@@ -161,7 +161,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const willData = insertWillSchema.parse(req.body);
+      
+      // Prepare will data with proper types
+      const willDataWithDefaults = {
+        title: req.body.title,
+        description: req.body.description,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
+        createdBy: userId,
+        circleId: 0, // Will be set below after getting circle
+      };
+      
+      console.log("Will data before validation:", willDataWithDefaults);
 
       // Get user's circle
       const circle = await storage.getUserCircle(userId);
