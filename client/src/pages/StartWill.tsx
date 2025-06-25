@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { createDateTimeFromInputs } from "@/lib/dateUtils";
 
 export default function StartWill() {
   const [, setLocation] = useLocation();
@@ -81,9 +82,9 @@ export default function StartWill() {
     const endDate = formData.get('endDate') as string;
     const endTime = formData.get('endTime') as string;
 
-    // Combine date and time
-    const startDateTime = `${startDate}T${startTime}`;
-    const endDateTime = `${endDate}T${endTime}`;
+    // Combine date and time using utility function
+    const startDateTime = createDateTimeFromInputs(startDate, startTime);
+    const endDateTime = createDateTimeFromInputs(endDate, endTime);
 
     // Validation
     const now = new Date();

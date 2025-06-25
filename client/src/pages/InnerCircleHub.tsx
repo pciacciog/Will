@@ -237,14 +237,7 @@ export default function InnerCircleHub() {
                     <div>
                       <h3 className="font-semibold text-gray-900">Will Scheduled</h3>
                       <p className="text-sm text-gray-600">
-                        Starts {new Date(will?.startDate).toLocaleDateString('en-US', { 
-                          month: 'long', 
-                          day: 'numeric', 
-                          year: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
+                        Starts {formatDisplayDateTime(will?.startDate)}
                       </p>
                     </div>
                   </div>
