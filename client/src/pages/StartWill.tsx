@@ -148,6 +148,8 @@ export default function StartWill() {
 
     // Create the will
     createWillMutation.mutate({
+      title: finalWillData.what || "Group Goal",
+      description: finalWillData.why || "Group commitment",
       startDate: finalWillData.startDate,
       endDate: finalWillData.endDate,
       circleId: finalWillData.circleId,

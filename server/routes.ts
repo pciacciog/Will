@@ -186,12 +186,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Your circle already has an active Will" });
       }
 
+      // Set circle ID and validate
+      willDataWithDefaults.circleId = circle.id;
+      const willData = insertWillSchema.parse(willDataWithDefaults);
+      
       // Create will
-      const will = await storage.createWill({
-        ...willData,
-        circleId: circle.id,
-        createdBy: userId,
-      });
+      const will = await storage.createWill(willData);
 
       res.json(will);
     } catch (error) {
