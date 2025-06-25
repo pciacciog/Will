@@ -32,10 +32,14 @@ function getWillStatus(will: any, memberCount: number): string {
     return 'completed';
   } else if (now >= startDate) {
     return 'active';
-  } else if (will.status === 'scheduled') {
-    return 'scheduled';
   } else {
-    return 'pending';
+    // Check commitment count to determine pending vs scheduled
+    const commitmentCount = will.commitments?.length || 0;
+    if (commitmentCount < memberCount) {
+      return 'pending';
+    } else {
+      return 'scheduled';
+    }
   }
 }
 
@@ -250,6 +254,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const status = getWillStatus(willWithCommitments, memberCount);
       
+      // Auto-update will status if it has transitioned based on time
+      if (status === 'active' && willWithCommitments.status !== 'active') {
+        await storage.updateWillStatus(will.id, 'active');
+      } else if (status === 'completed' && willWithCommitments.status !== 'completed') {
+        await storage.updateWillStatus(will.id, 'completed');
+      }
+      
       res.json({
         ...willWithCommitments,
         status,
@@ -276,6 +287,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const acknowledgedCount = await storage.getWillAcknowledgmentCount(willId);
       
       const status = getWillStatus(willWithCommitments, memberCount);
+      
+      // Auto-update will status if it has transitioned based on time
+      if (status === 'active' && willWithCommitments.status !== 'active') {
+        await storage.updateWillStatus(willId, 'active');
+      } else if (status === 'completed' && willWithCommitments.status !== 'completed') {
+        await storage.updateWillStatus(willId, 'completed');
+      }
 
       // Get progress for each commitment
       const commitmentsWithProgress = await Promise.all(

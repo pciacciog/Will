@@ -58,11 +58,14 @@ function formatTimeUntilStart(startDate: string): string {
   
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   
   if (days > 0) {
     return `${days} days, ${hours} hours`;
-  } else {
+  } else if (hours > 0) {
     return `${hours} hours`;
+  } else {
+    return `${minutes} minutes`;
   }
 }
 
@@ -78,7 +81,25 @@ export default function InnerCircleHub() {
     queryKey: ['/api/wills/circle', circle?.id],
     queryFn: () => fetch(`/api/wills/circle/${circle?.id}`).then(res => res.json()),
     enabled: !!circle?.id,
-    refetchInterval: 2000, // Real-time updates every 2 seconds
+    refetchInterval: (data) => {
+      // More frequent updates when will is close to starting
+      if (data?.startDate) {
+        const now = new Date();
+        const start = new Date(data.startDate);
+        const diff = start.getTime() - now.getTime();
+        
+        // Update every 10 seconds if starting within 5 minutes
+        if (diff > 0 && diff <= 5 * 60 * 1000) {
+          return 10000;
+        }
+        // Update every 30 seconds if starting within 1 hour
+        if (diff > 0 && diff <= 60 * 60 * 1000) {
+          return 30000;
+        }
+      }
+      // Default: update every 2 minutes
+      return 120000;
+    }
   });
 
   const willStatus = getWillStatus(will, circle?.members?.length || 0);
