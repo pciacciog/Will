@@ -570,6 +570,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update commitment (only allowed for pending status and own commitment)
+  app.put('/api/will-commitments/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const commitmentId = parseInt(req.params.id);
+      const userId = req.user.id;
+      const { what, why } = req.body;
+      
+      if (!what || !why) {
+        return res.status(400).json({ message: "Both 'what' and 'why' are required" });
+      }
+      
+      // Get the commitment to verify ownership and will status
+      const [commitment] = await db
+        .select()
+        .from(willCommitments)
+        .where(eq(willCommitments.id, commitmentId));
+      
+      if (!commitment) {
+        return res.status(404).json({ message: "Commitment not found" });
+      }
+      
+      // Only the user who created the commitment can edit it
+      if (commitment.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own commitments" });
+      }
+      
+      // Get the will to check status
+      const will = await storage.getWillById(commitment.willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      // Can only edit commitments while will is pending
+      if (will.status !== 'pending') {
+        return res.status(400).json({ message: "Commitments can only be edited while the will is pending" });
+      }
+      
+      // Update the commitment
+      const [updatedCommitment] = await db
+        .update(willCommitments)
+        .set({ what: what.trim(), why: why.trim() })
+        .where(eq(willCommitments.id, commitmentId))
+        .returning();
+      
+      res.json(updatedCommitment);
+    } catch (error) {
+      console.error("Error updating commitment:", error);
+      res.status(500).json({ message: "Failed to update commitment" });
+    }
+  });
+
   // Update will (only allowed for pending/scheduled status)
   app.put('/api/wills/:id', isAuthenticated, async (req: any, res) => {
     try {

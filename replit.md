@@ -107,6 +107,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Separated commitment submission from Will Details view for better UX
   - Added consistent flow for both initiators and members joining existing wills
   - Enhanced real-time status updates and progress tracking
+- **June 25, 2025**: Implemented role-based permissions system
+  - Circle level: All members are equal, no owner role or special privileges
+  - Will level: Only creators can edit/delete will structure (dates, deletion)
+  - Commitment level: Users can only edit their own commitments while will is pending
+  - Added Edit Commitment page at `/will/:id/edit-commitment/:commitmentId` route
+  - Added edit buttons for user's own commitments in Will Details view
+  - Proper authorization checks for all modification operations
 
 ## Changelog
 - June 25, 2025. Initial setup
@@ -115,3 +122,9 @@ This is a full-stack web application for group goal accountability, built with R
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Role and Permission Rules
+- **Circle Level**: All members are equal, no special "owner" role or privileges for circle creator
+- **Will Level**: Only the will creator can edit start/end dates or delete the will
+- **Commitment Level**: Each user can only edit their own commitment ("I will..." and "Because...")
+- **Status Restrictions**: Wills and commitments can only be modified while status is "pending"

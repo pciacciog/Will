@@ -178,9 +178,21 @@ export default function WillDetails() {
                           : commitment.user.email
                         }
                       </div>
-                      <Badge className="bg-green-100 text-green-800 text-xs">
-                        Submitted
-                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        <Badge className="bg-green-100 text-green-800 text-xs">
+                          Submitted
+                        </Badge>
+                        {commitment.userId === user?.id && will.status === 'pending' && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="text-xs h-6 px-2"
+                            onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
+                          >
+                            Edit
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div className="text-gray-700 mb-2">
                       <span className="font-medium">I will:</span> {commitment.what}

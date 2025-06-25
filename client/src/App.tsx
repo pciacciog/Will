@@ -14,6 +14,7 @@ import StartWill from "@/pages/StartWill";
 import WillDetails from "@/pages/WillDetails";
 import SubmitCommitment from "@/pages/SubmitCommitment";
 import EditWill from "@/pages/EditWill";
+import EditCommitment from "@/pages/EditCommitment";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Navigation from "@/components/Navigation";
 
@@ -46,6 +47,7 @@ function Router() {
             <Route path="/will/:id" component={WillDetails} />
             <Route path="/will/:id/commit" component={SubmitCommitment} />
             <Route path="/will/:id/edit" component={EditWill} />
+            <Route path="/will/:id/edit-commitment/:commitmentId" component={EditCommitment} />
             <Route path="/webadmin" component={AdminDashboard} />
           </>
         )}
