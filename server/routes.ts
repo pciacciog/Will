@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
 import { 
   insertCircleSchema, 
   insertWillSchema,
@@ -12,7 +12,6 @@ import {
   insertPageContentSchema,
 } from "@shared/schema";
 import { z } from "zod";
-import { isAuthenticated, isAdmin } from "./auth";
 
 function generateInviteCode(): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

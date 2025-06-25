@@ -6,7 +6,6 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
-import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -57,12 +56,15 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  const { storage } = await import("./storage");
   await storage.upsertUser({
     id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
+    username: claims["preferred_username"] || claims["email"] || claims["sub"],
+    email: claims["email"] || "",
+    password: "", // No password needed for OIDC users
+    firstName: claims["given_name"] || "",
+    lastName: claims["family_name"] || "",
+    profileImageUrl: claims["picture"] || "",
   });
 }
 
@@ -153,5 +155,24 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   } catch (error) {
     res.status(401).json({ message: "Unauthorized" });
     return;
+  }
+};
+
+export const isAdmin: RequestHandler = async (req: any, res, next) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { storage } = await import("./storage");
+    const user = await storage.getUser(req.user.id);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Admin check error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
