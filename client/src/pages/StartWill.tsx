@@ -77,12 +77,18 @@ export default function StartWill() {
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const startDate = formData.get('startDate') as string;
+    const startTime = formData.get('startTime') as string;
     const endDate = formData.get('endDate') as string;
+    const endTime = formData.get('endTime') as string;
+
+    // Combine date and time
+    const startDateTime = `${startDate}T${startTime}`;
+    const endDateTime = `${endDate}T${endTime}`;
 
     // Validation
     const now = new Date();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
 
     if (start <= now) {
       toast({
@@ -102,7 +108,7 @@ export default function StartWill() {
       return;
     }
 
-    setWillData({ ...willData, startDate, endDate });
+    setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });
     setCurrentStep(2);
   };
 
@@ -220,25 +226,57 @@ export default function StartWill() {
                 <p className="text-gray-600">When will your Will begin and end?</p>
               </div>
               
-              <form onSubmit={handleStep1Submit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Date & Time</label>
-                  <Input 
-                    type="datetime-local" 
-                    name="startDate"
-                    required 
-                    className="w-full"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date & Time</label>
-                  <Input 
-                    type="datetime-local" 
-                    name="endDate"
-                    required 
-                    className="w-full"
-                  />
+              <form onSubmit={handleStep1Submit} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Start Date & Time */}
+                  <div className="space-y-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Start Date & Time</label>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                        <Input 
+                          type="date" 
+                          name="startDate"
+                          required 
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
+                        <Input 
+                          type="time" 
+                          name="startTime"
+                          required 
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* End Date & Time */}
+                  <div className="space-y-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">End Date & Time</label>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                        <Input 
+                          type="date" 
+                          name="endDate"
+                          required 
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
+                        <Input 
+                          type="time" 
+                          name="endTime"
+                          required 
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="bg-blue-50 rounded-xl p-4">
