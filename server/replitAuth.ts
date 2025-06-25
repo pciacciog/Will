@@ -6,6 +6,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -56,15 +57,12 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  const { storage } = await import("./storage");
   await storage.upsertUser({
     id: claims["sub"],
-    username: claims["preferred_username"] || claims["email"] || claims["sub"],
-    email: claims["email"] || "",
-    password: "", // No password needed for OIDC users
-    firstName: claims["given_name"] || "",
-    lastName: claims["family_name"] || "",
-    profileImageUrl: claims["picture"] || "",
+    email: claims["email"],
+    firstName: claims["first_name"],
+    lastName: claims["last_name"],
+    profileImageUrl: claims["profile_image_url"],
   });
 }
 
@@ -80,14 +78,9 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const claims = tokens.claims();
-    const user = {
-      id: claims["sub"],
-      username: claims["preferred_username"] || claims["email"] || claims["sub"],
-      email: claims["email"] || "",
-    };
+    const user = {};
     updateUserSession(user, tokens);
-    await upsertUser(claims);
+    await upsertUser(tokens.claims());
     verified(null, user);
   };
 
@@ -132,49 +125,13 @@ export async function setupAuth(app: Express) {
       );
     });
   });
-
-  // User info endpoint
-  app.get("/api/user", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      const { storage } = await import("./storage");
-      const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
-      
-      if (!userId) {
-        return res.status(401).json({ message: "User ID not found in session" });
-      }
-      
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Server error" });
-    }
-  });
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user) {
+  if (!req.isAuthenticated() || !user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  // Ensure user has an ID
-  if (!user.id && user.claims?.sub) {
-    user.id = user.claims.sub;
-  }
-
-  if (!user.expires_at) {
-    return next(); // Allow if no expiration is set
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -196,25 +153,5 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   } catch (error) {
     res.status(401).json({ message: "Unauthorized" });
     return;
-  }
-};
-
-export const isAdmin: RequestHandler = async (req: any, res, next) => {
-  try {
-    const userId = req.user?.id || req.user?.claims?.sub;
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const { storage } = await import("./storage");
-    const user = await storage.getUser(userId);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-
-    next();
-  } catch (error) {
-    console.error("Admin check error:", error);
-    res.status(500).json({ message: "Server error" });
   }
 };

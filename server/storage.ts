@@ -129,58 +129,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    // Check if user exists by ID first
-    const existingUser = await this.getUser(userData.id);
-    
-    if (existingUser) {
-      // Update existing user
-      const [user] = await db
-        .update(users)
-        .set({
-          username: userData.username,
-          email: userData.email,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          profileImageUrl: userData.profileImageUrl,
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
           updatedAt: new Date(),
-        })
-        .where(eq(users.id, userData.id))
-        .returning();
-      return user;
-    } else {
-      // Check if email already exists for a different user
-      if (userData.email) {
-        const existingEmailUser = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, userData.email))
-          .limit(1);
-        
-        if (existingEmailUser.length > 0) {
-          // Update the existing user with the new ID and other data
-          const [user] = await db
-            .update(users)
-            .set({
-              id: userData.id,
-              username: userData.username,
-              firstName: userData.firstName,
-              lastName: userData.lastName,
-              profileImageUrl: userData.profileImageUrl,
-              updatedAt: new Date(),
-            })
-            .where(eq(users.email, userData.email))
-            .returning();
-          return user;
-        }
-      }
-      
-      // Create new user
-      const [user] = await db
-        .insert(users)
-        .values(userData)
-        .returning();
-      return user;
-    }
+        },
+      })
+      .returning();
+    return user;
   }
 
   // Circle operations
