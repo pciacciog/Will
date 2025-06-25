@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
+import { apiRequest } from "@/lib/queryClient";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
@@ -82,6 +83,15 @@ export default function InnerCircleHub() {
     queryFn: () => fetch(`/api/wills/circle/${circle?.id}`).then(res => res.json()),
     enabled: !!circle?.id,
     refetchInterval: (data) => {
+      if (!data) return 120000;
+      
+      const willStatus = getWillStatus(data, circle?.members?.length || 0);
+      
+      // More frequent updates for completed wills awaiting acknowledgment
+      if (willStatus === 'completed') {
+        return 5000; // 5 seconds for real-time acknowledgment counter
+      }
+      
       // More frequent updates when will is close to starting
       if (data?.startDate) {
         const now = new Date();
@@ -97,6 +107,7 @@ export default function InnerCircleHub() {
           return 30000;
         }
       }
+      
       // Default: update every 2 minutes
       return 120000;
     }
@@ -104,9 +115,7 @@ export default function InnerCircleHub() {
 
   const willStatus = getWillStatus(will, circle?.members?.length || 0);
 
-  const handleStartWill = () => {
-    setLocation('/start-will');
-  };
+
 
   const handleViewWillDetails = () => {
     if (will) {
@@ -214,9 +223,7 @@ export default function InnerCircleHub() {
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No active Will</h3>
                 <p className="text-gray-600 mb-6">Ready to commit to something meaningful together?</p>
-                <Button onClick={handleStartWill} className="bg-secondary hover:bg-green-600">
-                  Start a Will
-                </Button>
+                <NewWillButton />
               </div>
             )}
 

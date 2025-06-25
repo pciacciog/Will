@@ -65,6 +65,16 @@ export default function WillDetails() {
   const { data: will, isLoading } = useQuery({
     queryKey: [`/api/wills/${id}/details`],
     enabled: !!id,
+    refetchInterval: (data) => {
+      if (!data) return 30000;
+      
+      // More frequent updates for completed wills awaiting acknowledgment
+      if (data.status === 'completed') {
+        return 5000; // 5 seconds for real-time acknowledgment counter
+      }
+      
+      return 30000; // Default 30 seconds
+    },
   });
 
   const { data: circle } = useQuery({

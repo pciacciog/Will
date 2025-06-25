@@ -175,7 +175,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if circle already has an active will
       const existingWill = await storage.getCircleActiveWill(circle.id);
       if (existingWill) {
-        return res.status(400).json({ message: "Your circle already has an active Will" });
+        // If will is completed, check if all members have acknowledged
+        if (existingWill.status === 'completed') {
+          const memberCount = await storage.getCircleMemberCount(circle.id);
+          const acknowledgedCount = await storage.getWillAcknowledgmentCount(existingWill.id);
+          
+          if (acknowledgedCount < memberCount) {
+            return res.status(400).json({ 
+              message: "Cannot create new Will until all members acknowledge completion of the current one",
+              requiresAcknowledgment: true,
+              acknowledgedCount,
+              memberCount
+            });
+          }
+        } else {
+          return res.status(400).json({ message: "Your circle already has an active Will" });
+        }
       }
 
       // Set circle ID and validate
@@ -348,9 +363,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const memberCount = await storage.getCircleMemberCount(will.circleId);
       const acknowledgedCount = await storage.getWillAcknowledgmentCount(willId);
 
-      // If all members have acknowledged, mark as completed and archived
+      // If all members have acknowledged, the will is fully completed and can be archived
+      // This allows creation of new wills
       if (acknowledgedCount >= memberCount) {
-        await storage.updateWillStatus(willId, 'completed');
+        await storage.updateWillStatus(willId, 'archived');
       }
 
       res.json(acknowledgment);
