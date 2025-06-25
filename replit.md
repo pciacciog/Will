@@ -114,6 +114,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Added Edit Commitment page at `/will/:id/edit-commitment/:commitmentId` route
   - Added edit buttons for user's own commitments in Will Details view
   - Proper authorization checks for all modification operations
+- **June 25, 2025**: Enhanced acknowledgment system and time displays
+  - Fixed acknowledgment blocking: New wills cannot be created until all members acknowledge completion
+  - Added real-time counter updates (5-second polling) for acknowledgment status
+  - Refined time display: Shows minutes when less than 1 hour remaining for active wills
+  - Creators can now delete active wills (but not completed ones)
+  - Removed "Mark Done Today" button for active wills
+  - Improved server-side status transitions with automatic updates
 
 ## Changelog
 - June 25, 2025. Initial setup
