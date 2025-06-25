@@ -12,11 +12,19 @@ import { apiRequest } from "@/lib/queryClient";
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
   
+  // If will is archived, treat as no will
+  if (will.status === 'archived') return 'no_will';
+  
   const now = new Date();
   const startDate = new Date(will.startDate);
   const endDate = new Date(will.endDate);
 
   if (now >= endDate) {
+    // Check if all members have acknowledged
+    const acknowledgedCount = will.acknowledgedCount || 0;
+    if (acknowledgedCount >= memberCount) {
+      return 'no_will'; // All acknowledged, can start new will
+    }
     return 'completed';
   } else if (now >= startDate) {
     return 'active';

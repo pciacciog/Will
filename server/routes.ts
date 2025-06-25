@@ -276,6 +276,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateWillStatus(will.id, 'completed');
       }
       
+      // Check if will should be archived (all members acknowledged)
+      if (willWithCommitments.status === 'completed' && acknowledgedCount >= memberCount) {
+        await storage.updateWillStatus(will.id, 'archived');
+        return res.json(null); // Return null to indicate no active will
+      }
+      
       // Add user acknowledgment status
       const hasUserAcknowledged = await storage.hasUserAcknowledged(will.id, req.user.id);
       
