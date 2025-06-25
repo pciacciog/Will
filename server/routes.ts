@@ -42,7 +42,7 @@ function getWillStatus(will: any, memberCount: number): string {
 // Admin middleware
 const isAdmin: any = async (req: any, res: any, next: any) => {
   try {
-    const userId = req.user.claims.sub;
+    const userId = req.user.id;
     const user = await storage.getUser(userId);
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: "Admin access required" });
@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Circle routes
   app.post('/api/circles', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Check if user is already in a circle
       const existingCircle = await storage.getUserCircle(userId);
@@ -101,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/circles/join', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { inviteCode } = req.body;
 
       if (!inviteCode) {
@@ -148,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/circles/mine', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const circle = await storage.getUserCircle(userId);
       res.json(circle);
     } catch (error) {
@@ -160,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Will routes
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const willData = insertWillSchema.parse(req.body);
 
       // Get user's circle
@@ -191,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/wills/:id/commitments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const willId = parseInt(req.params.id);
       const commitmentData = insertWillCommitmentSchema.parse({
         ...req.body,
@@ -305,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/wills/:id/acknowledge', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const willId = parseInt(req.params.id);
 
       // Check if user already acknowledged
@@ -343,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/wills/:id/progress', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const willId = parseInt(req.params.id);
       const { date, completed } = req.body;
 
@@ -479,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/blog-posts', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const postData = insertBlogPostSchema.parse({ ...req.body, authorId: userId });
       const post = await storage.createBlogPost(postData);
       res.json(post);
@@ -524,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/page-contents', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contentData = insertPageContentSchema.parse({ ...req.body, updatedBy: userId });
       const content = await storage.createPageContent(contentData);
       res.json(content);
@@ -537,7 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/page-contents/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const content = await storage.updatePageContent(parseInt(id), { ...req.body, updatedBy: userId });
       res.json(content);
     } catch (error) {

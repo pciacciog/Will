@@ -83,6 +83,12 @@ This is a full-stack web application for group goal accountability, built with R
 - **Asset Serving**: Static files served from dist/public in production
 
 ## Recent Changes
+- **June 25, 2025**: Fixed authentication system and API endpoints
+  - Resolved all authentication errors caused by user object structure mismatch
+  - Fixed `/api/logout` endpoint routing and functionality
+  - Corrected user ID references from `req.user.claims.sub` to `req.user.id`
+  - Improved session management and passport deserialization
+  - Registration and login now working correctly with proper error handling
 - **June 25, 2025**: Complete admin dashboard implementation at `/webadmin` route
   - Added comprehensive user management (role updates, activate/deactivate)
   - Added circle and will monitoring with deletion capabilities  
