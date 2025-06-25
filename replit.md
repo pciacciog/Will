@@ -91,6 +91,10 @@ This is a full-stack web application for group goal accountability, built with R
   - Implemented admin middleware with role-based access control
   - Extended database schema with blog_posts and page_contents tables
   - Added admin statistics dashboard with platform metrics
+- **June 25, 2025**: Enhanced authentication flow
+  - Added dedicated authentication page at `/auth` route
+  - Updated landing page to redirect to auth page instead of direct login
+  - Improved user onboarding experience with feature preview
 
 ## Changelog
 - June 25, 2025. Initial setup
