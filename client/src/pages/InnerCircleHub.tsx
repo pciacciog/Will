@@ -163,7 +163,7 @@ export default function InnerCircleHub() {
                       }
                     </div>
                     <div className="text-sm text-gray-500">
-                      {index === 0 ? 'Creator' : 'Member'}
+                      Member
                     </div>
                   </div>
                   <div className="w-3 h-3 bg-green-400 rounded-full" title="Online"></div>
