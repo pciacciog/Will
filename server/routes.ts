@@ -39,19 +39,7 @@ function getWillStatus(will: any, memberCount: number): string {
   }
 }
 
-// Admin middleware
-const isAdmin: any = async (req: any, res: any, next: any) => {
-  try {
-    const userId = req.user.id;
-    const user = await storage.getUser(userId);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    next();
-  } catch (error) {
-    return res.status(403).json({ message: "Admin access required" });
-  }
-};
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
