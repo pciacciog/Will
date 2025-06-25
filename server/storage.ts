@@ -6,6 +6,8 @@ import {
   willCommitments,
   willAcknowledgments,
   dailyProgress,
+  blogPosts,
+  pageContents,
   type User,
   type UpsertUser,
   type Circle,
@@ -20,6 +22,10 @@ import {
   type InsertWillAcknowledgment,
   type DailyProgress,
   type InsertDailyProgress,
+  type BlogPost,
+  type InsertBlogPost,
+  type PageContent,
+  type InsertPageContent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -63,6 +69,36 @@ export interface IStorage {
   markDailyProgress(progress: InsertDailyProgress): Promise<DailyProgress>;
   getDailyProgress(willId: number, userId: string, date: string): Promise<DailyProgress | undefined>;
   getUserProgressStats(willId: number, userId: string): Promise<{ completed: number; total: number }>;
+  
+  // Admin operations
+  getAllUsers(limit?: number, offset?: number): Promise<User[]>;
+  getAllCircles(limit?: number, offset?: number): Promise<(Circle & { memberCount: number })[]>;
+  getAllWills(limit?: number, offset?: number): Promise<(Will & { circle: Circle; creator: User; memberCount: number })[]>;
+  updateUserRole(userId: string, role: string): Promise<void>;
+  deactivateUser(userId: string): Promise<void>;
+  activateUser(userId: string): Promise<void>;
+  deleteCircle(circleId: number): Promise<void>;
+  deleteWill(willId: number): Promise<void>;
+  getAdminStats(): Promise<{
+    totalUsers: number;
+    totalCircles: number;
+    totalWills: number;
+    activeWills: number;
+  }>;
+  
+  // Blog operations
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: number): Promise<void>;
+  getAllBlogPosts(limit?: number, offset?: number): Promise<(BlogPost & { author: User })[]>;
+  getBlogPostBySlug(slug: string): Promise<(BlogPost & { author: User }) | undefined>;
+  
+  // Page content operations
+  createPageContent(content: InsertPageContent): Promise<PageContent>;
+  updatePageContent(id: number, content: Partial<InsertPageContent>): Promise<PageContent>;
+  deletePageContent(id: number): Promise<void>;
+  getAllPageContents(): Promise<PageContent[]>;
+  getPageContentByKey(pageKey: string): Promise<PageContent | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -299,6 +335,176 @@ export class DatabaseStorage implements IStorage {
       completed: completedResult.count,
       total: totalResult.count,
     };
+  }
+
+  // Admin operations
+  async getAllUsers(limit = 50, offset = 0): Promise<User[]> {
+    return await db.select().from(users).limit(limit).offset(offset).orderBy(desc(users.createdAt));
+  }
+
+  async getAllCircles(limit = 50, offset = 0): Promise<(Circle & { memberCount: number })[]> {
+    const circlesList = await db.select().from(circles).limit(limit).offset(offset).orderBy(desc(circles.createdAt));
+    
+    const circlesWithMemberCount = await Promise.all(
+      circlesList.map(async (circle) => {
+        const memberCount = await this.getCircleMemberCount(circle.id);
+        return { ...circle, memberCount };
+      })
+    );
+    
+    return circlesWithMemberCount;
+  }
+
+  async getAllWills(limit = 50, offset = 0): Promise<(Will & { circle: Circle; creator: User; memberCount: number })[]> {
+    const willsData = await db
+      .select({
+        will: wills,
+        circle: circles,
+        creator: users,
+      })
+      .from(wills)
+      .innerJoin(circles, eq(wills.circleId, circles.id))
+      .innerJoin(users, eq(wills.createdBy, users.id))
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(wills.createdAt));
+
+    const willsWithMemberCount = await Promise.all(
+      willsData.map(async (item) => {
+        const memberCount = await this.getCircleMemberCount(item.will.circleId);
+        return {
+          ...item.will,
+          circle: item.circle,
+          creator: item.creator,
+          memberCount,
+        };
+      })
+    );
+
+    return willsWithMemberCount;
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<void> {
+    await db.update(users).set({ role }).where(eq(users.id, userId));
+  }
+
+  async deactivateUser(userId: string): Promise<void> {
+    await db.update(users).set({ isActive: false }).where(eq(users.id, userId));
+  }
+
+  async activateUser(userId: string): Promise<void> {
+    await db.update(users).set({ isActive: true }).where(eq(users.id, userId));
+  }
+
+  async deleteCircle(circleId: number): Promise<void> {
+    // Delete related data first
+    await db.delete(circleMembers).where(eq(circleMembers.circleId, circleId));
+    await db.delete(circles).where(eq(circles.id, circleId));
+  }
+
+  async deleteWill(willId: number): Promise<void> {
+    // Delete related data first
+    await db.delete(willCommitments).where(eq(willCommitments.willId, willId));
+    await db.delete(willAcknowledgments).where(eq(willAcknowledgments.willId, willId));
+    await db.delete(dailyProgress).where(eq(dailyProgress.willId, willId));
+    await db.delete(wills).where(eq(wills.id, willId));
+  }
+
+  async getAdminStats(): Promise<{
+    totalUsers: number;
+    totalCircles: number;
+    totalWills: number;
+    activeWills: number;
+  }> {
+    const [totalUsersResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const [totalCirclesResult] = await db.select({ count: sql<number>`count(*)` }).from(circles);
+    const [totalWillsResult] = await db.select({ count: sql<number>`count(*)` }).from(wills);
+    const [activeWillsResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(wills)
+      .where(sql`status IN ('pending', 'scheduled', 'active')`);
+
+    return {
+      totalUsers: totalUsersResult.count,
+      totalCircles: totalCirclesResult.count,
+      totalWills: totalWillsResult.count,
+      activeWills: activeWillsResult.count,
+    };
+  }
+
+  // Blog operations
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const [newPost] = await db.insert(blogPosts).values(post).returning();
+    return newPost;
+  }
+
+  async updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost> {
+    const [updatedPost] = await db
+      .update(blogPosts)
+      .set({ ...post, updatedAt: new Date() })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return updatedPost;
+  }
+
+  async deleteBlogPost(id: number): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  }
+
+  async getAllBlogPosts(limit = 50, offset = 0): Promise<(BlogPost & { author: User })[]> {
+    const posts = await db
+      .select({
+        post: blogPosts,
+        author: users,
+      })
+      .from(blogPosts)
+      .innerJoin(users, eq(blogPosts.authorId, users.id))
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(blogPosts.createdAt));
+
+    return posts.map(p => ({ ...p.post, author: p.author }));
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<(BlogPost & { author: User }) | undefined> {
+    const [result] = await db
+      .select({
+        post: blogPosts,
+        author: users,
+      })
+      .from(blogPosts)
+      .innerJoin(users, eq(blogPosts.authorId, users.id))
+      .where(eq(blogPosts.slug, slug));
+
+    return result ? { ...result.post, author: result.author } : undefined;
+  }
+
+  // Page content operations
+  async createPageContent(content: InsertPageContent): Promise<PageContent> {
+    const [newContent] = await db.insert(pageContents).values(content).returning();
+    return newContent;
+  }
+
+  async updatePageContent(id: number, content: Partial<InsertPageContent>): Promise<PageContent> {
+    const [updatedContent] = await db
+      .update(pageContents)
+      .set({ ...content, updatedAt: new Date() })
+      .where(eq(pageContents.id, id))
+      .returning();
+    return updatedContent;
+  }
+
+  async deletePageContent(id: number): Promise<void> {
+    await db.delete(pageContents).where(eq(pageContents.id, id));
+  }
+
+  async getAllPageContents(): Promise<PageContent[]> {
+    return await db.select().from(pageContents).orderBy(pageContents.pageKey);
+  }
+
+  async getPageContentByKey(pageKey: string): Promise<PageContent | undefined> {
+    const [content] = await db.select().from(pageContents).where(eq(pageContents.pageKey, pageKey));
+    return content;
   }
 }
 

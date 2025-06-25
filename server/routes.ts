@@ -8,6 +8,8 @@ import {
   insertWillCommitmentSchema,
   insertWillAcknowledgmentSchema,
   insertDailyProgressSchema,
+  insertBlogPostSchema,
+  insertPageContentSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -35,6 +37,20 @@ function getWillStatus(will: any, memberCount: number): string {
     return 'pending';
   }
 }
+
+// Admin middleware
+const isAdmin: any = async (req: any, res: any, next: any) => {
+  try {
+    const userId = req.user.claims.sub;
+    const user = await storage.getUser(userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -355,6 +371,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking progress:", error);
       res.status(500).json({ message: "Failed to mark progress" });
+    }
+  });
+
+  // Admin routes
+  app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+      const users = await storage.getAllUsers(parseInt(limit), parseInt(offset));
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.patch('/api/admin/users/:id/role', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+      await storage.updateUserRole(id, role);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  app.patch('/api/admin/users/:id/deactivate', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deactivateUser(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deactivating user:", error);
+      res.status(500).json({ message: "Failed to deactivate user" });
+    }
+  });
+
+  app.patch('/api/admin/users/:id/activate', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.activateUser(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error activating user:", error);
+      res.status(500).json({ message: "Failed to activate user" });
+    }
+  });
+
+  app.get('/api/admin/circles', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+      const circles = await storage.getAllCircles(parseInt(limit), parseInt(offset));
+      res.json(circles);
+    } catch (error) {
+      console.error("Error fetching circles:", error);
+      res.status(500).json({ message: "Failed to fetch circles" });
+    }
+  });
+
+  app.delete('/api/admin/circles/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCircle(parseInt(id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting circle:", error);
+      res.status(500).json({ message: "Failed to delete circle" });
+    }
+  });
+
+  app.get('/api/admin/wills', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+      const wills = await storage.getAllWills(parseInt(limit), parseInt(offset));
+      res.json(wills);
+    } catch (error) {
+      console.error("Error fetching wills:", error);
+      res.status(500).json({ message: "Failed to fetch wills" });
+    }
+  });
+
+  app.delete('/api/admin/wills/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteWill(parseInt(id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting will:", error);
+      res.status(500).json({ message: "Failed to delete will" });
+    }
+  });
+
+  // Blog posts
+  app.get('/api/admin/blog-posts', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+      const posts = await storage.getAllBlogPosts(parseInt(limit), parseInt(offset));
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching blog posts:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.post('/api/admin/blog-posts', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const postData = insertBlogPostSchema.parse({ ...req.body, authorId: userId });
+      const post = await storage.createBlogPost(postData);
+      res.json(post);
+    } catch (error) {
+      console.error("Error creating blog post:", error);
+      res.status(500).json({ message: "Failed to create blog post" });
+    }
+  });
+
+  app.patch('/api/admin/blog-posts/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const post = await storage.updateBlogPost(parseInt(id), req.body);
+      res.json(post);
+    } catch (error) {
+      console.error("Error updating blog post:", error);
+      res.status(500).json({ message: "Failed to update blog post" });
+    }
+  });
+
+  app.delete('/api/admin/blog-posts/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteBlogPost(parseInt(id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting blog post:", error);
+      res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // Page contents
+  app.get('/api/admin/page-contents', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const contents = await storage.getAllPageContents();
+      res.json(contents);
+    } catch (error) {
+      console.error("Error fetching page contents:", error);
+      res.status(500).json({ message: "Failed to fetch page contents" });
+    }
+  });
+
+  app.post('/api/admin/page-contents', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contentData = insertPageContentSchema.parse({ ...req.body, updatedBy: userId });
+      const content = await storage.createPageContent(contentData);
+      res.json(content);
+    } catch (error) {
+      console.error("Error creating page content:", error);
+      res.status(500).json({ message: "Failed to create page content" });
+    }
+  });
+
+  app.patch('/api/admin/page-contents/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      const content = await storage.updatePageContent(parseInt(id), { ...req.body, updatedBy: userId });
+      res.json(content);
+    } catch (error) {
+      console.error("Error updating page content:", error);
+      res.status(500).json({ message: "Failed to update page content" });
+    }
+  });
+
+  app.delete('/api/admin/page-contents/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deletePageContent(parseInt(id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting page content:", error);
+      res.status(500).json({ message: "Failed to delete page content" });
     }
   });
 

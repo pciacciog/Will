@@ -33,6 +33,8 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role", { length: 20 }).notNull().default("user"), // user, admin
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -84,6 +86,31 @@ export const dailyProgress = pgTable("daily_progress", {
   date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
   completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  authorId: varchar("author_id").notNull().references(() => users.id),
+  status: varchar("status", { length: 20 }).notNull().default("draft"), // draft, published, archived
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const pageContents = pgTable("page_contents", {
+  id: serial("id").primaryKey(),
+  pageKey: varchar("page_key", { length: 100 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  metaDescription: text("meta_description"),
+  isActive: boolean("is_active").notNull().default(true),
+  updatedBy: varchar("updated_by").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Relations
@@ -162,6 +189,20 @@ export const dailyProgressRelations = relations(dailyProgress, ({ one }) => ({
   }),
 }));
 
+export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
+  author: one(users, {
+    fields: [blogPosts.authorId],
+    references: [users.id],
+  }),
+}));
+
+export const pageContentsRelations = relations(pageContents, ({ one }) => ({
+  updatedByUser: one(users, {
+    fields: [pageContents.updatedBy],
+    references: [users.id],
+  }),
+}));
+
 // Schemas
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -208,3 +249,19 @@ export const insertDailyProgressSchema = createInsertSchema(dailyProgress).omit(
 });
 export type InsertDailyProgress = z.infer<typeof insertDailyProgressSchema>;
 export type DailyProgress = typeof dailyProgress.$inferSelect;
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;
+
+export const insertPageContentSchema = createInsertSchema(pageContents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertPageContent = z.infer<typeof insertPageContentSchema>;
+export type PageContent = typeof pageContents.$inferSelect;
