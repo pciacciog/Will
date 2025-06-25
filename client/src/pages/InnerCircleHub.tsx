@@ -226,7 +226,12 @@ export default function InnerCircleHub() {
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No active Will</h3>
                 <p className="text-gray-600 mb-6">Ready to commit to something meaningful together?</p>
-                <NewWillButton />
+                <Button 
+                  onClick={() => setLocation('/start-will')}
+                  className="bg-secondary hover:bg-green-600"
+                >
+                  Start a Will
+                </Button>
               </div>
             )}
 

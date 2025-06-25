@@ -229,7 +229,7 @@ export class DatabaseStorage implements IStorage {
       .from(wills)
       .where(and(
         eq(wills.circleId, circleId),
-        sql`status != 'completed'`
+        sql`status != 'archived'`
       ))
       .orderBy(desc(wills.createdAt))
       .limit(1);
