@@ -333,6 +333,9 @@ export default function WillDetails() {
                     </svg>
                     Waiting for all members to acknowledge completion: <span className="font-semibold">{will.acknowledgedCount || 0} of {will.memberCount || 0}</span>
                   </div>
+                  <div className="text-xs text-green-600 mt-2">
+                    All members must acknowledge before creating a new Will
+                  </div>
                 </div>
                 
                 {!will.hasUserAcknowledged ? (

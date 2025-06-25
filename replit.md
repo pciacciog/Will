@@ -121,6 +121,9 @@ This is a full-stack web application for group goal accountability, built with R
   - Creators can now delete active wills (but not completed ones)
   - Removed "Mark Done Today" button for active wills
   - Improved server-side status transitions with automatic updates
+  - Added acknowledgment counter display to WillDetails page with real-time updates
+  - Fixed toast import error in InnerCircleHub component
+  - Added informational notes about acknowledgment requirements before new Will creation
 
 ## Changelog
 - June 25, 2025. Initial setup
