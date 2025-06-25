@@ -182,7 +182,7 @@ export default function WillDetails() {
                         <Badge className="bg-green-100 text-green-800 text-xs">
                           Submitted
                         </Badge>
-                        {commitment.userId === user?.id && will.status === 'pending' && (
+                        {commitment.userId === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
                           <Button 
                             size="sm" 
                             variant="outline"

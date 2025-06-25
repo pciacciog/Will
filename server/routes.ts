@@ -602,9 +602,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
       
-      // Can only edit commitments while will is pending
-      if (will.status !== 'pending') {
-        return res.status(400).json({ message: "Commitments can only be edited while the will is pending" });
+      // Can only edit commitments while will is pending or scheduled
+      if (will.status === 'active' || will.status === 'completed') {
+        return res.status(400).json({ message: "Commitments can only be edited while the will is pending or scheduled" });
       }
       
       // Update the commitment

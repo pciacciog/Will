@@ -110,13 +110,13 @@ export default function EditCommitment() {
     );
   }
 
-  // Check if will is still in pending status
-  if (will.status !== 'pending') {
+  // Check if will is still editable (pending or scheduled)
+  if (will.status === 'active' || will.status === 'completed') {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Cannot Edit Commitment</h2>
-          <p className="text-gray-600 mb-4">Commitments can only be edited while the will is pending</p>
+          <p className="text-gray-600 mb-4">Commitments can only be edited while the will is pending or scheduled</p>
           <Button onClick={() => setLocation(`/will/${willId}`)}>
             Back to Will Details
           </Button>
@@ -188,7 +188,7 @@ export default function EditCommitment() {
               <div>
                 <h3 className="text-sm font-medium text-yellow-800 mb-1">Note</h3>
                 <p className="text-sm text-yellow-700">
-                  You can only edit your commitment while the will is in pending status.
+                  You can only edit your commitment while the will is pending or scheduled.
                 </p>
               </div>
             </div>
