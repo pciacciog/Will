@@ -129,18 +129,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
+    // Check if user exists by ID first
+    const existingUser = await this.getUser(userData.id);
+    
+    if (existingUser) {
+      // Update existing user
+      const [user] = await db
+        .update(users)
+        .set({
+          username: userData.username,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          profileImageUrl: userData.profileImageUrl,
           updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+        })
+        .where(eq(users.id, userData.id))
+        .returning();
+      return user;
+    } else {
+      // Check if email already exists (for different user)
+      const emailExists = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, userData.email || ''))
+        .limit(1);
+      
+      // If email exists, generate a unique one
+      let finalUserData = { ...userData };
+      if (emailExists.length > 0 && userData.email) {
+        finalUserData.email = `${userData.email.split('@')[0]}_${userData.id}@${userData.email.split('@')[1]}`;
+      }
+      
+      // Create new user
+      const [user] = await db
+        .insert(users)
+        .values(finalUserData)
+        .returning();
+      return user;
+    }
   }
 
   // Circle operations
