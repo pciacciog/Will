@@ -101,6 +101,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Added dedicated authentication page at `/auth` route
   - Updated landing page to redirect to auth page instead of direct login
   - Improved user onboarding experience with feature preview
+- **June 25, 2025**: Improved will commitment submission flow
+  - Fixed Will Details page routing and status display issues
+  - Implemented 2-step guided commitment flow at `/will/:id/commit` route
+  - Separated commitment submission from Will Details view for better UX
+  - Added consistent flow for both initiators and members joining existing wills
+  - Enhanced real-time status updates and progress tracking
 
 ## Changelog
 - June 25, 2025. Initial setup

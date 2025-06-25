@@ -3,12 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+
 
 function formatDateRange(startDate: string, endDate: string): string {
   const start = new Date(startDate);
@@ -61,8 +60,7 @@ export default function WillDetails() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [what, setWhat] = useState("");
-  const [why, setWhy] = useState("");
+
 
   const { data: will, isLoading } = useQuery({
     queryKey: [`/api/wills/${id}/details`],
@@ -87,41 +85,7 @@ export default function WillDetails() {
     },
   });
 
-  const commitmentMutation = useMutation({
-    mutationFn: async (data: { what: string; why: string }) => {
-      const response = await apiRequest('POST', `/api/wills/${id}/commitments`, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle', circle?.id] });
-      toast({
-        title: "Commitment Added",
-        description: "Your commitment has been submitted",
-      });
-      setWhat("");
-      setWhy("");
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
-  const handleSubmitCommitment = () => {
-    if (!what.trim() || !why.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in both fields",
-        variant: "destructive",
-      });
-      return;
-    }
-    commitmentMutation.mutate({ what: what.trim(), why: why.trim() });
-  };
 
   if (isLoading) {
     return (
@@ -266,52 +230,29 @@ export default function WillDetails() {
           </Card>
         )}
 
-        {/* User Commitment Form (if user hasn't submitted and will is pending) */}
+        {/* User Commitment Button (if user hasn't submitted and will is pending) */}
         {will.status === 'pending' && !userHasCommitted && (
           <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Your Commitment
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Step 1: I will...
-                  </label>
-                  <Input
-                    value={what}
-                    onChange={(e) => setWhat(e.target.value)}
-                    placeholder="Describe what you will do"
-                    className="w-full"
-                  />
+            <CardContent className="p-8 text-center">
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Step 2: Because...
-                  </label>
-                  <Textarea
-                    value={why}
-                    onChange={(e) => setWhy(e.target.value)}
-                    placeholder="Explain why this matters to you"
-                    className="w-full"
-                    rows={3}
-                  />
-                </div>
-                
-                <Button 
-                  onClick={handleSubmitCommitment}
-                  disabled={commitmentMutation.isPending || !what.trim() || !why.trim()}
-                  className="w-full"
-                >
-                  {commitmentMutation.isPending ? "Submitting..." : "Submit Commitment"}
-                </Button>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to commit?</h3>
+                <p className="text-gray-600">
+                  Join your circle members by adding your commitment to this will.
+                </p>
               </div>
+              
+              <Button 
+                onClick={() => setLocation(`/will/${id}/commit`)}
+                className="bg-secondary hover:bg-green-600"
+                size="lg"
+              >
+                Submit My Commitment
+              </Button>
             </CardContent>
           </Card>
         )}
