@@ -1,9 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export default function Landing() {
-  const handleGetStarted = () => {
-    window.location.href = '/api/login';
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -27,12 +25,13 @@ export default function Landing() {
               Hold each other accountable. Celebrate every victory as one.
             </p>
             
-            <Button 
-              onClick={handleGetStarted}
-              className="bg-primary hover:bg-blue-600 text-white px-8 py-4 rounded-2xl text-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              Start Your Journey →
-            </Button>
+            <Link href="/auth">
+              <Button 
+                className="bg-primary hover:bg-blue-600 text-white px-8 py-4 rounded-2xl text-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                Start Your Journey →
+              </Button>
+            </Link>
           </div>
           
           {/* Feature Highlights */}
