@@ -186,7 +186,7 @@ export default function WillDetails() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            className="text-xs h-6 px-2"
+                            className="text-xs h-7 px-3"
                             onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
                           >
                             Edit
