@@ -570,6 +570,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update will (only allowed for pending/scheduled status)
+  app.put('/api/wills/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      // Only creator can update the will
+      if (will.createdBy !== userId) {
+        return res.status(403).json({ message: "Only the creator can update the will" });
+      }
+      
+      // Can only update if status is pending or scheduled
+      if (will.status === 'active' || will.status === 'completed') {
+        return res.status(400).json({ message: "Cannot modify an active or completed will" });
+      }
+      
+      const { startDate, endDate } = req.body;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: "Start date and end date are required" });
+      }
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const now = new Date();
+      
+      if (start <= now) {
+        return res.status(400).json({ message: "Start date must be in the future" });
+      }
+      
+      if (end <= start) {
+        return res.status(400).json({ message: "End date must be after start date" });
+      }
+      
+      await storage.updateWill(willId, { startDate, endDate });
+      
+      res.json({ message: "Will updated successfully" });
+    } catch (error) {
+      console.error("Error updating will:", error);
+      res.status(500).json({ message: "Failed to update will" });
+    }
+  });
+
+  // Delete will (only allowed for pending/scheduled status)
+  app.delete('/api/wills/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      // Only creator can delete the will
+      if (will.createdBy !== userId) {
+        return res.status(403).json({ message: "Only the creator can delete the will" });
+      }
+      
+      // Can only delete if status is pending or scheduled
+      if (will.status === 'active' || will.status === 'completed') {
+        return res.status(400).json({ message: "Cannot delete an active or completed will" });
+      }
+      
+      await storage.deleteWill(willId);
+      
+      res.json({ message: "Will deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting will:", error);
+      res.status(500).json({ message: "Failed to delete will" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

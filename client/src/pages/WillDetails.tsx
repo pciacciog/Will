@@ -257,6 +257,53 @@ export default function WillDetails() {
           </Card>
         )}
 
+        {/* Creator Actions (Edit/Delete) - Only for pending/scheduled status */}
+        {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
+          <Card className="mb-8 border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-start space-x-3">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <h3 className="text-sm font-medium text-blue-800 mb-1">Creator Options</h3>
+                    <p className="text-sm text-blue-700">
+                      You can modify or delete this will until it becomes active.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => setLocation(`/will/${id}/edit`)}
+                  variant="outline"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  Edit Will
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Active Will Notice - Once active, cannot be modified */}
+        {will.createdBy === user?.id && will.status === 'active' && (
+          <Card className="mb-8 border-gray-200 bg-gray-50">
+            <CardContent className="p-6">
+              <div className="flex items-start space-x-3">
+                <svg className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-800 mb-1">Will is Active</h3>
+                  <p className="text-sm text-gray-600">
+                    This will is now active and cannot be modified or deleted.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Back to Hub */}
         <div className="text-center">
           <Button variant="outline" onClick={() => setLocation('/hub')}>

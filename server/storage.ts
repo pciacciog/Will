@@ -55,6 +55,7 @@ export interface IStorage {
   getCircleActiveWill(circleId: number): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
   updateWillStatus(willId: number, status: string): Promise<void>;
+  updateWill(willId: number, updates: Partial<InsertWill>): Promise<void>;
   getWillWithCommitments(willId: number): Promise<(Will & { commitments: (WillCommitment & { user: User })[] }) | undefined>;
   
   // Will commitment operations
@@ -242,6 +243,10 @@ export class DatabaseStorage implements IStorage {
 
   async updateWillStatus(willId: number, status: string): Promise<void> {
     await db.update(wills).set({ status }).where(eq(wills.id, willId));
+  }
+
+  async updateWill(willId: number, updates: Partial<InsertWill>): Promise<void> {
+    await db.update(wills).set(updates).where(eq(wills.id, willId));
   }
 
   async getWillWithCommitments(willId: number): Promise<(Will & { commitments: (WillCommitment & { user: User })[] }) | undefined> {
