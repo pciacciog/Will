@@ -1,0 +1,312 @@
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+
+function getWillStatus(will: any): string {
+  if (!will) return 'no_will';
+  
+  const now = new Date();
+  const startDate = new Date(will.startDate);
+  const endDate = new Date(will.endDate);
+
+  if (now >= endDate) {
+    return 'completed';
+  } else if (now >= startDate) {
+    return 'active';
+  } else if (will.status === 'scheduled') {
+    return 'scheduled';
+  } else {
+    return 'pending';
+  }
+}
+
+function formatTimeRemaining(endDate: string): string {
+  const now = new Date();
+  const end = new Date(endDate);
+  const diff = end.getTime() - now.getTime();
+  
+  if (diff <= 0) return 'Completed';
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (days > 0) {
+    return `${days} days, ${hours} hours remaining`;
+  } else {
+    return `${hours} hours remaining`;
+  }
+}
+
+function formatTimeUntilStart(startDate: string): string {
+  const now = new Date();
+  const start = new Date(startDate);
+  const diff = start.getTime() - now.getTime();
+  
+  if (diff <= 0) return 'Starting now';
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (days > 0) {
+    return `${days} days, ${hours} hours`;
+  } else {
+    return `${hours} hours`;
+  }
+}
+
+export default function InnerCircleHub() {
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  
+  const { data: circle } = useQuery({
+    queryKey: ['/api/circles/mine'],
+  });
+
+  const { data: will } = useQuery({
+    queryKey: ['/api/wills/circle', circle?.id],
+    enabled: !!circle?.id,
+  });
+
+  const willStatus = getWillStatus(will);
+
+  const handleStartWill = () => {
+    setLocation('/start-will');
+  };
+
+  const handleViewWillDetails = () => {
+    if (will) {
+      setLocation(`/will/${will.id}`);
+    }
+  };
+
+  if (!circle) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">No Circle Found</h2>
+          <p className="text-gray-600 mb-6">You need to be part of an Inner Circle first.</p>
+          <Button onClick={() => setLocation('/inner-circle')}>
+            Create or Join Circle
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pt-16 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
+          <p className="text-gray-600">Your space for shared accountability and growth</p>
+        </div>
+        
+        {/* Members Section */}
+        <Card className="mb-8">
+          <CardContent className="p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+              <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Circle Members
+            </h2>
+            
+            <div className="grid sm:grid-cols-2 gap-4">
+              {circle.members?.map((member: any, index: number) => (
+                <div key={member.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold">
+                      {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      {member.user.firstName && member.user.lastName 
+                        ? `${member.user.firstName} ${member.user.lastName}`
+                        : member.user.email
+                      }
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {index === 0 ? 'Creator' : 'Member'}
+                    </div>
+                  </div>
+                  <div className="w-3 h-3 bg-green-400 rounded-full" title="Online"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Will Status Section */}
+        <Card>
+          <CardContent className="p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+              <svg className="w-5 h-5 text-secondary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Current Will
+            </h2>
+            
+            {willStatus === 'no_will' && (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No active Will</h3>
+                <p className="text-gray-600 mb-6">Ready to commit to something meaningful together?</p>
+                <Button onClick={handleStartWill} className="bg-secondary hover:bg-green-600">
+                  Start a Will
+                </Button>
+              </div>
+            )}
+
+            {willStatus === 'pending' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Will Pending</h3>
+                      <p className="text-sm text-gray-600">
+                        {will?.commitmentCount || 0} of {will?.memberCount || 0} members have submitted
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                    Pending
+                  </Badge>
+                </div>
+                
+                <Button onClick={handleViewWillDetails} className="w-full">
+                  View Will Details
+                </Button>
+              </div>
+            )}
+
+            {willStatus === 'scheduled' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Will Scheduled</h3>
+                      <p className="text-sm text-gray-600">
+                        Starts {new Date(will?.startDate).toLocaleDateString('en-US', { 
+                          month: 'long', 
+                          day: 'numeric', 
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-blue-100 text-blue-800">
+                    Scheduled
+                  </Badge>
+                </div>
+                
+                <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                  <div className="text-sm text-blue-700">
+                    <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    Your Will will begin in <span className="font-semibold">{formatTimeUntilStart(will?.startDate)}</span>
+                  </div>
+                </div>
+                
+                <Button onClick={handleViewWillDetails} className="w-full">
+                  View Will Details
+                </Button>
+              </div>
+            )}
+
+            {willStatus === 'active' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Will Active</h3>
+                      <p className="text-sm text-gray-600">{formatTimeRemaining(will?.endDate)}</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">
+                    Active
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <Button 
+                    variant="outline" 
+                    className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                    onClick={() => {
+                      // Mark done for today functionality would go here
+                      handleViewWillDetails();
+                    }}
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Mark Done Today
+                  </Button>
+                  <Button variant="outline" onClick={handleViewWillDetails}>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View Details
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {willStatus === 'completed' && (
+              <div className="text-center py-8">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Will Completed!</h3>
+                <p className="text-gray-600 mb-6">Congratulations on completing your journey together</p>
+                
+                <div className="bg-green-50 rounded-xl p-4 mb-6">
+                  <div className="text-sm text-green-700">
+                    <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    Waiting for all members to acknowledge completion: <span className="font-semibold">{will?.acknowledgedCount || 0} of {will?.memberCount || 0}</span>
+                  </div>
+                </div>
+                
+                <Button className="bg-green-600 hover:bg-green-700" onClick={handleViewWillDetails}>
+                  Acknowledge Completion
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
