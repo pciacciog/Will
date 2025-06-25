@@ -648,7 +648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "End date must be after start date" });
       }
       
-      await storage.updateWill(willId, { startDate, endDate });
+      await storage.updateWill(willId, { startDate: start, endDate: end });
       
       res.json({ message: "Will updated successfully" });
     } catch (error) {
