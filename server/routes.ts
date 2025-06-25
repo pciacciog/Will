@@ -276,12 +276,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateWillStatus(will.id, 'completed');
       }
       
+      // Add user acknowledgment status
+      const hasUserAcknowledged = await storage.hasUserAcknowledged(will.id, req.user.id);
+      
       res.json({
         ...willWithCommitments,
         status,
         memberCount,
         commitmentCount,
         acknowledgedCount,
+        hasUserAcknowledged,
       });
     } catch (error) {
       console.error("Error fetching circle will:", error);
@@ -369,7 +373,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateWillStatus(willId, 'archived');
       }
 
-      res.json(acknowledgment);
+      res.json({
+        ...acknowledgment,
+        acknowledgedCount,
+        memberCount,
+        allAcknowledged: acknowledgedCount >= memberCount
+      });
     } catch (error) {
       console.error("Error acknowledging will:", error);
       res.status(500).json({ message: "Failed to acknowledge will" });
