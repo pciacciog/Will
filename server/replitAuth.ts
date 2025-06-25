@@ -80,9 +80,14 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const claims = tokens.claims();
+    const user = {
+      id: claims["sub"],
+      username: claims["preferred_username"] || claims["email"] || claims["sub"],
+      email: claims["email"] || "",
+    };
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    await upsertUser(claims);
     verified(null, user);
   };
 
@@ -136,7 +141,13 @@ export async function setupAuth(app: Express) {
 
     try {
       const { storage } = await import("./storage");
-      const user = await storage.getUser(req.user.id);
+      const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found in session" });
+      }
+      
+      const user = await storage.getUser(userId);
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -153,8 +164,17 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated() || !user) {
     return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  // Ensure user has an ID
+  if (!user.id && user.claims?.sub) {
+    user.id = user.claims.sub;
+  }
+
+  if (!user.expires_at) {
+    return next(); // Allow if no expiration is set
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -181,12 +201,13 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
 export const isAdmin: RequestHandler = async (req: any, res, next) => {
   try {
-    if (!req.user?.id) {
+    const userId = req.user?.id || req.user?.claims?.sub;
+    if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const { storage } = await import("./storage");
-    const user = await storage.getUser(req.user.id);
+    const user = await storage.getUser(userId);
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: "Admin access required" });
     }

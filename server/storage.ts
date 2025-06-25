@@ -148,23 +148,36 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return user;
     } else {
-      // Check if email already exists (for different user)
-      const emailExists = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, userData.email || ''))
-        .limit(1);
-      
-      // If email exists, generate a unique one
-      let finalUserData = { ...userData };
-      if (emailExists.length > 0 && userData.email) {
-        finalUserData.email = `${userData.email.split('@')[0]}_${userData.id}@${userData.email.split('@')[1]}`;
+      // Check if email already exists for a different user
+      if (userData.email) {
+        const existingEmailUser = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, userData.email))
+          .limit(1);
+        
+        if (existingEmailUser.length > 0) {
+          // Update the existing user with the new ID and other data
+          const [user] = await db
+            .update(users)
+            .set({
+              id: userData.id,
+              username: userData.username,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              profileImageUrl: userData.profileImageUrl,
+              updatedAt: new Date(),
+            })
+            .where(eq(users.email, userData.email))
+            .returning();
+          return user;
+        }
       }
       
       // Create new user
       const [user] = await db
         .insert(users)
-        .values(finalUserData)
+        .values(userData)
         .returning();
       return user;
     }

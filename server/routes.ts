@@ -53,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Circle routes
   app.post('/api/circles', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       
       // Check if user is already in a circle
       const existingCircle = await storage.getUserCircle(userId);
@@ -92,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/circles/join', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const { inviteCode } = req.body;
 
       if (!inviteCode) {
@@ -139,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/circles/mine', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const circle = await storage.getUserCircle(userId);
       res.json(circle);
     } catch (error) {
@@ -151,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Will routes
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       
       // Prepare will data with proper types
       const willDataWithDefaults = {
@@ -193,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/wills/:id/commitments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const willId = parseInt(req.params.id);
       const commitmentData = insertWillCommitmentSchema.parse({
         ...req.body,
@@ -323,7 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/wills/:id/acknowledge', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const willId = parseInt(req.params.id);
 
       // Check if user already acknowledged
@@ -361,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/wills/:id/progress', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const willId = parseInt(req.params.id);
       const { date, completed } = req.body;
 
@@ -497,7 +497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/blog-posts', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const postData = insertBlogPostSchema.parse({ ...req.body, authorId: userId });
       const post = await storage.createBlogPost(postData);
       res.json(post);
@@ -542,7 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/page-contents', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const contentData = insertPageContentSchema.parse({ ...req.body, updatedBy: userId });
       const content = await storage.createPageContent(contentData);
       res.json(content);
@@ -555,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/page-contents/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const content = await storage.updatePageContent(parseInt(id), { ...req.body, updatedBy: userId });
       res.json(content);
     } catch (error) {
@@ -579,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/will-commitments/:id', isAuthenticated, async (req: any, res) => {
     try {
       const commitmentId = parseInt(req.params.id);
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       const { what, why } = req.body;
       
       if (!what || !why) {
@@ -630,7 +630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/wills/:id', isAuthenticated, async (req: any, res) => {
     try {
       const willId = parseInt(req.params.id);
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       
       const will = await storage.getWillById(willId);
       if (!will) {
@@ -678,7 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/wills/:id', isAuthenticated, async (req: any, res) => {
     try {
       const willId = parseInt(req.params.id);
-      const userId = req.user.id;
+      const userId = req.user.id || req.user.claims?.sub;
       
       const will = await storage.getWillById(willId);
       if (!will) {
