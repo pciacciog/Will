@@ -691,9 +691,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only the creator can delete the will" });
       }
       
-      // Can only delete if status is pending or scheduled
-      if (will.status === 'active' || will.status === 'completed') {
-        return res.status(400).json({ message: "Cannot delete an active or completed will" });
+      // Can only delete if status is pending, scheduled, or active (but not completed)
+      if (will.status === 'completed') {
+        return res.status(400).json({ message: "Cannot delete a completed will" });
       }
       
       await storage.deleteWill(willId);
