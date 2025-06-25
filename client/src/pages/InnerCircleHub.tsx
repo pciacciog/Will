@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatDisplayDateTime } from "@/lib/dateUtils";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';

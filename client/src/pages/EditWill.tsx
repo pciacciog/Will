@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { splitDateTime, createDateTimeFromInputs } from "@/lib/dateUtils";
 
 export default function EditWill() {
   const { id } = useParams();
@@ -17,7 +18,9 @@ export default function EditWill() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   const { data: will, isLoading } = useQuery({
     queryKey: [`/api/wills/${id}/details`],
@@ -30,12 +33,13 @@ export default function EditWill() {
 
   useEffect(() => {
     if (will) {
-      // Convert dates to local datetime-local format
-      const start = new Date(will.startDate);
-      const end = new Date(will.endDate);
+      const startDateTime = splitDateTime(will.startDate);
+      const endDateTime = splitDateTime(will.endDate);
       
-      setStartDate(start.toISOString().slice(0, 16));
-      setEndDate(end.toISOString().slice(0, 16));
+      setStartDate(startDateTime.date);
+      setStartTime(startDateTime.time);
+      setEndDate(endDateTime.date);
+      setEndTime(endDateTime.time);
     }
   }, [will]);
 
@@ -83,17 +87,21 @@ export default function EditWill() {
   });
 
   const handleUpdate = () => {
-    if (!startDate || !endDate) {
+    if (!startDate || !endDate || !startTime || !endTime) {
       toast({
         title: "Missing Information",
-        description: "Please provide both start and end dates",
+        description: "Please provide both start and end dates with times",
         variant: "destructive",
       });
       return;
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // Create proper datetime strings
+    const startDateTime = createDateTimeFromInputs(startDate, startTime);
+    const endDateTime = createDateTimeFromInputs(endDate, endTime);
+    
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
     const now = new Date();
 
     if (start <= now) {
@@ -115,8 +123,8 @@ export default function EditWill() {
     }
 
     updateMutation.mutate({
-      startDate: start.toISOString(),
-      endDate: end.toISOString(),
+      startDate: startDateTime,
+      endDate: endDateTime,
     });
   };
 
@@ -201,31 +209,57 @@ export default function EditWill() {
             <CardTitle>Will Dates</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              <div>
-                <Label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date & Time
-                </Label>
-                <Input
-                  id="startDate"
-                  type="datetime-local"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date & Time
-                </Label>
-                <Input
-                  id="endDate"
-                  type="datetime-local"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full"
-                />
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Start Date & Time */}
+                <div className="space-y-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Start Date & Time</label>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                      <Input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
+                      <Input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* End Date & Time */}
+                <div className="space-y-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">End Date & Time</label>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                      <Input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
+                      <Input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
