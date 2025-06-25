@@ -254,14 +254,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(null);
       }
 
+      // Get will with commitments for accurate status
+      const willWithCommitments = await storage.getWillWithCommitments(will.id);
       const memberCount = await storage.getCircleMemberCount(circleId);
-      const commitmentCount = await storage.getWillCommitmentCount(will.id);
+      const commitmentCount = willWithCommitments?.commitments?.length || 0;
       const acknowledgedCount = await storage.getWillAcknowledgmentCount(will.id);
       
-      const status = getWillStatus(will, memberCount);
+      const status = getWillStatus(willWithCommitments, memberCount);
       
       res.json({
-        ...will,
+        ...willWithCommitments,
         status,
         memberCount,
         commitmentCount,

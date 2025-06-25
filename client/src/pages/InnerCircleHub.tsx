@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-function getWillStatus(will: any): string {
+function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
   
   const now = new Date();
@@ -18,10 +18,16 @@ function getWillStatus(will: any): string {
     return 'completed';
   } else if (now >= startDate) {
     return 'active';
-  } else if (will.status === 'scheduled') {
-    return 'scheduled';
   } else {
-    return 'pending';
+    // Check commitment count to determine pending vs scheduled
+    const commitmentCount = will.commitments?.length || 0;
+    if (commitmentCount < memberCount) {
+      return 'pending';
+    } else if (commitmentCount >= memberCount) {
+      return 'scheduled';
+    } else {
+      return 'pending';
+    }
   }
 }
 
@@ -69,10 +75,12 @@ export default function InnerCircleHub() {
 
   const { data: will } = useQuery({
     queryKey: ['/api/wills/circle', circle?.id],
+    queryFn: () => fetch(`/api/wills/circle/${circle?.id}`).then(res => res.json()),
     enabled: !!circle?.id,
+    refetchInterval: 2000, // Real-time updates every 2 seconds
   });
 
-  const willStatus = getWillStatus(will);
+  const willStatus = getWillStatus(will, circle?.members?.length || 0);
 
   const handleStartWill = () => {
     setLocation('/start-will');
@@ -202,7 +210,7 @@ export default function InnerCircleHub() {
                     <div>
                       <h3 className="font-semibold text-gray-900">Will Pending</h3>
                       <p className="text-sm text-gray-600">
-                        {will?.commitmentCount || 0} of {will?.memberCount || 0} members have submitted
+                        {will?.commitments?.length || 0} of {will?.memberCount || 0} members have submitted
                       </p>
                     </div>
                   </div>
