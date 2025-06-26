@@ -177,6 +177,7 @@ This is a full-stack web application for group goal accountability, built with R
   - Changed Home page title from "Welcome to Your Growth Journey" to "Welcome" with no subtext
   - Removed "A space to grow with your people" section completely from Home page for cleaner design
   - Updated Inner Circle Hub to display member names as first names only (removed last names for privacy/simplicity)
+  - Added motivational tagline "Become More — Together" to Inner Circle Hub header with italic and letter-spaced styling
 
 ## Changelog
 - June 25, 2025. Initial setup

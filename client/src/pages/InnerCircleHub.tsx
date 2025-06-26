@@ -156,7 +156,8 @@ export default function InnerCircleHub() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
-          <p className="text-gray-600">Your space for shared accountability and growth</p>
+          <p className="text-gray-600 mb-3">Your space for shared accountability and growth</p>
+          <p className="text-lg text-gray-700 italic tracking-wide">Become More — Together</p>
         </div>
         
         {/* Members Section */}
