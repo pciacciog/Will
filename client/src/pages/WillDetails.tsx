@@ -1,3 +1,4 @@
+import React from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -208,44 +209,78 @@ export default function WillDetails() {
                 <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Submitted Commitments
+                Member Commitments
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6">
-                {will.commitments.map((commitment: any) => (
-                  <div key={commitment.id} className="border-l-4 border-green-500 pl-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="font-medium text-gray-900">
-                        {commitment.user.firstName && commitment.user.lastName 
-                          ? `${commitment.user.firstName} ${commitment.user.lastName}`
-                          : commitment.user.email
-                        }
+                {will.commitments.map((commitment: any) => {
+                  const isCurrentUser = commitment.userId === user?.id;
+                  const [showWhy, setShowWhy] = React.useState(false);
+                  
+                  return (
+                    <div 
+                      key={commitment.id} 
+                      className={`border-l-4 pl-6 py-4 rounded-r-lg ${
+                        isCurrentUser 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-green-500'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="font-medium text-gray-900 flex items-center">
+                          {commitment.user.firstName && commitment.user.lastName 
+                            ? `${commitment.user.firstName} ${commitment.user.lastName}`
+                            : commitment.user.email
+                          }
+                          {isCurrentUser && (
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className="bg-green-100 text-green-800 text-xs">
+                            Submitted
+                          </Badge>
+                          {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-xs h-7 px-3"
+                              onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className="bg-green-100 text-green-800 text-xs">
-                          Submitted
-                        </Badge>
-                        {commitment.userId === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="text-xs h-7 px-3"
-                            onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
+                      <div className="text-gray-700 mb-2">
+                        <span className="font-medium">I will:</span> {commitment.what}
+                      </div>
+                      {isCurrentUser && (
+                        <div className="flex items-center space-x-3">
+                          <Button
+                            onClick={() => setShowWhy(!showWhy)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 p-1 h-auto"
                           >
-                            Edit
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                            {showWhy ? 'Hide Why' : 'Why?'}
                           </Button>
-                        )}
-                      </div>
+                          {showWhy && (
+                            <div className="flex-1 text-gray-600 text-sm">
+                              <span className="font-medium">Because:</span> {commitment.why}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-gray-700 mb-2">
-                      <span className="font-medium">I will:</span> {commitment.what}
-                    </div>
-                    <div className="text-gray-600 text-sm">
-                      <span className="font-medium">Because:</span> {commitment.why}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
