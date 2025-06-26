@@ -153,6 +153,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Used bold headers with brief subheadlines for clearer user flow
   - Maintained "A space to grow with your people" section title
   - Updated both Landing.tsx (unauthenticated) and Home.tsx (authenticated) pages
+- **June 26, 2025**: Simplified "Set Your Timeline" page interface and styling
+  - Changed section title from "Choose Your Scheduling Mode" to "Choose Your Schedule"
+  - Updated scheduling option cards: "Week Template" and "Custom" with concise descriptions
+  - Replaced green celebratory styling in schedule summary with subtle grey informational styling
+  - Changed "Your Weekly Schedule" to "Selected Schedule" with informative rather than confirmatory tone
+  - Removed green checkmark icon and background to avoid suggesting finality before submission
 
 ## Changelog
 - June 25, 2025. Initial setup

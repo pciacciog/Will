@@ -285,16 +285,16 @@ export default function StartWill() {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-lg font-medium text-gray-900 mb-4">
-                      Choose Your Scheduling Mode
+                      Choose Your Schedule
                     </label>
                     <RadioGroup value={schedulingMode} onValueChange={setSchedulingMode} className="space-y-4">
                       <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
                         <RadioGroupItem value="prescribed" id="prescribed" className="mt-1" />
                         <div className="flex-1">
                           <Label htmlFor="prescribed" className="cursor-pointer">
-                            <div className="font-medium text-gray-900 mb-1">📅 Prescribed Weekly Will</div>
+                            <div className="font-medium text-gray-900 mb-1">📅 Week Template</div>
                             <div className="text-sm text-gray-600">
-                              Runs Monday 12:00 AM to Sunday 12:00 PM. Consistent weekly rhythm for sustained habits.
+                              Runs Monday 12:00 AM to Sunday 12:00 PM.
                             </div>
                           </Label>
                         </div>
@@ -303,9 +303,9 @@ export default function StartWill() {
                         <RadioGroupItem value="custom" id="custom" className="mt-1" />
                         <div className="flex-1">
                           <Label htmlFor="custom" className="cursor-pointer">
-                            <div className="font-medium text-gray-900 mb-1">⚙️ Custom Will</div>
+                            <div className="font-medium text-gray-900 mb-1">⚙️ Custom</div>
                             <div className="text-sm text-gray-600">
-                              Set your own start and end dates and times. Full flexibility for any timeframe.
+                              Pick your own start and end times.
                             </div>
                           </Label>
                         </div>
@@ -316,18 +316,13 @@ export default function StartWill() {
 
                 {/* Prescribed Weekly Preview */}
                 {schedulingMode === 'prescribed' && (
-                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
-                    <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div>
-                        <div className="font-medium text-green-900 mb-2">Your Weekly Schedule</div>
-                        <div className="text-sm text-green-700 space-y-1">
-                          <div><strong>Start:</strong> {new Date(getNextMondayStart()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 AM</div>
-                          <div><strong>End:</strong> {new Date(getWeekEndSunday(getNextMondayStart())).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 PM</div>
-                          <div className="mt-2 text-xs text-green-600">Perfect for building consistent weekly habits and routines.</div>
-                        </div>
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                    <div>
+                      <div className="font-medium text-gray-900 mb-2">Selected Schedule</div>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <div><strong>Start:</strong> {new Date(getNextMondayStart()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 AM</div>
+                        <div><strong>End:</strong> {new Date(getWeekEndSunday(getNextMondayStart())).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 PM</div>
+                        <div className="mt-2 text-xs text-gray-600">This is the schedule for your upcoming Will.</div>
                       </div>
                     </div>
                   </div>
