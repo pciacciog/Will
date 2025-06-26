@@ -112,34 +112,19 @@ export default function Auth() {
           <CardContent className="space-y-6">
             {/* Features Preview */}
             <div className="space-y-4 mb-6">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Users className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Form Your Circle</h3>
-                  <p className="text-sm text-gray-600">Create or join intimate groups of 2-4 people</p>
-                </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Build Your Inner Circle</h3>
+                <p className="text-sm text-gray-600">Invite the people who matter most.</p>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Target className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Set Your Will</h3>
-                  <p className="text-sm text-gray-600">Create meaningful commitments with your circle's support</p>
-                </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Create Your Will</h3>
+                <p className="text-sm text-gray-600">Define what you will do.</p>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Shield className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Stay Accountable</h3>
-                  <p className="text-sm text-gray-600">Track progress and support each other daily</p>
-                </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Go to Work</h3>
+                <p className="text-sm text-gray-600">Share in the struggle.</p>
               </div>
             </div>
 
