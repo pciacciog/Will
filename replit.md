@@ -152,6 +152,7 @@ This is a full-stack web application for group goal accountability, built with R
   - New simplified cards: "Build Your Inner Circle", "Create Your Will", "Go to Work" 
   - Used bold headers with brief subheadlines for clearer user flow
   - Maintained "A space to grow with your people" section title
+  - Updated both Landing.tsx (unauthenticated) and Home.tsx (authenticated) pages
 
 ## Changelog
 - June 25, 2025. Initial setup
