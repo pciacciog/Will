@@ -5,13 +5,55 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 
+// Helper function to calculate next Monday at 12:00 AM
+function getNextMondayStart(): string {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  // Calculate days until next Monday
+  let daysUntilMonday;
+  if (dayOfWeek === 0) { // Sunday
+    // If it's Sunday after 12:00 PM, use next Monday
+    if (now.getHours() >= 12) {
+      daysUntilMonday = 1;
+    } else {
+      daysUntilMonday = 1;
+    }
+  } else if (dayOfWeek === 1) { // Monday
+    // If it's Monday, use next Monday (one week from today)
+    daysUntilMonday = 7;
+  } else {
+    // Tuesday through Saturday
+    daysUntilMonday = 8 - dayOfWeek;
+  }
+  
+  const nextMonday = new Date(now);
+  nextMonday.setDate(now.getDate() + daysUntilMonday);
+  nextMonday.setHours(0, 0, 0, 0); // 12:00 AM
+  
+  return nextMonday.toISOString();
+}
+
+// Helper function to calculate the Sunday at 12:00 PM of the same week
+function getWeekEndSunday(mondayStart: string): string {
+  const monday = new Date(mondayStart);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6); // Add 6 days to get to Sunday
+  sunday.setHours(12, 0, 0, 0); // 12:00 PM
+  
+  return sunday.toISOString();
+}
+
 export default function StartWill() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
+  const [schedulingMode, setSchedulingMode] = useState('prescribed'); // 'prescribed' or 'custom'
   const [willData, setWillData] = useState({
     startDate: '',
     endDate: '',
@@ -75,38 +117,49 @@ export default function StartWill() {
 
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const startDate = formData.get('startDate') as string;
-    const startTime = formData.get('startTime') as string;
-    const endDate = formData.get('endDate') as string;
-    const endTime = formData.get('endTime') as string;
+    
+    let startDateTime: string;
+    let endDateTime: string;
+    
+    if (schedulingMode === 'prescribed') {
+      // Use prescribed weekly schedule
+      startDateTime = getNextMondayStart();
+      endDateTime = getWeekEndSunday(startDateTime);
+    } else {
+      // Use custom dates from form
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      const startDate = formData.get('startDate') as string;
+      const startTime = formData.get('startTime') as string;
+      const endDate = formData.get('endDate') as string;
+      const endTime = formData.get('endTime') as string;
 
-    // Combine date and time using utility function
-    const startDateTime = createDateTimeFromInputs(startDate, startTime);
-    const endDateTime = createDateTimeFromInputs(endDate, endTime);
+      // Combine date and time using utility function
+      startDateTime = createDateTimeFromInputs(startDate, startTime);
+      endDateTime = createDateTimeFromInputs(endDate, endTime);
 
-    // Validation
-    const now = new Date();
-    const start = new Date(startDateTime);
-    const end = new Date(endDateTime);
+      // Validation for custom dates
+      const now = new Date();
+      const start = new Date(startDateTime);
+      const end = new Date(endDateTime);
 
-    if (start <= now) {
-      toast({
-        title: "Invalid Start Date",
-        description: "Start date must be in the future",
-        variant: "destructive",
-      });
-      return;
-    }
+      if (start <= now) {
+        toast({
+          title: "Invalid Start Date",
+          description: "Start date must be in the future",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (end <= start) {
-      toast({
-        title: "Invalid End Date",
-        description: "End date must be after start date",
-        variant: "destructive",
-      });
-      return;
+      if (end <= start) {
+        toast({
+          title: "Invalid End Date",
+          description: "End date must be after start date",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });

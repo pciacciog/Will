@@ -131,6 +131,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Added visual highlighting for user's own commitment with blue background and "You" badge
   - Implemented collapsible "Why?" toggle button for user's own reason with lightbulb icon
   - Fixed toast import error in InnerCircleHub component for invite code copying
+- **June 26, 2025**: Implemented Prescribed Weekly Will scheduling mode
+  - Added dual scheduling options: Prescribed Weekly Will vs Custom Will in StartWill component
+  - Prescribed Weekly Will automatically sets Monday 12:00 AM to Sunday 12:00 PM cycle
+  - Smart date calculation: next upcoming Monday start based on current day/time
+  - Enhanced Will creation flow with radio button selection and live preview of weekly schedule
+  - Maintains existing Custom Will functionality for flexible date/time selection
 
 ## Changelog
 - June 25, 2025. Initial setup
