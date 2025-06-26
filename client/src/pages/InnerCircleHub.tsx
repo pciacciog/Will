@@ -84,6 +84,7 @@ function formatTimeUntilStart(startDate: string): string {
 export default function InnerCircleHub() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
