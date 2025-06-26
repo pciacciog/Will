@@ -147,6 +147,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Removed username column from database schema completely
   - Updated all user display logic to show "First Last" format instead of usernames
   - Authentication now uses email field as the username field for Passport.js LocalStrategy
+- **June 26, 2025**: Updated landing page with simplified action-driven messaging
+  - Replaced "Inner Circle / Shared Commitment / Real Progress" section with streamlined content
+  - New simplified cards: "Build Your Inner Circle", "Create Your Will", "Go to Work" 
+  - Used bold headers with brief subheadlines for clearer user flow
+  - Maintained "A space to grow with your people" section title
 
 ## Changelog
 - June 25, 2025. Initial setup
