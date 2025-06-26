@@ -168,6 +168,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Step 3 "Why Does This Matter?" updates: Changed header to "Why would you like to do this?" with "Remember this when it gets tough" subtext
   - Added "Because" prefix to motivation input with new placeholder "because I like how I feel after I talk to her"
   - Added 50-character limit to motivation input and removed "Dig deep" tip section
+- **June 26, 2025**: Enhanced input field experience with dynamic character counting
+  - Added real-time character counters showing "X / 50" format that update with each keystroke
+  - Fixed placeholder text in "Why" field from "because I like..." to "I like..." (removed redundant "because")
+  - Implemented controlled input components with proper state management for character tracking
+  - Ensured seamless text styling consistency between fixed prefixes and user input text
 
 ## Changelog
 - June 25, 2025. Initial setup

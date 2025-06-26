@@ -60,6 +60,8 @@ export default function StartWill() {
     what: '',
     why: '',
   });
+  const [whatCharCount, setWhatCharCount] = useState(0);
+  const [whyCharCount, setWhyCharCount] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -423,11 +425,16 @@ export default function StartWill() {
                       required 
                       rows={4} 
                       maxLength={50}
+                      value={willData.what}
+                      onChange={(e) => {
+                        setWillData({ ...willData, what: e.target.value });
+                        setWhatCharCount(e.target.value.length);
+                      }}
                       className="w-full pl-16 pr-4 py-3 resize-none text-sm leading-6 font-normal" 
                       placeholder="call my grandmother this week"
                     />
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 text-right">50 characters max</div>
+                  <div className="text-xs text-gray-500 mt-1 text-right">{whatCharCount} / 50</div>
                 </div>
 
                 
@@ -468,11 +475,16 @@ export default function StartWill() {
                       required 
                       rows={4} 
                       maxLength={50}
+                      value={willData.why}
+                      onChange={(e) => {
+                        setWillData({ ...willData, why: e.target.value });
+                        setWhyCharCount(e.target.value.length);
+                      }}
                       className="w-full pl-20 pr-4 py-3 resize-none text-sm leading-6 font-normal" 
-                      placeholder="because I like how I feel after I talk to her"
+                      placeholder="I like how I feel after I talk to her"
                     />
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 text-right">50 characters max</div>
+                  <div className="text-xs text-gray-500 mt-1 text-right">{whyCharCount} / 50</div>
                 </div>
 
                 
