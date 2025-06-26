@@ -417,16 +417,17 @@ export default function StartWill() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-3 text-gray-500">I will</span>
+                    <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6">I will</span>
                     <Textarea 
                       name="what"
                       required 
                       rows={4} 
                       maxLength={50}
-                      className="w-full pl-16 pr-4 py-3 resize-none" 
+                      className="w-full pl-16 pr-4 py-3 resize-none text-sm leading-6 font-normal" 
                       placeholder="call my grandmother this week"
                     />
                   </div>
+                  <div className="text-xs text-gray-500 mt-1 text-right">50 characters max</div>
                 </div>
 
                 
@@ -461,16 +462,17 @@ export default function StartWill() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Your Why</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-3 text-gray-500">Because</span>
+                    <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6">Because</span>
                     <Textarea 
                       name="why"
                       required 
                       rows={4} 
                       maxLength={50}
-                      className="w-full pl-20 pr-4 py-3 resize-none" 
+                      className="w-full pl-20 pr-4 py-3 resize-none text-sm leading-6 font-normal" 
                       placeholder="because I like how I feel after I talk to her"
                     />
                   </div>
+                  <div className="text-xs text-gray-500 mt-1 text-right">50 characters max</div>
                 </div>
 
                 
