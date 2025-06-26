@@ -114,14 +114,14 @@ export default function WillDetails() {
       await apiRequest('DELETE', `/api/wills/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle', circle?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       toast({
         title: "Will Deleted",
         description: "The will has been successfully deleted",
       });
       setLocation('/hub');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: error.message,
@@ -130,8 +130,7 @@ export default function WillDetails() {
     },
   });
 
-
-
+  // Early returns after all hooks are defined
   if (isLoading) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
