@@ -247,7 +247,7 @@ export default function StartWill() {
               <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
                 1
               </div>
-              <span className={`ml-2 text-sm ${currentStep >= 1 ? 'text-primary' : 'text-gray-600'} font-medium`}>Dates</span>
+              <span className={`ml-2 text-sm ${currentStep >= 1 ? 'text-primary' : 'text-gray-600'} font-medium`}>When</span>
             </div>
             <div className={`w-8 h-0.5 ${currentStep >= 2 ? 'bg-primary' : 'bg-gray-300'}`}></div>
             <div className="flex items-center">
@@ -382,18 +382,7 @@ export default function StartWill() {
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="bg-blue-50 rounded-xl p-4">
-                      <div className="flex items-start space-x-3">
-                        <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <div className="text-sm text-blue-700">
-                          <p className="font-medium mb-1">Pro tip:</p>
-                          <p>Choose a realistic timeframe. Most successful Wills last between 7-30 days.</p>
-                        </div>
-                      </div>
-                    </div>
+
                   </div>
                 )}
                 
@@ -420,36 +409,26 @@ export default function StartWill() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">What Will You Do?</h2>
-                <p className="text-gray-600">Define your commitment clearly and specifically</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">What would you like to do?</h2>
+                <p className="text-gray-600">Cause it's as simple as wanting.</p>
               </div>
               
               <form onSubmit={handleStep2Submit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Commitment</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-3 text-gray-500 font-medium">I will</span>
+                    <span className="absolute left-4 top-3 text-gray-500">I will</span>
                     <Textarea 
                       name="what"
                       required 
                       rows={4} 
+                      maxLength={50}
                       className="w-full pl-16 pr-4 py-3 resize-none" 
-                      placeholder="exercise for 30 minutes every day"
+                      placeholder="call my grandmother this week"
                     />
                   </div>
                 </div>
-                
-                <div className="bg-green-50 rounded-xl p-4">
-                  <div className="flex items-start space-x-3">
-                    <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="text-sm text-green-700">
-                      <p className="font-medium mb-1">Make it specific:</p>
-                      <p>Good commitments are measurable and actionable. Instead of "be healthier," try "walk 10,000 steps daily."</p>
-                    </div>
-                  </div>
-                </div>
+
                 
                 <div className="flex justify-between">
                   <Button type="button" variant="ghost" onClick={() => setCurrentStep(1)}>
@@ -474,33 +453,26 @@ export default function StartWill() {
                     <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Why Does This Matter?</h2>
-                <p className="text-gray-600">Your motivation will keep you going when things get tough</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Why would you like to do this?</h2>
+                <p className="text-gray-600">Remember this when it gets tough.</p>
               </div>
               
               <form onSubmit={handleStep3Submit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Your Why</label>
-                  <Textarea 
-                    name="why"
-                    required 
-                    rows={4} 
-                    className="w-full resize-none" 
-                    placeholder="I want to build this habit because it will help me feel more energized and confident in my daily life..."
-                  />
-                </div>
-                
-                <div className="bg-orange-50 rounded-xl p-4">
-                  <div className="flex items-start space-x-3">
-                    <svg className="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                    </svg>
-                    <div className="text-sm text-orange-700">
-                      <p className="font-medium mb-1">Dig deep:</p>
-                      <p>The strongest motivations connect to your values, relationships, or long-term vision for yourself.</p>
-                    </div>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 text-gray-500">Because</span>
+                    <Textarea 
+                      name="why"
+                      required 
+                      rows={4} 
+                      maxLength={50}
+                      className="w-full pl-20 pr-4 py-3 resize-none" 
+                      placeholder="because I like how I feel after I talk to her"
+                    />
                   </div>
                 </div>
+
                 
                 <div className="flex justify-between">
                   <Button type="button" variant="ghost" onClick={() => setCurrentStep(2)}>

@@ -159,6 +159,15 @@ This is a full-stack web application for group goal accountability, built with R
   - Replaced green celebratory styling in schedule summary with subtle grey informational styling
   - Changed "Your Weekly Schedule" to "Selected Schedule" with informative rather than confirmatory tone
   - Removed green checkmark icon and background to avoid suggesting finality before submission
+- **June 26, 2025**: Enhanced UX and softened language across commitment flow screens
+  - Updated progress indicator: "Dates" → "When" to match When→What→Why flow
+  - Removed "Pro Tip" sections from custom scheduling and commitment steps
+  - Step 2 "What Will You Do?" updates: Changed header to "What would you like to do?" with "Cause it's as simple as wanting" subtext
+  - Updated input label from "Your Commitment" to "Your Want" with new placeholder "call my grandmother this week"
+  - Added 50-character limit to commitment input and removed tip styling for visual consistency
+  - Step 3 "Why Does This Matter?" updates: Changed header to "Why would you like to do this?" with "Remember this when it gets tough" subtext
+  - Added "Because" prefix to motivation input with new placeholder "because I like how I feel after I talk to her"
+  - Added 50-character limit to motivation input and removed "Dig deep" tip section
 
 ## Changelog
 - June 25, 2025. Initial setup
