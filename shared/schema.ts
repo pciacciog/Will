@@ -12,6 +12,7 @@ import {
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { createInsertSchema } from "drizzle-zod";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -29,11 +30,10 @@ export const sessions = pgTable(
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
-  username: varchar("username", { length: 50 }).unique().notNull(),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
   password: varchar("password").notNull(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role", { length: 20 }).notNull().default("user"), // user, admin
   isActive: boolean("is_active").notNull().default(true),
@@ -208,7 +208,13 @@ export const pageContentsRelations = relations(pageContents, ({ one }) => ({
 // Schemas
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export const insertCircleSchema = createInsertSchema(circles).omit({
   id: true,

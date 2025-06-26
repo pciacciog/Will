@@ -34,8 +34,8 @@ import { eq, and, desc, sql } from "drizzle-orm";
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: Omit<InsertUser, 'confirmPassword'>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   
   // Circle operations
@@ -111,17 +111,17 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
 
-  async createUser(userData: InsertUser): Promise<User> {
+  async createUser(userData: Omit<InsertUser, 'confirmPassword'>): Promise<User> {
     const userWithId = {
       ...userData,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
     };
-    const [user] = await db
+    const [user] = await this.db
       .insert(users)
       .values(userWithId)
       .returning();

@@ -139,6 +139,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Maintains existing Custom Will functionality for flexible date/time selection
   - Fixed React hooks violations in WillDetails component that prevented page from loading
   - Moved useState from inside map function to component level with proper state management
+- **June 26, 2025**: Completely removed usernames from authentication system
+  - Switched to email + password only authentication for both sign-in and sign-up
+  - Updated sign-up form to collect First Name, Last Name, Email, and Password fields
+  - Updated sign-in form to use Email and Password only
+  - Migrated all existing user accounts to have proper first and last names
+  - Removed username column from database schema completely
+  - Updated all user display logic to show "First Last" format instead of usernames
+  - Authentication now uses email field as the username field for Passport.js LocalStrategy
 
 ## Changelog
 - June 25, 2025. Initial setup

@@ -17,7 +17,7 @@ export default function Auth() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: { username: string; password: string }) => {
+    mutationFn: async (credentials: { email: string; password: string }) => {
       const res = await apiRequest('POST', '/api/login', credentials);
       return await res.json();
     },
@@ -35,7 +35,7 @@ export default function Auth() {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: { username: string; email: string; password: string }) => {
+    mutationFn: async (credentials: { email: string; password: string; firstName: string; lastName: string }) => {
       const res = await apiRequest('POST', '/api/register', credentials);
       return await res.json();
     },
@@ -56,7 +56,7 @@ export default function Auth() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     loginMutation.mutate({
-      username: formData.get('username') as string,
+      email: formData.get('email') as string,
       password: formData.get('password') as string,
     });
   };
@@ -77,9 +77,10 @@ export default function Auth() {
     }
 
     registerMutation.mutate({
-      username: formData.get('username') as string,
       email: formData.get('email') as string,
       password: password,
+      firstName: formData.get('firstName') as string,
+      lastName: formData.get('lastName') as string,
     });
   };
 
@@ -150,14 +151,15 @@ export default function Auth() {
               </TabsList>
               
               <TabsContent value="login" className="space-y-4 mt-6">
+                <p className="text-sm text-gray-600 mb-4">Sign in using your email and password.</p>
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-username">Username</Label>
+                    <Label htmlFor="login-email">Email</Label>
                     <Input
-                      id="login-username"
-                      name="username"
-                      type="text"
-                      placeholder="Enter your username"
+                      id="login-email"
+                      name="email"
+                      type="email"
+                      placeholder="Enter your email"
                       required
                     />
                   </div>
@@ -199,12 +201,22 @@ export default function Auth() {
               <TabsContent value="register" className="space-y-4 mt-6">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="register-username">Username</Label>
+                    <Label htmlFor="register-firstName">First Name</Label>
                     <Input
-                      id="register-username"
-                      name="username"
+                      id="register-firstName"
+                      name="firstName"
                       type="text"
-                      placeholder="Choose a username"
+                      placeholder="Enter your first name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-lastName">Last Name</Label>
+                    <Input
+                      id="register-lastName"
+                      name="lastName"
+                      type="text"
+                      placeholder="Enter your last name"
                       required
                     />
                   </div>
