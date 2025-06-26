@@ -126,6 +126,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Added informational notes about acknowledgment requirements before new Will creation
   - Fixed acknowledgment system transition to properly archive completed wills when all members acknowledge
   - Made Inner Circle intro message dynamic based on member count for more personal language
+- **June 26, 2025**: Enhanced commitment privacy and user experience
+  - Made "Because" statements private - only visible to the commitment author
+  - Added visual highlighting for user's own commitment with blue accent and "You" badge
+  - Implemented collapsible "Why?" toggle for personal commitment reasons
+  - Enhanced UI with smooth transitions and better visual hierarchy
 
 ## Changelog
 - June 25, 2025. Initial setup

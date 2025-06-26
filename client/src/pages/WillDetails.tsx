@@ -63,6 +63,7 @@ export default function WillDetails() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [expandedWhyStates, setExpandedWhyStates] = useState<{[key: string]: boolean}>({});
 
 
   const { data: will, isLoading } = useQuery({
@@ -213,39 +214,91 @@ export default function WillDetails() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-6">
-                {will.commitments.map((commitment: any) => (
-                  <div key={commitment.id} className="border-l-4 border-green-500 pl-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="font-medium text-gray-900">
-                        {commitment.user.firstName && commitment.user.lastName 
-                          ? `${commitment.user.firstName} ${commitment.user.lastName}`
-                          : commitment.user.email
-                        }
+                {will.commitments.map((commitment: any) => {
+                  const isOwnCommitment = commitment.userId === user?.id;
+                  const isWhyExpanded = expandedWhyStates[commitment.id] || false;
+                  
+                  const toggleWhy = () => {
+                    setExpandedWhyStates(prev => ({
+                      ...prev,
+                      [commitment.id]: !prev[commitment.id]
+                    }));
+                  };
+
+                  return (
+                    <div 
+                      key={commitment.id} 
+                      className={`border-l-4 pl-6 rounded-r-lg transition-all duration-200 ${
+                        isOwnCommitment 
+                          ? 'border-blue-500 bg-blue-50/50 shadow-sm' 
+                          : 'border-green-500'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="font-medium text-gray-900 flex items-center">
+                          {commitment.user.firstName && commitment.user.lastName 
+                            ? `${commitment.user.firstName} ${commitment.user.lastName}`
+                            : commitment.user.email
+                          }
+                          {isOwnCommitment && (
+                            <Badge variant="outline" className="ml-2 text-xs text-blue-700 border-blue-300">
+                              You
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className="bg-green-100 text-green-800 text-xs">
+                            Submitted
+                          </Badge>
+                          {isOwnCommitment && (will.status === 'pending' || will.status === 'scheduled') && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-xs h-7 px-3"
+                              onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className="bg-green-100 text-green-800 text-xs">
-                          Submitted
-                        </Badge>
-                        {commitment.userId === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="text-xs h-7 px-3"
-                            onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
+                      <div className="text-gray-700 mb-2">
+                        <span className="font-medium">I will:</span> {commitment.what}
+                      </div>
+                      
+                      {/* Why section - only show for own commitment */}
+                      {isOwnCommitment && (
+                        <div className="mt-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={toggleWhy}
+                            className="h-6 px-2 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                           >
-                            Edit
+                            {isWhyExpanded ? (
+                              <>
+                                <ChevronDown className="w-3 h-3 mr-1" />
+                                Hide Why
+                              </>
+                            ) : (
+                              <>
+                                <ChevronRight className="w-3 h-3 mr-1" />
+                                Why?
+                              </>
+                            )}
                           </Button>
-                        )}
-                      </div>
+                          {isWhyExpanded && (
+                            <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <div className="text-gray-700 text-sm">
+                                <span className="font-medium text-blue-800">Because:</span> {commitment.why}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-gray-700 mb-2">
-                      <span className="font-medium">I will:</span> {commitment.what}
-                    </div>
-                    <div className="text-gray-600 text-sm">
-                      <span className="font-medium">Because:</span> {commitment.why}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
