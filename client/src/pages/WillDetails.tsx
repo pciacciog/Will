@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,7 @@ export default function WillDetails() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [expandedCommitments, setExpandedCommitments] = useState<Record<string, boolean>>({});
 
 
   const { data: will, isLoading } = useQuery({
@@ -215,7 +216,13 @@ export default function WillDetails() {
               <div className="grid gap-6">
                 {will.commitments.map((commitment: any) => {
                   const isCurrentUser = commitment.userId === user?.id;
-                  const [showWhy, setShowWhy] = React.useState(false);
+                  const showWhy = expandedCommitments[commitment.id] || false;
+                  const toggleWhy = () => {
+                    setExpandedCommitments(prev => ({
+                      ...prev,
+                      [commitment.id]: !prev[commitment.id]
+                    }));
+                  };
                   
                   return (
                     <div 
@@ -260,7 +267,7 @@ export default function WillDetails() {
                       {isCurrentUser && (
                         <div className="flex items-center space-x-3">
                           <Button
-                            onClick={() => setShowWhy(!showWhy)}
+                            onClick={toggleWhy}
                             variant="ghost"
                             size="sm"
                             className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 p-1 h-auto"

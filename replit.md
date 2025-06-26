@@ -137,6 +137,8 @@ This is a full-stack web application for group goal accountability, built with R
   - Smart date calculation: next upcoming Monday start based on current day/time
   - Enhanced Will creation flow with radio button selection and live preview of weekly schedule
   - Maintains existing Custom Will functionality for flexible date/time selection
+  - Fixed React hooks violations in WillDetails component that prevented page from loading
+  - Moved useState from inside map function to component level with proper state management
 
 ## Changelog
 - June 25, 2025. Initial setup
