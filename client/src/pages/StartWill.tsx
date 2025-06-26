@@ -273,77 +273,134 @@ export default function StartWill() {
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Set Your Timeline</h2>
-                <p className="text-gray-600">When will your Will begin and end?</p>
+                <p className="text-gray-600">Choose your scheduling preference</p>
               </div>
               
               <form onSubmit={handleStep1Submit} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Start Date & Time */}
-                  <div className="space-y-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Start Date & Time</label>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
-                        <Input 
-                          type="date" 
-                          name="startDate"
-                          required 
-                          className="w-full"
-                        />
+                {/* Scheduling Mode Selection */}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-lg font-medium text-gray-900 mb-4">
+                      Choose Your Scheduling Mode
+                    </label>
+                    <RadioGroup value={schedulingMode} onValueChange={setSchedulingMode} className="space-y-4">
+                      <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <RadioGroupItem value="prescribed" id="prescribed" className="mt-1" />
+                        <div className="flex-1">
+                          <Label htmlFor="prescribed" className="cursor-pointer">
+                            <div className="font-medium text-gray-900 mb-1">📅 Prescribed Weekly Will</div>
+                            <div className="text-sm text-gray-600">
+                              Runs Monday 12:00 AM to Sunday 12:00 PM. Consistent weekly rhythm for sustained habits.
+                            </div>
+                          </Label>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
-                        <Input 
-                          type="time" 
-                          name="startTime"
-                          required 
-                          className="w-full"
-                        />
+                      <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <RadioGroupItem value="custom" id="custom" className="mt-1" />
+                        <div className="flex-1">
+                          <Label htmlFor="custom" className="cursor-pointer">
+                            <div className="font-medium text-gray-900 mb-1">⚙️ Custom Will</div>
+                            <div className="text-sm text-gray-600">
+                              Set your own start and end dates and times. Full flexibility for any timeframe.
+                            </div>
+                          </Label>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  {/* End Date & Time */}
-                  <div className="space-y-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">End Date & Time</label>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
-                        <Input 
-                          type="date" 
-                          name="endDate"
-                          required 
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
-                        <Input 
-                          type="time" 
-                          name="endTime"
-                          required 
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
+                    </RadioGroup>
                   </div>
                 </div>
-                
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <div className="flex items-start space-x-3">
-                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <div className="text-sm text-blue-700">
-                      <p className="font-medium mb-1">Pro tip:</p>
-                      <p>Choose a realistic timeframe. Most successful Wills last between 7-30 days.</p>
+
+                {/* Prescribed Weekly Preview */}
+                {schedulingMode === 'prescribed' && (
+                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+                    <div className="flex items-start space-x-3">
+                      <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <div className="font-medium text-green-900 mb-2">Your Weekly Schedule</div>
+                        <div className="text-sm text-green-700 space-y-1">
+                          <div><strong>Start:</strong> {new Date(getNextMondayStart()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 AM</div>
+                          <div><strong>End:</strong> {new Date(getWeekEndSunday(getNextMondayStart())).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 PM</div>
+                          <div className="mt-2 text-xs text-green-600">Perfect for building consistent weekly habits and routines.</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Custom Date Inputs */}
+                {schedulingMode === 'custom' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Start Date & Time */}
+                      <div className="space-y-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">Start Date & Time</label>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                            <Input 
+                              type="date" 
+                              name="startDate"
+                              required 
+                              className="w-full"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
+                            <Input 
+                              type="time" 
+                              name="startTime"
+                              required 
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* End Date & Time */}
+                      <div className="space-y-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">End Date & Time</label>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                            <Input 
+                              type="date" 
+                              name="endDate"
+                              required 
+                              className="w-full"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
+                            <Input 
+                              type="time" 
+                              name="endTime"
+                              required 
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-blue-50 rounded-xl p-4">
+                      <div className="flex items-start space-x-3">
+                        <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <div className="text-sm text-blue-700">
+                          <p className="font-medium mb-1">Pro tip:</p>
+                          <p>Choose a realistic timeframe. Most successful Wills last between 7-30 days.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex justify-between">
                   <Button type="button" variant="ghost" onClick={handleCancel}>
@@ -456,10 +513,10 @@ export default function StartWill() {
                   </Button>
                   <Button 
                     type="submit" 
-                    className="bg-secondary hover:bg-green-600"
                     disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                    className="bg-primary hover:bg-blue-600"
                   >
-                    {createWillMutation.isPending || addCommitmentMutation.isPending ? "Creating..." : "Submit Will"}
+                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will →'}
                   </Button>
                 </div>
               </form>
