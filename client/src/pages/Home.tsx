@@ -43,7 +43,16 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Your Circle is Ready</h3>
                 <p className="text-gray-600 mb-6">
-                  You're part of an Inner Circle with {circle.members?.length || 0} members
+                  {(() => {
+                    const memberCount = circle.members?.length || 0;
+                    if (memberCount === 1) {
+                      return "You're the first member of this Inner Circle";
+                    } else if (memberCount === 2) {
+                      return "You're part of an Inner Circle with 1 other member";
+                    } else {
+                      return `You're part of an Inner Circle with ${memberCount - 1} other members`;
+                    }
+                  })()}
                 </p>
                 <Button onClick={handleStartJourney} className="bg-secondary hover:bg-green-600">
                   Enter Your Circle Hub
