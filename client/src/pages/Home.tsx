@@ -77,7 +77,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {/* Core Flow - Simplified Action Steps */}
+        {/* Core Flow - Simplified Action Steps - Updated */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">A space to grow with your people</h2>
           <div className="grid md:grid-cols-3 gap-8">
