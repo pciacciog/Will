@@ -200,8 +200,8 @@ export default function InnerCircleHub() {
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">
-                      {member.user.firstName && member.user.lastName 
-                        ? `${member.user.firstName} ${member.user.lastName}`
+                      {member.user.firstName 
+                        ? member.user.firstName
                         : member.user.email
                       }
                     </div>

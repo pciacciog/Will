@@ -173,6 +173,9 @@ This is a full-stack web application for group goal accountability, built with R
   - Fixed placeholder text in "Why" field from "because I like..." to "I like..." (removed redundant "because")
   - Implemented controlled input components with proper state management for character tracking
   - Ensured seamless text styling consistency between fixed prefixes and user input text
+- **June 26, 2025**: Updated page titles and member display preferences
+  - Changed Home page title from "Welcome to Your Growth Journey" to "Become More - Together" with no subtext
+  - Updated Inner Circle Hub to display member names as first names only (removed last names for privacy/simplicity)
 
 ## Changelog
 - June 25, 2025. Initial setup

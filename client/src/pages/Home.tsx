@@ -24,11 +24,8 @@ export default function Home() {
         
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to Your Growth Journey
+            Become More - Together
           </h1>
-          <p className="text-xl text-gray-600">
-            Ready to achieve your goals with your Inner Circle?
-          </p>
         </div>
 
         {/* Quick Action Card */}
