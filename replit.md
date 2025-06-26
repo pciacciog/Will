@@ -124,6 +124,8 @@ This is a full-stack web application for group goal accountability, built with R
   - Added acknowledgment counter display to WillDetails page with real-time updates
   - Fixed toast import error in InnerCircleHub component
   - Added informational notes about acknowledgment requirements before new Will creation
+  - Fixed acknowledgment system transition to properly archive completed wills when all members acknowledge
+  - Made Inner Circle intro message dynamic based on member count for more personal language
 
 ## Changelog
 - June 25, 2025. Initial setup
