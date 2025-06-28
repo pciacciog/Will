@@ -224,6 +224,10 @@ This is a full-stack web application for group goal accountability, built with R
   - Changed from "Waiting for committed members to acknowledge completion: X of Y" to "X of Y participating members have acknowledged"
   - Simplified requirement text from "All committed members must acknowledge before creating a new WILL" to "Required before creating a new WILL"
   - Applied consistent wording across WillDetails and InnerCircleHub pages for better clarity
+- **June 28, 2025**: Streamlined WILL completion interface and user flow
+  - Simplified Inner Circle Hub completed WILL section to show only "WILL Completed!" title, congratulations, and "View" button
+  - Removed acknowledgment info and action from Inner Circle Hub for cleaner interface
+  - Moved all acknowledgment functionality exclusively to Will Details page for focused user experience
 
 ## Changelog
 - June 25, 2025. Initial setup
