@@ -156,7 +156,8 @@ export default function InnerCircleHub() {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest('POST', '/api/logout');
-      return await res.json();
+      // Logout endpoint returns 200 with no body, so don't try to parse JSON
+      return res.ok;
     },
     onSuccess: () => {
       // Clear user data and redirect
