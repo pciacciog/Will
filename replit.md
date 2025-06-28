@@ -192,6 +192,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Displays clean Start/End date format with full weekday, date, and time information
   - Simplified layout removes redundant timeline summary while keeping essential scheduling details
   - Positioned above member commitments for better information flow during pending phase
+- **June 28, 2025**: Implemented simple admin panel for internal testing
+  - Added admin rights to pcguzman2000@hotmail.com user in database
+  - Created Admin Panel link in user dropdown menu (only visible to admin users)
+  - Added protected /admin route with access control (non-admins see "Access Denied")
+  - Created simple JSON endpoints: /admin/users (all users) and /admin/wills (active wills only)
+  - Minimal styling approach for internal testing and data inspection purposes
 
 ## Changelog
 - June 25, 2025. Initial setup
