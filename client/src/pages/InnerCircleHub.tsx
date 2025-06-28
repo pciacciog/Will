@@ -48,19 +48,19 @@ function formatTimeRemaining(endDate: string): string {
   const now = new Date();
   const end = new Date(endDate);
   const diff = end.getTime() - now.getTime();
-  
-  if (diff <= 0) return 'Completed';
-  
+
+  if (diff <= 0) return "Time's up!";
+
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  
+
   if (days > 0) {
-    return `${days} days, ${hours} hours remaining`;
-  } else if (hours >= 1) {
-    return `${hours} hours remaining`;
+    return `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''} left`;
+  } else if (hours > 0) {
+    return `${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''} left`;
   } else {
-    return `${minutes} minutes remaining`;
+    return `${minutes} minute${minutes !== 1 ? 's' : ''} left`;
   }
 }
 
@@ -68,35 +68,37 @@ function formatTimeUntilStart(startDate: string): string {
   const now = new Date();
   const start = new Date(startDate);
   const diff = start.getTime() - now.getTime();
-  
-  if (diff <= 0) return 'Starting now';
-  
+
+  if (diff <= 0) return "Starting now!";
+
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  
+
   if (days > 0) {
-    return `${days} days, ${hours} hours`;
+    return `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}`;
   } else if (hours > 0) {
-    return `${hours} hours`;
+    return `${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}`;
   } else {
-    return `${minutes} minutes`;
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
   }
 }
 
 export default function InnerCircleHub() {
-  const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [showAccountSettings, setShowAccountSettings] = useState(false);
-  
+  const queryClient = useQueryClient();
+
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
+    queryFn: () => fetch('/api/circles/mine').then(res => res.json()),
+    enabled: !!user,
   });
 
   const { data: will } = useQuery({
-    queryKey: ['/api/wills/circle', circle?.id],
+    queryKey: [`/api/wills/circle/${circle?.id}`],
     queryFn: () => fetch(`/api/wills/circle/${circle?.id}`).then(res => res.json()),
     enabled: !!circle?.id,
     refetchInterval: (data) => {
@@ -142,11 +144,11 @@ export default function InnerCircleHub() {
     },
     onSuccess: () => {
       toast({
-        title: "Left Circle",
-        description: "You have successfully left your Inner Circle",
+        title: "Success",
+        description: "You have left the circle",
       });
-      // Redirect to home page
-      setLocation('/');
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      setLocation('/inner-circle');
     },
     onError: (error: any) => {
       toast({
@@ -157,46 +159,80 @@ export default function InnerCircleHub() {
     },
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/logout');
-      // Logout endpoint returns 200 with no body, so don't try to parse JSON
-      return res.ok;
-    },
-    onSuccess: () => {
-      // Simple redirect to root, which will trigger auth state check
-      window.location.href = '/';
-    },
-    onError: (error: any) => {
+  const handleLeaveCircle = () => {
+    if (will && (will.status === 'active' || will.status === 'scheduled' || will.status === 'pending')) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to logout",
+        title: "Cannot leave circle",
+        description: "You cannot leave while there's an active WILL. Please wait for it to complete or be cancelled.",
         variant: "destructive",
       });
-    },
-  });
+      return;
+    }
 
-  const handleLeaveCircle = () => {
-    if (confirm("Are you sure you want to leave this Inner Circle? This action cannot be undone.")) {
+    if (confirm('Are you sure you want to leave this circle? This action cannot be undone.')) {
       leaveCircleMutation.mutate();
     }
   };
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const formatDisplayDateTime = (dateString: string): string => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
+    
+    const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    
+    if (isToday) {
+      return `Today at ${timeStr}`;
+    } else if (isTomorrow) {
+      return `Tomorrow at ${timeStr}`;
+    } else {
+      return date.toLocaleDateString([], { 
+        weekday: 'long',
+        month: 'short', 
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    }
   };
 
   const handleViewWillDetails = () => {
-    if (will) {
+    if (will?.id) {
       setLocation(`/will/${will.id}`);
     }
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-6">Please log in to view your Inner Circle Hub.</p>
+          <Button onClick={() => setLocation('/auth')}>
+            Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!circle) {
     return (
-      <div className="min-h-screen pt-16 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">No Circle Found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Inner Circle</h2>
           <p className="text-gray-600 mb-6">You need to be part of an Inner Circle first.</p>
           <Button onClick={() => setLocation('/inner-circle')}>
             Create or Join Circle
@@ -212,61 +248,11 @@ export default function InnerCircleHub() {
         
         {/* Header */}
         <div className="relative mb-12">
-          {/* User Menu - Top Right */}
-          <div className="absolute top-0 right-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                  <span className="text-sm font-medium">
-                    {user?.firstName} {user?.lastName}
-                  </span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {user?.role === 'admin' && (
-                  <>
-                    <DropdownMenuItem 
-                      onClick={() => setLocation('/admin')}
-                      className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                    >
-                      <Shield className="h-4 w-4" />
-                      <span>Admin Panel</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem 
-                  onClick={() => setShowAccountSettings(true)}
-                  className="flex items-center space-x-2 cursor-pointer"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Account Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleLeaveCircle}
-                  className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                >
-                  <UserMinus className="h-4 w-4" />
-                  <span>Leave Circle</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
           
           {/* Main Header Content */}
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
-            <p className="text-gray-600">Your space for shared accountability and growth</p>
+            <p className="text-lg text-gray-600 italic tracking-wide">Become More — Together</p>
           </div>
         </div>
         
@@ -302,27 +288,91 @@ export default function InnerCircleHub() {
             </div>
             
             <div className="grid sm:grid-cols-2 gap-4">
-              {circle.members?.map((member: any, index: number) => (
-                <div key={member.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">
-                      {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">
-                      {member.user.firstName 
-                        ? member.user.firstName
-                        : member.user.email
-                      }
+              {circle.members?.map((member: any, index: number) => {
+                const isCurrentUser = member.user.id === user?.id;
+                
+                return (
+                  <div key={member.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold">
+                        {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
+                      </span>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      Member
+                    <div className="flex-1">
+                      {isCurrentUser ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-auto p-0 flex items-center space-x-2 text-left justify-start hover:bg-transparent">
+                              <div>
+                                <div className="font-medium text-gray-900 flex items-center">
+                                  {member.user.firstName 
+                                    ? member.user.firstName
+                                    : member.user.email
+                                  }
+                                  <ChevronDown className="h-4 w-4 ml-1" />
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  Member
+                                </div>
+                              </div>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-48">
+                            {user?.role === 'admin' && (
+                              <>
+                                <DropdownMenuItem 
+                                  onClick={() => setLocation('/admin')}
+                                  className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                >
+                                  <Shield className="h-4 w-4" />
+                                  <span>Admin Panel</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
+                            )}
+                            <DropdownMenuItem 
+                              onClick={() => setShowAccountSettings(true)}
+                              className="flex items-center space-x-2 cursor-pointer"
+                            >
+                              <Settings className="h-4 w-4" />
+                              <span>Account Settings</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={handleLeaveCircle}
+                              className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            >
+                              <UserMinus className="h-4 w-4" />
+                              <span>Leave Circle</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={handleLogout}
+                              className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
+                            >
+                              <LogOut className="h-4 w-4" />
+                              <span>Sign Out</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {member.user.firstName 
+                              ? member.user.firstName
+                              : member.user.email
+                            }
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Member
+                          </div>
+                        </div>
+                      )}
                     </div>
+                    <div className="w-3 h-3 bg-green-400 rounded-full" title="Online"></div>
                   </div>
-                  <div className="w-3 h-3 bg-green-400 rounded-full" title="Online"></div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -331,25 +381,22 @@ export default function InnerCircleHub() {
         <Card>
           <CardContent className="p-8">
             <div className="mb-6">
-              <div className="text-center mb-4">
-                <p className="text-lg text-gray-700 italic tracking-wide">Become More — Together</p>
-              </div>
               <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <svg className="w-5 h-5 text-secondary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Current WILL
               </h2>
             </div>
-            
+
             {willStatus === 'no_will' && (
-              <div className="text-center py-12">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No active Will</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No active WILL</h3>
                 <p className="text-gray-600 mb-6">Ready to commit to something meaningful together?</p>
                 <Button 
                   onClick={() => setLocation('/start-will')}
@@ -370,7 +417,7 @@ export default function InnerCircleHub() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">Will Pending</h3>
+                      <h3 className="font-semibold text-gray-900">WILL Pending</h3>
                       <p className="text-sm text-gray-600">
                         {will?.commitments?.length || 0} of {will?.memberCount || 0} members have submitted
                       </p>
@@ -382,7 +429,7 @@ export default function InnerCircleHub() {
                 </div>
                 
                 <Button onClick={handleViewWillDetails} className="w-full">
-                  View Will Details
+                  View WILL Details
                 </Button>
               </div>
             )}
@@ -397,7 +444,7 @@ export default function InnerCircleHub() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">Will Scheduled</h3>
+                      <h3 className="font-semibold text-gray-900">WILL Scheduled</h3>
                       <p className="text-sm text-gray-600">
                         Starts {formatDisplayDateTime(will?.startDate)}
                       </p>
@@ -418,7 +465,7 @@ export default function InnerCircleHub() {
                 </div>
                 
                 <Button onClick={handleViewWillDetails} className="w-full">
-                  View Will Details
+                  View WILL Details
                 </Button>
               </div>
             )}
@@ -433,7 +480,7 @@ export default function InnerCircleHub() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">Will Active</h3>
+                      <h3 className="font-semibold text-gray-900">WILL Active</h3>
                       <p className="text-sm text-gray-600">{formatTimeRemaining(will?.endDate)}</p>
                     </div>
                   </div>
@@ -443,7 +490,7 @@ export default function InnerCircleHub() {
                 </div>
                 
                 <Button onClick={handleViewWillDetails} className="w-full">
-                  View Will Details
+                  View WILL Details
                 </Button>
               </div>
             )}
