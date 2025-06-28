@@ -160,7 +160,10 @@ export default function InnerCircleHub() {
       return res.ok;
     },
     onSuccess: () => {
-      // Clear user data and redirect
+      // Clear user data from cache
+      queryClient.setQueryData(['/api/user'], null);
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Redirect to auth page
       setLocation('/auth');
     },
     onError: (error: any) => {
