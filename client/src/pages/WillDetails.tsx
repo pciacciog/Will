@@ -319,7 +319,7 @@ export default function WillDetails() {
                           </Button>
                           {showWhy && (
                             <div className="flex-1 text-gray-600 text-sm">
-                              <span className="font-medium">Because:</span> {commitment.why}
+                              <span className="font-normal">Because</span> {commitment.why}
                             </div>
                           )}
                         </div>
