@@ -246,14 +246,14 @@ export default function InnerCircleHub() {
         {/* Header */}
         <div className="relative mb-12">
           {/* User Menu - Top Right */}
-          <div className="absolute top-0 right-0">
+          <div className="absolute top-0 right-0 z-10">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                  <span className="text-sm font-medium">
+                <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 max-w-[200px] sm:max-w-none">
+                  <span className="text-sm font-medium truncate">
                     {user?.firstName} {user?.lastName}
                   </span>
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 flex-shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
