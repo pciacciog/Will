@@ -173,7 +173,7 @@ export default function WillDetails() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {will.status === 'pending' ? 'Will Pending' : 'Will Details'}
+                {will.status === 'pending' ? 'WILL Pending' : 'WILL Details'}
               </h1>
               <Badge 
                 className={
@@ -461,7 +461,7 @@ export default function WillDetails() {
                   variant="outline"
                   className="border-blue-300 text-blue-700 hover:bg-blue-100"
                 >
-                  Edit Will
+                  Edit WILL
                 </Button>
               </div>
             </CardContent>
@@ -490,7 +490,7 @@ export default function WillDetails() {
                       variant="destructive"
                       size="sm"
                     >
-                      Delete Will
+                      Delete WILL
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
