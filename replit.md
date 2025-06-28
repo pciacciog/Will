@@ -228,6 +228,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Simplified Inner Circle Hub completed WILL section to show only "WILL Completed!" title, congratulations, and "View" button
   - Removed acknowledgment info and action from Inner Circle Hub for cleaner interface
   - Moved all acknowledgment functionality exclusively to Will Details page for focused user experience
+- **June 28, 2025**: Relocated user dropdown menu for improved UX
+  - Moved dropdown menu from top-right navigation to user's name in Circle Members section
+  - User can now click on their own name (with chevron arrow) in the members list to access Account Settings, Leave Circle, Sign Out, and Admin Panel
+  - Removed user display from top navigation bar for cleaner header design
+  - Dropdown only appears for the current user, other members show as plain text
 
 ## Changelog
 - June 25, 2025. Initial setup
