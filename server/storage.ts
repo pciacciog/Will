@@ -9,6 +9,7 @@ import {
   blogPosts,
   pageContents,
   type User,
+  type InsertUser,
   type UpsertUser,
   type Circle,
   type InsertCircle,
@@ -123,7 +124,7 @@ export class DatabaseStorage implements IStorage {
       ...userData,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
     };
-    const [user] = await this.db
+    const [user] = await db
       .insert(users)
       .values(userWithId)
       .returning();

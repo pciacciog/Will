@@ -210,6 +210,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Applied to Navigation, InnerCircleHub, StartWill, WillDetails, AdminDashboard, Landing, Auth, and EditWill pages
   - Maintained consistency across landing pages, modal dialogs, toast notifications, and admin interfaces
   - Preserved lowercase usage only when "will" is used as a verb or in descriptive text
+- **June 28, 2025**: Fixed registration system database connection issue
+  - Resolved "Cannot read properties of undefined (reading 'insert')" error in DatabaseStorage.createUser method
+  - Added missing InsertUser type import to server/storage.ts
+  - Fixed database reference inconsistencies by ensuring all methods use imported 'db' instance
+  - Registration and login now working correctly with proper user creation and authentication flow
 
 ## Changelog
 - June 25, 2025. Initial setup
