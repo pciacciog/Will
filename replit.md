@@ -187,6 +187,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Added Sign Out functionality with proper session termination
   - Created backend API endpoints: `/api/change-password` and `/api/circles/leave` with authentication
   - Extended database storage with `updateUserPassword` and `removeCircleMember` methods
+- **June 28, 2025**: Enhanced Will Details page with simplified Proposed Timeline section
+  - Added "Proposed Timeline" section for pending wills to show proposed dates before approval
+  - Displays clean Start/End date format with full weekday, date, and time information
+  - Simplified layout removes redundant timeline summary while keeping essential scheduling details
+  - Positioned above member commitments for better information flow during pending phase
 
 ## Changelog
 - June 25, 2025. Initial setup

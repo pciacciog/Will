@@ -201,7 +201,7 @@ export default function WillDetails() {
           )}
         </div>
 
-        {/* Will Context - Show dates and details for pending wills */}
+        {/* Proposed Timeline - Show dates and details for pending wills */}
         {will.status === 'pending' && (
           <Card className="mb-8">
             <CardHeader>
@@ -209,40 +209,32 @@ export default function WillDetails() {
                 <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
                 </svg>
-                Will Context
+                Proposed Timeline
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Proposed Timeline</h4>
-                  <p className="text-blue-800">
-                    {formatDateRange(will.startDate, will.endDate)} • {calculateDuration(will.startDate, will.endDate)}
-                  </p>
+              <div className="space-y-3">
+                <div>
+                  <span className="font-medium text-gray-700">Start:</span>
+                  <span className="ml-2 text-gray-600">{new Date(will.startDate).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-700">Start:</span>
-                    <p className="text-gray-600">{new Date(will.startDate).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit'
-                    })}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">End:</span>
-                    <p className="text-gray-600">{new Date(will.endDate).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit'
-                    })}</p>
-                  </div>
+                <div>
+                  <span className="font-medium text-gray-700">End:</span>
+                  <span className="ml-2 text-gray-600">{new Date(will.endDate).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}</span>
                 </div>
               </div>
             </CardContent>
