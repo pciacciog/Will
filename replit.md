@@ -215,6 +215,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Added missing InsertUser type import to server/storage.ts
   - Fixed database reference inconsistencies by ensuring all methods use imported 'db' instance
   - Registration and login now working correctly with proper user creation and authentication flow
+- **June 28, 2025**: Enhanced "Your Why" privacy and formatting across commitment pages
+  - Added clear privacy notice with lock icon indicating "Why" statements are private and only visible to the user
+  - Improved text formatting to make "Because" prefix flow seamlessly with user input
+  - Applied consistent styling improvements to both StartWill and SubmitCommitment pages
+  - Enhanced visual presentation with better alignment, borders, and background styling
 
 ## Changelog
 - June 25, 2025. Initial setup

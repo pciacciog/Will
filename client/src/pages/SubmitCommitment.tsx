@@ -176,9 +176,17 @@ export default function SubmitCommitment() {
                 
                 <form className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Your Why</label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">Your Why</label>
+                      <span className="text-xs text-gray-500 flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Private - only you can see this
+                      </span>
+                    </div>
                     <div className="relative">
-                      <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6">Because</span>
+                      <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6 z-10">Because </span>
                       <Textarea 
                         value={why}
                         onChange={(e) => {
@@ -189,10 +197,14 @@ export default function SubmitCommitment() {
                           }
                         }}
                         placeholder="I like how I feel after I talk to her"
-                        className="w-full pl-20 resize-none"
+                        className="w-full pl-20 resize-none border-2 border-blue-200 focus:border-blue-400 bg-white/80"
                         rows={4}
                         maxLength={50}
                         autoFocus
+                        style={{ 
+                          lineHeight: '1.5',
+                          paddingTop: '12px'
+                        }}
                       />
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1">
