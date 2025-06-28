@@ -239,17 +239,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if circle already has an active will
       const existingWill = await storage.getCircleActiveWill(circle.id);
       if (existingWill) {
-        // If will is completed, check if all members have acknowledged
+        // If will is completed, check if all committed members have acknowledged
         if (existingWill.status === 'completed') {
-          const memberCount = await storage.getCircleMemberCount(circle.id);
+          const existingWillWithCommitments = await storage.getWillWithCommitments(existingWill.id);
+          const commitmentCount = existingWillWithCommitments?.commitments?.length || 0;
           const acknowledgedCount = await storage.getWillAcknowledgmentCount(existingWill.id);
           
-          if (acknowledgedCount < memberCount) {
+          if (acknowledgedCount < commitmentCount) {
             return res.status(400).json({ 
-              message: "Cannot create new Will until all members acknowledge completion of the current one",
+              message: "Cannot create new Will until all committed members acknowledge completion of the current one",
               requiresAcknowledgment: true,
               acknowledgedCount,
-              memberCount
+              commitmentCount
             });
           }
         } else {
@@ -340,8 +341,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateWillStatus(will.id, 'completed');
       }
       
-      // Check if will should be archived (all members acknowledged)
-      if (willWithCommitments.status === 'completed' && acknowledgedCount >= memberCount) {
+      // Check if will should be archived (all committed members acknowledged)
+      if (willWithCommitments.status === 'completed' && acknowledgedCount >= commitmentCount) {
         await storage.updateWillStatus(will.id, 'archived');
         return res.json(null); // Return null to indicate no active will
       }
@@ -416,6 +417,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const willId = parseInt(req.params.id);
 
+      // Check if user has committed to this will
+      const hasCommitted = await storage.hasUserCommitted(willId, userId);
+      if (!hasCommitted) {
+        return res.status(403).json({ message: "Only users who submitted commitments can acknowledge completion" });
+      }
+
       // Check if user already acknowledged
       const hasAcknowledged = await storage.hasUserAcknowledged(willId, userId);
       if (hasAcknowledged) {
@@ -428,26 +435,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
 
-      // Check if all members have acknowledged
-      const will = await storage.getWillById(willId);
-      if (!will) {
+      // Check if all committed members have acknowledged
+      const willWithCommitments = await storage.getWillWithCommitments(willId);
+      if (!willWithCommitments) {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const memberCount = await storage.getCircleMemberCount(will.circleId);
+      const commitmentCount = willWithCommitments.commitments?.length || 0;
       const acknowledgedCount = await storage.getWillAcknowledgmentCount(willId);
 
-      // If all members have acknowledged, the will is fully completed and can be archived
+      // If all committed members have acknowledged, the will is fully completed and can be archived
       // This allows creation of new wills
-      if (acknowledgedCount >= memberCount) {
+      if (acknowledgedCount >= commitmentCount) {
         await storage.updateWillStatus(willId, 'archived');
       }
 
       res.json({
         ...acknowledgment,
         acknowledgedCount,
-        memberCount,
-        allAcknowledged: acknowledgedCount >= memberCount
+        commitmentCount,
+        allAcknowledged: acknowledgedCount >= commitmentCount
       });
     } catch (error) {
       console.error("Error acknowledging will:", error);

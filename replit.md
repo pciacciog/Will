@@ -198,6 +198,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Added protected /admin route with access control (non-admins see "Access Denied")
   - Created simple JSON endpoints: /admin/users (all users) and /admin/wills (active wills only)
   - Minimal styling approach for internal testing and data inspection purposes
+- **June 28, 2025**: Fixed acknowledgment logic for Will completion
+  - Changed acknowledgment requirements from all circle members to only committed members who participated
+  - Only users who submitted commitments are now prompted to acknowledge completion
+  - Fixed backend validation to prevent non-participants from acknowledging
+  - Updated frontend displays to show "committed members" instead of "all members"
+  - Fixed archival logic to use commitment count instead of total member count
+  - Unified commitment submission UI between will creators and members joining existing wills with identical styling, icons, labels, and character limits
 
 ## Changelog
 - June 25, 2025. Initial setup
