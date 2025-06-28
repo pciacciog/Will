@@ -105,7 +105,7 @@ export default function Auth() {
               Join Your Inner Circle
             </CardTitle>
             <CardDescription className="text-gray-600">
-              Connect with your accountability partners and achieve your goals together
+              Connect with the people who matter. Grow together.
             </CardDescription>
           </CardHeader>
           
@@ -118,7 +118,7 @@ export default function Auth() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Form Your Circle</h3>
-                  <p className="text-sm text-gray-600">Create or join intimate groups of 2-4 people</p>
+                  <p className="text-sm text-gray-600">Start or join a group of 2–4 close friends.</p>
                 </div>
               </div>
               
@@ -128,7 +128,7 @@ export default function Auth() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Set Your Will</h3>
-                  <p className="text-sm text-gray-600">Create meaningful commitments with your circle's support</p>
+                  <p className="text-sm text-gray-600">Make a commitment</p>
                 </div>
               </div>
               
@@ -138,7 +138,7 @@ export default function Auth() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Stay Accountable</h3>
-                  <p className="text-sm text-gray-600">Track progress and support each other daily</p>
+                  <p className="text-sm text-gray-600">Support each other daily.</p>
                 </div>
               </div>
             </div>

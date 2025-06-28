@@ -178,6 +178,7 @@ This is a full-stack web application for group goal accountability, built with R
   - Removed "A space to grow with your people" section completely from Home page for cleaner design
   - Updated Inner Circle Hub to display member names as first names only (removed last names for privacy/simplicity)
   - Added motivational tagline "Become More — Together" to Inner Circle Hub header with italic and letter-spaced styling
+  - Updated Auth page with simplified messaging: "Connect with the people who matter. Grow together." and concise feature descriptions
 
 ## Changelog
 - June 25, 2025. Initial setup
