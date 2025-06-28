@@ -131,6 +131,9 @@ export default function InnerCircleHub() {
   });
 
   const willStatus = getWillStatus(will, circle?.members?.length || 0);
+  
+  // Debug: Log the status to console
+  console.log('Will status:', willStatus, 'Will data:', will);
 
   const leaveCircleMutation = useMutation({
     mutationFn: async () => {
