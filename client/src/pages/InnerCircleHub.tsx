@@ -88,6 +88,7 @@ export default function InnerCircleHub() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   
   const { data: circle } = useQuery({
@@ -160,11 +161,8 @@ export default function InnerCircleHub() {
       return res.ok;
     },
     onSuccess: () => {
-      // Clear user data from cache
-      queryClient.setQueryData(['/api/user'], null);
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      // Redirect to auth page
-      setLocation('/auth');
+      // Simple redirect to root, which will trigger auth state check
+      window.location.href = '/';
     },
     onError: (error: any) => {
       toast({
