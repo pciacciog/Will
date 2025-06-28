@@ -14,8 +14,8 @@ export default function Admin() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
           <p className="text-gray-600">You do not have permission to access this page.</p>
-          <Link href="/inner-circle">
-            <a className="text-blue-600 hover:text-blue-800 mt-4 inline-block">Return to Inner Circle</a>
+          <Link href="/inner-circle" className="text-blue-600 hover:text-blue-800 mt-4 inline-block">
+            Return to Inner Circle
           </Link>
         </div>
       </div>
@@ -58,8 +58,8 @@ export default function Admin() {
           </div>
 
           <div className="mt-8">
-            <Link href="/inner-circle">
-              <a className="text-blue-600 hover:text-blue-800">← Back to Inner Circle</a>
+            <Link href="/inner-circle" className="text-blue-600 hover:text-blue-800">
+              ← Back to Inner Circle
             </Link>
           </div>
         </div>

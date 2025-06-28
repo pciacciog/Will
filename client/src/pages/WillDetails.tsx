@@ -173,7 +173,7 @@ export default function WillDetails() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {will.status === 'pending' ? 'Will pending' : 'Will Details'}
+                {will.status === 'pending' ? 'Will Pending' : 'Will Details'}
               </h1>
               <Badge 
                 className={
