@@ -316,13 +316,15 @@ export default function InnerCircleHub() {
         <Card>
           <CardContent className="p-8">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2 flex items-center">
+              <div className="text-center mb-4">
+                <p className="text-lg text-gray-700 italic tracking-wide">Become More — Together</p>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
                 <svg className="w-5 h-5 text-secondary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Current Will
               </h2>
-              <p className="text-lg text-gray-700 italic tracking-wide">Become More — Together</p>
             </div>
             
             {willStatus === 'no_will' && (

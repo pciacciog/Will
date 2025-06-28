@@ -104,7 +104,7 @@ export default function StartWill() {
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       toast({
         title: "Will Created!",
-        description: "Your Will has been created and is waiting for other members to join.",
+        description: "Will has been created and is pending review from other members.",
       });
       setLocation('/hub');
     },
