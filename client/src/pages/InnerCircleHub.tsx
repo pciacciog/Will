@@ -245,6 +245,56 @@ export default function InnerCircleHub() {
         
         {/* Header */}
         <div className="relative mb-12">
+          {/* User Menu - Top Right */}
+          <div className="absolute top-0 right-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                  <span className="text-sm font-medium">
+                    {user?.firstName} {user?.lastName}
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {user?.role === 'admin' && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={() => setLocation('/admin')}
+                      className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem 
+                  onClick={() => setShowAccountSettings(true)}
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLeaveCircle}
+                  className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                >
+                  <UserMinus className="h-4 w-4" />
+                  <span>Leave Circle</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           
           {/* Main Header Content */}
           <div className="text-center">
@@ -285,91 +335,27 @@ export default function InnerCircleHub() {
             </div>
             
             <div className="grid sm:grid-cols-2 gap-4">
-              {circle.members?.map((member: any, index: number) => {
-                const isCurrentUser = member.user.id === user?.id;
-                
-                return (
-                  <div key={member.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold">
-                        {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      {isCurrentUser ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-auto p-0 flex items-center space-x-2 text-left justify-start hover:bg-transparent">
-                              <div>
-                                <div className="font-medium text-gray-900 flex items-center">
-                                  {member.user.firstName 
-                                    ? member.user.firstName
-                                    : member.user.email
-                                  }
-                                  <ChevronDown className="h-4 w-4 ml-1" />
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  Member
-                                </div>
-                              </div>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-48">
-                            {user?.role === 'admin' && (
-                              <>
-                                <DropdownMenuItem 
-                                  onClick={() => setLocation('/admin')}
-                                  className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                                >
-                                  <Shield className="h-4 w-4" />
-                                  <span>Admin Panel</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                              </>
-                            )}
-                            <DropdownMenuItem 
-                              onClick={() => setShowAccountSettings(true)}
-                              className="flex items-center space-x-2 cursor-pointer"
-                            >
-                              <Settings className="h-4 w-4" />
-                              <span>Account Settings</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={handleLeaveCircle}
-                              className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                            >
-                              <UserMinus className="h-4 w-4" />
-                              <span>Leave Circle</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={handleLogout}
-                              className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
-                            >
-                              <LogOut className="h-4 w-4" />
-                              <span>Sign Out</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      ) : (
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {member.user.firstName 
-                              ? member.user.firstName
-                              : member.user.email
-                            }
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Member
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="w-3 h-3 bg-green-400 rounded-full" title="Online"></div>
+              {circle.members?.map((member: any, index: number) => (
+                <div key={member.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold">
+                      {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
+                    </span>
                   </div>
-                );
-              })}
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      {member.user.firstName 
+                        ? member.user.firstName
+                        : member.user.email
+                      }
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Member
+                    </div>
+                  </div>
+                  <div className="w-3 h-3 bg-green-400 rounded-full" title="Online"></div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
