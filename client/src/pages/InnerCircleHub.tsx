@@ -3,8 +3,9 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { Copy } from "lucide-react";
+import { Copy, Settings, LogOut, UserMinus, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -127,7 +128,55 @@ export default function InnerCircleHub() {
 
   const willStatus = getWillStatus(will, circle?.members?.length || 0);
 
+  const leaveCircleMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', `/api/circles/leave`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Left Circle",
+        description: "You have successfully left your Inner Circle",
+      });
+      // Redirect to home page
+      setLocation('/');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to leave circle",
+        variant: "destructive",
+      });
+    },
+  });
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/logout');
+      return await res.json();
+    },
+    onSuccess: () => {
+      // Clear user data and redirect
+      setLocation('/auth');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to logout",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLeaveCircle = () => {
+    if (confirm("Are you sure you want to leave this Inner Circle? This action cannot be undone.")) {
+      leaveCircleMutation.mutate();
+    }
+  };
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   const handleViewWillDetails = () => {
     if (will) {
@@ -154,10 +203,49 @@ export default function InnerCircleHub() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
-          <p className="text-gray-600 mb-3">Your space for shared accountability and growth</p>
-          <p className="text-lg text-gray-700 italic tracking-wide">Become More — Together</p>
+        <div className="relative mb-12">
+          {/* User Menu - Top Right */}
+          <div className="absolute top-0 right-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                  <span className="text-sm font-medium">
+                    {user?.firstName} {user?.lastName}
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer">
+                  <Settings className="h-4 w-4" />
+                  <span>Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLeaveCircle}
+                  className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                >
+                  <UserMinus className="h-4 w-4" />
+                  <span>Leave Circle</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
+          {/* Main Header Content */}
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
+            <p className="text-gray-600 mb-3">Your space for shared accountability and growth</p>
+            <p className="text-lg text-gray-700 italic tracking-wide">Become More — Together</p>
+          </div>
         </div>
         
         {/* Members Section */}

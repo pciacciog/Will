@@ -46,6 +46,7 @@ export interface IStorage {
   
   // Circle member operations
   addCircleMember(member: InsertCircleMember): Promise<CircleMember>;
+  removeCircleMember(userId: string, circleId: number): Promise<void>;
   getCircleMemberCount(circleId: number): Promise<number>;
   isUserInCircle(userId: string, circleId: number): Promise<boolean>;
   getCircleMembers(circleId: number): Promise<(CircleMember & { user: User })[]>;
@@ -186,6 +187,14 @@ export class DatabaseStorage implements IStorage {
   async addCircleMember(member: InsertCircleMember): Promise<CircleMember> {
     const [newMember] = await db.insert(circleMembers).values(member).returning();
     return newMember;
+  }
+
+  async removeCircleMember(userId: string, circleId: number): Promise<void> {
+    await db.delete(circleMembers)
+      .where(and(
+        eq(circleMembers.userId, userId),
+        eq(circleMembers.circleId, circleId)
+      ));
   }
 
   async getCircleMemberCount(circleId: number): Promise<number> {

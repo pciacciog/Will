@@ -149,6 +149,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/circles/leave', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user's current circle
+      const circle = await storage.getUserCircle(userId);
+      if (!circle) {
+        return res.status(404).json({ message: "You are not a member of any circle" });
+      }
+
+      // Check if there are active wills
+      const activeWill = await storage.getCircleActiveWill(circle.id);
+      if (activeWill && (activeWill.status === 'active' || activeWill.status === 'scheduled')) {
+        return res.status(400).json({ message: "Cannot leave circle while there is an active or scheduled will" });
+      }
+
+      // Remove user from circle (this will be handled by deleting the circle member record)
+      await storage.removeCircleMember(userId, circle.id);
+
+      res.json({ message: "Successfully left the circle" });
+    } catch (error) {
+      console.error("Error leaving circle:", error);
+      res.status(500).json({ message: "Failed to leave circle" });
+    }
+  });
+
   // Will routes
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {
