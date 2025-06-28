@@ -220,6 +220,10 @@ This is a full-stack web application for group goal accountability, built with R
   - Improved text formatting to make "Because" prefix flow seamlessly with user input
   - Applied consistent styling improvements to both StartWill and SubmitCommitment pages
   - Enhanced visual presentation with better alignment, borders, and background styling
+- **June 28, 2025**: Improved acknowledgment messaging for WILL completion
+  - Changed from "Waiting for committed members to acknowledge completion: X of Y" to "X of Y participating members have acknowledged"
+  - Simplified requirement text from "All committed members must acknowledge before creating a new WILL" to "Required before creating a new WILL"
+  - Applied consistent wording across WillDetails and InnerCircleHub pages for better clarity
 
 ## Changelog
 - June 25, 2025. Initial setup
