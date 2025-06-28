@@ -16,6 +16,8 @@ export default function SubmitCommitment() {
   const [step, setStep] = useState(1);
   const [what, setWhat] = useState("");
   const [why, setWhy] = useState("");
+  const [whatCharCount, setWhatCharCount] = useState(0);
+  const [whyCharCount, setWhyCharCount] = useState(0);
 
   const { data: will } = useQuery({
     queryKey: [`/api/wills/${id}/details`],
@@ -111,77 +113,108 @@ export default function SubmitCommitment() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-center">
-              {step === 1 ? "What will you commit to?" : "Why does this matter to you?"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-8">
             {step === 1 ? (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    I will...
-                  </label>
-                  <Input
-                    value={what}
-                    onChange={(e) => setWhat(e.target.value)}
-                    placeholder="Describe what you will commit to doing"
-                    className="w-full"
-                    autoFocus
-                  />
-                  <p className="text-sm text-gray-500 mt-2">
-                    Be specific about what you want to achieve during this will period.
-                  </p>
+              <>
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">What would you like to do?</h2>
+                  <p className="text-gray-600">Cause it's as simple as wanting.</p>
                 </div>
                 
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={handleBack}>
-                    Back to Will Details
-                  </Button>
-                  <Button onClick={handleNext} disabled={!what.trim()}>
-                    Next
-                  </Button>
-                </div>
-              </div>
+                <form className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6">I will</span>
+                      <Textarea 
+                        value={what}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          if (newValue.length <= 50) {
+                            setWhat(newValue);
+                            setWhatCharCount(newValue.length);
+                          }
+                        }}
+                        placeholder="call my grandmother this week"
+                        className="w-full pl-16 resize-none"
+                        rows={2}
+                        maxLength={50}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="text-right text-xs text-gray-500 mt-1">
+                      {whatCharCount} / 50
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <Button type="button" variant="ghost" onClick={handleBack}>
+                      ← Back
+                    </Button>
+                    <Button type="button" onClick={handleNext} disabled={!what.trim()}>
+                      Next →
+                    </Button>
+                  </div>
+                </form>
+              </>
             ) : (
-              <div className="space-y-6">
-                {/* Summary of Step 1 */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm font-medium text-gray-700 mb-1">Your commitment:</p>
-                  <p className="text-gray-900">"I will {what}"</p>
+              <>
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-accent" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Why would you like to do this?</h2>
+                  <p className="text-gray-600">Remember this when it gets tough.</p>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Because...
-                  </label>
-                  <Textarea
-                    value={why}
-                    onChange={(e) => setWhy(e.target.value)}
-                    placeholder="Explain why this commitment is meaningful to you"
-                    className="w-full"
-                    rows={4}
-                    autoFocus
-                  />
-                  <p className="text-sm text-gray-500 mt-2">
-                    Share your motivation and why achieving this matters to you personally.
-                  </p>
-                </div>
-                
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={handleBack}>
-                    Back
-                  </Button>
-                  <Button 
-                    onClick={handleSubmit} 
-                    disabled={!why.trim() || commitmentMutation.isPending}
-                    className="bg-secondary hover:bg-green-600"
-                  >
-                    {commitmentMutation.isPending ? "Submitting..." : "Submit Commitment"}
-                  </Button>
-                </div>
-              </div>
+                <form className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Your Why</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6">Because</span>
+                      <Textarea 
+                        value={why}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          if (newValue.length <= 50) {
+                            setWhy(newValue);
+                            setWhyCharCount(newValue.length);
+                          }
+                        }}
+                        placeholder="I like how I feel after I talk to her"
+                        className="w-full pl-20 resize-none"
+                        rows={4}
+                        maxLength={50}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="text-right text-xs text-gray-500 mt-1">
+                      {whyCharCount} / 50
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <Button type="button" variant="ghost" onClick={handleBack}>
+                      ← Back
+                    </Button>
+                    <Button 
+                      type="button"
+                      onClick={handleSubmit} 
+                      disabled={!why.trim() || commitmentMutation.isPending}
+                      className="bg-primary hover:bg-blue-600"
+                    >
+                      {commitmentMutation.isPending ? "Submitting..." : "Submit Commitment"}
+                    </Button>
+                  </div>
+                </form>
+              </>
             )}
           </CardContent>
         </Card>
