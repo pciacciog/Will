@@ -179,6 +179,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Updated Inner Circle Hub to display member names as first names only (removed last names for privacy/simplicity)
   - Added motivational tagline "Become More — Together" to Inner Circle Hub header with italic and letter-spaced styling
   - Updated Auth page with simplified messaging: "Connect with the people who matter. Grow together." and concise feature descriptions
+- **June 28, 2025**: Implemented comprehensive Account Settings and user management functionality
+  - Added subtle user dropdown menu in Inner Circle Hub top-right corner with full name display
+  - Created functional Account Settings modal with Profile Info (read-only name/email) and Security sections
+  - Implemented secure password change functionality with current/new/confirm validation and 6-character minimum
+  - Added Leave Circle option with confirmation dialog and safety checks for active wills
+  - Added Sign Out functionality with proper session termination
+  - Created backend API endpoints: `/api/change-password` and `/api/circles/leave` with authentication
+  - Extended database storage with `updateUserPassword` and `removeCircleMember` methods
 
 ## Changelog
 - June 25, 2025. Initial setup
