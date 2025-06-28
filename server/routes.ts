@@ -10,9 +10,12 @@ import {
   insertDailyProgressSchema,
   insertBlogPostSchema,
   insertPageContentSchema,
+  willCommitments,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 function generateInviteCode(): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
