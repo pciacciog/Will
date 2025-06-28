@@ -20,22 +20,7 @@ export default function Navigation() {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            {user && (
-              <div className="flex items-center space-x-2 text-gray-600">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">
-                    {user.firstName?.charAt(0) || user.email?.charAt(0).toUpperCase() || '?'}
-                  </span>
-                </div>
-                <span className="text-sm font-medium">
-                  {user.firstName && user.lastName 
-                    ? `${user.firstName} ${user.lastName}`
-                    : user.email
-                  }
-                </span>
-              </div>
-            )}
-
+            {/* User dropdown now handled in Inner Circle Hub */}
           </div>
         </div>
       </div>
