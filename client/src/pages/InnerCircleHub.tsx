@@ -241,61 +241,61 @@ export default function InnerCircleHub() {
 
   return (
     <div className="min-h-screen pt-16 py-12">
+      {/* User Menu - Aligned with Navigation Bar */}
+      <div className="fixed top-0 right-4 sm:right-6 lg:right-8 z-50 h-16 flex items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 max-w-[160px] sm:max-w-none">
+              <span className="text-sm font-medium truncate">
+                {user?.firstName} {user?.lastName}
+              </span>
+              <ChevronDown className="h-4 w-4 flex-shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {user?.role === 'admin' && (
+              <>
+                <DropdownMenuItem 
+                  onClick={() => setLocation('/admin')}
+                  className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                >
+                  <Shield className="h-4 w-4" />
+                  <span>Admin Panel</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem 
+              onClick={() => setShowAccountSettings(true)}
+              className="flex items-center space-x-2 cursor-pointer"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Account Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={handleLeaveCircle}
+              className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+            >
+              <UserMinus className="h-4 w-4" />
+              <span>Leave Circle</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="relative mb-12">
-          {/* User Menu - Top Right */}
-          <div className="absolute top-0 right-0 z-10">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 max-w-[200px] sm:max-w-none">
-                  <span className="text-sm font-medium truncate">
-                    {user?.firstName} {user?.lastName}
-                  </span>
-                  <ChevronDown className="h-4 w-4 flex-shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {user?.role === 'admin' && (
-                  <>
-                    <DropdownMenuItem 
-                      onClick={() => setLocation('/admin')}
-                      className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                    >
-                      <Shield className="h-4 w-4" />
-                      <span>Admin Panel</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem 
-                  onClick={() => setShowAccountSettings(true)}
-                  className="flex items-center space-x-2 cursor-pointer"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Account Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleLeaveCircle}
-                  className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                >
-                  <UserMinus className="h-4 w-4" />
-                  <span>Leave Circle</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          
           {/* Main Header Content */}
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
