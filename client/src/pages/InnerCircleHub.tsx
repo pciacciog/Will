@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Copy, Settings, LogOut, UserMinus, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
+import AccountSettingsModal from "@/components/AccountSettingsModal";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
@@ -86,6 +88,7 @@ export default function InnerCircleHub() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
   
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
@@ -216,7 +219,10 @@ export default function InnerCircleHub() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer">
+                <DropdownMenuItem 
+                  onClick={() => setShowAccountSettings(true)}
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
                   <Settings className="h-4 w-4" />
                   <span>Account Settings</span>
                 </DropdownMenuItem>
@@ -450,6 +456,12 @@ export default function InnerCircleHub() {
             )}
           </CardContent>
         </Card>
+
+        {/* Account Settings Modal */}
+        <AccountSettingsModal 
+          isOpen={showAccountSettings}
+          onClose={() => setShowAccountSettings(false)}
+        />
       </div>
     </div>
   );

@@ -159,3 +159,6 @@ export const isAdmin: RequestHandler = (req: any, res, next) => {
   }
   res.status(403).json({ message: "Admin access required" });
 };
+
+// Export password utility functions
+export { hashPassword, comparePasswords };
