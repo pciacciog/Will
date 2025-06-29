@@ -265,6 +265,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Maintained lowercase "will" for normal grammar usage (auxiliary verb and descriptive text)
   - Applied consistent visual hierarchy to distinguish feature terminology from common language
   - Enhanced user experience with clear semantic emphasis on feature-specific references
+- **June 29, 2025**: Disabled Replit authentication to enable direct public access
+  - Completely removed Replit OIDC authentication system to prevent authentication gateway
+  - Uninstalled openid-client and memoizee dependencies that trigger platform-level auth
+  - Replaced replitAuth.ts with no-op functions to maintain compatibility
+  - App now uses local email/password authentication exclusively
+  - Users can access deployed app directly without requiring Replit accounts
+  - Enables public sharing and user registration through app's native auth system
 
 ## Changelog
 - June 25, 2025. Initial setup
