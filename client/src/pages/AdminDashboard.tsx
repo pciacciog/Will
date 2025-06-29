@@ -189,7 +189,7 @@ export default function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/wills'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
-      toast({ title: "Success", description: "WILL deleted successfully" });
+      toast({ title: "Success", description: "Will deleted successfully" });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total WILLs</CardTitle>
+            <CardTitle className="text-sm font-medium">Total <em>Wills</em></CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active WILLs</CardTitle>
+            <CardTitle className="text-sm font-medium">Active <em>Wills</em></CardTitle>
             <Target className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="circles">Circles</TabsTrigger>
-          <TabsTrigger value="wills">WILLs</TabsTrigger>
+          <TabsTrigger value="wills"><em>Wills</em></TabsTrigger>
           <TabsTrigger value="blog">Blog</TabsTrigger>
           <TabsTrigger value="pages">Pages</TabsTrigger>
         </TabsList>
@@ -474,11 +474,11 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
-        {/* WILLs Tab */}
+        {/* Wills Tab */}
         <TabsContent value="wills">
           <Card>
             <CardHeader>
-              <CardTitle>WILL Management</CardTitle>
+              <CardTitle><em>Will</em> Management</CardTitle>
               <CardDescription>Monitor goals and commitments</CardDescription>
             </CardHeader>
             <CardContent>
@@ -531,7 +531,7 @@ export default function AdminDashboard() {
                             </DialogTrigger>
                             <DialogContent>
                               <DialogHeader>
-                                <DialogTitle>Delete WILL</DialogTitle>
+                                <DialogTitle>Delete <em>Will</em></DialogTitle>
                                 <DialogDescription>
                                   Are you sure you want to delete "{will.title}"? This action cannot be undone.
                                 </DialogDescription>
@@ -542,7 +542,7 @@ export default function AdminDashboard() {
                                   onClick={() => deleteWillMutation.mutate(will.id)}
                                   disabled={deleteWillMutation.isPending}
                                 >
-                                  Delete WILL
+                                  Delete <em>Will</em>
                                 </Button>
                               </DialogFooter>
                             </DialogContent>

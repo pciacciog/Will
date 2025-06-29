@@ -52,7 +52,7 @@ export default function Landing() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Create Your WILL</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Create Your <em>Will</em></h3>
               <p className="text-gray-600 leading-relaxed">Define what you will do.</p>
             </div>
             

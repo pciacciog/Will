@@ -117,8 +117,8 @@ export default function StartWill() {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       
       toast({
-        title: "WILL Created!",
-        description: "WILL has been created and is pending review from other members.",
+        title: "Will Created!",
+        description: "Will has been created and is pending review from other members.",
       });
       setLocation('/hub');
     },
@@ -243,7 +243,7 @@ export default function StartWill() {
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">No Circle Found</h2>
-          <p className="text-gray-600 mb-6">You need to be part of an Inner Circle to create a Will.</p>
+          <p className="text-gray-600 mb-6">You need to be part of an Inner Circle to create a <em>Will</em>.</p>
           <Button onClick={() => setLocation('/inner-circle')}>
             Create or Join Circle
           </Button>
@@ -338,7 +338,7 @@ export default function StartWill() {
                       <div className="text-sm text-gray-700 space-y-1">
                         <div><strong>Start:</strong> {new Date(getNextMondayStart()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 AM</div>
                         <div><strong>End:</strong> {new Date(getWeekEndSunday(getNextMondayStart())).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 PM</div>
-                        <div className="mt-2 text-xs text-gray-600">This is the schedule for your upcoming Will.</div>
+                        <div className="mt-2 text-xs text-gray-600">This is the schedule for your upcoming <em>Will</em>.</div>
                       </div>
                     </div>
                   </div>
@@ -415,7 +415,7 @@ export default function StartWill() {
           </Card>
         )}
         
-        {/* Step 2: What Will You Do */}
+        {/* Step 2: What <em>Will</em> You Do */}
         {currentStep === 2 && (
           <Card>
             <CardContent className="p-8">

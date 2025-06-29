@@ -160,7 +160,7 @@ export default function InnerCircleHub() {
     if (will && (will.status === 'active' || will.status === 'scheduled' || will.status === 'pending')) {
       toast({
         title: "Cannot leave circle",
-        description: "You cannot leave while there's an active WILL. Please wait for it to complete or be cancelled.",
+        description: "You cannot leave while there's an active Will. Please wait for it to complete or be cancelled.",
         variant: "destructive",
       });
       return;
@@ -360,7 +360,7 @@ export default function InnerCircleHub() {
           </CardContent>
         </Card>
         
-        {/* Will Status Section */}
+        {/* <em>Will</em> Status Section */}
         <Card>
           <CardContent className="p-8">
             <div className="mb-6">
@@ -368,7 +368,7 @@ export default function InnerCircleHub() {
                 <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Current WILL
+                Current <em>Will</em>
               </h2>
             </div>
 
@@ -379,13 +379,13 @@ export default function InnerCircleHub() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No active WILL</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No active <em>Will</em></h3>
                 <p className="text-gray-600 mb-6">Ready to commit to something meaningful together?</p>
                 <Button 
                   onClick={() => setLocation('/start-will')}
                   className="bg-secondary hover:bg-green-600"
                 >
-                  Start a WILL
+                  Start a <em>Will</em>
                 </Button>
               </div>
             )}
@@ -400,7 +400,7 @@ export default function InnerCircleHub() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">WILL Pending</h3>
+                      <h3 className="font-semibold text-gray-900"><em>Will</em> Pending</h3>
                       <p className="text-sm text-gray-600">
                         {will?.commitments?.length || 0} of {will?.memberCount || 0} members have submitted
                       </p>
@@ -417,13 +417,13 @@ export default function InnerCircleHub() {
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <div className="text-sm text-amber-800">
-                      <strong>Note:</strong> This WILL becomes active automatically at the start date. Any member who has not submitted by then will not be included in the Will.
+                      <strong>Note:</strong> This <em>Will</em> becomes active automatically at the start date. Any member who has not submitted by then will not be included in the <em>Will</em>.
                     </div>
                   </div>
                 </div>
                 
                 <Button onClick={handleViewWillDetails} className="w-full">
-                  View WILL Details
+                  View <em>Will</em> Details
                 </Button>
               </div>
             )}
@@ -438,7 +438,7 @@ export default function InnerCircleHub() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">WILL Scheduled</h3>
+                      <h3 className="font-semibold text-gray-900"><em>Will</em> Scheduled</h3>
                       <p className="text-sm text-gray-600">
                         Starts {formatDisplayDateTime(will?.startDate)}
                       </p>
@@ -454,7 +454,7 @@ export default function InnerCircleHub() {
                     <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
-                    Your WILL will begin in <span className="font-semibold">{formatTimeUntilStart(will?.startDate)}</span>
+                    Your <em>Will</em> will begin in <span className="font-semibold">{formatTimeUntilStart(will?.startDate)}</span>
                   </div>
                 </div>
                 
@@ -474,7 +474,7 @@ export default function InnerCircleHub() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">WILL Active</h3>
+                      <h3 className="font-semibold text-gray-900"><em>Will</em> Active</h3>
                       <p className="text-sm text-gray-600">{formatTimeRemaining(will?.endDate)}</p>
                     </div>
                   </div>
