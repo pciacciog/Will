@@ -239,6 +239,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Implemented consistent query invalidation patterns for `/api/wills/circle`, `/api/circles/mine`, and specific will details queries
   - Fixed real-time updates for member lists, WILL status changes, and completion acknowledgments
   - Enhanced user experience with immediate UI feedback after all actions
+- **June 29, 2025**: Enhanced commitment creation UX with "What" preview on "Why" page
+  - Added preview card showing user's "What" input on the "Why would you like to do this?" step
+  - Preview displays as "I will [user's input]" with clean, modern styling matching existing design
+  - Implemented across both StartWill and SubmitCommitment flows for consistency
+  - Preview updates automatically if user goes back to edit their "What" input
+  - Improves context and flow during commitment creation process
 
 ## Changelog
 - June 25, 2025. Initial setup

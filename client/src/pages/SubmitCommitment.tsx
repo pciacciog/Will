@@ -177,6 +177,21 @@ export default function SubmitCommitment() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">Why would you like to do this?</h2>
                   <p className="text-gray-600">Remember this when it gets tough.</p>
                 </div>
+
+                {/* What Preview */}
+                {what && (
+                  <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <svg className="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      <span className="text-sm font-medium text-gray-700">Your Want</span>
+                    </div>
+                    <p className="text-gray-900 font-medium">
+                      I will {what}
+                    </p>
+                  </div>
+                )}
                 
                 <form className="space-y-6">
                   <div>
