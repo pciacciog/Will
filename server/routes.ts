@@ -49,7 +49,7 @@ function getWillStatus(will: any, memberCount: number): string {
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
+  // Use local authentication only - bypass Replit auth
   setupAuth(app);
 
   // Auth routes are handled by setupAuth
