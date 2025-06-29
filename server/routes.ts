@@ -50,7 +50,7 @@ function getWillStatus(will: any, memberCount: number): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupAuth(app);
 
   // Auth routes are handled by setupAuth
 

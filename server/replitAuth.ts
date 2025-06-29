@@ -8,7 +8,10 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
+// Disable Replit authentication - use local auth instead
+const DISABLE_REPLIT_AUTH = true;
+
+if (!DISABLE_REPLIT_AUTH && !process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
@@ -68,6 +71,12 @@ async function upsertUser(
 }
 
 export async function setupAuth(app: Express) {
+  // Skip Replit authentication when disabled - this allows direct access to the app
+  if (DISABLE_REPLIT_AUTH) {
+    console.log("Replit authentication disabled - using local authentication only");
+    return;
+  }
+
   app.set("trust proxy", 1);
   app.use(getSession());
   app.use(passport.initialize());
@@ -129,6 +138,11 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // When Replit auth is disabled, this middleware is not used
+  if (DISABLE_REPLIT_AUTH) {
+    return res.status(401).json({ message: "Unauthorized - Replit auth disabled" });
+  }
+
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {
