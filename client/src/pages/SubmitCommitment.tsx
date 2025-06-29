@@ -30,7 +30,10 @@ export default function SubmitCommitment() {
 
   const commitmentMutation = useMutation({
     mutationFn: async (data: { what: string; why: string }) => {
-      const response = await apiRequest('POST', `/api/wills/${id}/commitments`, data);
+      const response = await apiRequest(`/api/wills/${id}/commitments`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
       return response.json();
     },
     onSuccess: () => {

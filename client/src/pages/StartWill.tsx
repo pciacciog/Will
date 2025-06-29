@@ -71,7 +71,10 @@ export default function StartWill() {
 
   const createWillMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/wills', data);
+      const response = await apiRequest('/api/wills', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
       return response.json();
     },
     onSuccess: (will) => {
@@ -98,9 +101,12 @@ export default function StartWill() {
 
   const addCommitmentMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', `/api/wills/${data.willId}/commitments`, {
-        what: data.what,
-        why: data.why,
+      const response = await apiRequest(`/api/wills/${data.willId}/commitments`, {
+        method: 'POST',
+        body: JSON.stringify({
+          what: data.what,
+          why: data.why,
+        })
       });
       return response.json();
     },

@@ -136,7 +136,7 @@ export default function InnerCircleHub() {
 
   const leaveCircleMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/circles/leave`);
+      const res = await apiRequest(`/api/circles/leave`, { method: 'POST' });
       return await res.json();
     },
     onSuccess: () => {
