@@ -19,7 +19,7 @@ export default function InnerCircle() {
 
   const createCircleMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', '/api/circles');
+      return apiRequest('/api/circles', { method: 'POST' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
@@ -39,7 +39,10 @@ export default function InnerCircle() {
 
   const joinCircleMutation = useMutation({
     mutationFn: async (code: string) => {
-      return apiRequest('POST', '/api/circles/join', { inviteCode: code });
+      return apiRequest('/api/circles/join', {
+        method: 'POST',
+        body: JSON.stringify({ inviteCode: code })
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });

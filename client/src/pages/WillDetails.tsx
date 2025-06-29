@@ -88,7 +88,9 @@ export default function WillDetails() {
 
   const acknowledgeMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', `/api/wills/${id}/acknowledge`);
+      const response = await apiRequest(`/api/wills/${id}/acknowledge`, {
+        method: 'POST'
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -112,7 +114,9 @@ export default function WillDetails() {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('DELETE', `/api/wills/${id}`);
+      await apiRequest(`/api/wills/${id}`, {
+        method: 'DELETE'
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });

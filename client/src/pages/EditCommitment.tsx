@@ -39,7 +39,10 @@ export default function EditCommitment() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { what: string; why: string }) => {
-      const response = await apiRequest('PUT', `/api/will-commitments/${commitmentId}`, data);
+      const response = await apiRequest(`/api/will-commitments/${commitmentId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
       return response.json();
     },
     onSuccess: () => {

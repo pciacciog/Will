@@ -25,7 +25,10 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
 
   const changePasswordMutation = useMutation({
     mutationFn: async (passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
-      const res = await apiRequest('POST', '/api/change-password', passwordData);
+      const res = await apiRequest('/api/change-password', {
+        method: 'POST',
+        body: JSON.stringify(passwordData)
+      });
       return await res.json();
     },
     onSuccess: () => {

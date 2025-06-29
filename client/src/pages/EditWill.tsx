@@ -45,7 +45,10 @@ export default function EditWill() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { startDate: string; endDate: string }) => {
-      await apiRequest('PUT', `/api/wills/${id}`, data);
+      await apiRequest(`/api/wills/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: () => {
       // Invalidate all related queries to ensure UI updates everywhere
@@ -71,7 +74,7 @@ export default function EditWill() {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('DELETE', `/api/wills/${id}`);
+      await apiRequest(`/api/wills/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       // Invalidate all related queries to ensure UI updates everywhere
