@@ -119,7 +119,12 @@ export default function WillDetails() {
       });
     },
     onSuccess: () => {
+      // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      
       toast({
         title: "Will Deleted",
         description: "The will has been successfully deleted",

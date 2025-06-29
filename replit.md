@@ -254,6 +254,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Server now running successfully with proper database connections and authentication flow
   - Fixed 100+ TypeScript errors related to API calls and user type definitions
   - Enhanced type safety while maintaining full application functionality
+- **June 29, 2025**: Fixed will deletion cache invalidation for real-time UI updates
+  - Enhanced will deletion mutation to invalidate all related queries comprehensively
+  - Added invalidation for `/api/wills/circle`, `/api/wills/circle/${circleId}`, `/api/circles/mine`, and specific will details
+  - Resolved UI lag issue where deleted wills required manual page refresh to update
+  - All mutation operations now have proper cache invalidation for immediate UI feedback
 
 ## Changelog
 - June 25, 2025. Initial setup
