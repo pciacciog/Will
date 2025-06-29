@@ -117,8 +117,8 @@ export default function StartWill() {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       
       toast({
-        title: "WILL Created!",
-        description: "WILL has been created and is pending review from other members.",
+        title: "Will Created!",
+        description: "Will has been created and is pending review from other members.",
       });
       setLocation('/hub');
     },
@@ -532,7 +532,7 @@ export default function StartWill() {
                     disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
                     className="bg-primary hover:bg-blue-600"
                   >
-                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create WILL →'}
+                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will →'}
                   </Button>
                 </div>
               </form>

@@ -155,7 +155,7 @@ export default function WillDetails() {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Will not found</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4"><em>Will</em> not found</h2>
           <Button onClick={() => setLocation('/hub')}>
             Back to Hub
           </Button>
@@ -182,7 +182,7 @@ export default function WillDetails() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {will.status === 'pending' ? 'WILL Pending' : 'WILL Details'}
+                {will.status === 'pending' ? <><em>Will</em> Pending</> : <><em>Will</em> Details</>}
               </h1>
               <Badge 
                 className={
@@ -499,12 +499,12 @@ export default function WillDetails() {
                       variant="destructive"
                       size="sm"
                     >
-                      Delete WILL
+                      Delete <em>Will</em>
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Active Will</AlertDialogTitle>
+                      <AlertDialogTitle>Delete Active <em>Will</em></AlertDialogTitle>
                       <AlertDialogDescription>
                         Are you sure you want to delete this active will? This action cannot be undone and will remove all commitments and progress.
                       </AlertDialogDescription>

@@ -189,7 +189,7 @@ export default function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/wills'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
-      toast({ title: "Success", description: "WILL deleted successfully" });
+      toast({ title: "Success", description: "Will deleted successfully" });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -478,7 +478,7 @@ export default function AdminDashboard() {
         <TabsContent value="wills">
           <Card>
             <CardHeader>
-              <CardTitle>WILL Management</CardTitle>
+              <CardTitle><em>Will</em> Management</CardTitle>
               <CardDescription>Monitor goals and commitments</CardDescription>
             </CardHeader>
             <CardContent>
@@ -542,7 +542,7 @@ export default function AdminDashboard() {
                                   onClick={() => deleteWillMutation.mutate(will.id)}
                                   disabled={deleteWillMutation.isPending}
                                 >
-                                  Delete WILL
+                                  Delete <em>Will</em>
                                 </Button>
                               </DialogFooter>
                             </DialogContent>

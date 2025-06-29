@@ -259,6 +259,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Added invalidation for `/api/wills/circle`, `/api/wills/circle/${circleId}`, `/api/circles/mine`, and specific will details
   - Resolved UI lag issue where deleted wills required manual page refresh to update
   - All mutation operations now have proper cache invalidation for immediate UI feedback
+- **June 29, 2025**: Implemented visual distinction for "Will" feature terminology across entire application
+  - Added italic styling to "Will" when referring to the app feature using `<em>Will</em>` tags
+  - Updated all major components: InnerCircleHub, StartWill, WillDetails, AdminDashboard, EditWill, Landing
+  - Maintained lowercase "will" for normal grammar usage (auxiliary verb and descriptive text)
+  - Applied consistent visual hierarchy to distinguish feature terminology from common language
+  - Enhanced user experience with clear semantic emphasis on feature-specific references
 
 ## Changelog
 - June 25, 2025. Initial setup

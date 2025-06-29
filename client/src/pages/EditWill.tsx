@@ -174,7 +174,7 @@ export default function EditWill() {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Unauthorized</h2>
           <p className="text-gray-600 mb-4">Only the will creator can edit this will</p>
           <Button onClick={() => setLocation(`/will/${id}`)}>
-            Back to WILL Details
+            Back to <em>Will</em> Details
           </Button>
         </div>
       </div>
@@ -186,10 +186,10 @@ export default function EditWill() {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Cannot Edit WILL</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Cannot Edit <em>Will</em></h2>
           <p className="text-gray-600 mb-4">This will cannot be modified because it is {will.status}</p>
           <Button onClick={() => setLocation(`/will/${id}`)}>
-            Back to WILL Details
+            Back to <em>Will</em> Details
           </Button>
         </div>
       </div>
