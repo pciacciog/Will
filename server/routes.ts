@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import { isAuthenticated, isAdmin } from "./auth";
 import { 
   insertCircleSchema, 
   insertWillSchema,
@@ -13,7 +14,6 @@ import {
   willCommitments,
 } from "@shared/schema";
 import { z } from "zod";
-import { isAuthenticated, isAdmin } from "./auth";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
