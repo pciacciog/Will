@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
+import { setupAuth } from "./auth";
 import { 
   insertCircleSchema, 
   insertWillSchema,
@@ -13,6 +13,7 @@ import {
   willCommitments,
 } from "@shared/schema";
 import { z } from "zod";
+import { isAuthenticated, isAdmin } from "./auth";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -69,8 +70,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Import password comparison function from replitAuth module
-      const { comparePasswords, hashPassword } = await import('./replitAuth');
+      // Import password comparison function from auth module
+      const { comparePasswords, hashPassword } = await import('./auth');
       
       // Verify current password
       const isCurrentPasswordValid = await comparePasswords(currentPassword, user.password);
@@ -337,14 +338,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const status = getWillStatus(willWithCommitments, memberCount);
       
       // Auto-update will status if it has transitioned based on time
-      if (willWithCommitments && status === 'active' && willWithCommitments.status !== 'active') {
+      if (status === 'active' && willWithCommitments.status !== 'active') {
         await storage.updateWillStatus(will.id, 'active');
-      } else if (willWithCommitments && status === 'completed' && willWithCommitments.status !== 'completed') {
+      } else if (status === 'completed' && willWithCommitments.status !== 'completed') {
         await storage.updateWillStatus(will.id, 'completed');
       }
       
       // Check if will should be archived (all committed members acknowledged)
-      if (willWithCommitments && willWithCommitments.status === 'completed' && acknowledgedCount >= commitmentCount) {
+      if (willWithCommitments.status === 'completed' && acknowledgedCount >= commitmentCount) {
         await storage.updateWillStatus(will.id, 'archived');
         return res.json(null); // Return null to indicate no active will
       }

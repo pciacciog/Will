@@ -22,11 +22,11 @@ export default function SubmitCommitment() {
   const { data: will } = useQuery({
     queryKey: [`/api/wills/${id}/details`],
     enabled: !!id,
-  }) as { data: any };
+  });
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
-  }) as { data: any };
+  });
 
   const commitmentMutation = useMutation({
     mutationFn: async (data: { what: string; why: string }) => {

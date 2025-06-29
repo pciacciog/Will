@@ -133,7 +133,7 @@ export default function Auth() {
                   <Target className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">Set Your <em>Will</em></h3>
+                  <h3 className="font-medium text-gray-900">Set Your WILL</h3>
                   <p className="text-sm text-gray-600">Make a commitment</p>
                 </div>
               </div>
