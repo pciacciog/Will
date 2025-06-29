@@ -70,7 +70,7 @@ export default function WillDetails() {
   const { data: will, isLoading } = useQuery({
     queryKey: [`/api/wills/${id}/details`],
     enabled: !!id,
-    refetchInterval: (data) => {
+    refetchInterval: (data: any) => {
       if (!data) return 30000;
       
       // More frequent updates for completed wills awaiting acknowledgment
@@ -80,11 +80,11 @@ export default function WillDetails() {
       
       return 30000; // Default 30 seconds
     },
-  });
+  }) as { data: any, isLoading: boolean };
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
-  });
+  }) as { data: any };
 
   const acknowledgeMutation = useMutation({
     mutationFn: async () => {

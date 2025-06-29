@@ -67,7 +67,7 @@ export default function StartWill() {
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
-  });
+  }) as { data: any };
 
   const createWillMutation = useMutation({
     mutationFn: async (data: any) => {

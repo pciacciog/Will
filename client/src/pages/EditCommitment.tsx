@@ -21,11 +21,11 @@ export default function EditCommitment() {
   const { data: will, isLoading: willLoading } = useQuery({
     queryKey: [`/api/wills/${willId}/details`],
     enabled: !!willId,
-  });
+  }) as { data: any, isLoading: boolean };
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
-  });
+  }) as { data: any };
 
   // Find the user's commitment
   const userCommitment = will?.commitments?.find((c: any) => c.id === parseInt(commitmentId!));
