@@ -392,7 +392,7 @@ export default function InnerCircleHub() {
 
             {willStatus === 'pending' && (
               <div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
                       <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -409,6 +409,17 @@ export default function InnerCircleHub() {
                   <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                     Pending
                   </Badge>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start space-x-3">
+                    <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div className="text-sm text-amber-800">
+                      <strong>Note:</strong> This WILL becomes active once all members have submitted their proposals, or automatically at the start date. Any member who has not submitted will not be included in the WILL.
+                    </div>
+                  </div>
                 </div>
                 
                 <Button onClick={handleViewWillDetails} className="w-full">
