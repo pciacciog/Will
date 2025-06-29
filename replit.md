@@ -233,6 +233,12 @@ This is a full-stack web application for group goal accountability, built with R
   - User can now click on their own name (with chevron arrow) in the members list to access Account Settings, Leave Circle, Sign Out, and Admin Panel
   - Removed user display from top navigation bar for cleaner header design
   - Dropdown only appears for the current user, other members show as plain text
+- **June 28, 2025**: Fixed comprehensive UI reactivity and cache invalidation issues
+  - Resolved UI not updating without manual refresh across all components
+  - Added proper cache invalidation to all mutations: WILL creation, commitment submission, editing, acknowledgments, and deletions
+  - Implemented consistent query invalidation patterns for `/api/wills/circle`, `/api/circles/mine`, and specific will details queries
+  - Fixed real-time updates for member lists, WILL status changes, and completion acknowledgments
+  - Enhanced user experience with immediate UI feedback after all actions
 
 ## Changelog
 - June 25, 2025. Initial setup

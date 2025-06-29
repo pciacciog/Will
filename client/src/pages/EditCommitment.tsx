@@ -43,8 +43,12 @@ export default function EditCommitment() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle', circle?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      
       toast({
         title: "Commitment Updated",
         description: "Your commitment has been successfully updated",

@@ -75,7 +75,11 @@ export default function StartWill() {
       return response.json();
     },
     onSuccess: (will) => {
+      // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      
       // Add the creator's commitment
       addCommitmentMutation.mutate({
         willId: will.id,
@@ -101,7 +105,11 @@ export default function StartWill() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      
       toast({
         title: "WILL Created!",
         description: "WILL has been created and is pending review from other members.",

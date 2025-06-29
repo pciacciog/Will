@@ -48,8 +48,12 @@ export default function EditWill() {
       await apiRequest('PUT', `/api/wills/${id}`, data);
     },
     onSuccess: () => {
+      // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle', circle?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      
       toast({
         title: "WILL Updated",
         description: "The will dates have been successfully updated",
@@ -70,7 +74,11 @@ export default function EditWill() {
       await apiRequest('DELETE', `/api/wills/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle', circle?.id] });
+      // Invalidate all related queries to ensure UI updates everywhere
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      
       toast({
         title: "WILL Deleted",
         description: "The will has been successfully deleted",
