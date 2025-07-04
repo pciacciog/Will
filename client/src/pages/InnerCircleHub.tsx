@@ -242,7 +242,7 @@ export default function InnerCircleHub() {
   return (
     <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
       {/* User Menu - iOS Safe Area Compatible */}
-      <div className="fixed top-0 right-0 z-50 safe-area-top safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)', paddingRight: 'calc(env(safe-area-inset-right) + 16px)' }}>
+      <div className="fixed top-0 right-0 z-50 safe-area-top safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)', paddingRight: 'calc(env(safe-area-inset-right) + 16px)' }}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-auto p-3 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 mobile-touch-target rounded-lg">
