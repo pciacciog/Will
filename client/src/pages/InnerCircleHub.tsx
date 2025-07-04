@@ -244,18 +244,8 @@ export default function InnerCircleHub() {
       
       <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 24px)' }}>
         
-        {/* Header with integrated branding and user menu */}
+        {/* Header with user menu */}
         <div className="relative mb-8 md:mb-12">
-          {/* App branding integrated into header */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mr-3">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <span className="text-2xl font-bold text-gray-900">WILL</span>
-          </div>
-          
           {/* Main Header Content */}
           <div className="text-center">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 mobile-title">Inner Circle Hub</h1>
@@ -263,7 +253,7 @@ export default function InnerCircleHub() {
           </div>
           
           {/* User Menu - Simple Avatar Button */}
-          <div className="absolute top-0 right-0">
+          <div className="absolute top-0 right-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 4px)', paddingRight: 'calc(env(safe-area-inset-right) + 8px)' }}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="w-12 h-12 rounded-full p-0 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 mobile-touch-target">
