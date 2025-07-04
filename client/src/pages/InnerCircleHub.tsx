@@ -240,7 +240,7 @@ export default function InnerCircleHub() {
   }
 
   return (
-    <div className="min-h-screen pt-16 py-12">
+    <div className="min-h-screen pt-16 py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
       {/* User Menu - Aligned with Navigation Bar */}
       <div className="fixed top-0 right-4 sm:right-6 lg:right-8 z-50 h-16 flex items-center">
         <DropdownMenu>
@@ -334,26 +334,26 @@ export default function InnerCircleHub() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {circle.members?.map((member: any, index: number) => (
-                <div key={member.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl mobile-touch-target">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-lg">
+                <div key={member.id} className="flex items-center space-x-4 p-6 bg-gray-50 rounded-xl mobile-touch-target min-h-[64px]">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-semibold text-xl">
                       {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
                     </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900 text-base">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 text-lg truncate">
                       {member.user.firstName 
                         ? member.user.firstName
                         : member.user.email
                       }
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-base text-gray-500">
                       Member
                     </div>
                   </div>
-                  <div className="w-3 h-3 bg-green-400 rounded-full" title="Online"></div>
+                  <div className="w-4 h-4 bg-green-400 rounded-full flex-shrink-0" title="Online"></div>
                 </div>
               ))}
             </div>
