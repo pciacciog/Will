@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     iosScheme: 'https',
-    url: 'https://document-scanner-tool-porfirioaciacci.replit.dev',
+    url: 'https://willbeta.replit.app',
     cleartext: true
   },
   ios: {
