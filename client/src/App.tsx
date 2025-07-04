@@ -17,8 +17,6 @@ import EditWill from "@/pages/EditWill";
 import EditCommitment from "@/pages/EditCommitment";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
-import Navigation from "@/components/Navigation";
-
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -32,7 +30,6 @@ function Router() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {isAuthenticated && <Navigation />}
       <Switch>
         {!isAuthenticated ? (
           <>
