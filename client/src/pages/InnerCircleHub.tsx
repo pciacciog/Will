@@ -240,12 +240,12 @@ export default function InnerCircleHub() {
   }
 
   return (
-    <div className="min-h-screen pt-16 py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
-      {/* User Menu - Aligned with Navigation Bar */}
-      <div className="fixed top-0 right-4 sm:right-6 lg:right-8 z-50 h-16 flex items-center">
+    <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom">
+      {/* User Menu - iOS Safe Area Compatible */}
+      <div className="fixed top-0 right-0 z-50 mobile-header" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 max-w-[160px] sm:max-w-none">
+            <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 mobile-text">
               <span className="text-sm font-medium truncate">
                 {user?.firstName} {user?.lastName}
               </span>
@@ -292,19 +292,19 @@ export default function InnerCircleHub() {
         </DropdownMenu>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto mobile-container" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 80px)' }}>
         
         {/* Header */}
         <div className="relative mb-8 md:mb-12">
           {/* Main Header Content */}
           <div className="text-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
-            <p className="text-base md:text-lg text-gray-600 italic tracking-wide">Become More — Together</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 mobile-title">Inner Circle Hub</h1>
+            <p className="text-base md:text-lg text-gray-600 italic tracking-wide mobile-subtitle">Become More — Together</p>
           </div>
         </div>
         
         {/* Members Section */}
-        <Card className="mb-6 md:mb-8">
+        <Card className="mb-6 md:mb-8 mobile-card">
           <CardContent className="p-4 md:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
@@ -361,7 +361,7 @@ export default function InnerCircleHub() {
         </Card>
         
         {/* Will Status Section */}
-        <Card>
+        <Card className="mobile-card">
           <CardContent className="p-4 md:p-8">
             <div className="mb-6">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
