@@ -241,65 +241,83 @@ export default function InnerCircleHub() {
 
   return (
     <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
-      {/* User Menu - iOS Safe Area Compatible */}
-      <div className="fixed top-0 right-0 z-50 safe-area-top safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)', paddingRight: 'calc(env(safe-area-inset-right) + 16px)' }}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-auto p-3 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 mobile-touch-target rounded-lg">
-              <span className="text-sm font-medium truncate mobile-text">
-                {user?.firstName} {user?.lastName}
-              </span>
-              <ChevronDown className="h-4 w-4 flex-shrink-0" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {user?.role === 'admin' && (
-              <>
-                <DropdownMenuItem 
-                  onClick={() => setLocation('/admin')}
-                  className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                >
-                  <Shield className="h-4 w-4" />
-                  <span>Admin Panel</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            <DropdownMenuItem 
-              onClick={() => setShowAccountSettings(true)}
-              className="flex items-center space-x-2 cursor-pointer"
-            >
-              <Settings className="h-4 w-4" />
-              <span>Account Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleLeaveCircle}
-              className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-            >
-              <UserMinus className="h-4 w-4" />
-              <span>Leave Circle</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleLogout}
-              className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 120px)' }}>
+      
+      <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 24px)' }}>
         
-        {/* Header */}
+        {/* Header with integrated branding and user menu */}
         <div className="relative mb-8 md:mb-12">
+          {/* App branding integrated into header */}
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mr-3">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <span className="text-2xl font-bold text-gray-900">WILL</span>
+          </div>
+          
           {/* Main Header Content */}
           <div className="text-center">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 mobile-title">Inner Circle Hub</h1>
             <p className="text-base md:text-lg text-gray-600 italic tracking-wide mobile-subtitle">Become More — Together</p>
+          </div>
+          
+          {/* User Menu - Simple Avatar Button */}
+          <div className="absolute top-0 right-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-12 h-12 rounded-full p-0 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 mobile-touch-target">
+                  <span className="text-white font-semibold text-lg">
+                    {user?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || '?'}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <div className="px-3 py-2 border-b border-gray-200">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+                {user?.role === 'admin' && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={() => setLocation('/admin')}
+                      className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem 
+                  onClick={() => setShowAccountSettings(true)}
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLeaveCircle}
+                  className="flex items-center space-x-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                >
+                  <UserMinus className="h-4 w-4" />
+                  <span>Leave Circle</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         
