@@ -102,6 +102,33 @@
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* Force mobile styles for all devices */
+@media screen {
+  /* Make all buttons bigger on mobile */
+  button, .btn, [role="button"] {
+    min-height: 48px !important;
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+  }
+  
+  /* Larger text for mobile readability */
+  h1 { font-size: 1.75rem !important; }
+  h2 { font-size: 1.5rem !important; }
+  h3 { font-size: 1.25rem !important; }
+  
+  /* Better spacing for cards */
+  .card {
+    margin: 8px !important;
+    padding: 16px !important;
+  }
+  
+  /* Larger touch targets */
+  .copy-button, .invite-code-button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
   
   .shadow-soft {
     box-shadow: 0 4px 6px -1px hsla(221, 83%, 53%, 0.1), 0 2px 4px -1px hsla(221, 83%, 53%, 0.06);
@@ -132,19 +159,19 @@
   }
   
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft hover:shadow-glow transition-all duration-200;
+    @apply bg-primary text-primary-foreground hover:bg-primary hover:opacity-90 transition-all duration-200;
   }
   
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-soft hover:shadow-glow transition-all duration-200;
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary hover:opacity-90 transition-all duration-200;
   }
   
   .btn-accent {
-    @apply bg-accent text-accent-foreground hover:bg-accent/90 shadow-soft hover:shadow-glow transition-all duration-200;
+    @apply bg-accent text-accent-foreground hover:bg-accent hover:opacity-90 transition-all duration-200;
   }
   
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-glow hover:-translate-y-1;
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
   
   .input-focus {
@@ -197,11 +224,11 @@
   }
   
   .feature-card {
-    @apply bg-white rounded-2xl p-8 shadow-soft hover:shadow-glow transition-all duration-300 hover:-translate-y-1;
+    @apply bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1;
   }
   
   .hero-icon {
-    @apply w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-glow;
+    @apply w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl;
     background: linear-gradient(135deg, hsl(221, 83%, 53%) 0%, hsl(142, 76%, 36%) 100%);
   }
   
