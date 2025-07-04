@@ -295,28 +295,28 @@ export default function InnerCircleHub() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="relative mb-12">
+        <div className="relative mb-8 md:mb-12">
           {/* Main Header Content */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
-            <p className="text-lg text-gray-600 italic tracking-wide">Become More — Together</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Inner Circle Hub</h1>
+            <p className="text-base md:text-lg text-gray-600 italic tracking-wide">Become More — Together</p>
           </div>
         </div>
         
         {/* Members Section */}
-        <Card className="mb-8">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+        <Card className="mb-6 md:mb-8">
+          <CardContent className="p-4 md:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
                 <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 Circle Members
               </h2>
               
-              <div className="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-lg">
+              <div className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
                 <span className="text-sm text-gray-600">Invite Code:</span>
-                <span className="font-mono font-bold text-blue-600 text-lg">{circle.inviteCode}</span>
+                <span className="font-mono font-bold text-blue-600 text-base md:text-lg">{circle.inviteCode}</span>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -327,23 +327,23 @@ export default function InnerCircleHub() {
                       description: "Invite code copied to clipboard",
                     });
                   }}
-                  className="h-8 w-8 p-0 hover:bg-blue-100"
+                  className="h-8 w-8 p-0 hover:bg-blue-100 mobile-touch-target"
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               {circle.members?.map((member: any, index: number) => (
-                <div key={member.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                <div key={member.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl mobile-touch-target">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">
+                    <span className="text-white font-semibold text-lg">
                       {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-gray-900 text-base">
                       {member.user.firstName 
                         ? member.user.firstName
                         : member.user.email
@@ -362,9 +362,9 @@ export default function InnerCircleHub() {
         
         {/* Will Status Section */}
         <Card>
-          <CardContent className="p-8">
+          <CardContent className="p-4 md:p-8">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
                 <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -383,7 +383,7 @@ export default function InnerCircleHub() {
                 <p className="text-gray-600 mb-6">Ready to commit to something meaningful together?</p>
                 <Button 
                   onClick={() => setLocation('/start-will')}
-                  className="bg-secondary hover:bg-green-600"
+                  className="bg-secondary hover:bg-green-600 mobile-button"
                 >
                   Start a <em>Will</em>
                 </Button>
@@ -422,7 +422,7 @@ export default function InnerCircleHub() {
                   </div>
                 </div>
                 
-                <Button onClick={handleViewWillDetails} className="w-full">
+                <Button onClick={handleViewWillDetails} className="w-full mobile-button">
                   View <em>Will</em> Details
                 </Button>
               </div>
@@ -458,7 +458,7 @@ export default function InnerCircleHub() {
                   </div>
                 </div>
                 
-                <Button onClick={handleViewWillDetails} className="w-full">
+                <Button onClick={handleViewWillDetails} className="w-full mobile-button">
                   View <em>Will</em> Details
                 </Button>
               </div>
@@ -483,7 +483,7 @@ export default function InnerCircleHub() {
                   </Badge>
                 </div>
                 
-                <Button onClick={handleViewWillDetails} className="w-full">
+                <Button onClick={handleViewWillDetails} className="w-full mobile-button">
                   View <em>Will</em> Details
                 </Button>
               </div>
@@ -499,7 +499,7 @@ export default function InnerCircleHub() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> Completed!</h3>
                 <p className="text-gray-600 mb-6">Congratulations on completing your journey together</p>
                 
-                <Button className="bg-green-600 hover:bg-green-700" onClick={handleViewWillDetails}>
+                <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleViewWillDetails}>
                   View
                 </Button>
               </div>
