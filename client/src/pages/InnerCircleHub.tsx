@@ -242,11 +242,11 @@ export default function InnerCircleHub() {
   return (
     <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom">
       {/* User Menu - iOS Safe Area Compatible */}
-      <div className="fixed top-0 right-0 z-50 mobile-header" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}>
+      <div className="fixed top-0 right-0 z-50 safe-area-top safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)', paddingRight: 'calc(env(safe-area-inset-right) + 16px)' }}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-auto p-2 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 mobile-text">
-              <span className="text-sm font-medium truncate">
+            <Button variant="ghost" className="h-auto p-3 flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 mobile-touch-target rounded-lg">
+              <span className="text-sm font-medium truncate mobile-text">
                 {user?.firstName} {user?.lastName}
               </span>
               <ChevronDown className="h-4 w-4 flex-shrink-0" />
@@ -292,7 +292,7 @@ export default function InnerCircleHub() {
         </DropdownMenu>
       </div>
 
-      <div className="max-w-4xl mx-auto mobile-container" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 80px)' }}>
+      <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 100px)' }}>
         
         {/* Header */}
         <div className="relative mb-8 md:mb-12">
@@ -304,11 +304,11 @@ export default function InnerCircleHub() {
         </div>
         
         {/* Members Section */}
-        <Card className="mb-6 md:mb-8 mobile-card">
-          <CardContent className="p-4 md:p-8">
+        <Card className="mb-6 md:mb-8 mobile-card mobile-section">
+          <CardContent className="p-6 md:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
-                <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h2 className="mobile-subtitle font-semibold text-gray-900 flex items-center">
+                <svg className="w-6 h-6 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 Circle Members
@@ -334,26 +334,26 @@ export default function InnerCircleHub() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3">
               {circle.members?.map((member: any, index: number) => (
-                <div key={member.id} className="flex items-center space-x-4 p-6 bg-gray-50 rounded-xl mobile-touch-target min-h-[64px]">
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <div key={member.id} className="flex items-center space-x-4 bg-gray-50 mobile-list-item mobile-touch-target">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white font-semibold text-xl">
                       {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 text-lg truncate">
+                    <div className="font-semibold text-gray-900 mobile-text truncate">
                       {member.user.firstName 
                         ? member.user.firstName
                         : member.user.email
                       }
                     </div>
-                    <div className="text-base text-gray-500">
+                    <div className="text-gray-500 mobile-text">
                       Member
                     </div>
                   </div>
-                  <div className="w-4 h-4 bg-green-400 rounded-full flex-shrink-0" title="Online"></div>
+                  <div className="w-5 h-5 bg-green-400 rounded-full flex-shrink-0" title="Online"></div>
                 </div>
               ))}
             </div>
@@ -361,11 +361,11 @@ export default function InnerCircleHub() {
         </Card>
         
         {/* Will Status Section */}
-        <Card className="mobile-card">
-          <CardContent className="p-4 md:p-8">
+        <Card className="mobile-card mobile-section">
+          <CardContent className="p-6 md:p-8">
             <div className="mb-6">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center">
-                <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h2 className="mobile-subtitle font-semibold text-gray-900 flex items-center">
+                <svg className="w-6 h-6 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Current WILL

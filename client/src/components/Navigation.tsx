@@ -7,8 +7,8 @@ export default function Navigation() {
 
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50 safe-area-top safe-area-left safe-area-right">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)', paddingLeft: 'calc(env(safe-area-inset-left) + 16px)', paddingRight: 'calc(env(safe-area-inset-right) + 16px)' }}>
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
