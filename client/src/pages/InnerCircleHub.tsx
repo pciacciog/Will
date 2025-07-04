@@ -242,7 +242,7 @@ export default function InnerCircleHub() {
   return (
     <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
       
-      <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 24px)' }}>
+      <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)' }}>
         
         {/* Header with user menu */}
         <div className="relative mb-8 md:mb-12">
@@ -253,7 +253,7 @@ export default function InnerCircleHub() {
           </div>
           
           {/* User Menu - Simple Avatar Button */}
-          <div className="absolute top-0 right-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 4px)', paddingRight: 'calc(env(safe-area-inset-right) + 8px)' }}>
+          <div className="absolute top-0 right-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 20px)', paddingRight: 'calc(env(safe-area-inset-right) + 16px)' }}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="w-12 h-12 rounded-full p-0 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 mobile-touch-target">
