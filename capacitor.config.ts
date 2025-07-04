@@ -6,7 +6,9 @@ const config: CapacitorConfig = {
   webDir: 'dist/public',
   server: {
     androidScheme: 'https',
-    iosScheme: 'https'
+    iosScheme: 'https',
+    url: 'https://document-scanner-tool-porfirioaciacci.replit.dev',
+    cleartext: true
   },
   ios: {
     scheme: 'Inner Circles'
