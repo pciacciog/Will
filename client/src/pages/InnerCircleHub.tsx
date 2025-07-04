@@ -292,7 +292,7 @@ export default function InnerCircleHub() {
         </DropdownMenu>
       </div>
 
-      <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 100px)' }}>
+      <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 120px)' }}>
         
         {/* Header */}
         <div className="relative mb-8 md:mb-12">
