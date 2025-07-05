@@ -207,27 +207,30 @@ export default function SubmitCommitment() {
                         Private - only you can see this
                       </span>
                     </div>
-                    <div className="relative">
-                      <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6 z-10">Because </span>
-                      <Textarea 
-                        value={why}
-                        onChange={(e) => {
-                          const newValue = e.target.value;
-                          if (newValue.length <= 50) {
-                            setWhy(newValue);
-                            setWhyCharCount(newValue.length);
-                          }
-                        }}
-                        placeholder="I like how I feel after I talk to her"
-                        className="w-full pl-20 resize-none border-2 border-blue-200 focus:border-blue-400 bg-white/80"
-                        rows={4}
-                        maxLength={50}
-                        autoFocus
-                        style={{ 
-                          lineHeight: '1.5',
-                          paddingTop: '12px'
-                        }}
-                      />
+                    <div className="border-2 border-blue-200 rounded-md focus-within:border-blue-400 bg-white/80">
+                      <div className="flex items-start p-3">
+                        <span className="text-gray-900 font-medium text-sm mr-2 mt-0.5 flex-shrink-0">Because</span>
+                        <Textarea 
+                          value={why}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            if (newValue.length <= 50) {
+                              setWhy(newValue);
+                              setWhyCharCount(newValue.length);
+                            }
+                          }}
+                          placeholder="I like how I feel after I talk to her"
+                          className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0"
+                          rows={4}
+                          maxLength={50}
+                          autoFocus
+                          style={{ 
+                            background: 'transparent',
+                            boxShadow: 'none',
+                            lineHeight: '1.5'
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1">
                       {whyCharCount} / 50

@@ -300,7 +300,9 @@ This is a full-stack web application for group goal accountability, built with R
   - Fixed iOS app name display by updating CFBundleName and PRODUCT_NAME to "WILL" in both Info.plist and Xcode project settings
   - Resolved bundle identifier conflict by changing from com.will.app to com.porfirio.will to fix provisioning profile errors
   - Fixed "I will" prefix overlapping issue on iOS by restructuring input field layout with proper flexbox positioning
+  - Fixed "Because" prefix overlapping issue on iOS by applying same flexbox solution to "Why" input fields
   - Updated both StartWill and SubmitCommitment pages to prevent text overlap on mobile devices
+  - All input prefixes now use proper flexbox layout with flex-shrink-0 for consistent mobile display
 
 ## Changelog
 - June 25, 2025. Initial setup

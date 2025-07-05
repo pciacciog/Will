@@ -513,25 +513,28 @@ export default function StartWill() {
                       Private - only you can see this
                     </span>
                   </div>
-                  <div className="relative">
-                    <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6 z-10">Because </span>
-                    <Textarea 
-                      name="why"
-                      required 
-                      rows={4} 
-                      maxLength={50}
-                      value={willData.why}
-                      onChange={(e) => {
-                        setWillData({ ...willData, why: e.target.value });
-                        setWhyCharCount(e.target.value.length);
-                      }}
-                      className="w-full pl-20 pr-4 py-3 resize-none text-sm leading-6 font-normal border-2 border-blue-200 focus:border-blue-400 bg-white/80" 
-                      placeholder="I like how I feel after I talk to her"
-                      style={{ 
-                        lineHeight: '1.5',
-                        paddingTop: '12px'
-                      }}
-                    />
+                  <div className="border-2 border-blue-200 rounded-md focus-within:border-blue-400 bg-white/80">
+                    <div className="flex items-start p-3">
+                      <span className="text-gray-900 font-medium text-sm mr-2 mt-0.5 flex-shrink-0">Because</span>
+                      <Textarea 
+                        name="why"
+                        required 
+                        rows={4} 
+                        maxLength={50}
+                        value={willData.why}
+                        onChange={(e) => {
+                          setWillData({ ...willData, why: e.target.value });
+                          setWhyCharCount(e.target.value.length);
+                        }}
+                        className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0" 
+                        placeholder="I like how I feel after I talk to her"
+                        style={{ 
+                          background: 'transparent',
+                          boxShadow: 'none',
+                          lineHeight: '1.5'
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="text-xs text-gray-500 mt-1 text-right">{whyCharCount} / 50</div>
                 </div>
