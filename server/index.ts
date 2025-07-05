@@ -7,9 +7,25 @@ const app = express();
 // Configure app to be publicly accessible
 app.use((req, res, next) => {
   res.header('X-Replit-Public', 'true');
-  res.header('Access-Control-Allow-Origin', '*');
+  
+  // Allow specific origins for mobile app with credentials
+  const allowedOrigins = [
+    'https://willbeta.replit.app',
+    'capacitor://localhost',
+    'http://localhost',
+    'ionic://localhost',
+    'https://localhost'
+  ];
+  
+  const origin = req.get('Origin');
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', 'https://willbeta.replit.app');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
   res.header('Access-Control-Allow-Credentials', 'true');
   
   // Handle preflight requests

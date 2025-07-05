@@ -44,9 +44,9 @@ export function setupAuth(app: Express) {
     store: sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === 'production', // Use secure cookies for production HTTPS
-      httpOnly: true,
+      httpOnly: false, // Allow JavaScript access for mobile app
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax',
+      sameSite: 'none', // Required for cross-origin requests from mobile app
     },
   };
 
