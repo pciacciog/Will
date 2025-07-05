@@ -137,7 +137,7 @@ export default function SubmitCommitment() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
                     <div className="relative">
-                      <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6">I will</span>
+                      <span className="absolute left-4 top-3 text-gray-900 font-medium text-sm leading-6 z-20 bg-white px-1">I will</span>
                       <Textarea 
                         value={what}
                         onChange={(e) => {
@@ -148,10 +148,13 @@ export default function SubmitCommitment() {
                           }
                         }}
                         placeholder="call my grandmother this week"
-                        className="w-full pl-16 resize-none"
+                        className="w-full pl-16 resize-none border-2 border-gray-200 focus:border-blue-500"
                         rows={2}
                         maxLength={50}
                         autoFocus
+                        style={{ 
+                          paddingTop: '12px'
+                        }}
                       />
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1">

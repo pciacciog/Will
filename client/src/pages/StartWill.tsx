@@ -304,18 +304,26 @@ export default function StartWill() {
                       Choose Your Schedule
                     </label>
                     <RadioGroup value={schedulingMode} onValueChange={setSchedulingMode} className="space-y-4">
-                      <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <div className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        schedulingMode === 'prescribed' 
+                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}>
                         <RadioGroupItem value="prescribed" id="prescribed" className="mt-1" />
                         <div className="flex-1">
                           <Label htmlFor="prescribed" className="cursor-pointer">
                             <div className="font-medium text-gray-900 mb-1">📅 Week Template</div>
                             <div className="text-sm text-gray-600">
-                              Runs Monday 12:00 AM to Sunday 12:00 PM.
+                              Starts next Monday at 12:00 AM and ends Sunday at 12:00 PM
                             </div>
                           </Label>
                         </div>
                       </div>
-                      <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <div className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        schedulingMode === 'custom' 
+                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}>
                         <RadioGroupItem value="custom" id="custom" className="mt-1" />
                         <div className="flex-1">
                           <Label htmlFor="custom" className="cursor-pointer">
@@ -433,7 +441,7 @@ export default function StartWill() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-3 text-gray-900 pointer-events-none select-none font-normal text-sm leading-6">I will</span>
+                    <span className="absolute left-4 top-3 text-gray-900 font-medium text-sm leading-6 z-20 bg-white px-1">I will</span>
                     <Textarea 
                       name="what"
                       required 
@@ -444,8 +452,11 @@ export default function StartWill() {
                         setWillData({ ...willData, what: e.target.value });
                         setWhatCharCount(e.target.value.length);
                       }}
-                      className="w-full pl-16 pr-4 py-3 resize-none text-sm leading-6 font-normal" 
+                      className="w-full pl-16 pr-4 py-3 resize-none text-sm leading-6 font-normal border-2 border-gray-200 focus:border-blue-500" 
                       placeholder="call my grandmother this week"
+                      style={{ 
+                        paddingTop: '12px'
+                      }}
                     />
                   </div>
                   <div className="text-xs text-gray-500 mt-1 text-right">{whatCharCount} / 50</div>
