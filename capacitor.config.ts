@@ -5,9 +5,9 @@ const config: CapacitorConfig = {
   appName: 'WILL',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https',
-    iosScheme: 'https',
-    url: 'https://willbeta.replit.app',
+    androidScheme: 'http',
+    iosScheme: 'http',
+    url: 'http://localhost:5000',
     cleartext: true
   },
   ios: {
