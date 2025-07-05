@@ -12,6 +12,13 @@ const config: CapacitorConfig = {
   },
   ios: {
     scheme: 'WILL'
+  },
+  plugins: {
+    LiveReload: {
+      enabled: true,
+      hostname: 'localhost',
+      port: 5000
+    }
   }
 };
 
