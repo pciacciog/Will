@@ -289,11 +289,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Created build-mobile-simple.sh for streamlined mobile builds
   - Mobile app now ready for Xcode building and device testing
   - App configured to redirect to https://willbeta.replit.app for full functionality
-- **July 05, 2025**: Fixed iOS mobile UI issues and local development setup
+- **July 05, 2025**: Fixed iOS mobile UI issues and authentication system
   - Enhanced "I will" prefix visibility with white background, bold text, and proper z-index
   - Improved schedule selection visual feedback with blue highlighting and ring effects
   - Updated Week Template description text for clarity
-  - Configured iOS app to use local development server (localhost:5000) for testing changes
+  - Fixed authentication system for mobile app access with environment-aware cookie settings
+  - Added comprehensive CORS headers for mobile app compatibility
+  - Reverted to live server configuration (willbeta.replit.app) for production deployment
   - Applied fixes to both StartWill and SubmitCommitment pages for consistency
 
 ## Changelog
