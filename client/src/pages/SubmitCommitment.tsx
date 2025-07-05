@@ -136,26 +136,29 @@ export default function SubmitCommitment() {
                 <form className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-3 text-gray-900 font-medium text-sm leading-6 z-20 bg-white px-1">I will</span>
-                      <Textarea 
-                        value={what}
-                        onChange={(e) => {
-                          const newValue = e.target.value;
-                          if (newValue.length <= 50) {
-                            setWhat(newValue);
-                            setWhatCharCount(newValue.length);
-                          }
-                        }}
-                        placeholder="call my grandmother this week"
-                        className="w-full pl-16 resize-none border-2 border-gray-200 focus:border-blue-500"
-                        rows={2}
-                        maxLength={50}
-                        autoFocus
-                        style={{ 
-                          paddingTop: '12px'
-                        }}
-                      />
+                    <div className="relative border-2 border-gray-200 rounded-md focus-within:border-blue-500">
+                      <div className="flex items-start p-3">
+                        <span className="text-gray-900 font-bold text-sm mr-2 mt-0.5 flex-shrink-0">I will</span>
+                        <Textarea 
+                          value={what}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            if (newValue.length <= 50) {
+                              setWhat(newValue);
+                              setWhatCharCount(newValue.length);
+                            }
+                          }}
+                          placeholder="call my grandmother this week"
+                          className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0"
+                          rows={2}
+                          maxLength={50}
+                          autoFocus
+                          style={{ 
+                            background: 'transparent',
+                            boxShadow: 'none'
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1">
                       {whatCharCount} / 50

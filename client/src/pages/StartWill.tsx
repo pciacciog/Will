@@ -440,24 +440,27 @@ export default function StartWill() {
               <form onSubmit={handleStep2Submit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-3 text-gray-900 font-medium text-sm leading-6 z-20 bg-white px-1">I will</span>
-                    <Textarea 
-                      name="what"
-                      required 
-                      rows={4} 
-                      maxLength={50}
-                      value={willData.what}
-                      onChange={(e) => {
-                        setWillData({ ...willData, what: e.target.value });
-                        setWhatCharCount(e.target.value.length);
-                      }}
-                      className="w-full pl-16 pr-4 py-3 resize-none text-sm leading-6 font-normal border-2 border-gray-200 focus:border-blue-500" 
-                      placeholder="call my grandmother this week"
-                      style={{ 
-                        paddingTop: '12px'
-                      }}
-                    />
+                  <div className="relative border-2 border-gray-200 rounded-md focus-within:border-blue-500">
+                    <div className="flex items-start p-3">
+                      <span className="text-gray-900 font-bold text-sm mr-2 mt-0.5 flex-shrink-0">I will</span>
+                      <Textarea 
+                        name="what"
+                        required 
+                        rows={4} 
+                        maxLength={50}
+                        value={willData.what}
+                        onChange={(e) => {
+                          setWillData({ ...willData, what: e.target.value });
+                          setWhatCharCount(e.target.value.length);
+                        }}
+                        className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0" 
+                        placeholder="call my grandmother this week"
+                        style={{ 
+                          background: 'transparent',
+                          boxShadow: 'none'
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="text-xs text-gray-500 mt-1 text-right">{whatCharCount} / 50</div>
                 </div>
