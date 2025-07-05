@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # GitHub Setup Script for WILL iOS App
-# Replace YOUR_USERNAME and YOUR_REPO_NAME with your actual GitHub details
+# Connecting to https://github.com/pciaccio/Will.git
 
 echo "Setting up GitHub remote..."
 
 # Add your GitHub repository as origin
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+git remote add origin https://github.com/pciaccio/Will.git
 
 # Push your existing code to GitHub
 git push -u origin main
