@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.will.app',
+  appId: 'com.porfirio.will',
   appName: 'WILL',
   webDir: 'dist/public',
   server: {
