@@ -100,10 +100,16 @@ export default function WillDetails() {
       // Close the Final Will Summary modal
       setShowFinalSummary(false);
       
-      // Invalidate multiple queries to ensure UI updates everywhere
+      // Invalidate all related queries comprehensively to ensure immediate UI updates
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      
+      // Force immediate refetch of critical queries to bypass polling interval
+      queryClient.refetchQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.refetchQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.refetchQueries({ queryKey: ['/api/circles/mine'] });
       
       toast({
         title: "Will Acknowledged",
