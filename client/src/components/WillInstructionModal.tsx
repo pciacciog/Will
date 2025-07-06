@@ -47,7 +47,7 @@ export function WillInstructionModal({
               </div>
               <div>
                 <h3 className="font-medium text-gray-900 mb-1">When 🗓</h3>
-                <p className="text-sm text-gray-600">Choose when your <em>Will</em> starts and ends.</p>
+                <p className="text-sm text-gray-600">Start July 7 and end on July 14</p>
               </div>
             </div>
             
@@ -57,7 +57,7 @@ export function WillInstructionModal({
               </div>
               <div>
                 <h3 className="font-medium text-gray-900 mb-1">What 📝</h3>
-                <p className="text-sm text-gray-600">Example: "I will make time to call my grandmother this week."</p>
+                <p className="text-sm text-gray-600">"I will make time to call my grandmother this week."</p>
               </div>
             </div>
             
@@ -67,7 +67,7 @@ export function WillInstructionModal({
               </div>
               <div>
                 <h3 className="font-medium text-gray-900 mb-1">Why 💖</h3>
-                <p className="text-sm text-gray-600">Example: "Because I like how I feel after I talk to her."</p>
+                <p className="text-sm text-gray-600">"Because I like how I feel after I talk to her."</p>
               </div>
             </div>
           </div>
