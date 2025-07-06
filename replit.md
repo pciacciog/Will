@@ -364,6 +364,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Updated End Room scheduling page with ceremonial wording and clear constraints ("honor the effort")
   - Fixed Daily.co room access permissions with enhanced public settings (enable_knocking: false, enable_prejoin_ui: false)
   - Updated End Room button from "Create Video Room" to "Join" with green styling for better UX
+  - Restructured "Awaiting End Room" page to show "Will Complete" with "Pending End Room" status
+  - Added End Room explanation text and Scheduled End Room section with start/end times
+  - Removed duration text from date display for cleaner waiting for End Room interface
+  - Standardized all character limits to 75 characters across StartWill, SubmitCommitment, and EditCommitment pages
+  - Added real-time character counters showing "X / 75" format for consistent user experience
 
 ## Changelog
 - June 25, 2025. Initial setup

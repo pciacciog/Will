@@ -17,6 +17,8 @@ export default function EditCommitment() {
   const queryClient = useQueryClient();
   const [what, setWhat] = useState("");
   const [why, setWhy] = useState("");
+  const [whatCharCount, setWhatCharCount] = useState(0);
+  const [whyCharCount, setWhyCharCount] = useState(0);
 
   const { data: will, isLoading: willLoading } = useQuery({
     queryKey: [`/api/wills/${willId}/details`],
@@ -34,6 +36,8 @@ export default function EditCommitment() {
     if (userCommitment) {
       setWhat(userCommitment.what || "");
       setWhy(userCommitment.why || "");
+      setWhatCharCount((userCommitment.what || "").length);
+      setWhyCharCount((userCommitment.why || "").length);
     }
   }, [userCommitment]);
 
@@ -163,10 +167,20 @@ export default function EditCommitment() {
                 </label>
                 <Input
                   value={what}
-                  onChange={(e) => setWhat(e.target.value)}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    if (newValue.length <= 75) {
+                      setWhat(newValue);
+                      setWhatCharCount(newValue.length);
+                    }
+                  }}
                   placeholder="Describe what you will do"
                   className="w-full"
+                  maxLength={75}
                 />
+                <div className="text-right text-xs text-gray-500 mt-1">
+                  {whatCharCount} / 75
+                </div>
               </div>
               
               <div>
@@ -175,11 +189,21 @@ export default function EditCommitment() {
                 </label>
                 <Textarea
                   value={why}
-                  onChange={(e) => setWhy(e.target.value)}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    if (newValue.length <= 75) {
+                      setWhy(newValue);
+                      setWhyCharCount(newValue.length);
+                    }
+                  }}
                   placeholder="Explain why this matters to you"
                   className="w-full"
                   rows={4}
+                  maxLength={75}
                 />
+                <div className="text-right text-xs text-gray-500 mt-1">
+                  {whyCharCount} / 75
+                </div>
               </div>
             </div>
           </CardContent>
