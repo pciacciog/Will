@@ -55,11 +55,6 @@ export class DailyService {
           enable_recording: false,
           max_participants: 10,
           exp: expireTime,
-        },
-        config: {
-          start_video_off: true,
-          start_audio_off: true,
-          exp: expireTime,
         }
       }),
     });
