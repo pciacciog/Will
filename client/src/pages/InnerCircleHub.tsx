@@ -520,7 +520,7 @@ export default function InnerCircleHub() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room in Process</h3>
                     <p className="text-gray-600 mb-6">
-                      The End Room ceremony is currently active and will expire at <strong>{will?.endRoomScheduledAt ? formatDisplayDateTime(new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toISOString()) : 'N/A'}</strong>.
+                      The End Room is live and will close at <strong>{will?.endRoomScheduledAt ? formatDisplayDateTime(new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toISOString()) : 'N/A'}</strong>.
                     </p>
                     
                     <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleViewWillDetails}>
@@ -537,7 +537,7 @@ export default function InnerCircleHub() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room</h3>
                     <p className="text-gray-600 mb-6">
-                      The End Room will open at <strong>{formatDisplayDateTime(will?.endRoomScheduledAt)}</strong> and will expire at <strong>{will?.endRoomScheduledAt ? formatDisplayDateTime(new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toISOString()) : 'N/A'}</strong>.
+                      The End Room will open at <strong>{formatDisplayDateTime(will?.endRoomScheduledAt)}</strong> and will close at <strong>{will?.endRoomScheduledAt ? formatDisplayDateTime(new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toISOString()) : 'N/A'}</strong>.
                     </p>
                     
                     <Button className="bg-purple-600 hover:bg-purple-700 mobile-button" onClick={handleViewWillDetails}>

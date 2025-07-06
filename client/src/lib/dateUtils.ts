@@ -13,6 +13,19 @@ export function formatDisplayDateTime(dateString: string): string {
   
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+
+export function formatDisplayDateTimeFull(dateString: string): string {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',

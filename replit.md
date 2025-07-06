@@ -333,6 +333,9 @@ This is a full-stack web application for group goal accountability, built with R
   - Updated date formatting to consistently show "Sunday, July 6, 2025 at 12:50 PM" format instead of "Tomorrow"
   - Enhanced both InnerCircleHub and EndRoom components to show exact "opens at" and "expires at" times
   - Differentiated UI states: End Room pending (purple) vs End Room active (green) vs End Room completed (amber)
+  - Fixed timezone scheduling bug - End Room now correctly scheduled for 2 minutes after Will end instead of hours later
+  - Updated date format to MM/DD time format (e.g., "7/6 1:22 PM") and removed "ceremony" wording
+  - Simplified End Room messaging to "The End Room is live and will close at [time]"
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

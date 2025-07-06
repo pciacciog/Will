@@ -78,9 +78,7 @@ export function EndRoom({ willId }: EndRoomProps) {
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
+      month: 'numeric',
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
