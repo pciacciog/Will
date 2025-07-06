@@ -657,14 +657,14 @@ export default function StartWill() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Schedule Your End Room</h2>
-                <p className="text-gray-600">When will your circle gather to honor the efforts?</p>
+                <p className="text-gray-600">When will your circle gather to honor the effort?</p>
               </div>
 
               <form onSubmit={handleStep4Submit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">End Room Date & Time</label>
                   <p className="text-sm text-gray-600 mb-4">
-                    Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : 'e.g. 7/13/2025'}) and within 48 hours to share your stories.
+                    Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/6/2025'}) and within 48 hours.
                   </p>
                   <input
                     type="datetime-local"
@@ -678,12 +678,20 @@ export default function StartWill() {
                   />
                 </div>
 
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="space-y-1 text-sm text-gray-700">
-                    <p>• The End Room will open automatically at the scheduled time and run for 30 minutes</p>
-                    <p>• The End Room cannot be re-scheduled once <em>Will</em> is active</p>
-                    <p>• After the End Room time expires, it will close automatically, and the <em>Will</em> will be marked as complete—regardless of attendance.</p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="text-amber-600 text-sm">📌</span>
+                    <span className="text-sm font-medium text-amber-800">END ROOM:</span>
                   </div>
+                  <div className="space-y-1 text-sm text-amber-700 ml-6">
+                    <p>• Opens automatically and runs for 30 minutes</p>
+                    <p>• Cannot be rescheduled once the <em>Will</em> is active</p>
+                    <p>• Closes automatically after time is expired - regardless of attendance</p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-700 font-medium">This is the last step</p>
                 </div>
 
                 <div className="flex justify-between pt-4">
