@@ -152,9 +152,9 @@ export default function WillDetails() {
     },
   });
 
-  // Auto-show Final Will Summary when Will is completed
+  // Auto-show Final Will Summary when End Room ceremony is finished
   useEffect(() => {
-    if (will && will.status === 'completed' && !will.hasUserAcknowledged && !showFinalSummary) {
+    if (will && will.status === 'completed' && will.endRoomStatus === 'completed' && !will.hasUserAcknowledged && !showFinalSummary) {
       setShowFinalSummary(true);
     }
   }, [will, showFinalSummary]);
