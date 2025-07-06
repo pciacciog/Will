@@ -89,6 +89,23 @@ function formatTimeUntilStart(startDate: string): string {
   }
 }
 
+function formatActivationTime(dateString: string): string {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  
+  const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  
+  if (isToday) {
+    return timeStr; // Just "8:39 PM" for today
+  } else {
+    const monthDay = date.toLocaleDateString([], { month: 'long', day: 'numeric' });
+    return `on ${monthDay} at ${timeStr}`; // "on July 6 at 8:39 PM" for other days
+  }
+}
+
 export default function InnerCircleHub() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -472,7 +489,7 @@ export default function InnerCircleHub() {
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <div className="text-sm text-amber-800">
-                      <strong>Note:</strong> This <em>Will</em> becomes active automatically at <strong>{formatDisplayDateTime(will?.startDate)}</strong>. Any member who has not submitted by then will not be included in the <em>Will</em>.
+                      <strong>Note:</strong> This <em>Will</em> becomes active automatically at <strong>{formatActivationTime(will?.startDate)}</strong>. Any member who has not submitted by then will not be included in the <em>Will</em>.
                     </div>
                   </div>
                 </div>
@@ -495,7 +512,7 @@ export default function InnerCircleHub() {
                     <div>
                       <h3 className="font-semibold text-gray-900">WILL Scheduled</h3>
                       <p className="text-sm text-gray-600">
-                        Starts {formatDisplayDateTime(will?.startDate)}
+                        Starts {formatActivationTime(will?.startDate)}
                       </p>
                     </div>
                   </div>
