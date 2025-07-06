@@ -67,6 +67,7 @@ export default function StartWill() {
   const [whyCharCount, setWhyCharCount] = useState(0);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [showHelpIcon, setShowHelpIcon] = useState(false);
+  const [endRoomDateTime, setEndRoomDateTime] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -623,16 +624,16 @@ export default function StartWill() {
         
         {/* Step 4: End Room Scheduling - Special Ceremonial Step */}
         {currentStep === 4 && (
-          <Card className="border-2 border-amber-200 shadow-lg">
+          <Card className="shadow-lg">
             <CardContent className="p-8">
               <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                  <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-3">Schedule Your End Room</h2>
-                <p className="text-lg text-gray-600">When will your circle gather to honor the efforts?</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Schedule Your End Room</h2>
+                <p className="text-gray-600">When will your circle gather to honor the efforts?</p>
               </div>
 
               <form onSubmit={handleStep4Submit} className="space-y-6">
@@ -640,8 +641,6 @@ export default function StartWill() {
                   <label className="block text-sm font-medium text-gray-700 mb-3">End Room Date & Time</label>
                   <p className="text-sm text-gray-600 mb-4">
                     Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : 'e.g. 7/13/2025'}) to share your stories.
-                    <br />
-                    <span className="text-amber-700 font-medium">Note: Must be within 48 hours after the <em>Will</em> ends.</span>
                   </p>
                   <input
                     type="datetime-local"
@@ -649,27 +648,32 @@ export default function StartWill() {
                     required
                     min={willData.endDate}
                     max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
-                    className="w-full px-4 py-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg"
+                    value={endRoomDateTime}
+                    onChange={(e) => setEndRoomDateTime(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
-                  <div className="space-y-2 text-sm text-amber-800">
-                    <p>• A video call link will appear at the scheduled time.</p>
-                    <p>• You'll receive a 15-minute reminder before it starts.</p>
-                    <p>• Once the <em>Will</em> is active, the End Room time cannot be changed.</p>
-                    <p>• After the End Room closes—regardless of attendance—the <em>Will</em> is considered complete.</p>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="space-y-1 text-sm text-gray-700">
+                    <p>• Video call opens automatically at scheduled time</p>
+                    <p>• 15-minute reminder before start</p>
+                    <p>• Time cannot be changed once <em>Will</em> is active</p>
                   </div>
                 </div>
 
                 <div className="flex justify-between pt-4">
-                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)} className="text-gray-600">
+                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)}>
                     ← Back
                   </Button>
                   <Button 
                     type="submit" 
-                    disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                    className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 text-lg font-semibold"
+                    disabled={createWillMutation.isPending || addCommitmentMutation.isPending || !endRoomDateTime}
+                    className={`px-8 py-3 font-semibold ${
+                      endRoomDateTime && !createWillMutation.isPending 
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
                     {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating Your Will...' : 'Create Will →'}
                   </Button>
