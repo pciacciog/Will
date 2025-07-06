@@ -31,7 +31,7 @@ export function WillInstructionModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center mb-4">
-            How to Start a <em>Will</em>
+            🙋‍♀️ How to Start a <em>Will</em>
           </DialogTitle>
         </DialogHeader>
         

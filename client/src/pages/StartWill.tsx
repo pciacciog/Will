@@ -329,11 +329,6 @@ export default function StartWill() {
           <Card>
             <CardContent className="p-8">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
-                  </svg>
-                </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Set Your Timeline</h2>
                 <p className="text-gray-600">Choose your scheduling preference</p>
               </div>
@@ -489,7 +484,7 @@ export default function StartWill() {
                         name="what"
                         required 
                         rows={4} 
-                        maxLength={50}
+                        maxLength={75}
                         value={willData.what}
                         onChange={(e) => {
                           setWillData({ ...willData, what: e.target.value });
@@ -504,7 +499,7 @@ export default function StartWill() {
                       />
                     </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 text-right">{whatCharCount} / 50</div>
+                  <div className="text-xs text-gray-500 mt-1 text-right">{whatCharCount} / 75</div>
                 </div>
 
                 
@@ -557,19 +552,18 @@ export default function StartWill() {
                   </div>
                   <div className="border-2 border-blue-200 rounded-md focus-within:border-blue-400 bg-white/80">
                     <div className="flex items-start p-3">
-                      <span className="text-gray-900 font-medium text-sm mr-2 mt-0.5 flex-shrink-0">Because</span>
+                      <span className="text-gray-900 font-bold text-sm mr-2 mt-0.5 flex-shrink-0">Because</span>
                       <Textarea 
                         name="why"
                         required 
                         rows={4} 
-                        maxLength={50}
+                        maxLength={75}
                         value={willData.why}
                         onChange={(e) => {
                           setWillData({ ...willData, why: e.target.value });
                           setWhyCharCount(e.target.value.length);
                         }}
                         className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0" 
-                        placeholder="I like how I feel after I talk to her"
                         style={{ 
                           background: 'transparent',
                           boxShadow: 'none',
@@ -578,7 +572,7 @@ export default function StartWill() {
                       />
                     </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 text-right">{whyCharCount} / 50</div>
+                  <div className="text-xs text-gray-500 mt-1 text-right">{whyCharCount} / 75</div>
                 </div>
 
                 

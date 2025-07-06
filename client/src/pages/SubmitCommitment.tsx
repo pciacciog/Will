@@ -185,7 +185,7 @@ export default function SubmitCommitment() {
                           value={what}
                           onChange={(e) => {
                             const newValue = e.target.value;
-                            if (newValue.length <= 50) {
+                            if (newValue.length <= 75) {
                               setWhat(newValue);
                               setWhatCharCount(newValue.length);
                             }
@@ -193,7 +193,7 @@ export default function SubmitCommitment() {
                           placeholder="call my grandmother this week"
                           className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0"
                           rows={2}
-                          maxLength={50}
+                          maxLength={75}
                           autoFocus
                           style={{ 
                             background: 'transparent',
@@ -203,7 +203,7 @@ export default function SubmitCommitment() {
                       </div>
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1">
-                      {whatCharCount} / 50
+                      {whatCharCount} / 75
                     </div>
                   </div>
                   
@@ -251,20 +251,19 @@ export default function SubmitCommitment() {
                     </div>
                     <div className="border-2 border-blue-200 rounded-md focus-within:border-blue-400 bg-white/80">
                       <div className="flex items-start p-3">
-                        <span className="text-gray-900 font-medium text-sm mr-2 mt-0.5 flex-shrink-0">Because</span>
+                        <span className="text-gray-900 font-bold text-sm mr-2 mt-0.5 flex-shrink-0">Because</span>
                         <Textarea 
                           value={why}
                           onChange={(e) => {
                             const newValue = e.target.value;
-                            if (newValue.length <= 50) {
+                            if (newValue.length <= 75) {
                               setWhy(newValue);
                               setWhyCharCount(newValue.length);
                             }
                           }}
-                          placeholder="I like how I feel after I talk to her"
                           className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0"
                           rows={4}
-                          maxLength={50}
+                          maxLength={75}
                           autoFocus
                           style={{ 
                             background: 'transparent',
@@ -275,7 +274,7 @@ export default function SubmitCommitment() {
                       </div>
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1">
-                      {whyCharCount} / 50
+                      {whyCharCount} / 75
                     </div>
                   </div>
                   
