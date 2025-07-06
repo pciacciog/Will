@@ -55,6 +55,15 @@ export class DailyService {
           enable_recording: false,
           max_participants: 10,
           exp: expireTime,
+          enable_knocking: false,
+          enable_prejoin_ui: false,
+          enable_network_ui: false,
+          enable_people_ui: true,
+          owner_only_broadcast: false,
+          enable_mesh_sfu: false,
+          sfu_switchover: 0.5,
+          eject_at_room_exp: true,
+          eject_after_elapsed: 1800
         }
       }),
     });
