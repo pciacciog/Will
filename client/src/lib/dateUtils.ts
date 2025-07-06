@@ -12,13 +12,30 @@ export function formatDisplayDateTime(dateString: string): string {
   if (!dateString) return '';
   
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
+  const now = new Date();
+  
+  // Check if it's today (same date in local timezone)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const isToday = dateOnly.getTime() === today.getTime();
+  
+  if (isToday) {
+    // Just show time for today
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  } else {
+    // Show date and time for other days
+    return date.toLocaleDateString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
 }
 
 export function formatDisplayDateTimeFull(dateString: string): string {
