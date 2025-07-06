@@ -282,9 +282,12 @@ export default function StartWill() {
       return;
     }
 
+    // Convert local datetime to UTC for storage
+    const endRoomTimeUTC = new Date(endRoomDateTime).toISOString();
+    
     const finalWillData = {
       ...willData,
-      endRoomScheduledAt: endRoomDateTime,
+      endRoomScheduledAt: endRoomTimeUTC,
       circleId: circle?.id,
     };
 

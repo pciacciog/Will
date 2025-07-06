@@ -345,6 +345,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Created dedicated UI for "waiting_for_end_room" status in Inner Circle Hub with purple styling and video icon
   - Fixed End Room completion logic: Wills only complete when End Room expires, not when Will end date passes
   - Updated End Room info text to clarify 30-minute duration, no rescheduling, and automatic completion policies
+- **July 06, 2025**: Fixed comprehensive timezone handling for End Room scheduling
+  - Fixed End Room scheduling to properly convert user's local time to UTC before database storage
+  - Updated End Room display formatting to show times in user's local timezone from stored UTC timestamps
+  - Fixed scheduler logic to compare UTC times correctly for status transitions
+  - Implemented consistent timezone rules: store UTC in database, display local time in frontend
+  - Fixed 7-hour timezone offset issue that was incorrectly scheduling End Rooms
+  - Updated formatEndRoomTime function to handle proper UTC-to-local conversion without manual string manipulation
 
 ## Changelog
 - June 25, 2025. Initial setup

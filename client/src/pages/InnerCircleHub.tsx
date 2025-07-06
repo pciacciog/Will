@@ -109,12 +109,11 @@ function formatActivationTime(dateString: string): string {
 function formatEndRoomTime(dateString: string): string {
   if (!dateString) return '';
   
-  // Parse as local time to avoid timezone conversion issues
-  const dateStr = dateString.replace('T', ' ').replace(/\.\d+Z?$/, '');
-  const date = new Date(dateStr);
+  // Parse UTC timestamp and convert to local time for display
+  const date = new Date(dateString);
   const now = new Date();
   
-  // Compare dates more reliably
+  // Compare dates in local timezone
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const isToday = dateOnly.getTime() === today.getTime();
@@ -597,8 +596,7 @@ export default function InnerCircleHub() {
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room in Process</h3>
                     <p className="text-gray-600 mb-6">
                       The End Room is live and will close at <strong>{will?.endRoomScheduledAt ? (() => {
-                        const dateStr = will.endRoomScheduledAt.replace('T', ' ').replace(/\.\d+Z?$/, '');
-                        const openTime = new Date(dateStr);
+                        const openTime = new Date(will.endRoomScheduledAt);
                         const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
                         return formatEndRoomTime(closeTime.toISOString());
                       })() : 'N/A'}</strong>.
@@ -619,8 +617,7 @@ export default function InnerCircleHub() {
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room</h3>
                     <p className="text-gray-600 mb-6">
                       The End Room will open at <strong>{will?.endRoomScheduledAt ? formatEndRoomTime(will.endRoomScheduledAt) : 'N/A'}</strong> and will close at <strong>{will?.endRoomScheduledAt ? (() => {
-                        const dateStr = will.endRoomScheduledAt.replace('T', ' ').replace(/\.\d+Z?$/, '');
-                        const openTime = new Date(dateStr);
+                        const openTime = new Date(will.endRoomScheduledAt);
                         const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
                         return formatEndRoomTime(closeTime.toISOString());
                       })() : 'N/A'}</strong>.
