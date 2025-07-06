@@ -16,6 +16,7 @@ import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { dailyService } from "./daily";
 
 function generateInviteCode(): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -234,6 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate: new Date(req.body.endDate),
         createdBy: userId,
         circleId: 0, // Will be set below after getting circle
+        endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
       };
       
       console.log("Will data before validation:", willDataWithDefaults);
@@ -272,6 +274,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create will
       const will = await storage.createWill(willData);
+
+      // Create End Room if scheduled
+      if (req.body.endRoomScheduledAt) {
+        try {
+          const endRoomTime = new Date(req.body.endRoomScheduledAt);
+          const endRoom = await dailyService.createEndRoom({
+            willId: will.id,
+            scheduledStart: endRoomTime,
+          });
+          
+          // Update will with End Room details
+          await storage.updateWillEndRoom(will.id, {
+            endRoomScheduledAt: endRoomTime,
+            endRoomUrl: endRoom.url,
+            endRoomStatus: 'scheduled',
+          });
+          
+          console.log(`Created End Room for Will ${will.id}: ${endRoom.url}`);
+        } catch (error) {
+          console.error('Error creating End Room:', error);
+          // Continue without End Room - will creation should still succeed
+        }
+      }
 
       res.json(will);
     } catch (error) {

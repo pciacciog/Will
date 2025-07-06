@@ -60,6 +60,8 @@ export default function StartWill() {
     endDate: '',
     what: '',
     why: '',
+    circleId: null as number | null,
+    endRoomScheduledAt: '',
   });
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [whyCharCount, setWhyCharCount] = useState(0);
@@ -232,18 +234,43 @@ export default function StartWill() {
       return;
     }
 
-    const finalWillData = {
+    // Move to End Room scheduling step
+    setWillData({
       ...willData,
       why: why.trim(),
       circleId: circle?.id,
+    });
+    setCurrentStep(4);
+  };
+
+  const handleStep4Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const endRoomDateTime = formData.get('endRoomDateTime') as string;
+
+    if (!endRoomDateTime) {
+      toast({
+        title: "Missing End Room Time",
+        description: "Please select when your End Room ceremony will take place",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const finalWillData = {
+      ...willData,
+      endRoomScheduledAt: endRoomDateTime,
+      circleId: circle?.id,
     };
 
-    // Create the will
+    // Create the will with End Room time
     createWillMutation.mutate({
       title: finalWillData.what || "Group Goal",
       description: finalWillData.why || "Group commitment",
       startDate: finalWillData.startDate,
       endDate: finalWillData.endDate,
+      endRoomScheduledAt: finalWillData.endRoomScheduledAt,
       circleId: finalWillData.circleId,
     });
 
@@ -305,6 +332,13 @@ export default function StartWill() {
                   3
                 </div>
                 <span className={`ml-2 text-sm ${currentStep >= 3 ? 'text-primary' : 'text-gray-600'} font-medium`}>Why</span>
+              </div>
+              <div className={`w-8 h-0.5 ${currentStep >= 4 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 4 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  4
+                </div>
+                <span className={`ml-2 text-sm ${currentStep >= 4 ? 'text-primary' : 'text-gray-600'} font-medium`}>End Room</span>
               </div>
             </div>
             <div className="flex-1"></div>
@@ -580,6 +614,67 @@ export default function StartWill() {
                 
                 <div className="flex justify-between">
                   <Button type="button" variant="ghost" onClick={() => setCurrentStep(2)}>
+                    ← Back
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="bg-primary hover:bg-blue-600"
+                  >
+                    Next →
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Step 4: End Room Scheduling */}
+        {currentStep === 4 && (
+          <Card>
+            <CardContent className="p-8">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Schedule Your End Room</h2>
+                <p className="text-gray-600">When will your circle meet to celebrate completion?</p>
+              </div>
+
+              <form onSubmit={handleStep4Submit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">End Room Date & Time</label>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : 'end date'}) 
+                    when your circle will meet for the completion ceremony.
+                  </p>
+                  <input
+                    type="datetime-local"
+                    name="endRoomDateTime"
+                    required
+                    min={willData.endDate}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">End Room Info</p>
+                      <p className="text-sm text-blue-700 mt-1">
+                        This video call will automatically open at the scheduled time for your circle to celebrate 
+                        completing the <em>Will</em> together. You cannot change this time once the <em>Will</em> is created.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)}>
                     ← Back
                   </Button>
                   <Button 
