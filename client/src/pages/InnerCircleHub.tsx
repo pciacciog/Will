@@ -608,11 +608,14 @@ export default function InnerCircleHub() {
                       </Button>
                     ) : (
                       <div className="text-center">
-                        <Button disabled className="bg-gray-400 mobile-button mb-2">
-                          Video Room Setup Required
+                        <Button 
+                          onClick={handleJoinEndRoom}
+                          className="bg-amber-500 hover:bg-amber-600 text-white mobile-button mb-2"
+                        >
+                          Create Video Room
                         </Button>
                         <p className="text-sm text-gray-600">
-                          The End Room is active but video setup is needed. Please contact support.
+                          The End Room is active but video setup is needed. Click to create.
                         </p>
                       </div>
                     )}
