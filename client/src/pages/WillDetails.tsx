@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { EndRoom } from "@/components/EndRoom";
 
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -189,10 +190,13 @@ export default function WillDetails() {
                   will.status === 'active' ? 'bg-green-100 text-green-800' :
                   will.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                   will.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                  will.status === 'waiting_for_end_room' ? 'bg-purple-100 text-purple-800' :
+                  will.status === 'completed' ? 'bg-gray-100 text-gray-800' :
                   'bg-gray-100 text-gray-800'
                 }
               >
-                {will.status.charAt(0).toUpperCase() + will.status.slice(1)}
+                {will.status === 'waiting_for_end_room' ? 'Awaiting End Room' : 
+                 will.status.charAt(0).toUpperCase() + will.status.slice(1)}
               </Badge>
             </div>
           </div>
@@ -447,6 +451,13 @@ export default function WillDetails() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* End Room Section - Show for wills that are waiting for end room or completed */}
+        {(will.status === 'waiting_for_end_room' || will.status === 'completed') && (
+          <div className="mb-8">
+            <EndRoom willId={will.id} />
+          </div>
         )}
 
         {/* Creator Actions (Edit/Delete) - Only for pending/scheduled status */}

@@ -31,8 +31,13 @@ function getWillStatus(will: any, memberCount: number): string {
   const startDate = new Date(will.startDate);
   const endDate = new Date(will.endDate);
 
+  // If the will has End Room data, use the will's status directly
+  if (will.endRoomScheduledAt) {
+    return will.status || 'waiting_for_end_room';
+  }
+
   if (now >= endDate) {
-    return 'completed';
+    return 'waiting_for_end_room'; // Will transition to completed after End Room
   } else if (now >= startDate) {
     return 'active';
   } else {
@@ -807,6 +812,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting will:", error);
       res.status(500).json({ message: "Failed to delete will" });
+    }
+  });
+
+  // End Room routes
+  app.get('/api/wills/:id/end-room', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      // Check if user is part of this will's circle
+      const circle = await storage.getCircleById(will.circleId);
+      if (!circle) {
+        return res.status(404).json({ message: "Circle not found" });
+      }
+      
+      const isInCircle = await storage.isUserInCircle(userId, circle.id);
+      if (!isInCircle) {
+        return res.status(403).json({ message: "You must be in the circle to access the End Room" });
+      }
+      
+      // Return End Room information
+      res.json({
+        endRoomUrl: will.endRoomUrl,
+        endRoomScheduledAt: will.endRoomScheduledAt,
+        endRoomStatus: will.endRoomStatus,
+        isOpen: will.endRoomStatus === 'open',
+        canJoin: will.endRoomStatus === 'open' && will.endRoomUrl
+      });
+    } catch (error) {
+      console.error("Error fetching End Room:", error);
+      res.status(500).json({ message: "Failed to fetch End Room information" });
+    }
+  });
+
+  // Test Daily.co API connectivity
+  app.get('/api/daily/test', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const response = await fetch('https://api.daily.co/v1/rooms?limit=1', {
+        headers: {
+          'Authorization': `Bearer ${process.env.DAILY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        res.json({ status: 'connected', rooms: data });
+      } else {
+        const error = await response.text();
+        res.status(response.status).json({ status: 'error', error });
+      }
+    } catch (error) {
+      console.error("Daily.co test error:", error);
+      res.status(500).json({ status: 'error', message: error.message });
     }
   });
 

@@ -18,12 +18,17 @@ function getWillStatus(will: any, memberCount: number): string {
   // If will is archived, treat as no will
   if (will.status === 'archived') return 'no_will';
   
+  // If will has explicit status, use it (for End Room flow)
+  if (will.status === 'waiting_for_end_room' || will.status === 'completed') {
+    return will.status;
+  }
+  
   const now = new Date();
   const startDate = new Date(will.startDate);
   const endDate = new Date(will.endDate);
 
   if (now >= endDate) {
-    // Check if all members have acknowledged
+    // Will should transition to waiting_for_end_room, but check acknowledgments
     const acknowledgedCount = will.acknowledgedCount || 0;
     if (acknowledgedCount >= memberCount) {
       return 'no_will'; // All acknowledged, can start new will
@@ -109,6 +114,11 @@ export default function InnerCircleHub() {
       // More frequent updates for completed wills awaiting acknowledgment
       if (willStatus === 'completed') {
         return 5000; // 5 seconds for real-time acknowledgment counter
+      }
+      
+      // More frequent updates for wills waiting for end room
+      if (willStatus === 'waiting_for_end_room') {
+        return 30000; // 30 seconds for end room status updates
       }
       
       // More frequent updates when will is close to starting
@@ -497,11 +507,27 @@ export default function InnerCircleHub() {
               </div>
             )}
 
+            {willStatus === 'waiting_for_end_room' && (
+              <div className="text-center py-8">
+                <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> Complete!</h3>
+                <p className="text-gray-600 mb-6">Time to join your End Room ceremony</p>
+                
+                <Button className="bg-purple-600 hover:bg-purple-700 mobile-button" onClick={handleViewWillDetails}>
+                  Join End Room
+                </Button>
+              </div>
+            )}
+
             {willStatus === 'completed' && (
               <div className="text-center py-8"> {/* Simplified completion interface */}
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 713.138-3.138z" />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> Completed!</h3>

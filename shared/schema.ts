@@ -60,7 +60,10 @@ export const wills = pgTable("wills", {
   createdBy: varchar("created_by").notNull().references(() => users.id),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, completed
+  endRoomScheduledAt: timestamp("end_room_scheduled_at"),
+  endRoomUrl: varchar("end_room_url", { length: 500 }),
+  endRoomStatus: varchar("end_room_status", { length: 20 }).default("pending"), // pending, open, completed
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, waiting_for_end_room, completed
   createdAt: timestamp("created_at").defaultNow(),
 });
 
