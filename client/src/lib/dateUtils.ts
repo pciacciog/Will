@@ -13,9 +13,10 @@ export function formatDisplayDateTime(dateString: string): string {
   
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric', 
+    weekday: 'long',
     year: 'numeric',
+    month: 'long',
+    day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
     hour12: true
