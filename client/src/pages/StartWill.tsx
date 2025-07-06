@@ -654,9 +654,9 @@ export default function StartWill() {
 
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="space-y-1 text-sm text-gray-700">
-                    <p>• Video call opens automatically at scheduled time</p>
-                    <p>• 15-minute reminder before start</p>
-                    <p>• Time cannot be changed once <em>Will</em> is active</p>
+                    <p>• The End Room will open automatically at the scheduled time and run for 30 minutes</p>
+                    <p>• The End Room cannot be re-scheduled once <em>Will</em> is active</p>
+                    <p>• After the End Room time expires, it will close automatically, and the <em>Will</em> will be marked as complete—regardless of attendance.</p>
                   </div>
                 </div>
 
