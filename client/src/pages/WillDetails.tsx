@@ -201,7 +201,9 @@ export default function WillDetails() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {will.status === 'pending' ? <><em>Will</em> Pending</> : <><em>Will</em> Details</>}
+                {will.status === 'pending' ? <><em>Will</em> Pending</> : 
+                 will.status === 'waiting_for_end_room' ? <><em>Will</em> Complete</> : 
+                 <><em>Will</em> Details</>}
               </h1>
               <Badge 
                 className={
@@ -213,7 +215,7 @@ export default function WillDetails() {
                   'bg-gray-100 text-gray-800'
                 }
               >
-                {will.status === 'waiting_for_end_room' ? 'Awaiting End Room' : 
+                {will.status === 'waiting_for_end_room' ? 'Pending End Room' : 
                  will.status.charAt(0).toUpperCase() + will.status.slice(1)}
               </Badge>
             </div>
@@ -227,7 +229,10 @@ export default function WillDetails() {
           
           {will.status !== 'pending' && (
             <p className="text-gray-600">
-              {formatDateRange(will.startDate, will.endDate)} • {calculateDuration(will.startDate, will.endDate)}
+              {will.status === 'waiting_for_end_room' ? 
+                formatDateRange(will.startDate, will.endDate) : 
+                `${formatDateRange(will.startDate, will.endDate)} • ${calculateDuration(will.startDate, will.endDate)}`
+              }
             </p>
           )}
         </div>
@@ -466,6 +471,57 @@ export default function WillDetails() {
                     You have acknowledged this completion
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* End Room Explanation Section - Show for waiting_for_end_room status */}
+        {will.status === 'waiting_for_end_room' && (
+          <Card className="mb-8 border-amber-200 bg-amber-50">
+            <CardContent className="p-6">
+              <p className="text-gray-700 text-base leading-relaxed">
+                This is your final step: a 30-minute group session to reflect. Once the End Room ends, the <em>Will</em> will be marked as complete. The End Room will open automatically at the scheduled time and close after 30 minutes. Attendance is optional—but presence is powerful.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Scheduled End Room Section - Show for waiting_for_end_room status */}
+        {will.status === 'waiting_for_end_room' && will.endRoomScheduledAt && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <svg className="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Scheduled End Room
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div>
+                  <span className="font-medium text-gray-700">Starts:</span>
+                  <span className="ml-2 text-gray-600">{new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Ends:</span>
+                  <span className="ml-2 text-gray-600">{new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
