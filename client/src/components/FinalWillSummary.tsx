@@ -29,6 +29,19 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
     });
   };
 
+  const formatEndRoomTimespan = () => {
+    if (!will.endRoomScheduledAt) return '';
+    
+    const startTime = new Date(will.endRoomScheduledAt);
+    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000); // 30 minutes later
+    
+    const formatTime = (date: Date) => {
+      return `${date.getMonth() + 1}/${date.getDate()} ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+    };
+    
+    return `${formatTime(startTime)} to ${formatTime(endTime)}`;
+  };
+
   const calculateDuration = () => {
     const start = new Date(will.startDate);
     const end = new Date(will.endDate);
@@ -123,18 +136,30 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Video className="w-5 h-5 text-amber-600" />
+                  <Video className="w-5 h-5 text-green-600" />
                   End Room Ceremony
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <span className="font-medium text-gray-700">Scheduled for:</span>
-                  <p className="text-gray-600">{formatDateTime(will.endRoomScheduledAt)}</p>
+                  <span className="font-medium text-gray-700">Ran:</span>
+                  <p className="text-gray-600">{formatEndRoomTimespan()}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Duration:</span>
-                  <p className="text-gray-600">30 minutes</p>
+                  <span className="font-medium text-gray-700">Attendees:</span>
+                  <div className="mt-2 space-y-2">
+                    {will.commitments?.filter((commitment: any) => commitment.user).map((commitment: any) => (
+                      <div key={commitment.id} className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-gray-600">
+                          {commitment.user.firstName && commitment.user.lastName 
+                            ? `${commitment.user.firstName} ${commitment.user.lastName}`
+                            : commitment.user.email
+                          }
+                        </span>
+                      </div>
+                    )) || []}
+                  </div>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Status:</span>
@@ -147,25 +172,24 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           )}
 
           {/* Acknowledgment Section */}
-          <Card className="border-2 border-amber-200 bg-amber-50">
+          <Card className="border-2 border-green-200 bg-green-50">
             <CardContent className="p-6">
               <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle className="w-8 h-8 text-amber-600" />
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Acknowledge <em>Will</em> Completion
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    This marks the official completion of your shared journey. Once acknowledged, 
-                    this <em>Will</em> will be archived and you can start a new one.
+                    This marks the end of your will. Once acknowledged, it will be archived and you'll be ready to start a new one.
                   </p>
                 </div>
                 <Button 
                   onClick={onAcknowledge}
                   disabled={isAcknowledging}
-                  className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 text-lg"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
                   size="lg"
                 >
                   {isAcknowledging ? "Acknowledging..." : "Acknowledge and Close Will"}
