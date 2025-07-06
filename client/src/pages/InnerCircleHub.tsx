@@ -575,7 +575,9 @@ export default function InnerCircleHub() {
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room in Process</h3>
                     <p className="text-gray-600 mb-6">
                       The End Room is live and will close at <strong>{will?.endRoomScheduledAt ? (() => {
-                        const closeTime = new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000);
+                        const dateStr = will.endRoomScheduledAt.replace('T', ' ').replace(/\.\d+Z?$/, '');
+                        const openTime = new Date(dateStr);
+                        const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
                         return `${closeTime.getMonth() + 1}/${closeTime.getDate()} ${closeTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
                       })() : 'N/A'}</strong>.
                     </p>
@@ -595,10 +597,14 @@ export default function InnerCircleHub() {
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room</h3>
                     <p className="text-gray-600 mb-6">
                       The End Room will open at <strong>{will?.endRoomScheduledAt ? (() => {
-                        const openTime = new Date(will.endRoomScheduledAt);
+                        // Parse as local time to avoid timezone conversion issues
+                        const dateStr = will.endRoomScheduledAt.replace('T', ' ').replace(/\.\d+Z?$/, '');
+                        const openTime = new Date(dateStr);
                         return `${openTime.getMonth() + 1}/${openTime.getDate()} ${openTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
                       })() : 'N/A'}</strong> and will close at <strong>{will?.endRoomScheduledAt ? (() => {
-                        const closeTime = new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000);
+                        const dateStr = will.endRoomScheduledAt.replace('T', ' ').replace(/\.\d+Z?$/, '');
+                        const openTime = new Date(dateStr);
+                        const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
                         return `${closeTime.getMonth() + 1}/${closeTime.getDate()} ${closeTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
                       })() : 'N/A'}</strong>.
                     </p>
