@@ -321,6 +321,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Added 48-hour time limit constraint after Will end date for End Room scheduling
   - Updated copy to "When will your circle gather to honor the efforts?" with detailed scheduling rules
   - Added comprehensive disclaimer about End Room behavior and completion criteria
+- **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
+  - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
+  - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed
+  - Enforced End Room scheduling validation rules: must be scheduled between Will end time and 48 hours afterward
+  - Added client-side and server-side validation with clear error messages for invalid End Room times
+  - Created dedicated UI for "waiting_for_end_room" status in Inner Circle Hub with purple styling and video icon
+  - Fixed End Room completion logic: Wills only complete when End Room expires, not when Will end date passes
+  - Updated End Room info text to clarify 30-minute duration, no rescheduling, and automatic completion policies
 
 ## Changelog
 - June 25, 2025. Initial setup

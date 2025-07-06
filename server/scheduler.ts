@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import { db } from './db';
 import { wills } from '@shared/schema';
-import { eq, and, lt, gte, isNull } from 'drizzle-orm';
+import { eq, and, lt, gte, isNull, isNotNull } from 'drizzle-orm';
 import { dailyService } from './daily';
 import { storage } from './storage';
 
@@ -38,6 +38,9 @@ export class EndRoomScheduler {
     const now = new Date();
     console.log(`[EndRoomScheduler] Checking for End Rooms at ${now.toISOString()}`);
 
+    // First, transition Will statuses based on dates
+    await this.transitionWillStatuses(now);
+
     // Find End Rooms that should be opened (scheduled time has passed, status is pending)
     await this.openPendingEndRooms(now);
 
@@ -46,6 +49,62 @@ export class EndRoomScheduler {
 
     // Check for completed wills that need End Rooms scheduled
     await this.scheduleEndRoomsForCompletedWills();
+  }
+
+  private async transitionWillStatuses(now: Date) {
+    try {
+      // 1. Transition pending wills to active (start time has passed)
+      const willsToActivate = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.status, 'pending'),
+            lt(wills.startDate, now)
+          )
+        );
+
+      for (const will of willsToActivate) {
+        console.log(`[EndRoomScheduler] Activating Will ${will.id}`);
+        await storage.updateWillStatus(will.id, 'active');
+      }
+
+      // 2. Transition active wills to waiting_for_end_room (end time has passed and End Room scheduled)
+      const willsToWaitForEndRoom = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.status, 'active'),
+            lt(wills.endDate, now),
+            isNotNull(wills.endRoomScheduledAt)
+          )
+        );
+
+      for (const will of willsToWaitForEndRoom) {
+        console.log(`[EndRoomScheduler] Transitioning Will ${will.id} to waiting_for_end_room`);
+        await storage.updateWillStatus(will.id, 'waiting_for_end_room');
+      }
+
+      // 3. Transition active wills to completed (end time has passed and no End Room scheduled)
+      const willsToComplete = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.status, 'active'),
+            lt(wills.endDate, now),
+            isNull(wills.endRoomScheduledAt)
+          )
+        );
+
+      for (const will of willsToComplete) {
+        console.log(`[EndRoomScheduler] Completing Will ${will.id} (no End Room)`);
+        await storage.updateWillStatus(will.id, 'completed');
+      }
+    } catch (error) {
+      console.error('[EndRoomScheduler] Error transitioning Will statuses:', error);
+    }
   }
 
   private async openPendingEndRooms(now: Date) {
@@ -123,50 +182,9 @@ export class EndRoomScheduler {
 
   private async scheduleEndRoomsForCompletedWills() {
     try {
-      // Find wills that have ended but don't have End Rooms scheduled yet
-      const now = new Date();
-      const willsNeedingEndRooms = await db
-        .select()
-        .from(wills)
-        .where(
-          and(
-            eq(wills.status, 'active'),
-            lt(wills.endDate, now)
-          )
-        );
-
-      for (const will of willsNeedingEndRooms) {
-        // Skip if already has End Room scheduled
-        if (will.endRoomScheduledAt) {
-          continue;
-        }
-        
-        try {
-          console.log(`[EndRoomScheduler] Scheduling End Room for completed Will ${will.id}`);
-          
-          const endRoomTime = dailyService.calculateEndRoomTime(will.endDate);
-          
-          // Create Daily room
-          const room = await dailyService.createEndRoom({
-            willId: will.id,
-            scheduledStart: endRoomTime,
-            durationMinutes: 30
-          });
-
-          // Update will with End Room details
-          await storage.updateWillEndRoom(will.id, {
-            endRoomScheduledAt: endRoomTime,
-            endRoomUrl: room.url,
-            endRoomStatus: 'pending'
-          });
-          
-          await storage.updateWillStatus(will.id, 'waiting_for_end_room');
-
-          console.log(`[EndRoomScheduler] End Room scheduled for Will ${will.id} at ${endRoomTime.toISOString()}`);
-        } catch (error) {
-          console.error(`[EndRoomScheduler] Failed to schedule End Room for Will ${will.id}:`, error);
-        }
-      }
+      // This method is now handled by transitionWillStatuses
+      // No additional logic needed here as status transitions are handled above
+      return;
     } catch (error) {
       console.error('[EndRoomScheduler] Error scheduling End Rooms for completed wills:', error);
     }
