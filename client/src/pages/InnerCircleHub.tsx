@@ -106,6 +106,24 @@ function formatActivationTime(dateString: string): string {
   }
 }
 
+function formatEndRoomTime(dateString: string): string {
+  if (!dateString) return '';
+  
+  // Parse as local time to avoid timezone conversion issues
+  const dateStr = dateString.replace('T', ' ').replace(/\.\d+Z?$/, '');
+  const date = new Date(dateStr);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  
+  const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  
+  if (isToday) {
+    return timeStr; // Just "8:50 PM" for today
+  } else {
+    return `${date.getMonth() + 1}/${date.getDate()} ${timeStr}`; // "7/7 8:50 PM" for other days
+  }
+}
+
 export default function InnerCircleHub() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -578,7 +596,7 @@ export default function InnerCircleHub() {
                         const dateStr = will.endRoomScheduledAt.replace('T', ' ').replace(/\.\d+Z?$/, '');
                         const openTime = new Date(dateStr);
                         const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
-                        return `${closeTime.getMonth() + 1}/${closeTime.getDate()} ${closeTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                        return formatEndRoomTime(closeTime.toISOString());
                       })() : 'N/A'}</strong>.
                     </p>
                     
@@ -596,16 +614,11 @@ export default function InnerCircleHub() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room</h3>
                     <p className="text-gray-600 mb-6">
-                      The End Room will open at <strong>{will?.endRoomScheduledAt ? (() => {
-                        // Parse as local time to avoid timezone conversion issues
-                        const dateStr = will.endRoomScheduledAt.replace('T', ' ').replace(/\.\d+Z?$/, '');
-                        const openTime = new Date(dateStr);
-                        return `${openTime.getMonth() + 1}/${openTime.getDate()} ${openTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-                      })() : 'N/A'}</strong> and will close at <strong>{will?.endRoomScheduledAt ? (() => {
+                      The End Room will open at <strong>{will?.endRoomScheduledAt ? formatEndRoomTime(will.endRoomScheduledAt) : 'N/A'}</strong> and will close at <strong>{will?.endRoomScheduledAt ? (() => {
                         const dateStr = will.endRoomScheduledAt.replace('T', ' ').replace(/\.\d+Z?$/, '');
                         const openTime = new Date(dateStr);
                         const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
-                        return `${closeTime.getMonth() + 1}/${closeTime.getDate()} ${closeTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                        return formatEndRoomTime(closeTime.toISOString());
                       })() : 'N/A'}</strong>.
                     </p>
                     
