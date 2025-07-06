@@ -520,7 +520,10 @@ export default function InnerCircleHub() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room in Process</h3>
                     <p className="text-gray-600 mb-6">
-                      The End Room is live and will close at <strong>{will?.endRoomScheduledAt ? formatDisplayDateTime(new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toISOString()) : 'N/A'}</strong>.
+                      The End Room is live and will close at <strong>{will?.endRoomScheduledAt ? (() => {
+                        const closeTime = new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000);
+                        return `${closeTime.getMonth() + 1}/${closeTime.getDate()} ${closeTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                      })() : 'N/A'}</strong>.
                     </p>
                     
                     <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleViewWillDetails}>
@@ -537,7 +540,13 @@ export default function InnerCircleHub() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room</h3>
                     <p className="text-gray-600 mb-6">
-                      The End Room will open at <strong>{formatDisplayDateTime(will?.endRoomScheduledAt)}</strong> and will close at <strong>{will?.endRoomScheduledAt ? formatDisplayDateTime(new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toISOString()) : 'N/A'}</strong>.
+                      The End Room will open at <strong>{will?.endRoomScheduledAt ? (() => {
+                        const openTime = new Date(will.endRoomScheduledAt);
+                        return `${openTime.getMonth() + 1}/${openTime.getDate()} ${openTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                      })() : 'N/A'}</strong> and will close at <strong>{will?.endRoomScheduledAt ? (() => {
+                        const closeTime = new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000);
+                        return `${closeTime.getMonth() + 1}/${closeTime.getDate()} ${closeTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                      })() : 'N/A'}</strong>.
                     </p>
                     
                     <Button className="bg-purple-600 hover:bg-purple-700 mobile-button" onClick={handleViewWillDetails}>
