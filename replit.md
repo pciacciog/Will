@@ -352,6 +352,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Implemented consistent timezone rules: store UTC in database, display local time in frontend
   - Fixed 7-hour timezone offset issue that was incorrectly scheduling End Rooms
   - Updated formatEndRoomTime function to handle proper UTC-to-local conversion without manual string manipulation
+- **July 06, 2025**: Completed timezone and End Room functionality with working Daily.co integration
+  - Resolved Daily.co API authentication by setting up billing and providing working API key
+  - End Room lifecycle working perfectly: Will ends → End Room active → End Room expires → Will completed
+  - Timezone conversion working correctly: UTC storage with local time display throughout app
+  - Smart time formatting: shows just time for today ("9:17 PM") or date+time for other days
+  - Scheduler automatically transitions Will status and closes End Rooms at proper times
+  - Final Will Summary modal appears when End Room ceremony completes for acknowledgment flow
 
 ## Changelog
 - June 25, 2025. Initial setup
