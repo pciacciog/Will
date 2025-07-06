@@ -1,0 +1,45 @@
+🧭 End Room Flow – Final Will Completion Sequence
+🔁 Overview:
+After a Will reaches its scheduled end time, the app should guide the user (and their Circle) through a three-step closure process:
+1. Countdown to the End Room session
+2. Live End Room (30 min breakout session)
+3. Final Will Summary + Acknowledge
+
+🔄 Flow Breakdown:
+✅ 1. Will Ends → Status Changes to “Pending End Room”
+* Once the Will’s scheduled end date & time is reached:
+    * The Will status should automatically change from Active to Pending End Room.
+    * A countdown timer (based on the pre-scheduled End Room time) should begin.
+    * The End Room session must have been scheduled after the Will's end time, and no later than 48 hours after it ends.
+
+🟢 2. End Room Becomes Live
+* At the scheduled End Room time:
+    * A video call link or embedded session should automatically activate.
+    * The session remains live for exactly 30 minutes.
+    * During this time, users can join, share reflections, and bond.
+* During this session, the status should display something like: kotlin CopyEdit   “End Room in progress – this is your moment to reflect and celebrate.”
+*   
+* Once the 30 minutes are up:
+    * Automatically close the room.
+    * Update Will status to: Complete
+
+📄 3. Final Summary View
+* After the End Room ends:
+    * Display a Final Will Summary window as a modal or new page.
+    * This should include:
+        * Will duration (start and end dates)
+        * Each member’s Will item
+        * Participation log (who joined the End Room, timestamp)
+        * Any submitted reflections (if applicable)
+* Acknowledge button at the bottom: css CopyEdit   [ Acknowledge and Close Will ]
+*   
+* Only after this button is clicked:
+    * Clear Will from active state.
+    * Return to the “Start a New Will” view.
+    * Optionally archive the Will for viewing later in a “History” section.
+
+🧠 Notes & Logic Checks:
+* ⏳ The End Room must be scheduled in the initial Will setup and validated to:
+    * Start after the Will ends
+    * Start within 48 hours of Will end time
+* 🧾 The final summary view is crucial for closure, so it should not be skippable.

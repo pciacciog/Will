@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { EndRoom } from "@/components/EndRoom";
+import { FinalWillSummary } from "@/components/FinalWillSummary";
 
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -66,6 +67,7 @@ export default function WillDetails() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [expandedCommitments, setExpandedCommitments] = useState<Record<string, boolean>>({});
+  const [showFinalSummary, setShowFinalSummary] = useState(false);
 
 
   const { data: will, isLoading } = useQuery({
@@ -95,14 +97,23 @@ export default function WillDetails() {
       return response.json();
     },
     onSuccess: () => {
+      // Close the Final Will Summary modal
+      setShowFinalSummary(false);
+      
       // Invalidate multiple queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      
       toast({
-        title: "Acknowledged",
-        description: "You have acknowledged the completion of this Will",
+        title: "Will Acknowledged",
+        description: "You have acknowledged the completion of this Will. You can now start a new Will.",
       });
+      
+      // Navigate back to hub after acknowledgment
+      setTimeout(() => {
+        setLocation('/hub');
+      }, 1500);
     },
     onError: (error: any) => {
       toast({
@@ -140,6 +151,13 @@ export default function WillDetails() {
       });
     },
   });
+
+  // Auto-show Final Will Summary when Will is completed
+  useEffect(() => {
+    if (will && will.status === 'completed' && !will.hasUserAcknowledged && !showFinalSummary) {
+      setShowFinalSummary(true);
+    }
+  }, [will, showFinalSummary]);
 
   // Early returns after all hooks are defined
   if (isLoading) {
@@ -543,6 +561,15 @@ export default function WillDetails() {
           </Button>
         </div>
       </div>
+
+      {/* Final Will Summary Modal */}
+      <FinalWillSummary
+        isOpen={showFinalSummary}
+        onClose={() => setShowFinalSummary(false)}
+        onAcknowledge={() => acknowledgeMutation.mutate()}
+        will={will}
+        isAcknowledging={acknowledgeMutation.isPending}
+      />
     </div>
   );
 }

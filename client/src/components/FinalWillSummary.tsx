@@ -1,0 +1,180 @@
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, Clock, Users, Video } from 'lucide-react';
+
+interface FinalWillSummaryProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAcknowledge: () => void;
+  will: any;
+  isAcknowledging?: boolean;
+}
+
+export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAcknowledging = false }: FinalWillSummaryProps) {
+  if (!will) return null;
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
+  };
+
+  const calculateDuration = () => {
+    const start = new Date(will.startDate);
+    const end = new Date(will.endDate);
+    const diff = end.getTime() - start.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (days > 0) {
+      return `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}`;
+    } else if (hours > 0) {
+      return `${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    } else {
+      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3 text-2xl">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <em>Will</em> Complete - Final Summary
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Will Duration Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <em>Will</em> Duration
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span className="font-medium text-gray-700">Started:</span>
+                  <p className="text-gray-600">{formatDateTime(will.startDate)}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Ended:</span>
+                  <p className="text-gray-600">{formatDateTime(will.endDate)}</p>
+                </div>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Total Duration:</span>
+                <p className="text-gray-600">{calculateDuration()}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Member Commitments */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-600" />
+                Member Commitments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {will.commitments?.map((commitment: any) => (
+                  <div 
+                    key={commitment.id}
+                    className="border-l-4 border-purple-500 pl-4 py-3 bg-purple-50 rounded-r-lg"
+                  >
+                    <div className="font-medium text-gray-900 mb-1">
+                      {commitment.user.firstName && commitment.user.lastName 
+                        ? `${commitment.user.firstName} ${commitment.user.lastName}`
+                        : commitment.user.email
+                      }
+                    </div>
+                    <p className="text-gray-700 mb-2">
+                      <span className="font-medium">I will</span> {commitment.commitment}
+                    </p>
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                      Committed
+                    </Badge>
+                  </div>
+                )) || []}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* End Room Summary */}
+          {will.endRoomScheduledAt && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Video className="w-5 h-5 text-amber-600" />
+                  End Room Ceremony
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <span className="font-medium text-gray-700">Scheduled for:</span>
+                  <p className="text-gray-600">{formatDateTime(will.endRoomScheduledAt)}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Duration:</span>
+                  <p className="text-gray-600">30 minutes</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Status:</span>
+                  <Badge className="ml-2 bg-green-100 text-green-800">
+                    Completed
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Acknowledgment Section */}
+          <Card className="border-2 border-amber-200 bg-amber-50">
+            <CardContent className="p-6">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-8 h-8 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Acknowledge <em>Will</em> Completion
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    This marks the official completion of your shared journey. Once acknowledged, 
+                    this <em>Will</em> will be archived and you can start a new one.
+                  </p>
+                </div>
+                <Button 
+                  onClick={onAcknowledge}
+                  disabled={isAcknowledging}
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 text-lg"
+                  size="lg"
+                >
+                  {isAcknowledging ? "Acknowledging..." : "Acknowledge and Close Will"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
