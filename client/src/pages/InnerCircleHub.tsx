@@ -493,7 +493,7 @@ export default function InnerCircleHub() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900"><em>Will</em> Active</h3>
-                      <p className="text-sm text-gray-600">{formatTimeRemaining(will?.endDate)}</p>
+                      <p className="text-sm text-gray-600">Ends at {formatDisplayDateTime(will?.endDate)}</p>
                     </div>
                   </div>
                   <Badge className="bg-green-100 text-green-800">
