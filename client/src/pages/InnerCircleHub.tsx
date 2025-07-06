@@ -265,15 +265,16 @@ export default function InnerCircleHub() {
     try {
       // Fetch End Room data from the dedicated endpoint
       const response = await apiRequest(`/api/wills/${will.id}/end-room`);
+      const data = await response.json();
       
-      if (response.canJoin && response.endRoomUrl) {
+      if (data.canJoin && data.endRoomUrl) {
         // Open the Daily.co video room in a new tab
-        window.open(response.endRoomUrl, '_blank');
+        window.open(data.endRoomUrl, '_blank');
         toast({
           title: "Joining End Room",
           description: "Opening video call in new tab...",
         });
-      } else if (!response.endRoomUrl) {
+      } else if (!data.endRoomUrl) {
         toast({
           title: "End Room not ready",
           description: "The video room is being set up. Please try again in a moment.",
