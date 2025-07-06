@@ -113,7 +113,11 @@ function formatEndRoomTime(dateString: string): string {
   const dateStr = dateString.replace('T', ' ').replace(/\.\d+Z?$/, '');
   const date = new Date(dateStr);
   const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
+  
+  // Compare dates more reliably
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const isToday = dateOnly.getTime() === today.getTime();
   
   const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   
