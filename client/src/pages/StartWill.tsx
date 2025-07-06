@@ -278,7 +278,7 @@ export default function StartWill() {
   }
 
   return (
-    <div className="min-h-screen pt-8 pb-6 px-4 sm:pt-16 sm:py-12">
+    <div className="min-h-screen pt-16 pb-6 px-4 sm:pt-16 sm:py-12">
       <div className="max-w-2xl mx-auto sm:px-6 lg:px-8">
         
         {/* Progress Indicator */}

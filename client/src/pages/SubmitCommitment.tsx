@@ -136,20 +136,7 @@ export default function SubmitCommitment() {
                 <p className="text-gray-600">Step {step} of 2</p>
               </div>
             </div>
-            {showHelpIcon && (
-              <div className="flex-1 flex justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowInstructionModal(true)}
-                  className="w-8 h-8 p-0 text-gray-500 hover:text-gray-700"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </Button>
-              </div>
-            )}
+            <div className="flex-1"></div>
           </div>
         </div>
 
@@ -278,10 +265,25 @@ export default function SubmitCommitment() {
                     </div>
                   </div>
                   
-                  <div className="flex justify-between">
-                    <Button type="button" variant="ghost" onClick={handleBack}>
-                      ← Back
-                    </Button>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                      <Button type="button" variant="ghost" onClick={handleBack}>
+                        ← Back
+                      </Button>
+                      {showHelpIcon && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowInstructionModal(true)}
+                          className="w-8 h-8 p-0 text-gray-500 hover:text-gray-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </Button>
+                      )}
+                    </div>
                     <Button 
                       type="button"
                       onClick={handleSubmit} 
