@@ -514,8 +514,10 @@ export default function InnerCircleHub() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> Awaiting End Room</h3>
-                <p className="text-gray-600 mb-6">Your End Room ceremony is scheduled. The <em>Will</em> completes when the End Room expires.</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room</h3>
+                <p className="text-gray-600 mb-6">
+                  The End Room will open at <strong>{formatDisplayDateTime(will?.endRoomScheduledAt)}</strong> and will expire at <strong>{will?.endRoomScheduledAt ? formatDisplayDateTime(new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toISOString()) : 'N/A'}</strong>.
+                </p>
                 
                 <Button className="bg-purple-600 hover:bg-purple-700 mobile-button" onClick={handleViewWillDetails}>
                   View End Room Details

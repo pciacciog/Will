@@ -88,6 +88,12 @@ export function EndRoom({ willId }: EndRoomProps) {
     });
   };
 
+  const getExpirationTime = (startTime: string) => {
+    const start = new Date(startTime);
+    const expiration = new Date(start.getTime() + 30 * 60 * 1000);
+    return expiration.toISOString();
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -120,21 +126,28 @@ export function EndRoom({ willId }: EndRoomProps) {
         </div>
 
         {endRoomData.endRoomScheduledAt && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Clock className="w-4 h-4" />
-              <span>Scheduled for:</span>
+              <span>Schedule:</span>
             </div>
-            <p className="text-sm font-medium text-gray-900 ml-6">
-              {formatDateTime(endRoomData.endRoomScheduledAt)}
-            </p>
-            
-            {endRoomData.endRoomStatus === 'pending' && timeRemaining && (
-              <div className="ml-6">
-                <span className="text-xs text-gray-500">Starts in: </span>
-                <span className="text-sm font-mono font-bold text-purple-600">{timeRemaining}</span>
+            <div className="ml-6 space-y-2">
+              <div>
+                <span className="text-xs text-gray-500">Opens at: </span>
+                <span className="text-sm font-medium text-gray-900">{formatDateTime(endRoomData.endRoomScheduledAt)}</span>
               </div>
-            )}
+              <div>
+                <span className="text-xs text-gray-500">Expires at: </span>
+                <span className="text-sm font-medium text-gray-900">{formatDateTime(getExpirationTime(endRoomData.endRoomScheduledAt))}</span>
+              </div>
+              
+              {endRoomData.endRoomStatus === 'pending' && timeRemaining && (
+                <div>
+                  <span className="text-xs text-gray-500">Starts in: </span>
+                  <span className="text-sm font-mono font-bold text-purple-600">{timeRemaining}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
