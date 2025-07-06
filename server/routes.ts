@@ -871,6 +871,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You must be in the circle to access the End Room" });
       }
       
+      // If End Room is open but URL is missing, try to create the room
+      if (will.endRoomStatus === 'open' && !will.endRoomUrl && will.endRoomScheduledAt) {
+        try {
+          console.log(`Creating missing Daily.co room for Will ${willId}`);
+          const endRoom = await dailyService.createEndRoom({
+            willId: willId,
+            scheduledStart: new Date(will.endRoomScheduledAt),
+          });
+          
+          // Update will with End Room details
+          await storage.updateWillEndRoom(willId, {
+            endRoomUrl: endRoom.url,
+            endRoomStatus: 'open',
+          });
+          
+          console.log(`Created missing End Room for Will ${willId}: ${endRoom.url}`);
+          
+          // Return updated information
+          res.json({
+            endRoomUrl: endRoom.url,
+            endRoomScheduledAt: will.endRoomScheduledAt,
+            endRoomStatus: 'open',
+            isOpen: true,
+            canJoin: true
+          });
+          return;
+        } catch (error) {
+          console.error(`Failed to create missing End Room for Will ${willId}:`, error);
+        }
+      }
+      
       // Return End Room information
       res.json({
         endRoomUrl: will.endRoomUrl,

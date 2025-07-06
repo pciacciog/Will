@@ -221,6 +221,43 @@ export default function InnerCircleHub() {
     }
   };
 
+  const handleJoinEndRoom = async () => {
+    if (!will?.id) return;
+    
+    try {
+      // Fetch End Room data from the dedicated endpoint
+      const response = await apiRequest(`/api/wills/${will.id}/end-room`);
+      
+      if (response.canJoin && response.endRoomUrl) {
+        // Open the Daily.co video room in a new tab
+        window.open(response.endRoomUrl, '_blank');
+        toast({
+          title: "Joining End Room",
+          description: "Opening video call in new tab...",
+        });
+      } else if (!response.endRoomUrl) {
+        toast({
+          title: "End Room not ready",
+          description: "The video room is being set up. Please try again in a moment.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "End Room not available", 
+          description: "The End Room is not currently active.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error joining End Room:', error);
+      toast({
+        title: "Connection error",
+        description: "Unable to connect to End Room. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -526,7 +563,7 @@ export default function InnerCircleHub() {
                       })() : 'N/A'}</strong>.
                     </p>
                     
-                    <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleViewWillDetails}>
+                    <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleJoinEndRoom}>
                       Join End Room
                     </Button>
                   </>
