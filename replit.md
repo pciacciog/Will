@@ -303,6 +303,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Fixed "Because" prefix overlapping issue on iOS by applying same flexbox solution to "Why" input fields
   - Updated both StartWill and SubmitCommitment pages to prevent text overlap on mobile devices
   - All input prefixes now use proper flexbox layout with flex-shrink-0 for consistent mobile display
+- **July 05, 2025**: Implemented lightweight instructional modal for improved Will creation UX
+  - Added WillInstructionModal component with step-by-step guidance for new users
+  - Modal automatically shows for first-time Will creators and first-time commitment submitters
+  - Persistent "?" help icon in StartWill and SubmitCommitment pages for easy access
+  - Local storage tracking prevents repeated modal displays with optional "Don't show again" checkbox
+  - Clear copy explaining When/What/Why flow with practical examples for better user onboarding
 
 ## Changelog
 - June 25, 2025. Initial setup

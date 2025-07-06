@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
+import { WillInstructionModal } from "@/components/WillInstructionModal";
 
 // Helper function to calculate next Monday at 12:00 AM
 function getNextMondayStart(): string {
@@ -62,12 +63,27 @@ export default function StartWill() {
   });
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [whyCharCount, setWhyCharCount] = useState(0);
+  const [showInstructionModal, setShowInstructionModal] = useState(false);
+  const [showHelpIcon, setShowHelpIcon] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
   });
+
+  // Check if user should see instruction modal
+  useEffect(() => {
+    const hasSeenInstruction = localStorage.getItem('willInstructionSeen');
+    const hasCreatedWill = localStorage.getItem('hasCreatedWill');
+    
+    if (!hasSeenInstruction && !hasCreatedWill) {
+      setShowInstructionModal(true);
+    }
+    
+    // Always show help icon once the component is loaded
+    setShowHelpIcon(true);
+  }, []);
 
   const createWillMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -238,6 +254,15 @@ export default function StartWill() {
     setLocation('/hub');
   };
 
+  const handleModalStart = () => {
+    // Mark that user has started creating a will
+    localStorage.setItem('hasCreatedWill', 'true');
+  };
+
+  const handleModalClose = () => {
+    setShowInstructionModal(false);
+  };
+
   if (!circle) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
@@ -258,27 +283,44 @@ export default function StartWill() {
         
         {/* Progress Indicator */}
         <div className="mb-8">
-          <div className="flex items-center justify-center space-x-4">
-            <div className="flex items-center">
-              <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                1
+          <div className="flex items-center justify-between">
+            <div className="flex-1"></div>
+            <div className="flex items-center justify-center space-x-4">
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  1
+                </div>
+                <span className={`ml-2 text-sm ${currentStep >= 1 ? 'text-primary' : 'text-gray-600'} font-medium`}>When</span>
               </div>
-              <span className={`ml-2 text-sm ${currentStep >= 1 ? 'text-primary' : 'text-gray-600'} font-medium`}>When</span>
-            </div>
-            <div className={`w-8 h-0.5 ${currentStep >= 2 ? 'bg-primary' : 'bg-gray-300'}`}></div>
-            <div className="flex items-center">
-              <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                2
+              <div className={`w-8 h-0.5 ${currentStep >= 2 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  2
+                </div>
+                <span className={`ml-2 text-sm ${currentStep >= 2 ? 'text-primary' : 'text-gray-600'} font-medium`}>What</span>
               </div>
-              <span className={`ml-2 text-sm ${currentStep >= 2 ? 'text-primary' : 'text-gray-600'} font-medium`}>What</span>
-            </div>
-            <div className={`w-8 h-0.5 ${currentStep >= 3 ? 'bg-primary' : 'bg-gray-300'}`}></div>
-            <div className="flex items-center">
-              <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                3
+              <div className={`w-8 h-0.5 ${currentStep >= 3 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  3
+                </div>
+                <span className={`ml-2 text-sm ${currentStep >= 3 ? 'text-primary' : 'text-gray-600'} font-medium`}>Why</span>
               </div>
-              <span className={`ml-2 text-sm ${currentStep >= 3 ? 'text-primary' : 'text-gray-600'} font-medium`}>Why</span>
             </div>
+            {showHelpIcon && (
+              <div className="flex-1 flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowInstructionModal(true)}
+                  className="w-8 h-8 p-0 text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         
@@ -557,6 +599,14 @@ export default function StartWill() {
           </Card>
         )}
       </div>
+
+      {/* Instruction Modal */}
+      <WillInstructionModal
+        isOpen={showInstructionModal}
+        onClose={handleModalClose}
+        onStart={handleModalStart}
+        showDontShowAgain={true}
+      />
     </div>
   );
 }
