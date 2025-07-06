@@ -31,7 +31,7 @@ export function WillInstructionModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center mb-4">
-            🙋‍♀️ How to Start a <em>Will</em>
+            How to Start a <em>Will</em>
           </DialogTitle>
         </DialogHeader>
         
@@ -47,7 +47,7 @@ export function WillInstructionModal({
               </div>
               <div>
                 <h3 className="font-medium text-gray-900 mb-1">When 🗓</h3>
-                <p className="text-sm text-gray-600">Start July 7 and end on July 14</p>
+                <p className="text-sm text-gray-600">"Start July 7, 8:00 am and end on July 14, 12:00 pm"</p>
               </div>
             </div>
             
