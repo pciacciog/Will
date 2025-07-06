@@ -46,7 +46,7 @@ export class DailyService {
       },
       body: JSON.stringify({
         name: roomName,
-        privacy: 'private',
+        privacy: 'public',
         properties: {
           start_video_off: true,
           start_audio_off: true,
