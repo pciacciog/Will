@@ -84,7 +84,7 @@ export function EndRoom({ willId }: EndRoomProps) {
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
-      timeZoneName: 'short'
+      hour12: true
     });
   };
 

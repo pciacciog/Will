@@ -327,6 +327,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Added proper acknowledgment flow requiring user review before Will is officially archived
   - Updated Inner Circle Hub UI to show "Will Complete - Ready to Review" state with amber styling
   - Fixed pending Will note to display specific start date/time instead of generic "start date" text
+- **July 06, 2025**: Enhanced End Room status displays and consistent date formatting
+  - Fixed Final Will Summary to only appear after End Room ceremony actually completes (endRoomStatus === 'completed')
+  - Added "End Room in Process" status with green styling when End Room is currently active
+  - Updated date formatting to consistently show "Sunday, July 6, 2025 at 12:50 PM" format instead of "Tomorrow"
+  - Enhanced both InnerCircleHub and EndRoom components to show exact "opens at" and "expires at" times
+  - Differentiated UI states: End Room pending (purple) vs End Room active (green) vs End Room completed (amber)
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed
