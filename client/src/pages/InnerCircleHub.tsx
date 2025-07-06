@@ -611,9 +611,9 @@ export default function InnerCircleHub() {
                       <div className="text-center">
                         <Button 
                           onClick={handleJoinEndRoom}
-                          className="bg-amber-500 hover:bg-amber-600 text-white mobile-button mb-2"
+                          className="bg-green-600 hover:bg-green-700 text-white mobile-button mb-2"
                         >
-                          Create Video Room
+                          Join
                         </Button>
                         <p className="text-sm text-gray-600">
                           The End Room is active but video setup is needed. Click to create.

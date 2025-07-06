@@ -359,9 +359,11 @@ This is a full-stack web application for group goal accountability, built with R
   - Timezone conversion working correctly: UTC storage with local time display throughout app
   - Smart time formatting: shows just time for today ("9:17 PM") or date+time for other days applied to all date displays
   - Scheduler automatically transitions Will status and closes End Rooms at proper times
-  - Video room creation working: automatic during Will creation + fallback creation via "Create Video Room" button
+  - Video room creation working: automatic during Will creation + fallback creation via "Join" button
   - Final Will Summary modal appears when End Room ceremony completes for acknowledgment flow
   - Updated End Room scheduling page with ceremonial wording and clear constraints ("honor the effort")
+  - Fixed Daily.co room access permissions with enhanced public settings (enable_knocking: false, enable_prejoin_ui: false)
+  - Updated End Room button from "Create Video Room" to "Join" with green styling for better UX
 
 ## Changelog
 - June 25, 2025. Initial setup
