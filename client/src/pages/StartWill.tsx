@@ -333,13 +333,6 @@ export default function StartWill() {
                 </div>
                 <span className={`ml-2 text-sm ${currentStep >= 3 ? 'text-primary' : 'text-gray-600'} font-medium`}>Why</span>
               </div>
-              <div className={`w-8 h-0.5 ${currentStep >= 4 ? 'bg-primary' : 'bg-gray-300'}`}></div>
-              <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 4 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                  4
-                </div>
-                <span className={`ml-2 text-sm ${currentStep >= 4 ? 'text-primary' : 'text-gray-600'} font-medium`}>End Room</span>
-              </div>
             </div>
             <div className="flex-1"></div>
           </div>
@@ -628,61 +621,57 @@ export default function StartWill() {
           </Card>
         )}
         
-        {/* Step 4: End Room Scheduling */}
+        {/* Step 4: End Room Scheduling - Special Ceremonial Step */}
         {currentStep === 4 && (
-          <Card>
+          <Card className="border-2 border-amber-200 shadow-lg">
             <CardContent className="p-8">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                  <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Schedule Your End Room</h2>
-                <p className="text-gray-600">When will your circle meet to celebrate completion?</p>
+                <h2 className="text-3xl font-bold text-gray-900 mb-3">Schedule Your End Room</h2>
+                <p className="text-lg text-gray-600">When will your circle gather to honor the efforts?</p>
               </div>
 
               <form onSubmit={handleStep4Submit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">End Room Date & Time</label>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : 'end date'}) 
-                    when your circle will meet for the completion ceremony.
+                  <label className="block text-sm font-medium text-gray-700 mb-3">End Room Date & Time</label>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : 'e.g. 7/13/2025'}) to share your stories.
+                    <br />
+                    <span className="text-amber-700 font-medium">Note: Must be within 48 hours after the <em>Will</em> ends.</span>
                   </p>
                   <input
                     type="datetime-local"
                     name="endRoomDateTime"
                     required
                     min={willData.endDate}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
+                    className="w-full px-4 py-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg"
                   />
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">End Room Info</p>
-                      <p className="text-sm text-blue-700 mt-1">
-                        This video call will automatically open at the scheduled time for your circle to celebrate 
-                        completing the <em>Will</em> together. You cannot change this time once the <em>Will</em> is created.
-                      </p>
-                    </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
+                  <div className="space-y-2 text-sm text-amber-800">
+                    <p>• A video call link will appear at the scheduled time.</p>
+                    <p>• You'll receive a 15-minute reminder before it starts.</p>
+                    <p>• Once the <em>Will</em> is active, the End Room time cannot be changed.</p>
+                    <p>• After the End Room closes—regardless of attendance—the <em>Will</em> is considered complete.</p>
                   </div>
                 </div>
 
-                <div className="flex justify-between">
-                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)}>
+                <div className="flex justify-between pt-4">
+                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)} className="text-gray-600">
                     ← Back
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                    className="bg-primary hover:bg-blue-600"
+                    className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 text-lg font-semibold"
                   >
-                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will →'}
+                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating Your Will...' : 'Create Will →'}
                   </Button>
                 </div>
               </form>

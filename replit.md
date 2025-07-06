@@ -309,6 +309,18 @@ This is a full-stack web application for group goal accountability, built with R
   - Persistent "?" help icon in StartWill and SubmitCommitment pages for easy access
   - Local storage tracking prevents repeated modal displays with optional "Don't show again" checkbox
   - Clear copy explaining When/What/Why flow with practical examples for better user onboarding
+- **July 06, 2025**: Enhanced Will creation flow with End Room scheduling during creation
+  - Implemented End Room scheduling as step 4 in Will creation process (not after completion)
+  - Integrated Daily.co API to create video rooms automatically when Will is created
+  - Added server-side End Room creation with proper error handling and status tracking
+  - Updated database schema to support endRoomScheduledAt field in Will creation
+- **July 06, 2025**: Redesigned End Room scheduling UX for ceremonial experience
+  - Removed "End Room" from 3-step progress indicator (When → What → Why only)
+  - Created special ceremonial 4th screen that appears after "Why" step without being in progress bar
+  - Enhanced End Room interface with amber styling, larger icons, and ceremonial messaging
+  - Added 48-hour time limit constraint after Will end date for End Room scheduling
+  - Updated copy to "When will your circle gather to honor the efforts?" with detailed scheduling rules
+  - Added comprehensive disclaimer about End Room behavior and completion criteria
 
 ## Changelog
 - June 25, 2025. Initial setup
