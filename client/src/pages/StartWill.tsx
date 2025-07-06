@@ -356,38 +356,34 @@ export default function StartWill() {
                       Choose Your Schedule
                     </label>
                     <RadioGroup value={schedulingMode} onValueChange={setSchedulingMode} className="space-y-4">
-                      <div 
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      <label 
+                        htmlFor="prescribed"
+                        className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
                           schedulingMode === 'prescribed' 
                             ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
                             : 'border-gray-200 hover:bg-gray-50'
                         }`}
-                        onClick={() => setSchedulingMode('prescribed')}
                       >
                         <RadioGroupItem value="prescribed" id="prescribed" className="sr-only" />
-                        <Label htmlFor="prescribed" className="cursor-pointer">
-                          <div className="font-medium text-gray-900 mb-1">📅 Week Template</div>
-                          <div className="text-sm text-gray-600">
-                            Starts next Monday at 12:00 AM and ends Sunday at 12:00 PM
-                          </div>
-                        </Label>
-                      </div>
-                      <div 
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        <div className="font-medium text-gray-900 mb-1">📅 Week Template</div>
+                        <div className="text-sm text-gray-600">
+                          Starts next Monday at 12:00 AM and ends Sunday at 12:00 PM
+                        </div>
+                      </label>
+                      <label 
+                        htmlFor="custom"
+                        className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
                           schedulingMode === 'custom' 
                             ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
                             : 'border-gray-200 hover:bg-gray-50'
                         }`}
-                        onClick={() => setSchedulingMode('custom')}
                       >
                         <RadioGroupItem value="custom" id="custom" className="sr-only" />
-                        <Label htmlFor="custom" className="cursor-pointer">
-                          <div className="font-medium text-gray-900 mb-1">⚙️ Custom</div>
-                          <div className="text-sm text-gray-600">
-                            Pick your own start and end times.
-                          </div>
-                        </Label>
-                      </div>
+                        <div className="font-medium text-gray-900 mb-1">⚙️ Custom</div>
+                        <div className="text-sm text-gray-600">
+                          Pick your own start and end times.
+                        </div>
+                      </label>
                     </RadioGroup>
                   </div>
                 </div>
