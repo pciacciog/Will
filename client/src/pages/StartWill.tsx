@@ -278,8 +278,8 @@ export default function StartWill() {
   }
 
   return (
-    <div className="min-h-screen pt-16 py-12">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-8 pb-6 px-4 sm:pt-16 sm:py-12">
+      <div className="max-w-2xl mx-auto sm:px-6 lg:px-8">
         
         {/* Progress Indicator */}
         <div className="mb-8">
@@ -327,13 +327,13 @@ export default function StartWill() {
         {/* Step 1: Set Dates */}
         {currentStep === 1 && (
           <Card>
-            <CardContent className="p-8">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Set Your Timeline</h2>
+            <CardContent className="p-4 sm:p-8">
+              <div className="text-center mb-4 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Set Your Timeline</h2>
                 <p className="text-gray-600">Choose your scheduling preference</p>
               </div>
               
-              <form onSubmit={handleStep1Submit} className="space-y-8">
+              <form onSubmit={handleStep1Submit} className="space-y-4 sm:space-y-8">
                 {/* Scheduling Mode Selection */}
                 <div className="space-y-6">
                   <div>

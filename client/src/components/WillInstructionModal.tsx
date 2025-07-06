@@ -30,13 +30,13 @@ export function WillInstructionModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center mb-4">
+          <DialogTitle className="text-lg font-bold text-center mb-4">
             🙋‍♀️ How to Start a <em>Will</em>
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          <p className="text-gray-700 text-center mb-6">
+          <p className="text-gray-700 text-center mb-6 text-sm">
             A "<em>Will</em>" is something you deeply want to follow through on. This flow will help you name it, share it, and commit to it.
           </p>
           
@@ -46,8 +46,8 @@ export function WillInstructionModal({
                 <span className="text-blue-600 font-semibold text-sm">1</span>
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 mb-1">When 🗓</h3>
-                <p className="text-sm text-gray-600">"Start July 7, 8:00 am and end on July 14, 12:00 pm"</p>
+                <h3 className="font-semibold text-gray-900 mb-1 text-sm">When 🗓</h3>
+                <p className="text-xs text-gray-600">"Start July 7, 8:00 am and end on July 14, 12:00 pm"</p>
               </div>
             </div>
             
@@ -56,8 +56,8 @@ export function WillInstructionModal({
                 <span className="text-green-600 font-semibold text-sm">2</span>
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 mb-1">What 📝</h3>
-                <p className="text-sm text-gray-600">"I will make time to call my grandmother this week."</p>
+                <h3 className="font-semibold text-gray-900 mb-1 text-sm">What 📝</h3>
+                <p className="text-xs text-gray-600">"I will make time to call my grandmother this week."</p>
               </div>
             </div>
             
@@ -66,8 +66,8 @@ export function WillInstructionModal({
                 <span className="text-orange-600 font-semibold text-sm">3</span>
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 mb-1">Why 💖</h3>
-                <p className="text-sm text-gray-600">"Because I like how I feel after I talk to her."</p>
+                <h3 className="font-semibold text-gray-900 mb-1 text-sm">Why 💖</h3>
+                <p className="text-xs text-gray-600">"Because I like how I feel after I talk to her."</p>
               </div>
             </div>
           </div>
@@ -82,7 +82,7 @@ export function WillInstructionModal({
                 />
                 <label 
                   htmlFor="dontShowAgain" 
-                  className="text-sm text-gray-600 cursor-pointer"
+                  className="text-xs text-gray-600 cursor-pointer"
                 >
                   Don't show this again
                 </label>
@@ -91,7 +91,7 @@ export function WillInstructionModal({
             
             <Button 
               onClick={handleStart}
-              className="w-full bg-primary hover:bg-blue-600"
+              className="w-full bg-primary hover:bg-blue-600 text-sm"
             >
               Got it → Start
             </Button>
