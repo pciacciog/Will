@@ -899,6 +899,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return;
         } catch (error) {
           console.error(`Failed to create missing End Room for Will ${willId}:`, error);
+          // Fallback: Return End Room info without video URL
+          res.json({
+            endRoomUrl: null,
+            endRoomScheduledAt: will.endRoomScheduledAt,
+            endRoomStatus: 'open',
+            isOpen: true,
+            canJoin: false,
+            error: 'Video room setup required - please contact support'
+          });
+          return;
         }
       }
       

@@ -602,9 +602,20 @@ export default function InnerCircleHub() {
                       })() : 'N/A'}</strong>.
                     </p>
                     
-                    <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleJoinEndRoom}>
-                      Join End Room
-                    </Button>
+                    {will?.endRoomUrl ? (
+                      <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleJoinEndRoom}>
+                        Join End Room
+                      </Button>
+                    ) : (
+                      <div className="text-center">
+                        <Button disabled className="bg-gray-400 mobile-button mb-2">
+                          Video Room Setup Required
+                        </Button>
+                        <p className="text-sm text-gray-600">
+                          The End Room is active but video setup is needed. Please contact support.
+                        </p>
+                      </div>
+                    )}
                   </>
                 ) : (
                   // End Room is scheduled but not yet started
