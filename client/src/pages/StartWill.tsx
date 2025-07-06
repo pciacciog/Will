@@ -259,6 +259,29 @@ export default function StartWill() {
       return;
     }
 
+    // Validate End Room scheduling rules
+    const endRoomTime = new Date(endRoomDateTime);
+    const willEndTime = new Date(willData.endDate);
+    const maxEndRoomTime = new Date(willEndTime.getTime() + 48 * 60 * 60 * 1000);
+
+    if (endRoomTime <= willEndTime) {
+      toast({
+        title: "Invalid End Room Time",
+        description: "End Room must be scheduled after the Will ends",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (endRoomTime > maxEndRoomTime) {
+      toast({
+        title: "Invalid End Room Time",
+        description: "End Room must be scheduled within 48 hours after the Will ends",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const finalWillData = {
       ...willData,
       endRoomScheduledAt: endRoomDateTime,
@@ -638,7 +661,7 @@ export default function StartWill() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">End Room Date & Time</label>
                   <p className="text-sm text-gray-600 mb-4">
-                    Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : 'e.g. 7/13/2025'}) to share your stories.
+                    Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : 'e.g. 7/13/2025'}) and within 48 hours to share your stories.
                   </p>
                   <input
                     type="datetime-local"

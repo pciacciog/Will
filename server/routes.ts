@@ -279,6 +279,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.endRoomScheduledAt) {
         try {
           const endRoomTime = new Date(req.body.endRoomScheduledAt);
+          const willEndDate = new Date(req.body.endDate);
+          
+          // Validate End Room scheduling rules
+          if (!dailyService.isValidEndRoomTime(willEndDate, endRoomTime)) {
+            return res.status(400).json({ 
+              error: 'End Room must be scheduled between the Will end time and 48 hours afterward' 
+            });
+          }
+          
           const endRoom = await dailyService.createEndRoom({
             willId: will.id,
             scheduledStart: endRoomTime,
