@@ -42,6 +42,18 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
     return `${formatTime(startTime)} to ${formatTime(endTime)}`;
   };
 
+  const formatEndRoomStart = () => {
+    if (!will.endRoomScheduledAt) return "Not scheduled";
+    return formatDateTime(will.endRoomScheduledAt);
+  };
+
+  const formatEndRoomEnd = () => {
+    if (!will.endRoomScheduledAt) return "Not scheduled";
+    const startTime = new Date(will.endRoomScheduledAt);
+    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000); // 30 minutes later
+    return formatDateTime(endTime.toISOString());
+  };
+
   const calculateDuration = () => {
     const start = new Date(will.startDate);
     const end = new Date(will.endDate);
@@ -137,16 +149,26 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Video className="w-5 h-5 text-green-600" />
-                  End Room Ceremony
+                  End Room
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <span className="font-medium text-gray-700">Ran:</span>
-                  <p className="text-gray-600">{formatEndRoomTimespan()}</p>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium text-gray-700">Started:</span>
+                    <p className="text-gray-600">{formatEndRoomStart()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Ended:</span>
+                    <p className="text-gray-600">{formatEndRoomEnd()}</p>
+                  </div>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Attendees:</span>
+                  <span className="font-medium text-gray-700">Total Duration:</span>
+                  <p className="text-gray-600">30 minutes</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Participants:</span>
                   <div className="mt-2 space-y-2">
                     {will.commitments?.filter((commitment: any) => commitment.user).map((commitment: any) => (
                       <div key={commitment.id} className="flex items-center gap-2">

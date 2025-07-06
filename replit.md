@@ -369,6 +369,9 @@ This is a full-stack web application for group goal accountability, built with R
   - Removed duration text from date display for cleaner waiting for End Room interface
   - Standardized all character limits to 75 characters across StartWill, SubmitCommitment, and EditCommitment pages
   - Added real-time character counters showing "X / 75" format for consistent user experience
+  - Removed "ceremony" terminology from End Room feature across all components
+  - Updated End Room formatting to match Will Duration format with "Started:" and "Ended:" labels
+  - Changed "Attendees:" to "Participants:" and added consistent grid layout and duration display
 
 ## Changelog
 - June 25, 2025. Initial setup

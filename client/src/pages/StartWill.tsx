@@ -253,7 +253,7 @@ export default function StartWill() {
     if (!endRoomDateTime) {
       toast({
         title: "Missing End Room Time",
-        description: "Please select when your End Room ceremony will take place",
+        description: "Please select when your End Room will take place",
         variant: "destructive",
       });
       return;

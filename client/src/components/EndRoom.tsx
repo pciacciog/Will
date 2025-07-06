@@ -114,7 +114,7 @@ export function EndRoom({ willId }: EndRoomProps) {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-purple-900">
           <Video className="w-5 h-5" />
-          End Room Ceremony
+          End Room
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
