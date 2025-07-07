@@ -372,6 +372,16 @@ This is a full-stack web application for group goal accountability, built with R
   - Removed "ceremony" terminology from End Room feature across all components
   - Updated End Room formatting to match Will Duration format with "Started:" and "Ended:" labels
   - Changed "Attendees:" to "Participants:" and added consistent grid layout and duration display
+- **July 07, 2025**: Enhanced acknowledgment cache invalidation for instant UI updates
+  - Fixed acknowledgment UI lag requiring manual page refreshes to show "Create New Will" option
+  - Added comprehensive cache invalidation with immediate refetch calls to bypass polling intervals
+  - Enhanced both WillDetails acknowledgment button and Final Will Summary modal with instant updates
+  - Improved InnerCircleHub reactivity for immediate Will status changes after acknowledgment
+- **July 07, 2025**: Added End Room details to pending Will review interface
+  - Enhanced "Proposed Timeline" section for pending Wills to include End Room meeting details
+  - Added End Room scheduling information with open/close times for reviewers
+  - Improved visibility of complete Will timeline including video call ceremony for commitment reviewers
+  - Added amber-styled End Room section with video icon and 30-minute duration explanation
 
 ## Changelog
 - June 25, 2025. Initial setup
