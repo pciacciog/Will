@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
-import { Browser } from "@capacitor/browser";
+import { EmbeddedVideoRoom } from "@/components/EmbeddedVideoRoom";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
@@ -133,6 +133,8 @@ export default function InnerCircleHub() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showVideoRoom, setShowVideoRoom] = useState(false);
+  const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: circle } = useQuery({
@@ -269,21 +271,13 @@ export default function InnerCircleHub() {
       const data = await response.json();
       
       if (data.canJoin && data.endRoomUrl) {
-        // Open the Daily.co video room using Capacitor Browser API
-        try {
-          await Browser.open({ url: data.endRoomUrl });
-          toast({
-            title: "Joining End Room",
-            description: "Opening video call...",
-          });
-        } catch (browserError) {
-          // Fallback to window.open for web
-          window.open(data.endRoomUrl, '_blank');
-          toast({
-            title: "Joining End Room",
-            description: "Opening video call in new tab...",
-          });
-        }
+        // Show embedded video room instead of opening external browser
+        setVideoRoomUrl(data.endRoomUrl);
+        setShowVideoRoom(true);
+        toast({
+          title: "Joining End Room",
+          description: "Starting video call...",
+        });
       } else if (!data.endRoomUrl) {
         toast({
           title: "End Room not ready",
@@ -305,6 +299,15 @@ export default function InnerCircleHub() {
         variant: "destructive"
       });
     }
+  };
+
+  const handleLeaveVideoRoom = () => {
+    setShowVideoRoom(false);
+    setVideoRoomUrl(null);
+    toast({
+      title: "Left End Room",
+      description: "You have left the video call.",
+    });
   };
 
   if (!user) {
@@ -337,6 +340,16 @@ export default function InnerCircleHub() {
 
   return (
     <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
+      
+      {/* Embedded Video Room - Full Screen Overlay */}
+      {showVideoRoom && videoRoomUrl && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <EmbeddedVideoRoom 
+            roomUrl={videoRoomUrl} 
+            onLeave={handleLeaveVideoRoom}
+          />
+        </div>
+      )}
       
       <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)' }}>
         
