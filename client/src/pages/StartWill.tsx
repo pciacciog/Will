@@ -648,7 +648,7 @@ export default function StartWill() {
         
         {/* Step 4: End Room Scheduling - Special Ceremonial Step */}
         {currentStep === 4 && (
-          <Card className="shadow-lg">
+          <Card className="shadow-lg animate-in fade-in-50 duration-500">
             <CardContent className="p-6">
               <div className="text-center mb-6">
                 <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -657,15 +657,16 @@ export default function StartWill() {
                   </svg>
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 mb-1">Schedule Your End Room</h2>
+                <p className="text-xs text-gray-500 mb-2">one last step</p>
                 <p className="text-gray-600 text-sm">
-                  When will your circle gather to honor the effort? <span className="font-bold text-blue-600">This is the last step</span>
+                  When will your circle gather to honor the effort?
                 </p>
               </div>
 
               <form onSubmit={handleStep4Submit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">End Room Date & Time</label>
-                  <p className="text-xs text-gray-600 mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-4">End Room Date & Time</label>
+                  <p className="text-xs text-gray-600 mb-4">
                     Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/6/2025'}) and within 48 hours.
                   </p>
                   
@@ -684,20 +685,25 @@ export default function StartWill() {
                         className="w-full px-4 py-4 text-lg font-medium text-gray-800 bg-transparent border-none outline-none focus:ring-0"
                       />
                     </div>
-                    <div className="absolute -bottom-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                      👆 Click here to select date & time
+                    <div className="mt-2 text-center">
+                      <span className="text-blue-600 text-xs underline cursor-pointer">
+                        📅 Click above to select date & time
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <div className="mb-2">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
+                  <div className="mb-2 flex items-center">
+                    <svg className="w-4 h-4 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     <span className="text-sm font-medium text-amber-800">END ROOM:</span>
                   </div>
                   <div className="space-y-1 text-xs text-amber-700">
-                    <p>• Opens automatically at the scheduled date and runs for 30 minutes</p>
-                    <p>• Cannot be rescheduled once the <em>Will</em> is active</p>
-                    <p>• Closes automatically after 30 minutes expire - regardless of attendance</p>
+                    <p>🟡 Opens automatically at the scheduled date and runs for 30 minutes</p>
+                    <p>🟡 Cannot be rescheduled once the <em>Will</em> is active</p>
+                    <p>🟡 Closes automatically after 30 minutes expire - regardless of attendance</p>
                   </div>
                 </div>
 
