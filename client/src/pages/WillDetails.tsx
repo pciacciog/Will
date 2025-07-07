@@ -46,6 +46,26 @@ function formatTimeRemaining(endDate: string): string {
   }
 }
 
+function formatTimeUntilStart(startDate: string): string {
+  const now = new Date();
+  const start = new Date(startDate);
+  const diff = start.getTime() - now.getTime();
+  
+  if (diff <= 0) return 'Starting now';
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  
+  if (days > 0) {
+    return `Starts in ${days} days, ${hours} hours`;
+  } else if (hours >= 1) {
+    return `Starts in ${hours} hours`;
+  } else {
+    return `Starts in ${minutes} minutes`;
+  }
+}
+
 function calculateProgress(startDate: string, endDate: string): number {
   const now = new Date();
   const start = new Date(startDate);
@@ -446,8 +466,8 @@ export default function WillDetails() {
           </Card>
         )}
 
-        {/* Will Duration - Show for active, waiting_for_end_room, and completed wills */}
-        {(will.status === 'active' || will.status === 'waiting_for_end_room' || will.status === 'completed') && (
+        {/* Will Duration - Show for scheduled, active, waiting_for_end_room, and completed wills */}
+        {(will.status === 'scheduled' || will.status === 'active' || will.status === 'waiting_for_end_room' || will.status === 'completed') && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -485,14 +505,14 @@ export default function WillDetails() {
                   <span className="font-medium text-gray-700">Duration:</span>
                   <span className="ml-2 text-gray-600">{calculateDuration(will.startDate, will.endDate)}</span>
                 </div>
-                {will.status === 'active' && (
+                {(will.status === 'scheduled' || will.status === 'active') && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
                     <div className="flex items-center">
                       <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span className="text-sm font-medium text-green-700">
-                        {formatTimeRemaining(will.endDate)}
+                        {will.status === 'active' ? formatTimeRemaining(will.endDate) : formatTimeUntilStart(will.startDate)}
                       </span>
                     </div>
                   </div>
@@ -502,8 +522,8 @@ export default function WillDetails() {
           </Card>
         )}
 
-        {/* End Room Meeting Details - Show for active, waiting_for_end_room, and completed wills */}
-        {(will.status === 'active' || will.status === 'waiting_for_end_room' || will.status === 'completed') && will.endRoomScheduledAt && (
+        {/* End Room Meeting Details - Show for scheduled, active, waiting_for_end_room, and completed wills */}
+        {(will.status === 'scheduled' || will.status === 'active' || will.status === 'waiting_for_end_room' || will.status === 'completed') && will.endRoomScheduledAt && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -530,7 +550,7 @@ export default function WillDetails() {
                   <span className="font-medium text-gray-700">Duration:</span>
                   <span className="ml-2 text-gray-600">30 minutes</span>
                 </div>
-                {will.status === 'active' && (
+                {(will.status === 'scheduled' || will.status === 'active') && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
                     <div className="flex items-start">
                       <svg className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
