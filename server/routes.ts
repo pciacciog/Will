@@ -871,8 +871,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You must be in the circle to access the End Room" });
       }
       
-      // If End Room is open but URL is missing, try to create the room
-      if (will.endRoomStatus === 'open' && !will.endRoomUrl && will.endRoomScheduledAt) {
+      // If End Room is open but URL is missing or invalid, try to create the room
+      if (will.endRoomStatus === 'open' && (!will.endRoomUrl || will.endRoomUrl.includes('test')) && will.endRoomScheduledAt) {
         try {
           console.log(`Creating missing Daily.co room for Will ${willId}`);
           const endRoom = await dailyService.createEndRoom({
@@ -923,6 +923,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching End Room:", error);
       res.status(500).json({ message: "Failed to fetch End Room information" });
+    }
+  });
+
+  // Temporary endpoint to fix Will 37 End Room
+  app.post('/api/fix-will-37-endroom', async (req: any, res) => {
+    try {
+      console.log('Creating real Daily.co room for Will 37...');
+      
+      const endRoom = await dailyService.createEndRoom({
+        willId: 37,
+        scheduledStart: new Date('2025-07-07T11:54:00.000Z'),
+      });
+      
+      await storage.updateWillEndRoom(37, {
+        endRoomUrl: endRoom.url
+      });
+      
+      console.log(`✅ Created real Daily.co room for Will 37: ${endRoom.url}`);
+      res.json({ success: true, url: endRoom.url });
+    } catch (error) {
+      console.error('❌ Error creating Daily.co room:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 
