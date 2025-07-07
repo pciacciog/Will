@@ -123,10 +123,32 @@ export class EndRoomScheduler {
         try {
           console.log(`[EndRoomScheduler] Opening End Room for Will ${will.id}`);
           
-          // Update status to open
-          await storage.updateWillEndRoom(will.id, { endRoomStatus: 'open' });
-
-          console.log(`[EndRoomScheduler] End Room opened for Will ${will.id}`);
+          // Create Daily.co video room
+          if (!will.endRoomUrl && will.endRoomScheduledAt) {
+            try {
+              const endRoom = await dailyService.createEndRoom({
+                willId: will.id,
+                scheduledStart: new Date(will.endRoomScheduledAt),
+              });
+              
+              // Update status to open with video room URL
+              await storage.updateWillEndRoom(will.id, { 
+                endRoomStatus: 'open',
+                endRoomUrl: endRoom.url
+              });
+              
+              console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} with video URL: ${endRoom.url}`);
+            } catch (dailyError) {
+              console.error(`[EndRoomScheduler] Failed to create Daily.co room for Will ${will.id}:`, dailyError);
+              // Still mark as open even if video creation failed
+              await storage.updateWillEndRoom(will.id, { endRoomStatus: 'open' });
+              console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} but without video room`);
+            }
+          } else {
+            // Update status to open (room URL already exists)
+            await storage.updateWillEndRoom(will.id, { endRoomStatus: 'open' });
+            console.log(`[EndRoomScheduler] End Room opened for Will ${will.id}`);
+          }
         } catch (error) {
           console.error(`[EndRoomScheduler] Failed to open End Room for Will ${will.id}:`, error);
         }
