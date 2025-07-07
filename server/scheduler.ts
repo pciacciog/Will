@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import { db } from './db';
 import { wills } from '@shared/schema';
-import { eq, and, lt, gte, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, or, lt, gte, isNull, isNotNull } from 'drizzle-orm';
 import { dailyService } from './daily';
 import { storage } from './storage';
 
@@ -53,13 +53,13 @@ export class EndRoomScheduler {
 
   private async transitionWillStatuses(now: Date) {
     try {
-      // 1. Transition pending wills to active (start time has passed)
+      // 1. Transition pending/scheduled wills to active (start time has passed)
       const willsToActivate = await db
         .select()
         .from(wills)
         .where(
           and(
-            eq(wills.status, 'pending'),
+            or(eq(wills.status, 'pending'), eq(wills.status, 'scheduled')),
             lt(wills.startDate, now)
           )
         );
@@ -75,7 +75,7 @@ export class EndRoomScheduler {
         .from(wills)
         .where(
           and(
-            eq(wills.status, 'active'),
+            or(eq(wills.status, 'active'), eq(wills.status, 'scheduled')),
             lt(wills.endDate, now),
             isNotNull(wills.endRoomScheduledAt)
           )
@@ -92,7 +92,7 @@ export class EndRoomScheduler {
         .from(wills)
         .where(
           and(
-            eq(wills.status, 'active'),
+            or(eq(wills.status, 'active'), eq(wills.status, 'scheduled')),
             lt(wills.endDate, now),
             isNull(wills.endRoomScheduledAt)
           )

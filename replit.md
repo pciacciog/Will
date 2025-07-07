@@ -372,6 +372,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Removed "ceremony" terminology from End Room feature across all components
   - Updated End Room formatting to match Will Duration format with "Started:" and "Ended:" labels
   - Changed "Attendees:" to "Participants:" and added consistent grid layout and duration display
+- **July 07, 2025**: Enhanced Will Details consistency and fixed critical scheduler bug
+  - Made Will Details page consistent across all statuses (pending, scheduled, active, waiting_for_end_room, completed)
+  - Added Will Duration section and End Room Meeting details for scheduled, active, and other non-pending statuses
+  - Fixed critical scheduler bug where Wills were skipping the proper lifecycle transitions
+  - Root cause: Scheduler only handled 'pending' and 'active' statuses, missing 'scheduled' status in transition logic
+  - Updated scheduler to properly handle 'scheduled' status transitions: scheduled → active → waiting_for_end_room → completed
+  - Wills now correctly follow End Room flow instead of bypassing waiting_for_end_room status
+  - Added proper status transition logic with OR conditions to handle both 'pending' and 'scheduled' starting states
 
 ## Changelog
 - June 25, 2025. Initial setup
