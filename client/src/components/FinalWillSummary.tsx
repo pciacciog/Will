@@ -137,12 +137,9 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                         : commitment.user.email
                       }
                     </div>
-                    <p className="text-gray-700 mb-2">
+                    <p className="text-gray-700">
                       <span className="font-medium">I will</span> {commitment.commitment}
                     </p>
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                      Committed
-                    </Badge>
                   </div>
                 )) || []}
               </div>
