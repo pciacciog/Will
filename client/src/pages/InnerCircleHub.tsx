@@ -18,7 +18,7 @@ function getWillStatus(will: any, memberCount: number): string {
   // If will is archived, treat as no will
   if (will.status === 'archived') return 'no_will';
   
-  // Always respect the server-side status for End Room flow
+  // If will has explicit status, use it (for End Room flow)
   if (will.status === 'waiting_for_end_room' || will.status === 'completed') {
     return will.status;
   }
@@ -28,12 +28,7 @@ function getWillStatus(will: any, memberCount: number): string {
   const endDate = new Date(will.endDate);
 
   if (now >= endDate) {
-    // If Will has End Room scheduled, it should be waiting_for_end_room
-    if (will.endRoomScheduledAt) {
-      return 'waiting_for_end_room';
-    }
-    
-    // Otherwise check acknowledgments for completion
+    // Will should transition to waiting_for_end_room, but check acknowledgments
     const acknowledgedCount = will.acknowledgedCount || 0;
     if (acknowledgedCount >= memberCount) {
       return 'no_will'; // All acknowledged, can start new will
@@ -574,7 +569,7 @@ export default function InnerCircleHub() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900"><em>Will</em> Active</h3>
-                      <p className="text-sm text-gray-600">Ends at {formatEndRoomTime(will?.endDate)}</p>
+                      <p className="text-sm text-gray-600">Ends at {formatDisplayDateTime(will?.endDate)}</p>
                     </div>
                   </div>
                   <Badge className="bg-green-100 text-green-800">

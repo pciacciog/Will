@@ -100,16 +100,10 @@ export default function WillDetails() {
       // Close the Final Will Summary modal
       setShowFinalSummary(false);
       
-      // Invalidate all related queries comprehensively to ensure immediate UI updates
+      // Invalidate multiple queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      
-      // Force immediate refetch of critical queries to bypass polling interval
-      queryClient.refetchQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.refetchQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-      queryClient.refetchQueries({ queryKey: ['/api/circles/mine'] });
       
       toast({
         title: "Will Acknowledged",
@@ -278,45 +272,6 @@ export default function WillDetails() {
                     minute: '2-digit'
                   })}</span>
                 </div>
-                
-                {/* End Room Details for Pending Wills */}
-                {will.endRoomScheduledAt && (
-                  <div className="border-t pt-3 mt-3">
-                    <div className="flex items-center mb-2">
-                      <svg className="w-4 h-4 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      <span className="font-medium text-amber-700">End Room Meeting</span>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-700">Opens:</span>
-                        <span className="ml-2 text-gray-600">{new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit'
-                        })}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Closes:</span>
-                        <span className="ml-2 text-gray-600">{new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit'
-                        })}</span>
-                      </div>
-                      <div className="text-xs text-amber-600 mt-2">
-                        30-minute video call to honor the effort and close the <em>Will</em>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
