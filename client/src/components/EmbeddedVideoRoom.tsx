@@ -21,6 +21,8 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
   useEffect(() => {
     const initializeDaily = async () => {
       try {
+        console.log('Initializing Daily.co video room...', roomUrl);
+        
         // Dynamically import Daily to avoid SSR issues
         const Daily = (await import('@daily-co/daily-js')).default;
         
@@ -31,6 +33,7 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
         });
 
         callObjectRef.current = callObject;
+        console.log('Daily.co call object created successfully');
 
         // Set up event listeners
         callObject.on('joined-meeting', () => {
@@ -133,12 +136,6 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
       <div 
         id="daily-call-container" 
         className="w-full h-96 md:h-[500px] bg-gray-900"
-        ref={(el) => {
-          if (el && callObjectRef.current && !callFrame) {
-            setCallFrame(el);
-            // Daily will automatically attach to this container
-          }
-        }}
       />
       
       {/* Controls */}
