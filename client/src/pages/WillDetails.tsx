@@ -481,7 +481,7 @@ export default function WillDetails() {
           <Card className="mb-8 border-amber-200 bg-amber-50">
             <CardContent className="p-6">
               <p className="text-gray-700 text-base leading-relaxed">
-                This is your final step: a 30-minute group session to reflect. Once the End Room ends, the <em>Will</em> will be marked as complete. The End Room will open automatically at the scheduled time and close after 30 minutes. Attendance is optional—but presence is powerful.
+                This is your final step: a 30-minute group session to reflect. Once the End Room ends, the <em>Will</em> will be marked as complete. The End Room will open automatically at the scheduled time and close after 30 minutes. <strong>Attendance is optional—but presence is powerful</strong>.
               </p>
             </CardContent>
           </Card>
