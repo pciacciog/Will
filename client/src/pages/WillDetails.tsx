@@ -541,8 +541,8 @@ export default function WillDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Will Completed!</h3>
-                <p className="text-gray-600 mb-4">Congratulations on completing your journey together</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Acknowledge <em>Will</em> Completion</h3>
+                <p className="text-gray-600 mb-4">This marks the end of your will. Once acknowledged, it will be archived and you'll be ready to start a new one.</p>
                 
                 <div className="bg-green-100 rounded-xl p-4 mb-6">
                   <div className="text-sm text-green-700">
@@ -552,7 +552,10 @@ export default function WillDetails() {
                     <span className="font-semibold">{will.acknowledgedCount || 0} of {will.commitments?.length || 0}</span> participating members have acknowledged
                   </div>
                   <div className="text-xs text-green-600 mt-2">
-                    Required before creating a new WILL
+                    {((will.commitments?.length || 0) - (will.acknowledgedCount || 0)) > 0 
+                      ? `${(will.commitments?.length || 0) - (will.acknowledgedCount || 0)} member(s) still need to acknowledge`
+                      : 'All members have acknowledged - Will will be archived'
+                    }
                   </div>
                 </div>
                 
@@ -562,7 +565,7 @@ export default function WillDetails() {
                     disabled={acknowledgeMutation.isPending}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    {acknowledgeMutation.isPending ? 'Acknowledging...' : 'Acknowledge Completion'}
+                    {acknowledgeMutation.isPending ? 'Acknowledging...' : 'Acknowledge and Close Will'}
                   </Button>
                 ) : (
                   <div className="text-green-700 font-medium">
