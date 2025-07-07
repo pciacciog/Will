@@ -368,6 +368,49 @@ export default function WillDetails() {
           </Card>
         )}
 
+        {/* End Room Meeting Details - Show for pending wills */}
+        {will.status === 'pending' && will.endRoomScheduledAt && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
+                </svg>
+                End Room Meeting
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div>
+                  <span className="font-medium text-gray-700">Scheduled:</span>
+                  <span className="ml-2 text-gray-600">{new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Duration:</span>
+                  <span className="ml-2 text-gray-600">30 minutes</span>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                  <div className="flex items-start">
+                    <svg className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="text-sm text-blue-700">
+                      <strong>About End Room:</strong> A ceremonial video call where your circle gathers to honor the efforts made during this <em>Will</em>. The room opens automatically at the scheduled time and closes after 30 minutes.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Pending Members */}
         {will.status === 'pending' && (
           <Card className="mb-8">
