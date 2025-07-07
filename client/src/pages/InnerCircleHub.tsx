@@ -271,14 +271,21 @@ export default function InnerCircleHub() {
       const data = await response.json();
       
       if (data.canJoin && data.endRoomUrl) {
-        console.log('Opening video room:', data.endRoomUrl);
+        console.log('Opening video room [v2]:', data.endRoomUrl);
         
-        // For now, use direct navigation to the video URL on mobile
-        window.location.href = data.endRoomUrl;
+        // For mobile devices, use direct navigation to the video URL
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          window.location.href = data.endRoomUrl;
+        } else {
+          // For desktop, open in new tab
+          window.open(data.endRoomUrl, '_blank');
+        }
         
         toast({
-          title: "Joining End Room",
-          description: "Opening video call...",
+          title: "Joining End Room", 
+          description: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) 
+            ? "Navigating to video call..." 
+            : "Opening video call in new tab...",
         });
       } else if (!data.endRoomUrl) {
         toast({
