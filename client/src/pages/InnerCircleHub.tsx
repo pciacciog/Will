@@ -12,6 +12,7 @@ import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { Browser } from '@capacitor/browser';
+import { AdvancedVideoRoom } from "@/components/AdvancedVideoRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 
 function getWillStatus(will: any, memberCount: number): string {
@@ -134,6 +135,8 @@ export default function InnerCircleHub() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showVideoRoom, setShowVideoRoom] = useState(false);
+  const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -271,23 +274,16 @@ export default function InnerCircleHub() {
       const data = await response.json();
       
       if (data.canJoin && data.endRoomUrl) {
-        console.log('Opening video room in browser:', data.endRoomUrl);
+        console.log('Opening embedded video room:', data.endRoomUrl);
         
-        // Open video room in native browser for better mobile compatibility
-        try {
-          await Browser.open({ url: data.endRoomUrl });
-          toast({
-            title: "Joining End Room",
-            description: "Opening video call in browser...",
-          });
-        } catch (browserError) {
-          // Fallback to window.open for web
-          window.open(data.endRoomUrl, '_blank');
-          toast({
-            title: "Joining End Room", 
-            description: "Opening video call in new tab...",
-          });
-        }
+        // Show embedded video room with permissions handling
+        setVideoRoomUrl(data.endRoomUrl);
+        setShowVideoRoom(true);
+        
+        toast({
+          title: "Joining End Room",
+          description: "Starting video call with camera permissions...",
+        });
       } else if (!data.endRoomUrl) {
         toast({
           title: "End Room not ready",
@@ -309,6 +305,15 @@ export default function InnerCircleHub() {
         variant: "destructive"
       });
     }
+  };
+
+  const handleLeaveVideoRoom = () => {
+    setShowVideoRoom(false);
+    setVideoRoomUrl(null);
+    toast({
+      title: "Left End Room",
+      description: "You have left the video call.",
+    });
   };
 
 
@@ -344,7 +349,14 @@ export default function InnerCircleHub() {
   return (
     <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
       
-
+      {/* Advanced Embedded Video Room - Full Screen Overlay */}
+      {showVideoRoom && videoRoomUrl && (
+        <AdvancedVideoRoom 
+          roomUrl={videoRoomUrl} 
+          onLeave={handleLeaveVideoRoom}
+          durationMinutes={30}
+        />
+      )}
 
       
       <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)' }}>

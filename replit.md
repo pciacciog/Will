@@ -380,6 +380,16 @@ This is a full-stack web application for group goal accountability, built with R
   - Updated scheduler to properly handle 'scheduled' status transitions: scheduled → active → waiting_for_end_room → completed
   - Wills now correctly follow End Room flow instead of bypassing waiting_for_end_room status
   - Added proper status transition logic with OR conditions to handle both 'pending' and 'scheduled' starting states
+- **July 07, 2025**: Implemented advanced embedded video room with mobile optimization and permissions handling
+  - Created AdvancedVideoRoom component using iframe approach for better mobile compatibility
+  - Added Capacitor device detection to optimize experience for iOS/Android vs web
+  - Implemented proper iOS WebView permissions for camera and microphone access
+  - Added comprehensive fallback system: embedded iframe → native browser → external tab
+  - Enhanced video room with auto-disconnect timer (30 minutes) and real-time countdown
+  - Added iOS-specific configuration for camera/microphone permissions in Info.plist
+  - Created mobile build script with video room support and permission setup
+  - Fixed mobile video call errors by replacing embedded Daily.co SDK with iframe approach
+  - Video room now works reliably across all platforms with appropriate permission handling
 
 ## Changelog
 - June 25, 2025. Initial setup

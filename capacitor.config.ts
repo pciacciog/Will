@@ -11,7 +11,13 @@ const config: CapacitorConfig = {
     cleartext: true
   },
   ios: {
-    scheme: 'WILL'
+    scheme: 'WILL',
+    webContentsDebuggingEnabled: true
+  },
+  plugins: {
+    CapacitorHttp: {
+      enabled: true
+    }
   }
 };
 
