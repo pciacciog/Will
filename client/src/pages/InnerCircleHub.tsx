@@ -273,19 +273,13 @@ export default function InnerCircleHub() {
       if (data.canJoin && data.endRoomUrl) {
         console.log('Opening video room [v2]:', data.endRoomUrl);
         
-        // For mobile devices, use direct navigation to the video URL
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          window.location.href = data.endRoomUrl;
-        } else {
-          // For desktop, open in new tab
-          window.open(data.endRoomUrl, '_blank');
-        }
+        // Show embedded video room for better user experience
+        setVideoRoomUrl(data.endRoomUrl);
+        setShowVideoRoom(true);
         
         toast({
-          title: "Joining End Room", 
-          description: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) 
-            ? "Navigating to video call..." 
-            : "Opening video call in new tab...",
+          title: "Joining End Room",
+          description: "Starting embedded video call...",
         });
       } else if (!data.endRoomUrl) {
         toast({
@@ -351,6 +345,15 @@ export default function InnerCircleHub() {
     <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
       
 
+      {/* Embedded Video Room - Full Screen Overlay */}
+      {showVideoRoom && videoRoomUrl && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <EmbeddedVideoRoom 
+            roomUrl={videoRoomUrl} 
+            onLeave={handleLeaveVideoRoom}
+          />
+        </div>
+      )}
       
       <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)' }}>
         

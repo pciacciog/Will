@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { DailyCall } from '@daily-co/daily-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff, Users } from 'lucide-react';
@@ -10,13 +9,14 @@ interface EmbeddedVideoRoomProps {
 }
 
 export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) {
-  const callObjectRef = useRef<DailyCall | null>(null);
-  const [callFrame, setCallFrame] = useState<HTMLElement | null>(null);
+  const callObjectRef = useRef<any>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const [isJoined, setIsJoined] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initializeDaily = async () => {
@@ -69,10 +69,12 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
 
         // Join the room
         await callObject.join({ url: roomUrl });
+        setIsLoading(false);
 
       } catch (err) {
         console.error('Failed to initialize video call:', err);
         setError('Failed to connect to video room');
+        setIsLoading(false);
       }
     };
 
@@ -87,7 +89,11 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
 
     return () => {
       if (callObjectRef.current) {
-        callObjectRef.current.destroy();
+        try {
+          callObjectRef.current.destroy();
+        } catch (e) {
+          console.warn('Error destroying call object:', e);
+        }
       }
     };
   }, [roomUrl, onLeave]);
@@ -131,11 +137,12 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
   }
 
   return (
-    <div className="w-full h-full bg-black rounded-lg overflow-hidden">
+    <div className="w-full h-full bg-black flex flex-col">
       {/* Video Container */}
       <div 
-        id="daily-call-container" 
-        className="w-full h-96 md:h-[500px] bg-gray-900"
+        ref={videoContainerRef}
+        className="flex-1 bg-gray-900 relative"
+        style={{ minHeight: '400px' }}
       />
       
       {/* Controls */}
@@ -179,11 +186,11 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
         </Button>
       </div>
       
-      {!isJoined && (
-        <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center">
+      {(isLoading || !isJoined) && (
+        <div className="absolute inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-10">
           <div className="text-white text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-            <p>Connecting to End Room...</p>
+            <p>{isLoading ? 'Connecting to End Room...' : 'Joining video call...'}</p>
           </div>
         </div>
       )}
