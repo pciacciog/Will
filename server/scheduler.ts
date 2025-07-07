@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import { db } from './db';
 import { wills } from '@shared/schema';
-import { eq, and, lt, gte, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, or, lt, gte, isNull, isNotNull } from 'drizzle-orm';
 import { dailyService } from './daily';
 import { storage } from './storage';
 
@@ -69,13 +69,13 @@ export class EndRoomScheduler {
         await storage.updateWillStatus(will.id, 'active');
       }
 
-      // 2. Transition active wills to waiting_for_end_room (end time has passed and End Room scheduled)
+      // 2. Transition active/scheduled wills to waiting_for_end_room (end time has passed and End Room scheduled)
       const willsToWaitForEndRoom = await db
         .select()
         .from(wills)
         .where(
           and(
-            eq(wills.status, 'active'),
+            or(eq(wills.status, 'active'), eq(wills.status, 'scheduled')),
             lt(wills.endDate, now),
             isNotNull(wills.endRoomScheduledAt)
           )
@@ -86,13 +86,13 @@ export class EndRoomScheduler {
         await storage.updateWillStatus(will.id, 'waiting_for_end_room');
       }
 
-      // 3. Transition active wills to completed (end time has passed and no End Room scheduled)
+      // 3. Transition active/scheduled wills to completed (end time has passed and no End Room scheduled)
       const willsToComplete = await db
         .select()
         .from(wills)
         .where(
           and(
-            eq(wills.status, 'active'),
+            or(eq(wills.status, 'active'), eq(wills.status, 'scheduled')),
             lt(wills.endDate, now),
             isNull(wills.endRoomScheduledAt)
           )

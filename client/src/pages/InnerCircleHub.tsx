@@ -18,7 +18,7 @@ function getWillStatus(will: any, memberCount: number): string {
   // If will is archived, treat as no will
   if (will.status === 'archived') return 'no_will';
   
-  // If will has explicit status, use it (for End Room flow)
+  // Always respect the server-side status for End Room flow
   if (will.status === 'waiting_for_end_room' || will.status === 'completed') {
     return will.status;
   }
@@ -28,7 +28,12 @@ function getWillStatus(will: any, memberCount: number): string {
   const endDate = new Date(will.endDate);
 
   if (now >= endDate) {
-    // Will should transition to waiting_for_end_room, but check acknowledgments
+    // If Will has End Room scheduled, it should be waiting_for_end_room
+    if (will.endRoomScheduledAt) {
+      return 'waiting_for_end_room';
+    }
+    
+    // Otherwise check acknowledgments for completion
     const acknowledgedCount = will.acknowledgedCount || 0;
     if (acknowledgedCount >= memberCount) {
       return 'no_will'; // All acknowledged, can start new will
