@@ -236,6 +236,10 @@ export default function WillDetails() {
                 }
               >
                 {will.status === 'waiting_for_end_room' ? 'Pending End Room' : 
+                 will.status === 'active' ? 'Active' :
+                 will.status === 'pending' ? 'Pending' :
+                 will.status === 'scheduled' ? 'Scheduled' :
+                 will.status === 'completed' ? 'Completed' :
                  will.status.charAt(0).toUpperCase() + will.status.slice(1)}
               </Badge>
             </div>
@@ -249,10 +253,17 @@ export default function WillDetails() {
           
           {will.status !== 'pending' && (
             <p className="text-gray-600">
-              {will.status === 'waiting_for_end_room' ? 
-                formatDateRange(will.startDate, will.endDate) : 
-                `${formatDateRange(will.startDate, will.endDate)} • ${calculateDuration(will.startDate, will.endDate)}`
-              }
+              <span className="font-medium">Start:</span> {new Date(will.startDate).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              })} • <span className="font-medium">End:</span> {new Date(will.endDate).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              })}
             </p>
           )}
         </div>
@@ -416,16 +427,7 @@ export default function WillDetails() {
                   <span className="font-medium text-gray-700">Duration:</span>
                   <span className="ml-2 text-gray-600">30 minutes</span>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-                  <div className="flex items-start">
-                    <svg className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="text-sm text-blue-700">
-                      <strong>About End Room:</strong> A ceremonial video call where your circle gathers to honor the efforts made during this <em>Will</em>. The room opens automatically at the scheduled time and closes after 30 minutes.
-                    </div>
-                  </div>
-                </div>
+
               </div>
             </CardContent>
           </Card>
@@ -466,61 +468,7 @@ export default function WillDetails() {
           </Card>
         )}
 
-        {/* Will Duration - Show for scheduled, active, waiting_for_end_room, and completed wills */}
-        {(will.status === 'scheduled' || will.status === 'active' || will.status === 'waiting_for_end_room' || will.status === 'completed') && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <svg className="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
-                </svg>
-                <em>Will</em> Duration
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <span className="font-medium text-gray-700">Started:</span>
-                  <span className="ml-2 text-gray-600">{new Date(will.startDate).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Ended:</span>
-                  <span className="ml-2 text-gray-600">{new Date(will.endDate).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Duration:</span>
-                  <span className="ml-2 text-gray-600">{calculateDuration(will.startDate, will.endDate)}</span>
-                </div>
-                {(will.status === 'scheduled' || will.status === 'active') && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-sm font-medium text-green-700">
-                        {will.status === 'active' ? formatTimeRemaining(will.endDate) : formatTimeUntilStart(will.startDate)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
         {/* End Room Meeting Details - Show for scheduled, active, waiting_for_end_room, and completed wills */}
         {(will.status === 'scheduled' || will.status === 'active' || will.status === 'waiting_for_end_room' || will.status === 'completed') && will.endRoomScheduledAt && (
@@ -550,18 +498,7 @@ export default function WillDetails() {
                   <span className="font-medium text-gray-700">Duration:</span>
                   <span className="ml-2 text-gray-600">30 minutes</span>
                 </div>
-                {(will.status === 'scheduled' || will.status === 'active') && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-                    <div className="flex items-start">
-                      <svg className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="text-sm text-blue-700">
-                        <strong>About End Room:</strong> A ceremonial video call where your circle gathers to honor the efforts made during this <em>Will</em>. The room opens automatically at the scheduled time and closes after 30 minutes.
-                      </div>
-                    </div>
-                  </div>
-                )}
+
               </div>
             </CardContent>
           </Card>
