@@ -75,32 +75,52 @@ export function DailyVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Daily
       setIsLoading(true);
       console.log('Initializing Daily.co iframe...');
 
-      // Dynamically load Daily.co iframe library
-      if (!window.DailyIframe) {
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/@daily-co/daily-js';
-        script.async = true;
+      // Import Daily.co library directly
+      let DailyIframe;
+      try {
+        const DailyModule = await import('@daily-co/daily-js');
+        DailyIframe = DailyModule.default;
+        console.log('Daily.co library loaded successfully');
+      } catch (importError) {
+        console.warn('Failed to import @daily-co/daily-js, trying CDN fallback...', importError);
         
-        await new Promise((resolve, reject) => {
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
+        // Fallback to CDN if module import fails
+        if (!window.DailyIframe) {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/@daily-co/daily-js';
+          script.async = true;
+          
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+          
+          // Wait for library to initialize
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
         
-        // Wait a moment for the library to initialize
-        await new Promise(resolve => setTimeout(resolve, 500));
+        DailyIframe = window.DailyIframe;
       }
 
-      if (!window.DailyIframe) {
-        throw new Error('Daily.co library failed to load');
+      if (!DailyIframe) {
+        throw new Error('Daily.co library failed to load from both module and CDN');
       }
 
       // Create call frame with mobile-optimized settings
-      const callFrame = window.DailyIframe.createFrame(containerRef.current, {
+      const callFrame = DailyIframe.createFrame(containerRef.current, {
         showLeaveButton: false,
-        showFullscreenButton: true,
+        showFullscreenButton: isMobile,
         showLocalVideo: true,
         showParticipantsBar: true,
+        iframeStyle: {
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          width: '100%',
+          height: '100%',
+          border: 'none'
+        },
         theme: {
           accent: '#6366f1',
           accentText: '#ffffff',
@@ -161,12 +181,17 @@ export function DailyVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Daily
         setError('Microphone access denied. Please enable microphone permissions and try again.');
       });
 
-      // Join the meeting
+      // Join the meeting with mobile-optimized settings
+      console.log('Attempting to join room:', roomUrl);
       await callFrame.join({ 
         url: roomUrl,
         startVideoOff: false,
-        startAudioOff: false
+        startAudioOff: false,
+        videoSource: true,
+        audioSource: true
       });
+      
+      console.log('Successfully joined Daily.co room');
 
     } catch (err) {
       console.error('Failed to initialize Daily.co iframe:', err);

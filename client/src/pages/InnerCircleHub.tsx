@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { Browser } from '@capacitor/browser';
 import { DailyVideoRoom } from "@/components/DailyVideoRoom";
+import { SimpleVideoRoom } from "@/components/SimpleVideoRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 
 function getWillStatus(will: any, memberCount: number): string {
@@ -349,9 +350,9 @@ export default function InnerCircleHub() {
   return (
     <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
       
-      {/* Daily.co Embedded Video Room - Full Screen Overlay */}
+      {/* Embedded Video Room - Full Screen Overlay */}
       {showVideoRoom && videoRoomUrl && (
-        <DailyVideoRoom 
+        <SimpleVideoRoom 
           roomUrl={videoRoomUrl} 
           onLeave={handleLeaveVideoRoom}
           durationMinutes={30}
