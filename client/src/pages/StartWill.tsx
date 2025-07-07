@@ -649,7 +649,7 @@ export default function StartWill() {
                   </svg>
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 mb-1">Schedule Your End Room</h2>
-                <p className="text-xs text-gray-500 mb-2">one last step</p>
+                <p className="text-xs text-black mb-2">• one last step:</p>
                 <p className="text-gray-600 text-sm">
                   When will your circle gather to honor the effort?
                 </p>
@@ -657,9 +657,9 @@ export default function StartWill() {
 
               <form onSubmit={handleStep4Submit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-4">End Room Date & Time</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 underline">End Room Date & Time</label>
                   <p className="text-xs text-gray-600 mb-4">
-                    Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/6/2025'}) and within 48 hours.
+                    Choose a time to reflect after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}).
                   </p>
                   
                   {/* Enhanced Time Selector with Visual Emphasis */}
@@ -685,17 +685,17 @@ export default function StartWill() {
                   </div>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-2">
                   <div className="mb-2 flex items-center">
-                    <svg className="w-4 h-4 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-sm font-medium text-amber-800">END ROOM:</span>
+                    <span className="text-sm font-medium text-red-800">END ROOM:</span>
                   </div>
-                  <div className="space-y-1 text-xs text-amber-700">
-                    <p>🟡 Opens automatically at the scheduled date and runs for 30 minutes</p>
-                    <p>🟡 Cannot be rescheduled once the <em>Will</em> is active</p>
-                    <p>🟡 Closes automatically after 30 minutes expire - regardless of attendance</p>
+                  <div className="space-y-1 text-xs text-red-700">
+                    <p>🔴 Opens automatically at the scheduled date and runs for 30 minutes</p>
+                    <p>🔴 Cannot be rescheduled once the <em>Will</em> is active</p>
+                    <p>🔴 Closes automatically after 30 minutes expire - regardless of attendance</p>
                   </div>
                 </div>
 
