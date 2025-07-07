@@ -45,5 +45,16 @@
         </array>
         <key>UIViewControllerBasedStatusBarAppearance</key>
         <true/>
+        <key>NSCameraUsageDescription</key>
+        <string>This app needs camera access to enable video calls during your Will End Room ceremonies.</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>This app needs microphone access to enable video calls during your Will End Room ceremonies.</string>
+        <key>NSAppTransportSecurity</key>
+        <dict>
+                <key>NSAllowsArbitraryLoads</key>
+                <true/>
+                <key>NSAllowsArbitraryLoadsInWebContent</key>
+                <true/>
+        </dict>
 </dict>
 </plist>

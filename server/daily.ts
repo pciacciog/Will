@@ -48,8 +48,8 @@ export class DailyService {
         name: roomName,
         privacy: 'public',
         properties: {
-          start_video_off: true,
-          start_audio_off: true,
+          start_video_off: false,
+          start_audio_off: false,
           enable_chat: true,
           enable_screenshare: true,
           enable_recording: false,
@@ -63,7 +63,13 @@ export class DailyService {
           enable_mesh_sfu: false,
           sfu_switchover: 0.5,
           eject_at_room_exp: true,
-          eject_after_elapsed: 1800
+          eject_after_elapsed: 1800,
+          lang: 'en',
+          geo: 'us-west-2',
+          enable_dialin: false,
+          enable_sip: false,
+          signaling_impl: 'ws',
+          ice_transport_policy: 'all'
         }
       }),
     });

@@ -12,7 +12,12 @@ const config: CapacitorConfig = {
   },
   ios: {
     scheme: 'WILL',
-    webContentsDebuggingEnabled: true
+    webContentsDebuggingEnabled: true,
+    allowsInlineMediaPlayback: true,
+    allowsAirPlayForMediaPlayback: true,
+    allowsBackForwardNavigationGestures: true,
+    allowsLinkPreview: true,
+    mediaTypesRequiringUserActionForPlayback: []
   },
   plugins: {
     CapacitorHttp: {
