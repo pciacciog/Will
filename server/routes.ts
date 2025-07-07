@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateWillEndRoom(will.id, {
             endRoomScheduledAt: endRoomTime,
             endRoomUrl: endRoom.url,
-            endRoomStatus: 'scheduled',
+            endRoomStatus: 'pending',
           });
           
           console.log(`Created End Room for Will ${will.id}: ${endRoom.url}`);
