@@ -162,12 +162,12 @@ export default function SubmitCommitment() {
                   <p className="text-gray-600">Cause it's as simple as wanting.</p>
                 </div>
                 
-                <form className="space-y-6">
+                <form className="space-y-8">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
-                    <div className="relative border-2 border-gray-200 rounded-md focus-within:border-blue-500">
-                      <div className="flex items-start p-3">
-                        <span className="text-gray-900 font-bold text-sm mr-2 mt-0.5 flex-shrink-0">I will</span>
+                    <label className="block text-sm font-medium text-gray-700 mb-4">Your Want</label>
+                    <div className="relative">
+                      <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                        <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
                         <Textarea 
                           value={what}
                           onChange={(e) => {
@@ -178,19 +178,15 @@ export default function SubmitCommitment() {
                             }
                           }}
                           placeholder="call my grandmother this week"
-                          className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0"
+                          className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
                           rows={2}
                           maxLength={75}
                           autoFocus
-                          style={{ 
-                            background: 'transparent',
-                            boxShadow: 'none'
-                          }}
                         />
                       </div>
-                    </div>
-                    <div className="text-right text-xs text-gray-500 mt-1">
-                      {whatCharCount} / 75
+                      <div className="text-right text-xs text-gray-500 mt-2">
+                        {whatCharCount} / 75
+                      </div>
                     </div>
                   </div>
                   
@@ -227,7 +223,7 @@ export default function SubmitCommitment() {
                 
                 <form className="space-y-6">
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-4">
                       <label className="block text-sm font-medium text-gray-700">Your Why</label>
                       <span className="text-xs text-gray-500 flex items-center">
                         <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,9 +232,9 @@ export default function SubmitCommitment() {
                         Private - only you can see this
                       </span>
                     </div>
-                    <div className="border-2 border-blue-200 rounded-md focus-within:border-blue-400 bg-white/80">
-                      <div className="flex items-start p-3">
-                        <span className="text-gray-900 font-bold text-sm mr-2 mt-0.5 flex-shrink-0">Because</span>
+                    <div className="relative">
+                      <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                        <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
                         <Textarea 
                           value={why}
                           onChange={(e) => {
@@ -248,19 +244,15 @@ export default function SubmitCommitment() {
                               setWhyCharCount(newValue.length);
                             }
                           }}
-                          className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0"
-                          rows={4}
+                          placeholder="I like how I feel after I talk to her"
+                          className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                          rows={2}
                           maxLength={75}
                           autoFocus
-                          style={{ 
-                            background: 'transparent',
-                            boxShadow: 'none',
-                            lineHeight: '1.5'
-                          }}
                         />
                       </div>
                     </div>
-                    <div className="text-right text-xs text-gray-500 mt-1">
+                    <div className="text-right text-xs text-gray-500 mt-2">
                       {whyCharCount} / 75
                     </div>
                   </div>

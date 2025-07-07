@@ -528,32 +528,28 @@ export default function StartWill() {
                 <p className="text-gray-600">Cause it's as simple as wanting.</p>
               </div>
               
-              <form onSubmit={handleStep2Submit} className="space-y-6">
+              <form onSubmit={handleStep2Submit} className="space-y-8">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Want</label>
-                  <div className="relative border-2 border-gray-200 rounded-md focus-within:border-blue-500">
-                    <div className="flex items-start p-3">
-                      <span className="text-gray-900 font-bold text-sm mr-2 mt-0.5 flex-shrink-0">I will</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-4">Your Want</label>
+                  <div className="relative">
+                    <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                      <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
                       <Textarea 
                         name="what"
                         required 
-                        rows={4} 
+                        rows={2} 
                         maxLength={75}
                         value={willData.what}
                         onChange={(e) => {
                           setWillData({ ...willData, what: e.target.value });
                           setWhatCharCount(e.target.value.length);
                         }}
-                        className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0" 
+                        className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400" 
                         placeholder="call my grandmother this week"
-                        style={{ 
-                          background: 'transparent',
-                          boxShadow: 'none'
-                        }}
                       />
                     </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 text-right">{whatCharCount} / 75</div>
+                  <div className="text-xs text-gray-500 mt-2 text-right">{whatCharCount} / 75</div>
                 </div>
 
                 
@@ -593,9 +589,9 @@ export default function StartWill() {
                 </div>
               )}
               
-              <form onSubmit={handleStep3Submit} className="space-y-6">
+              <form onSubmit={handleStep3Submit} className="space-y-8">
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-4">
                     <label className="block text-sm font-medium text-gray-700">Your Why</label>
                     <span className="text-xs text-gray-500 flex items-center">
                       <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -604,29 +600,25 @@ export default function StartWill() {
                       Private - only you can see this
                     </span>
                   </div>
-                  <div className="border-2 border-blue-200 rounded-md focus-within:border-blue-400 bg-white/80">
-                    <div className="flex items-start p-3">
-                      <span className="text-gray-900 font-bold text-sm mr-2 mt-0.5 flex-shrink-0">Because</span>
+                  <div className="relative">
+                    <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                      <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
                       <Textarea 
                         name="why"
                         required 
-                        rows={4} 
+                        rows={2} 
                         maxLength={75}
                         value={willData.why}
                         onChange={(e) => {
                           setWillData({ ...willData, why: e.target.value });
                           setWhyCharCount(e.target.value.length);
                         }}
-                        className="flex-1 border-none outline-none resize-none text-sm leading-6 font-normal p-0 shadow-none focus:ring-0" 
-                        style={{ 
-                          background: 'transparent',
-                          boxShadow: 'none',
-                          lineHeight: '1.5'
-                        }}
+                        placeholder="I like how I feel after I talk to her"
+                        className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400" 
                       />
                     </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 text-right">{whyCharCount} / 75</div>
+                  <div className="text-xs text-gray-500 mt-2 text-right">{whyCharCount} / 75</div>
                 </div>
 
                 
