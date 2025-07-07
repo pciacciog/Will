@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Video, Users, ExternalLink } from 'lucide-react';
+import { Browser } from '@capacitor/browser';
 
 interface EndRoomProps {
   willId: number;
@@ -56,9 +57,14 @@ export function EndRoom({ willId }: EndRoomProps) {
     return () => clearInterval(interval);
   }, [endRoomData?.endRoomScheduledAt]);
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = async () => {
     if (endRoomData?.endRoomUrl && endRoomData.canJoin) {
-      window.open(endRoomData.endRoomUrl, '_blank');
+      try {
+        await Browser.open({ url: endRoomData.endRoomUrl });
+      } catch (browserError) {
+        // Fallback to window.open for web
+        window.open(endRoomData.endRoomUrl, '_blank');
+      }
     }
   };
 

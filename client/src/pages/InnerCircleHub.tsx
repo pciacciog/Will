@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
+import { Browser } from "@capacitor/browser";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
@@ -268,12 +269,21 @@ export default function InnerCircleHub() {
       const data = await response.json();
       
       if (data.canJoin && data.endRoomUrl) {
-        // Open the Daily.co video room in a new tab
-        window.open(data.endRoomUrl, '_blank');
-        toast({
-          title: "Joining End Room",
-          description: "Opening video call in new tab...",
-        });
+        // Open the Daily.co video room using Capacitor Browser API
+        try {
+          await Browser.open({ url: data.endRoomUrl });
+          toast({
+            title: "Joining End Room",
+            description: "Opening video call...",
+          });
+        } catch (browserError) {
+          // Fallback to window.open for web
+          window.open(data.endRoomUrl, '_blank');
+          toast({
+            title: "Joining End Room",
+            description: "Opening video call in new tab...",
+          });
+        }
       } else if (!data.endRoomUrl) {
         toast({
           title: "End Room not ready",
