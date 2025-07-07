@@ -12,6 +12,7 @@ import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { EmbeddedVideoRoom } from "@/components/EmbeddedVideoRoom";
+import { FinalWillSummary } from "@/components/FinalWillSummary";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';

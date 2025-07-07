@@ -11,10 +11,16 @@ interface FinalWillSummaryProps {
   onAcknowledge: () => void;
   will: any;
   isAcknowledging?: boolean;
+  currentUserId?: number;
 }
 
-export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAcknowledging = false }: FinalWillSummaryProps) {
+export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAcknowledging = false, currentUserId }: FinalWillSummaryProps) {
   if (!will) return null;
+
+  // Check if current user participated in this will
+  const userParticipated = will.commitments?.some((commitment: any) => 
+    commitment.userId === currentUserId
+  ) || false;
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -72,7 +78,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={userParticipated ? onClose : onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-2xl">
@@ -193,32 +199,59 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
             </Card>
           )}
 
-          {/* Acknowledgment Section */}
-          <Card className="border-2 border-green-200 bg-green-50">
-            <CardContent className="p-6">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+          {/* Acknowledgment Section - Only show for participating users */}
+          {userParticipated ? (
+            <Card className="border-2 border-green-200 bg-green-50">
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Acknowledge <em>Will</em> Completion
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      This marks the end of your will. Once acknowledged, it will be archived and you'll be ready to start a new one.
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={onAcknowledge}
+                    disabled={isAcknowledging}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+                    size="lg"
+                  >
+                    {isAcknowledging ? "Acknowledging..." : "Acknowledge and Close Will"}
+                  </Button>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Acknowledge <em>Will</em> Completion
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    This marks the end of your will. Once acknowledged, it will be archived and you'll be ready to start a new one.
-                  </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-2 border-blue-200 bg-blue-50">
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <em>Will</em> Complete
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      This <em>Will</em> has been completed. Only participating members need to acknowledge completion.
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={onClose}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
+                    size="lg"
+                  >
+                    Close Summary
+                  </Button>
                 </div>
-                <Button 
-                  onClick={onAcknowledge}
-                  disabled={isAcknowledging}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
-                  size="lg"
-                >
-                  {isAcknowledging ? "Acknowledging..." : "Acknowledge and Close Will"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </DialogContent>
     </Dialog>

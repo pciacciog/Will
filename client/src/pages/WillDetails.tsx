@@ -625,6 +625,7 @@ export default function WillDetails() {
         onAcknowledge={() => acknowledgeMutation.mutate()}
         will={will}
         isAcknowledging={acknowledgeMutation.isPending}
+        currentUserId={user?.id}
       />
     </div>
   );
