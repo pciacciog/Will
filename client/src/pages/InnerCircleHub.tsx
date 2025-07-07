@@ -511,7 +511,7 @@ export default function InnerCircleHub() {
                   onClick={() => setLocation('/start-will')}
                   className="bg-secondary hover:bg-green-600 mobile-button"
                 >
-                  Start a <em>Will</em>
+                  Start a<em>Will</em>
                 </Button>
               </div>
             )}
