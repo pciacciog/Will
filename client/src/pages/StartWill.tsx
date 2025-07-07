@@ -649,65 +649,72 @@ export default function StartWill() {
         {/* Step 4: End Room Scheduling - Special Ceremonial Step */}
         {currentStep === 4 && (
           <Card className="shadow-lg">
-            <CardContent className="p-8">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <CardContent className="p-6">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Schedule Your End Room</h2>
-                <p className="text-gray-600">When will your circle gather to honor the effort?</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-1">Schedule Your End Room</h2>
+                <p className="text-gray-600 text-sm">
+                  When will your circle gather to honor the effort? <span className="font-bold text-blue-600">This is the last step</span>
+                </p>
               </div>
 
-              <form onSubmit={handleStep4Submit} className="space-y-6">
+              <form onSubmit={handleStep4Submit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">End Room Date & Time</label>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">End Room Date & Time</label>
+                  <p className="text-xs text-gray-600 mb-3">
                     Choose a time after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/6/2025'}) and within 48 hours.
                   </p>
-                  <input
-                    type="datetime-local"
-                    name="endRoomDateTime"
-                    required
-                    min={willData.endDate}
-                    max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
-                    value={endRoomDateTime}
-                    onChange={(e) => setEndRoomDateTime(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
+                  
+                  {/* Enhanced Time Selector with Visual Emphasis */}
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg pointer-events-none"></div>
+                    <div className="relative bg-white border-2 border-blue-300 rounded-lg hover:border-blue-500 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all">
+                      <input
+                        type="datetime-local"
+                        name="endRoomDateTime"
+                        required
+                        min={willData.endDate}
+                        max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
+                        value={endRoomDateTime}
+                        onChange={(e) => setEndRoomDateTime(e.target.value)}
+                        className="w-full px-4 py-4 text-lg font-medium text-gray-800 bg-transparent border-none outline-none focus:ring-0"
+                      />
+                    </div>
+                    <div className="absolute -bottom-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                      👆 Click here to select date & time
+                    </div>
+                  </div>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-start gap-2 mb-2">
-                    <span className="text-amber-600 text-sm">📌</span>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="mb-2">
                     <span className="text-sm font-medium text-amber-800">END ROOM:</span>
                   </div>
-                  <div className="space-y-1 text-sm text-amber-700 ml-6">
-                    <p>• Opens automatically and runs for 30 minutes</p>
+                  <div className="space-y-1 text-xs text-amber-700">
+                    <p>• Opens automatically at the scheduled date and runs for 30 minutes</p>
                     <p>• Cannot be rescheduled once the <em>Will</em> is active</p>
-                    <p>• Closes automatically after time is expired - regardless of attendance</p>
+                    <p>• Closes automatically after 30 minutes expire - regardless of attendance</p>
                   </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm text-blue-700 font-medium">This is the last step</p>
-                </div>
-
-                <div className="flex justify-between pt-4">
-                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)}>
+                <div className="flex justify-between pt-2">
+                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)} className="text-sm">
                     ← Back
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={createWillMutation.isPending || addCommitmentMutation.isPending || !endRoomDateTime}
-                    className={`px-8 py-3 font-semibold ${
+                    className={`px-6 py-2 text-sm font-semibold ${
                       endRoomDateTime && !createWillMutation.isPending 
                         ? 'bg-green-600 hover:bg-green-700 text-white' 
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
-                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating Your Will...' : 'Create Will →'}
+                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will →'}
                   </Button>
                 </div>
               </form>
