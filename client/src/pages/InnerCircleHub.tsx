@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Browser } from '@capacitor/browser';
 import { DailyVideoRoom } from "@/components/DailyVideoRoom";
 import { SimpleVideoRoom } from "@/components/SimpleVideoRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
+import { useAppRefresh } from "@/hooks/useAppRefresh";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
@@ -140,6 +141,9 @@ export default function InnerCircleHub() {
   const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
+  
+  // Automatically refresh data when app comes back to foreground (mobile & web)
+  useAppRefresh();
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],

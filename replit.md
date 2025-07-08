@@ -272,6 +272,15 @@ This is a full-stack web application for group goal accountability, built with R
   - App now uses local email/password authentication exclusively
   - Users can access deployed app directly without requiring Replit accounts
   - Enables public sharing and user registration through app's native auth system
+- **July 08, 2025**: Fixed mobile app refresh issues and enhanced End Room video functionality
+  - Resolved "End Room not ready" error by fixing scheduler room creation logic
+  - Added comprehensive fallback detection for missing Daily.co room URLs
+  - Enhanced DailyService with improved logging and error handling
+  - Implemented automatic app refresh when mobile app returns to foreground
+  - Updated QueryClient configuration to enable focus-based data refresh
+  - Created useAppRefresh hook for seamless mobile/web app state management
+  - Data now refreshes automatically without requiring app restart
+  - Fixed mobile app UI lag by setting proper staleTime (30 seconds) instead of Infinity
 - **July 04, 2025**: Implemented Capacitor for iOS mobile app development
   - Added @capacitor/core, @capacitor/cli, and @capacitor/ios packages
   - Created capacitor.config.ts with proper iOS configuration and schemes
