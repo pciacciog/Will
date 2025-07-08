@@ -926,24 +926,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Temporary endpoint to fix Will 37 End Room
-  app.post('/api/fix-will-37-endroom', async (req: any, res) => {
+  // Fix Will 38 End Room with real Daily.co room
+  app.post('/api/fix-will-38-endroom', async (req: any, res) => {
     try {
-      console.log('Creating real Daily.co room for Will 37...');
+      console.log('Creating Daily.co room for Will 38...');
       
-      const endRoom = await dailyService.createEndRoom({
-        willId: 37,
-        scheduledStart: new Date('2025-07-07T11:54:00.000Z'),
+      const apiKey = process.env.DAILY_API_KEY;
+      const roomName = `will-38-endroom-${Date.now()}`;
+      
+      const response = await fetch('https://api.daily.co/v1/rooms', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: roomName,
+          privacy: 'public',
+          properties: {
+            start_video_off: false,
+            start_audio_off: false,
+            enable_chat: true,
+            enable_screenshare: true,
+            max_participants: 10,
+            enable_knocking: false,
+            enable_prejoin_ui: false,
+            enable_people_ui: true,
+            exp: Math.floor(Date.now() / 1000) + 7200, // 2 hours from now
+            eject_at_room_exp: true
+          }
+        }),
       });
       
-      await storage.updateWillEndRoom(37, {
-        endRoomUrl: endRoom.url
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Daily.co API error: ${response.status} - ${error}`);
+      }
+      
+      const room = await response.json();
+      console.log('✅ Daily.co room created:', room.url);
+      
+      // Update Will 38 with the real room URL
+      await storage.updateWillEndRoom(38, {
+        endRoomUrl: room.url
       });
       
-      console.log(`✅ Created real Daily.co room for Will 37: ${endRoom.url}`);
-      res.json({ success: true, url: endRoom.url });
+      console.log('✅ Will 38 updated with End Room URL');
+      
+      res.json({ success: true, url: room.url, room: room });
     } catch (error) {
-      console.error('❌ Error creating Daily.co room:', error);
+      console.error('❌ Error creating Daily.co room for Will 38:', error);
       res.status(500).json({ error: error.message });
     }
   });

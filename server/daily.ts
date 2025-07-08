@@ -34,9 +34,9 @@ export class DailyService {
 
   async createEndRoom({ willId, scheduledStart, durationMinutes = 30 }: CreateRoomOptions): Promise<DailyRoom> {
     const roomName = `will-${willId}-endroom-${Date.now()}`;
-    const expireTime = Math.floor(scheduledStart.getTime() / 1000) + (durationMinutes * 60);
+    const expireTime = Math.floor(Date.now() / 1000) + (durationMinutes * 60); // Start from now instead of scheduledStart
 
-    console.log('[DailyService] Creating room with config:', { roomName, expireTime });
+    console.log('[DailyService] Creating room with config:', { roomName, expireTime, willId });
     
     const response = await fetch(`${this.baseUrl}/rooms`, {
       method: 'POST',
@@ -60,26 +60,23 @@ export class DailyService {
           enable_network_ui: false,
           enable_people_ui: true,
           owner_only_broadcast: false,
-          enable_mesh_sfu: false,
-          sfu_switchover: 0.5,
           eject_at_room_exp: true,
           eject_after_elapsed: 1800,
-          lang: 'en',
-          geo: 'us-west-2',
-          enable_dialin: false,
-          enable_sip: false,
-          signaling_impl: 'ws',
-          ice_transport_policy: 'all'
+          lang: 'en'
         }
       }),
     });
 
+    console.log('[DailyService] Daily.co API Response status:', response.status);
+    const responseText = await response.text();
+    console.log('[DailyService] Daily.co API Response:', responseText);
+
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Failed to create Daily room: ${response.status} - ${error}`);
+      throw new Error(`Failed to create Daily room: ${response.status} - ${responseText}`);
     }
 
-    const room: DailyRoom = await response.json();
+    const room: DailyRoom = JSON.parse(responseText);
+    console.log('[DailyService] Room created successfully:', room.url);
     return room;
   }
 
