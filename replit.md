@@ -389,6 +389,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Mobile app automatically receives updates from live server without requiring rebuilds
   - Verified iOS project configuration: Bundle ID (com.porfirio.will), App Name (WILL), and permissions setup
   - Documented proper build process: npm run build → npx cap sync ios → pod install → open App.xcworkspace
+- **July 12, 2025**: Fixed iOS safe area scrolling issue preventing content from sliding under status bar
+  - Restructured MobileLayout component to use fixed safe area spacers instead of padding-based approach
+  - Changed from `min-h-screen` to `h-screen` with proper flex container structure
+  - Added fixed top safe area spacer: `h-[calc(env(safe-area-inset-top)+2rem)]` that remains visible during scroll
+  - Enhanced scroll container with proper iOS-specific classes: `overflow-y-auto scroll-smooth overscroll-contain ios-scroll`
+  - Implemented `[-webkit-overflow-scrolling:touch]` for native iOS scrolling behavior
+  - Content now properly respects safe area boundaries during scrolling on "Choose your schedule" and all other screens
+  - Fixed scroll-safe padding structure ensures content never appears under iOS status bar or system UI
 - **July 12, 2025**: Implemented comprehensive global design system with mobile-first approach
   - Created unified design system with 6 core components: MobileLayout, SectionCard, PrimaryButton, AvatarBadge, SectionTitle, ActionButton
   - Enhanced Tailwind config with global design tokens: brandGreen (#1EB854), brandBlue (#067DFD), brandGray scale
