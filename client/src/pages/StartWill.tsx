@@ -380,7 +380,7 @@ export default function StartWill() {
               <div className="space-y-6">
                 <div>
                   <label className="block text-lg font-medium text-gray-900 mb-4 tracking-tight">
-                    Choose Your Schedule
+                    Set Your Timeline
                   </label>
                   <RadioGroup value={schedulingMode} onValueChange={setSchedulingMode} className="space-y-4">
                     <label 
