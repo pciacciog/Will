@@ -338,7 +338,7 @@ export default function StartWill() {
       <div className="flex-1 py-6 space-y-6">
         
         {/* Progress Indicator */}
-        <div className="mb-8">
+        <div className="mb-8 pt-4">
           <div className="flex items-center justify-between">
             <div className="flex-1"></div>
             <div className="flex items-center justify-center space-x-4">
