@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
+import { ArrowLeft, Save, CheckCircle, Heart } from "lucide-react";
 
 export default function EditCommitment() {
   const { id: willId, commitmentId } = useParams();
@@ -137,110 +139,122 @@ export default function EditCommitment() {
   }
 
   return (
-    <div className="min-h-screen pt-16 py-12 bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <MobileLayout>
+      <div className="space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Edit Your Commitment</h1>
-              <p className="text-gray-600">Update your commitment details</p>
-            </div>
-          </div>
+        <div className="text-center">
+          <SectionTitle>Edit Your Commitment</SectionTitle>
+          <p className="text-gray-600 text-base tracking-tight">Update your commitment details</p>
         </div>
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Your Commitment</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <SectionCard>
+          <div className="space-y-6">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto">
+                <CheckCircle className="w-6 h-6 text-brandGreen" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">What You Will Do</h2>
+              </div>
+            </div>
+            
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  I will...
+                <label className="block text-sm font-medium text-gray-700 mb-4 tracking-tight">
+                  Your Want
                 </label>
-                <Input
-                  value={what}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    if (newValue.length <= 75) {
-                      setWhat(newValue);
-                      setWhatCharCount(newValue.length);
-                    }
-                  }}
-                  placeholder="Describe what you will do"
-                  className="w-full"
-                  maxLength={75}
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {whatCharCount} / 75
+                <div className="relative">
+                  <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
+                    <Textarea
+                      value={what}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        if (newValue.length <= 75) {
+                          setWhat(newValue);
+                          setWhatCharCount(newValue.length);
+                        }
+                      }}
+                      placeholder="describe what you will do"
+                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                      rows={2}
+                      maxLength={75}
+                    />
+                  </div>
+                  <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
+                    {whatCharCount} / 75
+                  </div>
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Because...
-                </label>
-                <Textarea
-                  value={why}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    if (newValue.length <= 75) {
-                      setWhy(newValue);
-                      setWhyCharCount(newValue.length);
-                    }
-                  }}
-                  placeholder="Explain why this matters to you"
-                  className="w-full"
-                  rows={4}
-                  maxLength={75}
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {whyCharCount} / 75
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
+                  <span className="text-xs text-gray-500 flex items-center tracking-tight">
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Private - only you can see this
+                  </span>
+                </div>
+                <div className="relative">
+                  <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
+                    <Textarea
+                      value={why}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        if (newValue.length <= 75) {
+                          setWhy(newValue);
+                          setWhyCharCount(newValue.length);
+                        }
+                      }}
+                      placeholder="explain why this matters to you"
+                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                      rows={3}
+                      maxLength={75}
+                    />
+                  </div>
+                  <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
+                    {whyCharCount} / 75
+                  </div>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
 
         {/* Warning Box */}
-        <Card className="mb-8 border-yellow-200 bg-yellow-50">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-3">
-              <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <div>
-                <h3 className="text-sm font-medium text-yellow-800 mb-1">Note</h3>
-                <p className="text-sm text-yellow-700">
-                  You can only edit your commitment while the will is pending or scheduled.
-                </p>
-              </div>
+        <SectionCard>
+          <div className="flex items-start space-x-3">
+            <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800 mb-1 tracking-tight">Note</h3>
+              <p className="text-sm text-yellow-700 tracking-tight">
+                You can only edit your commitment while the will is pending or scheduled.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
 
         {/* Action Buttons */}
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={() => setLocation(`/will/${willId}`)}>
-            Cancel
-          </Button>
+        <div className="flex justify-between gap-4">
+          <ActionButton onClick={() => setLocation(`/will/${willId}`)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Will
+          </ActionButton>
           
-          <Button 
+          <PrimaryButton
             onClick={handleUpdate}
-            disabled={updateMutation.isPending || !what.trim() || !why.trim()}
-            className="bg-secondary hover:bg-green-600"
+            disabled={!what.trim() || !why.trim() || updateMutation.isPending}
           >
+            <Save className="w-4 h-4 mr-2" />
             {updateMutation.isPending ? "Updating..." : "Update Commitment"}
-          </Button>
+          </PrimaryButton>
         </div>
       </div>
-    </div>
+    </MobileLayout>
   );
 }

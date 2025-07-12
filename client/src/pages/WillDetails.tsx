@@ -225,32 +225,29 @@ export default function WillDetails() {
   const submittedCount = will.commitments?.length || 0;
 
   return (
-    <div className="min-h-screen pt-16 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <MobileLayout>
+      <div className="space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
+              <Target className="w-6 h-6 text-brandGreen" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <SectionTitle>
                 {will.status === 'pending' ? <><em>Will</em> Pending</> : 
                  will.status === 'waiting_for_end_room' ? <><em>Will</em> Complete</> : 
                  <><em>Will</em> Details</>}
-              </h1>
+              </SectionTitle>
               <Badge 
-                className={
+                className={`text-xs tracking-tight ${
                   will.status === 'active' ? 'bg-green-100 text-green-800' :
                   will.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                   will.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
                   will.status === 'waiting_for_end_room' ? 'bg-purple-100 text-purple-800' :
                   will.status === 'completed' ? 'bg-gray-100 text-gray-800' :
                   'bg-gray-100 text-gray-800'
-                }
+                }`}
               >
                 {will.status === 'waiting_for_end_room' ? 'Pending End Room' : 
                  will.status === 'active' ? 'Active' :
@@ -263,13 +260,13 @@ export default function WillDetails() {
           </div>
           
           {will.status === 'pending' && (
-            <p className="text-gray-600 text-lg font-medium">
+            <p className="text-gray-600 text-base tracking-tight">
               {submittedCount} / {totalMembers} members have submitted their Will
             </p>
           )}
           
           {will.status !== 'pending' && (
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-base tracking-tight">
               <span className="font-medium">Start:</span> {new Date(will.startDate).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric',
@@ -327,17 +324,13 @@ export default function WillDetails() {
 
         {/* Submitted Commitments */}
         {will.commitments && will.commitments.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Member Commitments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6">
+          <SectionCard>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-brandGreen" />
+                <SectionTitle>Member Commitments</SectionTitle>
+              </div>
+              <div className="space-y-4">
                 {will.commitments.map((commitment: any) => {
                   const isCurrentUser = commitment.userId === user?.id;
                   const showWhy = expandedCommitments[commitment.id] || false;
@@ -358,51 +351,44 @@ export default function WillDetails() {
                       }`}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <div className="font-medium text-gray-900 flex items-center">
+                        <div className="font-medium text-gray-900 flex items-center tracking-tight">
                           {commitment.user.firstName && commitment.user.lastName 
                             ? `${commitment.user.firstName} ${commitment.user.lastName}`
                             : commitment.user.email
                           }
                           {isCurrentUser && (
-                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full tracking-tight">
                               You
                             </span>
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge className="bg-green-100 text-green-800 text-xs">
+                          <Badge className="bg-green-100 text-green-800 text-xs tracking-tight">
                             Submitted
                           </Badge>
                           {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="text-xs h-7 px-3"
+                            <ActionButton 
                               onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
                             >
+                              <Edit className="w-3 h-3 mr-1" />
                               Edit
-                            </Button>
+                            </ActionButton>
                           )}
                         </div>
                       </div>
                       <div className="text-gray-700 mb-2">
-                        <span className="font-medium">I will:</span> {commitment.what}
+                        <span className="font-medium tracking-tight">I will:</span> {commitment.what}
                       </div>
                       {isCurrentUser && (
                         <div className="flex items-center space-x-3">
-                          <Button
+                          <ActionButton
                             onClick={toggleWhy}
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 p-1 h-auto"
                           >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                            </svg>
+                            <Heart className="w-4 h-4 mr-1" />
                             {showWhy ? 'Hide Why' : 'Why?'}
-                          </Button>
+                          </ActionButton>
                           {showWhy && (
-                            <div className="flex-1 text-gray-600 text-sm">
+                            <div className="flex-1 text-gray-600 text-sm tracking-tight">
                               <span className="font-normal">Because</span> {commitment.why}
                             </div>
                           )}
@@ -412,8 +398,8 @@ export default function WillDetails() {
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </SectionCard>
         )}
 
         {/* End Room Meeting Details - Show for pending wills */}
@@ -755,6 +741,6 @@ export default function WillDetails() {
         currentUserId={user?.id}
         hasUserAcknowledged={will?.hasUserAcknowledged}
       />
-    </div>
+    </MobileLayout>
   );
 }

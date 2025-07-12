@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
+import { HelpCircle, ArrowLeft, ArrowRight, CheckCircle, Heart } from "lucide-react";
 
 export default function SubmitCommitment() {
   const { id } = useParams();
@@ -118,202 +120,181 @@ export default function SubmitCommitment() {
   };
 
   return (
-    <div className="min-h-screen pt-16 py-12 bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <MobileLayout>
+      <div className="space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1"></div>
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Submit Your Commitment</h1>
-                <p className="text-gray-600">Step {step} of 2</p>
-              </div>
-            </div>
-            <div className="flex-1"></div>
+        <div className="flex items-center justify-between">
+          <div>
+            <SectionTitle>Submit Your Commitment</SectionTitle>
+            <p className="text-gray-600 text-base tracking-tight">Step {step} of 2</p>
           </div>
+          {showHelpIcon && (
+            <ActionButton onClick={() => setShowInstructionModal(true)}>
+              <HelpCircle className="w-5 h-5" />
+            </ActionButton>
+          )}
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
+        <div className="w-full bg-gray-200 rounded-full h-2">
           <div 
-            className="bg-primary h-2 rounded-full transition-all duration-300" 
+            className="bg-brandBlue h-2 rounded-full transition-all duration-300" 
             style={{ width: `${(step / 2) * 100}%` }}
-          ></div>
+          />
         </div>
 
-        <Card>
-          <CardContent className="p-8">
-            {step === 1 ? (
-              <>
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">What would you like to do?</h2>
-                  <p className="text-gray-600">Cause it's as simple as wanting.</p>
+        <SectionCard>
+          {step === 1 ? (
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-6 h-6 text-brandGreen" />
                 </div>
-                
-                <form className="space-y-8">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-4">Your Want</label>
-                    <div className="relative">
-                      <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
-                        <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
-                        <Textarea 
-                          value={what}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            if (newValue.length <= 75) {
-                              setWhat(newValue);
-                              setWhatCharCount(newValue.length);
-                            }
-                          }}
-                          placeholder="call my grandmother this week"
-                          className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
-                          rows={2}
-                          maxLength={75}
-                          autoFocus
-                        />
-                      </div>
-                      <div className="text-right text-xs text-gray-500 mt-2">
-                        {whatCharCount} / 75
-                      </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">What would you like to do?</h2>
+                  <p className="text-gray-600 text-base tracking-tight">Cause it's as simple as wanting.</p>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-4 tracking-tight">Your Want</label>
+                  <div className="relative">
+                    <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                      <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
+                      <Textarea 
+                        value={what}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          if (newValue.length <= 75) {
+                            setWhat(newValue);
+                            setWhatCharCount(newValue.length);
+                          }
+                        }}
+                        placeholder="call my grandmother this week"
+                        className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                        rows={2}
+                        maxLength={75}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
+                      {whatCharCount} / 75
                     </div>
                   </div>
-                  
-                  <div className="flex justify-between">
-                    <Button type="button" variant="ghost" onClick={handleBack}>
-                      ← Back
-                    </Button>
-                    <Button type="button" onClick={handleNext} disabled={!what.trim()}>
-                      Next →
-                    </Button>
-                  </div>
-                </form>
-              </>
-            ) : (
-              <>
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-accent" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Why would you like to do this?</h2>
-                  <p className="text-gray-600">Remember this when it gets tough.</p>
                 </div>
+                
+                <div className="flex justify-between gap-4">
+                  <ActionButton onClick={handleBack}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </ActionButton>
+                  <PrimaryButton onClick={handleNext} disabled={!what.trim()}>
+                    Next
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </PrimaryButton>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto">
+                  <Heart className="w-6 h-6 text-orange-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Why would you like to do this?</h2>
+                  <p className="text-gray-600 text-base tracking-tight">Remember this when it gets tough.</p>
+                </div>
+              </div>
 
-                {/* What Preview */}
-                {what && (
-                  <div className="mb-6 p-4 bg-white border border-gray-100 rounded-lg shadow-sm">
-                    <p className="text-gray-900 font-medium text-center">
-                      I will {what}
-                    </p>
+              {/* What Preview */}
+              {what && (
+                <div className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm">
+                  <p className="text-gray-900 font-medium text-center tracking-tight">
+                    I will {what}
+                  </p>
+                </div>
+              )}
+              
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
+                    <span className="text-xs text-gray-500 flex items-center tracking-tight">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Private - only you can see this
+                    </span>
                   </div>
-                )}
-                
-                <form className="space-y-6">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <label className="block text-sm font-medium text-gray-700">Your Why</label>
-                      <span className="text-xs text-gray-500 flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Private - only you can see this
-                      </span>
+                  <div className="relative">
+                    <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                      <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
+                      <Textarea 
+                        value={why}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          if (newValue.length <= 75) {
+                            setWhy(newValue);
+                            setWhyCharCount(newValue.length);
+                          }
+                        }}
+                        placeholder="I like how I feel after I talk to her"
+                        className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                        rows={2}
+                        maxLength={75}
+                        autoFocus
+                      />
                     </div>
-                    <div className="relative">
-                      <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
-                        <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
-                        <Textarea 
-                          value={why}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            if (newValue.length <= 75) {
-                              setWhy(newValue);
-                              setWhyCharCount(newValue.length);
-                            }
-                          }}
-                          placeholder="I like how I feel after I talk to her"
-                          className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
-                          rows={2}
-                          maxLength={75}
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-                    <div className="text-right text-xs text-gray-500 mt-2">
+                    <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
                       {whyCharCount} / 75
                     </div>
                   </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-2">
-                      <Button type="button" variant="ghost" onClick={handleBack}>
-                        ← Back
-                      </Button>
-                      {showHelpIcon && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowInstructionModal(true)}
-                          className="w-8 h-8 p-0 text-gray-500 hover:text-gray-700"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </Button>
-                      )}
-                    </div>
-                    <Button 
-                      type="button"
-                      onClick={handleSubmit} 
-                      disabled={!why.trim() || commitmentMutation.isPending}
-                      className="bg-primary hover:bg-blue-600"
-                    >
-                      {commitmentMutation.isPending ? "Submitting..." : "Submit Commitment"}
-                    </Button>
-                  </div>
-                </form>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+                
+                <div className="flex justify-between gap-4">
+                  <ActionButton onClick={handleBack}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </ActionButton>
+                  <PrimaryButton 
+                    onClick={handleSubmit} 
+                    disabled={!why.trim() || commitmentMutation.isPending}
+                  >
+                    {commitmentMutation.isPending ? "Submitting..." : "Submit Commitment"}
+                  </PrimaryButton>
+                </div>
+              </div>
+            </div>
+          )}
+        </SectionCard>
 
         {/* Will Context */}
         {will && (
-          <Card className="mt-8">
-            <CardContent className="p-6">
-              <h3 className="font-medium text-gray-900 mb-2">Will Context</h3>
-              <p className="text-sm text-gray-600 mb-2">
-                <span className="font-medium">Duration:</span> {new Date(will.startDate).toLocaleDateString()} - {new Date(will.endDate).toLocaleDateString()}
-              </p>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Status:</span> {will.commitments?.length || 0} of {circle?.members?.length || 0} members have submitted
-              </p>
-            </CardContent>
-          </Card>
+          <SectionCard>
+            <div className="space-y-4">
+              <SectionTitle>Will Context</SectionTitle>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600 tracking-tight">
+                  <span className="font-medium">Duration:</span> {new Date(will.startDate).toLocaleDateString()} - {new Date(will.endDate).toLocaleDateString()}
+                </p>
+                <p className="text-sm text-gray-600 tracking-tight">
+                  <span className="font-medium">Status:</span> {will.commitments?.length || 0} of {circle?.members?.length || 0} members have submitted
+                </p>
+              </div>
+            </div>
+          </SectionCard>
         )}
-      </div>
 
-      {/* Instruction Modal */}
-      <WillInstructionModal
-        isOpen={showInstructionModal}
-        onClose={handleModalClose}
-        onStart={handleModalStart}
-        showDontShowAgain={true}
-      />
-    </div>
+        {/* Instruction Modal */}
+        <WillInstructionModal
+          isOpen={showInstructionModal}
+          onClose={handleModalClose}
+          onStart={handleModalStart}
+          showDontShowAgain={true}
+        />
+      </div>
+    </MobileLayout>
   );
 }
