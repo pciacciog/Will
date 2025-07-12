@@ -461,7 +461,7 @@ export default function InnerCircleHub() {
             }
           />
           
-          <div className="space-y-3">
+          <div className={`space-y-3 ${circle.members?.length <= 3 ? 'mt-2' : 'mt-4'}`}>
             {circle.members?.map((member: any, index: number) => (
               <div key={member.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
                 <AvatarBadge
@@ -501,7 +501,7 @@ export default function InnerCircleHub() {
                 variant="primary"
                 size="lg"
                 className="mx-auto mb-4"
-                ariaLabel="Create Will"
+                ariaLabel="Create a Will"
               >
                 <Plus className="w-8 h-8" />
               </ActionButton>

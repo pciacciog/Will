@@ -81,6 +81,8 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        brandGreen: '#1EB854',
+        brandBlue: '#067DFD',
       },
       keyframes: {
         "accordion-down": {
