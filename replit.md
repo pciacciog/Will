@@ -301,6 +301,10 @@ This is a full-stack web application for group goal accountability, built with R
   - Removed inaccurate timer display that didn't reflect actual End Room duration
   - Implemented mobile-first approach that bypasses iframe limitations by opening directly in browser
   - Fixed "Something went wrong" error by avoiding problematic iframe embedding on mobile entirely
+  - Integrated Capacitor InAppBrowser plugin for proper WebRTC support in native mobile apps
+  - Created dedicated waiting screen that explains video room is opening in browser window
+  - Added "Reopen Video Room" button for users to restart video call if needed
+  - Improved user experience with clear loading states and instructions for mobile video calls
 - **July 04, 2025**: Implemented Capacitor for iOS mobile app development
   - Added @capacitor/core, @capacitor/cli, and @capacitor/ios packages
   - Created capacitor.config.ts with proper iOS configuration and schemes
