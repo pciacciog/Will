@@ -513,7 +513,7 @@ export default function InnerCircleHub() {
                 size="lg"
                 fullWidth
               >
-                Start a <em>Will</em>
+                <span>Start a <em>Will</em></span>
               </PrimaryButton>
             </div>
           )}
