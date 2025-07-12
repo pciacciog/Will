@@ -13,7 +13,7 @@ import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
-import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart } from "lucide-react";
 
 // Helper function to calculate next Monday at 12:00 AM
 function getNextMondayStart(): string {
@@ -508,126 +508,115 @@ export default function StartWill() {
         
         {/* Step 2: What Will You Do */}
         {currentStep === 2 && (
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+          <SectionCard>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+              <SectionTitle>What would you like to do?</SectionTitle>
+              <p className="text-gray-600 text-base tracking-tight">Cause it's as simple as wanting.</p>
+            </div>
+            
+            <form onSubmit={handleStep2Submit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
+                <div className="relative">
+                  <div className="flex items-start bg-gray-50 border border-gray-200 rounded-lg p-4 focus-within:border-brandBlue focus-within:bg-white focus-within:shadow-sm transition-all duration-200">
+                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
+                    <Textarea 
+                      name="what"
+                      required 
+                      rows={2} 
+                      maxLength={75}
+                      value={willData.what}
+                      onChange={(e) => {
+                        setWillData({ ...willData, what: e.target.value });
+                        setWhatCharCount(e.target.value.length);
+                      }}
+                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400" 
+                      placeholder="call my grandmother this week"
+                    />
+                  </div>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">What would you like to do?</h2>
-                <p className="text-gray-600">Cause it's as simple as wanting.</p>
+                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whatCharCount} / 75</div>
               </div>
               
-              <form onSubmit={handleStep2Submit} className="space-y-8">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-4">Your Want</label>
-                  <div className="relative">
-                    <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
-                      <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
-                      <Textarea 
-                        name="what"
-                        required 
-                        rows={2} 
-                        maxLength={75}
-                        value={willData.what}
-                        onChange={(e) => {
-                          setWillData({ ...willData, what: e.target.value });
-                          setWhatCharCount(e.target.value.length);
-                        }}
-                        className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400" 
-                        placeholder="call my grandmother this week"
-                      />
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2 text-right">{whatCharCount} / 75</div>
-                </div>
-
-                
-                <div className="flex justify-between">
-                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(1)}>
-                    ← Back
-                  </Button>
-                  <Button type="submit">
-                    Next →
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+              <div className="flex justify-between items-center">
+                <ActionButton type="button" onClick={() => setCurrentStep(1)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </ActionButton>
+                <PrimaryButton type="submit">
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                </PrimaryButton>
+              </div>
+            </form>
+          </SectionCard>
         )}
         
         {/* Step 3: Why */}
         {currentStep === 3 && (
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-accent" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Why would you like to do this?</h2>
-                <p className="text-gray-600">Remember this when it gets tough.</p>
+          <SectionCard>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Heart className="w-6 h-6 text-orange-600" />
               </div>
+              <SectionTitle>Why would you like to do this?</SectionTitle>
+              <p className="text-gray-600 text-base tracking-tight">Remember this when it gets tough.</p>
+            </div>
 
-              {/* What Preview */}
-              {willData.what && (
-                <div className="mb-6 p-4 bg-white border border-gray-100 rounded-lg shadow-sm">
-                  <p className="text-gray-900 font-medium text-center">
-                    I will {willData.what}
-                  </p>
+            {/* What Preview */}
+            {willData.what && (
+              <div className="mb-6 p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                <p className="text-gray-900 font-medium text-center text-base tracking-tight">
+                  I will {willData.what}
+                </p>
+              </div>
+            )}
+            
+            <form onSubmit={handleStep3Submit} className="space-y-6">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
+                  <span className="text-xs text-gray-500 flex items-center tracking-tight">
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Private - only you can see this
+                  </span>
                 </div>
-              )}
+                <div className="relative">
+                  <div className="flex items-start bg-gray-50 border border-gray-200 rounded-lg p-4 focus-within:border-brandBlue focus-within:bg-white focus-within:shadow-sm transition-all duration-200">
+                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
+                    <Textarea 
+                      name="why"
+                      required 
+                      rows={2} 
+                      maxLength={75}
+                      value={willData.why}
+                      onChange={(e) => {
+                        setWillData({ ...willData, why: e.target.value });
+                        setWhyCharCount(e.target.value.length);
+                      }}
+                      placeholder="I like how I feel after I talk to her"
+                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400" 
+                    />
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whyCharCount} / 75</div>
+              </div>
               
-              <form onSubmit={handleStep3Submit} className="space-y-8">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Your Why</label>
-                    <span className="text-xs text-gray-500 flex items-center">
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      Private - only you can see this
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
-                      <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
-                      <Textarea 
-                        name="why"
-                        required 
-                        rows={2} 
-                        maxLength={75}
-                        value={willData.why}
-                        onChange={(e) => {
-                          setWillData({ ...willData, why: e.target.value });
-                          setWhyCharCount(e.target.value.length);
-                        }}
-                        placeholder="I like how I feel after I talk to her"
-                        className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400" 
-                      />
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2 text-right">{whyCharCount} / 75</div>
-                </div>
-
-                
-                <div className="flex justify-between">
-                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(2)}>
-                    ← Back
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="bg-primary hover:bg-blue-600"
-                  >
-                    Next →
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+              <div className="flex justify-between items-center">
+                <ActionButton type="button" onClick={() => setCurrentStep(2)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </ActionButton>
+                <PrimaryButton type="submit">
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                </PrimaryButton>
+              </div>
+            </form>
+          </SectionCard>
         )}
         
         {/* Step 4: End Room Scheduling - Special Ceremonial Step */}

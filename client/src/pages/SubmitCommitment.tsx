@@ -148,21 +148,21 @@ export default function SubmitCommitment() {
         <SectionCard>
           {step === 1 ? (
             <div className="space-y-6">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto">
-                  <CheckCircle className="w-6 h-6 text-brandGreen" />
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">What would you like to do?</h2>
+                  <SectionTitle>What would you like to do?</SectionTitle>
                   <p className="text-gray-600 text-base tracking-tight">Cause it's as simple as wanting.</p>
                 </div>
               </div>
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-4 tracking-tight">Your Want</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
                   <div className="relative">
-                    <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                    <div className="flex items-start bg-gray-50 border border-gray-200 rounded-lg p-4 focus-within:border-brandBlue focus-within:bg-white focus-within:shadow-sm transition-all duration-200">
                       <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
                       <Textarea 
                         value={what}
@@ -200,20 +200,20 @@ export default function SubmitCommitment() {
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto">
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto">
                   <Heart className="w-6 h-6 text-orange-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Why would you like to do this?</h2>
+                  <SectionTitle>Why would you like to do this?</SectionTitle>
                   <p className="text-gray-600 text-base tracking-tight">Remember this when it gets tough.</p>
                 </div>
               </div>
 
               {/* What Preview */}
               {what && (
-                <div className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm">
-                  <p className="text-gray-900 font-medium text-center tracking-tight">
+                <div className="p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                  <p className="text-gray-900 font-medium text-center text-base tracking-tight">
                     I will {what}
                   </p>
                 </div>
@@ -221,7 +221,7 @@ export default function SubmitCommitment() {
               
               <div className="space-y-6">
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
                     <span className="text-xs text-gray-500 flex items-center tracking-tight">
                       <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,7 +231,7 @@ export default function SubmitCommitment() {
                     </span>
                   </div>
                   <div className="relative">
-                    <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                    <div className="flex items-start bg-gray-50 border border-gray-200 rounded-lg p-4 focus-within:border-brandBlue focus-within:bg-white focus-within:shadow-sm transition-all duration-200">
                       <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
                       <Textarea 
                         value={why}

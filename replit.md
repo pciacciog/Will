@@ -413,6 +413,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Added white background with shadow, border, and hover effects for better visibility
   - Standardized help icon design across StartWill and SubmitCommitment pages
   - Improved accessibility with proper button styling and consistent interaction patterns
+- **July 12, 2025**: Applied consistent design system styling to Will creation "What" and "Why" steps
+  - Replaced harsh blue borders with subtle gray styling using consistent design system components
+  - Updated both steps to use SectionCard layout matching InnerCircleHub design language
+  - Applied consistent padding, typography, and spacing conventions across all form elements
+  - Replaced rigid input styling with elegant gray-to-white focus transitions and subtle shadows
+  - Updated buttons to use ActionButton and PrimaryButton components with consistent rounded styling
+  - Made layout more vertically compact for mobile with reduced margins and optimized icon sizing
+  - Enhanced visual hierarchy with proper Lucide React icons (CheckCircle, Heart) and consistent brand colors
 - **July 12, 2025**: Implemented comprehensive global design system with mobile-first approach
   - Created unified design system with 6 core components: MobileLayout, SectionCard, PrimaryButton, AvatarBadge, SectionTitle, ActionButton
   - Enhanced Tailwind config with global design tokens: brandGreen (#1EB854), brandBlue (#067DFD), brandGray scale
