@@ -18,7 +18,7 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Open video room with enhanced error handling for mobile
+  // Open video room with iOS-compatible solution
   const openVideoRoom = useCallback(async () => {
     try {
       console.log('Opening Daily.co room for mobile:', roomUrl);
@@ -26,10 +26,29 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
       
       // Check if running in Capacitor
       if (Capacitor.isNativePlatform()) {
-        console.log('Running in Capacitor - using Browser plugin');
+        console.log('Running in Capacitor - attempting Browser plugin');
+        
+        // For iOS, we need to use a direct approach since Browser plugin may not work
+        if (Capacitor.getPlatform() === 'ios') {
+          console.log('iOS detected - using Safari fallback');
+          // Direct Safari opening for iOS
+          window.location.href = roomUrl;
+          
+          toast({
+            title: "End Room Opened",
+            description: "Video call opened in Safari.",
+          });
+          
+          console.log('iOS Safari redirect successful');
+          setIsLoading(false);
+          return;
+        }
+        
+        // For Android, try Browser plugin
         try {
           await Browser.open({ 
-            url: roomUrl
+            url: roomUrl,
+            presentationStyle: 'fullscreen'
           });
           
           toast({
@@ -43,8 +62,15 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
           
         } catch (capacitorError) {
           console.error('Capacitor Browser failed:', capacitorError);
-          // For Capacitor, if Browser fails, we need to show manual instructions
-          setError(`Browser failed to open. Error: ${capacitorError.message || 'Unknown error'}`);
+          // If Browser plugin fails, fall back to Safari
+          window.location.href = roomUrl;
+          
+          toast({
+            title: "End Room Opened",
+            description: "Video call opened in Safari.",
+          });
+          
+          console.log('Safari fallback successful');
           setIsLoading(false);
           return;
         }
@@ -69,7 +95,7 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
       
     } catch (error) {
       console.error('Video room opening failed:', error);
-      setError(`Unable to open video room. ${error.message || 'Please try the manual options below.'}`);
+      setError(`Unable to open video room automatically. ${error.message || 'Please try the manual options below.'}`);
       setIsLoading(false);
     }
   }, [roomUrl, toast]);
@@ -115,15 +141,28 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
               </Button>
               <Button 
                 onClick={() => {
-                  // Direct system browser fallback
-                  window.location.href = roomUrl;
+                  // iOS-compatible system browser opening
+                  if (Capacitor.getPlatform() === 'ios') {
+                    window.location.href = roomUrl;
+                  } else {
+                    // For other platforms, try window.open first
+                    const newWindow = window.open(roomUrl, '_blank', 'noopener,noreferrer');
+                    if (!newWindow) {
+                      window.location.href = roomUrl;
+                    }
+                  }
+                  
+                  toast({
+                    title: "Opening Video Room",
+                    description: "Video call opening in Safari.",
+                  });
                 }} 
                 variant="outline"
                 size="lg"
                 className="w-full"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Open in System Browser
+                Open in Safari
               </Button>
               <Button 
                 onClick={() => {

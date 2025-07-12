@@ -22,6 +22,10 @@ const config: CapacitorConfig = {
   plugins: {
     CapacitorHttp: {
       enabled: true
+    },
+    Browser: {
+      enabled: true,
+      presentationStyle: 'fullscreen'
     }
   }
 };
