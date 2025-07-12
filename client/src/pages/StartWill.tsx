@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
+import { HelpIcon } from "@/components/ui/HelpIcon";
 import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle } from "lucide-react";
 
 // Helper function to calculate next Monday at 12:00 AM
@@ -491,12 +492,10 @@ export default function StartWill() {
                     Cancel
                   </Button>
                   {showHelpIcon && (
-                    <ActionButton
+                    <HelpIcon
                       onClick={() => setShowInstructionModal(true)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <HelpCircle className="w-4 h-4" />
-                    </ActionButton>
+                      size="md"
+                    />
                   )}
                 </div>
                 <PrimaryButton type="submit">

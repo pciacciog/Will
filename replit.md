@@ -407,6 +407,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Ensured all fixed headers, progress indicators, and full-screen components respect iOS safe area boundaries
   - Verified proper scroll behavior with `overflow-y-auto scroll-smooth overscroll-contain ios-scroll` classes throughout app
   - Maintained consistent mobile-first design approach with proper touch target sizing and iOS optimizations
+- **July 12, 2025**: Enhanced help icon visibility and standardized across app
+  - Created shared HelpIcon component with improved visibility and proper touch target sizing
+  - Increased help icon size from small 4x4 to medium 10x10 with larger text (text-xl)
+  - Added white background with shadow, border, and hover effects for better visibility
+  - Standardized help icon design across StartWill and SubmitCommitment pages
+  - Improved accessibility with proper button styling and consistent interaction patterns
 - **July 12, 2025**: Implemented comprehensive global design system with mobile-first approach
   - Created unified design system with 6 core components: MobileLayout, SectionCard, PrimaryButton, AvatarBadge, SectionTitle, ActionButton
   - Enhanced Tailwind config with global design tokens: brandGreen (#1EB854), brandBlue (#067DFD), brandGray scale

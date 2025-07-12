@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
+import { HelpIcon } from "@/components/ui/HelpIcon";
 import { HelpCircle, ArrowLeft, ArrowRight, CheckCircle, Heart } from "lucide-react";
 
 export default function SubmitCommitment() {
@@ -129,9 +130,10 @@ export default function SubmitCommitment() {
             <p className="text-gray-600 text-base tracking-tight">Step {step} of 2</p>
           </div>
           {showHelpIcon && (
-            <ActionButton onClick={() => setShowInstructionModal(true)}>
-              <HelpCircle className="w-5 h-5" />
-            </ActionButton>
+            <HelpIcon
+              onClick={() => setShowInstructionModal(true)}
+              size="md"
+            />
           )}
         </div>
 
