@@ -444,6 +444,9 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added visual separation**: Implemented border-t divider above button row for cleaner action area
   - **Refined bullet point alignment**: Used mt-0.5 positioning and flex-shrink-0 for better icon alignment
   - **Polished alert messaging**: Changed from bullet point to complete sentence for clearer user guidance
+  - **Fixed line break formatting**: Resolved "Willis" typo issue by using break-words class and proper list structure
+  - **Optimized for single viewport**: Reduced vertical spacing (mb-6 to mb-4, space-y-6 to space-y-4) to eliminate scrolling on iPhone 13/14
+  - **Enhanced bullet styling**: Replaced icons with clean circular bullets using bg-red-600 rounded-full for better readability
 - **July 12, 2025**: Implemented comprehensive global design system with mobile-first approach
   - Created unified design system with 6 core components: MobileLayout, SectionCard, PrimaryButton, AvatarBadge, SectionTitle, ActionButton
   - Enhanced Tailwind config with global design tokens: brandGreen (#1EB854), brandBlue (#067DFD), brandGray scale
