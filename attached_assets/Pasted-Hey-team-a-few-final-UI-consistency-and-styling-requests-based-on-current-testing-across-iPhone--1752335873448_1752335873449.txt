@@ -1,0 +1,57 @@
+Hey team — a few final UI consistency and styling requests based on current testing across iPhone:
+
+1. Back Button Styling
+The Back button on both “What” and “Why” steps feels disconnected from the visual system — especially compared to the clean button styling we’ve used elsewhere (e.g., in Inner Circle Hub and “Next” button).
+
+Suggestions:
+
+Make it visually consistent with the Next button (smaller, secondary style, ideally outlined or ghost button using Tailwind like bg-white border border-gray-300 text-gray-700).
+
+Apply same corner radius and padding logic as “Next.”
+
+2. Restore Section Titles
+Please reintroduce the section headers for clarity and tone:
+
+“What would you like to do?” (above “Your Want” input)
+
+“Why would you like to do this?” (above “Your Why” section)
+
+These headers are essential to communicate intent and add emotional weight. Their removal makes the screen feel emptier and less guided.
+
+3. Text & Typography Cleanup
+Right now, typography varies too much across screens:
+
+Example: the End Room screen has small body text and a large heading, whereas “Why” and “What” steps feel unbalanced (some inputs larger than headers).
+
+Suggest standardizing:
+
+Headers: text-xl font-semibold
+
+Subheaders: text-sm text-gray-500
+
+Inputs: text-base
+
+Icons: same sizing margins (max-w-[60px] and center-aligned)
+
+Maintain consistent padding/margins throughout all card components (e.g. inner spacing between icon → text → input should match spacing on Inner Circle Hub).
+
+4. Box Styling for Inputs
+The current light blue input boxes (especially in the “Why” section) feel awkward and inconsistent with the rest of the app. Suggest replacing them with clean rounded-xl border border-gray-200 inputs with neutral backgrounds (bg-white) and subtle focus state.
+
+You can use Tailwind like:
+
+html
+Copy
+Edit
+<textarea class="w-full p-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+5. General Consistency
+Please ensure:
+
+Consistent padding from top (especially in modals like “Schedule End Room”) to avoid cutting into iOS status bar
+
+Font weights and sizes are reused across components, aligned with what we’ve already done in Inner Circle Hub
+
+Icons (checkmark, heart, etc.) are consistently sized and centered across steps
+
+Let me know if anything’s unclear or if you’d like specific examples from Inner Circle Hub to replicate. Thanks again — the polish is almost there!
+

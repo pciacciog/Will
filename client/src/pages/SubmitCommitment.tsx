@@ -153,8 +153,8 @@ export default function SubmitCommitment() {
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <SectionTitle>What would you like to do?</SectionTitle>
-                  <p className="text-gray-600 text-base tracking-tight">Cause it's as simple as wanting.</p>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">What would you like to do?</h2>
+                  <p className="text-sm text-gray-500">Cause it's as simple as wanting.</p>
                 </div>
               </div>
               
@@ -162,7 +162,7 @@ export default function SubmitCommitment() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
                   <div className="relative">
-                    <div className="flex items-start bg-gray-50 border border-gray-200 rounded-lg p-4 focus-within:border-brandBlue focus-within:bg-white focus-within:shadow-sm transition-all duration-200">
+                    <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
                       <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
                       <Textarea 
                         value={what}
@@ -187,10 +187,13 @@ export default function SubmitCommitment() {
                 </div>
                 
                 <div className="flex justify-between gap-4">
-                  <ActionButton onClick={handleBack}>
+                  <button 
+                    onClick={handleBack}
+                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
-                  </ActionButton>
+                  </button>
                   <PrimaryButton onClick={handleNext} disabled={!what.trim()}>
                     Next
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -205,8 +208,8 @@ export default function SubmitCommitment() {
                   <Heart className="w-6 h-6 text-orange-600" />
                 </div>
                 <div>
-                  <SectionTitle>Why would you like to do this?</SectionTitle>
-                  <p className="text-gray-600 text-base tracking-tight">Remember this when it gets tough.</p>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Why would you like to do this?</h2>
+                  <p className="text-sm text-gray-500">Remember this when it gets tough.</p>
                 </div>
               </div>
 
@@ -231,7 +234,7 @@ export default function SubmitCommitment() {
                     </span>
                   </div>
                   <div className="relative">
-                    <div className="flex items-start bg-gray-50 border border-gray-200 rounded-lg p-4 focus-within:border-brandBlue focus-within:bg-white focus-within:shadow-sm transition-all duration-200">
+                    <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
                       <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
                       <Textarea 
                         value={why}
@@ -256,10 +259,13 @@ export default function SubmitCommitment() {
                 </div>
                 
                 <div className="flex justify-between gap-4">
-                  <ActionButton onClick={handleBack}>
+                  <button 
+                    onClick={handleBack}
+                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
-                  </ActionButton>
+                  </button>
                   <PrimaryButton 
                     onClick={handleSubmit} 
                     disabled={!why.trim() || commitmentMutation.isPending}
