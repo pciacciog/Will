@@ -334,8 +334,8 @@ export default function StartWill() {
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-6 px-4 sm:pt-16 sm:py-12">
-      <div className="max-w-2xl mx-auto sm:px-6 lg:px-8">
+    <MobileLayout>
+      <div className="flex-1 py-6 space-y-6">
         
         {/* Progress Indicator */}
         <div className="mb-8">
@@ -343,24 +343,24 @@ export default function StartWill() {
             <div className="flex-1"></div>
             <div className="flex items-center justify-center space-x-4">
               <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
                   1
                 </div>
-                <span className={`ml-2 text-sm ${currentStep >= 1 ? 'text-primary' : 'text-gray-600'} font-medium`}>When</span>
+                <span className={`ml-2 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
               </div>
-              <div className={`w-8 h-0.5 ${currentStep >= 2 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+              <div className={`w-8 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
               <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
                   2
                 </div>
-                <span className={`ml-2 text-sm ${currentStep >= 2 ? 'text-primary' : 'text-gray-600'} font-medium`}>What</span>
+                <span className={`ml-2 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>What</span>
               </div>
-              <div className={`w-8 h-0.5 ${currentStep >= 3 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+              <div className={`w-8 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
               <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
                   3
                 </div>
-                <span className={`ml-2 text-sm ${currentStep >= 3 ? 'text-primary' : 'text-gray-600'} font-medium`}>Why</span>
+                <span className={`ml-2 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
               </div>
             </div>
             <div className="flex-1"></div>
@@ -369,151 +369,143 @@ export default function StartWill() {
         
         {/* Step 1: Set Dates */}
         {currentStep === 1 && (
-          <Card>
-            <CardContent className="p-4 sm:p-8">
-              <div className="text-center mb-4 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Set Your Timeline</h2>
-                <p className="text-gray-600">Choose your scheduling preference</p>
-              </div>
-              
-              <form onSubmit={handleStep1Submit} className="space-y-4 sm:space-y-8">
-                {/* Scheduling Mode Selection */}
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-lg font-medium text-gray-900 mb-4">
-                      Choose Your Schedule
+          <SectionCard>
+            <div className="text-center mb-8">
+              <SectionTitle>Set Your Timeline</SectionTitle>
+              <p className="text-gray-600 tracking-tight">Choose your scheduling preference</p>
+            </div>
+            
+            <form onSubmit={handleStep1Submit} className="space-y-6">
+              {/* Scheduling Mode Selection */}
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-lg font-medium text-gray-900 mb-4 tracking-tight">
+                    Choose Your Schedule
+                  </label>
+                  <RadioGroup value={schedulingMode} onValueChange={setSchedulingMode} className="space-y-4">
+                    <label 
+                      htmlFor="prescribed"
+                      className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        schedulingMode === 'prescribed' 
+                          ? 'border-brandBlue bg-blue-50 ring-2 ring-blue-200' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <RadioGroupItem value="prescribed" id="prescribed" className="sr-only" />
+                      <div className="font-medium text-gray-900 mb-1 tracking-tight">📅 Week Template</div>
+                      <div className="text-sm text-gray-600 tracking-tight">
+                        Starts next Monday at 12:00 AM and ends Sunday at 12:00 PM
+                      </div>
                     </label>
-                    <RadioGroup value={schedulingMode} onValueChange={setSchedulingMode} className="space-y-4">
-                      <label 
-                        htmlFor="prescribed"
-                        className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          schedulingMode === 'prescribed' 
-                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
-                            : 'border-gray-200 hover:bg-gray-50'
-                        }`}
-                      >
-                        <RadioGroupItem value="prescribed" id="prescribed" className="sr-only" />
-                        <div className="font-medium text-gray-900 mb-1">📅 Week Template</div>
-                        <div className="text-sm text-gray-600">
-                          Starts next Monday at 12:00 AM and ends Sunday at 12:00 PM
-                        </div>
-                      </label>
-                      <label 
-                        htmlFor="custom"
-                        className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          schedulingMode === 'custom' 
-                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
-                            : 'border-gray-200 hover:bg-gray-50'
-                        }`}
-                      >
-                        <RadioGroupItem value="custom" id="custom" className="sr-only" />
-                        <div className="font-medium text-gray-900 mb-1">⚙️ Custom</div>
-                        <div className="text-sm text-gray-600">
-                          Pick your own start and end times.
-                        </div>
-                      </label>
-                    </RadioGroup>
+                    <label 
+                      htmlFor="custom"
+                      className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        schedulingMode === 'custom' 
+                          ? 'border-brandBlue bg-blue-50 ring-2 ring-blue-200' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <RadioGroupItem value="custom" id="custom" className="sr-only" />
+                      <div className="font-medium text-gray-900 mb-1 tracking-tight">⚙️ Custom</div>
+                      <div className="text-sm text-gray-600 tracking-tight">
+                        Pick your own start and end times.
+                      </div>
+                    </label>
+                  </RadioGroup>
+                </div>
+              </div>
+
+              {/* Prescribed Weekly Preview */}
+              {schedulingMode === 'prescribed' && (
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div>
+                    <div className="font-medium text-gray-900 mb-2 tracking-tight">Selected Schedule</div>
+                    <div className="text-sm text-gray-700 space-y-1 tracking-tight">
+                      <div><strong>Start:</strong> {new Date(getNextMondayStart()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 AM</div>
+                      <div><strong>End:</strong> {new Date(getWeekEndSunday(getNextMondayStart())).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 PM</div>
+                      <div className="mt-2 text-xs text-gray-600 tracking-tight">This is the schedule for your upcoming <em>Will</em>.</div>
+                    </div>
                   </div>
                 </div>
+              )}
 
-                {/* Prescribed Weekly Preview */}
-                {schedulingMode === 'prescribed' && (
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                    <div>
-                      <div className="font-medium text-gray-900 mb-2">Selected Schedule</div>
-                      <div className="text-sm text-gray-700 space-y-1">
-                        <div><strong>Start:</strong> {new Date(getNextMondayStart()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 AM</div>
-                        <div><strong>End:</strong> {new Date(getWeekEndSunday(getNextMondayStart())).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 PM</div>
-                        <div className="mt-2 text-xs text-gray-600">This is the schedule for your upcoming Will.</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Custom Date Inputs */}
-                {schedulingMode === 'custom' && (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Start Date & Time */}
-                      <div className="space-y-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-3">Start Date & Time</label>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
-                            <Input 
-                              type="date" 
-                              name="startDate"
-                              required 
-                              className="w-full"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
-                            <Input 
-                              type="time" 
-                              name="startTime"
-                              required 
-                              className="w-full"
-                            />
-                          </div>
+              {/* Custom Date Inputs */}
+              {schedulingMode === 'custom' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Start Date & Time */}
+                    <div className="space-y-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Start Date & Time</label>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1 tracking-tight">Date</label>
+                          <Input 
+                            type="date" 
+                            name="startDate"
+                            required 
+                            className="w-full"
+                          />
                         </div>
-                      </div>
-                      
-                      {/* End Date & Time */}
-                      <div className="space-y-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-3">End Date & Time</label>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
-                            <Input 
-                              type="date" 
-                              name="endDate"
-                              required 
-                              className="w-full"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
-                            <Input 
-                              type="time" 
-                              name="endTime"
-                              required 
-                              className="w-full"
-                            />
-                          </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1 tracking-tight">Time</label>
+                          <Input 
+                            type="time" 
+                            name="startTime"
+                            required 
+                            className="w-full"
+                          />
                         </div>
                       </div>
                     </div>
-
+                    
+                    {/* End Date & Time */}
+                    <div className="space-y-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">End Date & Time</label>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1 tracking-tight">Date</label>
+                          <Input 
+                            type="date" 
+                            name="endDate"
+                            required 
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1 tracking-tight">Time</label>
+                          <Input 
+                            type="time" 
+                            name="endTime"
+                            required 
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center space-x-2">
-                    <Button type="button" variant="ghost" onClick={handleCancel}>
-                      Cancel
-                    </Button>
-                    {showHelpIcon && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowInstructionModal(true)}
-                        className="w-8 h-8 p-0 text-gray-500 hover:text-gray-700"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </Button>
-                    )}
-                  </div>
-                  <Button type="submit">
-                    Next →
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-2">
+                  <Button type="button" variant="ghost" onClick={handleCancel}>
+                    Cancel
                   </Button>
+                  {showHelpIcon && (
+                    <ActionButton
+                      onClick={() => setShowInstructionModal(true)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                    </ActionButton>
+                  )}
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+                <PrimaryButton type="submit">
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                </PrimaryButton>
+              </div>
+            </form>
+          </SectionCard>
         )}
         
         {/* Step 2: What Will You Do */}
@@ -721,15 +713,15 @@ export default function StartWill() {
             </CardContent>
           </Card>
         )}
-      </div>
 
-      {/* Instruction Modal */}
-      <WillInstructionModal
-        isOpen={showInstructionModal}
-        onClose={handleModalClose}
-        onStart={handleModalStart}
-        showDontShowAgain={true}
-      />
-    </div>
+        {/* Instruction Modal */}
+        <WillInstructionModal
+          isOpen={showInstructionModal}
+          onClose={handleModalClose}
+          onStart={handleModalStart}
+          showDontShowAgain={true}
+        />
+      </div>
+    </MobileLayout>
   );
 }
