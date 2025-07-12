@@ -289,6 +289,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Added proper close button with X icon in modal header for better UX
   - Updated FinalWillSummary component to receive hasUserAcknowledged prop for state management
   - Users can now properly return to dashboard after Will completion without getting stuck
+- **July 12, 2025**: Fixed End Room functionality and mobile compatibility issues
+  - Resolved "End Room not ready" error caused by missing Daily.co room URLs in database
+  - Created new Daily.co room for Will #40 with mobile-friendly configuration settings
+  - Updated mobile End Room behavior to open directly in native browser for better compatibility
+  - Enhanced Daily.co room properties: enabled prejoin UI, network UI for better mobile experience
+  - Added device detection to automatically choose optimal video room experience (iframe vs browser)
+  - Fixed mobile "Something went wrong" error by bypassing problematic iframe embedding on mobile devices
+  - End Room now works seamlessly on both desktop (embedded) and mobile (native browser) platforms
 - **July 04, 2025**: Implemented Capacitor for iOS mobile app development
   - Added @capacitor/core, @capacitor/cli, and @capacitor/ios packages
   - Created capacitor.config.ts with proper iOS configuration and schemes

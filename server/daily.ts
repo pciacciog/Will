@@ -57,13 +57,17 @@ export class DailyService {
           max_participants: 10,
           exp: expireTime,
           enable_knocking: false,
-          enable_prejoin_ui: false,
-          enable_network_ui: false,
+          enable_prejoin_ui: true,
+          enable_network_ui: true,
           enable_people_ui: true,
           owner_only_broadcast: false,
           eject_at_room_exp: true,
           eject_after_elapsed: 1800,
-          lang: 'en'
+          lang: 'en',
+          // Mobile-friendly settings
+          enable_pip_ui: false,
+          enable_hand_raising: false,
+          enable_noise_cancellation_ui: false
         }
       }),
     });

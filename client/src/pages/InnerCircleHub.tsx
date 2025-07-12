@@ -279,16 +279,43 @@ export default function InnerCircleHub() {
       const data = await response.json();
       
       if (data.canJoin && data.endRoomUrl) {
-        console.log('Opening embedded video room:', data.endRoomUrl);
+        console.log('Opening video room:', data.endRoomUrl);
         
-        // Show embedded video room with permissions handling
-        setVideoRoomUrl(data.endRoomUrl);
-        setShowVideoRoom(true);
-        
-        toast({
-          title: "Joining End Room",
-          description: "Starting video call with camera permissions...",
-        });
+        // Check if we're on mobile (Capacitor)
+        try {
+          const { Device } = await import('@capacitor/device');
+          const deviceInfo = await Device.getInfo();
+          const isMobile = deviceInfo.platform === 'ios' || deviceInfo.platform === 'android';
+          
+          if (isMobile) {
+            // On mobile, open directly in native browser for better compatibility
+            const { Browser } = await import('@capacitor/browser');
+            await Browser.open({ url: data.endRoomUrl });
+            
+            toast({
+              title: "Opened in Browser",
+              description: "End Room opened in your device's browser for optimal experience.",
+            });
+          } else {
+            // On desktop, use embedded iframe
+            setVideoRoomUrl(data.endRoomUrl);
+            setShowVideoRoom(true);
+            
+            toast({
+              title: "Joining End Room",
+              description: "Starting video call with camera permissions...",
+            });
+          }
+        } catch (capacitorError) {
+          // Fallback: use embedded iframe for web
+          setVideoRoomUrl(data.endRoomUrl);
+          setShowVideoRoom(true);
+          
+          toast({
+            title: "Joining End Room",
+            description: "Starting video call with camera permissions...",
+          });
+        }
       } else if (!data.endRoomUrl) {
         toast({
           title: "End Room not ready",
