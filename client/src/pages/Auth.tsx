@@ -9,6 +9,7 @@ import { Link, useLocation } from "wouter";
 import { ArrowLeft, Shield, Users, Target, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle } from "@/components/ui/design-system";
 
 export default function Auth() {
   const [, setLocation] = useLocation();
@@ -91,8 +92,8 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <MobileLayout>
+      <div className="flex-1 py-6 space-y-6">
         {/* Back Button */}
         <Link href="/">
           <Button variant="ghost" className="mb-4">
@@ -102,52 +103,51 @@ export default function Auth() {
         </Link>
 
         {/* Main Auth Card */}
-        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="text-center space-y-2">
+        <SectionCard className="shadow-lg bg-white/80 backdrop-blur-sm">
+          <div className="text-center space-y-2 mb-6">
             <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
               <Shield className="h-8 w-8 text-indigo-600" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
               Join Your Inner Circle
-            </CardTitle>
-            <CardDescription className="text-gray-600">
+            </h1>
+            <p className="text-gray-600 tracking-tight">
               Connect with the people who matter. Grow together.
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
           
-          <CardContent className="space-y-6">
-            {/* Features Preview */}
-            <div className="space-y-4 mb-6">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Users className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Form Your Circle</h3>
-                  <p className="text-sm text-gray-600">Start or join a group of 2–4 close friends.</p>
-                </div>
+          {/* Features Preview */}
+          <div className="space-y-4 mb-6">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Users className="h-4 w-4 text-blue-600" />
               </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Target className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Set Your WILL</h3>
-                  <p className="text-sm text-gray-600">Make a commitment</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Shield className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Stay Accountable</h3>
-                  <p className="text-sm text-gray-600">Support each other daily.</p>
-                </div>
+              <div>
+                <h3 className="font-medium text-gray-900 tracking-tight">Form Your Circle</h3>
+                <p className="text-sm text-gray-600 tracking-tight">Start or join a group of 2–4 close friends.</p>
               </div>
             </div>
+            
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Target className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 tracking-tight">Set Your <em>Will</em></h3>
+                <p className="text-sm text-gray-600 tracking-tight">Make a commitment</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Shield className="h-4 w-4 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 tracking-tight">Stay Accountable</h3>
+                <p className="text-sm text-gray-600 tracking-tight">Support each other daily.</p>
+              </div>
+            </div>
+          </div>
 
             {/* Authentication Forms */}
             <Tabs defaultValue="login" className="w-full">
@@ -299,16 +299,15 @@ export default function Auth() {
 
             {/* Privacy Notice */}
             <div className="text-center">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 tracking-tight">
                 By continuing, you agree to our commitment to your privacy and security.
               </p>
             </div>
-          </CardContent>
-        </Card>
+        </SectionCard>
 
         {/* Additional Info */}
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 tracking-tight">
             New to accountability circles? 
             <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-medium ml-1">
               Learn more
@@ -316,6 +315,6 @@ export default function Auth() {
           </p>
         </div>
       </div>
-    </div>
+    </MobileLayout>
   );
 }

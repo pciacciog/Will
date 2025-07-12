@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
+import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle } from "lucide-react";
 
 // Helper function to calculate next Monday at 12:00 AM
 function getNextMondayStart(): string {
