@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MobileLayout, MobileHeader, MobileCard, MobileButton } from "@/components/ui/mobile-layout";
+import { MobileLayout, MobileHeader, SectionCard, PrimaryButton, AvatarBadge, SectionTitle, ActionButton } from "@/components/ui/design-system";
 import { useAuth } from "@/hooks/useAuth";
 import { Copy, Settings, LogOut, UserMinus, ChevronDown, Shield, Users, Target, Plus, Video, Clock, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -332,9 +332,9 @@ export default function InnerCircleHub() {
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
             <p className="text-muted-foreground mb-6">Please log in to view your Inner Circle Hub.</p>
-            <MobileButton onClick={() => setLocation('/auth')} size="lg">
+            <PrimaryButton onClick={() => setLocation('/auth')} size="lg">
               Sign In
-            </MobileButton>
+            </PrimaryButton>
           </div>
         </div>
       </MobileLayout>
@@ -348,9 +348,9 @@ export default function InnerCircleHub() {
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">No Inner Circle</h2>
             <p className="text-muted-foreground mb-6">You need to be part of an Inner Circle first.</p>
-            <MobileButton onClick={() => setLocation('/inner-circle')} size="lg">
+            <PrimaryButton onClick={() => setLocation('/inner-circle')} size="lg">
               Create or Join Circle
-            </MobileButton>
+            </PrimaryButton>
           </div>
         </div>
       </MobileLayout>
@@ -435,85 +435,86 @@ export default function InnerCircleHub() {
       {/* Main Content */}
       <div className="flex-1 py-4 space-y-4 ios-scroll">{/* Removed old header layout wrapper */}
         {/* Members Section */}
-        <MobileCard className="mb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
-            <h2 className="text-lg font-semibold flex items-center">
-              <Users className="w-5 h-5 text-primary mr-2" />
-              Circle Members
-            </h2>
-            
-            <div className="flex items-center space-x-2 bg-primary/5 px-3 py-2 rounded-lg">
-              <span className="text-sm text-muted-foreground">Invite Code:</span>
-              <span className="font-mono font-bold text-primary text-base">{circle.inviteCode}</span>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  navigator.clipboard.writeText(circle.inviteCode);
-                  toast({
-                    title: "Copied!",
-                    description: "Invite code copied to clipboard",
-                  });
-                }}
-                className="h-8 w-8 p-0 hover:bg-primary/10"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+        <SectionCard className="mb-4">
+          <SectionTitle 
+            title="Circle Members" 
+            icon={Users}
+            actions={
+              <div className="flex items-center space-x-2 bg-primary/5 px-3 py-2 rounded-lg">
+                <span className="text-sm text-muted-foreground">Invite Code:</span>
+                <span className="font-mono font-bold text-primary text-base tracking-tight">{circle.inviteCode}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    navigator.clipboard.writeText(circle.inviteCode);
+                    toast({
+                      title: "Copied!",
+                      description: "Invite code copied to clipboard",
+                    });
+                  }}
+                  className="h-8 w-8 p-0 hover:bg-primary/10"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            }
+          />
           
           <div className="space-y-3">
             {circle.members?.map((member: any, index: number) => (
               <div key={member.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-semibold text-lg">
-                    {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
-                  </span>
-                </div>
+                <AvatarBadge
+                  name={member.user.firstName || member.user.email}
+                  email={member.user.email}
+                  size="md"
+                  status="online"
+                  interactive={member.user.id === user?.id}
+                  onClick={member.user.id === user?.id ? () => setShowAccountSettings(true) : undefined}
+                />
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-foreground truncate">
+                  <div className="font-medium text-foreground truncate tracking-tight">
                     {member.user.firstName 
                       ? member.user.firstName
                       : member.user.email
                     }
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground tracking-tight">
                     Member
                   </div>
                 </div>
-                <div className="w-3 h-3 bg-green-400 rounded-full flex-shrink-0" title="Online"></div>
               </div>
             ))}
           </div>
-        </MobileCard>
+        </SectionCard>
         {/* Will Status Section */}
-        <MobileCard>
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold flex items-center">
-              <Target className="w-5 h-5 text-primary mr-2" />
-              Current <em>Will</em>
-            </h2>
-          </div>
+        <SectionCard>
+          <SectionTitle 
+            title="Current Will" 
+            icon={Target}
+          />
 
           {willStatus === 'no_will' && (
             <div className="text-center py-8">
-              <button 
+              <ActionButton 
                 onClick={() => setLocation('/start-will')}
-                className="w-16 h-16 bg-primary/10 hover:bg-primary/20 active:bg-primary/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors shadow-sm hover:shadow-md active:shadow-lg"
-                aria-label="Create Will"
+                variant="primary"
+                size="lg"
+                className="mx-auto mb-4"
+                ariaLabel="Create Will"
               >
-                <Plus className="w-8 h-8 text-primary" />
-              </button>
-              <h3 className="text-lg font-medium mb-2">No active <em>Will</em></h3>
-              <p className="text-muted-foreground mb-6 text-sm">Ready to commit to something meaningful together?</p>
-              <MobileButton 
+                <Plus className="w-8 h-8" />
+              </ActionButton>
+              <h3 className="text-lg font-medium mb-2 tracking-tight">No active <em>Will</em></h3>
+              <p className="text-muted-foreground mb-6 text-sm tracking-tight">Ready to commit to something meaningful together?</p>
+              <PrimaryButton 
                 onClick={() => setLocation('/start-will')}
-                variant="secondary"
+                variant="primary"
                 size="lg"
                 fullWidth
               >
                 Start a <em>Will</em>
-              </MobileButton>
+              </PrimaryButton>
             </div>
           )}
 
@@ -547,9 +548,9 @@ export default function InnerCircleHub() {
                 </div>
               </div>
               
-              <MobileButton onClick={handleViewWillDetails} size="lg" fullWidth>
+              <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
                 View <em>Will</em> Details
-              </MobileButton>
+              </PrimaryButton>
             </div>
           )}
 
@@ -581,9 +582,9 @@ export default function InnerCircleHub() {
                 </div>
               </div>
               
-              <MobileButton onClick={handleViewWillDetails} size="lg" fullWidth>
+              <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
                 View <em>Will</em> Details
-              </MobileButton>
+              </PrimaryButton>
             </div>
           )}
 
@@ -595,8 +596,8 @@ export default function InnerCircleHub() {
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold"><em>Will</em> Active</h3>
-                    <p className="text-sm text-muted-foreground">Ends at {formatDisplayDateTime(will?.endDate)}</p>
+                    <h3 className="font-semibold tracking-tight"><em>Will</em> Active</h3>
+                    <p className="text-sm text-muted-foreground tracking-tight">Ends at {formatDisplayDateTime(will?.endDate)}</p>
                   </div>
                 </div>
                 <Badge className="bg-green-100 text-green-800">
@@ -604,9 +605,9 @@ export default function InnerCircleHub() {
                 </Badge>
               </div>
               
-              <MobileButton onClick={handleViewWillDetails} size="lg" fullWidth>
+              <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
                 View <em>Will</em> Details
-              </MobileButton>
+              </PrimaryButton>
             </div>
           )}
 
@@ -629,17 +630,17 @@ export default function InnerCircleHub() {
                   </p>
                   
                   {will?.endRoomUrl ? (
-                    <MobileButton 
+                    <PrimaryButton 
                       onClick={handleJoinEndRoom}
                       variant="secondary"
                       size="lg"
                       fullWidth
                     >
                       Join End Room
-                    </MobileButton>
+                    </PrimaryButton>
                   ) : (
                     <div className="text-center">
-                      <MobileButton 
+                      <PrimaryButton 
                         onClick={handleJoinEndRoom}
                         variant="secondary"
                         size="lg"
@@ -647,8 +648,8 @@ export default function InnerCircleHub() {
                         className="mb-2"
                       >
                         Join
-                      </MobileButton>
-                      <p className="text-sm text-muted-foreground">
+                      </PrimaryButton>
+                      <p className="text-sm text-muted-foreground tracking-tight">
                         The End Room is active but video setup is needed. Click to create.
                       </p>
                     </div>
@@ -669,13 +670,13 @@ export default function InnerCircleHub() {
                     })() : 'N/A'}</strong>.
                   </p>
                   
-                  <MobileButton 
+                  <PrimaryButton 
                     onClick={handleViewWillDetails}
                     size="lg"
                     fullWidth
                   >
                     View End Room Details
-                  </MobileButton>
+                  </PrimaryButton>
                 </>
               )}
             </div>
@@ -689,17 +690,17 @@ export default function InnerCircleHub() {
               <h3 className="text-xl font-semibold mb-2"><em>Will</em> Complete - Ready to Review</h3>
               <p className="text-muted-foreground mb-6">Review the final summary to officially close out this <em>Will</em>.</p>
               
-              <MobileButton 
+              <PrimaryButton 
                 onClick={handleViewWillDetails}
                 variant="secondary"
                 size="lg"
                 fullWidth
               >
                 Review Final Summary
-              </MobileButton>
+              </PrimaryButton>
             </div>
           )}
-        </MobileCard>
+        </SectionCard>
       </div>
 
       {/* Account Settings Modal */}
