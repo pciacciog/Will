@@ -18,21 +18,22 @@ export function MobileLayout({
 }: MobileLayoutProps) {
   return (
     <div className={cn(
-      "flex flex-col h-screen bg-background",
-      // Safe area handling for iOS - ensure content stays below status bar
-      "pt-[calc(env(safe-area-inset-top)+2rem)] px-4 pb-[env(safe-area-inset-bottom)]",
+      "flex flex-col h-screen bg-background relative",
       className
     )}>
+      {/* Fixed safe area spacer - creates locked space for iOS system UI */}
+      <div className="flex-shrink-0 bg-background h-[calc(env(safe-area-inset-top)+2rem)] w-full"></div>
+      
       {/* Header */}
       {header && (
-        <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10 pt-4 pb-4">
+        <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10 px-4 pt-4 pb-4">
           {header}
         </div>
       )}
       
-      {/* Main content area - scrollable container with proper safe area respect */}
+      {/* Main content area - scrollable container with locked safe area */}
       <div className={cn(
-        "flex flex-col h-full",
+        "flex flex-col flex-1 px-4",
         scrollable && "overflow-y-auto scroll-smooth overscroll-contain ios-scroll"
       )}>
         {children}
@@ -40,10 +41,13 @@ export function MobileLayout({
       
       {/* Footer */}
       {footer && (
-        <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-t border-border/50">
+        <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-t border-border/50 px-4">
           {footer}
         </div>
       )}
+      
+      {/* Fixed bottom safe area spacer */}
+      <div className="flex-shrink-0 bg-background h-[env(safe-area-inset-bottom)] w-full"></div>
     </div>
   );
 }

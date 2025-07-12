@@ -83,9 +83,22 @@
       -webkit-overflow-scrolling: touch;
       /* Enhanced iOS scroll behavior */
       overflow-scrolling: touch;
-      /* Respect safe area during scroll */
-      scroll-padding-top: calc(env(safe-area-inset-top) + 2rem);
-      scroll-padding-bottom: env(safe-area-inset-bottom);
+      /* Prevent content from appearing in safe area during scroll */
+      -webkit-overflow-scrolling: touch;
+      /* Maintain safe boundaries during scroll */
+      overscroll-behavior: contain;
+    }
+    
+    /* Lock safe area - prevent any content from bleeding into iOS system UI */
+    .ios-safe-top {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: calc(env(safe-area-inset-top) + 2rem);
+      background: var(--background);
+      z-index: 9999;
+      pointer-events: none;
     }
   }
 
