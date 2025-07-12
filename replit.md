@@ -374,6 +374,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Updated date format to MM/DD time format (e.g., "7/6 1:22 PM") and removed "ceremony" wording
   - Simplified End Room messaging to "The End Room is live and will close at [time]"
   - Fixed redundant date formatting in Will activation text: now shows just time for today ("8:39 PM") or full date for other days ("on July 6 at 8:39 PM")
+- **July 12, 2025**: Completed mobile iOS safe area optimization and layout fixes
+  - Fixed critical iOS status bar overlap issue where header and user avatar were interfering with iOS system elements
+  - Removed conflicting safe area CSS from #root element that was causing duplicate padding
+  - Implemented proper safe area insets with `calc(env(safe-area-inset-top)+1.5rem)` for adequate clearance
+  - Enhanced MobileLayout component with unified safe area handling across all mobile screens
+  - Updated mobile development workflow: changes require mobile app rebuild/redeployment unlike web hot refresh
+  - Fixed header spacing between title and subtitle with optimized `mt-0.5` spacing
+  - Ensured native iOS feel with proper padding and layout structure throughout the app
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed
