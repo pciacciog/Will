@@ -297,6 +297,9 @@ This is a full-stack web application for group goal accountability, built with R
   - Added device detection to automatically choose optimal video room experience (iframe vs browser)
   - Fixed mobile "Something went wrong" error by bypassing problematic iframe embedding on mobile devices
   - End Room now works seamlessly on both desktop (embedded) and mobile (native browser) platforms
+  - Created MobileVideoRoom component with improved iframe permissions and error handling
+  - Added 10-second timeout detection for iframe loading failures with prominent "Open in Browser" fallback
+  - Enhanced mobile video room with better sandbox permissions and loading indicators
 - **July 04, 2025**: Implemented Capacitor for iOS mobile app development
   - Added @capacitor/core, @capacitor/cli, and @capacitor/ios packages
   - Created capacitor.config.ts with proper iOS configuration and schemes

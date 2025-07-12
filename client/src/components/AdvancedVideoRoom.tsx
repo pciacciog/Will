@@ -79,18 +79,30 @@ export function AdvancedVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Ad
       setIsLoading(true);
       
       // For iframe approach, we simulate joining
-      setTimeout(() => {
+      const joinTimeout = setTimeout(() => {
         setIsJoined(true);
         setIsLoading(false);
         setJoinStartTime(new Date());
         console.log('Successfully initialized iframe Daily call');
-      }, 2000);
+      }, 3000); // Increased timeout to give iframe more time to load
+      
+      // Mobile fallback timeout - if iframe doesn't work on mobile, show error after 8 seconds
+      if (isMobile) {
+        setTimeout(() => {
+          if (!isJoined) {
+            console.log('Mobile iframe failed to load, showing fallback');
+            setError('Video room needs to open in browser on mobile. Please use the "Open in Browser" button below.');
+            setIsLoading(false);
+            clearTimeout(joinTimeout);
+          }
+        }, 8000);
+      }
       
     } catch (err) {
       console.error('Failed to initialize Daily iframe:', err);
-      setError('Failed to connect to video room. Click "Open in Browser" for alternative access.');
+      setError('Failed to connect to video room. Use "Open in Browser" button below for alternative access.');
     }
-  }, [hasPermissions]);
+  }, [hasPermissions, isMobile, isJoined]);
 
   // No Daily SDK event listeners needed for iframe approach
 
@@ -202,9 +214,16 @@ export function AdvancedVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Ad
                 border: 'none',
                 backgroundColor: '#1f2937'
               }}
-              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *; clipboard-write"
               referrerPolicy="strict-origin-when-cross-origin"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-camera allow-microphone"
+              onLoad={() => {
+                console.log('Daily.co iframe loaded successfully');
+              }}
+              onError={(e) => {
+                console.error('Daily.co iframe error:', e);
+                setError('Video room failed to load. Please use the "Open in Browser" button below.');
+              }}
             />
           )}
         </div>
@@ -219,6 +238,11 @@ export function AdvancedVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Ad
               {!hasPermissions && (
                 <p className="text-sm text-gray-300">
                   Please allow camera and microphone access
+                </p>
+              )}
+              {isMobile && (
+                <p className="text-sm text-gray-300 mt-2">
+                  If this doesn't work, try the "Open in Browser" button below
                 </p>
               )}
             </div>
