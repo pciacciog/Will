@@ -621,84 +621,91 @@ export default function StartWill() {
         
         {/* Step 4: End Room Scheduling - Special Ceremonial Step */}
         {currentStep === 4 && (
-          <Card className="shadow-lg animate-in fade-in-50 duration-500">
-            <CardContent className="p-6">
-              <div className="text-center mb-6">
-                <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-1">Schedule Your End Room</h2>
-                <p className="text-xs text-black mb-2">• one last step:</p>
-                <p className="text-gray-600 text-sm">
-                  When will your circle gather to honor the effort?
+          <SectionCard>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 text-center">Schedule Your End Room</h2>
+              <p className="text-sm text-gray-400 text-center mt-1">• one last step:</p>
+              <p className="text-base text-gray-600 text-center mt-2">
+                When will your circle gather to honor the effort?
+              </p>
+            </div>
+
+            <form onSubmit={handleStep4Submit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Room Date & Time</label>
+                <p className="text-xs text-gray-500 mt-1 mb-4">
+                  Choose a time to reflect after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}).
                 </p>
+                
+                {/* Input field matching "I will" and "Your Why" styling */}
+                <div className="relative">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 focus-within:border-brandBlue focus-within:bg-white focus-within:shadow-sm transition-all duration-200">
+                    <input
+                      type="datetime-local"
+                      name="endRoomDateTime"
+                      required
+                      min={willData.endDate}
+                      max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
+                      value={endRoomDateTime}
+                      onChange={(e) => setEndRoomDateTime(e.target.value)}
+                      className="w-full text-base text-gray-900 bg-transparent border-none outline-none focus:ring-0"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <form onSubmit={handleStep4Submit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 underline">End Room Date & Time</label>
-                  <p className="text-xs text-gray-600 mb-4">
-                    Choose a time to reflect after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}).
-                  </p>
-                  
-                  {/* Enhanced Time Selector with Visual Emphasis */}
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg pointer-events-none"></div>
-                    <div className="relative bg-white border-2 border-blue-300 rounded-lg hover:border-blue-500 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all">
-                      <input
-                        type="datetime-local"
-                        name="endRoomDateTime"
-                        required
-                        min={willData.endDate}
-                        max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
-                        value={endRoomDateTime}
-                        onChange={(e) => setEndRoomDateTime(e.target.value)}
-                        className="w-full px-4 py-4 text-lg font-medium text-gray-800 bg-transparent border-none outline-none focus:ring-0"
-                      />
-                    </div>
-                    <div className="mt-2 text-center">
-                      <span className="text-blue-600 text-xs underline cursor-pointer">
-                        📅 Click above to select date & time
-                      </span>
-                    </div>
-                  </div>
+              {/* Warning Box */}
+              <div className="bg-red-50 border border-red-300 rounded-xl p-3 mt-6">
+                <div className="mb-2 flex items-center">
+                  <svg className="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-red-800">END ROOM:</span>
                 </div>
-
-                <div className="bg-red-50 border border-red-200 rounded-lg p-2">
-                  <div className="mb-2 flex items-center">
-                    <svg className="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className="space-y-1">
+                  <p className="text-sm text-red-600 flex items-center">
+                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="3" />
                     </svg>
-                    <span className="text-sm font-medium text-red-800">END ROOM:</span>
-                  </div>
-                  <div className="space-y-1 text-xs text-red-700">
-                    <p>🔴 Opens automatically at the scheduled date and runs for 30 minutes</p>
-                    <p>🔴 Cannot be rescheduled once the <em>Will</em> is active</p>
-                    <p>🔴 Closes automatically after 30 minutes expire - regardless of attendance</p>
-                  </div>
+                    Opens automatically at the scheduled date and runs for 30 minutes
+                  </p>
+                  <p className="text-sm text-red-600 flex items-center">
+                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="3" />
+                    </svg>
+                    Cannot be rescheduled once the <em>Will</em> is active
+                  </p>
+                  <p className="text-sm text-red-600 flex items-center">
+                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="3" />
+                    </svg>
+                    Closes automatically after 30 minutes expire - regardless of attendance
+                  </p>
                 </div>
+              </div>
 
-                <div className="flex justify-between pt-2">
-                  <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)} className="text-sm">
-                    ← Back
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={createWillMutation.isPending || addCommitmentMutation.isPending || !endRoomDateTime}
-                    className={`px-6 py-2 text-sm font-semibold ${
-                      endRoomDateTime && !createWillMutation.isPending 
-                        ? 'bg-green-600 hover:bg-green-700 text-white' 
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will →'}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+              <div className="flex justify-between items-center pt-2">
+                <ActionButton type="button" onClick={() => setCurrentStep(3)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  <span className="text-sm font-medium">Back</span>
+                </ActionButton>
+                <PrimaryButton 
+                  type="submit" 
+                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending || !endRoomDateTime}
+                >
+                  <span className="text-sm font-medium">
+                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will'}
+                  </span>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </PrimaryButton>
+              </div>
+            </form>
+          </SectionCard>
         )}
 
         {/* Instruction Modal */}

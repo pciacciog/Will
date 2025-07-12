@@ -421,6 +421,14 @@ This is a full-stack web application for group goal accountability, built with R
   - Updated buttons to use ActionButton and PrimaryButton components with consistent rounded styling
   - Made layout more vertically compact for mobile with reduced margins and optimized icon sizing
   - Enhanced visual hierarchy with proper Lucide React icons (CheckCircle, Heart) and consistent brand colors
+- **July 12, 2025**: Improved End Room scheduling screen visual hierarchy and consistency
+  - Updated title styling: "Schedule Your End Room" to text-xl font-semibold with proper text-center alignment
+  - Applied consistent subtitle styling: "• one last step:" as text-sm text-gray-400 and description as text-base text-gray-600
+  - Standardized date input field to match "I will" and "Your Why" styling with gray-to-white focus transitions
+  - Enhanced warning box with bg-red-50 border-red-300 rounded-xl styling and proper text-sm sizing for all content
+  - Updated warning icons to consistent w-4 h-4 sizing and improved bullet point alignment
+  - Applied text-sm font-medium styling to Back and Create Will buttons for consistency across the app
+  - Replaced oversized ceremonial styling with clean, hierarchical design matching app's visual language
 - **July 12, 2025**: Implemented comprehensive global design system with mobile-first approach
   - Created unified design system with 6 core components: MobileLayout, SectionCard, PrimaryButton, AvatarBadge, SectionTitle, ActionButton
   - Enhanced Tailwind config with global design tokens: brandGreen (#1EB854), brandBlue (#067DFD), brandGray scale
