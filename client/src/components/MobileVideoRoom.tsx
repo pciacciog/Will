@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Phone, PhoneOff, ExternalLink, X, Users, AlertCircle, Video } from 'lucide-react';
 import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
 
 interface MobileVideoRoomProps {
@@ -17,44 +18,71 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Open in Capacitor InAppBrowser for proper WebRTC support
-  const openInAppBrowser = useCallback(async () => {
+  // Open video room with enhanced error handling for mobile
+  const openVideoRoom = useCallback(async () => {
     try {
-      console.log('Opening Daily.co room in Capacitor InAppBrowser:', roomUrl);
+      console.log('Opening Daily.co room for mobile:', roomUrl);
+      console.log('Platform:', Capacitor.getPlatform());
       
-      // Use Capacitor Browser with proper options for WebRTC support
-      await Browser.open({ 
-        url: roomUrl,
-        windowName: 'endroom',
-        toolbarColor: '#1f2937',
-        presentationStyle: 'fullscreen'
-      });
+      // Check if running in Capacitor
+      if (Capacitor.isNativePlatform()) {
+        console.log('Running in Capacitor - using Browser plugin');
+        try {
+          await Browser.open({ 
+            url: roomUrl
+          });
+          
+          toast({
+            title: "End Room Opened",
+            description: "Video call opened in browser.",
+          });
+          
+          console.log('Capacitor Browser opened successfully');
+          setIsLoading(false);
+          return;
+          
+        } catch (capacitorError) {
+          console.error('Capacitor Browser failed:', capacitorError);
+          // For Capacitor, if Browser fails, we need to show manual instructions
+          setError(`Browser failed to open. Error: ${capacitorError.message || 'Unknown error'}`);
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        console.log('Running in web browser - using window.open');
+        // For web, use window.open
+        const newWindow = window.open(roomUrl, '_blank', 'noopener,noreferrer');
+        
+        if (newWindow) {
+          toast({
+            title: "End Room Opened",
+            description: "Video call opened in new browser tab.",
+          });
+          
+          console.log('window.open successful');
+          setIsLoading(false);
+          return;
+        } else {
+          throw new Error('Popup blocked or window.open failed');
+        }
+      }
       
-      toast({
-        title: "End Room Opened",
-        description: "Video call opened in dedicated browser window.",
-      });
-      
-      // Don't leave immediately - let user manually close when done
-      console.log('InAppBrowser opened successfully');
-      setIsLoading(false);
-      
-    } catch (browserError) {
-      console.error('Failed to open InAppBrowser:', browserError);
-      setError('Unable to open video room. Please try again.');
+    } catch (error) {
+      console.error('Video room opening failed:', error);
+      setError(`Unable to open video room. ${error.message || 'Please try the manual options below.'}`);
       setIsLoading(false);
     }
   }, [roomUrl, toast]);
 
-  // Open InAppBrowser immediately for mobile devices
+  // Open video room immediately for mobile devices
   useEffect(() => {
     const mobileTimeout = setTimeout(() => {
-      console.log('Opening End Room in InAppBrowser for proper WebRTC support');
-      openInAppBrowser();
+      console.log('Opening End Room for mobile with fallback support');
+      openVideoRoom();
     }, 500); // Open after brief delay for better UX
 
     return () => clearTimeout(mobileTimeout);
-  }, [openInAppBrowser]);
+  }, [openVideoRoom]);
 
 
 
@@ -78,12 +106,44 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
             <p className="text-red-700 mb-4">{error}</p>
             <div className="space-y-3">
               <Button 
-                onClick={openInAppBrowser} 
+                onClick={openVideoRoom} 
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 size="lg"
               >
                 <Video className="w-4 h-4 mr-2" />
                 Try Again
+              </Button>
+              <Button 
+                onClick={() => {
+                  // Direct system browser fallback
+                  window.location.href = roomUrl;
+                }} 
+                variant="outline"
+                size="lg"
+                className="w-full"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open in System Browser
+              </Button>
+              <Button 
+                onClick={() => {
+                  // Copy URL to clipboard as final fallback
+                  navigator.clipboard.writeText(roomUrl).then(() => {
+                    toast({
+                      title: "URL Copied",
+                      description: "Video room URL copied to clipboard. Open it in your browser.",
+                    });
+                  }).catch(() => {
+                    // If clipboard API fails, show the URL
+                    alert(`Video room URL: ${roomUrl}`);
+                  });
+                }} 
+                variant="outline"
+                size="lg"
+                className="w-full"
+              >
+                <AlertCircle className="w-4 h-4 mr-2" />
+                Copy URL
               </Button>
               <Button 
                 onClick={onLeave} 
@@ -152,7 +212,7 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
       <div className="bg-gray-800 p-4 flex justify-center items-center gap-4">
         {!isLoading && (
           <Button 
-            onClick={openInAppBrowser} 
+            onClick={openVideoRoom} 
             variant="outline" 
             size="lg"
             className="text-white border-gray-600 hover:bg-gray-700 px-6 py-3"
