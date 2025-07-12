@@ -37,6 +37,7 @@ export class DailyService {
     const expireTime = Math.floor(Date.now() / 1000) + (durationMinutes * 60); // Start from now instead of scheduledStart
 
     console.log('[DailyService] Creating room with config:', { roomName, expireTime, willId });
+    console.log('[DailyService] Daily.co API Key present:', !!this.apiKey);
     
     const response = await fetch(`${this.baseUrl}/rooms`, {
       method: 'POST',
