@@ -497,9 +497,13 @@ export default function InnerCircleHub() {
 
           {willStatus === 'no_will' && (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="w-8 h-8 text-muted-foreground" />
-              </div>
+              <button 
+                onClick={() => setLocation('/start-will')}
+                className="w-16 h-16 bg-primary/10 hover:bg-primary/20 active:bg-primary/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors shadow-sm hover:shadow-md active:shadow-lg"
+                aria-label="Create Will"
+              >
+                <Plus className="w-8 h-8 text-primary" />
+              </button>
               <h3 className="text-lg font-medium mb-2">No active <em>Will</em></h3>
               <p className="text-muted-foreground mb-6 text-sm">Ready to commit to something meaningful together?</p>
               <MobileButton 
