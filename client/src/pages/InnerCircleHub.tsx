@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MobileLayout, MobileHeader, MobileCard, MobileButton } from "@/components/ui/mobile-layout";
 import { useAuth } from "@/hooks/useAuth";
-import { Copy, Settings, LogOut, UserMinus, ChevronDown, Shield } from "lucide-react";
+import { Copy, Settings, LogOut, UserMinus, ChevronDown, Shield, Users, Target, Plus, Video, Clock, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -326,71 +327,58 @@ export default function InnerCircleHub() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
-          <p className="text-gray-600 mb-6">Please log in to view your Inner Circle Hub.</p>
-          <Button onClick={() => setLocation('/auth')}>
-            Sign In
-          </Button>
+      <MobileLayout>
+        <div className="flex items-center justify-center min-h-screen-safe">
+          <div className="text-center px-4">
+            <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
+            <p className="text-muted-foreground mb-6">Please log in to view your Inner Circle Hub.</p>
+            <MobileButton onClick={() => setLocation('/auth')} size="lg">
+              Sign In
+            </MobileButton>
+          </div>
         </div>
-      </div>
+      </MobileLayout>
     );
   }
 
   if (!circle) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Inner Circle</h2>
-          <p className="text-gray-600 mb-6">You need to be part of an Inner Circle first.</p>
-          <Button onClick={() => setLocation('/inner-circle')}>
-            Create or Join Circle
-          </Button>
+      <MobileLayout>
+        <div className="flex items-center justify-center min-h-screen-safe">
+          <div className="text-center px-4">
+            <h2 className="text-2xl font-bold mb-4">No Inner Circle</h2>
+            <p className="text-muted-foreground mb-6">You need to be part of an Inner Circle first.</p>
+            <MobileButton onClick={() => setLocation('/inner-circle')} size="lg">
+              Create or Join Circle
+            </MobileButton>
+          </div>
         </div>
-      </div>
+      </MobileLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 ios-safe-area-top ios-safe-area-bottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
-      
-      {/* Embedded Video Room - Full Screen Overlay */}
-      {showVideoRoom && videoRoomUrl && (
-        <MobileVideoRoom 
-          roomUrl={videoRoomUrl} 
-          onLeave={handleLeaveVideoRoom}
-          durationMinutes={30}
-        />
-      )}
-
-      
-      <div className="max-w-4xl mx-auto mobile-container safe-area-left safe-area-right" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)' }}>
-        
-        {/* Header with user menu */}
-        <div className="relative mb-8 md:mb-12">
-          {/* Main Header Content */}
-          <div className="text-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 mobile-title">Inner Circle Hub</h1>
-            <p className="text-base md:text-lg text-gray-600 italic tracking-wide mobile-subtitle">Become More — Together</p>
-          </div>
-          
-          {/* User Menu - Simple Avatar Button */}
-          <div className="absolute top-0 right-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 20px)', paddingRight: 'calc(env(safe-area-inset-right) + 16px)' }}>
+    <MobileLayout
+      className="bg-gray-50/50"
+      header={
+        <MobileHeader 
+          title="Inner Circle Hub"
+          subtitle="Become More — Together"
+          actions={
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-12 h-12 rounded-full p-0 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 mobile-touch-target">
-                  <span className="text-white font-semibold text-lg">
+                <Button variant="ghost" className="w-10 h-10 rounded-full p-0 bg-gradient-to-br from-primary to-secondary hover:from-primary/90 hover:to-secondary/90">
+                  <span className="text-white font-semibold text-sm">
                     {user?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || '?'}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <div className="px-3 py-2 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">
+                <div className="px-3 py-2 border-b">
+                  <p className="text-sm font-medium">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {user?.email}
                   </p>
                 </div>
@@ -398,7 +386,7 @@ export default function InnerCircleHub() {
                   <>
                     <DropdownMenuItem 
                       onClick={() => setLocation('/admin')}
-                      className="flex items-center space-x-2 cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                      className="flex items-center space-x-2 cursor-pointer"
                     >
                       <Shield className="h-4 w-4" />
                       <span>Admin Panel</span>
@@ -424,289 +412,309 @@ export default function InnerCircleHub() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-gray-700"
+                  className="flex items-center space-x-2 cursor-pointer"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Sign Out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </div>
-        
-        {/* Members Section */}
-        <Card className="mb-6 md:mb-8 mobile-card mobile-section">
-          <CardContent className="p-6 md:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
-              <h2 className="mobile-subtitle font-semibold text-gray-900 flex items-center">
-                <svg className="w-6 h-6 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Circle Members
-              </h2>
-              
-              <div className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
-                <span className="text-sm text-gray-600">Invite Code:</span>
-                <span className="font-mono font-bold text-blue-600 text-base md:text-lg">{circle.inviteCode}</span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    navigator.clipboard.writeText(circle.inviteCode);
-                    toast({
-                      title: "Copied!",
-                      description: "Invite code copied to clipboard",
-                    });
-                  }}
-                  className="h-8 w-8 p-0 hover:bg-blue-100 mobile-touch-target"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3">
-              {circle.members?.map((member: any, index: number) => (
-                <div key={member.id} className="flex items-center space-x-4 bg-gray-50 mobile-list-item mobile-touch-target">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-semibold text-xl">
-                      {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900 mobile-text truncate">
-                      {member.user.firstName 
-                        ? member.user.firstName
-                        : member.user.email
-                      }
-                    </div>
-                    <div className="text-gray-500 mobile-text">
-                      Member
-                    </div>
-                  </div>
-                  <div className="w-5 h-5 bg-green-400 rounded-full flex-shrink-0" title="Online"></div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Will Status Section */}
-        <Card className="mobile-card mobile-section">
-          <CardContent className="p-6 md:p-8">
-            <div className="mb-6">
-              <h2 className="mobile-subtitle font-semibold text-gray-900 flex items-center">
-                <svg className="w-6 h-6 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Current WILL
-              </h2>
-            </div>
-
-            {willStatus === 'no_will' && (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No active <em>Will</em></h3>
-                <p className="text-gray-600 mb-6">Ready to commit to something meaningful together?</p>
-                <Button 
-                  onClick={() => setLocation('/start-will')}
-                  className="bg-secondary hover:bg-green-600 mobile-button"
-                >
-                  Start a<em>Will</em>
-                </Button>
-              </div>
-            )}
-
-            {willStatus === 'pending' && (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                      <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">WILL Pending</h3>
-                      <p className="text-sm text-gray-600">
-                        {will?.commitments?.length || 0} of {will?.memberCount || 0} members have submitted
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                    Pending
-                  </Badge>
-                </div>
-
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-start space-x-3">
-                    <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    <div className="text-sm text-amber-800">
-                      <strong>Note:</strong> This <em>Will</em> becomes active automatically at <strong>{formatActivationTime(will?.startDate)}</strong>. Any member who has not submitted by then will not be included in the <em>Will</em>.
-                    </div>
-                  </div>
-                </div>
-                
-                <Button onClick={handleViewWillDetails} className="w-full mobile-button">
-                  View <em>Will</em> Details
-                </Button>
-              </div>
-            )}
-
-            {willStatus === 'scheduled' && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">WILL Scheduled</h3>
-                      <p className="text-sm text-gray-600">
-                        Starts {formatActivationTime(will?.startDate)}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800">
-                    Scheduled
-                  </Badge>
-                </div>
-                
-                <div className="bg-blue-50 rounded-xl p-4 mb-4">
-                  <div className="text-sm text-blue-700">
-                    <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    Your <em>Will</em> will begin in <span className="font-semibold">{formatTimeUntilStart(will?.startDate)}</span>
-                  </div>
-                </div>
-                
-                <Button onClick={handleViewWillDetails} className="w-full mobile-button">
-                  View <em>Will</em> Details
-                </Button>
-              </div>
-            )}
-
-            {willStatus === 'active' && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900"><em>Will</em> Active</h3>
-                      <p className="text-sm text-gray-600">Ends at {formatDisplayDateTime(will?.endDate)}</p>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800">
-                    Active
-                  </Badge>
-                </div>
-                
-                <Button onClick={handleViewWillDetails} className="w-full mobile-button">
-                  View <em>Will</em> Details
-                </Button>
-              </div>
-            )}
-
-            {willStatus === 'waiting_for_end_room' && (
-              <div className="text-center py-8">
-                {/* Check if End Room is currently active */}
-                {will?.endRoomStatus === 'open' ? (
-                  // End Room is currently in progress
-                  <>
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room in Process</h3>
-                    <p className="text-gray-600 mb-6">
-                      The End Room is live and will close at <strong>{will?.endRoomScheduledAt ? (() => {
-                        const openTime = new Date(will.endRoomScheduledAt);
-                        const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
-                        return formatEndRoomTime(closeTime.toISOString());
-                      })() : 'N/A'}</strong>.
-                    </p>
-                    
-                    {will?.endRoomUrl ? (
-                      <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleJoinEndRoom}>
-                        Join End Room
-                      </Button>
-                    ) : (
-                      <div className="text-center">
-                        <Button 
-                          onClick={handleJoinEndRoom}
-                          className="bg-green-600 hover:bg-green-700 text-white mobile-button mb-2"
-                        >
-                          Join
-                        </Button>
-                        <p className="text-sm text-gray-600">
-                          The End Room is active but video setup is needed. Click to create.
-                        </p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  // End Room is scheduled but not yet started
-                  <>
-                    <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> - End Room</h3>
-                    <p className="text-gray-600 mb-6">
-                      The End Room will open at <strong>{will?.endRoomScheduledAt ? formatEndRoomTime(will.endRoomScheduledAt) : 'N/A'}</strong> and will close at <strong>{will?.endRoomScheduledAt ? (() => {
-                        const openTime = new Date(will.endRoomScheduledAt);
-                        const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
-                        return formatEndRoomTime(closeTime.toISOString());
-                      })() : 'N/A'}</strong>.
-                    </p>
-                    
-                    <Button className="bg-purple-600 hover:bg-purple-700 mobile-button" onClick={handleViewWillDetails}>
-                      View End Room Details
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {willStatus === 'completed' && (
-              <div className="text-center py-8">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2"><em>Will</em> Complete - Ready to Review</h3>
-                <p className="text-gray-600 mb-6">Review the final summary to officially close out this <em>Will</em>.</p>
-                
-                <Button className="bg-green-600 hover:bg-green-700 mobile-button" onClick={handleViewWillDetails}>
-                  Review Final Summary
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Account Settings Modal */}
-        <AccountSettingsModal 
-          isOpen={showAccountSettings}
-          onClose={() => setShowAccountSettings(false)}
+          }
         />
+      }
+    >
+      {/* Embedded Video Room - Full Screen Overlay */}
+      {showVideoRoom && videoRoomUrl && (
+        <MobileVideoRoom 
+          roomUrl={videoRoomUrl} 
+          onLeave={handleLeaveVideoRoom}
+          durationMinutes={30}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 px-4 py-4 space-y-4 ios-scroll">{/* Removed old header layout wrapper */}
+        {/* Members Section */}
+        <MobileCard className="mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
+            <h2 className="text-lg font-semibold flex items-center">
+              <Users className="w-5 h-5 text-primary mr-2" />
+              Circle Members
+            </h2>
+            
+            <div className="flex items-center space-x-2 bg-primary/5 px-3 py-2 rounded-lg">
+              <span className="text-sm text-muted-foreground">Invite Code:</span>
+              <span className="font-mono font-bold text-primary text-base">{circle.inviteCode}</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  navigator.clipboard.writeText(circle.inviteCode);
+                  toast({
+                    title: "Copied!",
+                    description: "Invite code copied to clipboard",
+                  });
+                }}
+                className="h-8 w-8 p-0 hover:bg-primary/10"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            {circle.members?.map((member: any, index: number) => (
+              <div key={member.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-semibold text-lg">
+                    {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-foreground truncate">
+                    {member.user.firstName 
+                      ? member.user.firstName
+                      : member.user.email
+                    }
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Member
+                  </div>
+                </div>
+                <div className="w-3 h-3 bg-green-400 rounded-full flex-shrink-0" title="Online"></div>
+              </div>
+            ))}
+          </div>
+        </MobileCard>
+        {/* Will Status Section */}
+        <MobileCard>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              <Target className="w-5 h-5 text-primary mr-2" />
+              Current <em>Will</em>
+            </h2>
+          </div>
+
+          {willStatus === 'no_will' && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">No active <em>Will</em></h3>
+              <p className="text-muted-foreground mb-6 text-sm">Ready to commit to something meaningful together?</p>
+              <MobileButton 
+                onClick={() => setLocation('/start-will')}
+                variant="secondary"
+                size="lg"
+                fullWidth
+              >
+                Start a <em>Will</em>
+              </MobileButton>
+            </div>
+          )}
+
+          {willStatus === 'pending' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold"><em>Will</em> Pending</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {will?.commitments?.length || 0} of {will?.memberCount || 0} members have submitted
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                  Pending
+                </Badge>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start space-x-3">
+                  <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div className="text-sm text-amber-800">
+                    <strong>Note:</strong> This <em>Will</em> becomes active automatically at <strong>{formatActivationTime(will?.startDate)}</strong>. Any member who has not submitted by then will not be included in the <em>Will</em>.
+                  </div>
+                </div>
+              </div>
+              
+              <MobileButton onClick={handleViewWillDetails} size="lg" fullWidth>
+                View <em>Will</em> Details
+              </MobileButton>
+            </div>
+          )}
+
+          {willStatus === 'scheduled' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold"><em>Will</em> Scheduled</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Starts {formatActivationTime(will?.startDate)}
+                    </p>
+                  </div>
+                </div>
+                <Badge className="bg-blue-100 text-blue-800">
+                  Scheduled
+                </Badge>
+              </div>
+              
+              <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                <div className="text-sm text-blue-700">
+                  <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  Your <em>Will</em> will begin in <span className="font-semibold">{formatTimeUntilStart(will?.startDate)}</span>
+                </div>
+              </div>
+              
+              <MobileButton onClick={handleViewWillDetails} size="lg" fullWidth>
+                View <em>Will</em> Details
+              </MobileButton>
+            </div>
+          )}
+
+          {willStatus === 'active' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold"><em>Will</em> Active</h3>
+                    <p className="text-sm text-muted-foreground">Ends at {formatDisplayDateTime(will?.endDate)}</p>
+                  </div>
+                </div>
+                <Badge className="bg-green-100 text-green-800">
+                  Active
+                </Badge>
+              </div>
+              
+              <MobileButton onClick={handleViewWillDetails} size="lg" fullWidth>
+                View <em>Will</em> Details
+              </MobileButton>
+            </div>
+          )}
+
+          {willStatus === 'waiting_for_end_room' && (
+            <div className="text-center py-8">
+              {/* Check if End Room is currently active */}
+              {will?.endRoomStatus === 'open' ? (
+                // End Room is currently in progress
+                <>
+                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Video className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2"><em>Will</em> - End Room in Process</h3>
+                  <p className="text-muted-foreground mb-6">
+                    The End Room is live and will close at <strong>{will?.endRoomScheduledAt ? (() => {
+                      const openTime = new Date(will.endRoomScheduledAt);
+                      const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
+                      return formatEndRoomTime(closeTime.toISOString());
+                    })() : 'N/A'}</strong>.
+                  </p>
+                  
+                  {will?.endRoomUrl ? (
+                    <MobileButton 
+                      onClick={handleJoinEndRoom}
+                      variant="secondary"
+                      size="lg"
+                      fullWidth
+                    >
+                      Join End Room
+                    </MobileButton>
+                  ) : (
+                    <div className="text-center">
+                      <MobileButton 
+                        onClick={handleJoinEndRoom}
+                        variant="secondary"
+                        size="lg"
+                        fullWidth
+                        className="mb-2"
+                      >
+                        Join
+                      </MobileButton>
+                      <p className="text-sm text-muted-foreground">
+                        The End Room is active but video setup is needed. Click to create.
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                // End Room is scheduled but not yet started
+                <>
+                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Video className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2"><em>Will</em> - End Room</h3>
+                  <p className="text-muted-foreground mb-6">
+                    The End Room will open at <strong>{will?.endRoomScheduledAt ? formatEndRoomTime(will.endRoomScheduledAt) : 'N/A'}</strong> and will close at <strong>{will?.endRoomScheduledAt ? (() => {
+                      const openTime = new Date(will.endRoomScheduledAt);
+                      const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
+                      return formatEndRoomTime(closeTime.toISOString());
+                    })() : 'N/A'}</strong>.
+                  </p>
+                  
+                  <MobileButton 
+                    onClick={handleViewWillDetails}
+                    size="lg"
+                    fullWidth
+                  >
+                    View End Room Details
+                  </MobileButton>
+                </>
+              )}
+            </div>
+          )}
+
+          {willStatus === 'completed' && (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2"><em>Will</em> Complete - Ready to Review</h3>
+              <p className="text-muted-foreground mb-6">Review the final summary to officially close out this <em>Will</em>.</p>
+              
+              <MobileButton 
+                onClick={handleViewWillDetails}
+                variant="secondary"
+                size="lg"
+                fullWidth
+              >
+                Review Final Summary
+              </MobileButton>
+            </div>
+          )}
+        </MobileCard>
       </div>
-    </div>
+
+      {/* Account Settings Modal */}
+      <AccountSettingsModal 
+        isOpen={showAccountSettings}
+        onClose={() => setShowAccountSettings(false)}
+      />
+      
+      {/* Final Will Summary Modal */}
+      {will && willStatus === 'completed' && (
+        <FinalWillSummary 
+          will={will}
+          hasUserAcknowledged={will.hasUserAcknowledged}
+          onClose={() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+          }}
+        />
+      )}
+    </MobileLayout>
   );
 }
