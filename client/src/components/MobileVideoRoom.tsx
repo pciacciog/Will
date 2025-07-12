@@ -16,8 +16,6 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<string>('');
-  const [joinStartTime, setJoinStartTime] = useState<Date | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
   // Open in native browser as fallback
@@ -46,7 +44,6 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
     console.log('Mobile iframe loaded successfully');
     setIframeLoaded(true);
     setIsLoading(false);
-    setJoinStartTime(new Date());
   }, []);
 
   // Handle iframe error
@@ -56,28 +53,15 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
     setIsLoading(false);
   }, []);
 
-  // Timer countdown
+  // Immediately open in browser for mobile devices since iframe doesn't work reliably
   useEffect(() => {
-    if (!joinStartTime) return;
+    const mobileTimeout = setTimeout(() => {
+      console.log('Mobile iframe rarely works - opening in browser automatically');
+      openInBrowser();
+    }, 1000); // Open in browser after 1 second automatically
 
-    const interval = setInterval(() => {
-      const now = new Date();
-      const elapsed = now.getTime() - joinStartTime.getTime();
-      const remaining = (durationMinutes * 60 * 1000) - elapsed;
-
-      if (remaining <= 0) {
-        console.log('Auto-disconnecting due to time limit');
-        onLeave();
-        return;
-      }
-
-      const minutes = Math.floor(remaining / (1000 * 60));
-      const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
-      setTimeRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [joinStartTime, durationMinutes, onLeave]);
+    return () => clearTimeout(mobileTimeout);
+  }, [openInBrowser]);
 
   // Initialize with a timeout to detect iframe loading issues
   useEffect(() => {
@@ -139,16 +123,9 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       {/* Header */}
       <div className="bg-gray-800 p-4 flex justify-between items-center text-white">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            <span className="text-sm">End Room</span>
-          </div>
-          {timeRemaining && (
-            <div className="text-sm bg-gray-700 px-2 py-1 rounded">
-              {timeRemaining}
-            </div>
-          )}
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          <span className="text-sm">End Room</span>
         </div>
         
         <Button onClick={onLeave} variant="ghost" size="sm" className="text-white hover:bg-gray-700">
@@ -177,14 +154,14 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
           />
         </div>
         
-        {/* Loading overlay */}
+        {/* Loading overlay - shows briefly before opening browser */}
         {isLoading && (
           <div className="absolute inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center">
             <div className="text-white text-center max-w-sm mx-auto">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-              <p className="mb-2">Connecting to End Room...</p>
+              <p className="mb-2">Opening End Room...</p>
               <p className="text-sm text-gray-300">
-                This may take a moment on mobile
+                Opening in your browser for the best experience
               </p>
             </div>
           </div>
