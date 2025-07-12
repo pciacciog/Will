@@ -115,7 +115,7 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
   // Error state with retry option
   if (error) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-900 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 bg-gray-900 flex items-center justify-center p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <Card className="border-red-200 bg-red-50 max-w-md w-full">
           <CardHeader>
             <CardTitle className="text-red-800 flex items-center justify-between">
@@ -202,6 +202,9 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
   // Main mobile video interface - shows loading screen while InAppBrowser opens
   return (
     <div className="fixed inset-0 z-50 bg-gray-900 flex flex-col">
+      {/* Safe area spacer for iOS */}
+      <div className="flex-shrink-0 bg-gray-800 h-[env(safe-area-inset-top)] w-full"></div>
+      
       {/* Header */}
       <div className="bg-gray-800 p-4 flex justify-between items-center text-white">
         <div className="flex items-center gap-2">
@@ -271,6 +274,9 @@ export function MobileVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Mobi
           {isLoading ? "Cancel" : "Close"}
         </Button>
       </div>
+      
+      {/* Safe area spacer for iOS bottom */}
+      <div className="flex-shrink-0 bg-gray-800 h-[env(safe-area-inset-bottom)] w-full"></div>
     </div>
   );
 }

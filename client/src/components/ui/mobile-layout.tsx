@@ -22,7 +22,7 @@ export function MobileLayout({
       className
     )}>
       {/* Fixed safe area spacer - creates locked space for iOS system UI */}
-      <div className="flex-shrink-0 bg-background h-[calc(env(safe-area-inset-top)+2rem)] w-full"></div>
+      <div className="flex-shrink-0 bg-background h-[calc(env(safe-area-inset-top)+3rem)] w-full"></div>
       
       {/* Header */}
       {header && (
@@ -34,7 +34,9 @@ export function MobileLayout({
       {/* Main content area - scrollable container with locked safe area */}
       <div className={cn(
         "flex flex-col flex-1 px-4",
-        scrollable && "overflow-y-auto scroll-smooth overscroll-contain ios-scroll"
+        scrollable && "overflow-y-auto scroll-smooth overscroll-contain ios-scroll",
+        // iOS-specific smooth scrolling
+        "[&::-webkit-scrollbar]:hidden [-webkit-overflow-scrolling:touch]"
       )}>
         {children}
       </div>
