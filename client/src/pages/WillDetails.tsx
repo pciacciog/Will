@@ -111,6 +111,14 @@ export default function WillDetails() {
 
   const acknowledgeMutation = useMutation({
     mutationFn: async () => {
+      // Check if user has already acknowledged before making the request
+      if (will?.hasUserAcknowledged) {
+        // If already acknowledged, just close modal and navigate
+        setShowFinalSummary(false);
+        setLocation('/hub');
+        return;
+      }
+      
       const response = await apiRequest(`/api/wills/${id}/acknowledge`, {
         method: 'POST'
       });
@@ -136,6 +144,13 @@ export default function WillDetails() {
       }, 1500);
     },
     onError: (error: any) => {
+      // Handle "already acknowledged" error gracefully
+      if (error.message?.includes("already acknowledged")) {
+        setShowFinalSummary(false);
+        setLocation('/hub');
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message || "Failed to acknowledge completion",
@@ -725,11 +740,18 @@ export default function WillDetails() {
       {/* Final Will Summary Modal */}
       <FinalWillSummary
         isOpen={showFinalSummary}
-        onClose={() => setShowFinalSummary(false)}
+        onClose={() => {
+          setShowFinalSummary(false);
+          // Navigate back to dashboard if already acknowledged
+          if (will?.hasUserAcknowledged) {
+            setLocation('/hub');
+          }
+        }}
         onAcknowledge={() => acknowledgeMutation.mutate()}
         will={will}
         isAcknowledging={acknowledgeMutation.isPending}
         currentUserId={user?.id}
+        hasUserAcknowledged={will?.hasUserAcknowledged}
       />
     </div>
   );
