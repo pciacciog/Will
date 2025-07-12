@@ -82,7 +82,7 @@ export function MobileHeader({
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-muted-foreground truncate mt-1 italic">
+              <p className="text-sm text-muted-foreground truncate mt-0.5 italic">
                 {subtitle}
               </p>
             )}
