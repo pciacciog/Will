@@ -18,9 +18,9 @@ export function MobileLayout({
 }: MobileLayoutProps) {
   return (
     <div className={cn(
-      "flex flex-col min-h-screen bg-background",
-      // Safe area handling for iOS - wrap entire screen with extra clearance
-      "pt-[calc(env(safe-area-inset-top)+2.5rem)] px-4 pb-[env(safe-area-inset-bottom)]",
+      "flex flex-col h-screen bg-background",
+      // Safe area handling for iOS - ensure content stays below status bar
+      "pt-[calc(env(safe-area-inset-top)+2rem)] px-4 pb-[env(safe-area-inset-bottom)]",
       className
     )}>
       {/* Header */}
@@ -30,10 +30,10 @@ export function MobileLayout({
         </div>
       )}
       
-      {/* Main content area */}
+      {/* Main content area - scrollable container with proper safe area respect */}
       <div className={cn(
-        "flex-1 flex flex-col",
-        scrollable && "overflow-y-auto ios-scroll"
+        "flex flex-col h-full",
+        scrollable && "overflow-y-auto scroll-smooth overscroll-contain ios-scroll"
       )}>
         {children}
       </div>

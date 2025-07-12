@@ -65,15 +65,27 @@
   }
 
   /* iOS safe area support */
+  html, body {
+    overflow-x: hidden;
+  }
+
   #root {
     min-height: 100vh;
     min-height: -webkit-fill-available;
+    /* Ensure no conflicting padding that interferes with safe area */
+    padding: 0;
+    margin: 0;
   }
 
   /* iOS-specific touch optimizations */
   @supports (-webkit-touch-callout: none) {
     .ios-scroll {
       -webkit-overflow-scrolling: touch;
+      /* Enhanced iOS scroll behavior */
+      overflow-scrolling: touch;
+      /* Respect safe area during scroll */
+      scroll-padding-top: calc(env(safe-area-inset-top) + 2rem);
+      scroll-padding-bottom: env(safe-area-inset-bottom);
     }
   }
 

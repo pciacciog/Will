@@ -372,7 +372,6 @@ export default function StartWill() {
           <SectionCard>
             <div className="text-center mb-8">
               <SectionTitle>Set Your Timeline</SectionTitle>
-              <p className="text-gray-600 tracking-tight">Choose your scheduling preference</p>
             </div>
             
             <form onSubmit={handleStep1Submit} className="space-y-6">
