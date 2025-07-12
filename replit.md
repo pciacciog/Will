@@ -382,6 +382,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Updated mobile development workflow: changes require mobile app rebuild/redeployment unlike web hot refresh
   - Fixed header spacing between title and subtitle with optimized `mt-0.5` spacing
   - Ensured native iOS feel with proper padding and layout structure throughout the app
+- **July 12, 2025**: Resolved iOS build issues and established mobile development workflow
+  - Fixed "No such module 'Capacitor'" error by identifying missing CocoaPods dependencies
+  - Confirmed Capacitor's "App" target structure is correct by design (not an error)
+  - Established live server development workflow: iOS app connects to https://willbeta.replit.app
+  - Mobile app automatically receives updates from live server without requiring rebuilds
+  - Verified iOS project configuration: Bundle ID (com.porfirio.will), App Name (WILL), and permissions setup
+  - Documented proper build process: npm run build → npx cap sync ios → pod install → open App.xcworkspace
 - **July 12, 2025**: Implemented comprehensive global design system with mobile-first approach
   - Created unified design system with 6 core components: MobileLayout, SectionCard, PrimaryButton, AvatarBadge, SectionTitle, ActionButton
   - Enhanced Tailwind config with global design tokens: brandGreen (#1EB854), brandBlue (#067DFD), brandGray scale
