@@ -19,8 +19,8 @@ export function MobileLayout({
   return (
     <div className={cn(
       "flex flex-col min-h-screen bg-background",
-      // Safe area handling for iOS - wrap entire screen
-      "pt-[env(safe-area-inset-top)] px-4 pb-[env(safe-area-inset-bottom)]",
+      // Safe area handling for iOS - wrap entire screen with extra clearance
+      "pt-[calc(env(safe-area-inset-top)+1.5rem)] px-4 pb-[env(safe-area-inset-bottom)]",
       className
     )}>
       {/* Header */}
