@@ -637,8 +637,10 @@ export default function StartWill() {
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 text-center">Schedule Your End Room</h2>
-              <p className="text-sm text-gray-400 text-center mt-1">• one last step:</p>
-              <p className="text-base text-gray-600 text-center mt-2">
+              <div className="mt-3 rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-700 font-medium border border-blue-100 text-center">
+                One last step before you complete your Will.
+              </div>
+              <p className="text-base text-gray-600 text-center mt-3">
                 When will your circle gather to honor the effort?
               </p>
             </div>
@@ -668,28 +670,28 @@ export default function StartWill() {
               </div>
 
               {/* Warning Box */}
-              <div className="bg-red-50 border border-red-300 rounded-xl p-3 mt-6">
-                <div className="mb-2 flex items-center">
+              <div className="bg-red-50 border border-red-300 rounded-xl p-4 mt-6">
+                <div className="mb-3 flex items-center">
                   <svg className="w-4 h-4 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-sm font-medium text-red-800">END ROOM:</span>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-red-600 flex items-center">
-                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <div className="space-y-2 leading-relaxed">
+                  <p className="text-sm text-red-600 flex items-start pl-2">
+                    <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <circle cx="10" cy="10" r="3" />
                     </svg>
                     Opens automatically at the scheduled date and runs for 30 minutes
                   </p>
-                  <p className="text-sm text-red-600 flex items-center">
-                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <p className="text-sm text-red-600 flex items-start pl-2">
+                    <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <circle cx="10" cy="10" r="3" />
                     </svg>
                     Cannot be rescheduled once the <em>Will</em> is active
                   </p>
-                  <p className="text-sm text-red-600 flex items-center">
-                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <p className="text-sm text-red-600 flex items-start pl-2">
+                    <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <circle cx="10" cy="10" r="3" />
                     </svg>
                     Closes automatically after 30 minutes expire - regardless of attendance
@@ -697,24 +699,31 @@ export default function StartWill() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-2">
-                <button 
-                  type="button" 
-                  onClick={() => setCurrentStep(3)}
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </button>
-                <PrimaryButton 
-                  type="submit" 
-                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending || !endRoomDateTime}
-                >
-                  <span className="text-sm font-medium">
-                    {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will'}
-                  </span>
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </PrimaryButton>
+              <div className="border-t border-gray-200 pt-4 mt-6">
+                <div className="flex justify-between items-center">
+                  <button 
+                    type="button" 
+                    onClick={() => setCurrentStep(3)}
+                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createWillMutation.isPending || addCommitmentMutation.isPending || !endRoomDateTime}
+                    className={`px-4 py-3 rounded-lg text-sm font-medium flex items-center transition-colors duration-200 ${
+                      createWillMutation.isPending || addCommitmentMutation.isPending || !endRoomDateTime
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-brandGreen text-white hover:bg-green-600'
+                    }`}
+                  >
+                    <span className="text-sm font-medium">
+                      {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will'}
+                    </span>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </button>
+                </div>
               </div>
             </form>
           </SectionCard>
