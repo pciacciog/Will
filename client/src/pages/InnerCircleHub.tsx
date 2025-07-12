@@ -329,7 +329,7 @@ export default function InnerCircleHub() {
     return (
       <MobileLayout>
         <div className="flex items-center justify-center min-h-screen-safe">
-          <div className="text-center px-4">
+          <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
             <p className="text-muted-foreground mb-6">Please log in to view your Inner Circle Hub.</p>
             <MobileButton onClick={() => setLocation('/auth')} size="lg">
@@ -345,7 +345,7 @@ export default function InnerCircleHub() {
     return (
       <MobileLayout>
         <div className="flex items-center justify-center min-h-screen-safe">
-          <div className="text-center px-4">
+          <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">No Inner Circle</h2>
             <p className="text-muted-foreground mb-6">You need to be part of an Inner Circle first.</p>
             <MobileButton onClick={() => setLocation('/inner-circle')} size="lg">
@@ -433,7 +433,7 @@ export default function InnerCircleHub() {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 px-4 py-4 space-y-4 ios-scroll">{/* Removed old header layout wrapper */}
+      <div className="flex-1 py-4 space-y-4 ios-scroll">{/* Removed old header layout wrapper */}
         {/* Members Section */}
         <MobileCard className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">

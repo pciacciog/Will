@@ -19,13 +19,13 @@ export function MobileLayout({
   return (
     <div className={cn(
       "flex flex-col min-h-screen bg-background",
-      // Safe area handling for iOS
-      "pb-safe-bottom",
+      // Safe area handling for iOS - wrap entire screen
+      "pt-[env(safe-area-inset-top)] px-4 pb-[env(safe-area-inset-bottom)]",
       className
     )}>
       {/* Header */}
       {header && (
-        <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
+        <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10 pt-4 pb-4">
           {header}
         </div>
       )}
@@ -64,7 +64,7 @@ export function MobileHeader({
   onBack 
 }: MobileHeaderProps) {
   return (
-    <div className="px-4 py-3 sm:px-6">
+    <div className="px-0 py-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {back && (
@@ -82,7 +82,7 @@ export function MobileHeader({
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-muted-foreground truncate mt-0.5">
+              <p className="text-sm text-muted-foreground truncate mt-1 italic">
                 {subtitle}
               </p>
             )}
