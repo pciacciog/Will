@@ -550,6 +550,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added custom CSS animations**: Created fadeIn and slideUp keyframe animations with proper timing for smooth UX transitions
   - **Applied consistent animation logic**: Both StartWill and SubmitCommitment pages now use identical transition animation patterns
   - **Improved mobile flow**: Animations enhance the commitment submission process with professional, polished feel optimized for iOS app
+- **July 13, 2025**: Redesigned Current Will section with elegant hierarchical layout for consistent user experience
+  - **Unified pending Will design**: Replaced stacked visual elements with center-aligned card layout using single border and shadow
+  - **Improved information hierarchy**: Primary info (creator name) → Secondary (Will Pending status) → Tertiary (submission progress and timing)
+  - **Consistent cross-user experience**: All users see "[Name] proposed a new Will" format regardless of creator/member status
+  - **Streamlined visual weight**: Replaced large icons and badges with compact Clock icon and simplified status display
+  - **Mobile-optimized layout**: Reduced visual clutter with compact yellow info box and proper spacing for single viewport display
+  - **Enhanced readability**: Applied consistent text sizing (text-sm, text-xs) and color hierarchy (gray-600, gray-700, yellow-600)
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

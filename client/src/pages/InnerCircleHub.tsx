@@ -521,48 +521,39 @@ export default function InnerCircleHub() {
           )}
 
           {willStatus === 'pending' && (
-            <div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3 text-center shadow-sm">
               {/* Dynamic Will Initiator Message */}
-              <div className="text-sm text-gray-700 mb-2">
-                {will?.createdBy === user?.id ? (
-                  "You started this Will. Waiting on others to submit."
-                ) : (
-                  (() => {
-                    const creator = circle?.members?.find((member: any) => member.user.id === will?.createdBy);
-                    const creatorName = creator?.user?.firstName || creator?.user?.email || 'Someone';
-                    return `${creatorName} has proposed a new Will.`;
-                  })()
-                )}
-              </div>
-              
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold"><em>Will</em> Pending</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {will?.commitments?.length || 0} of {will?.memberCount || 0} members have submitted
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                  Pending
-                </Badge>
+              <div className="text-sm text-gray-600">
+                {(() => {
+                  const creator = circle?.members?.find((member: any) => member.user.id === will?.createdBy);
+                  const creatorName = creator?.user?.firstName || creator?.user?.email || 'Someone';
+                  return (
+                    <>
+                      <span className="font-medium text-gray-800">{creatorName}</span> proposed a new <em>Will</em>.
+                    </>
+                  );
+                })()}
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                <div className="flex items-start space-x-3">
-                  <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <div className="text-sm text-amber-800">
-                    <strong>Note:</strong> This <em>Will</em> becomes active automatically at <strong>{formatActivationTime(will?.startDate)}</strong>. Any member who has not submitted by then will not be included in the <em>Will</em>.
-                  </div>
-                </div>
+              {/* Will Pending Status */}
+              <div className="flex justify-center items-center space-x-2 text-yellow-600 text-sm font-semibold">
+                <Clock className="w-4 h-4" />
+                <span><em>Will</em> Pending</span>
               </div>
-              
+
+              {/* Submission Progress */}
+              <div className="text-sm text-gray-700">
+                {will?.commitments?.length || 0} of {will?.memberCount || 0} members have submitted
+              </div>
+
+              {/* Compact Info Box */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-2 text-xs text-yellow-900">
+                This <em>Will</em> will activate automatically at <span className="font-semibold">{formatActivationTime(will?.startDate)}</span>.
+                <br />
+                Anyone who hasn't submitted by then will not be included.
+              </div>
+
+              {/* Action Button */}
               <div className="mt-3 mb-3 px-4">
                 <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
                   View <em>Will</em> Details
