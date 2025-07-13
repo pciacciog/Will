@@ -583,6 +583,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Emphasized WILL and END ROOM sections**: Used font-semibold styling and single-line format for better readability
   - **Enhanced acknowledge box**: Added Target icon, improved spacing (p-4), and joyful green styling for better user experience
   - **Added subtle animation**: Implemented slide-in-from-bottom-4 transition with duration-300 for smooth modal appearance
+- **July 13, 2025**: Refined Will Completion screen with serious and respectful tone
+  - **Updated header**: Changed from "You did it — another Will complete!" to "Your Will has been completed" for composed, professional tone
+  - **Removed playful elements**: Eliminated yellow star icons to avoid childish appearance
+  - **Enhanced title structure**: Changed "Final Summary" to "FINAL SUMMARY" with bold font weight for better hierarchy
+  - **Improved formatting**: Updated "WILL:" and "END ROOM:" to "Will:" and "End Room:" with bold formatting while maintaining single-line display
+  - **Replaced Target icon**: Changed Target icon to CheckCircle in acknowledgment box for more neutral, professional appearance
+  - **Maintained functionality**: Preserved all existing acknowledgment flow and user interaction patterns
 - **July 13, 2025**: Fixed button text spacing issue in Inner Circle Hub preventing proper word separation
   - **Resolved rendering issue**: Fixed "ViewWillDetails" appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (</>) to prevent space collapse around italic <em> tags

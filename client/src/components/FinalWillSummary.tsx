@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Clock, Users, Video, Star, Target } from 'lucide-react';
+import { CheckCircle, Clock, Users, Video } from 'lucide-react';
 
 interface FinalWillSummaryProps {
   isOpen: boolean;
@@ -85,20 +85,16 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300">
         <DialogHeader>
-          {/* Celebratory Header */}
+          {/* Composed Header */}
           <div className="text-center mb-4">
-            <div className="flex items-center justify-center mb-2">
-              <Star className="w-6 h-6 text-yellow-500 mr-2" />
-              <h1 className="text-xl font-bold text-gray-900">
-                You did it — another <em>Will</em> complete!
-              </h1>
-              <Star className="w-6 h-6 text-yellow-500 ml-2" />
-            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">
+              Your <em>Will</em> has been completed
+            </h1>
           </div>
           
           {/* Final Summary Title */}
           <div className="text-center mt-2 mb-4">
-            <h2 className="text-lg font-semibold text-gray-700">Final Summary</h2>
+            <h2 className="text-lg font-bold text-gray-900">FINAL SUMMARY</h2>
           </div>
         </DialogHeader>
 
@@ -107,11 +103,11 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           <div className="bg-gray-50 rounded-lg p-3 mb-4">
             <div className="space-y-2 text-sm">
               <div>
-                <span className="font-semibold">WILL:</span> {formatWillTimespan()}
+                <span className="font-bold">Will:</span> {formatWillTimespan()}
               </div>
               {will.endRoomScheduledAt && (
                 <div>
-                  <span className="font-semibold">END ROOM:</span> {formatEndRoomTimespan()}
+                  <span className="font-bold">End Room:</span> {formatEndRoomTimespan()}
                 </div>
               )}
             </div>
@@ -142,7 +138,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
             <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4 mb-4">
               <div className="text-center space-y-3">
                 <div className="flex items-center justify-center mb-2">
-                  <Target className="w-5 h-5 text-green-600 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
                   <h3 className="text-sm font-semibold text-gray-900">
                     {hasUserAcknowledged ? <><em>Will</em> Acknowledged</> : "Acknowledge Completion"}
                   </h3>
