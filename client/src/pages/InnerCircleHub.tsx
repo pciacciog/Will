@@ -27,8 +27,20 @@ function getWillStatus(will: any, memberCount: number): string {
   if (will.status === 'archived') return 'no_will';
   
   // If will has explicit status, use it (for End Room flow)
-  if (will.status === 'waiting_for_end_room' || will.status === 'completed') {
+  if (will.status === 'waiting_for_end_room') {
     return will.status;
+  }
+  
+  // Special handling for completed status
+  if (will.status === 'completed') {
+    const committedMemberCount = will.commitments?.length || 0;
+    const acknowledgedCount = will.acknowledgedCount || 0;
+    
+    // If all committed members have acknowledged, show no_will to allow new Will creation
+    if (acknowledgedCount >= committedMemberCount) {
+      return 'no_will';
+    }
+    return 'completed';
   }
   
   const now = new Date();
@@ -37,9 +49,11 @@ function getWillStatus(will: any, memberCount: number): string {
 
   if (now >= endDate) {
     // Will should transition to waiting_for_end_room, but check acknowledgments
+    const committedMemberCount = will.commitments?.length || 0;
     const acknowledgedCount = will.acknowledgedCount || 0;
-    if (acknowledgedCount >= memberCount) {
-      return 'no_will'; // All acknowledged, can start new will
+    
+    if (acknowledgedCount >= committedMemberCount) {
+      return 'no_will'; // All committed members acknowledged, can start new will
     }
     return 'completed';
   } else if (now >= startDate) {
@@ -236,8 +250,17 @@ export default function InnerCircleHub() {
         title: "Will Acknowledged",
         description: "You have acknowledged the completion of this Will. You can now start a new Will.",
       });
+      
+      // Navigate to hub immediately after acknowledgment
+      setLocation('/hub');
     },
     onError: (error: any) => {
+      // Handle "already acknowledged" error gracefully
+      if (error.message?.includes("already acknowledged")) {
+        setLocation('/hub');
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message || "Failed to acknowledge Will",

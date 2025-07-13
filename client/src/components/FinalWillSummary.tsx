@@ -86,8 +86,8 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md h-[90vh] overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in">
-        <div className="flex flex-col h-full p-6 rounded-xl bg-white shadow-xl space-y-4 mx-auto">
+      <DialogContent className="max-w-md h-[90vh] overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in mx-auto">
+        <div className="flex flex-col h-full p-6 rounded-xl bg-white shadow-xl space-y-4 mx-auto max-w-sm">
           {/* Refined Header */}
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -178,8 +178,9 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
             <div className="text-center mt-4">
               <button 
                 onClick={() => {
-                  onClose();
+                  console.log('Back to Hub button clicked');
                   setLocation('/hub');
+                  onClose();
                 }}
                 className="text-blue-600 text-sm underline hover:text-blue-800 transition-colors"
               >
