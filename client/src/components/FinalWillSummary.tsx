@@ -83,103 +83,99 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm h-[90vh] overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300">
-        <div className="flex flex-col h-full">
-          {/* Compact Header */}
-          <div className="text-center mb-3">
-            <h1 className="text-lg font-bold text-gray-900 mb-1">
+      <DialogContent className="max-w-md h-[90vh] overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in">
+        <div className="flex flex-col h-full p-6 rounded-xl bg-white shadow-xl space-y-4">
+          {/* Refined Header */}
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Your <em>Will</em> has been completed
-            </h1>
-            <h2 className="text-sm font-bold text-gray-900">FINAL SUMMARY</h2>
+            </h2>
+            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+              Final Summary
+            </h3>
           </div>
 
-          {/* Main Content - Scrollable if needed */}
-          <div className="flex-1 space-y-3">
-            {/* Ultra Compact Duration Block */}
-            <div className="bg-gray-50 rounded-lg p-2">
-              <div className="space-y-1 text-xs">
-                <div>
-                  <span className="font-bold">Will:</span> {formatWillTimespan()}
-                </div>
-                {will.endRoomScheduledAt && (
-                  <div>
-                    <span className="font-bold">End Room:</span> {formatEndRoomTimespan()}
-                  </div>
-                )}
+          {/* Main Content */}
+          <div className="flex-1 space-y-4">
+            {/* Duration Block */}
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-sm space-y-1">
+              <div>
+                <span className="font-semibold">Will:</span> {formatWillTimespan()}
               </div>
+              {will.endRoomScheduledAt && (
+                <div>
+                  <span className="font-semibold">End Room:</span> {formatEndRoomTimespan()}
+                </div>
+              )}
             </div>
 
-            {/* Compact Member Commitments */}
-            <div>
-              <h3 className="text-xs font-bold text-gray-900 mb-2">Member Commitments</h3>
-              <div className="space-y-1">
+            {/* Member Commitments */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg text-gray-900">Member Commitments</h4>
+              <div className="space-y-3">
                 {will.commitments?.map((commitment: any) => (
-                  <div key={commitment.id} className="py-1">
-                    <div className="text-xs font-medium text-gray-700">
+                  <div key={commitment.id}>
+                    <p className="font-semibold text-gray-900">
                       {commitment.user.firstName && commitment.user.lastName 
                         ? `${commitment.user.firstName} ${commitment.user.lastName}`
                         : commitment.user.email
                       }
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      I will {commitment.commitment}
-                    </div>
+                    </p>
+                    <p className="text-gray-600 italic">
+                      I will: {commitment.what || commitment.commitment}
+                    </p>
                   </div>
                 )) || []}
               </div>
             </div>
           </div>
 
-          {/* Compact Actions Section */}
-          <div className="mt-auto pt-3 border-t">
+          {/* Refined Actions Section */}
+          <div className="mt-auto">
             {userParticipated ? (
-              <div className="border-2 border-green-200 bg-green-50 rounded-lg p-3">
-                <div className="text-center space-y-2">
-                  <div className="flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-1" />
-                    <h3 className="text-xs font-semibold text-gray-900">
-                      {hasUserAcknowledged ? <><em>Will</em> Acknowledged</> : "Acknowledge Completion"}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    {hasUserAcknowledged 
-                      ? <>Acknowledged. Ready for new <em>Will</em>.</>
-                      : <>Mark complete to start new <em>Will</em>.</>
-                    }
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                  <p className="font-semibold text-gray-900">
+                    {hasUserAcknowledged ? <><em>Will</em> Acknowledged</> : "✅ Acknowledge Completion"}
                   </p>
-                  {!hasUserAcknowledged && (
-                    <Button 
-                      onClick={onAcknowledge}
-                      disabled={isAcknowledging}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white py-1 px-3 mt-2"
-                      size="sm"
-                    >
-                      {isAcknowledging ? "Acknowledging..." : "Acknowledge"}
-                    </Button>
-                  )}
                 </div>
+                <p className="text-sm text-gray-700 mb-4">
+                  {hasUserAcknowledged 
+                    ? <>You have acknowledged this <em>Will</em>. It has been archived and you're ready to start a new one.</>
+                    : <>This marks the end of your <em>will</em>. Once acknowledged, it will be archived and you'll be ready to start a new one.</>
+                  }
+                </p>
+                {!hasUserAcknowledged && (
+                  <Button 
+                    onClick={onAcknowledge}
+                    disabled={isAcknowledging}
+                    className="w-full bg-green-600 hover:bg-green-700 hover:scale-105 transition-all duration-200 text-white py-2 rounded-lg"
+                    size="sm"
+                  >
+                    {isAcknowledging ? "Acknowledging..." : "Acknowledge"}
+                  </Button>
+                )}
               </div>
             ) : (
-              <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-3">
-                <div className="text-center">
-                  <div className="flex items-center justify-center mb-1">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-1" />
-                    <h3 className="text-xs font-semibold text-gray-900">
-                      <em>Will</em> Complete
-                    </h3>
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    Completed. Participants will acknowledge.
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <CheckCircle className="w-5 h-5 text-blue-600 mr-2" />
+                  <p className="font-semibold text-gray-900">
+                    <em>Will</em> Complete
                   </p>
                 </div>
+                <p className="text-sm text-gray-700">
+                  This <em>Will</em> has been completed. Only participating members need to acknowledge completion.
+                </p>
               </div>
             )}
 
             {/* Back to Hub */}
-            <div className="text-center mt-3">
+            <div className="text-center mt-4">
               <button 
                 onClick={onClose}
-                className="text-xs text-gray-600 hover:text-gray-800 underline"
+                className="text-blue-600 text-sm underline hover:text-blue-800 transition-colors"
               >
                 Back to Hub
               </button>

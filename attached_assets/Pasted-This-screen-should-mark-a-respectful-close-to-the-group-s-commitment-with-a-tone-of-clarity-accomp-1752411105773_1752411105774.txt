@@ -1,0 +1,60 @@
+This screen should mark a respectful close to the group’s commitment, with a tone of clarity, accomplishment, and dignity — not too flashy, not too dry.
+
+✅ Functional Fix
+The actual commitments from each member are missing. It currently just says “I will” instead of showing the user-submitted content.
+➤ Please ensure that the submitted commitment text appears below each member's name.
+
+🎨 Design Improvements
+Use Tailwind to refine visual structure and elegance. Suggestions:
+
+jsx
+Copy
+Edit
+<div className="p-6 rounded-xl bg-white shadow-xl max-w-md mx-auto space-y-6">
+  <h2 className="text-2xl font-semibold text-center">
+    Your <span className="italic">Will</span> has been completed
+  </h2>
+
+  <h3 className="text-sm font-semibold text-gray-600 uppercase text-center tracking-wide">
+    Final Summary
+  </h3>
+
+  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-sm space-y-1">
+    <p><span className="font-semibold">WILL:</span> July 13, 5:27 PM – 5:38 PM</p>
+    <p><span className="font-semibold">END ROOM:</span> July 13, 7:00 PM – 7:30 PM</p>
+  </div>
+
+  <div className="space-y-4">
+    <h4 className="font-semibold text-lg">Member Commitments</h4>
+    <div>
+      <p className="font-semibold">Randy Orton</p>
+      <p className="text-gray-600 italic">I will: Call my sister and apologize</p>
+    </div>
+    <div>
+      <p className="font-semibold">John Doe</p>
+      <p className="text-gray-600 italic">I will: Submit my resume to 5 jobs</p>
+    </div>
+  </div>
+
+  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+    <p className="font-semibold mb-1">✅ Acknowledge Completion</p>
+    <p className="text-sm text-gray-700">
+      This marks the end of your <span className="italic">will</span>. Once acknowledged, it will be archived and you'll be ready to start a new one.
+    </p>
+    <button className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+      Acknowledge
+    </button>
+  </div>
+
+  <div className="text-center">
+    <a href="#" className="text-blue-600 text-sm underline">Back to Hub</a>
+  </div>
+</div>
+🧩 Optional Suggestions:
+Slight animation on “Acknowledge” button (e.g. pulse on hover).
+
+Fade-in transition for the whole summary box on page load to give it some gravitas.
+
+Optional border top with gradient for visual segmentation.
+
+Let me know if you want an alternate style (e.g. card view or darker tone).
