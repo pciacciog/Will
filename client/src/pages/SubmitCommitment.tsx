@@ -18,6 +18,7 @@ export default function SubmitCommitment() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
+  const [showTransition, setShowTransition] = useState(false);
   const [what, setWhat] = useState("");
   const [why, setWhy] = useState("");
   const [whatCharCount, setWhatCharCount] = useState(0);
@@ -100,7 +101,14 @@ export default function SubmitCommitment() {
       });
       return;
     }
-    commitmentMutation.mutate({ what: what.trim(), why: why.trim() });
+    
+    // Show transition animation
+    setShowTransition(true);
+    
+    // After 1.5 seconds, submit the commitment
+    setTimeout(() => {
+      commitmentMutation.mutate({ what: what.trim(), why: why.trim() });
+    }, 1500);
   };
 
   const handleBack = () => {
@@ -146,7 +154,19 @@ export default function SubmitCommitment() {
         </div>
 
         <SectionCard>
-          {step === 1 ? (
+          {/* Transition Animation Screen */}
+          {showTransition ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-6 animate-fade-in">
+                <div className="w-16 h-16 mx-auto bg-brandBlue rounded-full flex items-center justify-center animate-pulse">
+                  <CheckCircle className="w-8 h-8 text-white" />
+                </div>
+                <p className="text-lg font-medium text-gray-900 animate-slide-up">
+                  Submitting your commitment...
+                </p>
+              </div>
+            </div>
+          ) : step === 1 ? (
             <div className="space-y-3">
               <div className="text-center space-y-3">
                 <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mx-auto">

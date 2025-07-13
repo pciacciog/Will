@@ -58,6 +58,7 @@ export default function StartWill() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [schedulingMode, setSchedulingMode] = useState('prescribed'); // 'prescribed' or 'custom'
+  const [showTransition, setShowTransition] = useState(false);
   const [willData, setWillData] = useState({
     startDate: '',
     endDate: '',
@@ -238,13 +239,21 @@ export default function StartWill() {
       return;
     }
 
-    // Move to End Room scheduling step
+    // Update will data and show transition
     setWillData({
       ...willData,
       why: why.trim(),
       circleId: circle?.id,
     });
-    setCurrentStep(4);
+    
+    // Show transition animation
+    setShowTransition(true);
+    
+    // After 1.5 seconds, move to End Room scheduling step
+    setTimeout(() => {
+      setShowTransition(false);
+      setCurrentStep(4);
+    }, 1500);
   };
 
   const handleStep4Submit = (e: React.FormEvent) => {
@@ -368,8 +377,22 @@ export default function StartWill() {
           </div>
         </div>
         
+        {/* Transition Animation Screen */}
+        {showTransition && (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center space-y-6 animate-fade-in">
+              <div className="w-16 h-16 mx-auto bg-brandBlue rounded-full flex items-center justify-center animate-pulse">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <p className="text-lg font-medium text-gray-900 animate-slide-up">
+                One last step before you set up your <em>Will</em>...
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: Set Dates */}
-        {currentStep === 1 && (
+        {currentStep === 1 && !showTransition && (
           <SectionCard>
             <div className="text-center mb-8">
               <SectionTitle>Set Your Timeline</SectionTitle>
@@ -507,7 +530,7 @@ export default function StartWill() {
         )}
         
         {/* Step 2: What Will You Do */}
-        {currentStep === 2 && (
+        {currentStep === 2 && !showTransition && (
           <SectionCard>
             <div className="text-center mb-6">
               <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -559,7 +582,7 @@ export default function StartWill() {
         )}
         
         {/* Step 3: Why */}
-        {currentStep === 3 && (
+        {currentStep === 3 && !showTransition && (
           <SectionCard>
             <div className="text-center mb-6">
               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -626,7 +649,7 @@ export default function StartWill() {
         )}
         
         {/* Step 4: End Room Scheduling - Special Ceremonial Step */}
-        {currentStep === 4 && (
+        {currentStep === 4 && !showTransition && (
           <SectionCard>
             <div className="text-center mb-3">
               <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2">
@@ -635,11 +658,8 @@ export default function StartWill() {
                 </svg>
               </div>
               <h2 className="text-lg font-semibold text-gray-900 text-center">Schedule Your End Room</h2>
-              <div className="mt-1 rounded-md bg-blue-50 px-3 py-1.5 text-xs text-blue-700 font-medium border border-blue-100 text-center">
-                One last step before you set up your Will.
-              </div>
-              <p className="text-sm text-gray-600 text-center mt-1">
-                When will your circle gather to honor the effort?
+              <p className="text-sm text-gray-600 italic text-center mt-1">
+                This is where your circle comes together to reflect, share, and honor the effort.
               </p>
             </div>
 
@@ -675,7 +695,7 @@ export default function StartWill() {
                   </svg>
                   <span className="text-xs font-medium text-red-800">END ROOM:</span>
                 </div>
-                <ul className="space-y-0 text-xs text-red-600 break-words">
+                <ul className="space-y-1 text-xs text-red-600 break-words">
                   <li className="flex items-start">
                     <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
                     <span>Opens automatically at the scheduled date and runs for 30 minutes</span>
