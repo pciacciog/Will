@@ -557,6 +557,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Streamlined visual weight**: Replaced large icons and badges with compact Clock icon and simplified status display
   - **Mobile-optimized layout**: Reduced visual clutter with compact yellow info box and proper spacing for single viewport display
   - **Enhanced readability**: Applied consistent text sizing (text-sm, text-xs) and color hierarchy (gray-600, gray-700, yellow-600)
+- **July 13, 2025**: Enhanced Circle Commitments layout in Will Details screen for improved mobile readability
+  - **Restructured commitment display**: Implemented clean stacked format with user name, "I will" label, and user content on separate lines
+  - **Improved visual hierarchy**: Added italic font styling for "I will" and "Because" labels to distinguish from user content
+  - **Enhanced button functionality**: Replaced text-based Edit button with compact Edit icon, simplified show/hide toggle to directional arrows only
+  - **Optimized spacing**: Added proper padding between sections (space-y-3, pt-3) and improved line spacing with leading-relaxed
+  - **Consistent mobile layout**: Applied improvements uniformly across all Will phases (pending, scheduled, active, completed)
+  - **Better touch targets**: Improved button sizing and spacing for mobile interaction while maintaining clean appearance
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

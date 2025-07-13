@@ -340,7 +340,7 @@ export default function WillDetails() {
             <CheckCircle className="w-4 h-4 text-brandGreen mr-2" />
             <span className="text-sm font-medium">Circle Commitments</span>
           </div>
-          <div className="space-y-2 divide-y divide-gray-100">
+          <div className="space-y-3 divide-y divide-gray-100">
             {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
               const isCurrentUser = commitment.userId === user?.id;
               const showWhy = expandedCommitments[commitment.id] || false;
@@ -352,52 +352,61 @@ export default function WillDetails() {
               };
               
               return (
-                <div key={commitment.id} className="pt-2 first:pt-0">
-                  <div className="flex items-start justify-between">
+                <div key={commitment.id} className="pt-3 first:pt-0">
+                  {/* User name and actions row */}
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0" />
-                      <div>
-                        <span className="text-sm font-medium">
-                          {commitment.user.firstName && commitment.user.lastName 
-                            ? `${commitment.user.firstName} ${commitment.user.lastName}`
-                            : commitment.user.email
-                          }
-                          {isCurrentUser && (
-                            <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">
-                              You
-                            </span>
-                          )}
-                        </span>
-                        <div className="text-xs text-gray-600 mt-0.5">
-                          I will: {commitment.what}
-                        </div>
-                      </div>
+                      <span className="text-sm font-medium">
+                        {commitment.user.firstName && commitment.user.lastName 
+                          ? `${commitment.user.firstName} ${commitment.user.lastName}`
+                          : commitment.user.email
+                        }
+                        {isCurrentUser && (
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">
+                            You
+                          </span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-1">
                       {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
                         <button 
                           onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
-                          className="text-xs text-blue-600 hover:text-blue-800 px-1 py-0.5 rounded"
+                          className="text-xs text-blue-600 hover:text-blue-800 px-1 py-0.5 rounded transition-colors"
                         >
-                          Edit
+                          <Edit className="w-3 h-3" />
                         </button>
                       )}
                       {isCurrentUser && (
                         <button
                           onClick={toggleWhy}
-                          className="text-xs text-blue-600 underline font-medium hover:text-blue-800 active:opacity-70 px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors duration-150 flex items-center space-x-1"
+                          className="text-xs text-blue-600 hover:text-blue-800 active:opacity-70 px-1 py-0.5 rounded transition-colors flex items-center"
                         >
-                          <span>{showWhy ? 'Hide' : 'Why?'}</span>
                           <span className="text-xs">{showWhy ? '▲' : '▼'}</span>
                         </button>
                       )}
                     </div>
                   </div>
-                  {isCurrentUser && showWhy && (
-                    <div className="mt-1 text-xs text-gray-600 pl-5">
-                      Because {commitment.why}
+                  
+                  {/* Commitment content */}
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-xs text-gray-500 font-medium italic mb-1">I will</div>
+                      <div className="text-sm text-gray-800 leading-relaxed">
+                        {commitment.what}
+                      </div>
                     </div>
-                  )}
+                    
+                    {isCurrentUser && showWhy && (
+                      <div className="pt-1">
+                        <div className="text-xs text-gray-500 font-medium italic mb-1">Because</div>
+                        <div className="text-sm text-gray-800 leading-relaxed">
+                          {commitment.why}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
