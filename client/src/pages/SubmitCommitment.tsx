@@ -122,12 +122,12 @@ export default function SubmitCommitment() {
 
   return (
     <MobileLayout>
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="space-y-3">
+        {/* Tightened Header */}
         <div className="flex items-center justify-between">
           <div>
+            <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
             <SectionTitle>Submit Your Commitment</SectionTitle>
-            <p className="text-gray-600 text-base tracking-tight">Step {step} of 2</p>
           </div>
           {showHelpIcon && (
             <HelpIcon
@@ -147,9 +147,9 @@ export default function SubmitCommitment() {
 
         <SectionCard>
           {step === 1 ? (
-            <div className="space-y-6">
+            <div className="space-y-3">
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mx-auto">
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
@@ -158,7 +158,7 @@ export default function SubmitCommitment() {
                 </div>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
                   <div className="relative">
@@ -202,9 +202,9 @@ export default function SubmitCommitment() {
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-3">
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mx-auto">
                   <Heart className="w-6 h-6 text-orange-600" />
                 </div>
                 <div>
@@ -213,16 +213,14 @@ export default function SubmitCommitment() {
                 </div>
               </div>
 
-              {/* What Preview */}
+              {/* Beautified What Preview */}
               {what && (
-                <div className="p-3 bg-gray-50 border border-gray-100 rounded-lg">
-                  <p className="text-gray-900 font-medium text-center text-base tracking-tight">
-                    I will {what}
-                  </p>
+                <div className="text-center italic text-lg px-4 py-3 border rounded-md shadow-sm text-gray-800 bg-white">
+                  "I will {what}"
                 </div>
               )}
               
-              <div className="space-y-6">
+              <div className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
@@ -278,22 +276,7 @@ export default function SubmitCommitment() {
           )}
         </SectionCard>
 
-        {/* Will Context */}
-        {will && (
-          <SectionCard>
-            <div className="space-y-4">
-              <SectionTitle>Will Context</SectionTitle>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600 tracking-tight">
-                  <span className="font-medium">Duration:</span> {new Date(will.startDate).toLocaleDateString()} - {new Date(will.endDate).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-gray-600 tracking-tight">
-                  <span className="font-medium">Status:</span> {will.commitments?.length || 0} of {circle?.members?.length || 0} members have submitted
-                </p>
-              </div>
-            </div>
-          </SectionCard>
-        )}
+
 
         {/* Instruction Modal */}
         <WillInstructionModal

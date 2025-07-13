@@ -495,6 +495,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Applied consistent spacing to "Start a Will", "View Will Details", "Join End Room", and "Review Final Summary" buttons
   - Enhanced button readability and touch targets for better mobile user experience
   - Established universal spacing rule for all summary screen action buttons to maintain clean, readable layout
+- **July 13, 2025**: Refined Step 1 and Step 2 commitment flow screens with elevated visual design
+  - **Removed redundant info boxes**: Eliminated "Duration" and "Status" sections from SubmitCommitment flow to reduce clutter
+  - **Beautified "I will..." preview**: Replaced plain text with styled, non-editable card using italic text-lg with border and shadow
+  - **Tightened header spacing**: Moved "Step X of 2" to text-sm text-gray-400 mb-1 above section titles for better hierarchy
+  - **Improved layout consistency**: Applied space-y-3 vertical spacing throughout both StartWill and SubmitCommitment flows
+  - **Refined icon sizing**: Reduced icon containers from w-12 h-12 to w-10 h-10 for cleaner, more proportional feel
+  - **Enhanced commitment preview**: Used consistent "I will [commitment]" format with elegant card styling across both flows
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

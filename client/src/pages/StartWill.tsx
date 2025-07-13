@@ -510,14 +510,14 @@ export default function StartWill() {
         {currentStep === 2 && (
           <SectionCard>
             <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="w-6 h-6 text-green-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">What would you like to do?</h2>
               <p className="text-sm text-gray-500">Cause it's as simple as wanting.</p>
             </div>
             
-            <form onSubmit={handleStep2Submit} className="space-y-6">
+            <form onSubmit={handleStep2Submit} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
                 <div className="relative">
@@ -562,23 +562,21 @@ export default function StartWill() {
         {currentStep === 3 && (
           <SectionCard>
             <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Heart className="w-6 h-6 text-orange-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Why would you like to do this?</h2>
               <p className="text-sm text-gray-500">Remember this when it gets tough.</p>
             </div>
 
-            {/* What Preview */}
+            {/* Beautified What Preview */}
             {willData.what && (
-              <div className="mb-6 p-3 bg-gray-50 border border-gray-100 rounded-lg">
-                <p className="text-gray-900 font-medium text-center text-base tracking-tight">
-                  I will {willData.what}
-                </p>
+              <div className="text-center italic text-lg px-4 py-3 border rounded-md shadow-sm text-gray-800 bg-white mb-3">
+                "I will {willData.what}"
               </div>
             )}
             
-            <form onSubmit={handleStep3Submit} className="space-y-6">
+            <form onSubmit={handleStep3Submit} className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
