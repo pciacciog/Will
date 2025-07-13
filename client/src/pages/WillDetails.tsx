@@ -287,14 +287,14 @@ export default function WillDetails() {
           )}
         </div>
 
-        {/* Compact Timeline & End Room Combined */}
-        <div className="bg-white rounded-lg border border-gray-200 p-3">
+        {/* Timeline Section */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center mb-3">
-            <Calendar className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="text-sm font-medium">Timeline</span>
+            <Calendar className="w-5 h-5 text-blue-600 mr-2" />
+            <span className="text-base font-semibold">Timeline</span>
           </div>
-          <div className="space-y-1 text-xs leading-tight">
-            <div>
+          <div className="space-y-2">
+            <div className="text-base">
               <span className="font-medium">Start:</span> {new Date(will.startDate).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric',
@@ -302,7 +302,7 @@ export default function WillDetails() {
                 minute: '2-digit'
               })}
             </div>
-            <div>
+            <div className="text-base">
               <span className="font-medium">End:</span> {new Date(will.endDate).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric',
@@ -311,38 +311,39 @@ export default function WillDetails() {
               })}
             </div>
           </div>
-          
-          {will.endRoomScheduledAt && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex items-center mb-3">
-                <Video className="w-4 h-4 text-blue-600 mr-2" />
-                <span className="text-sm font-medium">End Room</span>
-                <EndRoomTooltip className="ml-2" />
-              </div>
-              <div className="space-y-1 text-xs leading-tight">
-                <div>
-                  <span className="font-medium">Scheduled:</span> {new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}
-                </div>
-                <div>
-                  <span className="font-medium">Duration:</span> 30 minutes
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Compact Circle Commitments */}
-        <div className="bg-white rounded-lg border border-gray-200 p-3">
-          <div className="flex items-center mb-3">
-            <CheckCircle className="w-4 h-4 text-brandGreen mr-2" />
-            <span className="text-sm font-medium">Circle Commitments</span>
+        {/* End Room Section */}
+        {will.endRoomScheduledAt && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center mb-3">
+              <Video className="w-5 h-5 text-blue-600 mr-2" />
+              <span className="text-base font-semibold">End Room</span>
+              <EndRoomTooltip className="ml-2" />
+            </div>
+            <div className="space-y-2">
+              <div className="text-base">
+                <span className="font-medium">Scheduled:</span> {new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit'
+                })}
+              </div>
+              <div className="text-base">
+                <span className="font-medium">Duration:</span> 30 minutes
+              </div>
+            </div>
           </div>
-          <div className="space-y-3 divide-y divide-gray-100">
+        )}
+
+        {/* Circle Commitments Section */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center mb-4 pb-2 border-b border-gray-100">
+            <CheckCircle className="w-5 h-5 text-brandGreen mr-2" />
+            <span className="text-base font-semibold uppercase tracking-wide">Circle Commitments</span>
+          </div>
+          <div className="space-y-4">
             {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
               const isCurrentUser = commitment.userId === user?.id;
               const showWhy = expandedCommitments[commitment.id] || false;
@@ -354,18 +355,17 @@ export default function WillDetails() {
               };
               
               return (
-                <div key={commitment.id} className="pt-3 first:pt-0">
+                <div key={commitment.id} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
                   {/* User name and actions row */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0" />
-                      <span className="text-sm font-medium">
+                      <span className="text-base font-medium">
                         {commitment.user.firstName && commitment.user.lastName 
                           ? `${commitment.user.firstName} ${commitment.user.lastName}`
                           : commitment.user.email
                         }
                         {isCurrentUser && (
-                          <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                             You
                           </span>
                         )}
@@ -375,17 +375,17 @@ export default function WillDetails() {
                       {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
                         <button 
                           onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
-                          className="text-xs text-blue-600 hover:text-blue-800 px-1 py-0.5 rounded transition-colors"
+                          className="text-sm text-blue-600 hover:text-blue-800 px-2 py-1 rounded transition-colors"
                         >
-                          <Edit className="w-3 h-3" />
+                          <Edit className="w-4 h-4" />
                         </button>
                       )}
                       {isCurrentUser && (
                         <button
                           onClick={toggleWhy}
-                          className="text-xs text-blue-600 hover:text-blue-800 active:opacity-70 px-1 py-0.5 rounded transition-colors flex items-center"
+                          className="text-sm text-blue-600 hover:text-blue-800 active:opacity-70 px-2 py-1 rounded transition-colors flex items-center"
                         >
-                          <span className="text-xs">{showWhy ? '▲' : '▼'}</span>
+                          <span className="text-sm">{showWhy ? '▲' : '▼'}</span>
                         </button>
                       )}
                     </div>
@@ -394,16 +394,16 @@ export default function WillDetails() {
                   {/* Commitment content */}
                   <div className="space-y-2">
                     <div>
-                      <div className="text-xs text-gray-500 font-medium italic mb-1">I will</div>
-                      <div className="text-sm text-gray-800 leading-relaxed">
+                      <div className="text-sm text-gray-500 font-medium italic mb-1">I will</div>
+                      <div className="text-base text-gray-800 leading-relaxed">
                         {commitment.what}
                       </div>
                     </div>
                     
                     {isCurrentUser && showWhy && (
                       <div className="pt-1">
-                        <div className="text-xs text-gray-500 font-medium italic mb-1">Because</div>
-                        <div className="text-sm text-gray-800 leading-relaxed">
+                        <div className="text-sm text-gray-500 font-medium italic mb-1">Because</div>
+                        <div className="text-base text-gray-800 leading-relaxed">
                           {commitment.why}
                         </div>
                       </div>
@@ -412,30 +412,28 @@ export default function WillDetails() {
                 </div>
               );
             })}
-            
-
           </div>
         </div>
 
 
 
-        {/* Compact Submit Commitment */}
+        {/* Submit Commitment Section */}
         {will.status === 'pending' && !userHasCommitted && (
-          <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-center">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">Ready to commit?</h3>
-              <p className="text-xs text-gray-500 mb-3">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Ready to commit?</h3>
+              <p className="text-sm text-gray-500 mb-4">
                 Join your circle members by adding your commitment to this will.
               </p>
               <Button 
                 onClick={() => setLocation(`/will/${id}/commit`)}
-                className="bg-green-600 hover:bg-green-700 text-sm py-2 px-4"
-                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-base py-3 px-6"
+                size="lg"
               >
                 Submit My Commitment
               </Button>
@@ -443,29 +441,29 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Compact Acknowledgment Section for Completed Wills */}
+        {/* Acknowledgment Section for Completed Wills */}
         {will.status === 'completed' && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="text-center">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">Acknowledge <em>Will</em> Completion</h3>
-              <p className="text-xs text-gray-600 mb-2">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Acknowledge <em>Will</em> Completion</h3>
+              <p className="text-sm text-gray-600 mb-3">
                 {will.acknowledgedCount || 0} of {will.commitments?.length || 0} members acknowledged
               </p>
               {!will.hasUserAcknowledged ? (
                 <Button 
                   onClick={() => acknowledgeMutation.mutate()}
                   disabled={acknowledgeMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700 text-sm py-2 px-4"
-                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-base py-3 px-6"
+                  size="lg"
                 >
                   {acknowledgeMutation.isPending ? 'Acknowledging...' : 'Acknowledge and Close Will'}
                 </Button>
               ) : (
-                <div className="text-green-700 font-medium text-sm">
-                  <CheckCircle className="w-4 h-4 inline mr-1" />
+                <div className="text-green-700 font-medium text-base">
+                  <CheckCircle className="w-5 h-5 inline mr-2" />
                   Acknowledged
                 </div>
               )}
@@ -475,16 +473,16 @@ export default function WillDetails() {
 
         {/* End Room Section for active states */}
         {(will.status === 'waiting_for_end_room' || will.status === 'completed') && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div className="text-center">
-              <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Video className="w-4 h-4 text-amber-600" />
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Video className="w-5 h-5 text-amber-600" />
               </div>
-              <div className="flex items-center justify-center mb-1">
-                <h3 className="text-sm font-semibold text-gray-900">End Room</h3>
+              <div className="flex items-center justify-center mb-2">
+                <h3 className="text-base font-semibold text-gray-900">End Room</h3>
                 <EndRoomTooltip className="ml-2" />
               </div>
-              <p className="text-xs text-gray-600 mb-2">
+              <p className="text-sm text-gray-600 mb-3">
                 30-minute group reflection session
               </p>
               <EndRoom willId={will.id} />
@@ -492,21 +490,21 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Compact Creator Actions */}
+        {/* Creator Actions */}
         {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-sm font-medium text-blue-800">Creator Options</span>
+                <span className="text-base font-medium text-blue-800">Creator Options</span>
               </div>
               <Button 
                 onClick={() => setLocation(`/will/${id}/edit`)}
                 variant="outline"
-                className="border-blue-300 text-blue-700 hover:bg-blue-100 text-sm py-1 px-3"
-                size="sm"
+                className="border-blue-300 text-blue-700 hover:bg-blue-100 text-base py-2 px-4"
+                size="default"
               >
                 Edit{" "}<em>Will</em>
               </Button>
@@ -514,22 +512,22 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Compact Active Will Creator Actions */}
+        {/* Active Will Creator Actions */}
         {will.createdBy === user?.id && will.status === 'active' && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
-                <span className="text-sm font-medium text-red-800">Creator Options</span>
+                <span className="text-base font-medium text-red-800">Creator Options</span>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="destructive"
-                    size="sm"
-                    className="text-sm py-1 px-3"
+                    size="default"
+                    className="text-base py-2 px-4"
                   >
                     Delete{" "}<em>Will</em>
                   </Button>
@@ -556,11 +554,11 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Compact Back to Hub */}
-        <div className="text-center mt-3">
+        {/* Back to Hub */}
+        <div className="text-center mt-4">
           <button 
             onClick={() => setLocation('/hub')}
-            className="text-sm text-gray-600 hover:text-gray-800 underline"
+            className="text-base text-gray-600 hover:text-gray-800 underline font-medium"
           >
             Back to Hub
           </button>

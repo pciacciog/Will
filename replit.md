@@ -708,6 +708,17 @@ This is a full-stack web application for group goal accountability, built with R
   - Created mobile build script with video room support and permission setup
   - Fixed mobile video call errors by replacing embedded Daily.co SDK with iframe approach
   - Video room now works reliably across all platforms with appropriate permission handling
+- **July 13, 2025**: Enhanced Will Details screen with comprehensive typography and visual improvements
+  - **Improved section hierarchy**: Updated all section headers to text-base font-semibold with consistent icon sizing (w-5 h-5)
+  - **Enhanced readability**: Increased base font size from text-xs/text-sm to text-base for better mobile readability
+  - **Fixed button spacing**: Resolved "ViewWillDetails" text spacing issue by removing React fragments causing word concatenation
+  - **Enhanced visual structure**: Applied consistent p-4 padding and mb-3/mb-4 margins across all sections
+  - **Separated Timeline and End Room**: Split combined compact layout into distinct sections for better information hierarchy
+  - **Removed redundant icons**: Eliminated checkmark icons from Circle Commitments member names to reduce visual clutter
+  - **Improved EndRoomTooltip visibility**: Enhanced help icon with white background, border, shadow, and hover effects
+  - **Updated action buttons**: Increased button sizes from sm to default/lg with better touch targets and text-base sizing
+  - **Standardized card styling**: Applied consistent rounded-lg border styling with proper spacing throughout all status sections
+  - **Enhanced authentication handling**: Added proper redirect for unauthenticated users to prevent 401 errors
 
 ## Changelog
 - June 25, 2025. Initial setup
