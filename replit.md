@@ -468,6 +468,15 @@ This is a full-stack web application for group goal accountability, built with R
   - Maintained character limits (75 characters) with real-time counters across all commitment forms
   - Fixed JSX syntax issues and server compilation errors during design system migration
   - Ensured all components follow mobile-first responsive design with proper component hierarchy
+- **July 13, 2025**: Implemented global toast notification improvements for iOS compatibility
+  - Fixed iOS status bar overlap by updating ToastViewport positioning to use calc(env(safe-area-inset-top)+1rem)
+  - Added center alignment with left-1/2 transform -translate-x-1/2 for proper mobile positioning
+  - Enhanced typography consistency: title (text-base font-semibold) and description (text-sm text-gray-700)
+  - Applied center text alignment to both title and description components
+  - Reduced padding from p-6 pr-8 to px-4 py-3 for tighter mobile spacing
+  - Added smooth animations with ease-in-out duration-300 transitions
+  - Maintained responsive behavior with sm: modifiers for desktop positioning
+  - Ensured all toast notifications respect iOS safe area boundaries globally across the app
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed
