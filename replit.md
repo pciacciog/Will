@@ -447,6 +447,8 @@ This is a full-stack web application for group goal accountability, built with R
   - **Fixed line break formatting**: Resolved "Willis" typo issue by using break-words class and proper list structure
   - **Optimized for single viewport**: Reduced vertical spacing (mb-6 to mb-4, space-y-6 to space-y-4) to eliminate scrolling on iPhone 13/14
   - **Enhanced bullet styling**: Replaced icons with clean circular bullets using bg-red-600 rounded-full for better readability
+  - **Final spacing optimization**: Reduced bullet spacing from space-y-1.5 to space-y-0.5 for true single viewport display
+  - **Updated alert messaging**: Changed "complete your Will" to "set up your Will" for better user flow accuracy
 - **July 12, 2025**: Implemented comprehensive global design system with mobile-first approach
   - Created unified design system with 6 core components: MobileLayout, SectionCard, PrimaryButton, AvatarBadge, SectionTitle, ActionButton
   - Enhanced Tailwind config with global design tokens: brandGreen (#1EB854), brandBlue (#067DFD), brandGray scale

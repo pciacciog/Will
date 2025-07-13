@@ -638,7 +638,7 @@ export default function StartWill() {
               </div>
               <h2 className="text-xl font-semibold text-gray-900 text-center">Schedule Your End Room</h2>
               <div className="mt-2 rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-700 font-medium border border-blue-100 text-center">
-                One last step before you complete your Will.
+                One last step before you set up your Will.
               </div>
               <p className="text-base text-gray-600 text-center mt-2">
                 When will your circle gather to honor the effort?
@@ -677,7 +677,7 @@ export default function StartWill() {
                   </svg>
                   <span className="text-sm font-medium text-red-800">END ROOM:</span>
                 </div>
-                <ul className="space-y-1.5 text-sm text-red-600 break-words">
+                <ul className="space-y-0.5 text-sm text-red-600 break-words">
                   <li className="flex items-start pl-1">
                     <span className="w-1 h-1 bg-red-600 rounded-full mt-2 mr-2 flex-shrink-0"></span>
                     <span>Opens automatically at the scheduled date and runs for 30 minutes</span>
