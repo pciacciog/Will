@@ -627,8 +627,9 @@ This is a full-stack web application for group goal accountability, built with R
 - **July 13, 2025**: Design cleanup for "Schedule Your End Room" page
   - **Removed floating help icon**: Eliminated redundant (?) icon from End Room scheduling step
   - **Center-aligned title**: Updated "Schedule Your End Room" title to text-center for better visual hierarchy
-  - **Tightened bullet spacing**: Reduced spacing from space-y-1 to space-y-0.5 in red warning box for compact layout
-  - **Verified single input**: Confirmed only one "End Room Date & Time" input field exists in the form
+  - **Minimized bullet spacing**: Reduced spacing from space-y-1 to space-y-0 in red warning box for ultra-compact layout
+  - **Fixed input field styling**: Removed redundant outer container causing visual overflow issues
+  - **Streamlined input design**: Consolidated to single input field with proper border containment and focus states
   - **Maintained functionality**: Preserved all existing scheduling validation and submission logic
 - **July 13, 2025**: Fixed button text spacing issue in Inner Circle Hub preventing proper word separation
   - **Resolved rendering issue**: Fixed "ViewWillDetails" appearing as one word instead of "View Will Details" with proper spacing

@@ -673,18 +673,16 @@ export default function StartWill() {
                 
                 {/* Input field */}
                 <div className="relative">
-                  <div className="bg-white border border-gray-200 rounded-xl p-3 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                    <input
-                      type="datetime-local"
-                      name="endRoomDateTime"
-                      required
-                      min={willData.endDate}
-                      max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
-                      value={endRoomDateTime}
-                      onChange={(e) => setEndRoomDateTime(e.target.value)}
-                      className="w-full text-sm text-gray-900 bg-transparent border-none outline-none focus:ring-0"
-                    />
-                  </div>
+                  <input
+                    type="datetime-local"
+                    name="endRoomDateTime"
+                    required
+                    min={willData.endDate}
+                    max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
+                    value={endRoomDateTime}
+                    onChange={(e) => setEndRoomDateTime(e.target.value)}
+                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  />
                 </div>
               </div>
 
@@ -696,7 +694,7 @@ export default function StartWill() {
                   </svg>
                   <span className="text-xs font-medium text-red-800">END ROOM:</span>
                 </div>
-                <ul className="space-y-0.5 text-xs text-red-600 break-words">
+                <ul className="space-y-0 text-xs text-red-600 break-words">
                   <li className="flex items-start">
                     <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
                     <span>Opens automatically at the scheduled date and runs for 30 minutes</span>
