@@ -83,11 +83,12 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto [&>button]:hidden">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-left">
-            ✅ <em>Will</em> – Final Summary
+            <em>Will</em>: Complete
           </DialogTitle>
+          <p className="text-sm text-gray-600 mt-1">Final Summary</p>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -95,11 +96,11 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           <div className="bg-gray-50 rounded-lg p-3 mb-4">
             <div className="space-y-1 text-sm">
               <div>
-                🕓 <span className="font-medium"><em>Will</em>:</span> {formatWillTimespan()}
+                <span className="font-medium"><em>Will</em>:</span> {formatWillTimespan()}
               </div>
               {will.endRoomScheduledAt && (
                 <div>
-                  📹 <span className="font-medium">End Room:</span> {formatEndRoomTimespan()}
+                  <span className="font-medium">End Room:</span> {formatEndRoomTimespan()}
                 </div>
               )}
             </div>
