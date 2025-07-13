@@ -756,6 +756,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Aligned elements on same row**: Moved green "Live" badge to same line as title with proper gap-2 spacing
   - **Consistent styling**: Applied same Tailwind layout pattern as "Scheduled" view with proper padding and vertical centering
   - **Enhanced cohesion**: All End Room status views now maintain consistent visual hierarchy and spacing
+- **July 13, 2025**: Centered Final Summary modal layout for improved mobile balance
+  - **Centered container elements**: Applied proper Tailwind centering with mx-auto and max-w-sm constraints
+  - **Balanced Will & End Room summary**: Added text-center alignment to duration block for visual symmetry
+  - **Centered Member Commitments**: Applied text-center to section header and individual commitment cards
+  - **Centered Acknowledge section**: Used justify-center for icon/text alignment and text-center for overall card
+  - **Maintained "Back to Hub" centering**: Preserved existing text-center alignment for navigation link
+  - **Enhanced mobile UX**: Layout now feels properly balanced and consistent with app's visual hierarchy
 
 ## Changelog
 - June 25, 2025. Initial setup

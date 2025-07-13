@@ -84,7 +84,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md h-[90vh] overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in">
-        <div className="flex flex-col h-full p-6 rounded-xl bg-white shadow-xl space-y-4">
+        <div className="flex flex-col h-full p-6 rounded-xl bg-white shadow-xl space-y-4 mx-auto">
           {/* Refined Header */}
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -96,25 +96,25 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 space-y-4 w-full max-w-sm mx-auto">
             {/* Duration Block */}
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-xs space-y-1">
-              <div className="whitespace-nowrap">
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-xs space-y-1 w-full">
+              <div className="whitespace-nowrap text-center">
                 <span className="font-semibold">Will:</span> {formatWillTimespan()}
               </div>
               {will.endRoomScheduledAt && (
-                <div className="whitespace-nowrap">
+                <div className="whitespace-nowrap text-center">
                   <span className="font-semibold">End Room:</span> {formatEndRoomTimespan()}
                 </div>
               )}
             </div>
 
             {/* Member Commitments */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium uppercase text-gray-600 tracking-wide">Member Commitments</h4>
+            <div className="space-y-3 w-full">
+              <h4 className="text-sm font-medium uppercase text-gray-600 tracking-wide text-center">Member Commitments</h4>
               <div className="space-y-3">
                 {will.commitments?.map((commitment: any) => (
-                  <div key={commitment.id}>
+                  <div key={commitment.id} className="text-center">
                     <p className="font-semibold text-gray-900">
                       {commitment.user.firstName && commitment.user.lastName 
                         ? `${commitment.user.firstName} ${commitment.user.lastName}`
@@ -131,10 +131,10 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           </div>
 
           {/* Refined Actions Section */}
-          <div className="mt-auto">
+          <div className="mt-auto w-full max-w-sm mx-auto">
             {userParticipated ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center mb-2">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center mb-2">
                   <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
                   <p className="font-semibold text-gray-900">
                     {hasUserAcknowledged ? <><em>Will</em> Acknowledged</> : "Acknowledge Completion"}
@@ -158,8 +158,8 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                 )}
               </div>
             ) : (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center mb-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center mb-2">
                   <CheckCircle className="w-5 h-5 text-blue-600 mr-2" />
                   <p className="font-semibold text-gray-900">
                     <em>Will</em> Complete
