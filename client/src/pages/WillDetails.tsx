@@ -480,10 +480,7 @@ export default function WillDetails() {
               <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Video className="w-5 h-5 text-amber-600" />
               </div>
-              <div className="flex items-center justify-center mb-2">
-                <h3 className="text-base font-semibold text-gray-900">End Room</h3>
-                <EndRoomTooltip />
-              </div>
+              <h3 className="text-base font-semibold text-gray-900 mb-2">End Room</h3>
               <p className="text-sm text-gray-600 mb-3">
                 30-minute group reflection session
               </p>

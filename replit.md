@@ -746,6 +746,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Combined title and badge**: Moved purple "Scheduled" badge to same line as title with proper gap-2 spacing
   - **Improved alignment**: Used Tailwind flex layout with consistent spacing and vertical alignment
   - **Enhanced readability**: Single-line layout prevents text wrapping and maintains clean visual hierarchy
+- **July 13, 2025**: Cleaned up End Room section in Will Details page for consistent mobile display
+  - **Removed help icon**: Eliminated redundant (?) icon from yellow End Room section at bottom of Will Details page
+  - **Streamlined layout**: Simplified title structure to use direct h3 element without flex wrapper
+  - **Maintained consistency**: Ensured text styling matches other will summary screens (pending, scheduled, active, etc.)
+  - **Single viewport optimization**: Confirmed layout maintains single-page mobile display without scrolling
 
 ## Changelog
 - June 25, 2025. Initial setup
