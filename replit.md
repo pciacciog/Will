@@ -719,6 +719,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Updated action buttons**: Increased button sizes from sm to default/lg with better touch targets and text-base sizing
   - **Standardized card styling**: Applied consistent rounded-lg border styling with proper spacing throughout all status sections
   - **Enhanced authentication handling**: Added proper redirect for unauthenticated users to prevent 401 errors
+- **July 13, 2025**: Enhanced EndRoomTooltip modal with improved UX and accessibility features
+  - **Added proper close functionality**: Fixed missing close button and added clear X icon in top-right corner
+  - **Improved modal design**: Enhanced with rounded-2xl borders, proper padding, and modern shadow styling
+  - **Enhanced typography**: Updated title to text-xl font-semibold and description to text-sm with centered alignment
+  - **Added animations**: Implemented smooth fade-in and zoom-in animations for modal appearance
+  - **Improved accessibility**: Added keyboard escape support and proper aria-labels for close button
+  - **Enhanced backdrop interaction**: Added backdrop click-to-close with smooth opacity transitions
+  - **Better visual hierarchy**: Improved spacing with mb-3 between title and description for better readability
 
 ## Changelog
 - June 25, 2025. Initial setup
