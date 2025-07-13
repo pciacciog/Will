@@ -319,7 +319,7 @@ export default function WillDetails() {
             <div className="flex items-center mb-3">
               <Video className="w-5 h-5 text-blue-600 mr-2" />
               <span className="text-base font-semibold">End Room</span>
-              <EndRoomTooltip className="ml-2" />
+              <EndRoomTooltip />
             </div>
             <div className="space-y-2">
               <div className="text-base">
@@ -341,7 +341,7 @@ export default function WillDetails() {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center mb-4 pb-2 border-b border-gray-100">
             <CheckCircle className="w-5 h-5 text-brandGreen mr-2" />
-            <span className="text-base font-semibold uppercase tracking-wide">Circle Commitments</span>
+            <span className="text-base font-semibold text-gray-900 underline">Circle Commitments</span>
           </div>
           <div className="space-y-4">
             {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
@@ -480,7 +480,7 @@ export default function WillDetails() {
               </div>
               <div className="flex items-center justify-center mb-2">
                 <h3 className="text-base font-semibold text-gray-900">End Room</h3>
-                <EndRoomTooltip className="ml-2" />
+                <EndRoomTooltip />
               </div>
               <p className="text-sm text-gray-600 mb-3">
                 30-minute group reflection session

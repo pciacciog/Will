@@ -727,6 +727,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Improved accessibility**: Added keyboard escape support and proper aria-labels for close button
   - **Enhanced backdrop interaction**: Added backdrop click-to-close with smooth opacity transitions
   - **Better visual hierarchy**: Improved spacing with mb-3 between title and description for better readability
+- **July 13, 2025**: Fixed sticky navigation headers and applied UI consistency improvements to Will Details page
+  - **Implemented sticky navigation**: Added sticky top headers with proper iOS status bar visibility for StartWill and SubmitCommitment pages
+  - **Enhanced Circle Commitments section**: Added underline styling to section header for better visual distinction
+  - **Applied UI consistency**: Ensured Will Details page matches recent improvements made to Pending Phase screens
+  - **Improved EndRoomTooltip positioning**: Standardized help icon placement and removed redundant className props
+  - **Enhanced mobile UX**: Progress indicators and page titles now stay pinned during scrolling on commitment screens
 
 ## Changelog
 - June 25, 2025. Initial setup
