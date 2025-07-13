@@ -31,11 +31,41 @@ export default function Home() {
     }
   };
 
+  // If user is not authenticated, redirect to auth
+  if (!user) {
+    return (
+      <div className="min-h-screen pt-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Welcome
+            </h1>
+            <p className="text-gray-600 mb-8">Please log in to access your accountability circle.</p>
+            <Button onClick={() => setLocation('/auth')} className="bg-primary hover:bg-blue-600">
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Check if there's an active Will (scheduled or active status)
-  const isActiveWill = will && (will.status === 'active' || will.status === 'scheduled');
+  const isActiveWill = will && (will.status === 'active' || will.status === 'scheduled' || will.status === 'waiting_for_end_room');
   
   // Get user's commitment if they have one
   const userCommitment = isActiveWill && user ? will.commitments?.find((c: any) => c.userId === user.id) : null;
+
+  // Debug logging
+  console.log('Home.tsx Debug:', {
+    circle,
+    will,
+    user,
+    isActiveWill,
+    userCommitment,
+    willStatus: will?.status,
+    commitments: will?.commitments
+  });
 
   return (
     <div className="min-h-screen pt-16">
@@ -105,7 +135,8 @@ export default function Home() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Your Active <em>Will</em></h3>
                     <Badge className="bg-blue-100 text-blue-800 text-xs">
-                      {will.status === 'active' ? 'Active' : 'Scheduled'}
+                      {will.status === 'active' ? 'Active' : 
+                       will.status === 'waiting_for_end_room' ? 'Completed' : 'Scheduled'}
                     </Badge>
                   </div>
                 </div>
@@ -140,6 +171,15 @@ export default function Home() {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Debug Card - Show when user is not authenticated */}
+        {!user && (
+          <Card className="mb-8 border-2 border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <p className="text-red-800">Debug: User not authenticated. Please log in to see active Will details.</p>
             </CardContent>
           </Card>
         )}
