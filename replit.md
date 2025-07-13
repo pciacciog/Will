@@ -576,6 +576,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced disclaimer presentation**: Added pt-3 spacing above privacy notice, reduced to text-gray-400 font-light for subtlety
   - **Maintained one-pager design**: Preserved compact single-viewport layout while improving visual hierarchy and readability
   - **Improved form consistency**: Applied consistent space-y-3 spacing throughout authentication forms for cleaner stacking
+- **July 13, 2025**: Enhanced "Will: Complete" screen with celebratory design and improved visual hierarchy
+  - **Added celebratory headline**: "You did it — another Will complete!" with star icons and text-xl bold styling for warmth
+  - **Improved Final Summary prominence**: Made title more noticeable with font-semibold text-lg text-gray-700 and proper spacing
+  - **Removed assumption icons**: Removed green check marks next to member names to maintain neutrality
+  - **Emphasized WILL and END ROOM sections**: Used font-semibold styling and single-line format for better readability
+  - **Enhanced acknowledge box**: Added Target icon, improved spacing (p-4), and joyful green styling for better user experience
+  - **Added subtle animation**: Implemented slide-in-from-bottom-4 transition with duration-300 for smooth modal appearance
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

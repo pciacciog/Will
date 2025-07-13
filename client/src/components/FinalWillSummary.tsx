@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Clock, Users, Video } from 'lucide-react';
+import { CheckCircle, Clock, Users, Video, Star, Target } from 'lucide-react';
 
 interface FinalWillSummaryProps {
   isOpen: boolean;
@@ -83,44 +83,53 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto [&>button]:hidden">
+      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-left">
-            <em>Will</em>: Complete
-          </DialogTitle>
-          <p className="text-sm text-gray-600 mt-1">Final Summary</p>
+          {/* Celebratory Header */}
+          <div className="text-center mb-4">
+            <div className="flex items-center justify-center mb-2">
+              <Star className="w-6 h-6 text-yellow-500 mr-2" />
+              <h1 className="text-xl font-bold text-gray-900">
+                You did it — another <em>Will</em> complete!
+              </h1>
+              <Star className="w-6 h-6 text-yellow-500 ml-2" />
+            </div>
+          </div>
+          
+          {/* Final Summary Title */}
+          <div className="text-center mt-2 mb-4">
+            <h2 className="text-lg font-semibold text-gray-700">Final Summary</h2>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Compact Duration Block */}
           <div className="bg-gray-50 rounded-lg p-3 mb-4">
-            <div className="space-y-1 text-sm">
+            <div className="space-y-2 text-sm">
               <div>
-                <span className="font-medium"><em>Will</em>:</span> {formatWillTimespan()}
+                <span className="font-semibold">WILL:</span> {formatWillTimespan()}
               </div>
               {will.endRoomScheduledAt && (
                 <div>
-                  <span className="font-medium">End Room:</span> {formatEndRoomTimespan()}
+                  <span className="font-semibold">END ROOM:</span> {formatEndRoomTimespan()}
                 </div>
               )}
             </div>
           </div>
 
           {/* Member Commitments */}
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Member Commitments</h3>
+          <div className="mt-2 mb-4">
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Member Commitments</h3>
             <div className="space-y-2">
               {will.commitments?.map((commitment: any) => (
                 <div key={commitment.id} className="py-2">
-                  <div className="text-sm text-gray-700">
-                    ✅ <span className="font-medium">
-                      {commitment.user.firstName && commitment.user.lastName 
-                        ? `${commitment.user.firstName} ${commitment.user.lastName}`
-                        : commitment.user.email
-                      }
-                    </span>
+                  <div className="text-sm font-medium text-gray-700">
+                    {commitment.user.firstName && commitment.user.lastName 
+                      ? `${commitment.user.firstName} ${commitment.user.lastName}`
+                      : commitment.user.email
+                    }
                   </div>
-                  <div className="text-sm text-gray-600 mt-1 ml-4">
+                  <div className="text-sm text-gray-600 mt-1">
                     I will {commitment.commitment}
                   </div>
                 </div>
@@ -130,24 +139,25 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
           {/* Acknowledge & Close Box */}
           {userParticipated ? (
-            <div className="border-2 border-green-200 bg-green-50 rounded-lg p-3 mb-4">
+            <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4 mb-4">
               <div className="text-center space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                <div className="flex items-center justify-center mb-2">
+                  <Target className="w-5 h-5 text-green-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">
                     {hasUserAcknowledged ? <><em>Will</em> Acknowledged</> : "Acknowledge Completion"}
                   </h3>
-                  <p className="text-xs text-gray-600">
-                    {hasUserAcknowledged 
-                      ? <>You have acknowledged this <em>Will</em>. It will be archived and you can start a new one.</>
-                      : <>This marks the end of your <em>will</em>. Once acknowledged, it will be archived and you'll be ready to start a new one.</>
-                    }
-                  </p>
                 </div>
+                <p className="text-xs text-gray-600">
+                  {hasUserAcknowledged 
+                    ? <>You have acknowledged this <em>Will</em>. It will be archived and you can start a new one.</>
+                    : <>This marks the end of your <em>will</em>. Once acknowledged, it will be archived and you'll be ready to start a new one.</>
+                  }
+                </p>
                 {!hasUserAcknowledged && (
                   <Button 
                     onClick={onAcknowledge}
                     disabled={isAcknowledging}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 mt-3"
                     size="sm"
                   >
                     {isAcknowledging ? "Acknowledging..." : "Acknowledge"}
@@ -156,16 +166,17 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
               </div>
             </div>
           ) : (
-            <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-3 mb-4">
+            <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-4 mb-4">
               <div className="text-center space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                <div className="flex items-center justify-center mb-2">
+                  <CheckCircle className="w-5 h-5 text-blue-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-gray-900">
                     <em>Will</em> Complete
                   </h3>
-                  <p className="text-xs text-gray-600">
-                    This <em>Will</em> has been completed. Only participating members need to acknowledge completion.
-                  </p>
                 </div>
+                <p className="text-xs text-gray-600">
+                  This <em>Will</em> has been completed. Only participating members need to acknowledge completion.
+                </p>
               </div>
             </div>
           )}
