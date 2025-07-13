@@ -477,6 +477,13 @@ This is a full-stack web application for group goal accountability, built with R
   - Added smooth animations with ease-in-out duration-300 transitions
   - Maintained responsive behavior with sm: modifiers for desktop positioning
   - Ensured all toast notifications respect iOS safe area boundaries globally across the app
+- **July 13, 2025**: Implemented dynamic Will initiator messaging in Inner Circle Hub
+  - Added conditional messaging above Will Pending status block showing who started the Will
+  - If viewer is creator: "You started this Will. Waiting on others to submit."
+  - If viewer is not creator: "[CreatorName] has proposed a new Will."
+  - Dynamically looks up creator name from circle members using will.createdBy field
+  - Applied text-sm text-gray-700 mb-2 styling for consistent visual hierarchy
+  - Positioned immediately above Will Pending status block for clear context
 - **July 13, 2025**: Implemented comprehensive Will Details screen redesign for single viewport mobile display
   - Redesigned WillDetails page to fit entirely on single iPhone screen without scrolling across all Will states
   - Created unified compact layout with 3-4 main sections: header, timeline/end room, commitments, and actions

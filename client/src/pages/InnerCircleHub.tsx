@@ -522,6 +522,19 @@ export default function InnerCircleHub() {
 
           {willStatus === 'pending' && (
             <div>
+              {/* Dynamic Will Initiator Message */}
+              <div className="text-sm text-gray-700 mb-2">
+                {will?.createdBy === user?.id ? (
+                  "You started this Will. Waiting on others to submit."
+                ) : (
+                  (() => {
+                    const creator = circle?.members?.find((member: any) => member.user.id === will?.createdBy);
+                    const creatorName = creator?.user?.firstName || creator?.user?.email || 'Someone';
+                    return `${creatorName} has proposed a new Will.`;
+                  })()
+                )}
+              </div>
+              
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
