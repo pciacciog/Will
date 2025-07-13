@@ -658,10 +658,7 @@ export default function StartWill() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
                 </svg>
               </div>
-              <div className="flex items-center justify-center">
-                <h2 className="text-lg font-semibold text-gray-900">Schedule Your End Room</h2>
-                <EndRoomTooltip className="ml-2" />
-              </div>
+              <h2 className="text-xl font-semibold text-gray-900 text-center">Schedule Your End Room</h2>
               <p className="text-sm text-gray-600 italic text-center mt-1">
                 This is where your circle comes together to reflect, share, and honor the effort.
               </p>
@@ -699,7 +696,7 @@ export default function StartWill() {
                   </svg>
                   <span className="text-xs font-medium text-red-800">END ROOM:</span>
                 </div>
-                <ul className="space-y-1 text-xs text-red-600 break-words">
+                <ul className="space-y-0.5 text-xs text-red-600 break-words">
                   <li className="flex items-start">
                     <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
                     <span>Opens automatically at the scheduled date and runs for 30 minutes</span>

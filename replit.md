@@ -624,6 +624,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Prolonged "one last step" animation**: Increased timeout from 2.5 seconds to 3.5 seconds for both StartWill and SubmitCommitment flows
   - **Enhanced timing consistency**: Applied identical 3.5-second transition duration across all commitment submission processes
   - **Improved UX pacing**: Allows users more time to process completion before moving to next step
+- **July 13, 2025**: Design cleanup for "Schedule Your End Room" page
+  - **Removed floating help icon**: Eliminated redundant (?) icon from End Room scheduling step
+  - **Center-aligned title**: Updated "Schedule Your End Room" title to text-center for better visual hierarchy
+  - **Tightened bullet spacing**: Reduced spacing from space-y-1 to space-y-0.5 in red warning box for compact layout
+  - **Verified single input**: Confirmed only one "End Room Date & Time" input field exists in the form
+  - **Maintained functionality**: Preserved all existing scheduling validation and submission logic
 - **July 13, 2025**: Fixed button text spacing issue in Inner Circle Hub preventing proper word separation
   - **Resolved rendering issue**: Fixed "ViewWillDetails" appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (</>) to prevent space collapse around italic <em> tags
