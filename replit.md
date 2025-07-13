@@ -489,6 +489,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Added compact Back to Hub button as simple underlined text link instead of large button
   - Maintained all existing functionality while achieving single viewport display on iPhone 13/14 screens
   - Applied consistent design system with proper spacing, typography, and mobile-first responsive patterns
+- **July 13, 2025**: Fixed action button spacing issues across all Inner Circle Hub summary cards
+  - Added proper vertical spacing (mt-3 mb-3) and horizontal padding (px-4) to all primary action buttons
+  - Fixed cramped "ViewWillDetails" button spacing by wrapping buttons in spacing containers
+  - Applied consistent spacing to "Start a Will", "View Will Details", "Join End Room", and "Review Final Summary" buttons
+  - Enhanced button readability and touch targets for better mobile user experience
+  - Established universal spacing rule for all summary screen action buttons to maintain clean, readable layout
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

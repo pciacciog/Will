@@ -507,14 +507,16 @@ export default function InnerCircleHub() {
               </ActionButton>
               <h3 className="text-lg font-medium mb-2 tracking-tight">No active <em>Will</em></h3>
               <p className="text-muted-foreground mb-6 text-sm tracking-tight">Ready to commit to something meaningful together?</p>
-              <PrimaryButton 
-                onClick={() => setLocation('/start-will')}
-                variant="primary"
-                size="lg"
-                fullWidth
-              >
-                <span>Start a <em>Will</em></span>
-              </PrimaryButton>
+              <div className="mt-3 mb-3 px-4">
+                <PrimaryButton 
+                  onClick={() => setLocation('/start-will')}
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                >
+                  <span>Start a <em>Will</em></span>
+                </PrimaryButton>
+              </div>
             </div>
           )}
 
@@ -548,9 +550,11 @@ export default function InnerCircleHub() {
                 </div>
               </div>
               
-              <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
-                View <em>Will</em> Details
-              </PrimaryButton>
+              <div className="mt-3 mb-3 px-4">
+                <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
+                  View <em>Will</em> Details
+                </PrimaryButton>
+              </div>
             </div>
           )}
 
@@ -582,9 +586,11 @@ export default function InnerCircleHub() {
                 </div>
               </div>
               
-              <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
-                View <em>Will</em> Details
-              </PrimaryButton>
+              <div className="mt-3 mb-3 px-4">
+                <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
+                  View <em>Will</em> Details
+                </PrimaryButton>
+              </div>
             </div>
           )}
 
@@ -605,9 +611,11 @@ export default function InnerCircleHub() {
                 </Badge>
               </div>
               
-              <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
-                View <em>Will</em> Details
-              </PrimaryButton>
+              <div className="mt-3 mb-3 px-4">
+                <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
+                  View <em>Will</em> Details
+                </PrimaryButton>
+              </div>
             </div>
           )}
 
@@ -630,16 +638,18 @@ export default function InnerCircleHub() {
                   </p>
                   
                   {will?.endRoomUrl ? (
-                    <PrimaryButton 
-                      onClick={handleJoinEndRoom}
-                      variant="secondary"
-                      size="lg"
-                      fullWidth
-                    >
-                      Join End Room
-                    </PrimaryButton>
+                    <div className="mt-3 mb-3 px-4">
+                      <PrimaryButton 
+                        onClick={handleJoinEndRoom}
+                        variant="secondary"
+                        size="lg"
+                        fullWidth
+                      >
+                        Join End Room
+                      </PrimaryButton>
+                    </div>
                   ) : (
-                    <div className="text-center">
+                    <div className="mt-3 mb-3 px-4">
                       <PrimaryButton 
                         onClick={handleJoinEndRoom}
                         variant="secondary"
@@ -670,13 +680,15 @@ export default function InnerCircleHub() {
                     })() : 'N/A'}</strong>.
                   </p>
                   
-                  <PrimaryButton 
-                    onClick={handleViewWillDetails}
-                    size="lg"
-                    fullWidth
-                  >
-                    View End Room Details
-                  </PrimaryButton>
+                  <div className="mt-3 mb-3 px-4">
+                    <PrimaryButton 
+                      onClick={handleViewWillDetails}
+                      size="lg"
+                      fullWidth
+                    >
+                      View End Room Details
+                    </PrimaryButton>
+                  </div>
                 </>
               )}
             </div>
@@ -690,14 +702,16 @@ export default function InnerCircleHub() {
               <h3 className="text-xl font-semibold mb-2"><em>Will</em> Complete - Ready to Review</h3>
               <p className="text-muted-foreground mb-6">Review the final summary to officially close out this <em>Will</em>.</p>
               
-              <PrimaryButton 
-                onClick={handleViewWillDetails}
-                variant="secondary"
-                size="lg"
-                fullWidth
-              >
-                Review Final Summary
-              </PrimaryButton>
+              <div className="mt-3 mb-3 px-4">
+                <PrimaryButton 
+                  onClick={handleViewWillDetails}
+                  variant="secondary"
+                  size="lg"
+                  fullWidth
+                >
+                  Review Final Summary
+                </PrimaryButton>
+              </div>
             </div>
           )}
         </SectionCard>
