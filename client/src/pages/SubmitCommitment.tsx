@@ -105,10 +105,10 @@ export default function SubmitCommitment() {
     // Show transition animation
     setShowTransition(true);
     
-    // After 1.5 seconds, submit the commitment
+    // After 2.5 seconds, submit the commitment
     setTimeout(() => {
       commitmentMutation.mutate({ what: what.trim(), why: why.trim() });
-    }, 1500);
+    }, 2500);
   };
 
   const handleBack = () => {

@@ -544,7 +544,7 @@ This is a full-stack web application for group goal accountability, built with R
   - **Refined icon sizing**: Reduced icon containers from w-12 h-12 to w-10 h-10 for cleaner, more proportional feel
   - **Enhanced commitment preview**: Used consistent "I will [commitment]" format with elegant card styling across both flows
 - **July 13, 2025**: Implemented smooth transition animations and refined End Room scheduling UX
-  - **Added uplifting interstitial animations**: Implemented 1.5-second transition screen after "Why" step completion with "One last step before you set up your Will..." message
+  - **Added uplifting interstitial animations**: Implemented 2.5-second transition screen after "Why" step completion with "One last step before you set up your Will..." message
   - **Enhanced End Room scheduling screen**: Replaced blue alert box with elegant descriptive text "This is where your circle comes together to reflect, share, and honor the effort"
   - **Tightened warning box spacing**: Reduced vertical spacing from space-y-0 to space-y-1 in red info box for better mobile layout
   - **Added custom CSS animations**: Created fadeIn and slideUp keyframe animations with proper timing for smooth UX transitions
