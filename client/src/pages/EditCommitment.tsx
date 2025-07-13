@@ -141,83 +141,86 @@ export default function EditCommitment() {
   return (
     <MobileLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <SectionTitle>Edit Your Commitment</SectionTitle>
-          <p className="text-gray-600 text-base tracking-tight">Update your commitment details</p>
-        </div>
-
         <SectionCard>
-          <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto">
-                <CheckCircle className="w-6 h-6 text-brandGreen" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 tracking-tight">What You Will Do</h2>
+          <div className="text-center mb-6">
+            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">What would you like to do?</h2>
+            <p className="text-sm text-gray-500">Cause it's as simple as wanting.</p>
+          </div>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 tracking-tight">
+                Your Want
+              </label>
+              <div className="relative">
+                <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                  <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
+                  <Textarea
+                    value={what}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      if (newValue.length <= 75) {
+                        setWhat(newValue);
+                        setWhatCharCount(newValue.length);
+                      }
+                    }}
+                    placeholder="call my grandmother this week"
+                    className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                    rows={2}
+                    maxLength={75}
+                  />
+                </div>
+                <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
+                  {whatCharCount} / 75
+                </div>
               </div>
             </div>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4 tracking-tight">
-                  Your Want
-                </label>
-                <div className="relative">
-                  <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
-                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
-                    <Textarea
-                      value={what}
-                      onChange={(e) => {
-                        const newValue = e.target.value;
-                        if (newValue.length <= 75) {
-                          setWhat(newValue);
-                          setWhatCharCount(newValue.length);
-                        }
-                      }}
-                      placeholder="describe what you will do"
-                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
-                      rows={2}
-                      maxLength={75}
-                    />
-                  </div>
-                  <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
-                    {whatCharCount} / 75
-                  </div>
-                </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard>
+          <div className="text-center mb-6">
+            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <Heart className="w-6 h-6 text-orange-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Why would you like to do this?</h2>
+            <p className="text-sm text-gray-500">Remember this when it gets tough.</p>
+          </div>
+          
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
+                <span className="text-xs text-gray-500 flex items-center tracking-tight">
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Private - only you can see this
+                </span>
               </div>
-              
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
-                  <span className="text-xs text-gray-500 flex items-center tracking-tight">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    Private - only you can see this
-                  </span>
+              <div className="relative">
+                <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                  <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
+                  <Textarea
+                    value={why}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      if (newValue.length <= 75) {
+                        setWhy(newValue);
+                        setWhyCharCount(newValue.length);
+                      }
+                    }}
+                    placeholder="I like how I feel after I talk to her"
+                    className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                    rows={3}
+                    maxLength={75}
+                  />
                 </div>
-                <div className="relative">
-                  <div className="flex items-start bg-blue-50 border-2 border-blue-200 rounded-xl p-4 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
-                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
-                    <Textarea
-                      value={why}
-                      onChange={(e) => {
-                        const newValue = e.target.value;
-                        if (newValue.length <= 75) {
-                          setWhy(newValue);
-                          setWhyCharCount(newValue.length);
-                        }
-                      }}
-                      placeholder="explain why this matters to you"
-                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
-                      rows={3}
-                      maxLength={75}
-                    />
-                  </div>
-                  <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
-                    {whyCharCount} / 75
-                  </div>
+                <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
+                  {whyCharCount} / 75
                 </div>
               </div>
             </div>
@@ -240,11 +243,14 @@ export default function EditCommitment() {
         </SectionCard>
 
         {/* Action Buttons */}
-        <div className="flex justify-between gap-4">
-          <ActionButton onClick={() => setLocation(`/will/${willId}`)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Will
-          </ActionButton>
+        <div className="flex justify-between items-center gap-4">
+          <button
+            onClick={() => setLocation(`/will/${willId}`)}
+            className="text-sm font-medium text-gray-600 hover:text-gray-800 flex items-center transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back to <em>Will</em>
+          </button>
           
           <PrimaryButton
             onClick={handleUpdate}
