@@ -12,6 +12,7 @@ import { EndRoom } from "@/components/EndRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge } from "@/components/ui/design-system";
 import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart } from "lucide-react";
+import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -316,6 +317,7 @@ export default function WillDetails() {
               <div className="flex items-center mb-3">
                 <Video className="w-4 h-4 text-blue-600 mr-2" />
                 <span className="text-sm font-medium">End Room</span>
+                <EndRoomTooltip className="ml-2" />
               </div>
               <div className="space-y-1 text-xs leading-tight">
                 <div>
@@ -478,7 +480,10 @@ export default function WillDetails() {
               <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Video className="w-4 h-4 text-amber-600" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">End Room</h3>
+              <div className="flex items-center justify-center mb-1">
+                <h3 className="text-sm font-semibold text-gray-900">End Room</h3>
+                <EndRoomTooltip className="ml-2" />
+              </div>
               <p className="text-xs text-gray-600 mb-2">
                 30-minute group reflection session
               </p>

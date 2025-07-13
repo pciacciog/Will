@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Video, Users, ExternalLink } from 'lucide-react';
 import { Browser } from '@capacitor/browser';
+import { EndRoomTooltip } from './EndRoomTooltip';
 
 interface EndRoomProps {
   willId: number;
@@ -121,6 +122,7 @@ export function EndRoom({ willId }: EndRoomProps) {
         <CardTitle className="flex items-center gap-2 text-purple-900">
           <Video className="w-5 h-5" />
           End Room
+          <EndRoomTooltip />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

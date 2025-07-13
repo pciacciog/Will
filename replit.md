@@ -595,6 +595,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Streamlined text content**: Simplified descriptions to essential information (closes/opens at time) without verbose explanations
   - **Maintained functionality**: Preserved all button actions and status differentiation while achieving single viewport display
   - **Enhanced mobile UX**: Applied mobile-first design principles consistent with "Create a new will" interface
+- **July 13, 2025**: Added End Room help tooltip across all pages containing End Room references
+  - **Created reusable EndRoomTooltip component**: Implemented modal-style tooltip with backdrop and close button for End Room explanations
+  - **Added tooltips to all End Room instances**: WillDetails page (compact timeline and End Room sections), InnerCircleHub page (End Room in Process and scheduled states), StartWill page (Schedule Your End Room), and EndRoom component
+  - **Consistent user experience**: Help icon appears next to "End Room" text with standardized explanation: "This is where the circle will gather to reflect, share, and honor the efforts of each member's Will"
+  - **Mobile-optimized design**: Tooltip displays as full-screen modal with proper touch targets and iOS safe area handling
+  - **Accessible implementation**: Proper ARIA labels, keyboard navigation, and backdrop click-to-close functionality
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

@@ -13,6 +13,7 @@ import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
+import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart } from "lucide-react";
 
 // Helper function to calculate next Monday at 12:00 AM
@@ -657,7 +658,10 @@ export default function StartWill() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 text-center">Schedule Your End Room</h2>
+              <div className="flex items-center justify-center">
+                <h2 className="text-lg font-semibold text-gray-900">Schedule Your End Room</h2>
+                <EndRoomTooltip className="ml-2" />
+              </div>
               <p className="text-sm text-gray-600 italic text-center mt-1">
                 This is where your circle comes together to reflect, share, and honor the effort.
               </p>

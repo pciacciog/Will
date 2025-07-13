@@ -18,6 +18,7 @@ import { SimpleVideoRoom } from "@/components/SimpleVideoRoom";
 import { MobileVideoRoom } from "@/components/MobileVideoRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { useAppRefresh } from "@/hooks/useAppRefresh";
+import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
@@ -635,7 +636,10 @@ export default function InnerCircleHub() {
                         <Video className="w-5 h-5 text-green-600" />
                       </div>
                       <div>
-                        <h3 className="font-semibold tracking-tight"><em>Will</em> - End Room in Process</h3>
+                        <div className="flex items-center">
+                          <h3 className="font-semibold tracking-tight"><em>Will</em> - End Room in Process</h3>
+                          <EndRoomTooltip className="ml-2" />
+                        </div>
                         <p className="text-sm text-muted-foreground tracking-tight">
                           Closes at {will?.endRoomScheduledAt ? (() => {
                             const openTime = new Date(will.endRoomScheduledAt);
@@ -670,7 +674,10 @@ export default function InnerCircleHub() {
                         <Video className="w-5 h-5 text-purple-600" />
                       </div>
                       <div>
-                        <h3 className="font-semibold tracking-tight"><em>Will</em> - End Room</h3>
+                        <div className="flex items-center">
+                          <h3 className="font-semibold tracking-tight"><em>Will</em> - End Room</h3>
+                          <EndRoomTooltip className="ml-2" />
+                        </div>
                         <p className="text-sm text-muted-foreground tracking-tight">
                           Opens at {will?.endRoomScheduledAt ? formatEndRoomTime(will.endRoomScheduledAt) : 'N/A'}
                         </p>
