@@ -613,6 +613,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Streamlined content**: Shortened descriptive text from full sentence to concise "Review final summary to close out"
   - **Maintained functionality**: Preserved all existing button actions and Final Will Summary modal integration
   - **Enhanced mobile UX**: Achieved single viewport display consistent with other will status states
+- **July 13, 2025**: Enhanced Welcome screen as pre-hub dashboard with active Will display
+  - **Added active Will status card**: Created new section that displays when user has active or scheduled Will
+  - **Implemented commitment preview**: Shows user's "I will..." commitment with italic styling and proper formatting
+  - **Added private "Why" reveal**: Collapsible section with chevron icons to show/hide user's personal motivation
+  - **Enhanced visual hierarchy**: Used blue-themed card with border, background, and Target icon for Will emphasis
+  - **Maintained existing functionality**: Preserved circle overview, member count display, and hub navigation
+  - **Conditional display logic**: Only shows Will card when user has active commitment, falls back to standard view otherwise
 - **July 13, 2025**: Fixed button text spacing issue in Inner Circle Hub preventing proper word separation
   - **Resolved rendering issue**: Fixed "ViewWillDetails" appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (</>) to prevent space collapse around italic <em> tags

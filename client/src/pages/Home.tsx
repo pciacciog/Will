@@ -1,13 +1,26 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Target, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const [showWhy, setShowWhy] = useState(false);
   
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
+  });
+
+  const { data: will } = useQuery({
+    queryKey: ['/api/wills/circle'],
+    enabled: !!circle,
+  });
+
+  const { data: user } = useQuery({
+    queryKey: ['/api/user'],
   });
 
   const handleStartJourney = () => {
@@ -17,6 +30,12 @@ export default function Home() {
       setLocation('/inner-circle');
     }
   };
+
+  // Check if there's an active Will (scheduled or active status)
+  const isActiveWill = will && (will.status === 'active' || will.status === 'scheduled');
+  
+  // Get user's commitment if they have one
+  const userCommitment = isActiveWill && user ? will.commitments?.find((c: any) => c.userId === user.id) : null;
 
   return (
     <div className="min-h-screen pt-16">
@@ -28,7 +47,7 @@ export default function Home() {
           </h1>
         </div>
 
-        {/* Quick Action Card */}
+        {/* Circle Status Card */}
         <Card className="mb-8">
           <CardContent className="p-8 text-center">
             {circle ? (
@@ -38,7 +57,7 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Your Circle is Ready</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Your Circle</h3>
                 <p className="text-gray-600 mb-6">
                   {(() => {
                     const memberCount = circle.members?.length || 0;
@@ -73,6 +92,57 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
+
+        {/* Active Will Card - Only show if user has an active Will */}
+        {isActiveWill && userCommitment && (
+          <Card className="mb-8 border-2 border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Target className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Your Active <em>Will</em></h3>
+                    <Badge className="bg-blue-100 text-blue-800 text-xs">
+                      {will.status === 'active' ? 'Active' : 'Scheduled'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <p className="text-lg italic text-gray-800 font-medium">
+                  "I will {userCommitment.what || userCommitment.commitment}"
+                </p>
+                
+                {userCommitment.why && (
+                  <div className="text-sm">
+                    <button
+                      onClick={() => setShowWhy(!showWhy)}
+                      className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 hover:underline focus:outline-none"
+                    >
+                      <span>Reveal My Why</span>
+                      {showWhy ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </button>
+                    
+                    {showWhy && (
+                      <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200">
+                        <p className="text-gray-700">
+                          Because {userCommitment.why}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
 
       </div>
