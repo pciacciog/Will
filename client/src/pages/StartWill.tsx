@@ -250,11 +250,11 @@ export default function StartWill() {
     // Show transition animation
     setShowTransition(true);
     
-    // After 2.5 seconds, move to End Room scheduling step
+    // After 3.5 seconds, move to End Room scheduling step
     setTimeout(() => {
       setShowTransition(false);
       setCurrentStep(4);
-    }, 2500);
+    }, 3500);
   };
 
   const handleStep4Submit = (e: React.FormEvent) => {

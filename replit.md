@@ -620,6 +620,10 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced visual hierarchy**: Used blue-themed card with border, background, and Target icon for Will emphasis
   - **Maintained existing functionality**: Preserved circle overview, member count display, and hub navigation
   - **Conditional display logic**: Only shows Will card when user has active commitment, falls back to standard view otherwise
+- **July 13, 2025**: Extended transition animation duration for improved user experience
+  - **Prolonged "one last step" animation**: Increased timeout from 2.5 seconds to 3.5 seconds for both StartWill and SubmitCommitment flows
+  - **Enhanced timing consistency**: Applied identical 3.5-second transition duration across all commitment submission processes
+  - **Improved UX pacing**: Allows users more time to process completion before moving to next step
 - **July 13, 2025**: Fixed button text spacing issue in Inner Circle Hub preventing proper word separation
   - **Resolved rendering issue**: Fixed "ViewWillDetails" appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (</>) to prevent space collapse around italic <em> tags
