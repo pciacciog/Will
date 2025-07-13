@@ -92,9 +92,9 @@ export default function WillDetails() {
   const [showFinalSummary, setShowFinalSummary] = useState(false);
 
 
-  const { data: will, isLoading } = useQuery({
+  const { data: will, isLoading, error } = useQuery({
     queryKey: [`/api/wills/${id}/details`],
-    enabled: !!id,
+    enabled: !!id && !!user,
     refetchInterval: (data) => {
       if (!data) return 30000;
       
@@ -109,6 +109,7 @@ export default function WillDetails() {
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
+    enabled: !!user,
   });
 
   const acknowledgeMutation = useMutation({
@@ -197,11 +198,40 @@ export default function WillDetails() {
   }, [will, showFinalSummary]);
 
   // Early returns after all hooks are defined
+  if (!user) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Authentication required</h2>
+          <Button onClick={() => setLocation('/auth')}>
+            Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Error loading <em>Will</em></h2>
+          <p className="text-gray-600 mb-4">
+            {error.message || 'Unable to load Will details'}
+          </p>
+          <Button onClick={() => setLocation('/hub')}>
+            Back to Hub
+          </Button>
         </div>
       </div>
     );
