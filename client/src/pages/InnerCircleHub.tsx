@@ -624,65 +624,62 @@ export default function InnerCircleHub() {
           )}
 
           {willStatus === 'waiting_for_end_room' && (
-            <div className="text-center py-8">
+            <div className="p-4">
               {/* Check if End Room is currently active */}
               {will?.endRoomStatus === 'open' ? (
                 // End Room is currently in progress
                 <>
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Video className="w-8 h-8 text-green-600" />
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                        <Video className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold tracking-tight"><em>Will</em> - End Room in Process</h3>
+                        <p className="text-sm text-muted-foreground tracking-tight">
+                          Closes at {will?.endRoomScheduledAt ? (() => {
+                            const openTime = new Date(will.endRoomScheduledAt);
+                            const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
+                            return formatEndRoomTime(closeTime.toISOString());
+                          })() : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">
+                      Live
+                    </Badge>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2"><em>Will</em> - End Room in Process</h3>
-                  <p className="text-muted-foreground mb-6">
-                    The End Room is live and will close at <strong>{will?.endRoomScheduledAt ? (() => {
-                      const openTime = new Date(will.endRoomScheduledAt);
-                      const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
-                      return formatEndRoomTime(closeTime.toISOString());
-                    })() : 'N/A'}</strong>.
-                  </p>
                   
-                  {will?.endRoomUrl ? (
-                    <div className="mt-3 mb-3 px-4">
-                      <PrimaryButton 
-                        onClick={handleJoinEndRoom}
-                        variant="secondary"
-                        size="lg"
-                        fullWidth
-                      >
-                        Join End Room
-                      </PrimaryButton>
-                    </div>
-                  ) : (
-                    <div className="mt-3 mb-3 px-4">
-                      <PrimaryButton 
-                        onClick={handleJoinEndRoom}
-                        variant="secondary"
-                        size="lg"
-                        fullWidth
-                        className="mb-2"
-                      >
-                        Join
-                      </PrimaryButton>
-                      <p className="text-sm text-muted-foreground tracking-tight">
-                        The End Room is active but video setup is needed. Click to create.
-                      </p>
-                    </div>
-                  )}
+                  <div className="mt-3 mb-3 px-4">
+                    <PrimaryButton 
+                      onClick={handleJoinEndRoom}
+                      variant="secondary"
+                      size="lg"
+                      fullWidth
+                    >
+                      <>Join End Room</>
+                    </PrimaryButton>
+                  </div>
                 </>
               ) : (
                 // End Room is scheduled but not yet started
                 <>
-                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Video className="w-8 h-8 text-purple-600" />
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <Video className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold tracking-tight"><em>Will</em> - End Room</h3>
+                        <p className="text-sm text-muted-foreground tracking-tight">
+                          Opens at {will?.endRoomScheduledAt ? formatEndRoomTime(will.endRoomScheduledAt) : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-purple-100 text-purple-800">
+                      Scheduled
+                    </Badge>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2"><em>Will</em> - End Room</h3>
-                  <p className="text-muted-foreground mb-6">
-                    The End Room will open at <strong>{will?.endRoomScheduledAt ? formatEndRoomTime(will.endRoomScheduledAt) : 'N/A'}</strong> and will close at <strong>{will?.endRoomScheduledAt ? (() => {
-                      const openTime = new Date(will.endRoomScheduledAt);
-                      const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
-                      return formatEndRoomTime(closeTime.toISOString());
-                    })() : 'N/A'}</strong>.
-                  </p>
                   
                   <div className="mt-3 mb-3 px-4">
                     <PrimaryButton 
