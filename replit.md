@@ -570,6 +570,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Cleaned pending status display**: Removed duplicate pending member rows, consolidated to single "X / Y members submitted" counter
   - **Improved readability**: Reduced submission helper text contrast (text-gray-500) to avoid competing with main action button
   - **Streamlined layout**: Eliminated redundant visual elements while maintaining clear information hierarchy
+- **July 13, 2025**: Refined Auth screen layout for improved mobile elegance and reduced visual clutter
+  - **Optimized card styling**: Replaced SectionCard with custom rounded-xl card using px-4 py-6 padding for better breathability
+  - **Reduced vertical spacing**: Tightened feature bullet spacing from space-y-3 to space-y-2, header spacing from space-y-2 to space-y-1
+  - **Enhanced disclaimer presentation**: Added pt-3 spacing above privacy notice, reduced to text-gray-400 font-light for subtlety
+  - **Maintained one-pager design**: Preserved compact single-viewport layout while improving visual hierarchy and readability
+  - **Improved form consistency**: Applied consistent space-y-3 spacing throughout authentication forms for cleaner stacking
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

@@ -103,9 +103,9 @@ export default function Auth() {
         </Link>
 
         {/* Main Auth Card */}
-        <SectionCard className="shadow-lg bg-white/80 backdrop-blur-sm">
-          <div className="text-center space-y-2 mb-4">
-            <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
+        <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 px-4 py-6">
+          <div className="text-center space-y-1 mb-3">
+            <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-2">
               <Shield className="h-6 w-6 text-indigo-600" />
             </div>
             <h1 className="text-xl font-bold text-gray-900 tracking-tight">
@@ -117,7 +117,7 @@ export default function Auth() {
           </div>
           
           {/* Compact Features Preview */}
-          <div className="space-y-3 mb-4">
+          <div className="space-y-2 mb-3">
             <div className="flex items-center space-x-3">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <Users className="h-3 w-3 text-blue-600" />
@@ -306,12 +306,12 @@ export default function Auth() {
             </Tabs>
 
             {/* Privacy Notice */}
-            <div className="text-center">
-              <p className="text-xs text-gray-500 tracking-tight">
+            <div className="text-center pt-3">
+              <p className="text-xs text-gray-400 font-light tracking-tight">
                 By continuing, you agree to our commitment to your privacy and security.
               </p>
             </div>
-        </SectionCard>
+        </div>
       </div>
     </MobileLayout>
   );
