@@ -98,20 +98,20 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           {/* Main Content */}
           <div className="flex-1 space-y-4">
             {/* Duration Block */}
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-sm space-y-1">
-              <div>
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-xs space-y-1">
+              <div className="whitespace-nowrap">
                 <span className="font-semibold">Will:</span> {formatWillTimespan()}
               </div>
               {will.endRoomScheduledAt && (
-                <div>
+                <div className="whitespace-nowrap">
                   <span className="font-semibold">End Room:</span> {formatEndRoomTimespan()}
                 </div>
               )}
             </div>
 
             {/* Member Commitments */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-lg text-gray-900">Member Commitments</h4>
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium uppercase text-gray-600 tracking-wide">Member Commitments</h4>
               <div className="space-y-3">
                 {will.commitments?.map((commitment: any) => (
                   <div key={commitment.id}>
@@ -137,7 +137,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                 <div className="flex items-center mb-2">
                   <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
                   <p className="font-semibold text-gray-900">
-                    {hasUserAcknowledged ? <><em>Will</em> Acknowledged</> : "✅ Acknowledge Completion"}
+                    {hasUserAcknowledged ? <><em>Will</em> Acknowledged</> : "Acknowledge Completion"}
                   </p>
                 </div>
                 <p className="text-sm text-gray-700 mb-4">
