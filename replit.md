@@ -590,6 +590,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Improved formatting**: Updated "WILL:" and "END ROOM:" to "Will:" and "End Room:" with bold formatting while maintaining single-line display
   - **Replaced Target icon**: Changed Target icon to CheckCircle in acknowledgment box for more neutral, professional appearance
   - **Maintained functionality**: Preserved all existing acknowledgment flow and user interaction patterns
+- **July 13, 2025**: Optimized Final Will Summary for single viewport mobile display
+  - **Restructured layout**: Converted from scrollable to fixed-height layout using flexbox with h-[90vh] and overflow-hidden
+  - **Compressed typography**: Reduced font sizes from text-lg/text-sm to text-lg/text-xs for compact mobile display
+  - **Minimized spacing**: Reduced padding from p-4 to p-3/p-2 and margins from mb-4 to mb-3/mb-2 throughout
+  - **Consolidated sections**: Streamlined header from two separate title sections to single compact header
+  - **Shortened descriptive text**: Reduced acknowledgment descriptions to concise phrases like "Ready for new Will" and "Mark complete to start new Will"
+  - **Optimized action area**: Positioned acknowledgment box and Back to Hub button at bottom with mt-auto for consistent footer placement
+  - **Enhanced mobile UX**: Ensured all content fits within single iPhone viewport without requiring scroll
 - **July 13, 2025**: Fixed button text spacing issue in Inner Circle Hub preventing proper word separation
   - **Resolved rendering issue**: Fixed "ViewWillDetails" appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (</>) to prevent space collapse around italic <em> tags
