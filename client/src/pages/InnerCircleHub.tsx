@@ -156,6 +156,7 @@ export default function InnerCircleHub() {
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [showVideoRoom, setShowVideoRoom] = useState(false);
   const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null);
+  const [showFinalSummary, setShowFinalSummary] = useState(false);
 
   const queryClient = useQueryClient();
   
@@ -241,6 +242,9 @@ export default function InnerCircleHub() {
       return response.json();
     },
     onSuccess: () => {
+      // Close the modal first
+      setShowFinalSummary(false);
+      
       // Invalidate queries efficiently - start with most critical
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
@@ -250,14 +254,11 @@ export default function InnerCircleHub() {
         title: "Will Acknowledged",
         description: "You have acknowledged the completion of this Will. You can now start a new Will.",
       });
-      
-      // Navigate to hub immediately after acknowledgment
-      setLocation('/hub');
     },
     onError: (error: any) => {
       // Handle "already acknowledged" error gracefully
       if (error.message?.includes("already acknowledged")) {
-        setLocation('/hub');
+        setShowFinalSummary(false);
         return;
       }
       
@@ -770,7 +771,7 @@ export default function InnerCircleHub() {
               
               <div className="mt-3 mb-3 px-4">
                 <PrimaryButton 
-                  onClick={handleViewWillDetails}
+                  onClick={() => setShowFinalSummary(true)}
                   variant="secondary"
                   size="lg"
                   fullWidth
@@ -792,10 +793,11 @@ export default function InnerCircleHub() {
       {/* Final Will Summary Modal */}
       {will && willStatus === 'completed' && (
         <FinalWillSummary 
-          isOpen={true}
+          isOpen={showFinalSummary}
           will={will}
           hasUserAcknowledged={will.hasUserAcknowledged}
           onClose={() => {
+            setShowFinalSummary(false);
             queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
             queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
           }}

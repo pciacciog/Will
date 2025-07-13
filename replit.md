@@ -773,6 +773,9 @@ This is a full-stack web application for group goal accountability, built with R
   - **Fixed Will status transition**: Corrected getWillStatus function to properly handle acknowledgment count based on committed members instead of all circle members
   - **Fixed "Start a new Will" option**: Users can now properly start new Wills after acknowledgment completes, preventing them from being stuck in Final Summary modal
   - **Improved modal centering**: Enhanced FinalWillSummary component layout with proper centering and max-width constraints for better mobile display
+  - **Fixed persistent modal issue**: Added showFinalSummary state to InnerCircleHub to prevent modal from automatically reopening after closure
+  - **Enhanced "Back to Hub" button**: Added proper navigation with setTimeout to ensure modal closes before navigation, improving user experience
+  - **Applied consistent mx-auto max-w-md px-4 centering**: All container elements now use proper Tailwind centering classes for perfect mobile alignment
 
 ## Changelog
 - June 25, 2025. Initial setup

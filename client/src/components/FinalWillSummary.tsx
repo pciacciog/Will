@@ -86,10 +86,10 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md h-[90vh] overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in mx-auto">
-        <div className="flex flex-col h-full p-6 rounded-xl bg-white shadow-xl space-y-4 mx-auto max-w-sm">
+      <DialogContent className="max-w-md h-[90vh] overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in">
+        <div className="flex flex-col h-full p-4 rounded-xl bg-white shadow-xl space-y-4">
           {/* Refined Header */}
-          <div className="text-center">
+          <div className="text-center mx-auto max-w-md px-4">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Your <em>Will</em> has been completed
             </h2>
@@ -99,9 +99,9 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 space-y-4 w-full max-w-sm mx-auto">
+          <div className="flex-1 space-y-4 w-full">
             {/* Duration Block */}
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-xs space-y-1 w-full">
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-xs space-y-1 w-full mx-auto max-w-md px-4">
               <div className="whitespace-nowrap text-center">
                 <span className="font-semibold">Will:</span> {formatWillTimespan()}
               </div>
@@ -113,7 +113,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
             </div>
 
             {/* Member Commitments */}
-            <div className="space-y-3 w-full">
+            <div className="space-y-3 w-full mx-auto max-w-md px-4">
               <h4 className="text-sm font-medium uppercase text-gray-600 tracking-wide text-center">Member Commitments</h4>
               <div className="space-y-3">
                 {will.commitments?.map((commitment: any) => (
@@ -134,7 +134,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           </div>
 
           {/* Refined Actions Section */}
-          <div className="mt-auto w-full max-w-sm mx-auto">
+          <div className="mt-auto w-full mx-auto max-w-md px-4">
             {userParticipated ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                 <div className="flex items-center justify-center mb-2">
@@ -175,14 +175,16 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
             )}
 
             {/* Back to Hub */}
-            <div className="text-center mt-4">
+            <div className="text-center mt-4 mx-auto max-w-md px-4">
               <button 
                 onClick={() => {
                   console.log('Back to Hub button clicked');
-                  setLocation('/hub');
                   onClose();
+                  setTimeout(() => {
+                    setLocation('/hub');
+                  }, 100);
                 }}
-                className="text-blue-600 text-sm underline hover:text-blue-800 transition-colors"
+                className="text-blue-600 text-sm underline hover:text-blue-800 transition-colors font-medium"
               >
                 Back to Hub
               </button>
