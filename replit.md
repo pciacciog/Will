@@ -483,6 +483,17 @@ This is a full-stack web application for group goal accountability, built with R
   - Added hover states (hover:text-blue-800, hover:bg-gray-200) and active feedback (active:opacity-70)
   - Improved visual cues with rounded background (bg-gray-100) and transition animations
   - Button now clearly indicates clickability and reveals/hides user's private "Because" statement
+- **July 13, 2025**: Consolidated intro and sign-up experience for single viewport mobile display
+  - **Landing Page**: Redesigned from scrollable 3-section layout to single non-scrollable mobile screen
+  - Consolidated all intro content: hero section, "Build Your Inner Circle", "Create Your Will", "Go to Work" into compact single viewport
+  - Reduced icon sizes, card padding, and spacing for optimal mobile fit without scrolling
+  - Enhanced flow cards with horizontal layout and smaller visual elements for space efficiency
+  - **Auth Page**: Streamlined sign-up/sign-in screens for single viewport display
+  - Removed unnecessary "New to accountability circles?" text from sign-up page for cleaner UI
+  - Compressed form elements with reduced spacing (space-y-3 instead of space-y-4)
+  - Applied compact grid layout for first/last name fields to save vertical space
+  - Reduced input heights (h-9) and icon sizes for tighter mobile layout
+  - Maintained all functionality while achieving single screen display on iPhone 13/14
 - **July 13, 2025**: Implemented dynamic Will initiator messaging in Inner Circle Hub
   - Added conditional messaging above Will Pending status block showing who started the Will
   - If viewer is creator: "You started this Will. Waiting on others to submit."

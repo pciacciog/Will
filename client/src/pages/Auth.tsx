@@ -93,10 +93,10 @@ export default function Auth() {
 
   return (
     <MobileLayout>
-      <div className="flex-1 py-6 space-y-6">
+      <div className="flex-1 py-4 space-y-4">
         {/* Back Button */}
         <Link href="/">
-          <Button variant="ghost" className="mb-4">
+          <Button variant="ghost" className="mb-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
           </Button>
@@ -104,47 +104,47 @@ export default function Auth() {
 
         {/* Main Auth Card */}
         <SectionCard className="shadow-lg bg-white/80 backdrop-blur-sm">
-          <div className="text-center space-y-2 mb-6">
-            <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-              <Shield className="h-8 w-8 text-indigo-600" />
+          <div className="text-center space-y-2 mb-4">
+            <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
+              <Shield className="h-6 w-6 text-indigo-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">
               Join Your Inner Circle
             </h1>
-            <p className="text-gray-600 tracking-tight">
+            <p className="text-sm text-gray-600 tracking-tight">
               Connect with the people who matter. Grow together.
             </p>
           </div>
           
-          {/* Features Preview */}
-          <div className="space-y-4 mb-6">
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Users className="h-4 w-4 text-blue-600" />
+          {/* Compact Features Preview */}
+          <div className="space-y-3 mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Users className="h-3 w-3 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 tracking-tight">Form Your Circle</h3>
-                <p className="text-sm text-gray-600 tracking-tight">Start or join a group of 2–4 close friends.</p>
+                <h3 className="text-sm font-medium text-gray-900 tracking-tight">Form Your Circle</h3>
+                <p className="text-xs text-gray-600 tracking-tight">Start or join a group of 2–4 close friends.</p>
               </div>
             </div>
             
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Target className="h-4 w-4 text-green-600" />
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Target className="h-3 w-3 text-green-600" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 tracking-tight">Set Your <em>Will</em></h3>
-                <p className="text-sm text-gray-600 tracking-tight">Make a commitment</p>
+                <h3 className="text-sm font-medium text-gray-900 tracking-tight">Set Your <em>Will</em></h3>
+                <p className="text-xs text-gray-600 tracking-tight">Make a commitment</p>
               </div>
             </div>
             
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Shield className="h-4 w-4 text-purple-600" />
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Shield className="h-3 w-3 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 tracking-tight">Stay Accountable</h3>
-                <p className="text-sm text-gray-600 tracking-tight">Support each other daily.</p>
+                <h3 className="text-sm font-medium text-gray-900 tracking-tight">Stay Accountable</h3>
+                <p className="text-xs text-gray-600 tracking-tight">Support each other daily.</p>
               </div>
             </div>
           </div>
@@ -156,21 +156,21 @@ export default function Auth() {
                 <TabsTrigger value="register">Sign Up</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="login" className="space-y-4 mt-6">
-                <p className="text-sm text-gray-600 mb-4">Sign in using your email and password.</p>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+              <TabsContent value="login" className="space-y-3 mt-4">
+                <form onSubmit={handleLogin} className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="login-email" className="text-sm">Email</Label>
                     <Input
                       id="login-email"
                       name="email"
                       type="email"
                       placeholder="Enter your email"
                       required
+                      className="h-9"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="login-password" className="text-sm">Password</Label>
                     <div className="relative">
                       <Input
                         id="login-password"
@@ -178,6 +178,7 @@ export default function Auth() {
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
                         required
+                        className="h-9"
                       />
                       <Button
                         type="button"
@@ -187,16 +188,16 @@ export default function Auth() {
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-3 w-3" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3 w-3" />
                         )}
                       </Button>
                     </div>
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 h-9 text-sm"
                     disabled={loginMutation.isPending}
                   >
                     {loginMutation.isPending ? "Signing in..." : "Sign In"}
@@ -204,40 +205,45 @@ export default function Auth() {
                 </form>
               </TabsContent>
               
-              <TabsContent value="register" className="space-y-4 mt-6">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-firstName">First Name</Label>
-                    <Input
-                      id="register-firstName"
-                      name="firstName"
-                      type="text"
-                      placeholder="Enter your first name"
-                      required
-                    />
+              <TabsContent value="register" className="space-y-3 mt-4">
+                <form onSubmit={handleRegister} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="register-firstName" className="text-sm">First Name</Label>
+                      <Input
+                        id="register-firstName"
+                        name="firstName"
+                        type="text"
+                        placeholder="First name"
+                        required
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="register-lastName" className="text-sm">Last Name</Label>
+                      <Input
+                        id="register-lastName"
+                        name="lastName"
+                        type="text"
+                        placeholder="Last name"
+                        required
+                        className="h-9"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-lastName">Last Name</Label>
-                    <Input
-                      id="register-lastName"
-                      name="lastName"
-                      type="text"
-                      placeholder="Enter your last name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="register-email" className="text-sm">Email</Label>
                     <Input
                       id="register-email"
                       name="email"
                       type="email"
                       placeholder="Enter your email"
                       required
+                      className="h-9"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="register-password" className="text-sm">Password</Label>
                     <div className="relative">
                       <Input
                         id="register-password"
@@ -245,6 +251,7 @@ export default function Auth() {
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a password"
                         required
+                        className="h-9"
                       />
                       <Button
                         type="button"
@@ -254,15 +261,15 @@ export default function Auth() {
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-3 w-3" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3 w-3" />
                         )}
                       </Button>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-confirm-password">Confirm Password</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="register-confirm-password" className="text-sm">Confirm Password</Label>
                     <div className="relative">
                       <Input
                         id="register-confirm-password"
@@ -270,6 +277,7 @@ export default function Auth() {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
                         required
+                        className="h-9"
                       />
                       <Button
                         type="button"
@@ -279,16 +287,16 @@ export default function Auth() {
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-3 w-3" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3 w-3" />
                         )}
                       </Button>
                     </div>
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 h-9 text-sm"
                     disabled={registerMutation.isPending}
                   >
                     {registerMutation.isPending ? "Creating account..." : "Create Account"}
@@ -304,16 +312,6 @@ export default function Auth() {
               </p>
             </div>
         </SectionCard>
-
-        {/* Additional Info */}
-        <div className="text-center">
-          <p className="text-sm text-gray-600 tracking-tight">
-            New to accountability circles? 
-            <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-medium ml-1">
-              Learn more
-            </Link>
-          </p>
-        </div>
       </div>
     </MobileLayout>
   );
