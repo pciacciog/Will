@@ -385,9 +385,10 @@ export default function WillDetails() {
                       {isCurrentUser && (
                         <button
                           onClick={toggleWhy}
-                          className="text-xs text-gray-500 hover:text-gray-700 px-1 py-0.5 rounded"
+                          className="text-xs text-blue-600 underline font-medium hover:text-blue-800 active:opacity-70 px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors duration-150 flex items-center space-x-1"
                         >
-                          {showWhy ? 'Hide' : 'Why?'}
+                          <span>{showWhy ? 'Hide' : 'Why?'}</span>
+                          <span className="text-xs">{showWhy ? '▲' : '▼'}</span>
                         </button>
                       )}
                     </div>

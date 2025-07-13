@@ -477,6 +477,12 @@ This is a full-stack web application for group goal accountability, built with R
   - Added smooth animations with ease-in-out duration-300 transitions
   - Maintained responsive behavior with sm: modifiers for desktop positioning
   - Ensured all toast notifications respect iOS safe area boundaries globally across the app
+- **July 13, 2025**: Enhanced toast positioning and "Why?" button interactivity for better iOS compatibility
+  - Increased toast notification offset from 1rem to 3rem (calc(env(safe-area-inset-top)+3rem)) to prevent iOS status bar overlap
+  - Enhanced "Why?" button styling with blue text, underline, background pill, and directional arrows (▼/▲)
+  - Added hover states (hover:text-blue-800, hover:bg-gray-200) and active feedback (active:opacity-70)
+  - Improved visual cues with rounded background (bg-gray-100) and transition animations
+  - Button now clearly indicates clickability and reveals/hides user's private "Because" statement
 - **July 13, 2025**: Implemented dynamic Will initiator messaging in Inner Circle Hub
   - Added conditional messaging above Will Pending status block showing who started the Will
   - If viewer is creator: "You started this Will. Waiting on others to submit."
