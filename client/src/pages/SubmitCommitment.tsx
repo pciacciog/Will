@@ -130,28 +130,43 @@ export default function SubmitCommitment() {
 
   return (
     <MobileLayout>
-      <div className="space-y-3">
-        {/* Tightened Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
-            <SectionTitle>Submit Your Commitment</SectionTitle>
+      {/* Sticky Header with Progress */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
+        <div className="pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
+              <SectionTitle>Submit Your Commitment</SectionTitle>
+            </div>
+            {showHelpIcon && (
+              <HelpIcon
+                onClick={() => setShowInstructionModal(true)}
+                size="md"
+              />
+            )}
           </div>
-          {showHelpIcon && (
-            <HelpIcon
-              onClick={() => setShowInstructionModal(true)}
-              size="md"
-            />
-          )}
-        </div>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-brandBlue h-2 rounded-full transition-all duration-300" 
-            style={{ width: `${(step / 2) * 100}%` }}
-          />
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-brandBlue h-2 rounded-full transition-all duration-300" 
+              style={{ width: `${(step / 2) * 100}%` }}
+            />
+          </div>
+          
+          {/* Current Step Title */}
+          <div className="text-center">
+            <h1 className="text-xl font-semibold text-gray-900">
+              {step === 1 && "What would you like to do?"}
+              {step === 2 && "Why would you like to do this?"}
+            </h1>
+            {step === 1 && <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>}
+            {step === 2 && <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>}
+          </div>
         </div>
+      </div>
+
+      <div className="space-y-3">
 
         <SectionCard>
           {/* Transition Animation Screen */}
@@ -168,15 +183,6 @@ export default function SubmitCommitment() {
             </div>
           ) : step === 1 ? (
             <div className="space-y-3">
-              <div className="text-center space-y-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mx-auto">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">What would you like to do?</h2>
-                  <p className="text-sm text-gray-500">Cause it's as simple as wanting.</p>
-                </div>
-              </div>
               
               <div className="space-y-3">
                 <div>
@@ -223,15 +229,6 @@ export default function SubmitCommitment() {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="text-center space-y-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mx-auto">
-                  <Heart className="w-6 h-6 text-orange-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Why would you like to do this?</h2>
-                  <p className="text-sm text-gray-500">Remember this when it gets tough.</p>
-                </div>
-              </div>
 
               {/* Beautified What Preview */}
               {what && (

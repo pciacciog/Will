@@ -346,10 +346,9 @@ export default function StartWill() {
 
   return (
     <MobileLayout>
-      <div className="flex-1 py-6 space-y-6">
-        
-        {/* Progress Indicator */}
-        <div className="mb-8 pt-4">
+      {/* Sticky Header with Progress Indicator */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
+        <div className="pt-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex-1"></div>
             <div className="flex items-center justify-center space-x-4">
@@ -374,9 +373,32 @@ export default function StartWill() {
                 <span className={`ml-2 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
               </div>
             </div>
-            <div className="flex-1"></div>
+            <div className="flex-1 flex justify-end">
+              {showHelpIcon && (
+                <HelpIcon
+                  onClick={() => setShowInstructionModal(true)}
+                  size="md"
+                />
+              )}
+            </div>
+          </div>
+          
+          {/* Current Step Title */}
+          <div className="text-center">
+            <h1 className="text-xl font-semibold text-gray-900">
+              {currentStep === 1 && "Set Your Timeline"}
+              {currentStep === 2 && "What would you like to do?"}
+              {currentStep === 3 && "Why would you like to do this?"}
+              {currentStep === 4 && "Schedule Your End Room"}
+            </h1>
+            {currentStep === 2 && <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>}
+            {currentStep === 3 && <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>}
+            {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">This is where your circle comes together to reflect, share, and honor the effort.</p>}
           </div>
         </div>
+      </div>
+
+      <div className="flex-1 space-y-6">
         
         {/* Transition Animation Screen */}
         {showTransition && (
@@ -395,9 +417,6 @@ export default function StartWill() {
         {/* Step 1: Set Dates */}
         {currentStep === 1 && !showTransition && (
           <SectionCard>
-            <div className="text-center mb-8">
-              <SectionTitle>Set Your Timeline</SectionTitle>
-            </div>
             
             <form onSubmit={handleStep1Submit} className="space-y-6">
               {/* Scheduling Mode Selection */}
@@ -533,13 +552,6 @@ export default function StartWill() {
         {/* Step 2: What Will You Do */}
         {currentStep === 2 && !showTransition && (
           <SectionCard>
-            <div className="text-center mb-6">
-              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">What would you like to do?</h2>
-              <p className="text-sm text-gray-500">Cause it's as simple as wanting.</p>
-            </div>
             
             <form onSubmit={handleStep2Submit} className="space-y-3">
               <div>
@@ -585,13 +597,6 @@ export default function StartWill() {
         {/* Step 3: Why */}
         {currentStep === 3 && !showTransition && (
           <SectionCard>
-            <div className="text-center mb-6">
-              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Heart className="w-6 h-6 text-orange-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Why would you like to do this?</h2>
-              <p className="text-sm text-gray-500">Remember this when it gets tough.</p>
-            </div>
 
             {/* Beautified What Preview */}
             {willData.what && (
@@ -652,17 +657,6 @@ export default function StartWill() {
         {/* Step 4: End Room Scheduling - Special Ceremonial Step */}
         {currentStep === 4 && !showTransition && (
           <SectionCard>
-            <div className="text-center mb-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 text-center">Schedule Your End Room</h2>
-              <p className="text-sm text-gray-600 italic text-center mt-1">
-                This is where your circle comes together to reflect, share, and honor the effort.
-              </p>
-            </div>
 
             <form onSubmit={handleStep4Submit} className="space-y-3">
               <div>
