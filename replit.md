@@ -489,6 +489,16 @@ This is a full-stack web application for group goal accountability, built with R
   - Added compact Back to Hub button as simple underlined text link instead of large button
   - Maintained all existing functionality while achieving single viewport display on iPhone 13/14 screens
   - Applied consistent design system with proper spacing, typography, and mobile-first responsive patterns
+- **July 13, 2025**: Completed Final Will Summary compact redesign with improved acknowledgment logic
+  - Redesigned Final Will Summary modal to fit single mobile viewport without scrolling
+  - Updated header to single line "✅ Will – Final Summary" with proper typography hierarchy
+  - Merged Will Duration and End Room into compact duration block with emoji icons (🕓📹) and clean formatting
+  - Restructured member commitments to use two-line format: name on first line, commitment text on second line with proper spacing
+  - Fixed acknowledgment button logic: "Acknowledge" button only registers user's acknowledgment without closing modal
+  - Separated acknowledgment action from modal close: "Back to Hub" button serves as actual close/navigation
+  - Enhanced vertical spacing between sections (space-y-4, mb-4) for better visual hierarchy
+  - Removed duration calculations and parentheses from time displays to reduce visual clutter
+  - Applied consistent mobile-first design patterns with proper touch targets and readability
 - **July 13, 2025**: Fixed action button spacing issues across all Inner Circle Hub summary cards
   - Added proper vertical spacing (mt-3 mb-3) and horizontal padding (px-4) to all primary action buttons
   - Fixed cramped "ViewWillDetails" button spacing by wrapping buttons in spacing containers

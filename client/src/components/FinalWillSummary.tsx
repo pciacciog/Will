@@ -34,9 +34,13 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
     });
   };
 
-  const formatCompactTime = (dateString: string) => {
+  const formatCompactDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    return `${date.getMonth() + 1}/${date.getDate()} ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+  };
+
+  const formatWillTimespan = () => {
+    return `${formatCompactDateTime(will.startDate)} – ${formatCompactDateTime(will.endDate)}`;
   };
 
   const formatEndRoomTimespan = () => {
@@ -45,7 +49,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
     const startTime = new Date(will.endRoomScheduledAt);
     const endTime = new Date(startTime.getTime() + 30 * 60 * 1000); // 30 minutes later
     
-    return `${formatCompactTime(will.endRoomScheduledAt)} to ${formatCompactTime(endTime.toISOString())}`;
+    return `${formatCompactDateTime(will.endRoomScheduledAt)} – ${formatCompactDateTime(endTime.toISOString())}`;
   };
 
   const formatEndRoomStart = () => {
@@ -87,33 +91,36 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Compact Time Summary Block */}
-          <div className="bg-gray-50 rounded-lg p-3">
+          {/* Compact Duration Block */}
+          <div className="bg-gray-50 rounded-lg p-3 mb-4">
             <div className="space-y-1 text-sm">
               <div>
-                <span className="font-medium">• <em>Will</em> Duration:</span> {formatCompactTime(will.startDate)} to {formatCompactTime(will.endDate)} ({calculateDuration()})
+                🕓 <span className="font-medium"><em>Will</em>:</span> {formatWillTimespan()}
               </div>
               {will.endRoomScheduledAt && (
                 <div>
-                  <span className="font-medium">• End Room:</span> {formatEndRoomTimespan()} (30 mins)
+                  📹 <span className="font-medium">End Room:</span> {formatEndRoomTimespan()}
                 </div>
               )}
             </div>
           </div>
 
           {/* Member Commitments */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">Member Commitments</h3>
-            <div className="space-y-1 divide-y divide-gray-200">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Member Commitments</h3>
+            <div className="space-y-2">
               {will.commitments?.map((commitment: any) => (
-                <div key={commitment.id} className="pt-1 first:pt-0">
+                <div key={commitment.id} className="py-2">
                   <div className="text-sm text-gray-700">
                     ✅ <span className="font-medium">
                       {commitment.user.firstName && commitment.user.lastName 
                         ? `${commitment.user.firstName} ${commitment.user.lastName}`
                         : commitment.user.email
                       }
-                    </span> – I will {commitment.commitment}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1 ml-4">
+                    I will {commitment.commitment}
                   </div>
                 </div>
               )) || []}
@@ -122,7 +129,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
           {/* Acknowledge & Close Box */}
           {userParticipated ? (
-            <div className="border-2 border-green-200 bg-green-50 rounded-lg p-3">
+            <div className="border-2 border-green-200 bg-green-50 rounded-lg p-3 mb-4">
               <div className="text-center space-y-3">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-1">
@@ -135,18 +142,20 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                     }
                   </p>
                 </div>
-                <Button 
-                  onClick={hasUserAcknowledged ? onClose : onAcknowledge}
-                  disabled={isAcknowledging}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4"
-                  size="sm"
-                >
-                  {isAcknowledging ? "Acknowledging..." : hasUserAcknowledged ? "Return to Dashboard" : <>Acknowledge and Close <em>Will</em></>}
-                </Button>
+                {!hasUserAcknowledged && (
+                  <Button 
+                    onClick={onAcknowledge}
+                    disabled={isAcknowledging}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4"
+                    size="sm"
+                  >
+                    {isAcknowledging ? "Acknowledging..." : "Acknowledge"}
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
-            <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-3">
+            <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-3 mb-4">
               <div className="text-center space-y-3">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-1">
@@ -156,13 +165,6 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                     This <em>Will</em> has been completed. Only participating members need to acknowledge completion.
                   </p>
                 </div>
-                <Button 
-                  onClick={onClose}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4"
-                  size="sm"
-                >
-                  Close Summary
-                </Button>
               </div>
             </div>
           )}
