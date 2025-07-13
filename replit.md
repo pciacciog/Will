@@ -477,6 +477,18 @@ This is a full-stack web application for group goal accountability, built with R
   - Added smooth animations with ease-in-out duration-300 transitions
   - Maintained responsive behavior with sm: modifiers for desktop positioning
   - Ensured all toast notifications respect iOS safe area boundaries globally across the app
+- **July 13, 2025**: Implemented comprehensive Will Details screen redesign for single viewport mobile display
+  - Redesigned WillDetails page to fit entirely on single iPhone screen without scrolling across all Will states
+  - Created unified compact layout with 3-4 main sections: header, timeline/end room, commitments, and actions
+  - Consolidated Timeline and End Room information into single card with divider for space efficiency
+  - Replaced large member commitment cards with compact list format showing checkmarks and "You" badges
+  - Integrated pending members directly into commitments section with consistent styling
+  - Simplified Submit Commitment section to compact centered design with smaller icon and text
+  - Redesigned acknowledgment section for completed Wills to use minimal space while maintaining functionality
+  - Streamlined creator actions for edit/delete into compact horizontal layout with essential information
+  - Added compact Back to Hub button as simple underlined text link instead of large button
+  - Maintained all existing functionality while achieving single viewport display on iPhone 13/14 screens
+  - Applied consistent design system with proper spacing, typography, and mobile-first responsive patterns
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed

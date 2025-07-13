@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { EndRoom } from "@/components/EndRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge } from "@/components/ui/design-system";
-import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart } from "lucide-react";
 
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -256,502 +256,320 @@ export default function WillDetails() {
 
   return (
     <MobileLayout>
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="space-y-3">
+        {/* Compact Header */}
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
-              <Target className="w-6 h-6 text-brandGreen" />
-            </div>
-            <div>
-              <SectionTitle>
-                {will.status === 'pending' ? <><em>Will</em> Pending</> : 
-                 will.status === 'waiting_for_end_room' ? <><em>Will</em> Complete</> : 
-                 <><em>Will</em> Details</>}
-              </SectionTitle>
-              <Badge 
-                className={`text-xs tracking-tight ${
-                  will.status === 'active' ? 'bg-green-100 text-green-800' :
-                  will.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  will.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                  will.status === 'waiting_for_end_room' ? 'bg-purple-100 text-purple-800' :
-                  will.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}
-              >
-                {will.status === 'waiting_for_end_room' ? 'Pending End Room' : 
-                 will.status === 'active' ? 'Active' :
-                 will.status === 'pending' ? 'Pending' :
-                 will.status === 'scheduled' ? 'Scheduled' :
-                 will.status === 'completed' ? 'Completed' :
-                 will.status.charAt(0).toUpperCase() + will.status.slice(1)}
-              </Badge>
-            </div>
+          <h1 className="text-xl font-semibold mb-2"><em>Will</em></h1>
+          <div className="flex items-center justify-center space-x-2 mb-1">
+            <Badge 
+              className={`text-xs tracking-tight ${
+                will.status === 'active' ? 'bg-green-100 text-green-800' :
+                will.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                will.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                will.status === 'waiting_for_end_room' ? 'bg-purple-100 text-purple-800' :
+                will.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {will.status === 'waiting_for_end_room' ? 'Pending End Room' : 
+               will.status === 'active' ? 'Active' :
+               will.status === 'pending' ? 'Pending' :
+               will.status === 'scheduled' ? 'Scheduled' :
+               will.status === 'completed' ? 'Completed' :
+               will.status.charAt(0).toUpperCase() + will.status.slice(1)}
+            </Badge>
           </div>
-          
           {will.status === 'pending' && (
-            <p className="text-gray-600 text-base tracking-tight">
-              {submittedCount} / {totalMembers} members have submitted their Will
+            <p className="text-gray-600 text-sm tracking-tight">
+              {submittedCount} / {totalMembers} members submitted
             </p>
           )}
-          
-          {will.status !== 'pending' && (
-            <p className="text-gray-600 text-base tracking-tight">
+        </div>
+
+        {/* Compact Timeline & End Room Combined */}
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="flex items-center mb-2">
+            <Calendar className="w-4 h-4 text-blue-600 mr-2" />
+            <span className="text-sm font-medium">Timeline</span>
+          </div>
+          <div className="space-y-1 text-sm leading-tight">
+            <div>
               <span className="font-medium">Start:</span> {new Date(will.startDate).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit'
-              })} • <span className="font-medium">End:</span> {new Date(will.endDate).toLocaleDateString('en-US', { 
+              })}
+            </div>
+            <div>
+              <span className="font-medium">End:</span> {new Date(will.endDate).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit'
               })}
-            </p>
+            </div>
+          </div>
+          
+          {will.endRoomScheduledAt && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center mb-2">
+                <Video className="w-4 h-4 text-blue-600 mr-2" />
+                <span className="text-sm font-medium">End Room</span>
+              </div>
+              <div className="space-y-1 text-sm leading-tight">
+                <div>
+                  <span className="font-medium">Scheduled:</span> {new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}
+                </div>
+                <div>
+                  <span className="font-medium">Duration:</span> 30 minutes
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Proposed Timeline - Show dates and details for pending wills */}
-        {will.status === 'pending' && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
-                </svg>
-                Proposed Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <span className="font-medium text-gray-700">Start:</span>
-                  <span className="ml-2 text-gray-600">{new Date(will.startDate).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">End:</span>
-                  <span className="ml-2 text-gray-600">{new Date(will.endDate).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Submitted Commitments */}
-        {will.commitments && will.commitments.length > 0 && (
-          <SectionCard>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-brandGreen" />
-                <SectionTitle>Member Commitments</SectionTitle>
-              </div>
-              <div className="space-y-4">
-                {will.commitments.map((commitment: any) => {
-                  const isCurrentUser = commitment.userId === user?.id;
-                  const showWhy = expandedCommitments[commitment.id] || false;
-                  const toggleWhy = () => {
-                    setExpandedCommitments(prev => ({
-                      ...prev,
-                      [commitment.id]: !prev[commitment.id]
-                    }));
-                  };
-                  
-                  return (
-                    <div 
-                      key={commitment.id} 
-                      className={`border-l-4 pl-6 py-4 rounded-r-lg ${
-                        isCurrentUser 
-                          ? 'border-blue-500 bg-blue-50' 
-                          : 'border-green-500'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="font-medium text-gray-900 flex items-center tracking-tight">
+        {/* Compact Circle Commitments */}
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="flex items-center mb-2">
+            <CheckCircle className="w-4 h-4 text-brandGreen mr-2" />
+            <span className="text-sm font-medium">Circle Commitments</span>
+          </div>
+          <div className="space-y-2 divide-y divide-gray-100">
+            {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
+              const isCurrentUser = commitment.userId === user?.id;
+              const showWhy = expandedCommitments[commitment.id] || false;
+              const toggleWhy = () => {
+                setExpandedCommitments(prev => ({
+                  ...prev,
+                  [commitment.id]: !prev[commitment.id]
+                }));
+              };
+              
+              return (
+                <div key={commitment.id} className="pt-2 first:pt-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0" />
+                      <div>
+                        <span className="text-sm font-medium">
                           {commitment.user.firstName && commitment.user.lastName 
                             ? `${commitment.user.firstName} ${commitment.user.lastName}`
                             : commitment.user.email
                           }
                           {isCurrentUser && (
-                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full tracking-tight">
+                            <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">
                               You
                             </span>
                           )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge className="bg-green-100 text-green-800 text-xs tracking-tight">
-                            Submitted
-                          </Badge>
-                          {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
-                            <ActionButton 
-                              onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
-                            >
-                              <Edit className="w-3 h-3 mr-1" />
-                              Edit
-                            </ActionButton>
-                          )}
+                        </span>
+                        <div className="text-xs text-gray-600 mt-0.5">
+                          I will: {commitment.what}
                         </div>
                       </div>
-                      <div className="text-gray-700 mb-2">
-                        <span className="font-medium tracking-tight">I will:</span> {commitment.what}
-                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
+                        <button 
+                          onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
+                          className="text-xs text-blue-600 hover:text-blue-800 px-1 py-0.5 rounded"
+                        >
+                          Edit
+                        </button>
+                      )}
                       {isCurrentUser && (
-                        <div className="flex items-center space-x-3">
-                          <ActionButton
-                            onClick={toggleWhy}
-                          >
-                            <Heart className="w-4 h-4 mr-1" />
-                            {showWhy ? 'Hide Why' : 'Why?'}
-                          </ActionButton>
-                          {showWhy && (
-                            <div className="flex-1 text-gray-600 text-sm tracking-tight">
-                              <span className="font-normal">Because</span> {commitment.why}
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          onClick={toggleWhy}
+                          className="text-xs text-gray-500 hover:text-gray-700 px-1 py-0.5 rounded"
+                        >
+                          {showWhy ? 'Hide' : 'Why?'}
+                        </button>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </SectionCard>
-        )}
-
-        {/* End Room Meeting Details - Show for pending wills */}
-        {will.status === 'pending' && will.endRoomScheduledAt && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
-                </svg>
-                End Room Meeting
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <span className="font-medium text-gray-700">Scheduled:</span>
-                  <span className="ml-2 text-gray-600">{new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Duration:</span>
-                  <span className="ml-2 text-gray-600">30 minutes</span>
-                </div>
-
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pending Members */}
-        {will.status === 'pending' && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <svg className="w-5 h-5 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Pending Members
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {circle?.members?.filter((member: any) => 
-                  !will.commitments?.some((c: any) => c.userId === member.userId)
-                ).map((member: any) => (
-                  <div key={member.id} className="border-l-4 border-yellow-500 pl-6">
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-gray-900">
-                        {member.user.firstName && member.user.lastName 
-                          ? `${member.user.firstName} ${member.user.lastName}`
-                          : member.user.email
-                        }
-                      </div>
-                      <Badge variant="outline" className="text-yellow-700 border-yellow-300">
-                        Pending submission
-                      </Badge>
-                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-
-
-        {/* End Room Meeting Details - Show for scheduled, active, waiting_for_end_room, and completed wills */}
-        {(will.status === 'scheduled' || will.status === 'active' || will.status === 'waiting_for_end_room' || will.status === 'completed') && will.endRoomScheduledAt && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
-                </svg>
-                End Room Meeting
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <span className="font-medium text-gray-700">Scheduled:</span>
-                  <span className="ml-2 text-gray-600">{new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}</span>
+                  {isCurrentUser && showWhy && (
+                    <div className="mt-1 text-xs text-gray-600 pl-5">
+                      Because {commitment.why}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <span className="font-medium text-gray-700">Duration:</span>
-                  <span className="ml-2 text-gray-600">30 minutes</span>
-                </div>
-
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* User Commitment Button (if user hasn't submitted and will is pending) */}
-        {will.status === 'pending' && !userHasCommitted && (
-          <Card className="mb-8">
-            <CardContent className="p-8 text-center">
-              <div className="mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to commit?</h3>
-                <p className="text-gray-600">
-                  Join your circle members by adding your commitment to this will.
-                </p>
-              </div>
+              );
+            })}
+            
+            {/* Show pending members */}
+            {will.status === 'pending' && circle?.members?.map((member: any) => {
+              const hasCommitted = will.commitments?.some((c: any) => c.userId === member.id);
+              if (hasCommitted) return null;
               
+              return (
+                <div key={member.id} className="pt-2 first:pt-0">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-3 h-3 text-yellow-600 flex-shrink-0" />
+                    <span className="text-sm font-medium">
+                      {member.firstName && member.lastName 
+                        ? `${member.firstName} ${member.lastName}`
+                        : member.email
+                      }
+                    </span>
+                    <Badge className="bg-yellow-100 text-yellow-800 text-xs px-1 py-0.5">
+                      Pending
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+
+
+        {/* Compact Submit Commitment */}
+        {will.status === 'pending' && !userHasCommitted && (
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="text-center">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Ready to commit?</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Join your circle members by adding your commitment to this will.
+              </p>
               <Button 
                 onClick={() => setLocation(`/will/${id}/commit`)}
-                className="bg-secondary hover:bg-green-600"
-                size="lg"
+                className="bg-green-600 hover:bg-green-700 text-sm py-2 px-4"
+                size="sm"
               >
                 Submit My Commitment
               </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Acknowledgment Section for Completed Wills - Only for participants */}
-        {will.status === 'completed' && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
-          <Card className="mb-8 border-green-200 bg-green-50">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Acknowledge <em>Will</em> Completion</h3>
-                <p className="text-gray-600 mb-4">This marks the end of your will. Once acknowledged, it will be archived and you'll be ready to start a new one.</p>
-                
-                <div className="bg-green-100 rounded-xl p-4 mb-6">
-                  <div className="text-sm text-green-700">
-                    <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    <span className="font-semibold">{will.acknowledgedCount || 0} of {will.commitments?.length || 0}</span> participating members have acknowledged
-                  </div>
-                  <div className="text-xs text-green-600 mt-2">
-                    {((will.commitments?.length || 0) - (will.acknowledgedCount || 0)) > 0 
-                      ? `${(will.commitments?.length || 0) - (will.acknowledgedCount || 0)} member(s) still need to acknowledge`
-                      : 'All members have acknowledged - Will will be archived'
-                    }
-                  </div>
-                </div>
-                
-                {!will.hasUserAcknowledged ? (
-                  <Button 
-                    onClick={() => acknowledgeMutation.mutate()}
-                    disabled={acknowledgeMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {acknowledgeMutation.isPending ? 'Acknowledging...' : 'Acknowledge and Close Will'}
-                  </Button>
-                ) : (
-                  <div className="text-green-700 font-medium">
-                    <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    You have acknowledged this completion
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* End Room Explanation Section - Show for waiting_for_end_room status */}
-        {will.status === 'waiting_for_end_room' && (
-          <Card className="mb-8 border-amber-200 bg-amber-50">
-            <CardContent className="p-6">
-              <p className="text-gray-700 text-base leading-relaxed">
-                This is your final step: a 30-minute group session to reflect. Once the End Room ends, the <em>Will</em> will be marked as complete. The End Room will open automatically at the scheduled time and close after 30 minutes. <strong>Attendance is optional—but presence is powerful</strong>.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Scheduled End Room Section - Show for waiting_for_end_room status */}
-        {will.status === 'waiting_for_end_room' && will.endRoomScheduledAt && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <svg className="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Scheduled End Room
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <span className="font-medium text-gray-700">Starts:</span>
-                  <span className="ml-2 text-gray-600">{new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Ends:</span>
-                  <span className="ml-2 text-gray-600">{new Date(new Date(will.endRoomScheduledAt).getTime() + 30 * 60 * 1000).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* End Room Section - Show for wills that are waiting for end room or completed */}
-        {(will.status === 'waiting_for_end_room' || will.status === 'completed') && (
-          <div className="mb-8">
-            <EndRoom willId={will.id} />
+            </div>
           </div>
         )}
 
-        {/* Creator Actions (Edit/Delete) - Only for pending/scheduled status */}
-        {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
-          <Card className="mb-8 border-blue-200 bg-blue-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-start space-x-3">
-                  <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <h3 className="text-sm font-medium text-blue-800 mb-1">Creator Options</h3>
-                    <p className="text-sm text-blue-700">
-                      You can modify or delete this will until it becomes active.
-                    </p>
-                  </div>
-                </div>
+        {/* Compact Acknowledgment Section for Completed Wills */}
+        {will.status === 'completed' && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="text-center">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Acknowledge <em>Will</em> Completion</h3>
+              <p className="text-xs text-gray-600 mb-2">
+                {will.acknowledgedCount || 0} of {will.commitments?.length || 0} members acknowledged
+              </p>
+              {!will.hasUserAcknowledged ? (
                 <Button 
-                  onClick={() => setLocation(`/will/${id}/edit`)}
-                  variant="outline"
-                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  onClick={() => acknowledgeMutation.mutate()}
+                  disabled={acknowledgeMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700 text-sm py-2 px-4"
+                  size="sm"
                 >
-                  Edit WILL
+                  {acknowledgeMutation.isPending ? 'Acknowledging...' : 'Acknowledge and Close Will'}
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Active Will Notice - Creator can delete active wills */}
-        {will.createdBy === user?.id && will.status === 'active' && (
-          <Card className="mb-8 border-red-200 bg-red-50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-start space-x-3">
-                  <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  <div>
-                    <h3 className="text-sm font-medium text-red-800 mb-1">Creator Options</h3>
-                    <p className="text-sm text-red-700">
-                      As the creator, you can delete this active will if needed.
-                    </p>
-                  </div>
+              ) : (
+                <div className="text-green-700 font-medium text-sm">
+                  <CheckCircle className="w-4 h-4 inline mr-1" />
+                  Acknowledged
                 </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="destructive"
-                      size="sm"
-                    >
-                      Delete <em>Will</em>
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Active <em>Will</em></AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete this active will? This action cannot be undone and will remove all commitments and progress.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => deleteMutation.mutate()}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
+          </div>
         )}
 
-        {/* Back to Hub */}
-        <div className="text-center">
-          <Button variant="outline" onClick={() => setLocation('/hub')}>
+        {/* End Room Section for active states */}
+        {(will.status === 'waiting_for_end_room' || will.status === 'completed') && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="text-center">
+              <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Video className="w-4 h-4 text-amber-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">End Room</h3>
+              <p className="text-xs text-gray-600 mb-2">
+                30-minute group reflection session
+              </p>
+              <EndRoom willId={will.id} />
+            </div>
+          </div>
+        )}
+
+        {/* Compact Creator Actions */}
+        {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium text-blue-800">Creator Options</span>
+              </div>
+              <Button 
+                onClick={() => setLocation(`/will/${id}/edit`)}
+                variant="outline"
+                className="border-blue-300 text-blue-700 hover:bg-blue-100 text-sm py-1 px-3"
+                size="sm"
+              >
+                Edit <em>Will</em>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Compact Active Will Creator Actions */}
+        {will.createdBy === user?.id && will.status === 'active' && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span className="text-sm font-medium text-red-800">Creator Options</span>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive"
+                    size="sm"
+                    className="text-sm py-1 px-3"
+                  >
+                    Delete <em>Will</em>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Active <em>Will</em></AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this active will? This action cannot be undone and will remove all commitments and progress.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => deleteMutation.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        )}
+
+        {/* Compact Back to Hub */}
+        <div className="text-center mt-3">
+          <button 
+            onClick={() => setLocation('/hub')}
+            className="text-sm text-gray-600 hover:text-gray-800 underline"
+          >
             Back to Hub
-          </Button>
+          </button>
         </div>
       </div>
 
