@@ -751,6 +751,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Streamlined layout**: Simplified title structure to use direct h3 element without flex wrapper
   - **Maintained consistency**: Ensured text styling matches other will summary screens (pending, scheduled, active, etc.)
   - **Single viewport optimization**: Confirmed layout maintains single-page mobile display without scrolling
+- **July 13, 2025**: Applied consistent improvements to "Will – End Room in Process" state in Inner Circle Hub
+  - **Removed help icon**: Eliminated redundant (?) icon from "Will – End Room in Process" title
+  - **Aligned elements on same row**: Moved green "Live" badge to same line as title with proper gap-2 spacing
+  - **Consistent styling**: Applied same Tailwind layout pattern as "Scheduled" view with proper padding and vertical centering
+  - **Enhanced cohesion**: All End Room status views now maintain consistent visual hierarchy and spacing
 
 ## Changelog
 - June 25, 2025. Initial setup

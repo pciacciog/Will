@@ -636,9 +636,11 @@ export default function InnerCircleHub() {
                         <Video className="w-5 h-5 text-green-600" />
                       </div>
                       <div>
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-2">
                           <h3 className="font-semibold tracking-tight"><em>Will</em> - End Room in Process</h3>
-                          <EndRoomTooltip className="ml-2" />
+                          <Badge className="bg-green-100 text-green-800">
+                            Live
+                          </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground tracking-tight">
                           Closes at {will?.endRoomScheduledAt ? (() => {
@@ -649,9 +651,6 @@ export default function InnerCircleHub() {
                         </p>
                       </div>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">
-                      Live
-                    </Badge>
                   </div>
                   
                   <div className="mt-3 mb-3 px-4">
