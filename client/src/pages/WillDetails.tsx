@@ -371,11 +371,12 @@ export default function WillDetails() {
                         )}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-2">
                       {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
                         <button 
                           onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
-                          className="text-sm text-blue-600 hover:text-blue-800 px-2 py-1 rounded transition-colors"
+                          className="inline-flex items-center justify-center w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 rounded-md border border-blue-200 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-md"
+                          title="Edit commitment"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -383,9 +384,10 @@ export default function WillDetails() {
                       {isCurrentUser && (
                         <button
                           onClick={toggleWhy}
-                          className="text-sm text-blue-600 hover:text-blue-800 active:opacity-70 px-2 py-1 rounded transition-colors flex items-center"
+                          className="inline-flex items-center justify-center w-8 h-8 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700 rounded-md border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md"
+                          title={showWhy ? "Hide your reason" : "Show your reason"}
                         >
-                          <span className="text-sm">{showWhy ? '▲' : '▼'}</span>
+                          <span className="text-sm font-medium">{showWhy ? '▲' : '▼'}</span>
                         </button>
                       )}
                     </div>

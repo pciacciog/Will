@@ -733,6 +733,7 @@ This is a full-stack web application for group goal accountability, built with R
   - **Applied UI consistency**: Ensured Will Details page matches recent improvements made to Pending Phase screens
   - **Improved EndRoomTooltip positioning**: Standardized help icon placement and removed redundant className props
   - **Enhanced mobile UX**: Progress indicators and page titles now stay pinned during scrolling on commitment screens
+  - **Enhanced Edit and dropdown buttons**: Made Edit icon and Why revealer buttons more prominent with proper backgrounds, borders, shadows, and hover effects for better visual confidence
 
 ## Changelog
 - June 25, 2025. Initial setup
