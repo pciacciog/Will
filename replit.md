@@ -741,6 +741,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Removed blue outline**: Updated "Because" input styling to match standard neutral design from Will creation flow
   - **Preserved warning note**: Maintained edit restriction notice on Step 2 with proper styling and positioning
   - **Added what preview**: Shows user's "What" input on Step 2 for better context and flow continuity
+- **July 13, 2025**: Fixed End Room status display layout in Inner Circle Hub
+  - **Removed help icon**: Eliminated redundant (?) icon next to "Will – End Room" title
+  - **Combined title and badge**: Moved purple "Scheduled" badge to same line as title with proper gap-2 spacing
+  - **Improved alignment**: Used Tailwind flex layout with consistent spacing and vertical alignment
+  - **Enhanced readability**: Single-line layout prevents text wrapping and maintains clean visual hierarchy
 
 ## Changelog
 - June 25, 2025. Initial setup
