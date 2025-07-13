@@ -734,6 +734,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Improved EndRoomTooltip positioning**: Standardized help icon placement and removed redundant className props
   - **Enhanced mobile UX**: Progress indicators and page titles now stay pinned during scrolling on commitment screens
   - **Enhanced Edit and dropdown buttons**: Made Edit icon and Why revealer buttons more prominent with proper backgrounds, borders, shadows, and hover effects for better visual confidence
+- **July 13, 2025**: Revamped Edit Commitment page with two-step layout matching Will creation flow
+  - **Implemented two-step process**: Separated "What" and "Why" into distinct Step 1 and Step 2 screens with proper navigation
+  - **Added sticky navigation headers**: Consistent progress indicators and titles that stay visible during scrolling
+  - **Enhanced button layouts**: Improved footer styling with proper Tailwind spacing and mobile-optimized design
+  - **Removed blue outline**: Updated "Because" input styling to match standard neutral design from Will creation flow
+  - **Preserved warning note**: Maintained edit restriction notice on Step 2 with proper styling and positioning
+  - **Added what preview**: Shows user's "What" input on Step 2 for better context and flow continuity
 
 ## Changelog
 - June 25, 2025. Initial setup
