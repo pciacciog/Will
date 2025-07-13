@@ -417,7 +417,7 @@ export default function WillDetails() {
                       }
                     </span>
                     <Badge className="bg-yellow-100 text-yellow-800 text-xs px-1 py-0.5">
-                      Pending
+                      {member.firstName ? member.firstName : member.email} pending
                     </Badge>
                   </div>
                 </div>
@@ -514,7 +514,7 @@ export default function WillDetails() {
                 className="border-blue-300 text-blue-700 hover:bg-blue-100 text-sm py-1 px-3"
                 size="sm"
               >
-                Edit <em>Will</em>
+                Edit{" "}<em>Will</em>
               </Button>
             </div>
           </div>
@@ -537,12 +537,12 @@ export default function WillDetails() {
                     size="sm"
                     className="text-sm py-1 px-3"
                   >
-                    Delete <em>Will</em>
+                    Delete{" "}<em>Will</em>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Active <em>Will</em></AlertDialogTitle>
+                    <AlertDialogTitle>Delete Active{" "}<em>Will</em></AlertDialogTitle>
                     <AlertDialogDescription>
                       Are you sure you want to delete this active will? This action cannot be undone and will remove all commitments and progress.
                     </AlertDialogDescription>
