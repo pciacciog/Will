@@ -132,20 +132,18 @@ export default function WillDetails() {
       // Close the Final Will Summary modal
       setShowFinalSummary(false);
       
-      // Invalidate multiple queries to ensure UI updates everywhere
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      // Invalidate queries efficiently - start with most critical
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       
       toast({
         title: "Will Acknowledged",
         description: "You have acknowledged the completion of this Will. You can now start a new Will.",
       });
       
-      // Navigate back to hub after acknowledgment
-      setTimeout(() => {
-        setLocation('/hub');
-      }, 1500);
+      // Navigate back to hub immediately - remove artificial delay
+      setLocation('/hub');
     },
     onError: (error: any) => {
       // Handle "already acknowledged" error gracefully

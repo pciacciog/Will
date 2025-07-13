@@ -763,6 +763,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Centered Acknowledge section**: Used justify-center for icon/text alignment and text-center for overall card
   - **Maintained "Back to Hub" centering**: Preserved existing text-center alignment for navigation link
   - **Enhanced mobile UX**: Layout now feels properly balanced and consistent with app's visual hierarchy
+- **July 13, 2025**: Fixed Final Summary modal navigation and acknowledgment lag issues
+  - **Fixed "Back to Hub" button**: Added proper useLocation hook and navigation logic to FinalWillSummary component
+  - **Removed acknowledgment lag**: Eliminated artificial 1.5-second delay in acknowledgment process for immediate navigation
+  - **Optimized cache invalidation**: Reordered query invalidation to prioritize most critical queries (/api/wills/circle first)
+  - **Enhanced InnerCircleHub acknowledgment**: Added proper acknowledgment mutation with complete FinalWillSummary props
+  - **Improved UX flow**: Users now experience immediate navigation to hub after acknowledgment without waiting periods
+  - **Fixed modal interaction**: "Back to Hub" button now properly closes modal and navigates to hub in all contexts
 
 ## Changelog
 - June 25, 2025. Initial setup

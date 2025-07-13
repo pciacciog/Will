@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Clock, Users, Video } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 interface FinalWillSummaryProps {
   isOpen: boolean;
@@ -14,6 +15,8 @@ interface FinalWillSummaryProps {
 }
 
 export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAcknowledging = false, currentUserId, hasUserAcknowledged = false }: FinalWillSummaryProps) {
+  const [, setLocation] = useLocation();
+  
   if (!will) return null;
 
   // Check if current user participated in this will
@@ -174,7 +177,10 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
             {/* Back to Hub */}
             <div className="text-center mt-4">
               <button 
-                onClick={onClose}
+                onClick={() => {
+                  onClose();
+                  setLocation('/hub');
+                }}
                 className="text-blue-600 text-sm underline hover:text-blue-800 transition-colors"
               >
                 Back to Hub

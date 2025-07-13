@@ -218,6 +218,34 @@ export default function InnerCircleHub() {
     },
   });
 
+  const acknowledgeMutation = useMutation({
+    mutationFn: async () => {
+      if (!will?.id) return;
+      const response = await apiRequest(`/api/wills/${will.id}/acknowledge`, {
+        method: 'POST'
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate queries efficiently - start with most critical
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      
+      toast({
+        title: "Will Acknowledged",
+        description: "You have acknowledged the completion of this Will. You can now start a new Will.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to acknowledge Will",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleLeaveCircle = () => {
     if (will && (will.status === 'active' || will.status === 'scheduled' || will.status === 'pending')) {
       toast({
@@ -741,12 +769,16 @@ export default function InnerCircleHub() {
       {/* Final Will Summary Modal */}
       {will && willStatus === 'completed' && (
         <FinalWillSummary 
+          isOpen={true}
           will={will}
           hasUserAcknowledged={will.hasUserAcknowledged}
           onClose={() => {
             queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
             queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
           }}
+          onAcknowledge={() => acknowledgeMutation.mutate()}
+          isAcknowledging={acknowledgeMutation.isPending}
+          currentUserId={user?.id}
         />
       )}
     </MobileLayout>
