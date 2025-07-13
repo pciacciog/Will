@@ -703,12 +703,21 @@ export default function InnerCircleHub() {
           )}
 
           {willStatus === 'completed' && (
-            <div className="text-center py-8">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-green-600" />
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold tracking-tight"><em>Will</em> Complete - Ready to Review</h3>
+                    <p className="text-sm text-muted-foreground tracking-tight">Review final summary to close out</p>
+                  </div>
+                </div>
+                <Badge className="bg-green-100 text-green-800">
+                  Complete
+                </Badge>
               </div>
-              <h3 className="text-xl font-semibold mb-2"><em>Will</em> Complete - Ready to Review</h3>
-              <p className="text-muted-foreground mb-6">Review the final summary to officially close out this <em>Will</em>.</p>
               
               <div className="mt-3 mb-3 px-4">
                 <PrimaryButton 
