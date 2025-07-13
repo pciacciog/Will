@@ -56,16 +56,7 @@ export default function Home() {
   // Get user's commitment if they have one
   const userCommitment = isActiveWill && user ? will.commitments?.find((c: any) => c.userId === user.id) : null;
 
-  // Debug logging
-  console.log('Home.tsx Debug:', {
-    circle,
-    will,
-    user,
-    isActiveWill,
-    userCommitment,
-    willStatus: will?.status,
-    commitments: will?.commitments
-  });
+
 
   return (
     <div className="min-h-screen pt-16">
@@ -171,15 +162,6 @@ export default function Home() {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Debug Card - Show when user is not authenticated */}
-        {!user && (
-          <Card className="mb-8 border-2 border-red-200 bg-red-50">
-            <CardContent className="p-6">
-              <p className="text-red-800">Debug: User not authenticated. Please log in to see active Will details.</p>
             </CardContent>
           </Card>
         )}

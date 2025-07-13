@@ -620,10 +620,16 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced visual hierarchy**: Used blue-themed card with border, background, and Target icon for Will emphasis
   - **Maintained existing functionality**: Preserved circle overview, member count display, and hub navigation
   - **Conditional display logic**: Only shows Will card when user has active commitment, falls back to standard view otherwise
+  - **Added authentication handling**: Redirects to login if user not authenticated (401 error)
 - **July 13, 2025**: Extended transition animation duration for improved user experience
   - **Prolonged "one last step" animation**: Increased timeout from 2.5 seconds to 3.5 seconds for both StartWill and SubmitCommitment flows
   - **Enhanced timing consistency**: Applied identical 3.5-second transition duration across all commitment submission processes
   - **Improved UX pacing**: Allows users more time to process completion before moving to next step
+- **July 13, 2025**: Fixed button text spacing issues preventing proper word separation
+  - **Resolved "ViewWillDetails" rendering issue**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
+  - **Removed React Fragment wrapper**: Changed from `<>View <em>Will</em> Details</>` to `View <em>Will</em> Details` to fix spacing collapse
+  - **Applied fix to all button instances**: Updated "View Will Details", "View End Room Details", "Review Final Summary", and "Join End Room" buttons
+  - **Consistent text rendering**: All buttons now display with proper word spacing across all Will status states in Inner Circle Hub
 - **July 13, 2025**: Design cleanup for "Schedule Your End Room" page
   - **Removed floating help icon**: Eliminated redundant (?) icon from End Room scheduling step
   - **Center-aligned title**: Updated "Schedule Your End Room" title to text-center for better visual hierarchy

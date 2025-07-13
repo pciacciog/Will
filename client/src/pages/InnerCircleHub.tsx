@@ -557,7 +557,7 @@ export default function InnerCircleHub() {
               {/* Action Button */}
               <div className="mt-3 mb-3 px-4">
                 <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
-                  <>View <em>Will</em> Details</>
+                  View <em>Will</em> Details
                 </PrimaryButton>
               </div>
             </div>
@@ -593,7 +593,7 @@ export default function InnerCircleHub() {
               
               <div className="mt-3 mb-3 px-4">
                 <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
-                  <>View <em>Will</em> Details</>
+                  View <em>Will</em> Details
                 </PrimaryButton>
               </div>
             </div>
@@ -618,7 +618,7 @@ export default function InnerCircleHub() {
               
               <div className="mt-3 mb-3 px-4">
                 <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
-                  <>View <em>Will</em> Details</>
+                  View <em>Will</em> Details
                 </PrimaryButton>
               </div>
             </div>
@@ -661,7 +661,7 @@ export default function InnerCircleHub() {
                       size="lg"
                       fullWidth
                     >
-                      <>Join End Room</>
+                      Join End Room
                     </PrimaryButton>
                   </div>
                 </>
@@ -694,7 +694,7 @@ export default function InnerCircleHub() {
                       size="lg"
                       fullWidth
                     >
-                      <>View End Room Details</>
+                      View End Room Details
                     </PrimaryButton>
                   </div>
                 </>
@@ -726,7 +726,7 @@ export default function InnerCircleHub() {
                   size="lg"
                   fullWidth
                 >
-                  <>Review Final Summary</>
+                  Review Final Summary
                 </PrimaryButton>
               </div>
             </div>
