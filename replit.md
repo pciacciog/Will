@@ -583,6 +583,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Emphasized WILL and END ROOM sections**: Used font-semibold styling and single-line format for better readability
   - **Enhanced acknowledge box**: Added Target icon, improved spacing (p-4), and joyful green styling for better user experience
   - **Added subtle animation**: Implemented slide-in-from-bottom-4 transition with duration-300 for smooth modal appearance
+- **July 13, 2025**: Fixed button text spacing issue in Inner Circle Hub preventing proper word separation
+  - **Resolved rendering issue**: Fixed "ViewWillDetails" appearing as one word instead of "View Will Details" with proper spacing
+  - **Applied React Fragment fix**: Wrapped all button text in React fragments (</>) to prevent space collapse around italic <em> tags
+  - **Fixed multiple button instances**: Updated all "View Will Details", "View End Room Details", and "Review Final Summary" buttons
+  - **Ensured proper text rendering**: Button text now displays correctly with spaces in all Will status states (pending, scheduled, active, waiting_for_end_room, completed)
 - **July 06, 2025**: Implemented proper Will lifecycle and End Room completion flow
   - Fixed Will status transitions with new "waiting_for_end_room" status between Will end and End Room completion
   - Added comprehensive scheduler logic for Will lifecycle: pending → active → waiting_for_end_room → completed
