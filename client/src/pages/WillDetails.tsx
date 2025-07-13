@@ -280,7 +280,7 @@ export default function WillDetails() {
             </Badge>
           </div>
           {will.status === 'pending' && (
-            <p className="text-gray-600 text-sm tracking-tight">
+            <p className="text-gray-500 text-xs tracking-tight">
               {submittedCount} / {totalMembers} members submitted
             </p>
           )}
@@ -288,11 +288,11 @@ export default function WillDetails() {
 
         {/* Compact Timeline & End Room Combined */}
         <div className="bg-white rounded-lg border border-gray-200 p-3">
-          <div className="flex items-center mb-2">
+          <div className="flex items-center mb-3">
             <Calendar className="w-4 h-4 text-blue-600 mr-2" />
             <span className="text-sm font-medium">Timeline</span>
           </div>
-          <div className="space-y-1 text-sm leading-tight">
+          <div className="space-y-1 text-xs leading-tight">
             <div>
               <span className="font-medium">Start:</span> {new Date(will.startDate).toLocaleDateString('en-US', { 
                 month: 'short', 
@@ -313,11 +313,11 @@ export default function WillDetails() {
           
           {will.endRoomScheduledAt && (
             <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex items-center mb-2">
+              <div className="flex items-center mb-3">
                 <Video className="w-4 h-4 text-blue-600 mr-2" />
                 <span className="text-sm font-medium">End Room</span>
               </div>
-              <div className="space-y-1 text-sm leading-tight">
+              <div className="space-y-1 text-xs leading-tight">
                 <div>
                   <span className="font-medium">Scheduled:</span> {new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { 
                     month: 'short', 
@@ -336,7 +336,7 @@ export default function WillDetails() {
 
         {/* Compact Circle Commitments */}
         <div className="bg-white rounded-lg border border-gray-200 p-3">
-          <div className="flex items-center mb-2">
+          <div className="flex items-center mb-3">
             <CheckCircle className="w-4 h-4 text-brandGreen mr-2" />
             <span className="text-sm font-medium">Circle Commitments</span>
           </div>
@@ -411,28 +411,7 @@ export default function WillDetails() {
               );
             })}
             
-            {/* Show pending members */}
-            {will.status === 'pending' && circle?.members?.map((member: any) => {
-              const hasCommitted = will.commitments?.some((c: any) => c.userId === member.id);
-              if (hasCommitted) return null;
-              
-              return (
-                <div key={member.id} className="pt-2 first:pt-0">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-3 h-3 text-yellow-600 flex-shrink-0" />
-                    <span className="text-sm font-medium">
-                      {member.firstName && member.lastName 
-                        ? `${member.firstName} ${member.lastName}`
-                        : member.email
-                      }
-                    </span>
-                    <Badge className="bg-yellow-100 text-yellow-800 text-xs px-1 py-0.5">
-                      {member.firstName ? member.firstName : member.email} pending
-                    </Badge>
-                  </div>
-                </div>
-              );
-            })}
+
           </div>
         </div>
 
@@ -448,7 +427,7 @@ export default function WillDetails() {
                 </svg>
               </div>
               <h3 className="text-sm font-semibold text-gray-900 mb-1">Ready to commit?</h3>
-              <p className="text-xs text-gray-600 mb-3">
+              <p className="text-xs text-gray-500 mb-3">
                 Join your circle members by adding your commitment to this will.
               </p>
               <Button 
