@@ -787,6 +787,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Reduced excessive spacing**: Applied space-y-4 container spacing and eliminated large gaps between sections
   - **Better proportions**: Footer now sits closer to member list using flex-1 layout for proper space distribution
   - **Enhanced readability**: Larger padding (py-3 px-4) and improved visual hierarchy for mobile interaction
+- **July 14, 2025**: Fixed critical state management bug with stale circle data after leave/join operations
+  - **Comprehensive cache invalidation**: Enhanced leave/join/create circle mutations to invalidate all related queries
+  - **Proper error handling**: Added 404 error handling for circle and will queries with no retry on user-not-in-circle errors
+  - **Cache removal**: Added queryClient.removeQueries() calls to clear stale cache entries completely
+  - **Fixed race conditions**: Eliminated frontend showing stale circle data while backend correctly reports no membership
+  - **Improved query reliability**: Added staleTime: 0 to ensure immediate data freshness after state changes
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

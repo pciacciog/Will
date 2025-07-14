@@ -224,7 +224,15 @@ export default function InnerCircleHub() {
         title: "Success",
         description: "You have left the circle",
       });
+      // Comprehensive cache invalidation to prevent stale data
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Clear all cache to ensure fresh state
+      queryClient.removeQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.removeQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.removeQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       setLocation('/');
     },
     onError: (error: any) => {

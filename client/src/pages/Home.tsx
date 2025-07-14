@@ -79,17 +79,27 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [showWhy, setShowWhy] = useState(false);
   
-  const { data: circle } = useQuery({
+  const { data: circle, error: circleError } = useQuery({
     queryKey: ['/api/circles/mine'],
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
+    retry: (failureCount, error: any) => {
+      // Don't retry on 404 errors (user not in circle)
+      if (error?.message?.includes('404')) return false;
+      return failureCount < 3;
+    },
   });
 
-  const { data: will } = useQuery({
+  const { data: will, error: willError } = useQuery({
     queryKey: [`/api/wills/circle/${circle?.id}`],
     enabled: !!circle?.id,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
+    retry: (failureCount, error: any) => {
+      // Don't retry on 404 errors (no active will)
+      if (error?.message?.includes('404')) return false;
+      return failureCount < 3;
+    },
   });
 
   const { data: user } = useQuery({

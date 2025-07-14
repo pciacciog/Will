@@ -15,8 +15,14 @@ export default function InnerCircle() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const { data: circle, isLoading } = useQuery({
+  const { data: circle, isLoading, error: circleError } = useQuery({
     queryKey: ['/api/circles/mine'],
+    staleTime: 0, // Always consider data stale for immediate updates
+    retry: (failureCount, error: any) => {
+      // Don't retry on 404 errors (user not in circle)
+      if (error?.message?.includes('404')) return false;
+      return failureCount < 3;
+    },
   });
 
   const createCircleMutation = useMutation({
@@ -24,7 +30,13 @@ export default function InnerCircle() {
       return apiRequest('/api/circles', { method: 'POST' });
     },
     onSuccess: () => {
+      // Comprehensive cache invalidation to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Remove any stale cache entries
+      queryClient.removeQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.removeQueries({ queryKey: ['/api/wills/circle'] });
       toast({
         title: "Circle Created!",
         description: "Your Inner Circle has been created successfully.",
@@ -47,7 +59,13 @@ export default function InnerCircle() {
       });
     },
     onSuccess: () => {
+      // Comprehensive cache invalidation to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Remove any stale cache entries
+      queryClient.removeQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.removeQueries({ queryKey: ['/api/wills/circle'] });
       toast({
         title: "Joined Circle!",
         description: "You've successfully joined the Inner Circle.",
