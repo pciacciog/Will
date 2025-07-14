@@ -96,13 +96,15 @@ export default function Auth() {
       <div className="h-full flex flex-col">
         {/* Fixed Header */}
         <div className="flex-shrink-0 pt-[calc(env(safe-area-inset-top)+1rem)] px-4 pb-4">
-          {/* Back Button */}
-          <Link href="/">
-            <Button variant="ghost" className="mb-3">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
+          {/* Back Button - Upper Left */}
+          <div className="flex justify-start mb-4">
+            <Link href="/">
+              <Button variant="ghost" className="p-2">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
+            </Link>
+          </div>
 
           {/* Header Content */}
           <div className="text-center space-y-1">
