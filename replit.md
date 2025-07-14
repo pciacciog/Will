@@ -674,7 +674,7 @@ This is a full-stack web application for group goal accountability, built with R
   - **Unified EditCommitment flow**: Updated EditCommitment page to match exact StartWill and SubmitCommitment UI structure and styling
   - **Consistent editing experience**: Applied identical form structure, progress bars, sticky headers, and button layouts to editing flow
   - **Complete design consistency**: All three commitment flows (create, submit, edit) now use identical UI patterns and styling
-  - **Enhanced End Room help icon visibility**: Increased help icon size from w-6 h-6 to w-7 h-7 (sm:w-8 sm:h-8) with rounded-md styling for better mobile visibility and clickability
+  - **Enhanced End Room help icon visibility**: Increased help icon size from w-6 h-6 to w-10 h-10 (sm:w-12 sm:h-12) with thicker borders, larger icon, and enhanced styling for much better mobile visibility and clickability
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout
