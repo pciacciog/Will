@@ -731,6 +731,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Cleaned up UI**: Removed "(This is your scheduled End Room for reflection and closure.)" text from SubmitCommitment flow
   - **Reduced redundancy**: Eliminated unnecessary explanatory text that was already clear from context
   - **Streamlined design**: End Room Confirmation screen now shows only essential date/time information
+- **July 14, 2025**: Fixed Inner Circle Entry page mobile layout to prevent horizontal scrolling
+  - **Mobile viewport constraints**: Updated container to use max-w-screen-sm with px-4 padding and overflow-x-hidden
+  - **Single column layout**: Changed grid from md:grid-cols-2 to grid-cols-1 for mobile-first design
+  - **Reduced padding**: Decreased CardContent padding from p-8 to p-6 for better mobile fit
+  - **Constrained width**: Limited card container to max-w-md for optimal mobile display
+  - **Eliminated horizontal scroll**: Ensured all content fits within mobile viewport boundaries
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

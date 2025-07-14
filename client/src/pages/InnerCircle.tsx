@@ -110,7 +110,7 @@ export default function InnerCircle() {
 
   return (
     <MobileLayout>
-      <div className="max-w-4xl mx-auto py-8">
+      <div className="max-w-screen-sm mx-auto px-4 py-8 overflow-x-hidden">
         
         {!circle ? (
           // No Circle State
@@ -126,9 +126,9 @@ export default function InnerCircle() {
               Start a new circle or join an existing one with your invite code.
             </p>
             
-            <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
               <Card className="border-2 border-transparent hover:border-primary transition-colors">
-                <CardContent className="p-8">
+                <CardContent className="p-6">
                   <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -158,7 +158,7 @@ export default function InnerCircle() {
               </Card>
               
               <Card className="border-2 border-transparent hover:border-secondary transition-colors">
-                <CardContent className="p-8">
+                <CardContent className="p-6">
                   <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-6">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -182,7 +182,7 @@ export default function InnerCircle() {
           // Has Circle State
           <div>
             <Card className="mb-8">
-              <CardContent className="p-8">
+              <CardContent className="p-6">
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Inner Circle</h2>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-2">
