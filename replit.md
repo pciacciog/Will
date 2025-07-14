@@ -684,6 +684,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Applied across all flows**: Identical formatting and visual hierarchy for StartWill, SubmitCommitment, and EditCommitment pages
   - **Fixed Home button text**: Changed "Reveal My Why" to simply "Why" for cleaner interface consistency
   - **Maintained single-line headers**: Ensured "Why would you like to do this?" fits on single line across all views
+- **July 14, 2025**: Fixed critical iOS safe area collision issues with progress bars and headers during scroll
+  - **Root cause identified**: Step progress bars "When → What → Why" were colliding with iOS status bar (time, signal, battery) during scroll
+  - **Applied comprehensive safe area fixes**: Added `pt-[calc(env(safe-area-inset-top)+1rem)]` to all sticky header containers
+  - **Fixed StartWill, SubmitCommitment, and EditCommitment pages**: All progress indicator headers now properly respect iOS safe area boundaries
+  - **Enhanced CSS utilities**: Added comprehensive safe area utilities (.pt-safe, .pb-safe, .pt-safe-header, .pb-safe-footer) for consistent iOS handling
+  - **Updated Tailwind config**: Extended spacing tokens with safe-header, safe-footer, and safe-full for global safe area consistency
+  - **Fixed scrollable content positioning**: Ensured all scrollable content starts below fixed top bars instead of behind them
+  - **Verified mobile layout compatibility**: All existing MobileLayout components maintain proper safe area handling with unified h-[calc(env(safe-area-inset-top)+3rem)] spacing
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

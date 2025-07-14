@@ -165,7 +165,7 @@ export default function EditCommitment() {
       <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
         <MobileLayout>
         {/* Sticky Header with Progress */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
             <div className="flex items-center justify-between px-2">
               <div className="flex-1 min-w-0">
@@ -252,7 +252,7 @@ export default function EditCommitment() {
     <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
       <MobileLayout>
       {/* Sticky Header with Progress */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <div className="pt-4 space-y-3">
           <div className="flex items-center justify-between px-2">
             <div className="flex-1 min-w-0">

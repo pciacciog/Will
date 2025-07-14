@@ -159,7 +159,7 @@ export default function SubmitCommitment() {
     <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
       <MobileLayout>
         {/* Sticky Header with Progress Indicator */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
             <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
               <div className="flex items-center">
