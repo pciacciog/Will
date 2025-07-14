@@ -857,6 +857,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Inline privacy notice**: Moved "By continuing..." message inside each tab content to eliminate bottom scrolling
   - **Reduced step description spacing**: Changed from space-y-2 to space-y-1.5 and added mb-2 to create more compact vertical rhythm
   - **Ensured single-viewport display**: Both Sign In and Sign Up forms now fit entirely within iPhone screen without any scrolling behavior
+- **July 14, 2025**: Fixed Auth page iOS keyboard collision and optimized Sign Up form for single-viewport display
+  - **Restructured layout for keyboard compatibility**: Fixed header with back button using `fixed top-0 left-0 right-0 z-20` positioning
+  - **Proper keyboard handling**: Content area uses `overflow-y-auto` with calculated padding to prevent iOS status bar collision when keyboard appears
+  - **Ultra-compressed Sign Up form**: Reduced all elements for single-viewport fit - smaller icons (w-8 h-8), compact text (text-lg to text-xs), minimal spacing (space-y-1)
+  - **Optimized form inputs**: Reduced padding from py-2 to py-1.5, labels from text-sm to text-xs, button heights compressed throughout
+  - **Tighter step descriptions**: Icons reduced to w-3 h-3, spacing compressed from space-x-3 to space-x-2, all text sizes minimized
+  - **Single-viewport achievement**: Both Sign In and Sign Up forms now fit entirely within iPhone screen without scrolling, even with 5 form fields
 - **July 14, 2025**: Implemented premium welcome screen UI polish with professional design improvements
   - **Enhanced typography**: Updated headline to `text-3xl font-semibold tracking-tight`, subtext to `text-base text-gray-500 leading-snug`
   - **Improved CTA button**: Applied `w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition`
