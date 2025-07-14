@@ -93,9 +93,9 @@ export default function Auth() {
 
   return (
     <MobileLayout scrollable={false}>
-      <div className="h-screen overflow-hidden flex flex-col">
-        {/* Back Button - Properly positioned for iOS */}
-        <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-10">
+      <div className="h-screen overflow-hidden flex flex-col justify-center">
+        {/* Back Button - Better iOS positioning */}
+        <div className="absolute top-[calc(env(safe-area-inset-top)+1.5rem)] left-4 z-10">
           <Link href="/">
             <Button variant="ghost" className="p-2 h-10 w-10">
               <ArrowLeft className="h-5 w-5" />
@@ -104,7 +104,7 @@ export default function Auth() {
         </div>
 
         {/* Fixed Header */}
-        <div className="flex-shrink-0 pt-[calc(env(safe-area-inset-top)+4rem)] px-4 pb-3">
+        <div className="flex-shrink-0 pt-16 px-4 pb-4">
           {/* Header Content */}
           <div className="text-center space-y-1">
             <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-2">
@@ -119,9 +119,9 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Content Area - No scroll, fits in viewport */}
-        <div className="flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-          <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 px-4 py-4">
+        {/* Content Area - Centered, no scroll */}
+        <div className="flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] flex items-center justify-center min-h-0">
+          <div className="w-full max-w-sm bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 px-4 py-3">
           
           {/* Compact Features Preview */}
           <div className="space-y-1 mb-3">
@@ -158,9 +158,9 @@ export default function Auth() {
 
             {/* Authentication Forms */}
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-10 rounded-md overflow-hidden border">
-                <TabsTrigger value="login" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-500">Sign In</TabsTrigger>
-                <TabsTrigger value="register" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-500">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 h-10 rounded-md overflow-hidden border mx-auto">
+                <TabsTrigger value="login" className="flex justify-center items-center data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-500">Sign In</TabsTrigger>
+                <TabsTrigger value="register" className="flex justify-center items-center data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-500">Sign Up</TabsTrigger>
               </TabsList>
               
               <TabsContent value="login" className="space-y-2 mt-3">

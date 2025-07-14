@@ -818,6 +818,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Scrollable content area**: Created separate scrollable content area with `flex-1 overflow-y-auto` for forms and features
   - **iOS keyboard compatibility**: Fixed header remains in position when keyboard opens, preventing collision with system UI elements
   - **Proper safe area handling**: Added bottom safe area spacing with `pb-[calc(env(safe-area-inset-bottom)+1rem)]`
+- **July 14, 2025**: Enhanced Auth page layout for optimal mobile experience
+  - **Fixed scrolling issue**: Added `justify-center` to main container and `flex items-center justify-center` to content area for perfect viewport fit
+  - **Centered tabs properly**: Enhanced TabsList with `mx-auto` and individual tab centering with `flex justify-center items-center`
+  - **Improved back button positioning**: Increased safe area clearance from `+1rem` to `+1.5rem` for better iOS status bar separation
+  - **Optimized content container**: Reduced max-width from `max-w-md` to `max-w-sm` and padding from `py-4` to `py-3` for tighter mobile layout
+  - **Eliminated unnecessary scrolling**: Used `min-h-0` and centered layout to ensure single viewport display without overflow
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags
