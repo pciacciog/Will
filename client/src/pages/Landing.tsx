@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Handshake, Pencil, Bolt } from 'lucide-react';
+import { Handshake, Pencil, TrendingUp } from 'lucide-react';
 
 export default function Landing() {
   return (
@@ -24,19 +24,21 @@ export default function Landing() {
             Hold each other accountable. Celebrate every victory as one.
           </p>
           
-          <Link href="/auth">
-            <Button 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition"
-            >
-              Start Your Journey →
-            </Button>
-          </Link>
+          <div className="mt-6">
+            <Link href="/auth">
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition"
+              >
+                Start Your Journey →
+              </Button>
+            </Link>
+          </div>
         </div>
         
         {/* Step Flow Cards */}
         <div className="space-y-4">
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center space-x-4">
-            <div className="bg-blue-100 p-2 rounded-full">
+            <div className="bg-blue-100 p-2 rounded-full shadow-sm">
               <Handshake className="w-6 h-6 text-blue-600" />
             </div>
             <div>
@@ -46,7 +48,7 @@ export default function Landing() {
           </div>
           
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center space-x-4">
-            <div className="bg-green-100 p-2 rounded-full">
+            <div className="bg-green-100 p-2 rounded-full shadow-sm">
               <Pencil className="w-6 h-6 text-green-600" />
             </div>
             <div>
@@ -56,8 +58,8 @@ export default function Landing() {
           </div>
           
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center space-x-4">
-            <div className="bg-purple-100 p-2 rounded-full">
-              <Bolt className="w-6 h-6 text-purple-600" />
+            <div className="bg-purple-100 p-2 rounded-full shadow-sm">
+              <TrendingUp className="w-6 h-6 text-purple-600" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Go to Work</h3>
