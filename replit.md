@@ -692,6 +692,15 @@ This is a full-stack web application for group goal accountability, built with R
   - **Updated Tailwind config**: Extended spacing tokens with safe-header, safe-footer, and safe-full for global safe area consistency
   - **Fixed scrollable content positioning**: Ensured all scrollable content starts below fixed top bars instead of behind them
   - **Verified mobile layout compatibility**: All existing MobileLayout components maintain proper safe area handling with unified h-[calc(env(safe-area-inset-top)+3rem)] spacing
+- **July 14, 2025**: Enhanced Circle Commitments "Why" button interactivity for better user experience
+  - **Improved button visibility**: Changed from plain white background to filled blue styling (bg-blue-100, text-blue-800, border-blue-200)
+  - **Enhanced hover states**: Added hover:bg-blue-200 and hover:shadow-md for clear interactive feedback
+  - **Added subtle shadow**: Applied shadow-sm to default state for better depth perception
+  - **Improved tappable appearance**: Button now clearly indicates it's interactive rather than appearing as plain text
+  - **Enhanced red active state**: Added hover:bg-red-600 to active state for consistent interaction patterns
+  - **Better visual hierarchy**: Blue filled button stands out clearly against white background in Circle Commitments section
+  - **Applied to Home page**: Updated Home.tsx "Why" button with identical styling for consistency across all Will displays
+  - **Consistent chevron integration**: Maintained ChevronUp/ChevronDown icons while upgrading button styling for better interactivity
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

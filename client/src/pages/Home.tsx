@@ -252,7 +252,11 @@ export default function Home() {
                   <div className="text-sm">
                     <button
                       onClick={() => setShowWhy(!showWhy)}
-                      className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 hover:underline focus:outline-none"
+                      className={`inline-flex items-center space-x-1 px-3 py-1 rounded-md border transition-all duration-200 shadow-sm ${
+                        showWhy 
+                          ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600' 
+                          : 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 hover:shadow-md'
+                      }`}
                     >
                       <span>Why</span>
                       {showWhy ? (

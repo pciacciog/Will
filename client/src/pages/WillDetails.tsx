@@ -445,10 +445,10 @@ export default function WillDetails() {
                       {isCurrentUser && (
                         <button
                           onClick={toggleWhy}
-                          className={`text-sm px-3 py-1 rounded-md border transition-all duration-200 ${
+                          className={`text-sm px-3 py-1 rounded-md border transition-all duration-200 shadow-sm ${
                             showWhy 
-                              ? 'bg-red-500 text-white border-red-500 shadow-md' 
-                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                              ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600' 
+                              : 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 hover:shadow-md'
                           }`}
                           title={showWhy ? "Hide your reason" : "Show your reason"}
                         >
