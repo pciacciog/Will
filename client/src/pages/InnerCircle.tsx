@@ -180,31 +180,32 @@ export default function InnerCircle() {
           </div>
         ) : (
           // Has Circle State
-          <div className="h-screen-safe flex flex-col py-2">
-            {/* Ultra-compact Header */}
-            <div className="flex-shrink-0 mb-2">
-              <h2 className="text-lg font-bold text-gray-900 mb-1">Your Inner Circle</h2>
-              <div className="flex items-center gap-x-2">
-                <span className="text-xs text-gray-500">Invite Code:</span>
-                <div className="bg-gray-100 px-2 py-0.5 rounded font-mono tracking-widest text-xs font-semibold text-gray-800">
-                  {circle.inviteCode}
+          <div className="h-screen-safe flex flex-col justify-between py-2">
+            {/* Content Section */}
+            <div className="flex-shrink-0">
+              {/* Ultra-compact Header */}
+              <div className="mb-4">
+                <h2 className="text-lg font-bold text-gray-900 mb-2">Your Inner Circle</h2>
+                <div className="flex items-center gap-x-2">
+                  <span className="text-xs text-gray-500">Invite Code:</span>
+                  <div className="bg-gray-100 px-2 py-0.5 rounded font-mono tracking-widest text-xs font-semibold text-gray-800">
+                    {circle.inviteCode}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyInviteCode(circle.inviteCode)}
+                    className="text-primary hover:text-blue-600 p-0.5"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyInviteCode(circle.inviteCode)}
-                  className="text-primary hover:text-blue-600 p-0.5"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </Button>
               </div>
-            </div>
-            
-            {/* Ultra-compact Members Section */}
-            <div className="flex-1 min-h-0 mb-1">
-              <div className="space-y-0.5 overflow-y-auto h-full">
+              
+              {/* Ultra-compact Members Section */}
+              <div className="space-y-0.5 mb-4">
                 {circle.members?.map((member: any, index: number) => (
                   <div key={member.id} className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded border border-gray-200">
                     <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -233,8 +234,8 @@ export default function InnerCircle() {
               </div>
             </div>
             
-            {/* Ultra-compact Footer */}
-            <div className="flex-shrink-0 space-y-1">
+            {/* Footer Section - Fixed to Bottom */}
+            <div className="flex-shrink-0 space-y-2">
               <div className="px-2 py-1 bg-blue-50 rounded text-xs">
                 <div className="flex items-center gap-x-2 text-blue-700">
                   <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

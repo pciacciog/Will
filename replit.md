@@ -764,6 +764,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Minimized vertical gaps**: Reduced margins between sections (mb-1, mb-2) and member spacing (space-y-0.5)
   - **Optimized container padding**: Reduced overall container padding from py-4 to py-2 for better space utilization
   - **Single viewport achievement**: Layout now fits entirely within iPhone screen without scrolling for both 1 and 4 member scenarios
+- **July 14, 2025**: Fixed excessive vertical whitespace issue on Inner Circle Entry page
+  - **Restructured layout**: Changed from `flex-1` member section to `justify-between` layout to eliminate unnecessary space expansion
+  - **Removed flex-1 issue**: Member section no longer takes up all available space, preventing excessive vertical gaps
+  - **Fixed footer positioning**: Footer now properly positioned at bottom without large gaps above it
+  - **Eliminated scrolling**: Content now fits within viewport height for standard iOS screen sizes without scrolling
+  - **Improved spacing**: Added consistent `mb-4` spacing between sections while maintaining compact design
+  - **Clean layout**: Achieved proper space distribution with header, member list, and footer sections
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags
