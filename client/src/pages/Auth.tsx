@@ -93,9 +93,9 @@ export default function Auth() {
 
   return (
     <MobileLayout scrollable={false}>
-      <div className="h-full flex flex-col">
-        {/* Back Button - Absolute Upper Left */}
-        <div className="absolute top-[calc(env(safe-area-inset-top)+0.5rem)] left-4 z-10">
+      <div className="h-screen overflow-hidden flex flex-col">
+        {/* Back Button - Properly positioned for iOS */}
+        <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-10">
           <Link href="/">
             <Button variant="ghost" className="p-2 h-10 w-10">
               <ArrowLeft className="h-5 w-5" />
@@ -104,7 +104,7 @@ export default function Auth() {
         </div>
 
         {/* Fixed Header */}
-        <div className="flex-shrink-0 pt-[calc(env(safe-area-inset-top)+3rem)] px-4 pb-4">
+        <div className="flex-shrink-0 pt-[calc(env(safe-area-inset-top)+4rem)] px-4 pb-3">
           {/* Header Content */}
           <div className="text-center space-y-1">
             <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-2">
@@ -119,12 +119,12 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-          <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 px-4 py-6">
+        {/* Content Area - No scroll, fits in viewport */}
+        <div className="flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 px-4 py-4">
           
           {/* Compact Features Preview */}
-          <div className="space-y-2 mb-3">
+          <div className="space-y-1 mb-3">
             <div className="flex items-center space-x-3">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <Users className="h-3 w-3 text-blue-600" />
@@ -158,12 +158,12 @@ export default function Auth() {
 
             {/* Authentication Forms */}
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="register">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 h-10 rounded-md overflow-hidden border">
+                <TabsTrigger value="login" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-500">Sign In</TabsTrigger>
+                <TabsTrigger value="register" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=inactive]:bg-gray-100 data-[state=inactive]:text-gray-500">Sign Up</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="login" className="space-y-3 mt-4">
+              <TabsContent value="login" className="space-y-2 mt-3">
                 <form onSubmit={handleLogin} className="space-y-3">
                   <div className="space-y-1">
                     <Label htmlFor="login-email" className="text-sm">Email</Label>
@@ -212,8 +212,8 @@ export default function Auth() {
                 </form>
               </TabsContent>
               
-              <TabsContent value="register" className="space-y-3 mt-4">
-                <form onSubmit={handleRegister} className="space-y-3">
+              <TabsContent value="register" className="space-y-2 mt-3">
+                <form onSubmit={handleRegister} className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label htmlFor="register-firstName" className="text-sm">First Name</Label>
@@ -313,7 +313,7 @@ export default function Auth() {
             </Tabs>
 
             {/* Privacy Notice */}
-            <div className="text-center pt-3">
+            <div className="text-center pt-2">
               <p className="text-xs text-gray-400 font-light tracking-tight">
                 By continuing, you agree to our commitment to your privacy and security.
               </p>
