@@ -28,9 +28,9 @@ export function WillInstructionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" title="">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center mb-4">
+          <DialogTitle className="text-xl font-bold text-center mb-4" title="">
             🙋‍♀️ How to Start a <em>Will</em>
           </DialogTitle>
         </DialogHeader>
@@ -41,32 +41,32 @@ export function WillInstructionModal({
           </p>
           
           <div className="space-y-4">
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start space-x-3" title="">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-blue-600 font-semibold text-sm">1</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-1 text-base">When 🗓</h3>
+                <h3 className="font-semibold text-gray-900 mb-1 text-base" title="">When 🗓</h3>
                 <p className="text-sm text-gray-600">"Start July 7, 8:00 am and end on July 14, 12:00 pm"</p>
               </div>
             </div>
             
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start space-x-3" title="">
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-green-600 font-semibold text-sm">2</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-1 text-base">What 📝</h3>
+                <h3 className="font-semibold text-gray-900 mb-1 text-base" title="">What 📝</h3>
                 <p className="text-sm text-gray-600">"I will make time to call my grandmother this week."</p>
               </div>
             </div>
             
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start space-x-3" title="">
               <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-orange-600 font-semibold text-sm">3</span>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-1 text-base">Why 💖</h3>
+                <h3 className="font-semibold text-gray-900 mb-1 text-base" title="">Why 💖</h3>
                 <p className="text-sm text-gray-600">"Because I like how I feel after I talk to her."</p>
               </div>
             </div>
