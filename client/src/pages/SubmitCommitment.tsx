@@ -427,7 +427,7 @@ export default function SubmitCommitment() {
                         <div><strong>Date:</strong> {will?.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading...'}</div>
                         <div><strong>Time:</strong> {will?.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}</div>
                       </div>
-                      <div className="mt-3 text-xs text-gray-600 tracking-tight">(This is your scheduled End Room for reflection and closure.)</div>
+
                     </div>
                   </div>
                 </div>
