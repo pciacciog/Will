@@ -708,6 +708,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Updated icon colors**: Changed Video icon and container from amber-600/amber-100 to purple-600/purple-100 for consistency
   - **Enhanced visual hierarchy**: Purple theme now matches End Room status phase formatting across the application
   - **Smart time display**: Shows "Session ended" when End Room expires, handles edge cases gracefully
+- **July 14, 2025**: Bypassed end room requirement for legacy wills without scheduled end rooms
+  - **Database migration**: Updated 3 completed wills (IDs 26, 27, 28) that had no end room scheduled
+  - **Status correction**: Changed end_room_status from 'pending' to 'completed' for wills without end_room_scheduled_at
+  - **Immediate effect**: These wills now proceed directly to final review stage without requiring end room scheduling
+  - **Legacy compatibility**: Ensures older wills created before end room requirement can still complete properly
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags
