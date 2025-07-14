@@ -141,13 +141,7 @@ export default function SubmitCommitment() {
               </div>
             </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-brandBlue h-2 rounded-full transition-all duration-300" 
-              style={{ width: `${(step / 2) * 100}%` }}
-            />
-          </div>
+
           
           {/* Current Step Title */}
           <div className="text-center">
