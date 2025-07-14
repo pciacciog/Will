@@ -17,7 +17,7 @@ export default function SubmitCommitment() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
   const [what, setWhat] = useState("");
   const [why, setWhy] = useState("");
@@ -78,42 +78,69 @@ export default function SubmitCommitment() {
     },
   });
 
-  const handleNext = () => {
-    if (step === 1) {
-      if (!what.trim()) {
-        toast({
-          title: "Missing Information",
-          description: "Please describe what you will do",
-          variant: "destructive",
-        });
-        return;
-      }
-      setStep(2);
-    }
+  const handleStep1Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentStep(2);
   };
 
-  const handleSubmit = () => {
-    if (!why.trim()) {
+  const handleStep2Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const whatInput = formData.get('what') as string;
+
+    if (!whatInput.trim()) {
       toast({
-        title: "Missing Information",
+        title: "Empty Commitment",
+        description: "Please describe what you will do",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setWhat(whatInput.trim());
+    setCurrentStep(3);
+  };
+
+  const handleStep3Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const whyInput = formData.get('why') as string;
+
+    if (!whyInput.trim()) {
+      toast({
+        title: "Missing Motivation",
         description: "Please explain why this matters to you",
         variant: "destructive",
       });
       return;
     }
+
+    setWhy(whyInput.trim());
     
     // Show transition animation
     setShowTransition(true);
     
-    // After 3.5 seconds, submit the commitment
+    // After 3.5 seconds, move to End Room acceptance step
     setTimeout(() => {
-      commitmentMutation.mutate({ what: what.trim(), why: why.trim() });
+      setShowTransition(false);
+      setCurrentStep(4);
     }, 3500);
   };
 
+  const handleStep4Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    commitmentMutation.mutate({ what: what.trim(), why: why.trim() });
+  };
+
   const handleBack = () => {
-    if (step === 2) {
-      setStep(1);
+    if (currentStep === 2) {
+      setCurrentStep(1);
+    } else if (currentStep === 3) {
+      setCurrentStep(2);
+    } else if (currentStep === 4) {
+      setCurrentStep(3);
     } else {
       setLocation(`/will/${id}`);
     }
@@ -131,25 +158,41 @@ export default function SubmitCommitment() {
   return (
     <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
       <MobileLayout>
-        {/* Sticky Header with Progress */}
+        {/* Sticky Header with Progress Indicator */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
           <div className="pt-4 space-y-3">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
-                <SectionTitle>Submit Your Commitment</SectionTitle>
+            <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  1
+                </div>
+                <span className={`ml-1 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
+              </div>
+              <div className={`w-6 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  2
+                </div>
+                <span className={`ml-1 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>What</span>
+              </div>
+              <div className={`w-6 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  3
+                </div>
+                <span className={`ml-1 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
               </div>
             </div>
-
-
           
           {/* Current Step Title */}
           <div className="text-center mt-6">
             <h1 className="text-xl font-semibold text-gray-900">
-              {step === 1 && "What would you like to do?"}
-              {step === 2 && "Why would you like to do this?"}
+              {currentStep === 1 && "Accept Will Timeline"}
+              {currentStep === 2 && "What would you like to do?"}
+              {currentStep === 3 && "Why would you like to do this?"}
+              {currentStep === 4 && "Accept End Room Schedule"}
             </h1>
-            {step === 1 && (
+            {currentStep === 2 && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
@@ -159,7 +202,7 @@ export default function SubmitCommitment() {
                 <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>
               </>
             )}
-            {step === 2 && (
+            {currentStep === 3 && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
@@ -169,27 +212,70 @@ export default function SubmitCommitment() {
                 <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
               </>
             )}
+            {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">This is where your circle comes together to reflect, share, and honor the effort.</p>}
           </div>
         </div>
       </div>
 
-      <div className="space-y-3">
-
-        <SectionCard>
-          {/* Transition Animation Screen */}
-          {showTransition ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="text-center space-y-6 animate-fade-in">
-                <div className="w-16 h-16 mx-auto bg-brandBlue rounded-full flex items-center justify-center animate-pulse">
-                  <CheckCircle className="w-8 h-8 text-white" />
-                </div>
-                <p className="text-lg font-medium text-gray-900 animate-slide-up">
-                  Submitting your commitment...
-                </p>
+      <div className="flex-1 space-y-6">
+        
+        {/* Transition Animation Screen */}
+        {showTransition && (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center space-y-6 animate-fade-in">
+              <div className="w-16 h-16 mx-auto bg-brandBlue rounded-full flex items-center justify-center animate-pulse">
+                <CheckCircle className="w-8 h-8 text-white" />
               </div>
+              <p className="text-lg font-medium text-gray-900 animate-slide-up">
+                One last step before you submit your commitment...
+              </p>
             </div>
-          ) : step === 1 ? (
-            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-3">
+          </div>
+        )}
+
+        {/* Step 1: Accept Will Timeline */}
+        {currentStep === 1 && !showTransition && (
+          <SectionCard>
+            <form onSubmit={handleStep1Submit} className="space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-lg font-medium text-gray-900 mb-4 tracking-tight">
+                    Will Timeline
+                  </label>
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mx-4">
+                    <div>
+                      <div className="font-medium text-gray-900 mb-1 tracking-tight">Schedule</div>
+                      <div className="text-sm text-gray-700 space-y-0.5 tracking-tight">
+                        <div><strong>Start:</strong> {will?.startDate ? new Date(will.startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading...'} at {will?.startDate ? new Date(will.startDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}</div>
+                        <div><strong>End:</strong> {will?.endDate ? new Date(will.endDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading...'} at {will?.endDate ? new Date(will.endDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}</div>
+                        <div className="mt-1 text-xs text-gray-600 tracking-tight">This is the schedule for the <em>Will</em> you're joining.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <button 
+                  type="button"
+                  onClick={handleBack}
+                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </button>
+                <PrimaryButton type="submit">
+                  Accept <ArrowRight className="w-4 h-4 ml-2" />
+                </PrimaryButton>
+              </div>
+            </form>
+          </SectionCard>
+        )}
+
+        {/* Step 2: What */}
+        {currentStep === 2 && !showTransition && (
+          <SectionCard>
+            <form onSubmit={handleStep2Submit} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
                 <div className="relative">
@@ -239,7 +325,12 @@ export default function SubmitCommitment() {
                 </PrimaryButton>
               </div>
             </form>
-          ) : (
+          </SectionCard>
+        )}
+
+        {/* Step 3: Why */}
+        {currentStep === 3 && !showTransition && (
+          <SectionCard>
             <div className="space-y-3">
               {/* Beautified What Preview */}
               {what && (
@@ -248,7 +339,7 @@ export default function SubmitCommitment() {
                 </div>
               )}
               
-              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-3">
+              <form onSubmit={handleStep3Submit} className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
@@ -303,17 +394,57 @@ export default function SubmitCommitment() {
                 </div>
                 <PrimaryButton 
                   type="submit" 
-                  disabled={!why.trim() || commitmentMutation.isPending}
+                  disabled={!why.trim()}
                 >
-                  {commitmentMutation.isPending ? "Submitting..." : "Submit Commitment"}
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
             </form>
             </div>
-          )}
-        </SectionCard>
+          </SectionCard>
+        )}
 
+        {/* Step 4: Accept End Room Schedule */}
+        {currentStep === 4 && !showTransition && (
+          <SectionCard>
+            <form onSubmit={handleStep4Submit} className="space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-lg font-medium text-gray-900 mb-4 tracking-tight">
+                    End Room Schedule
+                  </label>
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mx-4">
+                    <div>
+                      <div className="font-medium text-gray-900 mb-1 tracking-tight">Scheduled For</div>
+                      <div className="text-sm text-gray-700 space-y-0.5 tracking-tight">
+                        <div><strong>Date:</strong> {will?.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading...'}</div>
+                        <div><strong>Time:</strong> {will?.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}</div>
+                        <div className="mt-1 text-xs text-gray-600 tracking-tight">This is where your circle comes together to reflect, share, and honor the effort.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
+              <div className="flex justify-between items-center">
+                <button 
+                  type="button"
+                  onClick={handleBack}
+                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </button>
+                <PrimaryButton 
+                  type="submit" 
+                  disabled={commitmentMutation.isPending}
+                >
+                  {commitmentMutation.isPending ? "Submitting..." : "Accept & Submit Commitment"}
+                </PrimaryButton>
+              </div>
+            </form>
+          </SectionCard>
+        )}
 
         {/* Instruction Modal */}
         <WillInstructionModal

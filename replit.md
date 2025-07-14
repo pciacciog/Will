@@ -690,6 +690,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Fixed multiple button instances**: Updated "View Will Details", "View End Room Details", and "Review Final Summary" buttons
   - **Root cause identified**: JSX spaces around `<em>` tags were being collapsed during rendering, causing word concatenation
   - **Applied comprehensive solution**: All Inner Circle Hub buttons now use React fragments to preserve proper word spacing
+- **July 14, 2025**: Restructured SubmitCommitment flow to unified four-step "When / What / Why / End Room" experience
+  - **Implemented four-step process**: Added "Accept Will Timeline" as Step 1, matching creator's flow structure
+  - **Enhanced progress indicator**: Updated to use "1 When — 2 What — 3 Why" navigation bar instead of "Step 1 of 2"
+  - **Added Will Timeline acceptance**: Step 1 displays prefilled start/end dates with single green "Accept" button
+  - **Preserved What/Why steps**: Steps 2 and 3 maintain identical visual formatting and UX from Will creation flow
+  - **Added End Room acceptance**: Step 4 shows prefilled End Room schedule with "Accept & Submit Commitment" button
+  - **Enhanced user experience**: Unified commitment submission mirrors inspiring Will creation process with consistent design patterns
+  - **Improved visual hierarchy**: All steps use identical title styling, icon placement, and subtitle formatting as StartWill component
 - **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
   - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
   - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context
