@@ -53,14 +53,14 @@ export function EndRoomTooltip({ className = "" }: EndRoomTooltipProps) {
           
           {/* Modal */}
           <div className="fixed inset-4 z-50 flex items-center justify-center">
-            <div className="bg-white rounded-2xl shadow-xl p-6 w-[90%] max-w-sm transition-all duration-300 ease-in-out transform animate-in fade-in-0 zoom-in-95 relative">
+            <div className="bg-white rounded-2xl shadow-lg p-6 w-[90%] max-w-sm transition-all duration-300 ease-in-out transform animate-in fade-in-0 zoom-in-95 relative">
               {/* Close button in upper right corner */}
               <button
                 onClick={handleClose}
-                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 hover:text-black transition-all duration-200"
+                className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors duration-200"
                 aria-label="Close modal"
               >
-                &times;
+                <span className="text-xl">&times;</span>
               </button>
               
               <div className="pr-10">

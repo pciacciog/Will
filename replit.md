@@ -740,6 +740,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Optimized spacing**: Increased padding to py-4 px-6 and used gap-2 for consistent element spacing
   - **Refined button design**: Applied minimal secondary styling with proper hover states and border-based approach
   - **Better mobile layout**: Used flex justify-between items-center gap-4 for optimal spacing on all screen sizes
+- **July 14, 2025**: Refined EndRoomTooltip modal design for better visual hierarchy and mobile usability
+  - **Enhanced close button**: Improved X button visibility with text-gray-500, increased size to text-xl, added hover:text-red-500
+  - **Optimized positioning**: Updated spacing from top-2 right-2 to top-3 right-3 for better breathing room
+  - **Better touch targets**: Increased button size from w-6 h-6 to w-8 h-8 for improved mobile interaction
+  - **Cleaner styling**: Removed heavy border and background styling from close button for minimalist approach
+  - **Modern aesthetics**: Maintained rounded-2xl and shadow-lg for contemporary card appearance
 - **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
   - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
   - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context
