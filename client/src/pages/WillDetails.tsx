@@ -13,6 +13,7 @@ import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge } from "@/components/ui/design-system";
 import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
+import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
 
 
@@ -539,15 +540,13 @@ export default function WillDetails() {
 
         {/* End Room Section for active states */}
         {(will.status === 'waiting_for_end_room' || will.status === 'completed') && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
             <div className="text-center">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Video className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Video className="w-5 h-5 text-purple-600" />
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">End Room</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                30-minute group reflection session
-              </p>
+              <EndRoomCountdown will={will} />
               <EndRoom willId={will.id} />
             </div>
           </div>

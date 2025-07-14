@@ -701,6 +701,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Better visual hierarchy**: Blue filled button stands out clearly against white background in Circle Commitments section
   - **Applied to Home page**: Updated Home.tsx "Why" button with identical styling for consistency across all Will displays
   - **Consistent chevron integration**: Maintained ChevronUp/ChevronDown icons while upgrading button styling for better interactivity
+- **July 14, 2025**: Enhanced End Room display with live countdown and purple theme matching
+  - **Added live countdown functionality**: Created EndRoomCountdown component to replace static "30-minute group reflection session" text
+  - **Implemented real-time timer**: Shows remaining time in "Xh Ym Zs remaining" format with 1-second updates
+  - **Changed background to purple**: Updated End Room section from amber/yellow (bg-amber-50, border-amber-200) to purple (bg-purple-50, border-purple-200)
+  - **Updated icon colors**: Changed Video icon and container from amber-600/amber-100 to purple-600/purple-100 for consistency
+  - **Enhanced visual hierarchy**: Purple theme now matches End Room status phase formatting across the application
+  - **Smart time display**: Shows "Session ended" when End Room expires, handles edge cases gracefully
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags
