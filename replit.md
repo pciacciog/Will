@@ -723,6 +723,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Simplified date format**: Clean "Date:" and "Time:" format with explanatory text "(This is your scheduled End Room for reflection and closure.)"
   - **Enhanced CTA button**: Changed from "Accept & Submit Commitment" to "Finalize" with handshake icon for intentional feel
   - **Improved layout**: Added mt-8 margin above content and center-aligned schedule box for better visual balance
+- **July 14, 2025**: Enhanced vertical spacing between progress bar and screen titles for improved visual hierarchy
+  - **Increased spacing**: Updated from mt-8 to mt-12 across all Will creation flow components for better breathing room
+  - **Applied to all commitment flows**: Enhanced StartWill, SubmitCommitment, and EditCommitment pages for consistency
+  - **Better visual balance**: Reduced cramped feeling between progress indicator and page titles
+  - **Mobile optimization**: Maintains single-page display while improving readability and user experience
 - **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
   - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
   - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context
