@@ -381,8 +381,26 @@ export default function StartWill() {
               {currentStep === 3 && "Why would you like to do this?"}
               {currentStep === 4 && "Schedule Your End Room"}
             </h1>
-            {currentStep === 2 && <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>}
-            {currentStep === 3 && <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>}
+            {currentStep === 2 && (
+              <>
+                <div className="flex justify-center my-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>
+              </>
+            )}
+            {currentStep === 3 && (
+              <>
+                <div className="flex justify-center my-3">
+                  <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                    <Heart className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
+              </>
+            )}
             {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">This is where your circle comes together to reflect, share, and honor the effort.</p>}
           </div>
         </div>

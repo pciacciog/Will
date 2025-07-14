@@ -187,6 +187,11 @@ export default function EditCommitment() {
             <h1 className="text-xl font-semibold text-gray-900">
               What would you like to do?
             </h1>
+            <div className="flex justify-center my-3">
+              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+            </div>
             <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>
           </div>
         </div>
@@ -269,6 +274,11 @@ export default function EditCommitment() {
           <h1 className="text-xl font-semibold text-gray-900">
             Why would you like to do this?
           </h1>
+          <div className="flex justify-center my-3">
+            <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+              <Heart className="w-6 h-6 text-white" />
+            </div>
+          </div>
           <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
         </div>
       </div>

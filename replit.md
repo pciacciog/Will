@@ -675,6 +675,15 @@ This is a full-stack web application for group goal accountability, built with R
   - **Consistent editing experience**: Applied identical form structure, progress bars, sticky headers, and button layouts to editing flow
   - **Complete design consistency**: All three commitment flows (create, submit, edit) now use identical UI patterns and styling
   - **Enhanced End Room help icon visibility**: Increased help icon size from w-6 h-6 to w-10 h-10 (sm:w-12 sm:h-12) with thicker borders, larger icon, and enhanced styling for much better mobile visibility and clickability
+- **July 14, 2025**: Enhanced Circle Commitments "Why" button with refined styling and elegant content reveal
+  - **Refined "Why" button styling**: Updated to elegant appearance using `text-sm px-3 py-1 rounded-md bg-gray-100 border border-gray-300 hover:bg-gray-200 transition`
+  - **Enhanced revealed content**: Applied distinctive blue styling `mt-2 p-2 bg-blue-50 border-l-4 border-blue-400 text-sm text-blue-800 rounded` for better content separation
+  - **Improved visual hierarchy**: Clear differentiation between "What" and "Because" content with proper styling and spacing
+  - **Added purposeful icons**: Implemented solid green checkmark for "What would you like to do?" and solid red heart for "Why would you like to do this?" steps
+  - **Consistent icon placement**: Centered icons between headers and subtext with w-10 h-10 sizing and proper color backgrounds (green-500, red-500)
+  - **Applied across all flows**: Identical formatting and visual hierarchy for StartWill, SubmitCommitment, and EditCommitment pages
+  - **Fixed Home button text**: Changed "Reveal My Why" to simply "Why" for cleaner interface consistency
+  - **Maintained single-line headers**: Ensured "Why would you like to do this?" fits on single line across all views
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout

@@ -149,8 +149,26 @@ export default function SubmitCommitment() {
               {step === 1 && "What would you like to do?"}
               {step === 2 && "Why would you like to do this?"}
             </h1>
-            {step === 1 && <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>}
-            {step === 2 && <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>}
+            {step === 1 && (
+              <>
+                <div className="flex justify-center my-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <div className="flex justify-center my-3">
+                  <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                    <Heart className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
+              </>
+            )}
           </div>
         </div>
       </div>
