@@ -10,7 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
-import { HelpCircle, ArrowLeft, ArrowRight, CheckCircle, Heart, Calendar } from "lucide-react";
+import { HelpCircle, ArrowLeft, ArrowRight, CheckCircle, Heart, Calendar, Handshake } from "lucide-react";
 
 export default function SubmitCommitment() {
   const { id } = useParams();
@@ -190,7 +190,7 @@ export default function SubmitCommitment() {
               {currentStep === 1 && "Proposed Will Timeline"}
               {currentStep === 2 && "What would you like to do?"}
               {currentStep === 3 && "Why would you like to do this?"}
-              {currentStep === 4 && "Accept End Room Schedule"}
+              {currentStep === 4 && "End Room Confirmation"}
             </h1>
             {currentStep === 2 && (
               <>
@@ -212,7 +212,7 @@ export default function SubmitCommitment() {
                 <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
               </>
             )}
-            {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">This is where your circle comes together to reflect, share, and honor the effort.</p>}
+            {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">Your circle will gather here to reflect, share, and honor the efforts.</p>}
           </div>
         </div>
       </div>
@@ -411,23 +411,23 @@ export default function SubmitCommitment() {
           </SectionCard>
         )}
 
-        {/* Step 4: Accept End Room Schedule */}
+        {/* Step 4: End Room Confirmation */}
         {currentStep === 4 && !showTransition && (
           <SectionCard>
-            <form onSubmit={handleStep4Submit} className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-lg font-medium text-gray-900 mb-4 tracking-tight">
-                    End Room Schedule
-                  </label>
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mx-4">
-                    <div>
-                      <div className="font-medium text-gray-900 mb-1 tracking-tight">Scheduled For</div>
-                      <div className="text-sm text-gray-700 space-y-0.5 tracking-tight">
+            <form onSubmit={handleStep4Submit} className="space-y-6">
+              <div className="space-y-6 mt-8">
+                <div className="text-center">
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mx-auto max-w-md">
+                    <div className="flex items-center justify-center mb-3">
+                      <Calendar className="w-5 h-5 text-gray-600 mr-2" />
+                      <div className="font-medium text-gray-900 tracking-tight">Scheduled End Room</div>
+                    </div>
+                    <div className="text-sm text-gray-700 tracking-tight">
+                      <div className="font-medium space-y-1">
                         <div><strong>Date:</strong> {will?.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading...'}</div>
                         <div><strong>Time:</strong> {will?.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}</div>
-                        <div className="mt-1 text-xs text-gray-600 tracking-tight">This is where your circle comes together to reflect, share, and honor the effort.</div>
                       </div>
+                      <div className="mt-3 text-xs text-gray-600 tracking-tight">(This is your scheduled End Room for reflection and closure.)</div>
                     </div>
                   </div>
                 </div>
@@ -445,8 +445,16 @@ export default function SubmitCommitment() {
                 <PrimaryButton 
                   type="submit" 
                   disabled={commitmentMutation.isPending}
+                  className="flex items-center"
                 >
-                  {commitmentMutation.isPending ? "Submitting..." : "Accept & Submit Commitment"}
+                  {commitmentMutation.isPending ? (
+                    "Submitting..."
+                  ) : (
+                    <>
+                      <Handshake className="w-4 h-4 mr-2" />
+                      Finalize
+                    </>
+                  )}
                 </PrimaryButton>
               </div>
             </form>

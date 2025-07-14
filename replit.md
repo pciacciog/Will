@@ -716,6 +716,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added calendar icon**: Included Calendar icon from Lucide React next to "Schedule" heading
   - **Increased vertical spacing**: Added mt-8 below title for better breathing room and visual balance
   - **Updated button text**: Changed "Accept" to "Join Will" for clearer action indication
+- **July 14, 2025**: Enhanced "Accept End Room Schedule" screen with improved clarity and professional polish
+  - **Updated title**: Changed from "Accept End Room Schedule" to "End Room Confirmation" for better clarity
+  - **Refined subtitle**: Updated to "Your circle will gather here to reflect, share, and honor the efforts."
+  - **Updated box header**: Changed from "Scheduled For" to "Scheduled End Room" with calendar icon
+  - **Simplified date format**: Clean "Date:" and "Time:" format with explanatory text "(This is your scheduled End Room for reflection and closure.)"
+  - **Enhanced CTA button**: Changed from "Accept & Submit Commitment" to "Finalize" with handshake icon for intentional feel
+  - **Improved layout**: Added mt-8 margin above content and center-aligned schedule box for better visual balance
 - **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
   - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
   - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context
