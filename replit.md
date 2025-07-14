@@ -709,6 +709,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced breathing room**: Applied to StartWill, SubmitCommitment, and EditCommitment pages for consistency
   - **Better visual hierarchy**: Reduced cramped feeling between progress indicator and screen titles
   - **Mobile optimization**: Maintains single-page display while improving readability and user experience
+- **July 14, 2025**: Enhanced "Accept Will Timeline" screen with improved clarity and visual polish
+  - **Updated title**: Changed from "Accept Will Timeline" to "Proposed Will Timeline" for better clarity
+  - **Center-aligned schedule box**: Made schedule display center-aligned with mx-auto max-w-md styling
+  - **Cleaner date format**: Updated to "Monday, July 14 from 2:09 PM to 2:14 PM" single-line format
+  - **Added calendar icon**: Included Calendar icon from Lucide React next to "Schedule" heading
+  - **Increased vertical spacing**: Added mt-8 below title for better breathing room and visual balance
+  - **Updated button text**: Changed "Accept" to "Join Will" for clearer action indication
 - **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
   - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
   - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context

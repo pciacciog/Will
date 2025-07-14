@@ -10,7 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
-import { HelpCircle, ArrowLeft, ArrowRight, CheckCircle, Heart } from "lucide-react";
+import { HelpCircle, ArrowLeft, ArrowRight, CheckCircle, Heart, Calendar } from "lucide-react";
 
 export default function SubmitCommitment() {
   const { id } = useParams();
@@ -187,7 +187,7 @@ export default function SubmitCommitment() {
           {/* Current Step Title */}
           <div className="text-center mt-8">
             <h1 className="text-xl font-semibold text-gray-900">
-              {currentStep === 1 && "Accept Will Timeline"}
+              {currentStep === 1 && "Proposed Will Timeline"}
               {currentStep === 2 && "What would you like to do?"}
               {currentStep === 3 && "Why would you like to do this?"}
               {currentStep === 4 && "Accept End Room Schedule"}
@@ -233,23 +233,30 @@ export default function SubmitCommitment() {
           </div>
         )}
 
-        {/* Step 1: Accept Will Timeline */}
+        {/* Step 1: Proposed Will Timeline */}
         {currentStep === 1 && !showTransition && (
           <SectionCard>
-            <form onSubmit={handleStep1Submit} className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-lg font-medium text-gray-900 mb-4 tracking-tight">
-                    Will Timeline
-                  </label>
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mx-4">
-                    <div>
-                      <div className="font-medium text-gray-900 mb-1 tracking-tight">Schedule</div>
-                      <div className="text-sm text-gray-700 space-y-0.5 tracking-tight">
-                        <div><strong>Start:</strong> {will?.startDate ? new Date(will.startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading...'} at {will?.startDate ? new Date(will.startDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}</div>
-                        <div><strong>End:</strong> {will?.endDate ? new Date(will.endDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading...'} at {will?.endDate ? new Date(will.endDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}</div>
-                        <div className="mt-1 text-xs text-gray-600 tracking-tight">This is the schedule for the <em>Will</em> you're joining.</div>
+            <form onSubmit={handleStep1Submit} className="space-y-6">
+              <div className="space-y-6 mt-8">
+                <div className="text-center">
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mx-auto max-w-md">
+                    <div className="flex items-center justify-center mb-3">
+                      <Calendar className="w-5 h-5 text-gray-600 mr-2" />
+                      <div className="font-medium text-gray-900 tracking-tight">Schedule</div>
+                    </div>
+                    <div className="text-sm text-gray-700 tracking-tight">
+                      <div className="font-medium">
+                        {will?.startDate && will?.endDate ? (
+                          <>
+                            {new Date(will.startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} from{' '}
+                            {new Date(will.startDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} to{' '}
+                            {new Date(will.endDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          </>
+                        ) : (
+                          'Loading...'
+                        )}
                       </div>
+                      <div className="mt-2 text-xs text-gray-600 tracking-tight">This is the schedule for the <em>Will</em> you're joining.</div>
                     </div>
                   </div>
                 </div>
@@ -265,7 +272,7 @@ export default function SubmitCommitment() {
                   Back
                 </button>
                 <PrimaryButton type="submit">
-                  Accept <ArrowRight className="w-4 h-4 ml-2" />
+                  Join Will <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
             </form>
