@@ -829,6 +829,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Fixed iOS safe area collision**: Added `pt-[env(safe-area-inset-top)]` to prevent content cutoff by status bar on devices with notch
   - **Improved visual hierarchy**: Enhanced member name styling with `font-semibold text-gray-800` and commitment text with `text-sm` for better readability
   - **Better content separation**: Each member's commitment now has clear visual separation without clutter, improving overall modal presentation
+- **July 14, 2025**: Fixed Final Summary modal scrolling and viewport issues for single-screen display
+  - **Prevented vertical scrolling**: Applied `overflow-hidden` to dialog content and main container to eliminate scrolling
+  - **Fixed iOS safe area handling**: Properly implemented `pt-[env(safe-area-inset-top)]` and `pb-[env(safe-area-inset-bottom)]` for full screen respect
+  - **Restructured layout**: Used `flex-col justify-between` with `flex-1` for content and `mt-auto` for actions to distribute content properly
+  - **Single viewport display**: Modal now fits entirely within iPhone screen without scrolling, with actions positioned at bottom
 - **July 14, 2025**: Implemented premium welcome screen UI polish with professional design improvements
   - **Enhanced typography**: Updated headline to `text-3xl font-semibold tracking-tight`, subtext to `text-base text-gray-500 leading-snug`
   - **Improved CTA button**: Applied `w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition`
