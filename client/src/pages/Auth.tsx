@@ -93,9 +93,9 @@ export default function Auth() {
 
   return (
     <MobileLayout scrollable={false}>
-      <div className="min-h-screen overflow-hidden flex flex-col justify-between pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-4 bg-gradient-to-br from-blue-50 via-white to-green-50">
+      <div className="h-screen overflow-hidden flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-4 bg-gradient-to-br from-blue-50 via-white to-green-50">
         {/* Back Button */}
-        <div className="absolute top-[env(safe-area-inset-top)] left-4 z-10">
+        <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-10">
           <Link href="/">
             <button className="p-2 rounded-full hover:bg-gray-100 transition">
               <ArrowLeft className="h-5 w-5 text-gray-600" />
@@ -104,9 +104,9 @@ export default function Auth() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col justify-center space-y-4 max-w-sm mx-auto w-full">
+        <div className="flex-1 flex flex-col justify-center space-y-3 max-w-sm mx-auto w-full pt-16">
           {/* Header & Icon */}
-          <div className="text-center space-y-1">
+          <div className="text-center space-y-1 mb-2">
             <div className="bg-violet-100 p-2 rounded-full w-10 h-10 flex items-center justify-center mx-auto">
               <Shield className="w-5 h-5 text-violet-500" />
             </div>
@@ -115,7 +115,7 @@ export default function Auth() {
           </div>
 
           {/* Step Descriptions */}
-          <div className="space-y-2">
+          <div className="space-y-1.5 mb-2">
             <div className="flex items-start space-x-3">
               <div className="bg-blue-100 p-2 rounded-full shadow-sm">
                 <Handshake className="w-4 h-4 text-blue-600" />
@@ -163,8 +163,8 @@ export default function Auth() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="mt-3 space-y-3">
-                <form onSubmit={handleLogin} className="space-y-3">
+              <TabsContent value="login" className="mt-2 space-y-2">
+                <form onSubmit={handleLogin} className="space-y-2">
                   <div>
                     <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
                     <Input
@@ -210,10 +210,17 @@ export default function Auth() {
                     {loginMutation.isPending ? "Signing in..." : "Sign In"}
                   </Button>
                 </form>
+                
+                {/* Privacy Notice - Inline within form */}
+                <div className="text-center pt-1">
+                  <p className="text-xs text-gray-400 font-light">
+                    By continuing, you agree to our commitment to your privacy and security.
+                  </p>
+                </div>
               </TabsContent>
 
-              <TabsContent value="register" className="mt-3 space-y-3">
-                <form onSubmit={handleRegister} className="space-y-3">
+              <TabsContent value="register" className="mt-2 space-y-2">
+                <form onSubmit={handleRegister} className="space-y-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="register-firstName" className="text-sm font-medium">First Name</Label>
@@ -309,16 +316,16 @@ export default function Auth() {
                     {registerMutation.isPending ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
+                
+                {/* Privacy Notice - Inline within form */}
+                <div className="text-center pt-1">
+                  <p className="text-xs text-gray-400 font-light">
+                    By continuing, you agree to our commitment to your privacy and security.
+                  </p>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
-        </div>
-
-        {/* Privacy Notice */}
-        <div className="text-center pb-2">
-          <p className="text-xs text-gray-400 font-light">
-            By continuing, you agree to our commitment to your privacy and security.
-          </p>
         </div>
       </div>
     </MobileLayout>

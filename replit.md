@@ -849,6 +849,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Upgraded icon consistency**: Used TrendingUp instead of Bolt for "Stay Accountable" section to match Welcome screen
   - **Fixed JSX structure**: Completely restructured Auth.tsx to resolve compilation errors and ensure proper component hierarchy
   - **Applied mobile-first layout**: Centered content with `max-w-sm mx-auto` and proper safe area handling for iOS compatibility
+- **July 14, 2025**: Fixed Auth page single-viewport issues and iOS safe area collision
+  - **Eliminated scrolling completely**: Changed from `min-h-screen` to `h-screen` with strict `overflow-hidden` to prevent any scrolling
+  - **Fixed back button iOS collision**: Updated positioning to `top-[calc(env(safe-area-inset-top)+1rem)]` to clear iOS status bar safely
+  - **Elevated title section**: Added `pt-16` to main content area and reduced spacing throughout header and step descriptions
+  - **Compressed form spacing**: Reduced all form spacing from space-y-3 to space-y-2, tabs from mt-3 to mt-2 for tighter layout
+  - **Inline privacy notice**: Moved "By continuing..." message inside each tab content to eliminate bottom scrolling
+  - **Reduced step description spacing**: Changed from space-y-2 to space-y-1.5 and added mb-2 to create more compact vertical rhythm
+  - **Ensured single-viewport display**: Both Sign In and Sign Up forms now fit entirely within iPhone screen without any scrolling behavior
 - **July 14, 2025**: Implemented premium welcome screen UI polish with professional design improvements
   - **Enhanced typography**: Updated headline to `text-3xl font-semibold tracking-tight`, subtext to `text-base text-gray-500 leading-snug`
   - **Improved CTA button**: Applied `w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition`
