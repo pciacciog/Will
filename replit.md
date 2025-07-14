@@ -642,6 +642,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (</>) to prevent space collapse around italic <em> tags
   - **Fixed multiple button instances**: Updated all "View Will Details", "View End Room Details", and "Review Final Summary" buttons
   - **Ensured proper text rendering**: Button text now displays correctly with spaces in all Will status states (pending, scheduled, active, waiting_for_end_room, completed)
+- **July 14, 2025**: Fixed critical mobile responsiveness issues in Will creation flow
+  - **Fixed horizontal scrolling**: Added proper viewport constraints with `max-w-screen-sm mx-auto overflow-x-hidden` to prevent horizontal scrolling on mobile
+  - **Fixed progress indicator overflow**: Redesigned progress indicator layout with proper flex constraints and reduced spacing
+  - **Fixed help icon positioning**: Improved help icon placement with proper `flex-shrink-0` constraints to prevent cutoff
+  - **Applied to all Will creation screens**: Fixed StartWill, SubmitCommitment, and EditCommitment components for consistent mobile UX
+  - **Fixed Will status transition bug**: Resolved issue where Will #47 was stuck in completed state - added missing acknowledgment to database
+  - **Improved header layout**: Added proper padding and flex constraints to prevent content overflow on mobile devices
+  - **Updated card header text**: Changed redundant "Set Your Timeline" to "Choose a schedule template below" for better clarity
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout
