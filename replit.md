@@ -653,6 +653,7 @@ This is a full-stack web application for group goal accountability, built with R
   - **Optimized custom scheduling layout**: Implemented 2-column grid layout for date/time inputs to reduce vertical space usage
   - **Enhanced End Room scheduling**: Added proper mobile padding (`px-4`) and input containment (`w-full max-w-md mx-auto`) to prevent edge collisions
   - **Improved Inner Circle Hub mobile layout**: Applied responsive 2-column grid layout for Circle Members section when 3+ members present to maintain single viewport display
+  - **Fixed Final Summary modal scrolling**: Replaced fixed height container with proper vertical scrolling (`max-h-screen overflow-y-auto`) to prevent content cutoff on mobile with 4+ member commitments
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout
