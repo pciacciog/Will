@@ -812,6 +812,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced Enter Circle button**: Added shadow-lg, hover:shadow-xl, hover:scale-105 transform, increased padding (px-10 py-4), and bold text-lg styling
   - **Improved visual hierarchy**: Increased icon size (w-5 h-5), added rounded-xl corners, and enhanced spacing (space-y-3) for better prominence
   - **Interactive feedback**: Added hover effects with scale transformation and enhanced shadow depth for better user engagement
+- **July 14, 2025**: Fixed Auth page header collision with iOS status bar when keyboard is open
+  - **Fixed header positioning**: Restructured Auth page with fixed header using `pt-[calc(env(safe-area-inset-top)+1rem)]` to prevent iOS status bar overlap
+  - **Non-scrollable header**: Moved "Join Your Inner Circle" title and back button to fixed header section that doesn't scroll with content
+  - **Scrollable content area**: Created separate scrollable content area with `flex-1 overflow-y-auto` for forms and features
+  - **iOS keyboard compatibility**: Fixed header remains in position when keyboard opens, preventing collision with system UI elements
+  - **Proper safe area handling**: Added bottom safe area spacing with `pb-[calc(env(safe-area-inset-bottom)+1rem)]`
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

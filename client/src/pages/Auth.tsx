@@ -92,19 +92,20 @@ export default function Auth() {
   };
 
   return (
-    <MobileLayout>
-      <div className="flex-1 py-4 space-y-4">
-        {/* Back Button */}
-        <Link href="/">
-          <Button variant="ghost" className="mb-2">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Button>
-        </Link>
+    <MobileLayout scrollable={false}>
+      <div className="h-full flex flex-col">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 pt-[calc(env(safe-area-inset-top)+1rem)] px-4 pb-4">
+          {/* Back Button */}
+          <Link href="/">
+            <Button variant="ghost" className="mb-3">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
 
-        {/* Main Auth Card */}
-        <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 px-4 py-6">
-          <div className="text-center space-y-1 mb-3">
+          {/* Header Content */}
+          <div className="text-center space-y-1">
             <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-2">
               <Shield className="h-6 w-6 text-indigo-600" />
             </div>
@@ -115,6 +116,11 @@ export default function Auth() {
               Connect with the people who matter. Grow together.
             </p>
           </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 px-4 py-6">
           
           {/* Compact Features Preview */}
           <div className="space-y-2 mb-3">
@@ -311,6 +317,7 @@ export default function Auth() {
                 By continuing, you agree to our commitment to your privacy and security.
               </p>
             </div>
+          </div>
         </div>
       </div>
     </MobileLayout>
