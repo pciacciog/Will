@@ -652,14 +652,14 @@ export default function StartWill() {
           <SectionCard>
 
             <form onSubmit={handleStep4Submit} className="space-y-3">
-              <div>
+              <div className="px-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">End Room Date & Time</label>
                 <p className="text-xs text-gray-500 mb-2">
                   Choose a time to reflect after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}).
                 </p>
                 
-                {/* Input field */}
-                <div className="relative">
+                {/* Input field with proper mobile containment */}
+                <div className="w-full max-w-md mx-auto">
                   <input
                     type="datetime-local"
                     name="endRoomDateTime"
@@ -674,7 +674,7 @@ export default function StartWill() {
               </div>
 
               {/* Warning Box - Compact */}
-              <div className="bg-red-50 border border-red-300 rounded-xl p-3 mt-3">
+              <div className="bg-red-50 border border-red-300 rounded-xl p-3 mt-3 mx-4">
                 <div className="mb-1 flex items-center">
                   <svg className="w-3 h-3 text-red-600 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -698,7 +698,7 @@ export default function StartWill() {
               </div>
 
               <div className="border-t border-gray-200 pt-3 mt-3">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center px-4">
                   <button 
                     type="button" 
                     onClick={() => setCurrentStep(3)}
