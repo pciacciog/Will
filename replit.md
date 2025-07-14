@@ -728,6 +728,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Applied to all commitment flows**: Enhanced StartWill, SubmitCommitment, and EditCommitment pages for consistency
   - **Better visual balance**: Reduced cramped feeling between progress indicator and page titles
   - **Mobile optimization**: Maintains single-page display while improving readability and user experience
+- **July 14, 2025**: Fixed "Fill out this field" tooltip in instruction modal and performed database maintenance
+  - **Removed browser tooltips**: Added explicit empty title="" attributes to prevent unwanted browser-generated tooltips
+  - **Applied to all modal elements**: Fixed DialogContent, DialogTitle, and all step sections in WillInstructionModal
+  - **Database maintenance**: Successfully terminated Will ID 55 (John and Randy) for fresh testing environment
+  - **Clean slate**: Removed all associated commitments, pushes, and acknowledgments for new will creation
 - **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
   - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
   - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context
