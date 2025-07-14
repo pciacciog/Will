@@ -555,21 +555,20 @@ export default function WillDetails() {
 
         {/* Creator Actions */}
         {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-slate-50 border border-blue-100 rounded-2xl shadow-md py-4 px-6">
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-base font-medium text-blue-800">Creator Options</span>
+                <span className="text-base font-medium text-blue-700">Creator Options</span>
               </div>
               <Button 
                 onClick={() => setLocation(`/will/${id}/edit`)}
-                variant="outline"
-                className="border-blue-300 text-blue-700 hover:bg-blue-100 text-base py-2 px-4"
+                className="border border-blue-500 text-blue-600 bg-white hover:bg-blue-50 rounded-lg px-4 py-2 text-base font-medium"
                 size="default"
               >
-                Edit{" "}<em>Will</em>
+                Edit <em>Will</em>
               </Button>
             </div>
           </div>
@@ -577,22 +576,21 @@ export default function WillDetails() {
 
         {/* Active Will Creator Actions */}
         {will.createdBy === user?.id && will.status === 'active' && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-red-50 border border-red-100 rounded-2xl shadow-md py-4 px-6">
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
-                <span className="text-base font-medium text-red-800">Creator Options</span>
+                <span className="text-base font-medium text-red-700">Creator Options</span>
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
-                    variant="destructive"
+                    className="border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-lg px-4 py-2 text-base font-medium"
                     size="default"
-                    className="text-base py-2 px-4"
                   >
-                    Delete{" "}<em>Will</em>
+                    Delete <em>Will</em>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
