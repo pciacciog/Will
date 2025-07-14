@@ -696,6 +696,15 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced visual differentiation**: Active (green), Scheduled (blue), and Completed (amber) Wills have distinct color schemes
   - **Improved card styling**: Dynamic background colors and badges match Will status for consistent visual hierarchy
   - **Added formatStartTime helper**: Provides user-friendly countdown display for scheduled Will start times
+- **July 14, 2025**: Fixed critical real-time updates issue preventing status changes from displaying without app restart
+  - **Root cause identified**: App was only refreshing on focus/visibility changes, not continuously polling for updates
+  - **Implemented continuous polling**: Added 30-second refetch intervals to all critical queries (circles, wills, will details)
+  - **Enhanced Will status polling**: Dynamic intervals based on Will state - 5 seconds for acknowledgments, 10 seconds when starting soon
+  - **Fixed global query config**: Set staleTime to 0 and enabled refetchOnReconnect for immediate updates
+  - **Updated InnerCircleHub**: Real-time updates for Will status transitions, countdown timers, and member acknowledgments
+  - **Updated Home page**: Real-time polling for Welcome screen Will status and countdown displays
+  - **Updated WillDetails page**: Enhanced polling frequency for completion acknowledgments and status changes
+  - **Eliminated manual refresh requirement**: Users no longer need to close/reopen app to see Will status changes
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout

@@ -167,12 +167,15 @@ export default function InnerCircleHub() {
     queryKey: ['/api/circles/mine'],
     queryFn: () => fetch('/api/circles/mine').then(res => res.json()),
     enabled: !!user,
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+    staleTime: 0, // Always consider data stale for immediate updates
   });
 
   const { data: will } = useQuery({
     queryKey: [`/api/wills/circle/${circle?.id}`],
     queryFn: () => fetch(`/api/wills/circle/${circle?.id}`).then(res => res.json()),
     enabled: !!circle?.id,
+    staleTime: 0, // Always consider data stale for immediate updates
     refetchInterval: (data: any) => {
       if (!data) return 120000;
       

@@ -96,6 +96,7 @@ export default function WillDetails() {
   const { data: will, isLoading, error } = useQuery({
     queryKey: [`/api/wills/${id}/details`],
     enabled: !!id && !!user,
+    staleTime: 0, // Always consider data stale for immediate updates
     refetchInterval: (data) => {
       if (!data) return 30000;
       
@@ -111,6 +112,8 @@ export default function WillDetails() {
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
     enabled: !!user,
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+    staleTime: 0, // Always consider data stale for immediate updates
   });
 
   const acknowledgeMutation = useMutation({

@@ -81,11 +81,15 @@ export default function Home() {
   
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+    staleTime: 0, // Always consider data stale for immediate updates
   });
 
   const { data: will } = useQuery({
     queryKey: [`/api/wills/circle/${circle?.id}`],
     enabled: !!circle?.id,
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+    staleTime: 0, // Always consider data stale for immediate updates
   });
 
   const { data: user } = useQuery({
