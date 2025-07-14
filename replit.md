@@ -777,6 +777,10 @@ This is a full-stack web application for group goal accountability, built with R
   - **Minimal spacing**: Reduced all margins and spacing to absolute minimum while maintaining readability
   - **Overflow hidden**: Added `overflow-y-hidden` to container to prevent any potential scrolling
   - **Perfect fit**: Layout now guaranteed to fit within viewport for both 1 and 4 member scenarios without scrolling
+- **July 14, 2025**: Fixed leave circle redirect to properly navigate to Welcome page
+  - **Corrected redirect logic**: Changed leaveCircleMutation onSuccess handler from `setLocation('/inner-circle')` to `setLocation('/')`
+  - **Proper user flow**: Users leaving circles now correctly redirect to Welcome page instead of Inner Circle Entry page
+  - **Fixed navigation bug**: Eliminated confusion where users saw "Your Inner Circle" interface after successfully leaving a circle
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

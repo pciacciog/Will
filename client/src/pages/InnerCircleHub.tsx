@@ -225,7 +225,7 @@ export default function InnerCircleHub() {
         description: "You have left the circle",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      setLocation('/inner-circle');
+      setLocation('/');
     },
     onError: (error: any) => {
       toast({
