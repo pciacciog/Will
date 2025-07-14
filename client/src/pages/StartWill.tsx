@@ -419,9 +419,9 @@ export default function StartWill() {
         {currentStep === 1 && !showTransition && (
           <SectionCard>
             
-            <form onSubmit={handleStep1Submit} className="space-y-6">
+            <form onSubmit={handleStep1Submit} className="space-y-4">
               {/* Scheduling Mode Selection */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-lg font-medium text-gray-900 mb-4 tracking-tight">
                     Choose a schedule template below
@@ -461,13 +461,13 @@ export default function StartWill() {
 
               {/* Prescribed Weekly Preview */}
               {schedulingMode === 'prescribed' && (
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mx-4">
                   <div>
-                    <div className="font-medium text-gray-900 mb-2 tracking-tight">Selected Schedule</div>
-                    <div className="text-sm text-gray-700 space-y-1 tracking-tight">
+                    <div className="font-medium text-gray-900 mb-1 tracking-tight">Selected Schedule</div>
+                    <div className="text-sm text-gray-700 space-y-0.5 tracking-tight">
                       <div><strong>Start:</strong> {new Date(getNextMondayStart()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 AM</div>
                       <div><strong>End:</strong> {new Date(getWeekEndSunday(getNextMondayStart())).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 PM</div>
-                      <div className="mt-2 text-xs text-gray-600 tracking-tight">This is the schedule for your upcoming <em>Will</em>.</div>
+                      <div className="mt-1 text-xs text-gray-600 tracking-tight">This is the schedule for your upcoming <em>Will</em>.</div>
                     </div>
                   </div>
                 </div>
@@ -475,62 +475,54 @@ export default function StartWill() {
 
               {/* Custom Date Inputs */}
               {schedulingMode === 'custom' && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3 px-4">
+                  <div className="space-y-3">
                     {/* Start Date & Time */}
-                    <div className="space-y-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Start Date & Time</label>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1 tracking-tight">Date</label>
-                          <Input 
-                            type="date" 
-                            name="startDate"
-                            required 
-                            className="w-full"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1 tracking-tight">Time</label>
-                          <Input 
-                            type="time" 
-                            name="startTime"
-                            required 
-                            className="w-full"
-                          />
-                        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input 
+                          type="date" 
+                          name="startDate"
+                          required 
+                          placeholder="Start date"
+                          className="w-full"
+                        />
+                        <Input 
+                          type="time" 
+                          name="startTime"
+                          required 
+                          placeholder="Start time"
+                          className="w-full"
+                        />
                       </div>
                     </div>
                     
                     {/* End Date & Time */}
-                    <div className="space-y-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">End Date & Time</label>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1 tracking-tight">Date</label>
-                          <Input 
-                            type="date" 
-                            name="endDate"
-                            required 
-                            className="w-full"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1 tracking-tight">Time</label>
-                          <Input 
-                            type="time" 
-                            name="endTime"
-                            required 
-                            className="w-full"
-                          />
-                        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input 
+                          type="date" 
+                          name="endDate"
+                          required 
+                          placeholder="End date"
+                          className="w-full"
+                        />
+                        <Input 
+                          type="time" 
+                          name="endTime"
+                          required 
+                          placeholder="End time"
+                          className="w-full"
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
               )}
               
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center px-4 pt-2">
                 <div className="flex items-center space-x-2">
                   <Button type="button" variant="ghost" onClick={handleCancel}>
                     Cancel
