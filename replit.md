@@ -714,6 +714,9 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added real-time polling**: Tracks push status and prevents duplicate pushes per user per Will
   - **Enhanced notification messaging**: Shows specific pusher name "Randy has pushed you! 🚀" instead of generic "teammate"
   - **Push button behavior**: Green when available, grey when already used, only visible for active Will status
+  - **IMPORTANT LIMITATION**: Current implementation only sends local notifications on same device, not cross-device push notifications
+  - **For real cross-device push notifications**: Would require Apple Push Notification Service (APNs) or Firebase Cloud Messaging (FCM)
+  - **Fixed Will deletion bug**: Added willPushes cleanup to deleteWill method to prevent foreign key constraint violations
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout

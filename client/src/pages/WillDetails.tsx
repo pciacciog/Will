@@ -220,7 +220,7 @@ export default function WillDetails() {
       
       toast({
         title: "Push Sent!",
-        description: "You have pushed your circle",
+        description: "You have pushed your circle (local notification only - not cross-device)",
       });
     },
     onError: (error: any) => {
@@ -397,7 +397,7 @@ export default function WillDetails() {
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
-                title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Push your teammates'}
+                title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Push your teammates (local notification only)'}
               >
                 <Zap className="w-3 h-3 mr-1" />
                 {pushMutation.isPending ? 'Pushing...' : 'Push'}

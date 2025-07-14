@@ -553,13 +553,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Push notifications are only available for active wills" });
       }
 
+      // Get pusher info
+      const pusher = await storage.getUser(userId);
+      const pusherName = pusher?.firstName && pusher?.lastName 
+        ? `${pusher.firstName} ${pusher.lastName}`
+        : pusher?.email || 'Someone';
+
+      // Get circle members to notify (excluding the pusher)
+      const circleMembers = await storage.getCircleMembers(will.circleId);
+      const membersToNotify = circleMembers.filter(member => member.userId !== userId);
+
       // Record the push
       const push = await storage.addWillPush({
         willId,
         userId,
       });
 
-      res.json(push);
+      // Send push notifications to all other circle members
+      // In a real implementation, you would:
+      // 1. Store device tokens for each user
+      // 2. Use APNs for iOS or FCM for cross-platform
+      // 3. Send actual push notifications
+      
+      // For now, we'll return the data so the frontend can handle local notifications
+      res.json({
+        ...push,
+        pusherName,
+        membersToNotify: membersToNotify.map(member => ({
+          id: member.userId,
+          name: member.user.firstName && member.user.lastName 
+            ? `${member.user.firstName} ${member.user.lastName}`
+            : member.user.email
+        }))
+      });
     } catch (error) {
       console.error("Error adding push notification:", error);
       res.status(500).json({ message: "Failed to add push notification" });

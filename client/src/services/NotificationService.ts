@@ -1,4 +1,6 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 
 export class NotificationService {
   private static instance: NotificationService;
@@ -17,31 +19,72 @@ export class NotificationService {
     if (this.initialized) return;
 
     try {
-      // Request permissions
-      const permission = await LocalNotifications.requestPermissions();
+      // Request local notification permissions
+      const localPermission = await LocalNotifications.requestPermissions();
       
-      if (permission.display === 'granted') {
-        console.log('Notification permissions granted');
-        this.initialized = true;
+      if (localPermission.display === 'granted') {
+        console.log('Local notification permissions granted');
       } else {
-        console.log('Notification permissions denied');
+        console.log('Local notification permissions denied');
       }
+
+      // Only try push notifications on native platforms
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const pushPermission = await PushNotifications.requestPermissions();
+          
+          if (pushPermission.receive === 'granted') {
+            console.log('Push notification permissions granted');
+            
+            // Register for push notifications
+            await PushNotifications.register();
+            
+            // Listen for registration success
+            PushNotifications.addListener('registration', (token) => {
+              console.log('Push registration success, token:', token.value);
+              // TODO: Send this token to server for storage
+            });
+            
+            // Listen for registration errors
+            PushNotifications.addListener('registrationError', (err) => {
+              console.error('Push registration error:', err.error);
+            });
+            
+            // Listen for incoming push notifications
+            PushNotifications.addListener('pushNotificationReceived', (notification) => {
+              console.log('Push notification received:', notification);
+            });
+            
+            // Listen for push notification actions
+            PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+              console.log('Push notification action performed:', notification);
+            });
+          }
+        } catch (pushError) {
+          console.warn('Push notifications not available:', pushError);
+        }
+      }
+      
+      this.initialized = true;
     } catch (error) {
       console.error('Error initializing notifications:', error);
     }
   }
 
+  // IMPORTANT: This only sends LOCAL notifications to the same device
+  // For real cross-device push notifications, see docs/PUSH_NOTIFICATIONS.md
   async sendPushNotification(pusherName: string, willTitle: string) {
     if (!this.initialized) {
       await this.initialize();
     }
 
     try {
+      // This only works on the same device - NOT cross-device
       await LocalNotifications.schedule({
         notifications: [
           {
             id: Date.now(),
-            title: `${pusherName} has pushed you`,
+            title: `${pusherName} has pushed you! 🚀`,
             body: `${pusherName} wants to encourage you with your Will`,
             schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
             sound: 'default',
@@ -55,6 +98,8 @@ export class NotificationService {
           }
         ]
       });
+      
+      console.log('[NotificationService] LOCAL notification sent - this does NOT notify other users');
     } catch (error) {
       console.error('Error scheduling notification:', error);
     }
