@@ -713,6 +713,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Status correction**: Changed end_room_status from 'pending' to 'completed' for wills without end_room_scheduled_at
   - **Immediate effect**: These wills now proceed directly to final review stage without requiring end room scheduling
   - **Legacy compatibility**: Ensures older wills created before end room requirement can still complete properly
+- **July 14, 2025**: Updated Home page Will display with simplified title and neutral color scheme
+  - **Simplified title**: Changed from "Your Completed Will" to just "Will" for cleaner, more focused display
+  - **Neutral color scheme**: Replaced amber/yellow formatting for completed wills with green theme
+  - **Consistent styling**: waiting_for_end_room status now uses green colors (border-green-200, bg-green-50, text-green-600) instead of amber
+  - **Visual unity**: Completed wills now match active will styling for better visual consistency
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

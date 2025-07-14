@@ -202,7 +202,7 @@ export default function Home() {
         {isActiveWill && userCommitment && (
           <Card className={`mb-8 border-2 ${
             willStatus === 'active' ? 'border-green-200 bg-green-50' :
-            willStatus === 'waiting_for_end_room' ? 'border-amber-200 bg-amber-50' :
+            willStatus === 'waiting_for_end_room' ? 'border-green-200 bg-green-50' :
             'border-blue-200 bg-blue-50'
           }`}>
             <CardContent className="p-6">
@@ -210,24 +210,23 @@ export default function Home() {
                 <div className="flex items-center space-x-3">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                     willStatus === 'active' ? 'bg-green-100' :
-                    willStatus === 'waiting_for_end_room' ? 'bg-amber-100' :
+                    willStatus === 'waiting_for_end_room' ? 'bg-green-100' :
                     'bg-blue-100'
                   }`}>
                     <Target className={`w-6 h-6 ${
                       willStatus === 'active' ? 'text-green-600' :
-                      willStatus === 'waiting_for_end_room' ? 'text-amber-600' :
+                      willStatus === 'waiting_for_end_room' ? 'text-green-600' :
                       'text-blue-600'
                     }`} />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Your {willStatus === 'active' ? 'Active' : 
-                             willStatus === 'waiting_for_end_room' ? 'Completed' : 'Scheduled'} <em>Will</em>
+                      <em>Will</em>
                     </h3>
                     <div className="flex items-center space-x-2">
                       <Badge className={`text-xs ${
                         willStatus === 'active' ? 'bg-green-100 text-green-800' :
-                        willStatus === 'waiting_for_end_room' ? 'bg-amber-100 text-amber-800' :
+                        willStatus === 'waiting_for_end_room' ? 'bg-green-100 text-green-800' :
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {willStatus === 'active' ? 'Active' : 
