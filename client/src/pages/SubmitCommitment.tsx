@@ -144,7 +144,7 @@ export default function SubmitCommitment() {
 
           
           {/* Current Step Title */}
-          <div className="text-center">
+          <div className="text-center mt-6">
             <h1 className="text-xl font-semibold text-gray-900">
               {step === 1 && "What would you like to do?"}
               {step === 2 && "Why would you like to do this?"}
