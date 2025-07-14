@@ -53,20 +53,20 @@ export function EndRoomTooltip({ className = "" }: EndRoomTooltipProps) {
           
           {/* Modal */}
           <div className="fixed inset-4 z-50 flex items-center justify-center">
-            <div className="bg-white rounded-2xl shadow-xl p-8 w-[90%] max-w-sm transition-all duration-300 ease-in-out transform animate-in fade-in-0 zoom-in-95">
-              <div className="flex items-start justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 underline decoration-2 underline-offset-4 decoration-gray-300">
+            <div className="bg-white rounded-2xl shadow-xl p-6 w-[90%] max-w-sm transition-all duration-300 ease-in-out transform animate-in fade-in-0 zoom-in-95 relative">
+              {/* Close button in upper right corner */}
+              <button
+                onClick={handleClose}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-300"
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              
+              <div className="pr-10">
+                <h3 className="text-xl font-semibold text-gray-900 underline decoration-2 underline-offset-4 decoration-gray-300 mb-3">
                   End Room
                 </h3>
-                <button
-                  onClick={handleClose}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all duration-200 hover:scale-105 active:scale-95"
-                  aria-label="Close modal"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="space-y-4">
                 <p className="text-base text-gray-700 leading-relaxed text-center">
                   This is where the circle will gather to reflect, share, and honor the efforts of each member's Will.
                 </p>
