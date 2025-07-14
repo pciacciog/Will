@@ -667,6 +667,10 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced Will Details button visibility**: Updated End Room help icon to w-5 h-5 with ml-2 spacing for better visibility
   - **Improved Edit button styling**: Replaced square icon with labeled "Edit" button using px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 styling
   - **Enhanced Why button interaction**: Replaced arrow dropdown with labeled "Why" button using consistent button styling for better mobile UX
+  - **Unified commitment submission flow**: Updated SubmitCommitment flow to match exact UI structure and styling from StartWill creation flow
+  - **Consistent form patterns**: Applied proper form elements, validation, and button layouts to both What and Why steps for non-creator users
+  - **Matching visual hierarchy**: Applied identical headers, input styling, character counters, and spacing patterns between creator and non-creator flows
+  - **Streamlined user experience**: Non-creator users now have equally polished experience with consistent design patterns across all commitment steps
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout

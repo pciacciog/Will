@@ -177,129 +177,126 @@ export default function SubmitCommitment() {
               </div>
             </div>
           ) : step === 1 ? (
-            <div className="space-y-3">
-              
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
-                  <div className="relative">
-                    <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                      <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
-                      <Textarea 
-                        value={what}
-                        onChange={(e) => {
-                          const newValue = e.target.value;
-                          if (newValue.length <= 75) {
-                            setWhat(newValue);
-                            setWhatCharCount(newValue.length);
-                          }
-                        }}
-                        placeholder="call my grandmother this week"
-                        className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
-                        rows={2}
-                        maxLength={75}
-                        autoFocus
-                      />
-                    </div>
-                    <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
-                      {whatCharCount} / 75
-                    </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
+                <div className="relative">
+                  <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
+                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
+                    <Textarea 
+                      name="what"
+                      required
+                      rows={2}
+                      maxLength={75}
+                      value={what}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        if (newValue.length <= 75) {
+                          setWhat(newValue);
+                          setWhatCharCount(newValue.length);
+                        }
+                      }}
+                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                      placeholder="call my grandmother this week"
+                      autoFocus
+                    />
                   </div>
                 </div>
-                
-                <div className="flex justify-between gap-4">
-                  <div className="flex items-center space-x-2">
-                    <button 
-                      onClick={handleBack}
-                      className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back
-                    </button>
-                    {showHelpIcon && (
-                      <HelpIcon
-                        onClick={() => setShowInstructionModal(true)}
-                        size="sm"
-                      />
-                    )}
-                  </div>
-                  <PrimaryButton onClick={handleNext} disabled={!what.trim()}>
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </PrimaryButton>
-                </div>
+                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whatCharCount} / 75</div>
               </div>
-            </div>
+              
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-2">
+                  <button 
+                    type="button"
+                    onClick={handleBack}
+                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </button>
+                  {showHelpIcon && (
+                    <HelpIcon
+                      onClick={() => setShowInstructionModal(true)}
+                      size="sm"
+                    />
+                  )}
+                </div>
+                <PrimaryButton type="submit" disabled={!what.trim()}>
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                </PrimaryButton>
+              </div>
+            </form>
           ) : (
             <div className="space-y-3">
-
               {/* Beautified What Preview */}
               {what && (
-                <div className="text-center italic text-lg px-4 py-3 border rounded-md shadow-sm text-gray-800 bg-white">
+                <div className="text-center italic text-lg px-4 py-3 border rounded-md shadow-sm text-gray-800 bg-white mb-3">
                   "I will {what}"
                 </div>
               )}
               
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
-                    <span className="text-xs text-gray-500 flex items-center tracking-tight">
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      Private - only you can see this
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                      <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
-                      <Textarea 
-                        value={why}
-                        onChange={(e) => {
-                          const newValue = e.target.value;
-                          if (newValue.length <= 75) {
-                            setWhy(newValue);
-                            setWhyCharCount(newValue.length);
-                          }
-                        }}
-                        placeholder="I like how I feel after I talk to her"
-                        className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
-                        rows={2}
-                        maxLength={75}
-                        autoFocus
-                      />
-                    </div>
-                    <div className="text-right text-xs text-gray-500 mt-2 tracking-tight">
-                      {whyCharCount} / 75
-                    </div>
+              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
+                  <span className="text-xs text-gray-500 flex items-center tracking-tight">
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Private - only you can see this
+                  </span>
+                </div>
+                <div className="relative">
+                  <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
+                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
+                    <Textarea 
+                      name="why"
+                      required
+                      rows={2}
+                      maxLength={75}
+                      value={why}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        if (newValue.length <= 75) {
+                          setWhy(newValue);
+                          setWhyCharCount(newValue.length);
+                        }
+                      }}
+                      placeholder="I like how I feel after I talk to her"
+                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                      autoFocus
+                    />
                   </div>
                 </div>
-                
-                <div className="flex justify-between gap-4">
-                  <div className="flex items-center space-x-2">
-                    <button 
-                      onClick={handleBack}
-                      className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back
-                    </button>
-                    {showHelpIcon && (
-                      <HelpIcon
-                        onClick={() => setShowInstructionModal(true)}
-                        size="sm"
-                      />
-                    )}
-                  </div>
-                  <PrimaryButton 
-                    onClick={handleSubmit} 
-                    disabled={!why.trim() || commitmentMutation.isPending}
-                  >
-                    {commitmentMutation.isPending ? "Submitting..." : "Submit Commitment"}
-                  </PrimaryButton>
-                </div>
+                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whyCharCount} / 75</div>
               </div>
+              
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-2">
+                  <button 
+                    type="button"
+                    onClick={handleBack}
+                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </button>
+                  {showHelpIcon && (
+                    <HelpIcon
+                      onClick={() => setShowInstructionModal(true)}
+                      size="sm"
+                    />
+                  )}
+                </div>
+                <PrimaryButton 
+                  type="submit" 
+                  disabled={!why.trim() || commitmentMutation.isPending}
+                >
+                  {commitmentMutation.isPending ? "Submitting..." : "Submit Commitment"}
+                </PrimaryButton>
+              </div>
+            </form>
             </div>
           )}
         </SectionCard>
