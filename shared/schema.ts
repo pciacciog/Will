@@ -92,6 +92,13 @@ export const dailyProgress = pgTable("daily_progress", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const willPushes = pgTable("will_pushes", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  pushedAt: timestamp("pushed_at").defaultNow(),
+});
+
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
@@ -124,6 +131,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   willCommitments: many(willCommitments),
   willAcknowledgments: many(willAcknowledgments),
   dailyProgress: many(dailyProgress),
+  willPushes: many(willPushes),
 }));
 
 export const circlesRelations = relations(circles, ({ one, many }) => ({
@@ -158,6 +166,7 @@ export const willsRelations = relations(wills, ({ one, many }) => ({
   commitments: many(willCommitments),
   acknowledgments: many(willAcknowledgments),
   dailyProgress: many(dailyProgress),
+  pushes: many(willPushes),
 }));
 
 export const willCommitmentsRelations = relations(willCommitments, ({ one }) => ({
@@ -189,6 +198,17 @@ export const dailyProgressRelations = relations(dailyProgress, ({ one }) => ({
   }),
   user: one(users, {
     fields: [dailyProgress.userId],
+    references: [users.id],
+  }),
+}));
+
+export const willPushesRelations = relations(willPushes, ({ one }) => ({
+  will: one(wills, {
+    fields: [willPushes.willId],
+    references: [wills.id],
+  }),
+  user: one(users, {
+    fields: [willPushes.userId],
     references: [users.id],
   }),
 }));
@@ -260,6 +280,13 @@ export const insertDailyProgressSchema = createInsertSchema(dailyProgress).omit(
 });
 export type InsertDailyProgress = z.infer<typeof insertDailyProgressSchema>;
 export type DailyProgress = typeof dailyProgress.$inferSelect;
+
+export const insertWillPushSchema = createInsertSchema(willPushes).omit({
+  id: true,
+  pushedAt: true,
+});
+export type InsertWillPush = z.infer<typeof insertWillPushSchema>;
+export type WillPush = typeof willPushes.$inferSelect;
 
 export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
   id: true,

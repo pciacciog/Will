@@ -8,6 +8,7 @@ import {
   insertWillCommitmentSchema,
   insertWillAcknowledgmentSchema,
   insertDailyProgressSchema,
+  insertWillPushSchema,
   insertBlogPostSchema,
   insertPageContentSchema,
   willCommitments,
@@ -526,6 +527,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking progress:", error);
       res.status(500).json({ message: "Failed to mark progress" });
+    }
+  });
+
+  // Push notification routes
+  app.post('/api/wills/:id/push', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+
+      // Check if user has already pushed for this will
+      const hasAlreadyPushed = await storage.hasUserPushed(willId, userId);
+      if (hasAlreadyPushed) {
+        return res.status(409).json({ message: "You have already pushed for this will" });
+      }
+
+      // Get will to ensure it exists and is active
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+
+      // Only allow pushing for active wills
+      if (will.status !== 'active') {
+        return res.status(400).json({ message: "Push notifications are only available for active wills" });
+      }
+
+      // Record the push
+      const push = await storage.addWillPush({
+        willId,
+        userId,
+      });
+
+      res.json(push);
+    } catch (error) {
+      console.error("Error adding push notification:", error);
+      res.status(500).json({ message: "Failed to add push notification" });
+    }
+  });
+
+  app.get('/api/wills/:id/push/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+
+      const hasUserPushed = await storage.hasUserPushed(willId, userId);
+      const pushes = await storage.getWillPushes(willId);
+
+      res.json({ 
+        hasUserPushed, 
+        pushes 
+      });
+    } catch (error) {
+      console.error("Error getting push status:", error);
+      res.status(500).json({ message: "Failed to get push status" });
     }
   });
 

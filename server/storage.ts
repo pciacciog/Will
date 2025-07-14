@@ -6,6 +6,7 @@ import {
   willCommitments,
   willAcknowledgments,
   dailyProgress,
+  willPushes,
   blogPosts,
   pageContents,
   type User,
@@ -23,6 +24,8 @@ import {
   type InsertWillAcknowledgment,
   type DailyProgress,
   type InsertDailyProgress,
+  type WillPush,
+  type InsertWillPush,
   type BlogPost,
   type InsertBlogPost,
   type PageContent,
@@ -80,6 +83,11 @@ export interface IStorage {
   markDailyProgress(progress: InsertDailyProgress): Promise<DailyProgress>;
   getDailyProgress(willId: number, userId: string, date: string): Promise<DailyProgress | undefined>;
   getUserProgressStats(willId: number, userId: string): Promise<{ completed: number; total: number }>;
+  
+  // Push notification operations
+  addWillPush(push: InsertWillPush): Promise<WillPush>;
+  hasUserPushed(willId: number, userId: string): Promise<boolean>;
+  getWillPushes(willId: number): Promise<(WillPush & { user: User })[]>;
   
   // Admin operations
   getAllUsers(limit?: number, offset?: number): Promise<User[]>;
@@ -563,6 +571,37 @@ export class DatabaseStorage implements IStorage {
   async getPageContentByKey(pageKey: string): Promise<PageContent | undefined> {
     const [content] = await db.select().from(pageContents).where(eq(pageContents.pageKey, pageKey));
     return content;
+  }
+
+  // Push notification operations
+  async addWillPush(push: InsertWillPush): Promise<WillPush> {
+    const [newPush] = await db.insert(willPushes).values(push).returning();
+    return newPush;
+  }
+
+  async hasUserPushed(willId: number, userId: string): Promise<boolean> {
+    const [push] = await db
+      .select()
+      .from(willPushes)
+      .where(and(eq(willPushes.willId, willId), eq(willPushes.userId, userId)));
+    return !!push;
+  }
+
+  async getWillPushes(willId: number): Promise<(WillPush & { user: User })[]> {
+    const pushes = await db
+      .select({
+        push: willPushes,
+        user: users,
+      })
+      .from(willPushes)
+      .leftJoin(users, eq(willPushes.userId, users.id))
+      .where(eq(willPushes.willId, willId))
+      .orderBy(desc(willPushes.pushedAt));
+    
+    return pushes.map(({ push, user }) => ({
+      ...push,
+      user: user!,
+    }));
   }
 }
 

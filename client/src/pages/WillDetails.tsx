@@ -11,8 +11,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { EndRoom } from "@/components/EndRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge } from "@/components/ui/design-system";
-import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
+import { notificationService } from "@/services/NotificationService";
 
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -192,6 +193,45 @@ export default function WillDetails() {
     },
   });
 
+  // Push notification query and mutation
+  const { data: pushStatus, isLoading: isPushLoading } = useQuery({
+    queryKey: [`/api/wills/${id}/push/status`],
+    enabled: !!will && will.status === 'active',
+    refetchInterval: 30000,
+  });
+
+  const pushMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(`/api/wills/${id}/push`, {
+        method: 'POST'
+      });
+      return response.json();
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/push/status`] });
+      
+      // Send local notification to encourage teammates
+      if (user && will) {
+        const pusherName = user.firstName && user.lastName 
+          ? `${user.firstName} ${user.lastName}`
+          : user.email;
+        await notificationService.sendPushNotification(pusherName, will.title || 'Your Will');
+      }
+      
+      toast({
+        title: "Push Sent!",
+        description: "Your teammates have been notified to encourage them",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send push notification",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Auto-show Final Will Summary when End Room ceremony is finished
   useEffect(() => {
     if (will && will.status === 'completed' && will.endRoomStatus === 'completed' && !will.hasUserAcknowledged && !showFinalSummary) {
@@ -342,9 +382,27 @@ export default function WillDetails() {
 
         {/* Circle Commitments Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center mb-4 pb-2 border-b border-gray-100">
-            <CheckCircle className="w-5 h-5 text-brandGreen mr-2" />
-            <span className="text-base font-semibold text-gray-900 underline">Circle Commitments</span>
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+            <div className="flex items-center">
+              <CheckCircle className="w-5 h-5 text-brandGreen mr-2" />
+              <span className="text-base font-semibold text-gray-900 underline">Circle Commitments</span>
+            </div>
+            {/* Push notification button for active wills */}
+            {will.status === 'active' && (
+              <button
+                onClick={() => pushMutation.mutate()}
+                disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
+                className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  pushStatus?.hasUserPushed
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+                title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Push your teammates'}
+              >
+                <Zap className="w-4 h-4 mr-1" />
+                {pushMutation.isPending ? 'Pushing...' : 'Push'}
+              </button>
+            )}
           </div>
           <div className="space-y-4">
             {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
