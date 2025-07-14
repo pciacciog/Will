@@ -198,11 +198,11 @@ export default function InnerCircle() {
           </div>
         ) : (
           // Has Circle State
-          <div className="h-full flex flex-col space-y-4">
+          <div className="h-full flex flex-col space-y-2">
             {/* Header Section */}
-            <div className="flex-shrink-0">
-              <h2 className="text-xl font-bold text-gray-900 mb-3">Your Inner Circle</h2>
-              <div className="flex items-center gap-x-2">
+            <div className="flex-shrink-0 text-center">
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Your Inner Circle</h2>
+              <div className="flex items-center justify-center gap-x-2">
                 <span className="text-sm text-gray-500">Invite Code:</span>
                 <div className="bg-gray-100 px-3 py-1 rounded-md font-mono tracking-widest text-sm font-semibold text-gray-800">
                   {circle.inviteCode}
@@ -250,9 +250,9 @@ export default function InnerCircle() {
             </div>
             
             {/* Footer Section */}
-            <div className="flex-shrink-0 space-y-3">
+            <div className="flex-shrink-0 space-y-1">
               <div className="px-3 py-2 bg-blue-50 rounded-lg text-sm">
-                <div className="flex items-center gap-x-2 text-blue-700">
+                <div className="flex items-center justify-center gap-x-2 text-blue-700">
                   <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>

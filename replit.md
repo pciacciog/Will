@@ -793,6 +793,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Cache removal**: Added queryClient.removeQueries() calls to clear stale cache entries completely
   - **Fixed race conditions**: Eliminated frontend showing stale circle data while backend correctly reports no membership
   - **Improved query reliability**: Added staleTime: 0 to ensure immediate data freshness after state changes
+- **July 14, 2025**: Enhanced Inner Circle Entry page layout with center-aligned elements and reduced vertical spacing
+  - **Center-aligned title**: "Your Inner Circle" title now uses text-center for better visual hierarchy
+  - **Center-aligned invite code section**: Invite code and copy button now centered using justify-center
+  - **Reduced vertical spacing**: Changed from space-y-4 to space-y-2 for main container, mb-3 to mb-2 for title
+  - **Compressed footer spacing**: Reduced footer section spacing from space-y-3 to space-y-1 between Circle Status and Enter Circle button
+  - **Centered Circle Status**: Circle Status info box now uses justify-center for centered alignment
+  - **Single viewport optimization**: Eliminated excessive white space to ensure comfortable fit on iPhone screens without scrolling
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags
