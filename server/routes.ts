@@ -33,6 +33,11 @@ function getWillStatus(will: any, memberCount: number): string {
   const startDate = new Date(will.startDate);
   const endDate = new Date(will.endDate);
 
+  // If the will has an explicit status of 'completed', respect it (for legacy wills)
+  if (will.status === 'completed') {
+    return 'completed';
+  }
+
   // If the will has End Room data, use the will's status directly
   if (will.endRoomScheduledAt) {
     return will.status || 'waiting_for_end_room';

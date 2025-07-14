@@ -737,6 +737,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Reduced padding**: Decreased CardContent padding from p-8 to p-6 for better mobile fit
   - **Constrained width**: Limited card container to max-w-md for optimal mobile display
   - **Eliminated horizontal scroll**: Ensured all content fits within mobile viewport boundaries
+- **July 14, 2025**: Fixed legacy will display issue for QFHFB3 circle showing incorrect "End Room Scheduled" status
+  - **Root cause identified**: Server-side getWillStatus function was ignoring explicit 'completed' status for legacy wills
+  - **Database analysis**: Will ID 28 has status 'completed' but end_room_scheduled_at is NULL (legacy will bypassed end room)
+  - **Fixed server logic**: Added priority check for will.status === 'completed' before time-based logic
+  - **Legacy compatibility**: Ensures completed wills without end room scheduling display proper 'completed' status instead of 'waiting_for_end_room'
+  - **Result**: QFHFB3 circle no longer shows "Will - End Room Scheduled" for legacy completed will
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags
