@@ -6,6 +6,57 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Target, ChevronDown, ChevronUp } from "lucide-react";
 
+function getWillStatus(will: any, memberCount: number): string {
+  if (!will) return 'no_will';
+  
+  // If will is archived, treat as no will
+  if (will.status === 'archived') return 'no_will';
+  
+  // If will has explicit status, use it (for End Room flow)
+  if (will.status === 'waiting_for_end_room') {
+    return will.status;
+  }
+  
+  // Special handling for completed status
+  if (will.status === 'completed') {
+    const committedMemberCount = will.commitments?.length || 0;
+    const acknowledgedCount = will.acknowledgedCount || 0;
+    
+    // If all committed members have acknowledged, show no_will to allow new Will creation
+    if (acknowledgedCount >= committedMemberCount) {
+      return 'no_will';
+    }
+    return 'completed';
+  }
+  
+  const now = new Date();
+  const startDate = new Date(will.startDate);
+  const endDate = new Date(will.endDate);
+
+  if (now >= endDate) {
+    // Will should transition to waiting_for_end_room, but check acknowledgments
+    const committedMemberCount = will.commitments?.length || 0;
+    const acknowledgedCount = will.acknowledgedCount || 0;
+    
+    if (acknowledgedCount >= committedMemberCount) {
+      return 'no_will'; // All committed members acknowledged, can start new will
+    }
+    return 'completed';
+  } else if (now >= startDate) {
+    return 'active';
+  } else {
+    // Check commitment count to determine pending vs scheduled
+    const commitmentCount = will.commitments?.length || 0;
+    if (commitmentCount < memberCount) {
+      return 'pending';
+    } else if (commitmentCount >= memberCount) {
+      return 'scheduled';
+    } else {
+      return 'pending';
+    }
+  }
+}
+
 export default function Home() {
   const [, setLocation] = useLocation();
   const [showWhy, setShowWhy] = useState(false);
@@ -15,8 +66,8 @@ export default function Home() {
   });
 
   const { data: will } = useQuery({
-    queryKey: ['/api/wills/circle'],
-    enabled: !!circle,
+    queryKey: [`/api/wills/circle/${circle?.id}`],
+    enabled: !!circle?.id,
   });
 
   const { data: user } = useQuery({
@@ -50,11 +101,22 @@ export default function Home() {
     );
   }
 
-  // Check if there's an active Will (scheduled or active status)
-  const isActiveWill = will && (will.status === 'active' || will.status === 'scheduled' || will.status === 'waiting_for_end_room');
+  // Check if there's an active Will using the same logic as InnerCircleHub
+  const willStatus = getWillStatus(will, circle?.members?.length || 0);
+  const isActiveWill = willStatus === 'active' || willStatus === 'scheduled' || willStatus === 'waiting_for_end_room';
   
   // Get user's commitment if they have one
-  const userCommitment = isActiveWill && user ? will.commitments?.find((c: any) => c.userId === user.id) : null;
+  const userCommitment = isActiveWill && user ? will?.commitments?.find((c: any) => c.userId === user.id) : null;
+  
+  // Debug logging
+  console.log('Home component debug:', {
+    will,
+    willStatus,
+    isActiveWill,
+    userCommitment,
+    userId: user?.id,
+    commitments: will?.commitments
+  });
 
 
 
