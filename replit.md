@@ -704,6 +704,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Better positioning**: Moved from top-4 right-4 to top-2 right-2 for closer corner placement
   - **Enhanced styling**: Added border border-gray-300 bg-white for better definition and w-6 h-6 sizing
   - **Perfect centering**: Applied flex items-center justify-center for precise alignment of close button
+- **July 14, 2025**: Improved vertical spacing between progress bar and screen titles for better visual balance
+  - **Increased spacing**: Updated from mt-6 to mt-8 across all Will creation flow components
+  - **Enhanced breathing room**: Applied to StartWill, SubmitCommitment, and EditCommitment pages for consistency
+  - **Better visual hierarchy**: Reduced cramped feeling between progress indicator and screen titles
+  - **Mobile optimization**: Maintains single-page display while improving readability and user experience
 - **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
   - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
   - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context

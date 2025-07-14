@@ -185,7 +185,7 @@ export default function SubmitCommitment() {
             </div>
           
           {/* Current Step Title */}
-          <div className="text-center mt-6">
+          <div className="text-center mt-8">
             <h1 className="text-xl font-semibold text-gray-900">
               {currentStep === 1 && "Accept Will Timeline"}
               {currentStep === 2 && "What would you like to do?"}
