@@ -473,6 +473,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(willCommitments).where(eq(willCommitments.willId, willId));
     await db.delete(willAcknowledgments).where(eq(willAcknowledgments.willId, willId));
     await db.delete(dailyProgress).where(eq(dailyProgress.willId, willId));
+    await db.delete(willPushes).where(eq(willPushes.willId, willId));
     await db.delete(wills).where(eq(wills.id, willId));
   }
 
