@@ -100,15 +100,17 @@ export default function InnerCircle() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-16 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <MobileLayout>
+        <div className="flex items-center justify-center min-h-screen-safe">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MobileLayout>
     );
   }
 
   return (
-    <div className="min-h-screen pt-16 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <MobileLayout>
+      <div className="max-w-4xl mx-auto py-8">
         
         {!circle ? (
           // No Circle State
@@ -255,6 +257,6 @@ export default function InnerCircle() {
           </div>
         )}
       </div>
-    </div>
+    </MobileLayout>
   );
 }

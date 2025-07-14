@@ -77,6 +77,56 @@
     margin: 0;
   }
 
+  /* Global safe area utilities */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+  
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .ml-safe {
+    margin-left: env(safe-area-inset-left);
+  }
+  
+  .mr-safe {
+    margin-right: env(safe-area-inset-right);
+  }
+  
+  /* Enhanced safe area spacing for iOS headers */
+  .pt-safe-header {
+    padding-top: calc(env(safe-area-inset-top) + 1.5rem);
+  }
+  
+  .pb-safe-footer {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem);
+  }
+  
+  /* Full safe area padding for main containers */
+  .p-safe-full {
+    padding-top: calc(env(safe-area-inset-top) + 1.5rem);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem);
+    padding-left: calc(env(safe-area-inset-left) + 1rem);
+    padding-right: calc(env(safe-area-inset-right) + 1rem);
+  }
+
   /* iOS-specific touch optimizations */
   @supports (-webkit-touch-callout: none) {
     .ios-scroll {

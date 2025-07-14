@@ -15,9 +15,13 @@ export default {
         'safe-bottom': 'env(safe-area-inset-bottom)',
         'safe-left': 'env(safe-area-inset-left)',
         'safe-right': 'env(safe-area-inset-right)',
+        'safe-header': 'calc(env(safe-area-inset-top) + 1.5rem)',
+        'safe-footer': 'calc(env(safe-area-inset-bottom) + 1.5rem)',
+        'safe-full': 'calc(env(safe-area-inset-top) + env(safe-area-inset-bottom) + 3rem)',
       },
       minHeight: {
         'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+        'screen-safe-header': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 3rem)',
       },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem', letterSpacing: '-0.025em' }],

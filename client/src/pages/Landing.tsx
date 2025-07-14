@@ -4,7 +4,7 @@ import { Link } from "wouter";
 export default function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col justify-center">
+      <div className="max-w-md mx-auto px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] h-screen flex flex-col justify-center">
         {/* Hero Section */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center mx-auto mb-6">

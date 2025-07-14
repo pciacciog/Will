@@ -107,7 +107,7 @@ export default function Home() {
   // If user is not authenticated, redirect to auth
   if (!user) {
     return (
-      <div className="min-h-screen pt-16">
+      <div className="min-h-screen pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -143,7 +143,7 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
         <div className="text-center mb-12">
