@@ -139,14 +139,6 @@ export default function SubmitCommitment() {
                 <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
                 <SectionTitle>Submit Your Commitment</SectionTitle>
               </div>
-              <div className="flex-shrink-0 ml-2">
-                {showHelpIcon && (
-                  <HelpIcon
-                    onClick={() => setShowInstructionModal(true)}
-                    size="sm"
-                  />
-                )}
-              </div>
             </div>
 
           {/* Progress Bar */}
@@ -216,13 +208,21 @@ export default function SubmitCommitment() {
                 </div>
                 
                 <div className="flex justify-between gap-4">
-                  <button 
-                    onClick={handleBack}
-                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={handleBack}
+                      className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </button>
+                    {showHelpIcon && (
+                      <HelpIcon
+                        onClick={() => setShowInstructionModal(true)}
+                        size="sm"
+                      />
+                    )}
+                  </div>
                   <PrimaryButton onClick={handleNext} disabled={!what.trim()}>
                     Next
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -277,13 +277,21 @@ export default function SubmitCommitment() {
                 </div>
                 
                 <div className="flex justify-between gap-4">
-                  <button 
-                    onClick={handleBack}
-                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={handleBack}
+                      className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </button>
+                    {showHelpIcon && (
+                      <HelpIcon
+                        onClick={() => setShowInstructionModal(true)}
+                        size="sm"
+                      />
+                    )}
+                  </div>
                   <PrimaryButton 
                     onClick={handleSubmit} 
                     disabled={!why.trim() || commitmentMutation.isPending}

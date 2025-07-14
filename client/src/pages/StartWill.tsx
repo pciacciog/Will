@@ -486,7 +486,7 @@ export default function StartWill() {
                             required 
                             className="w-full"
                           />
-                          <div className="text-xs text-gray-400 mt-1">HH:MM AM/PM</div>
+                          <div className="text-xs text-gray-400 mt-1">HH:MM</div>
                         </div>
                       </div>
                     </div>
@@ -511,7 +511,7 @@ export default function StartWill() {
                             required 
                             className="w-full"
                           />
-                          <div className="text-xs text-gray-400 mt-1">HH:MM AM/PM</div>
+                          <div className="text-xs text-gray-400 mt-1">HH:MM</div>
                         </div>
                       </div>
                     </div>
@@ -667,7 +667,7 @@ export default function StartWill() {
                     onChange={(e) => setEndRoomDateTime(e.target.value)}
                     className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   />
-                  <div className="text-xs text-gray-400 mt-1 text-center">MM/DD/YYYY HH:MM AM/PM</div>
+                  <div className="text-xs text-gray-400 mt-1 text-center">MM/DD/YYYY HH:MM</div>
                 </div>
               </div>
 

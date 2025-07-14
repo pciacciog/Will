@@ -659,6 +659,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added End Room scheduling placeholder**: Applied "MM/DD/YYYY HH:MM AM/PM" placeholder to End Room datetime-local input field with consistent gray styling
   - **Fixed help icon positioning and sizing**: Moved help icon below title to avoid collision with "Why" text, reduced icon sizes from md to sm (w-8 h-8), and repositioned to center below step titles
   - **Enhanced date/time input guidance**: Added format helper text below date/time inputs since HTML5 date/time inputs don't support placeholder attributes - shows "MM/DD/YYYY" and "HH:MM AM/PM" below respective fields
+- **July 14, 2025**: Streamlined help icon placement and time format guidance for cleaner UX
+  - **Removed help icons from headers**: Eliminated help icons from upper right corner of all When/What/Why tab headers to reduce visual clutter
+  - **Consolidated help icon placement**: Help icons now appear only at bottom of screens next to CTA buttons for single-point access
+  - **Simplified time format guidance**: Changed time input helper text from "HH:MM AM/PM" to just "HH:MM" to reduce unnecessary information
+  - **Clarified placeholder limitations**: HTML5 date/time inputs don't support placeholder text inside fields - helper text below inputs is the only viable approach
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout
