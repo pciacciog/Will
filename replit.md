@@ -684,6 +684,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Applied across all flows**: Identical formatting and visual hierarchy for StartWill, SubmitCommitment, and EditCommitment pages
   - **Fixed Home button text**: Changed "Reveal My Why" to simply "Why" for cleaner interface consistency
   - **Maintained single-line headers**: Ensured "Why would you like to do this?" fits on single line across all views
+- **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
+  - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
+  - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags
+  - **Fixed multiple button instances**: Updated "View Will Details", "View End Room Details", and "Review Final Summary" buttons
+  - **Root cause identified**: JSX spaces around `<em>` tags were being collapsed during rendering, causing word concatenation
+  - **Applied comprehensive solution**: All Inner Circle Hub buttons now use React fragments to preserve proper word spacing
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout
