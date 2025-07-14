@@ -705,6 +705,15 @@ This is a full-stack web application for group goal accountability, built with R
   - **Updated Home page**: Real-time polling for Welcome screen Will status and countdown displays
   - **Updated WillDetails page**: Enhanced polling frequency for completion acknowledgments and status changes
   - **Eliminated manual refresh requirement**: Users no longer need to close/reopen app to see Will status changes
+- **July 14, 2025**: Implemented Push notification feature for team encouragement
+  - **Extended database schema**: Added willPushes table to track one-per-user-per-Will push notifications
+  - **Created comprehensive storage layer**: Added addWillPush, hasUserPushed, and getWillPushes methods
+  - **Added API routes**: /api/wills/:id/push and /api/wills/:id/push/status with proper validation
+  - **Integrated Push button**: Added to Will Details page Circle Commitments section header for active Wills only
+  - **Created NotificationService**: Using Capacitor Local Notifications for mobile alerts
+  - **Added real-time polling**: Tracks push status and prevents duplicate pushes per user per Will
+  - **Enhanced notification messaging**: Shows specific pusher name "Randy has pushed you! 🚀" instead of generic "teammate"
+  - **Push button behavior**: Green when available, grey when already used, only visible for active Will status
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout

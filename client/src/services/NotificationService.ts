@@ -41,7 +41,7 @@ export class NotificationService {
         notifications: [
           {
             id: Date.now(),
-            title: "Your teammate pushed you! 🚀",
+            title: `${pusherName} has pushed you! 🚀`,
             body: `${pusherName} wants to encourage you with your Will`,
             schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
             sound: 'default',
