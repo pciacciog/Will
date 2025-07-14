@@ -718,6 +718,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Neutral color scheme**: Replaced amber/yellow formatting for completed wills with green theme
   - **Consistent styling**: waiting_for_end_room status now uses green colors (border-green-200, bg-green-50, text-green-600) instead of amber
   - **Visual unity**: Completed wills now match active will styling for better visual consistency
+- **July 14, 2025**: Fixed Inner Circle Hub display issue for legacy wills without scheduled end rooms
+  - **Root cause**: Inner Circle Hub was showing "Will - End Room Scheduled" for legacy wills that bypassed end room requirement
+  - **Solution**: Added condition to only show waiting_for_end_room status UI when will.endRoomScheduledAt exists
+  - **Legacy compatibility**: Wills without end room scheduled dates now properly skip end room display sections
+  - **UI cleanup**: Removed display of "Opens at N/A" text for wills that never had end rooms scheduled
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

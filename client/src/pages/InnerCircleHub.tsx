@@ -679,7 +679,7 @@ export default function InnerCircleHub() {
             </div>
           )}
 
-          {willStatus === 'waiting_for_end_room' && (
+          {willStatus === 'waiting_for_end_room' && will?.endRoomScheduledAt && (
             <div className="p-4">
               {/* Check if End Room is currently active */}
               {will?.endRoomStatus === 'open' ? (
@@ -735,7 +735,7 @@ export default function InnerCircleHub() {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground tracking-tight">
-                          Opens at {will?.endRoomScheduledAt ? formatEndRoomTime(will.endRoomScheduledAt) : 'N/A'}
+                          Opens at {formatEndRoomTime(will.endRoomScheduledAt)}
                         </p>
                       </div>
                     </div>
