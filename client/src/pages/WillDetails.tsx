@@ -384,7 +384,7 @@ export default function WillDetails() {
                       {isCurrentUser && (
                         <button
                           onClick={toggleWhy}
-                          className="px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                          className="text-sm px-3 py-1 rounded-md bg-gray-100 border border-gray-300 hover:bg-gray-200 transition"
                           title={showWhy ? "Hide your reason" : "Show your reason"}
                         >
                           Why
@@ -403,11 +403,8 @@ export default function WillDetails() {
                     </div>
                     
                     {isCurrentUser && showWhy && (
-                      <div className="pt-1">
-                        <div className="text-sm text-gray-500 font-medium italic mb-1">Because</div>
-                        <div className="text-base text-gray-800 leading-relaxed">
-                          {commitment.why}
-                        </div>
+                      <div className="mt-2 p-2 bg-blue-50 border-l-4 border-blue-400 text-sm text-blue-800 rounded">
+                        Because {commitment.why}
                       </div>
                     )}
                   </div>
