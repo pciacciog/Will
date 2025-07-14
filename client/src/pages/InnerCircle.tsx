@@ -181,46 +181,48 @@ export default function InnerCircle() {
           <div>
             <Card className="mb-8">
               <CardContent className="p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Your Inner Circle</h2>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-500">Invite Code:</span>
-                    <div className="bg-gray-100 px-4 py-2 rounded-lg font-mono tracking-widest text-lg font-semibold">
-                      {circle.inviteCode}
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Inner Circle</h2>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-2">
+                    <span className="text-sm text-gray-500 font-medium">Invite Code:</span>
+                    <div className="flex items-center gap-x-2">
+                      <div className="bg-gray-100 px-4 py-2 rounded-md font-mono tracking-widest text-lg font-semibold text-gray-800">
+                        {circle.inviteCode}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyInviteCode(circle.inviteCode)}
+                        className="text-primary hover:text-blue-600"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyInviteCode(circle.inviteCode)}
-                      className="text-primary hover:text-blue-600"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </Button>
                   </div>
                 </div>
                 
-                <div className="space-y-3 mb-6">
+                <div className="space-y-2 mb-6">
                   {circle.members?.map((member: any, index: number) => (
-                    <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <div key={member.id} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                           <span className="text-white font-semibold text-sm">
                             {member.user.firstName?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || '?'}
                           </span>
                         </div>
-                        <div>
-                          <div className="font-medium text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
                             {member.user.firstName && member.user.lastName 
                               ? `${member.user.firstName} ${member.user.lastName}`
                               : member.user.email
                             }
                           </div>
-                          <div className="text-sm text-gray-500">{member.user.email}</div>
+                          <div className="text-sm text-gray-500 truncate">{member.user.email}</div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex-shrink-0 ml-3">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           Member
                         </span>
@@ -229,9 +231,9 @@ export default function InnerCircle() {
                   ))}
                 </div>
                 
-                <div className="p-4 bg-blue-50 rounded-xl">
-                  <div className="flex items-center space-x-2 text-blue-700">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <div className="mt-4 px-3 py-2 bg-blue-50 rounded-md">
+                  <div className="flex items-center gap-x-2 text-blue-700">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <span className="text-sm font-medium">
@@ -242,10 +244,10 @@ export default function InnerCircle() {
               </CardContent>
             </Card>
             
-            <div className="text-center">
+            <div className="text-center mt-6">
               <Button 
                 onClick={handleEnterCircle}
-                className="bg-primary hover:bg-blue-600 text-white px-8 py-4 rounded-2xl text-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="bg-primary hover:bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 Enter Circle →
               </Button>
