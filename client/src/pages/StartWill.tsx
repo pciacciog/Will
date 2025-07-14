@@ -485,15 +485,15 @@ export default function StartWill() {
                           type="date" 
                           name="startDate"
                           required 
-                          placeholder="Start date"
-                          className="w-full"
+                          placeholder="MM/DD/YYYY"
+                          className="w-full placeholder:text-gray-400"
                         />
                         <Input 
                           type="time" 
                           name="startTime"
                           required 
-                          placeholder="Start time"
-                          className="w-full"
+                          placeholder="HH:MM AM/PM"
+                          className="w-full placeholder:text-gray-400"
                         />
                       </div>
                     </div>
@@ -506,15 +506,15 @@ export default function StartWill() {
                           type="date" 
                           name="endDate"
                           required 
-                          placeholder="End date"
-                          className="w-full"
+                          placeholder="MM/DD/YYYY"
+                          className="w-full placeholder:text-gray-400"
                         />
                         <Input 
                           type="time" 
                           name="endTime"
                           required 
-                          placeholder="End time"
-                          className="w-full"
+                          placeholder="HH:MM AM/PM"
+                          className="w-full placeholder:text-gray-400"
                         />
                       </div>
                     </div>

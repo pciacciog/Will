@@ -655,6 +655,7 @@ This is a full-stack web application for group goal accountability, built with R
   - **Improved Inner Circle Hub mobile layout**: Applied responsive 2-column grid layout for Circle Members section when 3+ members present to maintain single viewport display
   - **Fixed Final Summary modal scrolling**: Replaced fixed height container with proper vertical scrolling (`max-h-screen overflow-y-auto`) to prevent content cutoff on mobile with 4+ member commitments
   - **Fixed Why toggle button collision**: Added proper spacing (`gap-3`), flex constraints (`flex-1 min-w-0`), and text truncation to prevent collision between user names and toggle buttons in Circle Commitments section
+  - **Enhanced custom timeline input placeholders**: Added clear format guidance with "MM/DD/YYYY" for date inputs and "HH:MM AM/PM" for time inputs, styled with `placeholder:text-gray-400` for visual consistency
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout
