@@ -664,11 +664,12 @@ export default function StartWill() {
                     type="datetime-local"
                     name="endRoomDateTime"
                     required
+                    placeholder="MM/DD/YYYY HH:MM AM/PM"
                     min={willData.endDate}
                     max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
                     value={endRoomDateTime}
                     onChange={(e) => setEndRoomDateTime(e.target.value)}
-                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 placeholder:text-gray-400"
                   />
                 </div>
               </div>
