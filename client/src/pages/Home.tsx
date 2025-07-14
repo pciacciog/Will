@@ -206,7 +206,7 @@ export default function Home() {
                       onClick={() => setShowWhy(!showWhy)}
                       className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 hover:underline focus:outline-none"
                     >
-                      <span>Reveal My Why</span>
+                      <span>Why</span>
                       {showWhy ? (
                         <ChevronUp className="w-4 h-4" />
                       ) : (
