@@ -690,6 +690,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Fixed multiple button instances**: Updated "View Will Details", "View End Room Details", and "Review Final Summary" buttons
   - **Root cause identified**: JSX spaces around `<em>` tags were being collapsed during rendering, causing word concatenation
   - **Applied comprehensive solution**: All Inner Circle Hub buttons now use React fragments to preserve proper word spacing
+- **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
+  - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
+  - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context
+  - **Enhanced visual differentiation**: Active (green), Scheduled (blue), and Completed (amber) Wills have distinct color schemes
+  - **Improved card styling**: Dynamic background colors and badges match Will status for consistent visual hierarchy
+  - **Added formatStartTime helper**: Provides user-friendly countdown display for scheduled Will start times
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout

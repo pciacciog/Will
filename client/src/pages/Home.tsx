@@ -57,6 +57,24 @@ function getWillStatus(will: any, memberCount: number): string {
   }
 }
 
+function formatStartTime(startDate: string): string {
+  if (!startDate) return '';
+  
+  const start = new Date(startDate);
+  const now = new Date();
+  const diffMs = start.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffDays > 0) {
+    return `Starts in ${diffDays} day${diffDays > 1 ? 's' : ''}`;
+  } else if (diffHours > 0) {
+    return `Starts in ${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  } else {
+    return 'Starting soon';
+  }
+}
+
 export default function Home() {
   const [, setLocation] = useLocation();
   const [showWhy, setShowWhy] = useState(false);
@@ -176,21 +194,47 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {/* Active Will Card - Only show if user has an active Will */}
+        {/* Active/Scheduled Will Card - Only show if user has an active, scheduled, or completed Will */}
         {isActiveWill && userCommitment && (
-          <Card className="mb-8 border-2 border-blue-200 bg-blue-50">
+          <Card className={`mb-8 border-2 ${
+            willStatus === 'active' ? 'border-green-200 bg-green-50' :
+            willStatus === 'waiting_for_end_room' ? 'border-amber-200 bg-amber-50' :
+            'border-blue-200 bg-blue-50'
+          }`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Target className="w-6 h-6 text-blue-600" />
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    willStatus === 'active' ? 'bg-green-100' :
+                    willStatus === 'waiting_for_end_room' ? 'bg-amber-100' :
+                    'bg-blue-100'
+                  }`}>
+                    <Target className={`w-6 h-6 ${
+                      willStatus === 'active' ? 'text-green-600' :
+                      willStatus === 'waiting_for_end_room' ? 'text-amber-600' :
+                      'text-blue-600'
+                    }`} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Your Active <em>Will</em></h3>
-                    <Badge className="bg-blue-100 text-blue-800 text-xs">
-                      {will.status === 'active' ? 'Active' : 
-                       will.status === 'waiting_for_end_room' ? 'Completed' : 'Scheduled'}
-                    </Badge>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Your {willStatus === 'active' ? 'Active' : 
+                             willStatus === 'waiting_for_end_room' ? 'Completed' : 'Scheduled'} <em>Will</em>
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={`text-xs ${
+                        willStatus === 'active' ? 'bg-green-100 text-green-800' :
+                        willStatus === 'waiting_for_end_room' ? 'bg-amber-100 text-amber-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {willStatus === 'active' ? 'Active' : 
+                         willStatus === 'waiting_for_end_room' ? 'Completed' : 'Scheduled'}
+                      </Badge>
+                      {willStatus === 'scheduled' && will?.startDate && (
+                        <span className="text-xs text-gray-500">
+                          {formatStartTime(will.startDate)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
