@@ -57,10 +57,10 @@ export function EndRoomTooltip({ className = "" }: EndRoomTooltipProps) {
               {/* Close button in upper right corner */}
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-300"
+                className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 hover:text-black transition-all duration-200"
                 aria-label="Close modal"
               >
-                <X className="w-4 h-4" />
+                &times;
               </button>
               
               <div className="pr-10">

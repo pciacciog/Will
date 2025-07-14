@@ -698,6 +698,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added End Room acceptance**: Step 4 shows prefilled End Room schedule with "Accept & Submit Commitment" button
   - **Enhanced user experience**: Unified commitment submission mirrors inspiring Will creation process with consistent design patterns
   - **Improved visual hierarchy**: All steps use identical title styling, icon placement, and subtitle formatting as StartWill component
+- **July 14, 2025**: Enhanced EndRoomTooltip close button visibility for better mobile UX
+  - **Replaced X icon with &times;**: Used HTML entity for crisp "×" symbol instead of Lucide React icon
+  - **Improved visibility**: Changed to text-gray-600 for better initial visibility, hover:text-black for clearer contrast
+  - **Better positioning**: Moved from top-4 right-4 to top-2 right-2 for closer corner placement
+  - **Enhanced styling**: Added border border-gray-300 bg-white for better definition and w-6 h-6 sizing
+  - **Perfect centering**: Applied flex items-center justify-center for precise alignment of close button
 - **July 14, 2025**: Enhanced Welcome screen to display scheduled Wills alongside active Wills
   - **Extended Will display logic**: Welcome screen now shows scheduled Wills with "Your Scheduled Will" title and blue styling
   - **Added timing information**: Scheduled Wills display "Starts in X days/hours" countdown for better user context
