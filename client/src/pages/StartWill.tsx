@@ -374,7 +374,7 @@ export default function StartWill() {
             </div>
           
           {/* Current Step Title */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-16">
             <h1 className="text-xl font-semibold text-gray-900">
               {currentStep === 1 && "Set Your Timeline"}
               {currentStep === 2 && "What would you like to do?"}

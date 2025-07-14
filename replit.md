@@ -724,9 +724,9 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced CTA button**: Changed from "Accept & Submit Commitment" to "Finalize" with handshake icon for intentional feel
   - **Improved layout**: Added mt-8 margin above content and center-aligned schedule box for better visual balance
 - **July 14, 2025**: Enhanced vertical spacing between progress bar and screen titles for improved visual hierarchy
-  - **Increased spacing**: Updated from mt-8 to mt-12 across all Will creation flow components for better breathing room
+  - **Increased spacing**: Updated from mt-8 to mt-12, then further enhanced to mt-16 across all Will creation flow components for optimal breathing room
   - **Applied to all commitment flows**: Enhanced StartWill, SubmitCommitment, and EditCommitment pages for consistency
-  - **Better visual balance**: Reduced cramped feeling between progress indicator and page titles
+  - **Better visual balance**: Significantly reduced cramped feeling between progress indicator and page titles
   - **Mobile optimization**: Maintains single-page display while improving readability and user experience
 - **July 14, 2025**: Fixed "Fill out this field" tooltip in instruction modal and performed database maintenance
   - **Removed browser tooltips**: Added explicit empty title="" attributes to prevent unwanted browser-generated tooltips

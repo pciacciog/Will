@@ -183,7 +183,7 @@ export default function EditCommitment() {
           </div>
           
           {/* Current Step Title */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-16">
             <h1 className="text-xl font-semibold text-gray-900">
               What would you like to do?
             </h1>
@@ -270,7 +270,7 @@ export default function EditCommitment() {
         </div>
         
         {/* Current Step Title */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-16">
           <h1 className="text-xl font-semibold text-gray-900">
             Why would you like to do this?
           </h1>
