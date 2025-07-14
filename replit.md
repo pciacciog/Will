@@ -671,6 +671,9 @@ This is a full-stack web application for group goal accountability, built with R
   - **Consistent form patterns**: Applied proper form elements, validation, and button layouts to both What and Why steps for non-creator users
   - **Matching visual hierarchy**: Applied identical headers, input styling, character counters, and spacing patterns between creator and non-creator flows
   - **Streamlined user experience**: Non-creator users now have equally polished experience with consistent design patterns across all commitment steps
+  - **Unified EditCommitment flow**: Updated EditCommitment page to match exact StartWill and SubmitCommitment UI structure and styling
+  - **Consistent editing experience**: Applied identical form structure, progress bars, sticky headers, and button layouts to editing flow
+  - **Complete design consistency**: All three commitment flows (create, submit, edit) now use identical UI patterns and styling
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout
