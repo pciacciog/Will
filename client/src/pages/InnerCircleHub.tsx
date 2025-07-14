@@ -514,7 +514,7 @@ export default function InnerCircleHub() {
             }
           />
           
-          <div className={`space-y-3 ${circle.members?.length <= 3 ? 'mt-2' : 'mt-4'}`}>
+          <div className={`${circle.members?.length <= 2 ? 'space-y-3' : 'grid grid-cols-2 gap-3'} ${circle.members?.length <= 3 ? 'mt-2' : 'mt-4'}`}>
             {circle.members?.map((member: any, index: number) => (
               <div key={member.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
                 <AvatarBadge
