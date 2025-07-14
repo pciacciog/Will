@@ -144,7 +144,7 @@ export default function WillDetails() {
       
       toast({
         title: "Will Acknowledged",
-        description: "You have acknowledged the completion of this Will. You can now start a new Will.",
+        description: "You have acknowledged the completion of this Will. Once all of the members have acknowledged, you will be able to start a new will.",
       });
       
       // Navigate back to hub immediately - remove artificial delay
