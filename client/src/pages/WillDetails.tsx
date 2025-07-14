@@ -220,7 +220,7 @@ export default function WillDetails() {
       
       toast({
         title: "Push Sent!",
-        description: "Your teammates have been notified to encourage them",
+        description: "You have pushed your circle",
       });
     },
     onError: (error: any) => {
@@ -392,14 +392,14 @@ export default function WillDetails() {
               <button
                 onClick={() => pushMutation.mutate()}
                 disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
-                className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
                   pushStatus?.hasUserPushed
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
                 title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Push your teammates'}
               >
-                <Zap className="w-4 h-4 mr-1" />
+                <Zap className="w-3 h-3 mr-1" />
                 {pushMutation.isPending ? 'Pushing...' : 'Push'}
               </button>
             )}
