@@ -317,7 +317,9 @@ export default function WillDetails() {
             <div className="flex items-center mb-3">
               <Video className="w-5 h-5 text-blue-600 mr-2" />
               <span className="text-base font-semibold">End Room</span>
-              <EndRoomTooltip />
+              <div className="ml-2">
+                <EndRoomTooltip />
+              </div>
             </div>
             <div className="space-y-2">
               <div className="text-base">
@@ -373,19 +375,19 @@ export default function WillDetails() {
                       {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
                         <button 
                           onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
-                          className="inline-flex items-center justify-center w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 rounded-md border border-blue-200 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-md"
+                          className="px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                           title="Edit commitment"
                         >
-                          <Edit className="w-4 h-4" />
+                          Edit
                         </button>
                       )}
                       {isCurrentUser && (
                         <button
                           onClick={toggleWhy}
-                          className="inline-flex items-center justify-center w-8 h-8 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700 rounded-md border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md"
+                          className="px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                           title={showWhy ? "Hide your reason" : "Show your reason"}
                         >
-                          <span className="text-sm font-medium">{showWhy ? '▲' : '▼'}</span>
+                          Why
                         </button>
                       )}
                     </div>

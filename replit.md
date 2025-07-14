@@ -664,6 +664,9 @@ This is a full-stack web application for group goal accountability, built with R
   - **Consolidated help icon placement**: Help icons now appear only at bottom of screens next to CTA buttons for single-point access
   - **Simplified time format guidance**: Changed time input helper text from "HH:MM AM/PM" to just "HH:MM" to reduce unnecessary information
   - **Clarified placeholder limitations**: HTML5 date/time inputs don't support placeholder text inside fields - helper text below inputs is the only viable approach
+  - **Enhanced Will Details button visibility**: Updated End Room help icon to w-5 h-5 with ml-2 spacing for better visibility
+  - **Improved Edit button styling**: Replaced square icon with labeled "Edit" button using px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 styling
+  - **Enhanced Why button interaction**: Replaced arrow dropdown with labeled "Why" button using consistent button styling for better mobile UX
 - **July 13, 2025**: Redesigned "End Room in Process" screen for single viewport mobile display
   - **Converted from scrollable to compact layout**: Redesigned End Room status screen to fit entirely on single iPhone screen without scrolling
   - **Reduced icon sizes**: Changed from large 20x20 centered icons to compact 10x10 icons in horizontal layout
