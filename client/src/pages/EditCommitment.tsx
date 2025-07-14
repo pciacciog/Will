@@ -162,7 +162,8 @@ export default function EditCommitment() {
   // Step 1: What
   if (step === 1) {
     return (
-      <MobileLayout>
+      <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
+        <MobileLayout>
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 pb-4 mb-6">
           <div className="text-center">
             <div className="text-sm text-gray-400 mb-1">Step 1 of 2</div>
@@ -232,12 +233,14 @@ export default function EditCommitment() {
           </div>
         </div>
       </MobileLayout>
+      </div>
     );
   }
 
   // Step 2: Why
   return (
-    <MobileLayout>
+    <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
+      <MobileLayout>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 pb-4 mb-6">
         <div className="text-center">
           <div className="text-sm text-gray-400 mb-1">Step 2 of 2</div>
@@ -338,5 +341,6 @@ export default function EditCommitment() {
         </div>
       </div>
     </MobileLayout>
+    </div>
   );
 }

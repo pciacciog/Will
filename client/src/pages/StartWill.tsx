@@ -345,43 +345,44 @@ export default function StartWill() {
   }
 
   return (
-    <MobileLayout>
-      {/* Sticky Header with Progress Indicator */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
-        <div className="pt-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex-1"></div>
-            <div className="flex items-center justify-center space-x-4">
-              <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                  1
+    <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
+      <MobileLayout>
+        {/* Sticky Header with Progress Indicator */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
+          <div className="pt-4 space-y-3">
+            <div className="flex items-center justify-between px-2">
+              <div className="w-10 flex-shrink-0"></div>
+              <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                    1
+                  </div>
+                  <span className={`ml-1 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
                 </div>
-                <span className={`ml-2 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
+                <div className={`w-6 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                    2
+                  </div>
+                  <span className={`ml-1 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>What</span>
+                </div>
+                <div className={`w-6 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                    3
+                  </div>
+                  <span className={`ml-1 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
+                </div>
               </div>
-              <div className={`w-8 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-              <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                  2
-                </div>
-                <span className={`ml-2 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>What</span>
-              </div>
-              <div className={`w-8 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-              <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                  3
-                </div>
-                <span className={`ml-2 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
+              <div className="w-10 flex-shrink-0 flex justify-end">
+                {showHelpIcon && (
+                  <HelpIcon
+                    onClick={() => setShowInstructionModal(true)}
+                    size="md"
+                  />
+                )}
               </div>
             </div>
-            <div className="flex-1 flex justify-end">
-              {showHelpIcon && (
-                <HelpIcon
-                  onClick={() => setShowInstructionModal(true)}
-                  size="md"
-                />
-              )}
-            </div>
-          </div>
           
           {/* Current Step Title */}
           <div className="text-center">
@@ -743,5 +744,6 @@ export default function StartWill() {
         />
       </div>
     </MobileLayout>
+    </div>
   );
 }

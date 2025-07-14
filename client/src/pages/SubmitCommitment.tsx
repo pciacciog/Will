@@ -129,22 +129,25 @@ export default function SubmitCommitment() {
   };
 
   return (
-    <MobileLayout>
-      {/* Sticky Header with Progress */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
-        <div className="pt-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
-              <SectionTitle>Submit Your Commitment</SectionTitle>
+    <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
+      <MobileLayout>
+        {/* Sticky Header with Progress */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
+          <div className="pt-4 space-y-3">
+            <div className="flex items-center justify-between px-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
+                <SectionTitle>Submit Your Commitment</SectionTitle>
+              </div>
+              <div className="flex-shrink-0 ml-2">
+                {showHelpIcon && (
+                  <HelpIcon
+                    onClick={() => setShowInstructionModal(true)}
+                    size="md"
+                  />
+                )}
+              </div>
             </div>
-            {showHelpIcon && (
-              <HelpIcon
-                onClick={() => setShowInstructionModal(true)}
-                size="md"
-              />
-            )}
-          </div>
 
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -304,5 +307,6 @@ export default function SubmitCommitment() {
         />
       </div>
     </MobileLayout>
+    </div>
   );
 }
