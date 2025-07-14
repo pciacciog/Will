@@ -824,6 +824,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Improved back button positioning**: Increased safe area clearance from `+1rem` to `+1.5rem` for better iOS status bar separation
   - **Optimized content container**: Reduced max-width from `max-w-md` to `max-w-sm` and padding from `py-4` to `py-3` for tighter mobile layout
   - **Eliminated unnecessary scrolling**: Used `min-h-0` and centered layout to ensure single viewport display without overflow
+- **July 14, 2025**: Enhanced Final Will Summary modal with elegant dividers and improved iOS safe area handling
+  - **Added elegant dividers**: Implemented `divide-y divide-gray-200` between member commitments with proper vertical padding (`py-3`) and spacing (`space-y-0.5`)
+  - **Fixed iOS safe area collision**: Added `pt-[env(safe-area-inset-top)]` to prevent content cutoff by status bar on devices with notch
+  - **Improved visual hierarchy**: Enhanced member name styling with `font-semibold text-gray-800` and commitment text with `text-sm` for better readability
+  - **Better content separation**: Each member's commitment now has clear visual separation without clutter, improving overall modal presentation
 - **July 14, 2025**: Implemented premium welcome screen UI polish with professional design improvements
   - **Enhanced typography**: Updated headline to `text-3xl font-semibold tracking-tight`, subtext to `text-base text-gray-500 leading-snug`
   - **Improved CTA button**: Applied `w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition`

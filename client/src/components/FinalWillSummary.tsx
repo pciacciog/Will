@@ -89,7 +89,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-screen overflow-y-auto [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in mt-[calc(env(safe-area-inset-top)+1rem)]">
-        <div className="px-4 py-6 space-y-4">
+        <div className="pt-[env(safe-area-inset-top)] px-4 py-6 space-y-4">
           {/* Refined Header */}
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -115,16 +115,16 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
           {/* Member Commitments */}
           <div className="space-y-3 w-full">
             <h4 className="text-sm font-medium uppercase text-gray-600 tracking-wide text-center">Member Commitments</h4>
-            <div className="space-y-3">
+            <div className="divide-y divide-gray-200">
               {will.commitments?.map((commitment: any) => (
-                <div key={commitment.id} className="text-center">
-                  <p className="font-semibold text-gray-900">
+                <div key={commitment.id} className="py-3 text-center space-y-0.5">
+                  <p className="font-semibold text-gray-800">
                     {commitment.user.firstName && commitment.user.lastName 
                       ? `${commitment.user.firstName} ${commitment.user.lastName}`
                       : commitment.user.email
                     }
                   </p>
-                  <p className="text-gray-600 italic">
+                  <p className="text-gray-600 italic text-sm">
                     I will: {commitment.what || commitment.commitment}
                   </p>
                 </div>
