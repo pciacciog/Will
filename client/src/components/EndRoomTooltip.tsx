@@ -37,10 +37,10 @@ export function EndRoomTooltip({ className = "" }: EndRoomTooltipProps) {
     <div className={`relative inline-block ${className}`}>
       <button
         onClick={handleToggle}
-        className="w-6 h-6 bg-white border border-gray-300 hover:bg-gray-50 hover:border-blue-400 active:opacity-70 rounded-full flex items-center justify-center text-gray-600 hover:text-blue-600 transition-all shadow-sm cursor-pointer"
+        className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-100 hover:border-blue-400 active:opacity-70 transition-all shadow-sm cursor-pointer"
         aria-label="End Room information"
       >
-        <HelpCircle className="w-5 h-5" />
+        <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
       
       {isOpen && (
