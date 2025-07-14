@@ -756,6 +756,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Improved consistency**: Modal now displays properly on both pre-acknowledgment and post-acknowledgment states
   - **Updated component props**: Added acknowledgedCount and commitmentCount props to FinalWillSummary component
   - **Better user guidance**: Clear messaging about archival process and readiness to start new Will once all members acknowledge
+- **July 14, 2025**: Optimized Inner Circle Entry page layout for single viewport mobile display
+  - **Ultra-compact header**: Reduced title size (text-lg), minimized invite code padding (py-0.5), and compressed button spacing
+  - **Condensed member cards**: Smaller avatars (w-5 h-5), reduced padding (py-1 px-2), and compact text with leading-tight
+  - **Streamlined member badges**: Smaller "Member" badges with reduced padding (px-1 py-0.5) and rounded corners
+  - **Compressed footer**: Reduced spacing between Circle Status and Enter Circle button (space-y-1)
+  - **Minimized vertical gaps**: Reduced margins between sections (mb-1, mb-2) and member spacing (space-y-0.5)
+  - **Optimized container padding**: Reduced overall container padding from py-4 to py-2 for better space utilization
+  - **Single viewport achievement**: Layout now fits entirely within iPhone screen without scrolling for both 1 and 4 member scenarios
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags
