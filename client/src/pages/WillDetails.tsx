@@ -640,6 +640,8 @@ export default function WillDetails() {
         isAcknowledging={acknowledgeMutation.isPending}
         currentUserId={user?.id}
         hasUserAcknowledged={will?.hasUserAcknowledged}
+        acknowledgedCount={will?.acknowledgedCount || 0}
+        commitmentCount={will?.commitmentCount || 0}
       />
     </MobileLayout>
   );

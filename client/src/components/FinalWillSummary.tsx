@@ -12,9 +12,11 @@ interface FinalWillSummaryProps {
   isAcknowledging?: boolean;
   currentUserId?: number;
   hasUserAcknowledged?: boolean;
+  acknowledgedCount?: number;
+  commitmentCount?: number;
 }
 
-export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAcknowledging = false, currentUserId, hasUserAcknowledged = false }: FinalWillSummaryProps) {
+export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAcknowledging = false, currentUserId, hasUserAcknowledged = false, acknowledgedCount = 0, commitmentCount = 0 }: FinalWillSummaryProps) {
   const [, setLocation] = useLocation();
   
   if (!will) return null;
@@ -86,7 +88,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-screen overflow-y-auto [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in">
+      <DialogContent className="max-w-md max-h-screen overflow-y-auto [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in mt-[calc(env(safe-area-inset-top)+1rem)]">
         <div className="px-4 py-6 space-y-4">
           {/* Refined Header */}
           <div className="text-center">
@@ -142,7 +144,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                 </div>
                 <p className="text-sm text-gray-700 mb-4">
                   {hasUserAcknowledged 
-                    ? <>You have acknowledged this <em>Will</em>. It has been archived and you're ready to start a new one.</>
+                    ? <>You have acknowledged this <em>Will</em>. It has been archived and you will be ready to start a new one once all members have acknowledged ({acknowledgedCount} / {commitmentCount}).</>
                     : <>This marks the end of your <em>will</em>. Once acknowledged, it will be archived and you'll be ready to start a new one.</>
                   }
                 </p>

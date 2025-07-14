@@ -750,6 +750,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced responsive design**: Added h-screen-safe class to Tailwind config for proper iOS safe area handling
   - **Optimized member display**: Smaller font sizes (text-sm/text-xs) and more compact member badge styling
   - **Fixed viewport constraints**: Ensured Enter Circle button and all content fits within single iPhone viewport
+- **July 14, 2025**: Fixed Final Will Summary modal iOS safe area collision and enhanced acknowledgment messaging
+  - **Fixed iOS status bar collision**: Added mt-[calc(env(safe-area-inset-top)+1rem)] to DialogContent for consistent safe area handling
+  - **Enhanced acknowledgment messaging**: Updated to show dynamic progress count "({acknowledgedCount} / {commitmentCount})" for better user context
+  - **Improved consistency**: Modal now displays properly on both pre-acknowledgment and post-acknowledgment states
+  - **Updated component props**: Added acknowledgedCount and commitmentCount props to FinalWillSummary component
+  - **Better user guidance**: Clear messaging about archival process and readiness to start new Will once all members acknowledge
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

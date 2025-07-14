@@ -807,6 +807,8 @@ export default function InnerCircleHub() {
           onAcknowledge={() => acknowledgeMutation.mutate()}
           isAcknowledging={acknowledgeMutation.isPending}
           currentUserId={user?.id}
+          acknowledgedCount={will.acknowledgedCount || 0}
+          commitmentCount={will.commitmentCount || 0}
         />
       )}
     </MobileLayout>
