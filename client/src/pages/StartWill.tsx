@@ -384,16 +384,6 @@ export default function StartWill() {
             {currentStep === 2 && <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>}
             {currentStep === 3 && <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>}
             {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">This is where your circle comes together to reflect, share, and honor the effort.</p>}
-            
-            {/* Help Icon positioned below title */}
-            {showHelpIcon && (
-              <div className="flex justify-center mt-3">
-                <HelpIcon
-                  onClick={() => setShowInstructionModal(true)}
-                  size="sm"
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -537,7 +527,7 @@ export default function StartWill() {
                   {showHelpIcon && (
                     <HelpIcon
                       onClick={() => setShowInstructionModal(true)}
-                      size="md"
+                      size="sm"
                     />
                   )}
                 </div>
