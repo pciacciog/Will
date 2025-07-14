@@ -355,9 +355,9 @@ export default function WillDetails() {
               return (
                 <div key={commitment.id} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
                   {/* User name and actions row */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-base font-medium">
+                  <div className="flex items-center justify-between mb-2 gap-3">
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                      <span className="text-base font-medium truncate">
                         {commitment.user.firstName && commitment.user.lastName 
                           ? `${commitment.user.firstName} ${commitment.user.lastName}`
                           : commitment.user.email
@@ -369,7 +369,7 @@ export default function WillDetails() {
                         )}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 flex-shrink-0">
                       {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
                         <button 
                           onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
