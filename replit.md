@@ -743,6 +743,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Fixed server logic**: Added priority check for will.status === 'completed' before time-based logic
   - **Legacy compatibility**: Ensures completed wills without end room scheduling display proper 'completed' status instead of 'waiting_for_end_room'
   - **Result**: QFHFB3 circle no longer shows "Will - End Room Scheduled" for legacy completed will
+- **July 14, 2025**: Optimized Inner Circle Entry page for single viewport mobile display without vertical scrolling
+  - **Restructured layout**: Changed from Card-based layout to flexbox with fixed header/footer and scrollable member list
+  - **Reduced element sizes**: Smaller avatars (8x8), compact member cards with reduced padding (py-2 px-3)
+  - **Improved space utilization**: Removed unnecessary Card wrapper, reduced margins and spacing throughout
+  - **Enhanced responsive design**: Added h-screen-safe class to Tailwind config for proper iOS safe area handling
+  - **Optimized member display**: Smaller font sizes (text-sm/text-xs) and more compact member badge styling
+  - **Fixed viewport constraints**: Ensured Enter Circle button and all content fits within single iPhone viewport
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

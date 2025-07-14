@@ -23,6 +23,10 @@ export default {
         'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
         'screen-safe-header': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 3rem)',
       },
+      height: {
+        'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+        'screen-safe-header': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 3rem)',
+      },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem', letterSpacing: '-0.025em' }],
         'sm': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '-0.025em' }],
