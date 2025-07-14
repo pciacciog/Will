@@ -800,6 +800,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Compressed footer spacing**: Reduced footer section spacing from space-y-3 to space-y-1 between Circle Status and Enter Circle button
   - **Centered Circle Status**: Circle Status info box now uses justify-center for centered alignment
   - **Single viewport optimization**: Eliminated excessive white space to ensure comfortable fit on iPhone screens without scrolling
+- **July 14, 2025**: Fixed "Create Your Inner Circle" page to be non-scrollable with proper iOS safe area handling
+  - **Fixed header positioning**: Added proper iOS safe area spacing with `pt-[calc(env(safe-area-inset-top)+1rem)]` to prevent collision with status bar
+  - **Non-scrollable layout**: Restructured to use flexbox with `h-full flex flex-col` and `scrollable={false}` for fixed viewport
+  - **Compact design**: Reduced icon sizes (w-12 h-12), font sizes (text-2xl to text-lg), and spacing for single viewport fit
+  - **Centered content**: Used `justify-center` to center card content vertically within available space
+  - **Bottom safe area**: Added proper bottom safe area spacing with `pb-[calc(env(safe-area-inset-bottom)+1rem)]`
+  - **Mobile optimization**: Ensured all elements fit within iPhone screen boundaries without scrolling or status bar interference
 - **July 14, 2025**: Fixed button text spacing issue preventing proper word separation in Inner Circle Hub
   - **Resolved "ViewWillDetails" concatenation**: Fixed button text appearing as one word instead of "View Will Details" with proper spacing
   - **Applied React Fragment fix**: Wrapped all button text in React fragments (`<>text</>`) to prevent space collapse around italic `<em>` tags

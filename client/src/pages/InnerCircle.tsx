@@ -131,31 +131,35 @@ export default function InnerCircle() {
       <div className="max-w-screen-sm mx-auto px-4 py-1 overflow-x-hidden h-full overflow-y-hidden">
         
         {!circle ? (
-          // No Circle State
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center mx-auto mb-8">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
+          // No Circle State - Fixed non-scrollable layout
+          <div className="h-full flex flex-col">
+            {/* Fixed Header */}
+            <div className="flex-shrink-0 text-center pt-[calc(env(safe-area-inset-top)+1rem)] pb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Your Inner Circle</h1>
+              <p className="text-base text-gray-600 px-4">
+                Start a new circle or join an existing one with your invite code.
+              </p>
             </div>
             
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Create Your Inner Circle</h1>
-            <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-              Start a new circle or join an existing one with your invite code.
-            </p>
-            
-            <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
+            {/* Content Area */}
+            <div className="flex-1 px-4 flex flex-col justify-center space-y-4">
               <Card className="border-2 border-transparent hover:border-primary transition-colors">
-                <CardContent className="p-6">
-                  <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <CardContent className="p-4">
+                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Join a Circle</h3>
-                  <p className="text-gray-600 mb-6">Have an invite code? Join your friends' circle.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Join a Circle</h3>
+                  <p className="text-gray-600 mb-4 text-center text-sm">Have an invite code? Join your friends' circle.</p>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <Input 
                       type="text" 
                       placeholder="Enter invite code (e.g., J3ZQ9P)" 
@@ -176,14 +180,14 @@ export default function InnerCircle() {
               </Card>
               
               <Card className="border-2 border-transparent hover:border-secondary transition-colors">
-                <CardContent className="p-6">
-                  <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <CardContent className="p-4">
+                  <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Create a Circle</h3>
-                  <p className="text-gray-600 mb-6">Start fresh with a new circle for your group.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Create a Circle</h3>
+                  <p className="text-gray-600 mb-4 text-center text-sm">Start fresh with a new circle for your group.</p>
                   
                   <Button 
                     onClick={handleCreateCircle}
@@ -195,6 +199,9 @@ export default function InnerCircle() {
                 </CardContent>
               </Card>
             </div>
+            
+            {/* Bottom safe area */}
+            <div className="flex-shrink-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]"></div>
           </div>
         ) : (
           // Has Circle State
