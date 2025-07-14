@@ -94,18 +94,17 @@ export default function Auth() {
   return (
     <MobileLayout scrollable={false}>
       <div className="h-full flex flex-col">
-        {/* Fixed Header */}
-        <div className="flex-shrink-0 pt-[calc(env(safe-area-inset-top)+1rem)] px-4 pb-4">
-          {/* Back Button - Upper Left */}
-          <div className="flex justify-start mb-4">
-            <Link href="/">
-              <Button variant="ghost" className="p-2">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
+        {/* Back Button - Absolute Upper Left */}
+        <div className="absolute top-[calc(env(safe-area-inset-top)+0.5rem)] left-4 z-10">
+          <Link href="/">
+            <Button variant="ghost" className="p-2 h-10 w-10">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
 
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 pt-[calc(env(safe-area-inset-top)+3rem)] px-4 pb-4">
           {/* Header Content */}
           <div className="text-center space-y-1">
             <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-2">
