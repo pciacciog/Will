@@ -9,15 +9,15 @@ interface HelpIconProps {
 
 export function HelpIcon({ onClick, className, size = 'md' }: HelpIconProps) {
   const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12'
+    sm: 'w-6 h-6',
+    md: 'w-8 h-8',
+    lg: 'w-10 h-10'
   };
 
   const textSizeClasses = {
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-2xl'
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg'
   };
 
   return (

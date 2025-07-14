@@ -350,37 +350,26 @@ export default function StartWill() {
         {/* Sticky Header with Progress Indicator */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6">
           <div className="pt-4 space-y-3">
-            <div className="flex items-center justify-between px-2">
-              <div className="w-10 flex-shrink-0"></div>
-              <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
-                <div className="flex items-center">
-                  <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                    1
-                  </div>
-                  <span className={`ml-1 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
+            <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  1
                 </div>
-                <div className={`w-6 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                <div className="flex items-center">
-                  <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                    2
-                  </div>
-                  <span className={`ml-1 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>What</span>
-                </div>
-                <div className={`w-6 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                <div className="flex items-center">
-                  <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                    3
-                  </div>
-                  <span className={`ml-1 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
-                </div>
+                <span className={`ml-1 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
               </div>
-              <div className="w-10 flex-shrink-0 flex justify-end">
-                {showHelpIcon && (
-                  <HelpIcon
-                    onClick={() => setShowInstructionModal(true)}
-                    size="md"
-                  />
-                )}
+              <div className={`w-6 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  2
+                </div>
+                <span className={`ml-1 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>What</span>
+              </div>
+              <div className={`w-6 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                  3
+                </div>
+                <span className={`ml-1 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
               </div>
             </div>
           
@@ -395,6 +384,16 @@ export default function StartWill() {
             {currentStep === 2 && <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>}
             {currentStep === 3 && <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>}
             {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">This is where your circle comes together to reflect, share, and honor the effort.</p>}
+            
+            {/* Help Icon positioned below title */}
+            {showHelpIcon && (
+              <div className="flex justify-center mt-3">
+                <HelpIcon
+                  onClick={() => setShowInstructionModal(true)}
+                  size="sm"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -481,20 +480,24 @@ export default function StartWill() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start</label>
                       <div className="grid grid-cols-2 gap-2">
-                        <Input 
-                          type="date" 
-                          name="startDate"
-                          required 
-                          placeholder="MM/DD/YYYY"
-                          className="w-full placeholder:text-gray-400"
-                        />
-                        <Input 
-                          type="time" 
-                          name="startTime"
-                          required 
-                          placeholder="HH:MM AM/PM"
-                          className="w-full placeholder:text-gray-400"
-                        />
+                        <div>
+                          <Input 
+                            type="date" 
+                            name="startDate"
+                            required 
+                            className="w-full"
+                          />
+                          <div className="text-xs text-gray-400 mt-1">MM/DD/YYYY</div>
+                        </div>
+                        <div>
+                          <Input 
+                            type="time" 
+                            name="startTime"
+                            required 
+                            className="w-full"
+                          />
+                          <div className="text-xs text-gray-400 mt-1">HH:MM AM/PM</div>
+                        </div>
                       </div>
                     </div>
                     
@@ -502,20 +505,24 @@ export default function StartWill() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End</label>
                       <div className="grid grid-cols-2 gap-2">
-                        <Input 
-                          type="date" 
-                          name="endDate"
-                          required 
-                          placeholder="MM/DD/YYYY"
-                          className="w-full placeholder:text-gray-400"
-                        />
-                        <Input 
-                          type="time" 
-                          name="endTime"
-                          required 
-                          placeholder="HH:MM AM/PM"
-                          className="w-full placeholder:text-gray-400"
-                        />
+                        <div>
+                          <Input 
+                            type="date" 
+                            name="endDate"
+                            required 
+                            className="w-full"
+                          />
+                          <div className="text-xs text-gray-400 mt-1">MM/DD/YYYY</div>
+                        </div>
+                        <div>
+                          <Input 
+                            type="time" 
+                            name="endTime"
+                            required 
+                            className="w-full"
+                          />
+                          <div className="text-xs text-gray-400 mt-1">HH:MM AM/PM</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -664,13 +671,13 @@ export default function StartWill() {
                     type="datetime-local"
                     name="endRoomDateTime"
                     required
-                    placeholder="MM/DD/YYYY HH:MM AM/PM"
                     min={willData.endDate}
                     max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
                     value={endRoomDateTime}
                     onChange={(e) => setEndRoomDateTime(e.target.value)}
-                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 placeholder:text-gray-400"
+                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   />
+                  <div className="text-xs text-gray-400 mt-1 text-center">MM/DD/YYYY HH:MM AM/PM</div>
                 </div>
               </div>
 

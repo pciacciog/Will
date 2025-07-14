@@ -143,7 +143,7 @@ export default function SubmitCommitment() {
                 {showHelpIcon && (
                   <HelpIcon
                     onClick={() => setShowInstructionModal(true)}
-                    size="md"
+                    size="sm"
                   />
                 )}
               </div>
