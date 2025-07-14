@@ -93,18 +93,21 @@ export default function Auth() {
 
   return (
     <MobileLayout scrollable={false}>
-      <div className="h-screen overflow-hidden flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-4 bg-gradient-to-br from-blue-50 via-white to-green-50">
-        {/* Back Button */}
-        <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-10">
-          <Link href="/">
-            <button className="p-2 rounded-full hover:bg-gray-100 transition">
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
-            </button>
-          </Link>
+      <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-blue-50 via-white to-green-50">
+        {/* Fixed Header with Back Button */}
+        <div className="fixed top-0 left-0 right-0 z-20 pt-[env(safe-area-inset-top)] pb-2 bg-gradient-to-br from-blue-50 via-white to-green-50">
+          <div className="flex justify-start px-4 pt-4">
+            <Link href="/">
+              <button className="p-2 rounded-full hover:bg-gray-100 transition">
+                <ArrowLeft className="h-5 w-5 text-gray-600" />
+              </button>
+            </Link>
+          </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col justify-center space-y-3 max-w-sm mx-auto w-full pt-16">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto pt-[calc(env(safe-area-inset-top)+4rem)] pb-[env(safe-area-inset-bottom)] px-4">
+          <div className="max-w-sm mx-auto space-y-3">
           {/* Header & Icon */}
           <div className="text-center space-y-1 mb-2">
             <div className="bg-violet-100 p-2 rounded-full w-10 h-10 flex items-center justify-center mx-auto">
@@ -326,6 +329,7 @@ export default function Auth() {
               </TabsContent>
             </Tabs>
           </div>
+        </div>
         </div>
       </div>
     </MobileLayout>
