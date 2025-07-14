@@ -53,20 +53,24 @@ export function EndRoomTooltip({ className = "" }: EndRoomTooltipProps) {
           
           {/* Modal */}
           <div className="fixed inset-4 z-50 flex items-center justify-center">
-            <div className="bg-white rounded-2xl shadow-lg p-6 w-[90%] max-w-sm transition-all duration-300 ease-in-out transform animate-in fade-in-0 zoom-in-95">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-semibold text-gray-900">End Room</h3>
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-[90%] max-w-sm transition-all duration-300 ease-in-out transform animate-in fade-in-0 zoom-in-95">
+              <div className="flex items-start justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 underline decoration-2 underline-offset-4 decoration-gray-300">
+                  End Room
+                </h3>
                 <button
                   onClick={handleClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all duration-200 hover:scale-105 active:scale-95"
                   aria-label="Close modal"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
-              <p className="text-sm text-gray-700 leading-relaxed text-center">
-                This is where the circle will gather to reflect, share, and honor the efforts of each member's Will.
-              </p>
+              <div className="space-y-4">
+                <p className="text-base text-gray-700 leading-relaxed text-center">
+                  This is where the circle will gather to reflect, share, and honor the efforts of each member's Will.
+                </p>
+              </div>
             </div>
           </div>
         </>
