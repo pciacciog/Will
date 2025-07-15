@@ -92,18 +92,17 @@ export default function Auth() {
   };
 
   return (
-    <MobileLayout scrollable={false}>
-      <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-blue-50 via-white to-green-50">
-        {/* Content Area with Back Button Inside */}
-        <div className="flex-1 overflow-hidden pt-[calc(env(safe-area-inset-top)+1rem)] pb-[env(safe-area-inset-bottom)] px-4">
-          {/* Back Button positioned in shaded area */}
-          <div className="flex justify-start mb-4">
-            <Link href="/">
-              <button className="p-3 rounded-xl bg-white/80 shadow-md hover:bg-white hover:shadow-lg transition-all duration-200 backdrop-blur-sm">
-                <ArrowLeft className="h-5 w-5 text-gray-600" />
-              </button>
-            </Link>
-          </div>
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ touchAction: 'none' }}>
+      {/* Content Area with Back Button Inside */}
+      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+1rem)] pb-[env(safe-area-inset-bottom)] px-4" style={{ overscrollBehavior: 'none' }}>
+        {/* Back Button positioned in shaded area */}
+        <div className="flex justify-start mb-4">
+          <Link href="/">
+            <button className="p-3 rounded-xl bg-white/80 shadow-md hover:bg-white hover:shadow-lg transition-all duration-200 backdrop-blur-sm">
+              <ArrowLeft className="h-5 w-5 text-gray-600" />
+            </button>
+          </Link>
+        </div>
           
           <div className="max-w-sm mx-auto flex flex-col space-y-1">
           {/* Header & Icon */}
@@ -328,8 +327,7 @@ export default function Auth() {
             </Tabs>
           </div>
         </div>
-        </div>
       </div>
-    </MobileLayout>
+    </div>
   );
 }
