@@ -129,7 +129,11 @@ export default function Home() {
 
   // Show splash screen if requested
   if (showSplash) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+    console.log('Rendering splash screen from Home component');
+    return <SplashScreen onComplete={() => {
+      console.log('Splash screen completed');
+      setShowSplash(false);
+    }} />;
   }
 
   // If user is not authenticated, redirect to auth
