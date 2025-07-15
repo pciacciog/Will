@@ -96,7 +96,7 @@ export default function Auth() {
       {/* Content Area with Back Button Inside */}
       <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+1rem)] pb-[env(safe-area-inset-bottom)] px-4" style={{ overscrollBehavior: 'none' }}>
         {/* Back Button positioned in shaded area */}
-        <div className="flex justify-start mb-4">
+        <div className="flex justify-start mb-8">
           <Link href="/">
             <button className="p-2 rounded-lg bg-white/80 shadow-sm hover:bg-white hover:shadow-md transition-all duration-200 backdrop-blur-sm">
               <ArrowLeft className="h-4 w-4 text-gray-600" />
