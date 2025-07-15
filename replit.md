@@ -848,10 +848,18 @@ This is a full-stack web application for group goal accountability, built with R
 - **July 15, 2025**: Implemented elegant splash screen and Welcome page updates
   - **Created SplashScreen component**: "All You Need Is a Little... Will." with smooth fade animations and 2.3s duration
   - **Integrated with authentication flow**: Splash appears after successful login/registration before navigating to Welcome
-  - **Added app startup splash**: Shows for already authenticated users on app launch for consistent brand experience
   - **Updated Welcome page title**: Changed from "Welcome" to "Will" to reinforce personal agency and intentionality
   - **Enhanced Tailwind animations**: Added fade-in/fade-out keyframes for professional transition effects
   - **Emotional anchoring**: Splash screen creates pause before commitment, symbolizing moment of resolve and personal agency
+  - **Fixed authentication navigation**: Resolved 404 error by removing conflicting splash screen logic from App.tsx
+- **July 15, 2025**: Enhanced Welcome page with premium visual design and sophisticated UI elements
+  - **Elegant "Will" title**: Gradient text effect with subtle glow animation and refined typography
+  - **Glass-morphism design**: Sophisticated backdrop blur cards with shadow effects and rounded corners
+  - **Intentional circle icons**: Users/Plus icons with sparkle accents, gradient borders, and meaningful visual hierarchy
+  - **Premium color schemes**: Emerald/teal for existing circles, blue/indigo for new circles with consistent gradients
+  - **Smooth micro-interactions**: Hover animations, scale effects, and enhanced button interactions
+  - **Enhanced typography**: Improved spacing, tracking, and readability across all text elements
+  - **Cohesive design system**: Professional modern feel with thoughtful use of gradients and visual effects
   - **Improved visual hierarchy**: Icons now have more character and depth, creating a more expressive and polished landing experience
 - **July 14, 2025**: Completed Auth page mobile optimization with strict viewport fitting and visual consistency
   - **Implemented strict viewport constraints**: Used `min-h-screen overflow-hidden flex flex-col justify-between` to eliminate all scrolling
