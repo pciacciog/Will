@@ -111,17 +111,17 @@ export default function Auth() {
               <Shield className="w-4 h-4 text-blue-600" />
             </div>
             <h1 className="text-base font-semibold">Join Your Inner Circle</h1>
-            <p className="text-xs text-gray-600">Connect with the people who matter. Grow together.</p>
+            <p className="text-base text-gray-600">Connect with the people who matter. Grow together.</p>
           </div>
 
           {/* Step Descriptions */}
-          <div className="space-y-1 mb-2">
+          <div className="space-y-1 mb-6">
             <div className="flex items-start space-x-2">
               <div className="bg-blue-100 p-1 rounded-full shadow-sm">
                 <Handshake className="w-3 h-3 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-800">Form Your Circle</p>
+                <p className="text-[15px] font-medium text-gray-800 leading-relaxed">Form Your Circle</p>
                 <p className="text-xs text-gray-600">Start or join a group of 2–4 close friends.</p>
               </div>
             </div>
@@ -130,7 +130,7 @@ export default function Auth() {
                 <Pencil className="w-3 h-3 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-800">Set Your <em>Will</em></p>
+                <p className="text-[15px] font-medium text-gray-800 leading-relaxed">Set Your <em>Will</em></p>
                 <p className="text-xs text-gray-600">Make a commitment.</p>
               </div>
             </div>
@@ -139,7 +139,7 @@ export default function Auth() {
                 <TrendingUp className="w-3 h-3 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-800">Stay Accountable</p>
+                <p className="text-[15px] font-medium text-gray-800 leading-relaxed">Stay Accountable</p>
                 <p className="text-xs text-gray-600">Support each other daily.</p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export default function Auth() {
           {/* Tabs */}
           <div className="w-full">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="flex border rounded-xl overflow-hidden text-center w-full bg-gray-50 mx-auto mb-1">
+              <TabsList className="flex border rounded-xl overflow-hidden text-center w-full bg-gray-50 mx-auto mb-3 py-2">
                 <TabsTrigger 
                   value="login" 
                   className="w-1/2 py-1 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-gray-700 data-[state=active]:shadow-sm data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 border-r border-gray-200 flex justify-center items-center"
@@ -163,8 +163,8 @@ export default function Auth() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="mt-0.5 space-y-1">
-                <form onSubmit={handleLogin} className="space-y-1">
+              <TabsContent value="login" className="mt-0.5 space-y-3">
+                <form onSubmit={handleLogin} className="space-y-3">
                   <div>
                     <Label htmlFor="login-email" className="text-xs font-medium">Email</Label>
                     <Input
@@ -202,13 +202,15 @@ export default function Auth() {
                       </Button>
                     </div>
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
-                    disabled={loginMutation.isPending}
-                  >
-                    {loginMutation.isPending ? "Signing in..." : "Sign In"}
-                  </Button>
+                  <div className="mt-4">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
+                      disabled={loginMutation.isPending}
+                    >
+                      {loginMutation.isPending ? "Signing in..." : "Sign In"}
+                    </Button>
+                  </div>
                 </form>
                 
                 {/* Privacy Notice - Inline within form */}
@@ -219,8 +221,8 @@ export default function Auth() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="register" className="mt-0.5 space-y-0.5">
-                <form onSubmit={handleRegister} className="space-y-0.5">
+              <TabsContent value="register" className="mt-0.5 space-y-3">
+                <form onSubmit={handleRegister} className="space-y-3">
                   <div className="grid grid-cols-2 gap-1.5">
                     <div>
                       <Label htmlFor="register-firstName" className="text-xs font-medium">First Name</Label>
@@ -308,13 +310,15 @@ export default function Auth() {
                       </Button>
                     </div>
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
-                    disabled={registerMutation.isPending}
-                  >
-                    {registerMutation.isPending ? "Creating account..." : "Create Account"}
-                  </Button>
+                  <div className="mt-4">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
+                      disabled={registerMutation.isPending}
+                    >
+                      {registerMutation.isPending ? "Creating account..." : "Create Account"}
+                    </Button>
+                  </div>
                 </form>
                 
                 {/* Privacy Notice - Inline within form */}
