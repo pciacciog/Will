@@ -111,12 +111,11 @@ export default function Auth() {
               <Hand className="w-7 h-7 text-white" />
             </div>
             <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-1">WILL</h1>
-            <p className="text-sm text-gray-500 leading-snug text-center">Become who you're meant to be. Together.</p>
           </div>
 
           {/* Content Section - Elevated */}
-          <div className="-mt-4">
-            <p className="text-base text-gray-500 leading-snug text-center mb-3">Connect with the people who matter. Grow together.</p>
+          <div className="-mt-6">
+            <p className="text-base text-gray-500 leading-snug text-center mb-3">Become who you're meant to be. Together.</p>
             
             {/* Step Descriptions - Enhanced Design */}
             <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-gray-100/50 mb-4">
