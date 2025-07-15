@@ -29,7 +29,12 @@ export default function Auth() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(['/api/user'], user);
-      setShowSplash(true);
+      // Invalidate queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Small delay to ensure state is updated before showing splash
+      setTimeout(() => {
+        setShowSplash(true);
+      }, 100);
     },
     onError: (error: any) => {
       toast({
@@ -50,7 +55,12 @@ export default function Auth() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(['/api/user'], user);
-      setShowSplash(true);
+      // Invalidate queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Small delay to ensure state is updated before showing splash
+      setTimeout(() => {
+        setShowSplash(true);
+      }, 100);
     },
     onError: (error: any) => {
       toast({
@@ -95,7 +105,12 @@ export default function Auth() {
 
   // Show splash screen after successful authentication
   if (showSplash) {
-    return <SplashScreen onComplete={() => setLocation('/')} />;
+    return <SplashScreen onComplete={() => {
+      // Delay to ensure authentication state is fully updated
+      setTimeout(() => {
+        setLocation('/');
+      }, 500);
+    }} />;
   }
 
   return (
