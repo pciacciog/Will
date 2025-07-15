@@ -94,7 +94,7 @@ export default function Auth() {
   return (
     <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ touchAction: 'none' }}>
       {/* Content Area with Back Button Inside */}
-      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-[env(safe-area-inset-bottom)] px-4" style={{ overscrollBehavior: 'none' }}>
+      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+2rem)] pb-[env(safe-area-inset-bottom)] px-4" style={{ overscrollBehavior: 'none' }}>
         {/* Back Button positioned in shaded area */}
         <div className="flex justify-start mb-4">
           <Link href="/">
@@ -107,11 +107,11 @@ export default function Auth() {
           <div className="max-w-sm mx-auto flex flex-col space-y-1">
           {/* Header & Icon */}
           <div className="text-center space-y-1 mb-1">
-            <div className="bg-blue-100 p-1.5 rounded-full w-8 h-8 flex items-center justify-center mx-auto">
-              <Shield className="w-4 h-4 text-blue-600" />
+            <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
+              <Shield className="w-6 h-6 text-blue-600" />
             </div>
-            <h1 className="text-base font-semibold">Join Your Inner Circle</h1>
-            <p className="text-base text-gray-600">Connect with the people who matter. Grow together.</p>
+            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Join Your Inner Circle</h1>
+            <p className="text-base text-gray-500 leading-snug">Connect with the people who matter. Grow together.</p>
           </div>
 
           {/* Step Descriptions */}
@@ -121,8 +121,8 @@ export default function Auth() {
                 <Handshake className="w-3 h-3 text-blue-600" />
               </div>
               <div>
-                <p className="text-[15px] font-medium text-gray-800 leading-relaxed">Form Your Circle</p>
-                <p className="text-xs text-gray-600">Start or join a group of 2–4 close friends.</p>
+                <p className="font-semibold text-gray-900">Form Your Circle</p>
+                <p className="text-gray-500 text-sm">Start or join a group of 2–4 close friends.</p>
               </div>
             </div>
             <div className="flex items-start space-x-2">
@@ -130,8 +130,8 @@ export default function Auth() {
                 <Pencil className="w-3 h-3 text-green-600" />
               </div>
               <div>
-                <p className="text-[15px] font-medium text-gray-800 leading-relaxed">Set Your <em>Will</em></p>
-                <p className="text-xs text-gray-600">Make a commitment.</p>
+                <p className="font-semibold text-gray-900">Set Your <em>Will</em></p>
+                <p className="text-gray-500 text-sm">Make a commitment.</p>
               </div>
             </div>
             <div className="flex items-start space-x-2">
@@ -139,8 +139,8 @@ export default function Auth() {
                 <TrendingUp className="w-3 h-3 text-purple-600" />
               </div>
               <div>
-                <p className="text-[15px] font-medium text-gray-800 leading-relaxed">Stay Accountable</p>
-                <p className="text-xs text-gray-600">Support each other daily.</p>
+                <p className="font-semibold text-gray-900">Stay Accountable</p>
+                <p className="text-gray-500 text-sm">Support each other daily.</p>
               </div>
             </div>
           </div>
