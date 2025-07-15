@@ -114,7 +114,7 @@ export default function Auth() {
           </div>
 
           {/* Content Section - Elevated */}
-          <div className="-mt-4">
+          <div className="-mt-6">
             <p className="text-base text-gray-500 leading-snug text-center mb-3">Connect with the people who matter. Grow together.</p>
             
             {/* Step Descriptions */}
