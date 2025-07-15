@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { notificationService } from "@/services/NotificationService";
+import { useLocation } from "wouter";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Auth from "@/pages/Auth";
@@ -21,9 +22,10 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [location] = useLocation();
 
   // Debug logging
-  console.log('Router debug:', { isAuthenticated, isLoading, user: user?.id });
+  console.log('Router debug:', { isAuthenticated, isLoading, user: user?.id, location });
 
   if (isLoading) {
     return (
