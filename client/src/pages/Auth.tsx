@@ -106,8 +106,10 @@ export default function Auth() {
   // Show splash screen after successful authentication
   if (showSplash) {
     return <SplashScreen onComplete={() => {
+      console.log('Splash screen completed, navigating to /');
       // Delay to ensure authentication state is fully updated
       setTimeout(() => {
+        console.log('Setting location to /');
         setLocation('/');
       }, 500);
     }} />;

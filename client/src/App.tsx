@@ -20,7 +20,10 @@ import EditCommitment from "@/pages/EditCommitment";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Debug logging
+  console.log('Router debug:', { isAuthenticated, isLoading, user: user?.id });
 
   if (isLoading) {
     return (
