@@ -1,10 +1,11 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Target, ChevronDown, ChevronUp, Users, Plus, Sparkles } from "lucide-react";
+import SplashScreen from "@/components/SplashScreen";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
@@ -78,6 +79,16 @@ function formatStartTime(startDate: string): string {
 export default function Home() {
   const [, setLocation] = useLocation();
   const [showWhy, setShowWhy] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
+
+  // Check if we should show splash screen on first load
+  useEffect(() => {
+    const shouldShowSplash = localStorage.getItem('showSplashOnHome');
+    if (shouldShowSplash === 'true') {
+      localStorage.removeItem('showSplashOnHome');
+      setShowSplash(true);
+    }
+  }, []);
   
   const { data: circle, error: circleError } = useQuery({
     queryKey: ['/api/circles/mine'],
@@ -113,6 +124,11 @@ export default function Home() {
       setLocation('/inner-circle');
     }
   };
+
+  // Show splash screen if requested
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
 
   // If user is not authenticated, redirect to auth
   if (!user) {

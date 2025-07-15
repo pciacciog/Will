@@ -17,7 +17,7 @@ export default function Auth() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showSplash, setShowSplash] = useState(false);
+  // Remove splash screen functionality
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
@@ -32,11 +32,8 @@ export default function Auth() {
       queryClient.setQueryData(['/api/user'], user);
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      // Small delay to ensure state is updated before showing splash
-      setTimeout(() => {
-        console.log('Setting showSplash to true');
-        setShowSplash(true);
-      }, 100);
+      // Set a flag to show splash screen on first Home load
+      localStorage.setItem('showSplashOnHome', 'true');
     },
     onError: (error: any) => {
       toast({
@@ -59,10 +56,8 @@ export default function Auth() {
       queryClient.setQueryData(['/api/user'], user);
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      // Small delay to ensure state is updated before showing splash
-      setTimeout(() => {
-        setShowSplash(true);
-      }, 100);
+      // Set a flag to show splash screen on first Home load
+      localStorage.setItem('showSplashOnHome', 'true');
     },
     onError: (error: any) => {
       toast({
@@ -107,18 +102,7 @@ export default function Auth() {
     });
   };
 
-  // Show splash screen after successful authentication
-  if (showSplash) {
-    console.log('Rendering splash screen');
-    return <SplashScreen onComplete={() => {
-      console.log('Splash screen completed, navigating to /');
-      // Delay to ensure authentication state is fully updated
-      setTimeout(() => {
-        console.log('Setting location to /', 'Current location:', window.location.pathname);
-        setLocation('/');
-      }, 500);
-    }} />;
-  }
+  // Splash screen is now handled by Home component
 
   return (
     <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ touchAction: 'none' }}>
