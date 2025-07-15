@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Shield, Eye, EyeOff, Handshake, Pencil, TrendingUp } from "lucide-react";
+import { ArrowLeft, Users, Eye, EyeOff, Handshake, Pencil, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MobileLayout } from "@/components/ui/design-system";
@@ -107,8 +107,8 @@ export default function Auth() {
           <div className="max-w-sm mx-auto flex flex-col -mt-4">
           {/* Header & Icon */}
           <div className="text-center mb-2">
-            <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
-              <Shield className="w-6 h-6 text-blue-600" />
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-2xl w-14 h-14 flex items-center justify-center mx-auto mb-2 shadow-lg">
+              <Users className="w-7 h-7 text-white" />
             </div>
             <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-1">Join Your Inner Circle</h1>
           </div>
