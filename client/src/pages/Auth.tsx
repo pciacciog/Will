@@ -115,7 +115,7 @@ export default function Auth() {
           </div>
 
           {/* Step Descriptions */}
-          <div className="space-y-1 mb-6">
+          <div className="space-y-1 mb-4">
             <div className="flex items-start space-x-2">
               <div className="bg-blue-100 p-1 rounded-full shadow-sm">
                 <Handshake className="w-3 h-3 text-blue-600" />
