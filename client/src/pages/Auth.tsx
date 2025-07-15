@@ -106,7 +106,7 @@ export default function Auth() {
           
           <div className="max-w-sm mx-auto flex flex-col space-y-1">
           {/* Header & Icon */}
-          <div className="text-center space-y-1 mb-1">
+          <div className="text-center space-y-1 mb-3">
             <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
               <Shield className="w-6 h-6 text-blue-600" />
             </div>
