@@ -94,9 +94,9 @@ export default function Auth() {
   return (
     <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ touchAction: 'none' }}>
       {/* Content Area with Back Button Inside */}
-      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[env(safe-area-inset-bottom)] px-4" style={{ overscrollBehavior: 'none' }}>
+      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+2rem)] pb-[env(safe-area-inset-bottom)] px-4" style={{ overscrollBehavior: 'none' }}>
         {/* Back Button positioned in shaded area */}
-        <div className="flex justify-start mb-8">
+        <div className="flex justify-start mb-6">
           <Link href="/">
             <button className="p-2 rounded-lg bg-white/80 shadow-sm hover:bg-white hover:shadow-md transition-all duration-200 backdrop-blur-sm">
               <ArrowLeft className="h-4 w-4 text-gray-600" />
@@ -106,7 +106,7 @@ export default function Auth() {
           
           <div className="max-w-sm mx-auto flex flex-col space-y-1">
           {/* Header & Icon */}
-          <div className="text-center space-y-1 mb-1">
+          <div className="text-center space-y-1">
             <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
               <Shield className="w-6 h-6 text-blue-600" />
             </div>
