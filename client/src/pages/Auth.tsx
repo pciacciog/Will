@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Hand, Eye, EyeOff, Handshake, Pencil, TrendingUp } from "lucide-react";
+import { ArrowLeft, Hand, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MobileLayout } from "@/components/ui/design-system";
@@ -115,42 +115,7 @@ export default function Auth() {
 
           {/* Content Section - Elevated */}
           <div className="-mt-6">
-            <p className="text-base text-gray-500 leading-snug text-center mb-3">Become who you're meant to be. <span className="font-semibold text-gray-700 italic">Together.</span></p>
-            
-            {/* Step Descriptions - Enhanced Design */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-gray-100/50 mb-4">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-xl shadow-md">
-                    <Handshake className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-sm">Form Your Circle</p>
-                    <p className="text-gray-600 text-xs leading-relaxed">Start or join a group of 2–4 close friends.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-xl shadow-md">
-                    <Pencil className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-sm">Set Your <em>Will</em></p>
-                    <p className="text-gray-600 text-xs leading-relaxed">Make a commitment.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-2 rounded-xl shadow-md">
-                    <TrendingUp className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-sm">Stay Accountable</p>
-                    <p className="text-gray-600 text-xs leading-relaxed">Support each other daily.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p className="text-base text-gray-500 leading-snug text-center mb-6">Become who you're meant to be. <span className="font-semibold text-gray-700 italic">Together.</span></p>
 
           {/* Tabs - Enhanced Design */}
           <div className="w-full">
