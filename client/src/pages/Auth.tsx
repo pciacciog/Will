@@ -111,11 +111,14 @@ export default function Auth() {
               <Shield className="w-6 h-6 text-blue-600" />
             </div>
             <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-1">Join Your Inner Circle</h1>
-            <p className="text-base text-gray-500 leading-snug">Connect with the people who matter. Grow together.</p>
           </div>
 
-          {/* Step Descriptions */}
-          <div className="space-y-1 mb-3">
+          {/* Content Section - Elevated */}
+          <div className="-mt-4">
+            <p className="text-base text-gray-500 leading-snug text-center mb-3">Connect with the people who matter. Grow together.</p>
+            
+            {/* Step Descriptions */}
+            <div className="space-y-1 mb-3">
             <div className="flex items-start space-x-2">
               <div className="bg-blue-100 p-1 rounded-full shadow-sm">
                 <Handshake className="w-3 h-3 text-blue-600" />
@@ -329,6 +332,7 @@ export default function Auth() {
                 </div>
               </TabsContent>
             </Tabs>
+          </div>
           </div>
         </div>
       </div>
