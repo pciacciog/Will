@@ -107,8 +107,8 @@ export default function Auth() {
           <div className="max-w-sm mx-auto flex flex-col space-y-1">
           {/* Header & Icon */}
           <div className="text-center space-y-1 mb-1">
-            <div className="bg-violet-100 p-1.5 rounded-full w-8 h-8 flex items-center justify-center mx-auto">
-              <Shield className="w-4 h-4 text-violet-500" />
+            <div className="bg-blue-100 p-1.5 rounded-full w-8 h-8 flex items-center justify-center mx-auto">
+              <Shield className="w-4 h-4 text-blue-600" />
             </div>
             <h1 className="text-base font-semibold">Join Your Inner Circle</h1>
             <p className="text-xs text-gray-600">Connect with the people who matter. Grow together.</p>
@@ -204,7 +204,7 @@ export default function Auth() {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-violet-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-violet-700 transition"
+                    className="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
                     disabled={loginMutation.isPending}
                   >
                     {loginMutation.isPending ? "Signing in..." : "Sign In"}
@@ -310,7 +310,7 @@ export default function Auth() {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-violet-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-violet-700 transition"
+                    className="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
                     disabled={registerMutation.isPending}
                   >
                     {registerMutation.isPending ? "Creating account..." : "Create Account"}
