@@ -104,9 +104,9 @@ export default function Auth() {
           </Link>
         </div>
           
-          <div className="max-w-sm mx-auto flex flex-col -mt-2">
+          <div className="max-w-sm mx-auto flex flex-col -mt-4">
           {/* Header & Icon */}
-          <div className="text-center mb-3">
+          <div className="text-center mb-2">
             <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
               <Shield className="w-6 h-6 text-blue-600" />
             </div>
