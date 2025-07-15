@@ -115,7 +115,7 @@ export default function Home() {
     },
   });
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/user'],
   });
 
@@ -134,6 +134,15 @@ export default function Home() {
       console.log('Splash screen completed');
       setShowSplash(false);
     }} />;
+  }
+
+  // Show loading state while user data is being fetched
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   // If user is not authenticated, redirect to auth

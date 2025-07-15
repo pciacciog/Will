@@ -1,0 +1,126 @@
+Here's a structured debug strategy to help the developer resolve the splash screen issue once and for all, without relying on guessing or excessive logging.
+
+✅ Problem Summary
+Login/auth succeeds
+
+Splash logic is triggered (e.g., showSplash = true)
+
+But the Splash screen never renders
+
+Then → app crashes to 404, possibly due to navigation failing or unmounted component
+
+🧠 Likely Root Causes
+Component unmount before Splash can render
+➤ If Home is mounting while splash logic is still loading, React might unmount a screen before it even gets shown.
+
+Incorrect route render logic
+➤ Maybe conditional rendering in the Home route (e.g. if (!showSplash) return null) is not allowing splash screen to mount.
+
+Routing race condition
+➤ React Router might render before localStorage state (or auth state) is fully available.
+
+React Query or Context state desync
+➤ Splash visibility is tied to a state (context/localStorage/query) that updates after render, but it’s not triggering a re-render.
+
+🛠️ Suggested Solution Path
+✅ Step 1: Decouple Routing from Splash State
+Make sure Home always renders something—even just a blank screen—while determining splash state.
+
+tsx
+Copy
+Edit
+// Home.tsx (React pseudo-code)
+const Home = () => {
+  const [showSplash, setShowSplash] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const splashFlag = localStorage.getItem("showSplashOnHome");
+
+    if (splashFlag === "true") {
+      setShowSplash(true);
+      setTimeout(() => {
+        localStorage.removeItem("showSplashOnHome");
+        setShowSplash(false);
+        setLoading(false);
+      }, 2000);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  if (loading) return null;
+
+  return showSplash ? (
+    <SplashScreen />
+  ) : (
+    <MainHomeContent />
+  );
+};
+✅ Step 2: Make Splash Always Renderable
+Ensure <SplashScreen /> is mounted inside Home, not behind a routing wall
+
+Avoid using navigation like navigate("/splash") unless Splash has a dedicated route (which causes complexity)
+
+✅ Step 3: Remove Routing Dependency for Splash
+Avoid react-router redirects for splash.
+
+Bad:
+
+tsx
+Copy
+Edit
+navigate("/splash");
+Better: show splash within the Home page for 2 seconds before showing the real content.
+
+✅ Step 4: Ensure Auth Flow Sets Flag Early
+In login mutation:
+
+ts
+Copy
+Edit
+onSuccess: () => {
+  localStorage.setItem("showSplashOnHome", "true");
+  navigate("/");
+}
+✅ Step 5: Confirm Re-render Triggers
+Make sure you call setShowSplash(true) inside useEffect, not just set state without a trigger.
+
+Use console.log("Rendering splash screen") directly in SplashScreen to confirm render.
+
+🔄 Optional: Full Navigation Flow
+txt
+Copy
+Edit
+User signs in
+↓
+Login mutation success
+↓
+→ Set localStorage splash flag
+→ Navigate to "/"
+↓
+Home mounts
+↓
+→ Reads splash flag
+→ Shows splash screen for 2s
+↓
+→ Shows main Home content
+✅ Final Checklist
+✅ Checkpoint	Status
+Login success sets splash flag	✅
+Splash flag is read in Home	❓
+Splash screen renders in Home	❓
+No route change required for splash	✅
+State updates trigger re-render	❓
+
+Let me know if you’d like me to draft a complete Home.tsx or SplashScreen.tsx based on this approach.
+
+
+
+
+
+
+
+
+
+Ask ChatGPT
