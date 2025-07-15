@@ -864,6 +864,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Optimized form inputs**: Reduced padding from py-2 to py-1.5, labels from text-sm to text-xs, button heights compressed throughout
   - **Tighter step descriptions**: Icons reduced to w-3 h-3, spacing compressed from space-x-3 to space-x-2, all text sizes minimized
   - **Single-viewport achievement**: Both Sign In and Sign Up forms now fit entirely within iPhone screen without scrolling, even with 5 form fields
+- **July 15, 2025**: Enhanced Auth page readability and improved back button UX based on user feedback
+  - **Improved font sizes for better readability**: Increased subtitle from text-xs to text-sm, step titles from text-sm to text-base, step descriptions from text-xs to text-sm
+  - **Enhanced icon sizes**: Increased header icon from w-8 h-8 to w-12 h-12, step icons from w-3 h-3 to w-5 h-5 for better visual balance
+  - **Upgraded back button design**: Added sophisticated rounded-xl container with bg-white/80 shadow-md, backdrop-blur-sm, and enhanced hover states
+  - **Optimized vertical spacing**: Increased content padding from pt-[calc(env(safe-area-inset-top)+4rem)] to 5rem, added proper spacing throughout (space-y-3, mb-3, mb-4)
+  - **Enhanced Sign In form**: Restored proper input padding (px-4 py-2) and label sizes (text-sm) for optimal readability and user experience
+  - **Balanced layout**: Maintained single-viewport display while significantly improving text legibility and visual hierarchy
 - **July 14, 2025**: Implemented premium welcome screen UI polish with professional design improvements
   - **Enhanced typography**: Updated headline to `text-3xl font-semibold tracking-tight`, subtext to `text-base text-gray-500 leading-snug`
   - **Improved CTA button**: Applied `w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition`
