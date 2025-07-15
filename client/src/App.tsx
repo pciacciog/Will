@@ -4,8 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { notificationService } from "@/services/NotificationService";
+import SplashScreen from "@/components/SplashScreen";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Auth from "@/pages/Auth";
@@ -21,6 +22,21 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [showSplash, setShowSplash] = useState(true);
+  const [hasShownSplash, setHasShownSplash] = useState(false);
+
+  // Show splash screen on app load if user is authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !hasShownSplash) {
+      setHasShownSplash(true);
+      // Don't show splash immediately, allow a moment for the auth check
+      setTimeout(() => {
+        setShowSplash(false);
+      }, 100);
+    } else if (!isLoading && !isAuthenticated) {
+      setShowSplash(false);
+    }
+  }, [isLoading, isAuthenticated, hasShownSplash]);
 
   if (isLoading) {
     return (
@@ -28,6 +44,11 @@ function Router() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // Show splash screen for authenticated users on app load
+  if (isAuthenticated && showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
   return (

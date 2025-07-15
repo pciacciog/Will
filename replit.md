@@ -844,6 +844,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added inspiring tagline**: Implemented "Become who you're meant to be. Together." below WILL title
   - **Enhanced visual hierarchy**: Hand icon with emerald-teal gradient represents commitment, growth, and the act of raising your hand to volunteer
   - **Improved symbolism**: Logo now perfectly captures "I will" concept through universally understood gesture of personal commitment
+  - **Removed redundant three-step flow**: Streamlined Auth page by removing explanatory cards for cleaner sign-in experience
+- **July 15, 2025**: Implemented elegant splash screen and Welcome page updates
+  - **Created SplashScreen component**: "All You Need Is a Little... Will." with smooth fade animations and 2.3s duration
+  - **Integrated with authentication flow**: Splash appears after successful login/registration before navigating to Welcome
+  - **Added app startup splash**: Shows for already authenticated users on app launch for consistent brand experience
+  - **Updated Welcome page title**: Changed from "Welcome" to "Will" to reinforce personal agency and intentionality
+  - **Enhanced Tailwind animations**: Added fade-in/fade-out keyframes for professional transition effects
+  - **Emotional anchoring**: Splash screen creates pause before commitment, symbolizing moment of resolve and personal agency
   - **Improved visual hierarchy**: Icons now have more character and depth, creating a more expressive and polished landing experience
 - **July 14, 2025**: Completed Auth page mobile optimization with strict viewport fitting and visual consistency
   - **Implemented strict viewport constraints**: Used `min-h-screen overflow-hidden flex flex-col justify-between` to eliminate all scrolling

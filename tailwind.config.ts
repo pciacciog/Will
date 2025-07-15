@@ -38,6 +38,20 @@ export default {
         '4xl': ['2.25rem', { lineHeight: '2.5rem', letterSpacing: '-0.025em' }],
         '5xl': ['3rem', { lineHeight: '1', letterSpacing: '-0.025em' }],
       },
+      animation: {
+        'fade-in': 'fadeIn 1s ease-out',
+        'fade-out': 'fadeOut 0.5s ease-in',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeOut: {
+          '0%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

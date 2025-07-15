@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SplashScreen from "@/components/SplashScreen";
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export default function Auth() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
@@ -27,7 +29,7 @@ export default function Auth() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(['/api/user'], user);
-      setLocation('/');
+      setShowSplash(true);
     },
     onError: (error: any) => {
       toast({
@@ -48,7 +50,7 @@ export default function Auth() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(['/api/user'], user);
-      setLocation('/');
+      setShowSplash(true);
     },
     onError: (error: any) => {
       toast({
@@ -90,6 +92,11 @@ export default function Auth() {
       lastName: formData.get('lastName') as string,
     });
   };
+
+  // Show splash screen after successful authentication
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setLocation('/')} />;
+  }
 
   return (
     <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ touchAction: 'none' }}>

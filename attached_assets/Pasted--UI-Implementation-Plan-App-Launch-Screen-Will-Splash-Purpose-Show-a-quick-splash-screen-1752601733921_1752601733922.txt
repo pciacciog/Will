@@ -1,0 +1,86 @@
+🧱 UI Implementation Plan – App Launch Screen ("Will" Splash)
+🎯 Purpose:
+Show a quick splash screen that anchors the user emotionally before they reach the Welcome screen. This moment affirms the app’s tone: agency, intention, personal power.
+
+📍 When to Display:
+After Sign In/Sign Up, before navigating to the Welcome screen.
+
+If the user is already signed in, show immediately on app open before redirecting to the Welcome screen.
+
+Option 1: Splash Screen (Recommended)
+Duration: ~2 seconds
+Fade in/out effect: Optional but recommended (see Bonus)
+
+✅ Copy:
+html
+Copy
+Edit
+<div class="h-screen w-screen bg-white flex flex-col justify-center items-center">
+  <p class="text-lg text-gray-500 mb-2 italic tracking-wide">All You Need Is a Little...</p>
+  <h1 class="text-5xl font-bold text-black tracking-tight">Will.</h1>
+</div>
+🌀 Optional Animation:
+Use Framer Motion, or Tailwind animation utilities like:
+
+html
+Copy
+Edit
+<div class="animate-fade-in transition-opacity duration-1000">
+  ...
+</div>
+Then fade out before transitioning to the Welcome screen.
+
+Option 2: Embedded in Onboarding (Alternate)
+If not using a splash screen, integrate at the top of the first Welcome screen:
+
+html
+Copy
+Edit
+<div class="mt-12 text-center">
+  <p class="text-md text-gray-500 italic">All You Need Is a Little...</p>
+  <h1 class="text-4xl font-bold text-gray-800">Will.</h1>
+</div>
+✨ Bonus Touch (Optional)
+Animate the word “Will.” to appear a moment after the first line.
+
+This delay symbolizes the moment of resolve — when the user steps into their agency.
+
+Let me know if you'd like a Figma or motion spec for it!
+
+
+
+
+
+
+
+
+You said:
+Thw Welcome Screen should now dispaly Wiill at the title rather than welcome
+
+
+ChatGPT said:
+Got it — here’s a clean developer-facing instruction you can pass on:
+
+🧾 Update: Welcome Screen Title
+🔄 Change:
+Replace the word “Welcome” with “Will” on the Welcome Screen.
+
+🖼 Current:
+html
+Copy
+Edit
+<h1 class="text-4xl font-bold text-gray-800">Welcome</h1>
+✅ Update To:
+html
+Copy
+Edit
+<h1 class="text-4xl font-bold text-gray-800">Will</h1>
+💡 Why:
+This reinforces the brand identity and immediately reminds the user of the core value: personal agency and intentionality.
+
+Let me know if you’d also like to add a short tagline under it like:
+
+html
+Copy
+Edit
+<p class="text-md text-gray-500 italic">Step in with intention.</p>
