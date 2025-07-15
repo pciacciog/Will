@@ -28,11 +28,13 @@ export default function Auth() {
       return await res.json();
     },
     onSuccess: (user) => {
+      console.log('Login success, user:', user);
       queryClient.setQueryData(['/api/user'], user);
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       // Small delay to ensure state is updated before showing splash
       setTimeout(() => {
+        console.log('Setting showSplash to true');
         setShowSplash(true);
       }, 100);
     },
@@ -74,10 +76,12 @@ export default function Auth() {
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    loginMutation.mutate({
+    const credentials = {
       email: formData.get('email') as string,
       password: formData.get('password') as string,
-    });
+    };
+    console.log('Submitting login:', credentials);
+    loginMutation.mutate(credentials);
   };
 
   const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
