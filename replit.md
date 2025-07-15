@@ -838,6 +838,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added breathing room above CTA**: Wrapped "Start Your Journey" button in `div` with `mt-6` for better visual flow and spacing
   - **Upgraded icon set**: Replaced `Bolt` with `TrendingUp` for "Go to Work" section to represent growth and progress more effectively
   - **Enhanced icon containers**: Added `shadow-sm` to all icon containers for premium visual depth and better presentation
+- **July 15, 2025**: Updated Auth page branding and logo for better user connection
+  - **Replaced confusing Shield icon**: Changed from generic shield to meaningful Hand icon representing personal agency and volunteerism
+  - **Updated app title**: Changed from "Join Your Inner Circle" to clean, powerful "WILL" branding
+  - **Added inspiring tagline**: Implemented "Become who you're meant to be. Together." below WILL title
+  - **Enhanced visual hierarchy**: Hand icon with emerald-teal gradient represents commitment, growth, and the act of raising your hand to volunteer
+  - **Improved symbolism**: Logo now perfectly captures "I will" concept through universally understood gesture of personal commitment
   - **Improved visual hierarchy**: Icons now have more character and depth, creating a more expressive and polished landing experience
 - **July 14, 2025**: Completed Auth page mobile optimization with strict viewport fitting and visual consistency
   - **Implemented strict viewport constraints**: Used `min-h-screen overflow-hidden flex flex-col justify-between` to eliminate all scrolling
