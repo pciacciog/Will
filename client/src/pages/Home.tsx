@@ -84,8 +84,10 @@ export default function Home() {
   // Check if we should show splash screen on first load
   useEffect(() => {
     const shouldShowSplash = localStorage.getItem('showSplashOnHome');
+    console.log('Home useEffect: shouldShowSplash =', shouldShowSplash);
     if (shouldShowSplash === 'true') {
       localStorage.removeItem('showSplashOnHome');
+      console.log('Setting showSplash to true');
       setShowSplash(true);
     }
   }, []);

@@ -33,6 +33,7 @@ export default function Auth() {
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       // Set a flag to show splash screen on first Home load
+      console.log('Setting showSplashOnHome to true in localStorage');
       localStorage.setItem('showSplashOnHome', 'true');
     },
     onError: (error: any) => {
