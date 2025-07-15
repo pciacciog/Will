@@ -115,7 +115,7 @@ export default function Auth() {
 
           {/* Content Section - Elevated */}
           <div className="-mt-6">
-            <p className="text-base text-gray-500 leading-snug text-center mb-3">Become who you're meant to be. Together.</p>
+            <p className="text-base text-gray-500 leading-snug text-center mb-3">Become who you're meant to be. <span className="font-semibold text-gray-700 italic">Together.</span></p>
             
             {/* Step Descriptions - Enhanced Design */}
             <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-gray-100/50 mb-4">
