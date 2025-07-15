@@ -35,11 +35,11 @@ export default function Landing() {
           </div>
         </div>
         
-        {/* Step Flow Cards */}
+        {/* Step Flow Cards - Enhanced Design */}
         <div className="space-y-4">
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center space-x-4">
-            <div className="bg-blue-100 p-2 rounded-full shadow-sm">
-              <Handshake className="w-6 h-6 text-blue-600" />
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-md">
+              <Handshake className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Build Your Inner Circle</h3>
@@ -48,8 +48,8 @@ export default function Landing() {
           </div>
           
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center space-x-4">
-            <div className="bg-green-100 p-2 rounded-full shadow-sm">
-              <Pencil className="w-6 h-6 text-green-600" />
+            <div className="bg-gradient-to-br from-green-500 to-green-600 p-3 rounded-xl shadow-md">
+              <Pencil className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Create Your <em>Will</em></h3>
@@ -58,8 +58,8 @@ export default function Landing() {
           </div>
           
           <div className="bg-white rounded-xl shadow-sm p-4 flex items-center space-x-4">
-            <div className="bg-purple-100 p-2 rounded-full shadow-sm">
-              <TrendingUp className="w-6 h-6 text-purple-600" />
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-xl shadow-md">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Go to Work</h3>
