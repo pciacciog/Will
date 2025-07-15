@@ -878,6 +878,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Ultra-compact forms**: Sign In form uses space-y-1.5, Sign Up form uses space-y-1 for maximum compression
   - **Minimized form margins**: Reduced all TabsContent from mt-2 to mt-1, input field margins from mt-1 to mt-0.5
   - **Single-viewport achievement**: Both Sign In and Sign Up forms now fit completely within mobile viewport without scrolling, as required
+- **July 15, 2025**: Critical Auth page fixes for back button positioning and single-viewport display
+  - **Restructured layout completely**: Removed fixed header and positioned back button within shaded content area using mb-4 spacing
+  - **Proper back button location**: Moved back button from fixed header to within content area to stay in shaded screen boundaries
+  - **Ultra-compressed content**: Header icon reduced to w-8 h-8, step icons to w-3 h-3, all text sizes to text-xs/text-sm
+  - **Minimized form elements**: Sign In form uses space-y-1, Sign Up form uses space-y-0.5, all input padding reduced to py-1/py-1.5
+  - **Tab compression**: TabsList padding reduced to py-1, font sizes to text-xs for maximum space efficiency
+  - **Non-scrollable enforcement**: Applied overflow-hidden, scrollable={false}, and flex-col justify-start to prevent any scrolling
+  - **Single viewport guarantee**: Both authentication forms now display completely within mobile screen without scrolling capability
 - **July 14, 2025**: Implemented premium welcome screen UI polish with professional design improvements
   - **Enhanced typography**: Updated headline to `text-3xl font-semibold tracking-tight`, subtext to `text-base text-gray-500 leading-snug`
   - **Improved CTA button**: Applied `w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition`
