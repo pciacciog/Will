@@ -35,6 +35,8 @@ export default function Auth() {
       // Set a flag to show splash screen on first Home load
       console.log('Setting showSplashOnHome to true in localStorage');
       localStorage.setItem('showSplashOnHome', 'true');
+      // Redirect to home page
+      setLocation('/');
     },
     onError: (error: any) => {
       toast({
