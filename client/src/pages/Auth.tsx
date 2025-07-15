@@ -152,19 +152,19 @@ export default function Auth() {
               </div>
             </div>
 
-          {/* Tabs */}
+          {/* Tabs - Enhanced Design */}
           <div className="w-full">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="flex border rounded-xl overflow-hidden text-center w-full bg-gray-50 mx-auto mb-3 py-2">
+              <TabsList className="flex border rounded-2xl overflow-hidden text-center w-full bg-gradient-to-r from-gray-50 to-gray-100 mx-auto mb-4 py-2 shadow-inner">
                 <TabsTrigger 
                   value="login" 
-                  className="w-1/2 py-1 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-gray-700 data-[state=active]:shadow-sm data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 border-r border-gray-200 flex justify-center items-center"
+                  className="w-1/2 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-lg data-[state=active]:transform data-[state=active]:scale-105 data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 border-r border-gray-200 flex justify-center items-center transition-all duration-200"
                 >
                   Sign In
                 </TabsTrigger>
                 <TabsTrigger 
                   value="register" 
-                  className="w-1/2 py-1 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-gray-700 data-[state=active]:shadow-sm data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 flex justify-center items-center"
+                  className="w-1/2 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-lg data-[state=active]:transform data-[state=active]:scale-105 data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 flex justify-center items-center transition-all duration-200"
                 >
                   Sign Up
                 </TabsTrigger>
