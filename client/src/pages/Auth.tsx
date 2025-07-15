@@ -94,7 +94,7 @@ export default function Auth() {
   return (
     <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ touchAction: 'none' }}>
       {/* Content Area with Back Button Inside */}
-      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+1rem)] pb-[env(safe-area-inset-bottom)] px-4" style={{ overscrollBehavior: 'none' }}>
+      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[env(safe-area-inset-bottom)] px-4" style={{ overscrollBehavior: 'none' }}>
         {/* Back Button positioned in shaded area */}
         <div className="flex justify-start mb-8">
           <Link href="/">
