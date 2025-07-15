@@ -92,35 +92,33 @@ export default function Auth() {
   };
 
   return (
-    <div className="fixed inset-0 h-screen w-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      {/* Fixed Header with Safe Area */}
-      <div className="fixed top-0 left-0 right-0 z-10 bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        {/* Back Button with proper safe area clearance */}
-        <div className="flex justify-start px-4 pt-4 pb-2">
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ touchAction: 'none' }}>
+      {/* Content Area with Back Button Inside */}
+      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4" style={{ overscrollBehavior: 'none' }}>
+        {/* Back Button positioned in shaded area */}
+        <div className="flex justify-start mb-4">
           <Link href="/">
             <button className="p-2 rounded-lg bg-white/80 shadow-sm hover:bg-white hover:shadow-md transition-all duration-200 backdrop-blur-sm">
               <ArrowLeft className="h-4 w-4 text-gray-600" />
             </button>
           </Link>
         </div>
-        
-        {/* Title and Icon - Fixed Header */}
-        <div className="text-center px-4 pb-3">
-          <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
-            <Shield className="w-6 h-6 text-blue-600" />
-          </div>
-          <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Join Your Inner Circle</h1>
-        </div>
-      </div>
-
-      {/* Scrollable Content Area */}
-      <div className="h-full overflow-y-auto" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 160px)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}>
-        <div className="max-w-sm mx-auto px-4">
-          {/* Subtitle */}
-          <p className="text-base text-gray-500 leading-snug text-center mb-4">Connect with the people who matter. Grow together.</p>
           
-          {/* Step Descriptions */}
-          <div className="space-y-2 mb-4">
+          <div className="max-w-sm mx-auto flex flex-col -mt-4">
+          {/* Header & Icon */}
+          <div className="text-center mb-2">
+            <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
+              <Shield className="w-6 h-6 text-blue-600" />
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-1">Join Your Inner Circle</h1>
+          </div>
+
+          {/* Content Section - Elevated */}
+          <div className="-mt-6">
+            <p className="text-base text-gray-500 leading-snug text-center mb-3">Connect with the people who matter. Grow together.</p>
+            
+            {/* Step Descriptions */}
+            <div className="space-y-1 mb-3">
             <div className="flex items-start space-x-2">
               <div className="bg-blue-100 p-1 rounded-full shadow-sm">
                 <Handshake className="w-3 h-3 text-blue-600" />
@@ -334,6 +332,7 @@ export default function Auth() {
                 </div>
               </TabsContent>
             </Tabs>
+          </div>
           </div>
         </div>
       </div>
