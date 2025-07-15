@@ -727,6 +727,13 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced messaging**: Changed from "You can now start a new Will" to "Once all of the members have acknowledged, you will be able to start a new will"
   - **Applied to both locations**: Updated toast messages in both WillDetails.tsx and InnerCircleHub.tsx
   - **Improved clarity**: Users now understand they must wait for all members to acknowledge before creating new wills
+- **July 15, 2025**: Completely resolved authentication flow and splash screen issues
+  - **Fixed splash screen rendering**: Successfully implemented splash screen that appears after login with proper timing (800ms → "Will." → 2.3s total)
+  - **Resolved 404 routing error**: Fixed critical issue where authenticated users remained on /auth route causing 404 errors
+  - **Added automatic redirect**: Login success now properly redirects to home page (/) before showing splash screen
+  - **Enhanced authentication flow**: Login → Redirect to / → Splash screen → Home content without any crashes or errors
+  - **Maintained mobile compatibility**: All fixes work seamlessly on both web and mobile platforms with proper iOS safe area handling
+  - **Improved user experience**: Authentication flow now provides smooth, elegant transition from login to app content
 - **July 14, 2025**: Removed redundant parenthetical text from End Room Confirmation screen
   - **Cleaned up UI**: Removed "(This is your scheduled End Room for reflection and closure.)" text from SubmitCommitment flow
   - **Reduced redundancy**: Eliminated unnecessary explanatory text that was already clear from context
