@@ -886,6 +886,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Tab compression**: TabsList padding reduced to py-1, font sizes to text-xs for maximum space efficiency
   - **Non-scrollable enforcement**: Applied overflow-hidden, scrollable={false}, and flex-col justify-start to prevent any scrolling
   - **Single viewport guarantee**: Both authentication forms now display completely within mobile screen without scrolling capability
+- **July 15, 2025**: Final Auth page scroll elimination and iOS status bar collision fix
+  - **Completely fixed layout**: Removed MobileLayout wrapper and applied `fixed inset-0 h-screen w-screen overflow-hidden` for truly fixed positioning
+  - **Disabled all scrolling**: Added `touchAction: 'none'` and `overscrollBehavior: 'none'` to prevent any touch-based scrolling
+  - **Fixed iOS status bar collision**: Increased top padding from `+1rem` to `+2.5rem` to prevent back button collision with iOS time display
+  - **Eliminated scroll capability**: Page now completely locked in place with no scrolling gestures or behaviors
+  - **Perfect mobile experience**: Single viewport display with no scrolling, proper iOS safe area handling, and collision-free back button positioning
 - **July 14, 2025**: Implemented premium welcome screen UI polish with professional design improvements
   - **Enhanced typography**: Updated headline to `text-3xl font-semibold tracking-tight`, subtext to `text-base text-gray-500 leading-snug`
   - **Improved CTA button**: Applied `w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl shadow-md transition`
