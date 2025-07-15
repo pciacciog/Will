@@ -35,50 +35,35 @@ export default function Landing() {
           </div>
         </div>
         
-        {/* Step Flow Cards - Enhanced Design with Blue Borders */}
+        {/* Step Flow Cards - Enhanced Design with Visible Borders */}
         <div className="space-y-3">
-          <div className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 rounded-xl opacity-75"></div>
-            <div className="relative bg-white rounded-xl shadow-lg p-0.5">
-              <div className="bg-white rounded-xl p-4 flex items-center space-x-4">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-md">
-                  <Handshake className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Build Your Inner Circle</h3>
-                  <p className="text-gray-600 text-sm">Invite the people who matter most.</p>
-                </div>
-              </div>
+          <div className="bg-white rounded-xl shadow-lg border-2 border-blue-200 hover:border-blue-300 transition-colors p-4 flex items-center space-x-4">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-md">
+              <Handshake className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Build Your Inner Circle</h3>
+              <p className="text-gray-600 text-sm">Invite the people who matter most.</p>
             </div>
           </div>
           
-          <div className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-xl opacity-75"></div>
-            <div className="relative bg-white rounded-xl shadow-lg p-0.5">
-              <div className="bg-white rounded-xl p-4 flex items-center space-x-4">
-                <div className="bg-gradient-to-br from-green-500 to-green-600 p-3 rounded-xl shadow-md">
-                  <Pencil className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Create Your <em>Will</em></h3>
-                  <p className="text-gray-600 text-sm">Define what you will do.</p>
-                </div>
-              </div>
+          <div className="bg-white rounded-xl shadow-lg border-2 border-green-200 hover:border-green-300 transition-colors p-4 flex items-center space-x-4">
+            <div className="bg-gradient-to-br from-green-500 to-green-600 p-3 rounded-xl shadow-md">
+              <Pencil className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Create Your <em>Will</em></h3>
+              <p className="text-gray-600 text-sm">Define what you will do.</p>
             </div>
           </div>
           
-          <div className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 rounded-xl opacity-75"></div>
-            <div className="relative bg-white rounded-xl shadow-lg p-0.5">
-              <div className="bg-white rounded-xl p-4 flex items-center space-x-4">
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-xl shadow-md">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Go to Work</h3>
-                  <p className="text-gray-600 text-sm">Share in the struggle.</p>
-                </div>
-              </div>
+          <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 hover:border-purple-300 transition-colors p-4 flex items-center space-x-4">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-xl shadow-md">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Go to Work</h3>
+              <p className="text-gray-600 text-sm">Share in the struggle.</p>
             </div>
           </div>
         </div>
