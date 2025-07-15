@@ -96,7 +96,7 @@ export default function Auth() {
       <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-blue-50 via-white to-green-50">
         {/* Fixed Header with Back Button */}
         <div className="fixed top-0 left-0 right-0 z-20 pt-[env(safe-area-inset-top)] pb-2 bg-gradient-to-br from-blue-50 via-white to-green-50">
-          <div className="flex justify-start px-4 pt-6">
+          <div className="flex justify-start px-4 pt-2">
             <Link href="/">
               <button className="p-3 rounded-xl bg-white/80 shadow-md hover:bg-white hover:shadow-lg transition-all duration-200 backdrop-blur-sm">
                 <ArrowLeft className="h-5 w-5 text-gray-600" />
@@ -106,22 +106,22 @@ export default function Auth() {
         </div>
 
         {/* Non-scrollable Content Area */}
-        <div className="flex-1 overflow-hidden pt-[calc(env(safe-area-inset-top)+5rem)] pb-[env(safe-area-inset-bottom)] px-4">
-          <div className="max-w-sm mx-auto h-full flex flex-col justify-center space-y-3">
+        <div className="flex-1 overflow-hidden pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-[env(safe-area-inset-bottom)] px-4">
+          <div className="max-w-sm mx-auto h-full flex flex-col justify-center space-y-2">
           {/* Header & Icon */}
-          <div className="text-center space-y-2 mb-3">
-            <div className="bg-violet-100 p-2 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
-              <Shield className="w-6 h-6 text-violet-500" />
+          <div className="text-center space-y-1 mb-2">
+            <div className="bg-violet-100 p-2 rounded-full w-10 h-10 flex items-center justify-center mx-auto">
+              <Shield className="w-5 h-5 text-violet-500" />
             </div>
-            <h1 className="text-xl font-semibold">Join Your Inner Circle</h1>
+            <h1 className="text-lg font-semibold">Join Your Inner Circle</h1>
             <p className="text-sm text-gray-600">Connect with the people who matter. Grow together.</p>
           </div>
 
           {/* Step Descriptions */}
-          <div className="space-y-3 mb-4">
+          <div className="space-y-2 mb-3">
             <div className="flex items-start space-x-3">
-              <div className="bg-blue-100 p-2 rounded-full shadow-sm">
-                <Handshake className="w-5 h-5 text-blue-600" />
+              <div className="bg-blue-100 p-1.5 rounded-full shadow-sm">
+                <Handshake className="w-4 h-4 text-blue-600" />
               </div>
               <div>
                 <p className="text-base font-medium text-gray-800">Form Your Circle</p>
@@ -129,8 +129,8 @@ export default function Auth() {
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <div className="bg-green-100 p-2 rounded-full shadow-sm">
-                <Pencil className="w-5 h-5 text-green-600" />
+              <div className="bg-green-100 p-1.5 rounded-full shadow-sm">
+                <Pencil className="w-4 h-4 text-green-600" />
               </div>
               <div>
                 <p className="text-base font-medium text-gray-800">Set Your <em>Will</em></p>
@@ -138,8 +138,8 @@ export default function Auth() {
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <div className="bg-purple-100 p-2 rounded-full shadow-sm">
-                <TrendingUp className="w-5 h-5 text-purple-600" />
+              <div className="bg-purple-100 p-1.5 rounded-full shadow-sm">
+                <TrendingUp className="w-4 h-4 text-purple-600" />
               </div>
               <div>
                 <p className="text-base font-medium text-gray-800">Stay Accountable</p>
@@ -166,8 +166,8 @@ export default function Auth() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="mt-2 space-y-2">
-                <form onSubmit={handleLogin} className="space-y-2">
+              <TabsContent value="login" className="mt-1 space-y-1.5">
+                <form onSubmit={handleLogin} className="space-y-1.5">
                   <div>
                     <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
                     <Input
@@ -176,12 +176,12 @@ export default function Auth() {
                       type="email"
                       placeholder="Enter your email"
                       required
-                      className="w-full px-4 py-2 border rounded-xl text-sm mt-1"
+                      className="w-full px-4 py-2 border rounded-xl text-sm mt-0.5"
                     />
                   </div>
                   <div>
                     <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
-                    <div className="relative mt-1">
+                    <div className="relative mt-0.5">
                       <Input
                         id="login-password"
                         name="password"
@@ -215,15 +215,15 @@ export default function Auth() {
                 </form>
                 
                 {/* Privacy Notice - Inline within form */}
-                <div className="text-center pt-1">
+                <div className="text-center pt-0.5">
                   <p className="text-xs text-gray-400 font-light">
                     By continuing, you agree to our commitment to your privacy and security.
                   </p>
                 </div>
               </TabsContent>
 
-              <TabsContent value="register" className="mt-2 space-y-1.5">
-                <form onSubmit={handleRegister} className="space-y-1.5">
+              <TabsContent value="register" className="mt-1 space-y-1">
+                <form onSubmit={handleRegister} className="space-y-1">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label htmlFor="register-firstName" className="text-sm font-medium">First Name</Label>
@@ -233,7 +233,7 @@ export default function Auth() {
                         type="text"
                         placeholder="First name"
                         required
-                        className="w-full px-3 py-1.5 border rounded-xl text-sm mt-1"
+                        className="w-full px-3 py-1.5 border rounded-xl text-sm mt-0.5"
                       />
                     </div>
                     <div>
@@ -244,7 +244,7 @@ export default function Auth() {
                         type="text"
                         placeholder="Last name"
                         required
-                        className="w-full px-3 py-1.5 border rounded-xl text-sm mt-1"
+                        className="w-full px-3 py-1.5 border rounded-xl text-sm mt-0.5"
                       />
                     </div>
                   </div>
@@ -256,12 +256,12 @@ export default function Auth() {
                       type="email"
                       placeholder="Enter your email"
                       required
-                      className="w-full px-3 py-1.5 border rounded-xl text-sm mt-1"
+                      className="w-full px-3 py-1.5 border rounded-xl text-sm mt-0.5"
                     />
                   </div>
                   <div>
                     <Label htmlFor="register-password" className="text-sm font-medium">Password</Label>
-                    <div className="relative mt-1">
+                    <div className="relative mt-0.5">
                       <Input
                         id="register-password"
                         name="password"
@@ -287,7 +287,7 @@ export default function Auth() {
                   </div>
                   <div>
                     <Label htmlFor="register-confirmPassword" className="text-sm font-medium">Confirm Password</Label>
-                    <div className="relative mt-1">
+                    <div className="relative mt-0.5">
                       <Input
                         id="register-confirmPassword"
                         name="confirmPassword"
@@ -321,7 +321,7 @@ export default function Auth() {
                 </form>
                 
                 {/* Privacy Notice - Inline within form */}
-                <div className="text-center pt-1">
+                <div className="text-center pt-0.5">
                   <p className="text-xs text-gray-400 font-light">
                     By continuing, you agree to our commitment to your privacy and security.
                   </p>
