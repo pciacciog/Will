@@ -751,6 +751,7 @@ This is a full-stack web application for group goal accountability, built with R
   - **Added scrollable commitments section**: Implemented flex-1 overflow-y-auto for member commitments to handle 4+ members
   - **Enhanced navigation options**: Added "Close" button for acknowledged users and improved "Back to Hub" styling for better user flow
   - **Fixed user trap issue**: Users can now properly exit Final Will Summary modal after acknowledgment with dual navigation options
+  - **Fixed "Why" button styling**: Changed from blue background (bg-blue-100) to neutral white background (bg-white) to match "Edit" button styling and avoid confusion about pre-selected state
   - **Applied consistent mobile-first design**: All components now fit seamlessly on single iPhone viewport without scrolling
 - **July 14, 2025**: Removed redundant parenthetical text from End Room Confirmation screen
   - **Cleaned up UI**: Removed "(This is your scheduled End Room for reflection and closure.)" text from SubmitCommitment flow

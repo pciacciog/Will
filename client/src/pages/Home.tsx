@@ -334,7 +334,7 @@ export default function Home() {
                           className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg border transition-all duration-200 shadow-sm text-sm font-medium ${
                             showWhy 
                               ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600' 
-                              : 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                           }`}
                         >
                           <span>Why</span>
