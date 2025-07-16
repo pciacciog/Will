@@ -238,17 +238,42 @@ export default function SubmitCommitment() {
           <SectionCard>
             <form onSubmit={handleStep1Submit} className="space-y-6">
               <div className="space-y-6 mt-8">
-                <div className="text-center">
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mx-auto max-w-md">
-                    <div className="flex items-center justify-center mb-3">
-                      <Calendar className="w-5 h-5 text-gray-600 mr-2" />
-                      <div className="font-medium text-gray-900 tracking-tight">Schedule</div>
+                {/* Creator Information */}
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-2">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
                     </div>
-                    <div className="text-sm text-gray-700 tracking-tight">
-                      <div className="font-medium">
+                    <span className="text-sm font-medium text-blue-800">
+                      {circle?.members?.find(member => member.id === will?.createdBy)?.firstName || 'Someone'} proposed this schedule
+                    </span>
+                  </div>
+                </div>
+
+                {/* Enhanced Schedule Card */}
+                <div className="text-center">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200 shadow-sm mx-auto max-w-sm">
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Will Schedule</h3>
+                    <div className="text-base text-gray-800 leading-relaxed">
+                      <div className="font-medium mb-2">
                         {will?.startDate && will?.endDate ? (
                           <>
-                            {new Date(will.startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} from{' '}
+                            {new Date(will.startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                          </>
+                        ) : (
+                          'Loading...'
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-3">
+                        {will?.startDate && will?.endDate ? (
+                          <>
                             {new Date(will.startDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} to{' '}
                             {new Date(will.endDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                           </>
@@ -256,7 +281,11 @@ export default function SubmitCommitment() {
                           'Loading...'
                         )}
                       </div>
-                      <div className="mt-2 text-xs text-gray-600 tracking-tight">This is the schedule for the <em>Will</em> you're joining.</div>
+                      <div className="bg-white/60 rounded-lg p-3 border border-blue-100">
+                        <p className="text-xs text-blue-700 leading-relaxed">
+                          Join your circle for this commitment period and work together toward your goals
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
