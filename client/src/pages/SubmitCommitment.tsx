@@ -247,7 +247,7 @@ export default function SubmitCommitment() {
                       </svg>
                     </div>
                     <span className="text-sm font-medium text-blue-800">
-                      {circle?.members?.find(member => member.id === will?.createdBy)?.firstName || 'Someone'} proposed this schedule
+                      {circle?.members?.find(member => member.id === will?.createdBy)?.firstName || 'Someone'} has proposed the following:
                     </span>
                   </div>
                 </div>
