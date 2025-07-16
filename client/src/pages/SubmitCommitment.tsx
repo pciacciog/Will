@@ -212,7 +212,7 @@ export default function SubmitCommitment() {
                 <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
               </>
             )}
-            {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">Your circle will gather here to reflect, share, and honor the efforts.</p>}
+
           </div>
         </div>
       </div>
@@ -473,7 +473,7 @@ export default function SubmitCommitment() {
                       </div>
                       <div className="bg-white/60 rounded-lg p-3 border border-purple-100">
                         <p className="text-xs text-purple-700 leading-relaxed">
-                          Your circle will gather here to reflect, share insights, and celebrate your collective efforts
+                          Your circle will gather here to reflect, share, and honor your collective efforts
                         </p>
                       </div>
                     </div>
