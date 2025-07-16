@@ -184,50 +184,45 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
-        <div className="max-w-lg mx-auto px-6">
+    <div className="h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 overflow-hidden">
+      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] h-full flex flex-col">
+        <div className="max-w-sm mx-auto px-4 flex-1 flex flex-col justify-center space-y-4">
           
-          {/* Elegant Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-4">
+          {/* Compact Header */}
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center mb-2">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-xl opacity-30 animate-pulse"></div>
-                <h1 className="relative text-5xl font-light text-gray-900 tracking-wide">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
+                <h1 className="relative text-3xl font-light text-gray-900 tracking-wide">
                   <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                     Will
                   </span>
                 </h1>
               </div>
             </div>
-            <p className="text-sm text-gray-500 font-light tracking-wide uppercase">
+            <p className="text-xs text-gray-500 font-light tracking-wide uppercase">
               Your Journey Starts Here
             </p>
           </div>
 
-          {/* Circle Status Card */}
+          {/* Compact Circle Status Card */}
           <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-3xl blur opacity-25"></div>
-            <Card className="relative bg-white/80 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden">
-              <CardContent className="p-8 text-center">
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-25"></div>
+            <Card className="relative bg-white/80 backdrop-blur-xl border-0 shadow-xl rounded-2xl overflow-hidden">
+              <CardContent className="p-4 text-center">
                 {circle ? (
-                  <div className="space-y-6">
-                    {/* Intentional Circle Icon */}
-                    <div className="relative mx-auto w-20 h-20">
+                  <div className="space-y-3">
+                    {/* Compact Circle Icon */}
+                    <div className="relative mx-auto w-12 h-12">
                       <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full animate-pulse opacity-20"></div>
-                      <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-4 border-emerald-100 flex items-center justify-center shadow-lg">
-                        <div className="relative">
-                          <Users className="w-8 h-8 text-emerald-600" strokeWidth={1.5} />
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full flex items-center justify-center">
-                            <Sparkles className="w-2 h-2 text-white" />
-                          </div>
-                        </div>
+                      <div className="relative w-12 h-12 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-100 flex items-center justify-center shadow-md">
+                        <Users className="w-5 h-5 text-emerald-600" strokeWidth={1.5} />
                       </div>
                     </div>
                     
-                    <div className="space-y-3">
-                      <h3 className="text-2xl font-semibold text-gray-900 tracking-tight">Your Circle</h3>
-                      <p className="text-gray-600 leading-relaxed">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold text-gray-900">Your Circle</h3>
+                      <p className="text-sm text-gray-600">
                         {(() => {
                           const memberCount = circle.members?.length || 0;
                           if (memberCount === 1) {
@@ -241,41 +236,36 @@ export default function Home() {
                       </p>
                     </div>
                     
-                    <div className="pt-4">
+                    <div className="pt-2">
                       <Button 
                         onClick={handleStartJourney} 
-                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                       >
                         Enter Your Circle Hub
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                    {/* Create Circle Icon */}
-                    <div className="relative mx-auto w-20 h-20">
+                  <div className="space-y-3">
+                    {/* Compact Create Circle Icon */}
+                    <div className="relative mx-auto w-12 h-12">
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full animate-pulse opacity-20"></div>
-                      <div className="relative w-20 h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border-4 border-blue-100 flex items-center justify-center shadow-lg">
-                        <div className="relative">
-                          <Plus className="w-8 h-8 text-blue-600" strokeWidth={1.5} />
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center">
-                            <Sparkles className="w-2 h-2 text-white" />
-                          </div>
-                        </div>
+                      <div className="relative w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border-2 border-blue-100 flex items-center justify-center shadow-md">
+                        <Plus className="w-5 h-5 text-blue-600" strokeWidth={1.5} />
                       </div>
                     </div>
                     
-                    <div className="space-y-3">
-                      <h3 className="text-2xl font-semibold text-gray-900 tracking-tight">Create Your Inner Circle</h3>
-                      <p className="text-gray-600 leading-relaxed">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold text-gray-900">Create Your Inner Circle</h3>
+                      <p className="text-sm text-gray-600">
                         Start by creating or joining an Inner Circle to begin your accountability journey
                       </p>
                     </div>
                     
-                    <div className="pt-4">
+                    <div className="pt-2">
                       <Button 
                         onClick={handleStartJourney} 
-                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-medium py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-medium py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                       >
                         Get Started
                       </Button>
@@ -286,91 +276,87 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* Active/Scheduled Will Card - Only show if user has an active, scheduled, or completed Will */}
+          {/* Compact Active Will Card */}
           {isActiveWill && userCommitment && (
-            <div className="mt-8">
-              <div className="relative">
-                <div className={`absolute -inset-1 rounded-3xl blur opacity-25 ${
-                  willStatus === 'active' ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
-                  willStatus === 'waiting_for_end_room' ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
-                  'bg-gradient-to-r from-blue-400 to-indigo-500'
-                }`}></div>
-                <Card className="relative bg-white/80 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden">
-                  <CardContent className="p-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
-                          willStatus === 'active' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-100' :
-                          willStatus === 'waiting_for_end_room' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-100' :
-                          'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100'
+            <div className="relative">
+              <div className={`absolute -inset-1 rounded-2xl blur opacity-25 ${
+                willStatus === 'active' ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+                willStatus === 'waiting_for_end_room' ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+                'bg-gradient-to-r from-blue-400 to-indigo-500'
+              }`}></div>
+              <Card className="relative bg-white/80 backdrop-blur-xl border-0 shadow-xl rounded-2xl overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${
+                      willStatus === 'active' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100' :
+                      willStatus === 'waiting_for_end_room' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100' :
+                      'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100'
+                    }`}>
+                      <Target className={`w-5 h-5 ${
+                        willStatus === 'active' ? 'text-green-600' :
+                        willStatus === 'waiting_for_end_room' ? 'text-green-600' :
+                        'text-blue-600'
+                      }`} strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        <em>Will</em>
+                      </h3>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={`text-xs font-medium px-2 py-1 rounded-full ${
+                          willStatus === 'active' ? 'bg-green-100 text-green-800' :
+                          willStatus === 'waiting_for_end_room' ? 'bg-green-100 text-green-800' :
+                          'bg-blue-100 text-blue-800'
                         }`}>
-                          <Target className={`w-7 h-7 ${
-                            willStatus === 'active' ? 'text-green-600' :
-                            willStatus === 'waiting_for_end_room' ? 'text-green-600' :
-                            'text-blue-600'
-                          }`} strokeWidth={1.5} />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-semibold text-gray-900 tracking-tight">
-                            <em>Will</em>
-                          </h3>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Badge className={`text-xs font-medium px-3 py-1 rounded-full ${
-                              willStatus === 'active' ? 'bg-green-100 text-green-800' :
-                              willStatus === 'waiting_for_end_room' ? 'bg-green-100 text-green-800' :
-                              'bg-blue-100 text-blue-800'
-                            }`}>
-                              {willStatus === 'active' ? 'Active' : 
-                               willStatus === 'waiting_for_end_room' ? 'Completed' : 'Scheduled'}
-                            </Badge>
-                            {willStatus === 'scheduled' && will?.startDate && (
-                              <span className="text-xs text-gray-500 font-medium">
-                                {formatStartTime(will.startDate)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                          {willStatus === 'active' ? 'Active' : 
+                           willStatus === 'waiting_for_end_room' ? 'Completed' : 'Scheduled'}
+                        </Badge>
+                        {willStatus === 'scheduled' && will?.startDate && (
+                          <span className="text-xs text-gray-500 font-medium">
+                            {formatStartTime(will.startDate)}
+                          </span>
+                        )}
                       </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl p-3 border border-gray-100">
+                      <p className="text-sm italic text-gray-800 font-medium">
+                        "I will {userCommitment.what || userCommitment.commitment}"
+                      </p>
                     </div>
                     
-                    <div className="space-y-4">
-                      <div className="bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-2xl p-4 border border-gray-100">
-                        <p className="text-lg italic text-gray-800 font-medium leading-relaxed">
-                          "I will {userCommitment.what || userCommitment.commitment}"
-                        </p>
-                      </div>
-                      
-                      {userCommitment.why && (
-                        <div className="space-y-2">
-                          <button
-                            onClick={() => setShowWhy(!showWhy)}
-                            className={`inline-flex items-center space-x-2 px-4 py-2 rounded-xl border transition-all duration-200 shadow-sm font-medium ${
-                              showWhy 
-                                ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600 hover:shadow-lg' 
-                                : 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 hover:shadow-md'
-                            }`}
-                          >
-                            <span>Why</span>
-                            {showWhy ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                          </button>
-                          
-                          {showWhy && (
-                            <div className="mt-3 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                              <p className="text-gray-700 leading-relaxed">
-                                Because {userCommitment.why}
-                              </p>
-                            </div>
+                    {userCommitment.why && (
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => setShowWhy(!showWhy)}
+                          className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg border transition-all duration-200 shadow-sm text-sm font-medium ${
+                            showWhy 
+                              ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600' 
+                              : 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200'
+                          }`}
+                        >
+                          <span>Why</span>
+                          {showWhy ? (
+                            <ChevronUp className="w-3 h-3" />
+                          ) : (
+                            <ChevronDown className="w-3 h-3" />
                           )}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                        </button>
+                        
+                        {showWhy && (
+                          <div className="mt-2 p-3 bg-blue-50 border-l-4 border-blue-400 text-sm text-blue-800 rounded">
+                            <p className="leading-relaxed">
+                              Because {userCommitment.why}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>
