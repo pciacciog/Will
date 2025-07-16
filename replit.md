@@ -742,6 +742,15 @@ This is a full-stack web application for group goal accountability, built with R
   - **Root cause fix**: Corrected DailyService.createEndRoom() timing - rooms are created exactly when End Room goes live (status="open") with 30-minute expiration from that moment
   - **Enhanced logging**: Added detailed logging showing createdAt, scheduledStart, expiresAt timestamps to track room lifecycle
   - **Prevented future issues**: Rooms now expire 30 minutes after End Room opens (when status changes to "open"), ensuring full 30-minute availability
+- **July 16, 2025**: Optimized mobile UI for single viewport display across Home page and Final Will Summary modal
+  - **Compressed Home page layout**: Reduced header from text-5xl to text-3xl, applied compact spacing and flexbox centering
+  - **Streamlined Circle Status Cards**: Reduced icons from w-20 h-20 to w-12 h-12, compressed padding from p-8 to p-4
+  - **Optimized Active Will Card**: Applied compact layout with smaller elements and tighter spacing for mobile fit
+  - **Fixed Final Will Summary iOS collision**: Added proper safe area handling with calc(env(safe-area-inset-top)+1rem) spacing
+  - **Reduced modal content sizes**: Compressed header from text-xl to text-lg, member commitments from text-sm to text-xs
+  - **Added scrollable commitments section**: Implemented flex-1 overflow-y-auto for member commitments to handle 4+ members
+  - **Shortened acknowledgment text**: Reduced descriptive text length for compact mobile display
+  - **Applied consistent mobile-first design**: All components now fit seamlessly on single iPhone viewport without scrolling
 - **July 14, 2025**: Removed redundant parenthetical text from End Room Confirmation screen
   - **Cleaned up UI**: Removed "(This is your scheduled End Room for reflection and closure.)" text from SubmitCommitment flow
   - **Reduced redundancy**: Eliminated unnecessary explanatory text that was already clear from context

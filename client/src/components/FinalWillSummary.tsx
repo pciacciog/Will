@@ -88,74 +88,71 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md h-screen overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in">
-        <div className="min-h-screen overflow-hidden flex flex-col justify-between pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-4 py-6">
-          {/* Top Content - Header, Duration, and Commitments */}
-          <div className="flex-1 space-y-4">
-            {/* Refined Header */}
+      <DialogContent className="max-w-sm h-screen overflow-hidden [&>button]:hidden animate-in slide-in-from-bottom-4 duration-300 fade-in">
+        <div className="h-full flex flex-col pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-3 py-3">
+          {/* Compact Header */}
+          <div className="text-center mb-3">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              Your <em>Will</em> has been completed
+            </h2>
+            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              Final Summary
+            </h3>
+          </div>
+
+          {/* Compact Duration Block */}
+          <div className="bg-gray-50 border border-gray-200 p-2 rounded-lg text-xs space-y-1 mb-3">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Your <em>Will</em> has been completed
-              </h2>
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                Final Summary
-              </h3>
+              <span className="font-semibold">Will:</span> {formatWillTimespan()}
             </div>
-
-            {/* Duration Block */}
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-xs space-y-1 w-full">
-              <div className="whitespace-nowrap text-center">
-                <span className="font-semibold">Will:</span> {formatWillTimespan()}
+            {will.endRoomScheduledAt && (
+              <div className="text-center">
+                <span className="font-semibold">End Room:</span> {formatEndRoomTimespan()}
               </div>
-              {will.endRoomScheduledAt && (
-                <div className="whitespace-nowrap text-center">
-                  <span className="font-semibold">End Room:</span> {formatEndRoomTimespan()}
+            )}
+          </div>
+
+          {/* Compact Member Commitments */}
+          <div className="flex-1 overflow-y-auto">
+            <h4 className="text-xs font-medium uppercase text-gray-600 tracking-wide text-center mb-2">Member Commitments</h4>
+            <div className="space-y-2">
+              {will.commitments?.map((commitment: any) => (
+                <div key={commitment.id} className="text-center space-y-0.5 py-1">
+                  <p className="font-semibold text-gray-800 text-sm">
+                    {commitment.user.firstName && commitment.user.lastName 
+                      ? `${commitment.user.firstName} ${commitment.user.lastName}`
+                      : commitment.user.email
+                    }
+                  </p>
+                  <p className="text-gray-600 italic text-xs leading-tight">
+                    I will: {commitment.what || commitment.commitment}
+                  </p>
                 </div>
-              )}
-            </div>
-
-            {/* Member Commitments */}
-            <div className="space-y-3 w-full">
-              <h4 className="text-sm font-medium uppercase text-gray-600 tracking-wide text-center">Member Commitments</h4>
-              <div className="divide-y divide-gray-200">
-                {will.commitments?.map((commitment: any) => (
-                  <div key={commitment.id} className="py-3 text-center space-y-0.5">
-                    <p className="font-semibold text-gray-800">
-                      {commitment.user.firstName && commitment.user.lastName 
-                        ? `${commitment.user.firstName} ${commitment.user.lastName}`
-                        : commitment.user.email
-                      }
-                    </p>
-                    <p className="text-gray-600 italic text-sm">
-                      I will: {commitment.what || commitment.commitment}
-                    </p>
-                  </div>
-                )) || []}
-              </div>
+              )) || []}
             </div>
           </div>
 
-          {/* Bottom Actions Section */}
-          <div className="w-full mt-auto space-y-4">
+          {/* Compact Bottom Actions */}
+          <div className="mt-3 space-y-2">
             {userParticipated ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                  <p className="font-semibold text-gray-900">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                <div className="flex items-center justify-center mb-1">
+                  <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                  <p className="font-semibold text-gray-900 text-sm">
                     {hasUserAcknowledged ? <><em>Will</em> Acknowledged</> : "Acknowledge Completion"}
                   </p>
                 </div>
-                <p className="text-sm text-gray-700 mb-4">
+                <p className="text-xs text-gray-700 mb-2">
                   {hasUserAcknowledged 
-                    ? <>You have acknowledged this <em>Will</em>. It has been archived and you will be ready to start a new one once all members have acknowledged ({acknowledgedCount} / {commitmentCount}).</>
-                    : <>This marks the end of your <em>will</em>. Once acknowledged, it will be archived and you'll be ready to start a new one.</>
+                    ? <>You have acknowledged this <em>Will</em>. Ready for new <em>Will</em> once all members acknowledge ({acknowledgedCount} / {commitmentCount}).</>
+                    : <>Mark complete to start new <em>Will</em>.</>
                   }
                 </p>
                 {!hasUserAcknowledged && (
                   <Button 
                     onClick={onAcknowledge}
                     disabled={isAcknowledging}
-                    className="w-full bg-green-600 hover:bg-green-700 hover:scale-105 transition-all duration-200 text-white py-2 rounded-lg"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm"
                     size="sm"
                   >
                     {isAcknowledging ? "Acknowledging..." : "Acknowledge"}
@@ -163,14 +160,14 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                 )}
               </div>
             ) : (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <CheckCircle className="w-5 h-5 text-blue-600 mr-2" />
-                  <p className="font-semibold text-gray-900">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                <div className="flex items-center justify-center mb-1">
+                  <CheckCircle className="w-4 h-4 text-blue-600 mr-2" />
+                  <p className="font-semibold text-gray-900 text-sm">
                     <em>Will</em> Complete
                   </p>
                 </div>
-                <p className="text-sm text-gray-700">
+                <p className="text-xs text-gray-700">
                   This <em>Will</em> has been completed. Only participating members need to acknowledge completion.
                 </p>
               </div>
@@ -186,7 +183,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                     setLocation('/hub');
                   }, 100);
                 }}
-                className="text-blue-600 text-sm underline hover:text-blue-800 transition-colors font-medium"
+                className="text-blue-600 text-xs underline hover:text-blue-800 transition-colors font-medium"
               >
                 Back to Hub
               </button>
