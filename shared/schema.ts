@@ -61,6 +61,7 @@ export const wills = pgTable("wills", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   endRoomScheduledAt: timestamp("end_room_scheduled_at"),
+  endRoomOpenedAt: timestamp("end_room_opened_at"),
   endRoomUrl: varchar("end_room_url", { length: 500 }),
   endRoomStatus: varchar("end_room_status", { length: 20 }).default("pending"), // pending, open, completed
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, waiting_for_end_room, completed

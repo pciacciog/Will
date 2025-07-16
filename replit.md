@@ -742,6 +742,14 @@ This is a full-stack web application for group goal accountability, built with R
   - **Root cause fix**: Corrected DailyService.createEndRoom() timing - rooms are created exactly when End Room goes live (status="open") with 30-minute expiration from that moment
   - **Enhanced logging**: Added detailed logging showing createdAt, scheduledStart, expiresAt timestamps to track room lifecycle
   - **Prevented future issues**: Rooms now expire 30 minutes after End Room opens (when status changes to "open"), ensuring full 30-minute availability
+- **July 16, 2025**: Fixed critical End Room scheduler bug causing premature session expiration
+  - **Root cause identified**: Scheduler was closing End Rooms 30 minutes after scheduled time instead of actual open time
+  - **Database schema enhancement**: Added endRoomOpenedAt timestamp field to wills table to track actual room opening time
+  - **Scheduler logic fix**: Updated closeExpiredEndRooms() to use endRoomOpenedAt instead of endRoomScheduledAt for 30-minute expiration calculation
+  - **Storage interface update**: Enhanced updateWillEndRoom() method to accept endRoomOpenedAt parameter
+  - **Comprehensive tracking**: All End Room opening operations now record exact timestamp when room status changes to "open"
+  - **Tested fix**: Verified scheduler correctly closes End Rooms 30 minutes after actual opening time, preventing premature expiration
+  - **Database migration**: Applied schema changes with npm run db:push to add endRoomOpenedAt column
 - **July 16, 2025**: Optimized mobile UI for single viewport display across Home page and Final Will Summary modal
   - **Compressed Home page layout**: Reduced header from text-5xl to text-3xl, applied compact spacing and flexbox centering
   - **Streamlined Circle Status Cards**: Reduced icons from w-20 h-20 to w-12 h-12, compressed padding from p-8 to p-4

@@ -131,9 +131,10 @@ export class EndRoomScheduler {
                 scheduledStart: new Date(will.endRoomScheduledAt),
               });
               
-              // Update status to open with video room URL
+              // Update status to open with video room URL and track when it actually opened
               await storage.updateWillEndRoom(will.id, { 
                 endRoomStatus: 'open',
+                endRoomOpenedAt: now,
                 endRoomUrl: endRoom.url
               });
               
@@ -141,12 +142,18 @@ export class EndRoomScheduler {
             } catch (dailyError) {
               console.error(`[EndRoomScheduler] Failed to create Daily.co room for Will ${will.id}:`, dailyError);
               // Still mark as open even if video creation failed
-              await storage.updateWillEndRoom(will.id, { endRoomStatus: 'open' });
+              await storage.updateWillEndRoom(will.id, { 
+                endRoomStatus: 'open',
+                endRoomOpenedAt: now
+              });
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} but without video room`);
             }
           } else {
             // Update status to open (room URL already exists)
-            await storage.updateWillEndRoom(will.id, { endRoomStatus: 'open' });
+            await storage.updateWillEndRoom(will.id, { 
+              endRoomStatus: 'open',
+              endRoomOpenedAt: now
+            });
             console.log(`[EndRoomScheduler] End Room opened for Will ${will.id}`);
           }
         } catch (error) {
@@ -168,7 +175,7 @@ export class EndRoomScheduler {
         .where(
           and(
             eq(wills.endRoomStatus, 'open'),
-            lt(wills.endRoomScheduledAt, thirtyMinutesAgo)
+            lt(wills.endRoomOpenedAt, thirtyMinutesAgo)
           )
         );
 

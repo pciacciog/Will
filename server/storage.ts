@@ -64,6 +64,7 @@ export interface IStorage {
   updateWill(willId: number, updates: Partial<InsertWill>): Promise<void>;
   updateWillEndRoom(willId: number, endRoomData: { 
     endRoomScheduledAt?: Date; 
+    endRoomOpenedAt?: Date;
     endRoomUrl?: string; 
     endRoomStatus?: string; 
   }): Promise<void>;
@@ -285,6 +286,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateWillEndRoom(willId: number, endRoomData: { 
     endRoomScheduledAt?: Date; 
+    endRoomOpenedAt?: Date;
     endRoomUrl?: string; 
     endRoomStatus?: string; 
   }): Promise<void> {
