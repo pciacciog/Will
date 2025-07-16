@@ -746,10 +746,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Compressed Home page layout**: Reduced header from text-5xl to text-3xl, applied compact spacing and flexbox centering
   - **Streamlined Circle Status Cards**: Reduced icons from w-20 h-20 to w-12 h-12, compressed padding from p-8 to p-4
   - **Optimized Active Will Card**: Applied compact layout with smaller elements and tighter spacing for mobile fit
-  - **Fixed Final Will Summary iOS collision**: Added proper safe area handling with calc(env(safe-area-inset-top)+1rem) spacing
-  - **Reduced modal content sizes**: Compressed header from text-xl to text-lg, member commitments from text-sm to text-xs
+  - **Fixed Final Will Summary iOS collision**: Enhanced safe area handling with calc(env(safe-area-inset-top)+3rem) spacing to prevent status bar overlap
+  - **Reduced modal content sizes**: Compressed header from text-xl to text-base, member commitments from text-sm to text-xs
   - **Added scrollable commitments section**: Implemented flex-1 overflow-y-auto for member commitments to handle 4+ members
-  - **Shortened acknowledgment text**: Reduced descriptive text length for compact mobile display
+  - **Enhanced navigation options**: Added "Close" button for acknowledged users and improved "Back to Hub" styling for better user flow
+  - **Fixed user trap issue**: Users can now properly exit Final Will Summary modal after acknowledgment with dual navigation options
   - **Applied consistent mobile-first design**: All components now fit seamlessly on single iPhone viewport without scrolling
 - **July 14, 2025**: Removed redundant parenthetical text from End Room Confirmation screen
   - **Cleaned up UI**: Removed "(This is your scheduled End Room for reflection and closure.)" text from SubmitCommitment flow
