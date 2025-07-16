@@ -750,6 +750,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Comprehensive tracking**: All End Room opening operations now record exact timestamp when room status changes to "open"
   - **Tested fix**: Verified scheduler correctly closes End Rooms 30 minutes after actual opening time, preventing premature expiration
   - **Database migration**: Applied schema changes with npm run db:push to add endRoomOpenedAt column
+- **July 16, 2025**: Enhanced End Room countdown display and commitment "Because" text styling
+  - **Updated countdown format**: Modified EndRoomCountdown component to show "opens in: [time]" for pending End Rooms instead of "remaining" format
+  - **Fixed "Because" text styling**: Changed "Because" text from blue to black and bold formatting in both Home and WillDetails components
+  - **Improved user experience**: End Room countdown now clearly differentiates between pending ("opens in:") and active ("remaining") states
+  - **Enhanced readability**: Bold black "Because" text provides better contrast and emphasis in commitment displays
 - **July 16, 2025**: Optimized mobile UI for single viewport display across Home page and Final Will Summary modal
   - **Compressed Home page layout**: Reduced header from text-5xl to text-3xl, applied compact spacing and flexbox centering
   - **Streamlined Circle Status Cards**: Reduced icons from w-20 h-20 to w-12 h-12, compressed padding from p-8 to p-4

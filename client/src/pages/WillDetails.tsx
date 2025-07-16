@@ -470,8 +470,8 @@ export default function WillDetails() {
                     
                     {isCurrentUser && showWhy && (
                       <div className="mt-3 p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-lg shadow-sm animate-in fade-in duration-300">
-                        <div className="text-base font-semibold text-red-800 tracking-wide">
-                          Because {commitment.why}
+                        <div className="text-base tracking-wide">
+                          <span className="font-bold text-black">Because</span> {commitment.why}
                         </div>
                       </div>
                     )}
