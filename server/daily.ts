@@ -34,9 +34,16 @@ export class DailyService {
 
   async createEndRoom({ willId, scheduledStart, durationMinutes = 30 }: CreateRoomOptions): Promise<DailyRoom> {
     const roomName = `will-${willId}-endroom-${Date.now()}`;
-    const expireTime = Math.floor(Date.now() / 1000) + (durationMinutes * 60); // Start from now instead of scheduledStart
+    // Calculate expiration from scheduled start time + duration, not from creation time
+    const expireTime = Math.floor(scheduledStart.getTime() / 1000) + (durationMinutes * 60);
 
-    console.log('[DailyService] Creating room with config:', { roomName, expireTime, willId });
+    console.log('[DailyService] Creating room with config:', { 
+      roomName, 
+      expireTime, 
+      willId,
+      scheduledStart: scheduledStart.toISOString(),
+      expiresAt: new Date(expireTime * 1000).toISOString()
+    });
     console.log('[DailyService] Daily.co API Key present:', !!this.apiKey);
     
     const response = await fetch(`${this.baseUrl}/rooms`, {
