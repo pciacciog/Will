@@ -734,6 +734,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Enhanced authentication flow**: Login → Redirect to / → Splash screen → Home content without any crashes or errors
   - **Maintained mobile compatibility**: All fixes work seamlessly on both web and mobile platforms with proper iOS safe area handling
   - **Improved user experience**: Authentication flow now provides smooth, elegant transition from login to app content
+- **July 16, 2025**: Fixed End Room video access issue for circle O6E793
+  - **Resolved Daily.co room expiration**: Created new Daily.co room for Will 59 End Room after original room expired
+  - **Updated database**: Updated end_room_url with fresh Daily.co room URL (will-59-endroom-1752656617)
+  - **Fixed user access**: Users can now successfully join the End Room video call instead of seeing "meeting no longer available"
+  - **Room configuration**: 30-minute expiration, up to 10 participants, prejoin UI enabled for mobile compatibility
 - **July 14, 2025**: Removed redundant parenthetical text from End Room Confirmation screen
   - **Cleaned up UI**: Removed "(This is your scheduled End Room for reflection and closure.)" text from SubmitCommitment flow
   - **Reduced redundancy**: Eliminated unnecessary explanatory text that was already clear from context
