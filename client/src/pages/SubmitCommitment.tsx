@@ -445,18 +445,37 @@ export default function SubmitCommitment() {
           <SectionCard>
             <form onSubmit={handleStep4Submit} className="space-y-6">
               <div className="space-y-6 mt-8">
+                {/* Enhanced End Room Card */}
                 <div className="text-center">
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mx-auto max-w-md">
-                    <div className="flex items-center justify-center mb-3">
-                      <Calendar className="w-5 h-5 text-gray-600 mr-2" />
-                      <div className="font-medium text-gray-900 tracking-tight">Scheduled End Room</div>
-                    </div>
-                    <div className="text-sm text-gray-700 tracking-tight">
-                      <div className="font-medium space-y-1">
-                        <div><strong>Date:</strong> {will?.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading...'}</div>
-                        <div><strong>Time:</strong> {will?.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}</div>
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 border border-purple-200 shadow-sm mx-auto max-w-sm">
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
                       </div>
-
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">End Room</h3>
+                    <div className="text-base text-gray-800 leading-relaxed">
+                      <div className="font-medium mb-2">
+                        {will?.endRoomScheduledAt ? (
+                          new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+                        ) : (
+                          'Loading...'
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-3">
+                        {will?.endRoomScheduledAt ? (
+                          new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                        ) : (
+                          ''
+                        )}
+                      </div>
+                      <div className="bg-white/60 rounded-lg p-3 border border-purple-100">
+                        <p className="text-xs text-purple-700 leading-relaxed">
+                          Your circle will gather here to reflect, share insights, and celebrate your collective efforts
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -481,7 +500,7 @@ export default function SubmitCommitment() {
                   ) : (
                     <>
                       <Handshake className="w-4 h-4 mr-2" />
-                      Finalize
+                      Let's do it
                     </>
                   )}
                 </PrimaryButton>

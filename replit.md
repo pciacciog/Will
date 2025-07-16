@@ -754,6 +754,8 @@ This is a full-stack web application for group goal accountability, built with R
   - **Fixed "Why" button styling**: Changed from blue background (bg-blue-100) to neutral white background (bg-white) to match "Edit" button styling and avoid confusion about pre-selected state
   - **Enhanced End Room info modal**: Redesigned with professional styling including gradient icon, feature bullet points, improved typography, and better close button design
   - **Enhanced Proposed Will Timeline screen**: Redesigned with gradient background, creator information badge, larger icons, and improved visual hierarchy for better aesthetic appeal
+  - **Enhanced End Room Confirmation screen**: Redesigned with purple gradient background, video icon, and improved visual consistency matching Timeline screen design
+  - **Updated End Room CTA button**: Changed from "Finalize" to "Let's do it" for more encouraging and positive tone
   - **Applied consistent mobile-first design**: All components now fit seamlessly on single iPhone viewport without scrolling
 - **July 14, 2025**: Removed redundant parenthetical text from End Room Confirmation screen
   - **Cleaned up UI**: Removed "(This is your scheduled End Room for reflection and closure.)" text from SubmitCommitment flow
