@@ -739,9 +739,9 @@ This is a full-stack web application for group goal accountability, built with R
   - **Updated database**: Updated end_room_url with fresh Daily.co room URL (will-59-endroom-1752656617)
   - **Fixed user access**: Users can now successfully join the End Room video call instead of seeing "meeting no longer available"
   - **Room configuration**: 30-minute expiration, up to 10 participants, prejoin UI enabled for mobile compatibility
-  - **Root cause fix**: Updated DailyService.createEndRoom() to calculate expiration from scheduled start time + duration instead of creation time
-  - **Enhanced logging**: Added detailed logging showing scheduledStart, expiresAt timestamps to track room lifecycle
-  - **Prevented future issues**: Rooms now expire 30 minutes after End Room opens, not after room creation
+  - **Root cause fix**: Corrected DailyService.createEndRoom() timing - rooms are created exactly when End Room goes live (status="open") with 30-minute expiration from that moment
+  - **Enhanced logging**: Added detailed logging showing createdAt, scheduledStart, expiresAt timestamps to track room lifecycle
+  - **Prevented future issues**: Rooms now expire 30 minutes after End Room opens (when status changes to "open"), ensuring full 30-minute availability
 - **July 14, 2025**: Removed redundant parenthetical text from End Room Confirmation screen
   - **Cleaned up UI**: Removed "(This is your scheduled End Room for reflection and closure.)" text from SubmitCommitment flow
   - **Reduced redundancy**: Eliminated unnecessary explanatory text that was already clear from context
