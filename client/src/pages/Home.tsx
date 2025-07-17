@@ -346,7 +346,7 @@ export default function Home() {
                         </button>
                         
                         {showWhy && (
-                          <div className="mt-2 p-3 bg-blue-50 border-l-4 border-blue-400 text-sm rounded">
+                          <div className="mt-2 p-3 bg-gray-50 border-l-4 border-gray-300 text-sm rounded">
                             <p className="leading-relaxed">
                               <span className="font-bold text-black">Because</span> {userCommitment.why}
                             </p>
