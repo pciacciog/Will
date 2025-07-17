@@ -248,13 +248,22 @@ export default function SubmitCommitment() {
                     </div>
                     <span className="text-sm font-medium text-blue-800">
                       {(() => {
-                        const creator = circle?.members?.find(member => member.id === will?.createdBy);
                         console.log('SubmitCommitment Creator Debug:', { 
                           willCreatedBy: will?.createdBy, 
                           circleMembers: circle?.members,
-                          foundCreator: creator
+                          willLoaded: !!will,
+                          circleLoaded: !!circle
                         });
-                        return creator?.firstName || 'Someone';
+                        
+                        // Wait for both will and circle data to load
+                        if (!will || !circle || !circle.members) {
+                          return 'Loading...';
+                        }
+                        
+                        const creator = circle.members.find(member => member.user.id === will.createdBy);
+                        console.log('Found creator:', creator);
+                        
+                        return creator?.user.firstName || 'Someone';
                       })()} has proposed the following:
                     </span>
                   </div>

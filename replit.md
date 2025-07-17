@@ -763,6 +763,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Dynamic creator display**: Updated "Someone proposed this schedule" to show actual creator's name: "[Name] has proposed the following:"
   - **Improved user context**: Users can now see which circle member initiated the Will proposal
   - **Enhanced user experience**: More personal and informative Will timeline presentation
+- **July 17, 2025**: Fixed creator name display issue in Will proposal timeline
+  - **Root cause identified**: Data structure mismatch where component expected member.id but API returned member.user.id
+  - **Fixed data access pattern**: Updated SubmitCommitment component to use member.user.id and member.user.firstName
+  - **Enhanced debugging**: Added comprehensive logging to track data loading and creator lookup process
+  - **Resolved issue**: Creator names now properly display instead of "Someone" fallback text
 - **July 17, 2025**: Fixed critical Daily.co End Room expiration bug causing "meeting no longer available" errors
   - **Root cause identified**: Daily.co rooms were being created with expiration times based on Date.now() instead of scheduled start time
   - **Fixed expiration logic**: Changed from `Date.now() + 30 minutes` to `scheduledStart.getTime() + 30 minutes`
