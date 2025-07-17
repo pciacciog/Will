@@ -247,7 +247,15 @@ export default function SubmitCommitment() {
                       </svg>
                     </div>
                     <span className="text-sm font-medium text-blue-800">
-                      {circle?.members?.find(member => member.id === will?.createdBy)?.firstName || 'Someone'} has proposed the following:
+                      {(() => {
+                        const creator = circle?.members?.find(member => member.id === will?.createdBy);
+                        console.log('SubmitCommitment Creator Debug:', { 
+                          willCreatedBy: will?.createdBy, 
+                          circleMembers: circle?.members,
+                          foundCreator: creator
+                        });
+                        return creator?.firstName || 'Someone';
+                      })()} has proposed the following:
                     </span>
                   </div>
                 </div>
