@@ -34,9 +34,9 @@ export class DailyService {
 
   async createEndRoom({ willId, scheduledStart, durationMinutes = 30 }: CreateRoomOptions): Promise<DailyRoom> {
     const roomName = `will-${willId}-endroom-${Date.now()}`;
-    // Calculate expiration from when room goes live (now) + duration
-    // Room is created when End Room status changes to "open" at scheduled time
-    const expireTime = Math.floor(Date.now() / 1000) + (durationMinutes * 60);
+    // Calculate expiration from scheduled start time + duration
+    // This ensures room is valid for exactly 30 minutes from scheduled start, regardless of when it's created
+    const expireTime = Math.floor(scheduledStart.getTime() / 1000) + (durationMinutes * 60);
 
     console.log('[DailyService] Creating room with config:', { 
       roomName, 

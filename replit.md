@@ -763,6 +763,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Dynamic creator display**: Updated "Someone proposed this schedule" to show actual creator's name: "[Name] has proposed the following:"
   - **Improved user context**: Users can now see which circle member initiated the Will proposal
   - **Enhanced user experience**: More personal and informative Will timeline presentation
+- **July 17, 2025**: Fixed critical Daily.co End Room expiration bug causing "meeting no longer available" errors
+  - **Root cause identified**: Daily.co rooms were being created with expiration times based on Date.now() instead of scheduled start time
+  - **Fixed expiration logic**: Changed from `Date.now() + 30 minutes` to `scheduledStart.getTime() + 30 minutes`
+  - **Deterministic behavior**: End Rooms now stay open for exactly 30 minutes from scheduled start time regardless of when room is created
+  - **Immediate fix applied**: Created new Daily.co room for Will 61 with corrected expiration (5:30 AM UTC)
+  - **Prevented future issues**: All new End Rooms will now have predictable 30-minute availability windows
 - **July 16, 2025**: Optimized mobile UI for single viewport display across Home page and Final Will Summary modal
   - **Compressed Home page layout**: Reduced header from text-5xl to text-3xl, applied compact spacing and flexbox centering
   - **Streamlined Circle Status Cards**: Reduced icons from w-20 h-20 to w-12 h-12, compressed padding from p-8 to p-4
