@@ -668,10 +668,9 @@ export default function StartWill() {
 
             <form onSubmit={handleStep4Submit} className="space-y-3">
               <div className="px-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">End Room Date & Time</label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Choose a time to reflect after your <em>Will</em> ends ({willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}).
-                </p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Choose a time to reflect after your <em>Will</em> ends on {willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'} (must be within 48 hours).
+                </label>
                 
                 {/* Input field with proper mobile containment */}
                 <div className="w-full max-w-md mx-auto">
