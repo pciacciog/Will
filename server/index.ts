@@ -41,61 +41,78 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve privacy policy with simple content first to test
+const privacyPolicyHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WILL App - Privacy Policy</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <h1>WILL App Privacy Policy</h1>
+    <p><strong>Last Updated:</strong> July 18, 2025</p>
+    
+    <h2>1. Information We Collect</h2>
+    <p>We collect minimal information necessary for the app to function:</p>
+    <ul>
+        <li><strong>Email Address:</strong> For account authentication</li>
+        <li><strong>First and Last Name:</strong> For identification within circles</li>
+        <li><strong>Circle and Commitment Data:</strong> Your goals and progress</li>
+        <li><strong>Camera/Microphone Access:</strong> Only during End Room video sessions</li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+    <ul>
+        <li>Account management and authentication</li>
+        <li>Circle functionality and commitment tracking</li>
+        <li>Video sessions for End Room reflection</li>
+    </ul>
+
+    <h2>3. Information Sharing</h2>
+    <p><strong>We do not sell, trade, or share your personal information with third parties.</strong></p>
+    <p>Your information is only shared within your accountability circle. Your "Why" motivations are private and only visible to you.</p>
+
+    <h2>4. Data Security</h2>
+    <p>All data is transmitted using HTTPS encryption and stored securely. Passwords are hashed and never stored in plain text.</p>
+
+    <h2>5. Your Rights</h2>
+    <ul>
+        <li>View and update your account information</li>
+        <li>Leave circles or delete your account</li>
+        <li>Request a copy of your data</li>
+    </ul>
+
+    <h2>6. Contact Us</h2>
+    <p>For questions about this privacy policy: privacy@willapp.com</p>
+</body>
+</html>
+`;
+
+// Serve privacy policy with API route that won't conflict with client routing
 app.get('/privacy-policy.html', (req, res) => {
   console.log('Privacy policy route hit!');
   res.setHeader('Content-Type', 'text/html');
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>WILL App - Privacy Policy</title>
-        <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-            h1 { color: #2c3e50; }
-            h2 { color: #34495e; margin-top: 30px; }
-        </style>
-    </head>
-    <body>
-        <h1>WILL App Privacy Policy</h1>
-        <p><strong>Last Updated:</strong> July 18, 2025</p>
-        
-        <h2>1. Information We Collect</h2>
-        <p>We collect minimal information necessary for the app to function:</p>
-        <ul>
-            <li><strong>Email Address:</strong> For account authentication</li>
-            <li><strong>First and Last Name:</strong> For identification within circles</li>
-            <li><strong>Circle and Commitment Data:</strong> Your goals and progress</li>
-        </ul>
+  res.send(privacyPolicyHtml);
+});
 
-        <h2>2. How We Use Your Information</h2>
-        <ul>
-            <li>Account management and authentication</li>
-            <li>Circle functionality and commitment tracking</li>
-            <li>Video sessions for End Room reflection</li>
-        </ul>
-
-        <h2>3. Information Sharing</h2>
-        <p><strong>We do not sell, trade, or share your personal information with third parties.</strong></p>
-        <p>Your information is only shared within your accountability circle.</p>
-
-        <h2>4. Data Security</h2>
-        <p>All data is transmitted using HTTPS encryption and stored securely.</p>
-
-        <h2>5. Contact Us</h2>
-        <p>For questions about this privacy policy: privacy@willapp.com</p>
-    </body>
-    </html>
-  `);
+// Also serve at /api/privacy-policy as backup
+app.get('/api/privacy-policy', (req, res) => {
+  console.log('API Privacy policy route hit!');
+  res.setHeader('Content-Type', 'text/html');
+  res.send(privacyPolicyHtml);
 });
 
 app.use((req, res, next) => {
