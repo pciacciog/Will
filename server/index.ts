@@ -41,6 +41,20 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Serve privacy policy before any other routes
+app.get('/privacy-policy.html', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.resolve('./privacy-policy.html');
+  
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/html');
+    res.sendFile(filePath);
+  } else {
+    res.status(404).send('Privacy policy not found');
+  }
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
