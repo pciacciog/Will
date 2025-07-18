@@ -1090,6 +1090,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Privacy policy route
+  app.get('/privacy-policy.html', (req, res) => {
+    res.sendFile('privacy-policy.html', { root: '.' });
+  });
+
   // Simple admin endpoints for direct browser access
   app.get('/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
