@@ -101,20 +101,6 @@ const privacyPolicyHtml = `
 </html>
 `;
 
-// Serve privacy policy with API route that won't conflict with client routing
-app.get('/privacy-policy.html', (req, res) => {
-  console.log('Privacy policy route hit!');
-  res.setHeader('Content-Type', 'text/html');
-  res.send(privacyPolicyHtml);
-});
-
-// Also serve at /api/privacy-policy as backup
-app.get('/api/privacy-policy', (req, res) => {
-  console.log('API Privacy policy route hit!');
-  res.setHeader('Content-Type', 'text/html');
-  res.send(privacyPolicyHtml);
-});
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -143,6 +129,20 @@ app.use((req, res, next) => {
   });
 
   next();
+});
+
+// Serve privacy policy BEFORE API routes to avoid conflicts
+app.get('/privacy-policy.html', (req, res) => {
+  console.log('Privacy policy route hit!');
+  res.setHeader('Content-Type', 'text/html');
+  res.send(privacyPolicyHtml);
+});
+
+// Also serve at /api/privacy-policy as backup
+app.get('/api/privacy-policy', (req, res) => {
+  console.log('API Privacy policy route hit!');
+  res.setHeader('Content-Type', 'text/html');
+  res.send(privacyPolicyHtml);
 });
 
 (async () => {
