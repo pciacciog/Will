@@ -1092,7 +1092,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Privacy policy route
   app.get('/privacy-policy.html', (req, res) => {
-    res.sendFile('privacy-policy.html', { root: '.' });
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.resolve('./privacy-policy.html');
+    
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).send('Privacy policy not found');
+    }
   });
 
   // Simple admin endpoints for direct browser access
