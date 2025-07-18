@@ -56,11 +56,15 @@ export default function Auth() {
       return await res.json();
     },
     onSuccess: (user) => {
+      console.log('Registration success, user:', user);
       queryClient.setQueryData(['/api/user'], user);
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       // Set a flag to show splash screen on first Home load
+      console.log('Setting showSplashOnHome to true in localStorage');
       localStorage.setItem('showSplashOnHome', 'true');
+      // Redirect to home page
+      setLocation('/');
     },
     onError: (error: any) => {
       toast({

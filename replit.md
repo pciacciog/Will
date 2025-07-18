@@ -779,6 +779,11 @@ This is a full-stack web application for group goal accountability, built with R
   - **Updated WillDetails component**: Changed "Because" reveal content from red gradient to bg-gray-50 border-gray-300 for consistency
   - **Improved visual consistency**: All "Why?" reveal content now uses neutral gray styling instead of colored backgrounds
   - **Enhanced readability**: Subtle gray background provides better contrast without being visually distracting
+- **July 18, 2025**: Fixed critical account creation 404 error and enhanced privacy policy hosting
+  - **Fixed registration redirect**: Added missing setLocation('/') to registration mutation in Auth.tsx
+  - **Root cause resolved**: Registration was successful but users remained on /auth route causing 404 errors
+  - **Enhanced privacy policy**: Moved privacy policy routes before API registration to prevent route conflicts
+  - **Improved user flow**: Users now properly redirected to home page after successful account creation with splash screen
 - **July 16, 2025**: Optimized mobile UI for single viewport display across Home page and Final Will Summary modal
   - **Compressed Home page layout**: Reduced header from text-5xl to text-3xl, applied compact spacing and flexbox centering
   - **Streamlined Circle Status Cards**: Reduced icons from w-20 h-20 to w-12 h-12, compressed padding from p-8 to p-4
