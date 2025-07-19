@@ -126,12 +126,12 @@ export default function Auth() {
           
           <div className="max-w-sm mx-auto flex flex-col">
           {/* Header & Icon */}
-          <div className="text-center mb-4">
-            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-3 rounded-2xl w-14 h-14 flex items-center justify-center mx-auto mb-3 shadow-lg">
+          <div className="text-center mb-2 md:mb-4">
+            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-3 rounded-2xl w-14 h-14 flex items-center justify-center mx-auto mb-2 md:mb-3 shadow-lg">
               <Hand className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-2">WILL</h1>
-            <p className="text-sm text-gray-500 leading-snug text-center mb-6">Become who you're meant to be. <span className="font-semibold text-gray-700 italic">Together.</span></p>
+            <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-1 md:mb-2">WILL</h1>
+            <p className="text-sm text-gray-500 leading-snug text-center mb-4 md:mb-6">Become who you're meant to be. <span className="font-semibold text-gray-700 italic">Together.</span></p>
           </div>
 
           {/* Content Section */}
