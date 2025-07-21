@@ -1,0 +1,15 @@
+{
+  "appId": "com.will.app",
+  "appName": "WillApp",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "url": "https://willbeta.replit.app",
+    "cleartext": true
+  },
+  "ios": {
+    "scheme": "WILL"
+  }
+}
