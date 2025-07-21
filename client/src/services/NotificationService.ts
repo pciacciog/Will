@@ -45,11 +45,11 @@ export class NotificationService {
               
               // Send device token to server for storage
               try {
-                const response = await fetch('/api/push-tokens', {
+                // Import apiRequest dynamically to avoid module issues
+                const { apiRequest } = await import('../lib/queryClient');
+                
+                const response = await apiRequest('/api/push-tokens', {
                   method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
                   body: JSON.stringify({
                     deviceToken: token.value,
                     platform: 'ios' // Since this is mainly for iOS
@@ -158,12 +158,12 @@ export class NotificationService {
   // WILL LIFECYCLE NOTIFICATIONS
   async sendWillStartedNotification(willTitle: string) {
     try {
+      // Import apiRequest dynamically to avoid module issues
+      const { apiRequest } = await import('../lib/queryClient');
+      
       // Send server-side push notification to all committed members
-      const response = await fetch('/api/notifications/will-started', {
+      const response = await apiRequest('/api/notifications/will-started', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           willTitle: willTitle
         })
@@ -179,12 +179,12 @@ export class NotificationService {
 
   async sendWillProposedNotification(creatorName: string, willTitle: string) {
     try {
+      // Import apiRequest dynamically to avoid module issues
+      const { apiRequest } = await import('../lib/queryClient');
+      
       // Send server-side push notification to all other circle members
-      const response = await fetch('/api/notifications/will-proposed', {
+      const response = await apiRequest('/api/notifications/will-proposed', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           creatorName: creatorName,
           willTitle: willTitle
@@ -201,12 +201,12 @@ export class NotificationService {
 
   async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string) {
     try {
+      // Import apiRequest dynamically to avoid module issues
+      const { apiRequest } = await import('../lib/queryClient');
+      
       // Send server-side push notification to all circle members
-      const response = await fetch('/api/notifications/end-room', {
+      const response = await apiRequest('/api/notifications/end-room', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           type: type,
           endRoomTime: endRoomTime
@@ -223,12 +223,12 @@ export class NotificationService {
 
   async sendReadyForNewWillNotification() {
     try {
+      // Import apiRequest dynamically to avoid module issues
+      const { apiRequest } = await import('../lib/queryClient');
+      
       // Send server-side push notification to all circle members
-      const response = await fetch('/api/notifications/ready-for-new-will', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+      const response = await apiRequest('/api/notifications/ready-for-new-will', {
+        method: 'POST'
       });
       
       if (!response.ok) {

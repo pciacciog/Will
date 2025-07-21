@@ -316,6 +316,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Send push notifications to other circle members
+      try {
+        const members = await storage.getCircleMembers(circle.id);
+        const otherMembers = members
+          .filter(member => member.userId !== userId)
+          .map(member => member.userId);
+        
+        if (otherMembers.length > 0) {
+          const creator = await storage.getUser(userId);
+          const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Someone';
+          await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers);
+          console.log(`Sent Will proposed notifications to ${otherMembers.length} members`);
+        }
+      } catch (notificationError) {
+        console.error("Error sending will proposed notifications:", notificationError);
+        // Don't fail the will creation if notifications fail
+      }
+
       res.json(will);
     } catch (error) {
       console.error("Error creating will:", error);
