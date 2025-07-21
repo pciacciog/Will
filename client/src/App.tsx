@@ -66,14 +66,15 @@ function Router() {
 function App() {
   useEffect(() => {
     // Initialize notification service when app starts
-    notificationService.initialize();
+    console.log('App mounted - initializing notifications');
+    notificationService.initialize().catch(console.error);
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
         <Router />
+        <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
   );
