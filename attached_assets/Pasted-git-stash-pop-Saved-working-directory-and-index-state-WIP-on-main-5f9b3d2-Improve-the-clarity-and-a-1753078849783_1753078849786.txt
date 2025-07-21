@@ -1,0 +1,751 @@
+git stash pop
+Saved working directory and index state WIP on main: 5f9b3d2 Improve the clarity and appearance of key elements on the user interface
+From https://github.com/pciacciog/Will
+ * branch            main       -> FETCH_HEAD
+Updating 5f9b3d2..513891a
+Fast-forward
+ .gitignore                                         |   8 +-
+ CHECKLIST_VERIFICATION.md                          | 105 +++
+ .../IMG_085997BF6CC4-1_1752468351029.jpeg          | Bin 0 -> 539233 bytes
+ .../IMG_233B7796E2EF-1_1752680332609.jpeg          | Bin 0 -> 152830 bytes
+ .../IMG_286ED0BED9B0-1_1752512674592.jpeg          | Bin 0 -> 551686 bytes
+ .../IMG_3B73345F6777-1_1752393341544.jpeg          | Bin 0 -> 455763 bytes
+ .../IMG_3D87A008F489-1_1752466668562.jpeg          | Bin 0 -> 538261 bytes
+ .../IMG_44F8A0C54213-1_1751881335838.jpeg          | Bin 0 -> 434721 bytes
+ .../IMG_469710FD91B0-1_1752410918752.jpeg          | Bin 0 -> 539257 bytes
+ .../IMG_59AC347FA9CE-1_1752476039481.jpeg          | Bin 0 -> 675900 bytes
+ .../IMG_622020176D6E-1_1752569915015.jpeg          | Bin 0 -> 1366728 bytes
+ .../IMG_62EB79DDCBE1-1_1752467637656.jpeg          | Bin 0 -> 564239 bytes
+ .../IMG_788483DAD209-1_1752413406632.jpeg          | Bin 0 -> 720689 bytes
+ .../IMG_793010929B83-1_1752468274200.jpeg          | Bin 0 -> 611984 bytes
+ attached_assets/IMG_8295_1751710397355.jpg         | Bin 0 -> 348117 bytes
+ attached_assets/IMG_8295_1751712952384.jpg         | Bin 0 -> 348117 bytes
+ attached_assets/IMG_8297_1751726769477.PNG         | Bin 0 -> 137355 bytes
+ attached_assets/IMG_8340_1751780170681.jpg         | Bin 0 -> 496556 bytes
+ attached_assets/IMG_8341_1751780170681.PNG         | Bin 0 -> 172914 bytes
+ attached_assets/IMG_8342_1751780646440.jpg         | Bin 0 -> 261626 bytes
+ attached_assets/IMG_8343_1751780662224.jpg         | Bin 0 -> 434496 bytes
+ attached_assets/IMG_8345_1751781321152.jpg         | Bin 0 -> 659290 bytes
+ attached_assets/IMG_8401_1751882094863.PNG         | Bin 0 -> 207194 bytes
+ attached_assets/IMG_8402_1751882692556.PNG         | Bin 0 -> 225270 bytes
+ attached_assets/IMG_8405_1751883115311.jpg         | Bin 0 -> 934912 bytes
+ attached_assets/IMG_8409_1751887660952.PNG         | Bin 0 -> 216233 bytes
+ attached_assets/IMG_8410_1751886313987.PNG         | Bin 0 -> 73164 bytes
+ attached_assets/IMG_8411_1751887405617.PNG         | Bin 0 -> 114588 bytes
+ attached_assets/IMG_8438_1752300716156.PNG         | Bin 0 -> 224332 bytes
+ attached_assets/IMG_8439_1752300677500.jpg         | Bin 0 -> 581723 bytes
+ attached_assets/IMG_8459_1752303874149.PNG         | Bin 0 -> 94403 bytes
+ attached_assets/IMG_8460_1752305255825.jpg         | Bin 0 -> 244589 bytes
+ attached_assets/IMG_8463_1752306403406.PNG         | Bin 0 -> 105416 bytes
+ attached_assets/IMG_8466_1752308828503.PNG         | Bin 0 -> 110712 bytes
+ attached_assets/IMG_8467_1752309613281.PNG         | Bin 0 -> 143756 bytes
+ attached_assets/IMG_8468_1752310481283.PNG         | Bin 0 -> 212883 bytes
+ attached_assets/IMG_8469_1752311017062.PNG         | Bin 0 -> 216114 bytes
+ attached_assets/IMG_8474_1752313666391.jpg         | Bin 0 -> 48669 bytes
+ attached_assets/IMG_8475_1752314712999.PNG         | Bin 0 -> 164346 bytes
+ attached_assets/IMG_8476_1752314712998.PNG         | Bin 0 -> 165403 bytes
+ attached_assets/IMG_8483_1752316588300.jpg         | Bin 0 -> 482278 bytes
+ attached_assets/IMG_8485_1752333580045.jpg         | Bin 0 -> 56158 bytes
+ attached_assets/IMG_8486_1752334030668.jpg         | Bin 0 -> 575709 bytes
+ attached_assets/IMG_8492_1752336978744.PNG         | Bin 0 -> 193125 bytes
+ attached_assets/IMG_8505_1752386455175.PNG         | Bin 0 -> 186646 bytes
+ attached_assets/IMG_8508 2_1752389184633.PNG       | Bin 0 -> 253593 bytes
+ attached_assets/IMG_8508_1752387995935.PNG         | Bin 0 -> 253593 bytes
+ attached_assets/IMG_8509_1752389089774.PNG         | Bin 0 -> 174255 bytes
+ attached_assets/IMG_8510_1752389079988.PNG         | Bin 0 -> 199429 bytes
+ attached_assets/IMG_8511_1752389453457.jpg         | Bin 0 -> 418889 bytes
+ attached_assets/IMG_8512_1752389456438.PNG         | Bin 0 -> 164716 bytes
+ attached_assets/IMG_8516_1752390500618.PNG         | Bin 0 -> 191309 bytes
+ attached_assets/IMG_8517_1752390500617.PNG         | Bin 0 -> 205861 bytes
+ attached_assets/IMG_8518_1752390500617.PNG         | Bin 0 -> 219433 bytes
+ attached_assets/IMG_8519_1752391164956.jpg         | Bin 0 -> 444754 bytes
+ attached_assets/IMG_8522_1752392920430.PNG         | Bin 0 -> 255717 bytes
+ attached_assets/IMG_8523_1752392998332.PNG         | Bin 0 -> 156628 bytes
+ attached_assets/IMG_8525_1752393134862.PNG         | Bin 0 -> 255991 bytes
+ attached_assets/IMG_8529_1752393768326.PNG         | Bin 0 -> 1538047 bytes
+ attached_assets/IMG_8530_1752393768326.PNG         | Bin 0 -> 799166 bytes
+ attached_assets/IMG_8531_1752393768321.PNG         | Bin 0 -> 191570 bytes
+ attached_assets/IMG_8534_1752397904119.PNG         | Bin 0 -> 181142 bytes
+ attached_assets/IMG_8537 2_1752398225871.PNG       | Bin 0 -> 265945 bytes
+ attached_assets/IMG_8537_1752397293002.PNG         | Bin 0 -> 265945 bytes
+ attached_assets/IMG_8538_1752397295401.PNG         | Bin 0 -> 264451 bytes
+ attached_assets/IMG_8539_1752397658608.PNG         | Bin 0 -> 168820 bytes
+ attached_assets/IMG_8541_1752397612840.PNG         | Bin 0 -> 152769 bytes
+ attached_assets/IMG_8552_1752399014862.PNG         | Bin 0 -> 223482 bytes
+ attached_assets/IMG_8554_1752401038738.PNG         | Bin 0 -> 183167 bytes
+ attached_assets/IMG_8555_1752400913760.PNG         | Bin 0 -> 166668 bytes
+ attached_assets/IMG_8556_1752400664679.jpg         | Bin 0 -> 471192 bytes
+ attached_assets/IMG_8560_1752410997470.PNG         | Bin 0 -> 177756 bytes
+ attached_assets/IMG_8564_1752411642966.PNG         | Bin 0 -> 248997 bytes
+ attached_assets/IMG_8569_1752414186597.PNG         | Bin 0 -> 184250 bytes
+ attached_assets/IMG_8570_1752414436276.PNG         | Bin 0 -> 251712 bytes
+ attached_assets/IMG_8571_1752414794172.PNG         | Bin 0 -> 159445 bytes
+ attached_assets/IMG_8572_1752414911587.PNG         | Bin 0 -> 160444 bytes
+ attached_assets/IMG_8573_1752415362387.PNG         | Bin 0 -> 310753 bytes
+ attached_assets/IMG_8574_1752415507029.PNG         | Bin 0 -> 140322 bytes
+ attached_assets/IMG_8575_1752415942123.PNG         | Bin 0 -> 174176 bytes
+ attached_assets/IMG_8576_1752415939748.PNG         | Bin 0 -> 183179 bytes
+ attached_assets/IMG_8578_1752414376874.PNG         | Bin 0 -> 98020 bytes
+ attached_assets/IMG_8579_1752416149085.PNG         | Bin 0 -> 222239 bytes
+ attached_assets/IMG_8580_1752416271594.PNG         | Bin 0 -> 159735 bytes
+ attached_assets/IMG_8581_1752416357872.PNG         | Bin 0 -> 221090 bytes
+ attached_assets/IMG_8582_1752416777355.PNG         | Bin 0 -> 235686 bytes
+ attached_assets/IMG_8585_1752417751470.PNG         | Bin 0 -> 205285 bytes
+ attached_assets/IMG_8593_1752466414919.PNG         | Bin 0 -> 196354 bytes
+ attached_assets/IMG_8597_1752467058170.PNG         | Bin 0 -> 268347 bytes
+ attached_assets/IMG_8597_1752467197432.PNG         | Bin 0 -> 268347 bytes
+ attached_assets/IMG_8602_1752469994047.jpg         | Bin 0 -> 254874 bytes
+ attached_assets/IMG_8609_1752470627980.PNG         | Bin 0 -> 166569 bytes
+ attached_assets/IMG_8613_1752472099327.PNG         | Bin 0 -> 126960 bytes
+ attached_assets/IMG_8614_1752471630121.PNG         | Bin 0 -> 157595 bytes
+ attached_assets/IMG_8616_1752471928690.PNG         | Bin 0 -> 138086 bytes
+ attached_assets/IMG_8617_1752471998233.PNG         | Bin 0 -> 170474 bytes
+ attached_assets/IMG_8618_1752472270105.PNG         | Bin 0 -> 157595 bytes
+ attached_assets/IMG_8622_1752473104157.PNG         | Bin 0 -> 167895 bytes
+ attached_assets/IMG_8623_1752472818202.PNG         | Bin 0 -> 125431 bytes
+ attached_assets/IMG_8624_1752472818201.PNG         | Bin 0 -> 140109 bytes
+ attached_assets/IMG_8625_1752473002080.jpg         | Bin 0 -> 147438 bytes
+ attached_assets/IMG_8628_1752475911615.PNG         | Bin 0 -> 129419 bytes
+ attached_assets/IMG_8629 2_1752475911614.PNG       | Bin 0 -> 145380 bytes
+ attached_assets/IMG_8631_1752475254588.jpg         | Bin 0 -> 218429 bytes
+ attached_assets/IMG_8634_1752476793581.jpg         | Bin 0 -> 174437 bytes
+ attached_assets/IMG_8634_1752477112439.jpg         | Bin 0 -> 174437 bytes
+ attached_assets/IMG_8637_1752478648225.PNG         | Bin 0 -> 129245 bytes
+ attached_assets/IMG_8638_1752478648225.PNG         | Bin 0 -> 144709 bytes
+ attached_assets/IMG_8639_1752478648224.PNG         | Bin 0 -> 180077 bytes
+ attached_assets/IMG_8640_1752478815478.PNG         | Bin 0 -> 324737 bytes
+ attached_assets/IMG_8643_1752479690908.jpg         | Bin 0 -> 93381 bytes
+ attached_assets/IMG_8644_1752479757025.jpg         | Bin 0 -> 208384 bytes
+ attached_assets/IMG_8645_1752480071177.PNG         | Bin 0 -> 200970 bytes
+ attached_assets/IMG_8646_1752480677971.PNG         | Bin 0 -> 155379 bytes
+ attached_assets/IMG_8647_1752482139394.PNG         | Bin 0 -> 414833 bytes
+ attached_assets/IMG_8647_1752482447162.PNG         | Bin 0 -> 414833 bytes
+ attached_assets/IMG_8649_1752482476743.jpg         | Bin 0 -> 124257 bytes
+ attached_assets/IMG_8650_1752483050788.jpg         | Bin 0 -> 450344 bytes
+ attached_assets/IMG_8651_1752485307313.PNG         | Bin 0 -> 265920 bytes
+ attached_assets/IMG_8652_1752485384159.PNG         | Bin 0 -> 134462 bytes
+ attached_assets/IMG_8654_1752485437479.PNG         | Bin 0 -> 217053 bytes
+ attached_assets/IMG_8656_1752486566925.PNG         | Bin 0 -> 224828 bytes
+ attached_assets/IMG_8657_1752486593069.PNG         | Bin 0 -> 257574 bytes
+ attached_assets/IMG_8658_1752486631841.PNG         | Bin 0 -> 241282 bytes
+ attached_assets/IMG_8659_1752487092303.PNG         | Bin 0 -> 204634 bytes
+ attached_assets/IMG_8660_1752487092302.PNG         | Bin 0 -> 114441 bytes
+ attached_assets/IMG_8661_1752487725298.PNG         | Bin 0 -> 94669 bytes
+ attached_assets/IMG_8662_1752487725297.PNG         | Bin 0 -> 92416 bytes
+ attached_assets/IMG_8663_1752488288483.PNG         | Bin 0 -> 95956 bytes
+ attached_assets/IMG_8664 2_1752488288482.PNG       | Bin 0 -> 160320 bytes
+ attached_assets/IMG_8665_1752488900162.PNG         | Bin 0 -> 99590 bytes
+ attached_assets/IMG_8666_1752489723395.PNG         | Bin 0 -> 104936 bytes
+ attached_assets/IMG_8667_1752489818475.PNG         | Bin 0 -> 172720 bytes
+ attached_assets/IMG_8668_1752489686703.PNG         | Bin 0 -> 223776 bytes
+ attached_assets/IMG_8669_1752489686702.PNG         | Bin 0 -> 124588 bytes
+ attached_assets/IMG_8671 2_1752492230310.PNG       | Bin 0 -> 124571 bytes
+ attached_assets/IMG_8672 2_1752492161797.PNG       | Bin 0 -> 164449 bytes
+ attached_assets/IMG_8674_1752492435307.PNG         | Bin 0 -> 426173 bytes
+ attached_assets/IMG_8676_1752494561130.jpg         | Bin 0 -> 595354 bytes
+ attached_assets/IMG_8677_1752494561129.PNG         | Bin 0 -> 190488 bytes
+ attached_assets/IMG_8686_1752515940293.PNG         | Bin 0 -> 1476172 bytes
+ attached_assets/IMG_8695_1752522721203.PNG         | Bin 0 -> 1480279 bytes
+ attached_assets/IMG_8696_1752522952306.PNG         | Bin 0 -> 978817 bytes
+ attached_assets/IMG_8697_1752523098109.PNG         | Bin 0 -> 1347740 bytes
+ attached_assets/IMG_8698_1752565728936.PNG         | Bin 0 -> 1599423 bytes
+ attached_assets/IMG_8699_1752565728935.PNG         | Bin 0 -> 1466894 bytes
+ attached_assets/IMG_8700_1752567062880.PNG         | Bin 0 -> 1594531 bytes
+ attached_assets/IMG_8701_1752567062880.PNG         | Bin 0 -> 1459529 bytes
+ attached_assets/IMG_8702_1752568590229.PNG         | Bin 0 -> 1591841 bytes
+ attached_assets/IMG_8703_1752568590229.PNG         | Bin 0 -> 1458619 bytes
+ attached_assets/IMG_8711_1752572751264.jpg         | Bin 0 -> 442854 bytes
+ attached_assets/IMG_8712_1752573002227.jpg         | Bin 0 -> 1060551 bytes
+ attached_assets/IMG_8713_1752573864265.PNG         | Bin 0 -> 1527576 bytes
+ attached_assets/IMG_8714_1752574556546.jpg         | Bin 0 -> 1031385 bytes
+ attached_assets/IMG_8719_1752599134884.PNG         | Bin 0 -> 1389738 bytes
+ attached_assets/IMG_8720_1752599134883.PNG         | Bin 0 -> 1249313 bytes
+ attached_assets/IMG_8725_1752657715898.PNG         | Bin 0 -> 227451 bytes
+ attached_assets/IMG_8726 2_1752657863779.PNG       | Bin 0 -> 224121 bytes
+ attached_assets/IMG_8726_1752657713476.PNG         | Bin 0 -> 224121 bytes
+ attached_assets/IMG_8727_1752658036634.PNG         | Bin 0 -> 176321 bytes
+ attached_assets/IMG_8727_1752658233751.PNG         | Bin 0 -> 176321 bytes
+ attached_assets/IMG_8728_1752658247099.PNG         | Bin 0 -> 191512 bytes
+ attached_assets/IMG_8729_1752658358267.PNG         | Bin 0 -> 123160 bytes
+ attached_assets/IMG_8731 2_1752674487333.PNG       | Bin 0 -> 2926642 bytes
+ attached_assets/IMG_8731_1752657574195.PNG         | Bin 0 -> 2926642 bytes
+ attached_assets/IMG_8732_1752657656857.PNG         | Bin 0 -> 2897671 bytes
+ attached_assets/IMG_8737_1752656459895.png         | Bin 0 -> 194403 bytes
+ attached_assets/IMG_8739_1752656459895.png         | Bin 0 -> 258400 bytes
+ attached_assets/IMG_8742 2_1752730587018.PNG       | Bin 0 -> 181626 bytes
+ attached_assets/IMG_8742_1752692626463.PNG         | Bin 0 -> 181626 bytes
+ attached_assets/IMG_8743_1752689878242.PNG         | Bin 0 -> 412638 bytes
+ attached_assets/IMG_8744_1752689743782.PNG         | Bin 0 -> 548159 bytes
+ attached_assets/IMG_8745_1752689633812.PNG         | Bin 0 -> 3149939 bytes
+ attached_assets/IMG_8746_1752689606969.jpg         | Bin 0 -> 100251 bytes
+ attached_assets/IMG_8748_1752680323465.jpg         | Bin 0 -> 460949 bytes
+ attached_assets/IMG_8752_1752730276925.PNG         | Bin 0 -> 411797 bytes
+ attached_assets/IMG_8753_1752730177158.PNG         | Bin 0 -> 3333803 bytes
+ attached_assets/IMG_8756_1752736554432.PNG         | Bin 0 -> 410255 bytes
+ attached_assets/IMG_8847_1753075867501.PNG         | Bin 0 -> 103839 bytes
+ attached_assets/IMG_8848_1753075844138.PNG         | Bin 0 -> 190045 bytes
+ .../IMG_9A2B445EF9FD-1_1752592946702.jpeg          | Bin 0 -> 1275824 bytes
+ .../IMG_9A38A043D4DD-1_1752490467544.jpeg          | Bin 0 -> 295973 bytes
+ .../IMG_A7B77FF950D0-1_1752467494414.jpeg          | Bin 0 -> 573259 bytes
+ .../IMG_D77E190D475F-1_1752572643231.jpeg          | Bin 0 -> 1397772 bytes
+ .../IMG_E314BA9A4022-1_1752466843381.jpeg          | Bin 0 -> 697007 bytes
+ .../IMG_F2BE7F613D1C-1_1752473181021.jpeg          | Bin 0 -> 57836 bytes
+ .../IMG_F38DCF75890A-1_1751888354909.jpeg          | Bin 0 -> 802883 bytes
+ .../IMG_F59CD3CD2D84-1_1752411919719.jpeg          | Bin 0 -> 538755 bytes
+ ...ts-scheduled-en-1751805374439_1751805374439.txt |  45 +
+ ...creen-no-scroll-1752389076605_1752389076606.txt |  52 ++
+ ...k-splash-screen-1752601733921_1752601733922.txt |  86 ++
+ ...sue-once-and-fo-1752604146868_1752604146869.txt | 126 +++
+ ...-across-iPhone--1752335873448_1752335873449.txt |  57 ++
+ ...ull-fatal-not-a-1751711119920_1751711119921.txt | 114 +++
+ ...ull-fatal-not-a-1751711171900_1751711171900.txt | 130 +++
+ ...-clarity-accomp-1752411105773_1752411105774.txt |  60 ++
+ ...icated-users-la-1753069048143_1753069048144.txt |  94 ++
+ ...y-spaced-and-no-1752516308213_1752516308214.txt | 103 +++
+ ...import-useMutat-1752822408186_1752822408187.txt | 270 ++++++
+ ...r-App-pod-Capac-1752852637168_1752852637170.txt |  61 ++
+ ...cording_07-12-2025 17-33-33_1_1752316433055.MP4 | Bin 0 -> 4943145 bytes
+ ...-07 at 6.29.10\342\200\257PM_1751888031552.png" | Bin 0 -> 143675 bytes
+ ...-07 at 6.31.30\342\200\257PM_1751887991919.png" | Bin 0 -> 85254 bytes
+ ...2 at 10.58.47\342\200\257PM_1752336067783.jpeg" | Bin 0 -> 725537 bytes
+ ...14 at 6.36.54\342\200\257PM_1752493045687.jpeg" | Bin 0 -> 604239 bytes
+ ...14 at 6.36.54\342\200\257PM_1752493135267.jpeg" | Bin 0 -> 604239 bytes
+ ...-19 at 2.41.05\342\200\257PM_1752911098442.png" | Bin 0 -> 1027258 bytes
+ attached_assets/image_1751711528402.png            | Bin 0 -> 110444 bytes
+ attached_assets/image_1751711872105.png            | Bin 0 -> 27705 bytes
+ attached_assets/image_1751777556911.png            | Bin 0 -> 69745 bytes
+ attached_assets/image_1751778019911.png            | Bin 0 -> 6537 bytes
+ attached_assets/image_1751782742632.png            | Bin 0 -> 19751 bytes
+ attached_assets/image_1751789813933.png            | Bin 0 -> 21197 bytes
+ attached_assets/image_1751790042980.png            | Bin 0 -> 38947 bytes
+ attached_assets/image_1751791154143.png            | Bin 0 -> 73304 bytes
+ attached_assets/image_1751791182134.png            | Bin 0 -> 73304 bytes
+ attached_assets/image_1751804237016.png            | Bin 0 -> 116381 bytes
+ attached_assets/image_1751804894134.png            | Bin 0 -> 133572 bytes
+ attached_assets/image_1751805949572.png            | Bin 0 -> 73135 bytes
+ attached_assets/image_1751806164821.png            | Bin 0 -> 23835 bytes
+ attached_assets/image_1751806223575.png            | Bin 0 -> 81365 bytes
+ attached_assets/image_1751806431212.png            | Bin 0 -> 74597 bytes
+ attached_assets/image_1751806666999.png            | Bin 0 -> 76610 bytes
+ attached_assets/image_1751807022729.png            | Bin 0 -> 72762 bytes
+ attached_assets/image_1751807321517.png            | Bin 0 -> 70504 bytes
+ attached_assets/image_1751807594219.png            | Bin 0 -> 43173 bytes
+ attached_assets/image_1751808112576.png            | Bin 0 -> 27300 bytes
+ attached_assets/image_1751808183057.png            | Bin 0 -> 82664 bytes
+ attached_assets/image_1751808349195.png            | Bin 0 -> 60603 bytes
+ attached_assets/image_1751808461515.png            | Bin 0 -> 84492 bytes
+ attached_assets/image_1751809088551.png            | Bin 0 -> 79535 bytes
+ attached_assets/image_1751809584821.png            | Bin 0 -> 66788 bytes
+ attached_assets/image_1751810512820.png            | Bin 0 -> 27186 bytes
+ attached_assets/image_1751810740083.png            | Bin 0 -> 27336 bytes
+ attached_assets/image_1751810784085.png            | Bin 0 -> 116590 bytes
+ attached_assets/image_1751810968273.png            | Bin 0 -> 46323 bytes
+ attached_assets/image_1751811275565.png            | Bin 0 -> 87938 bytes
+ attached_assets/image_1751811418288.png            | Bin 0 -> 84413 bytes
+ attached_assets/image_1751811978119.png            | Bin 0 -> 53822 bytes
+ attached_assets/image_1751812409634.png            | Bin 0 -> 85420 bytes
+ attached_assets/image_1751812577311.png            | Bin 0 -> 92665 bytes
+ attached_assets/image_1751812704152.png            | Bin 0 -> 120513 bytes
+ attached_assets/image_1751812754781.png            | Bin 0 -> 27311 bytes
+ attached_assets/image_1751812916725.png            | Bin 0 -> 26394 bytes
+ attached_assets/image_1751813206045.png            | Bin 0 -> 25413 bytes
+ attached_assets/image_1751813321581.png            | Bin 0 -> 62053 bytes
+ attached_assets/image_1751813632331.png            | Bin 0 -> 122066 bytes
+ attached_assets/image_1751813849147.png            | Bin 0 -> 91089 bytes
+ attached_assets/image_1751814289448.png            | Bin 0 -> 131844 bytes
+ attached_assets/image_1751814296983.png            | Bin 0 -> 57243 bytes
+ attached_assets/image_1751814374524.png            | Bin 0 -> 82916 bytes
+ attached_assets/image_1751882366711.png            | Bin 0 -> 23658 bytes
+ attached_assets/image_1751888091329.png            | Bin 0 -> 45786 bytes
+ attached_assets/image_1751888255672.png            | Bin 0 -> 177549 bytes
+ attached_assets/image_1751889413289.png            | Bin 0 -> 36311 bytes
+ attached_assets/image_1751889664459.png            | Bin 0 -> 27120 bytes
+ attached_assets/image_1751992800275.png            | Bin 0 -> 32182 bytes
+ attached_assets/image_1752303447100.png            | Bin 0 -> 40252 bytes
+ attached_assets/image_1752305724529.png            | Bin 0 -> 7789 bytes
+ attached_assets/image_1752335184655.png            | Bin 0 -> 319466 bytes
+ attached_assets/image_1752335197298.png            | Bin 0 -> 247282 bytes
+ attached_assets/image_1752335350384.png            | Bin 0 -> 251828 bytes
+ attached_assets/image_1752516278875.png            | Bin 0 -> 221632 bytes
+ attached_assets/image_1752516288435.png            | Bin 0 -> 500839 bytes
+ attached_assets/image_1752516403783.png            | Bin 0 -> 336831 bytes
+ attached_assets/image_1752521270298.png            | Bin 0 -> 320253 bytes
+ attached_assets/image_1752521481560.png            | Bin 0 -> 1008416 bytes
+ attached_assets/image_1752521662172.png            | Bin 0 -> 213530 bytes
+ attached_assets/image_1752521665858.png            | Bin 0 -> 226973 bytes
+ attached_assets/image_1752566260629.png            | Bin 0 -> 213700 bytes
+ attached_assets/image_1752566271603.png            | Bin 0 -> 1086129 bytes
+ attached_assets/image_1752567424305.png            | Bin 0 -> 1042665 bytes
+ attached_assets/image_1752567430178.png            | Bin 0 -> 1107063 bytes
+ attached_assets/image_1752598984908.png            | Bin 0 -> 202611 bytes
+ attached_assets/image_1752601916999.png            | Bin 0 -> 63473 bytes
+ attached_assets/image_1752602672854.png            | Bin 0 -> 35244 bytes
+ attached_assets/image_1752602963105.png            | Bin 0 -> 35686 bytes
+ attached_assets/image_1752606543103.png            | Bin 0 -> 44709 bytes
+ attached_assets/image_1752826509904.png            | Bin 0 -> 86080 bytes
+ attached_assets/image_1752827347274.png            | Bin 0 -> 134340 bytes
+ attached_assets/image_1752827659966.png            | Bin 0 -> 36177 bytes
+ attached_assets/image_1752827844378.png            | Bin 0 -> 178395 bytes
+ attached_assets/image_1752827937664.png            | Bin 0 -> 89380 bytes
+ attached_assets/image_1752828056021.png            | Bin 0 -> 63196 bytes
+ attached_assets/image_1752828162448.png            | Bin 0 -> 97470 bytes
+ attached_assets/image_1752828304707.png            | Bin 0 -> 983126 bytes
+ attached_assets/image_1752828313315.png            | Bin 0 -> 220873 bytes
+ attached_assets/image_1752828799942.png            | Bin 0 -> 339516 bytes
+ attached_assets/image_1752829691751.png            | Bin 0 -> 86844 bytes
+ attached_assets/image_1752829779202.png            | Bin 0 -> 74841 bytes
+ attached_assets/image_1752829944490.png            | Bin 0 -> 87018 bytes
+ attached_assets/image_1752835240723.png            | Bin 0 -> 238553 bytes
+ attached_assets/image_1752835456704.png            | Bin 0 -> 62111 bytes
+ attached_assets/image_1752835605521.png            | Bin 0 -> 106227 bytes
+ attached_assets/image_1752852142760.png            | Bin 0 -> 194675 bytes
+ attached_assets/image_1752852888340.png            | Bin 0 -> 43113 bytes
+ attached_assets/image_1752912211347.png            | Bin 0 -> 703409 bytes
+ attached_assets/image_1752912430934.png            | Bin 0 -> 172546 bytes
+ attached_assets/image_1753074616470.png            | Bin 0 -> 36469 bytes
+ attached_assets/image_1753075196493.png            | Bin 0 -> 19730 bytes
+ build-mobile-complete.sh                           |  86 +-
+ build-mobile-with-video.sh                         |  56 ++
+ capacitor.config.ts                                |  27 +-
+ certs/README.md                                    |  28 +
+ client/src/App.tsx                                 |  17 +-
+ client/src/components/AdvancedVideoRoom.tsx        | 285 ++++++
+ client/src/components/DailyVideoRoom.tsx           | 373 ++++++++
+ client/src/components/EmbeddedVideoRoom.tsx        | 207 +++++
+ client/src/components/EndRoom.tsx                  | 204 +++++
+ client/src/components/EndRoomCountdown.tsx         |  73 ++
+ client/src/components/EndRoomTooltip.tsx           | 106 +++
+ client/src/components/FinalWillSummary.tsx         | 207 +++++
+ client/src/components/MobileVideoRoom.tsx          | 282 ++++++
+ client/src/components/SimpleVideoRoom.tsx          | 249 ++++++
+ client/src/components/SplashScreen.tsx             |  44 +
+ client/src/components/WillInstructionModal.tsx     | 103 +++
+ client/src/components/ui/HelpIcon.tsx              |  40 +
+ client/src/components/ui/avatar.tsx                |   2 -
+ client/src/components/ui/chart.tsx                 |   2 -
+ client/src/components/ui/collapsible.tsx           |   2 -
+ client/src/components/ui/design-system.tsx         | 362 ++++++++
+ client/src/components/ui/dialog.tsx                |   2 -
+ client/src/components/ui/drawer.tsx                |   2 -
+ client/src/components/ui/form.tsx                  |   2 -
+ client/src/components/ui/hover-card.tsx            |   2 -
+ client/src/components/ui/menubar.tsx               |   2 -
+ client/src/components/ui/mobile-layout.tsx         | 188 ++++
+ client/src/components/ui/progress.tsx              |   2 -
+ client/src/components/ui/resizable.tsx             |   2 -
+ client/src/components/ui/select.tsx                |   2 -
+ client/src/components/ui/sheet.tsx                 |   2 -
+ client/src/components/ui/toast.tsx                 |   8 +-
+ client/src/components/ui/toaster.tsx               |   2 +-
+ client/src/components/ui/toggle-group.tsx          |   2 -
+ client/src/components/ui/tooltip.tsx               |   2 -
+ client/src/hooks/useAppRefresh.ts                  |  35 +
+ client/src/index.css                               | 125 +++
+ client/src/lib/dateUtils.ts                        |  35 +-
+ client/src/lib/queryClient.ts                      |   7 +-
+ client/src/pages/Auth-backup.tsx                   | 326 +++++++
+ client/src/pages/Auth.tsx                          | 299 +++----
+ client/src/pages/EditCommitment.tsx                | 293 +++++--
+ client/src/pages/Home.tsx                          | 391 +++++++--
+ client/src/pages/InnerCircle.tsx                   | 218 +++--
+ client/src/pages/InnerCircleHub.tsx                | 767 +++++++++++-----
+ client/src/pages/Landing.tsx                       | 100 +--
+ client/src/pages/StartWill.tsx                     | 685 ++++++++++-----
+ client/src/pages/SubmitCommitment.tsx              | 612 +++++++++----
+ client/src/pages/WillDetails.tsx                   | 772 +++++++++-------
+ client/src/services/NotificationService.ts         | 243 ++++++
+ docs/APPLE_DEVELOPER_SETUP_CHECKLIST.md            | 137 +++
+ docs/DEPLOYMENT_WORKFLOW.md                        | 105 +++
+ docs/PUSH_NOTIFICATIONS.md                         |  62 ++
+ docs/PUSH_NOTIFICATIONS_SETUP.md                   | 119 +++
+ docs/SIMPLE_NOTIFICATION_SETUP.md                  | 115 +++
+ fix-ios-build.sh                                   | 168 ++++
+ fix-missing-end-rooms.js                           |  38 +
+ fix-will-37.js                                     |  32 +
+ ios-screenshot-setup.md                            |  66 ++
+ ios/App/App.xcodeproj/project.pbxproj              | 740 ++++++++--------
+ .../App.entitlements}                              |   6 +-
+ ios/App/App/AppDelegate.swift                      |  27 +
+ ios/App/App/Info.plist                             |  97 ++-
+ ios/App/App/Info.plist.additions                   |  14 +
+ ios/App/Podfile                                    |   5 +-
+ package-lock.json                                  | 414 ++++++++-
+ package.json                                       |  10 +-
+ privacy-policy.html                                | 146 ++++
+ replit.md                                          | 966 +++++++++++++++++++++
+ server/auth.ts                                     |   4 +-
+ server/daily.ts                                    | 149 ++++
+ server/index.ts                                    | 105 ++-
+ server/pushNotificationService.ts                  | 191 ++++
+ server/routes.ts                                   | 451 +++++++++-
+ server/scheduler.ts                                | 275 ++++++
+ server/storage.ts                                  |  55 ++
+ shared/schema.ts                                   |  59 +-
+ sync-mobile.sh                                     |  18 +
+ tailwind.config.ts                                 |  56 ++
+ test-privacy.html                                  |  10 +
+ 380 files changed, 11953 insertions(+), 1881 deletions(-)
+ create mode 100644 CHECKLIST_VERIFICATION.md
+ create mode 100644 attached_assets/IMG_085997BF6CC4-1_1752468351029.jpeg
+ create mode 100644 attached_assets/IMG_233B7796E2EF-1_1752680332609.jpeg
+ create mode 100644 attached_assets/IMG_286ED0BED9B0-1_1752512674592.jpeg
+ create mode 100644 attached_assets/IMG_3B73345F6777-1_1752393341544.jpeg
+ create mode 100644 attached_assets/IMG_3D87A008F489-1_1752466668562.jpeg
+ create mode 100644 attached_assets/IMG_44F8A0C54213-1_1751881335838.jpeg
+ create mode 100644 attached_assets/IMG_469710FD91B0-1_1752410918752.jpeg
+ create mode 100644 attached_assets/IMG_59AC347FA9CE-1_1752476039481.jpeg
+ create mode 100644 attached_assets/IMG_622020176D6E-1_1752569915015.jpeg
+ create mode 100644 attached_assets/IMG_62EB79DDCBE1-1_1752467637656.jpeg
+ create mode 100644 attached_assets/IMG_788483DAD209-1_1752413406632.jpeg
+ create mode 100644 attached_assets/IMG_793010929B83-1_1752468274200.jpeg
+ create mode 100644 attached_assets/IMG_8295_1751710397355.jpg
+ create mode 100644 attached_assets/IMG_8295_1751712952384.jpg
+ create mode 100644 attached_assets/IMG_8297_1751726769477.PNG
+ create mode 100644 attached_assets/IMG_8340_1751780170681.jpg
+ create mode 100644 attached_assets/IMG_8341_1751780170681.PNG
+ create mode 100644 attached_assets/IMG_8342_1751780646440.jpg
+ create mode 100644 attached_assets/IMG_8343_1751780662224.jpg
+ create mode 100644 attached_assets/IMG_8345_1751781321152.jpg
+ create mode 100644 attached_assets/IMG_8401_1751882094863.PNG
+ create mode 100644 attached_assets/IMG_8402_1751882692556.PNG
+ create mode 100644 attached_assets/IMG_8405_1751883115311.jpg
+ create mode 100644 attached_assets/IMG_8409_1751887660952.PNG
+ create mode 100644 attached_assets/IMG_8410_1751886313987.PNG
+ create mode 100644 attached_assets/IMG_8411_1751887405617.PNG
+ create mode 100644 attached_assets/IMG_8438_1752300716156.PNG
+ create mode 100644 attached_assets/IMG_8439_1752300677500.jpg
+ create mode 100644 attached_assets/IMG_8459_1752303874149.PNG
+ create mode 100644 attached_assets/IMG_8460_1752305255825.jpg
+ create mode 100644 attached_assets/IMG_8463_1752306403406.PNG
+ create mode 100644 attached_assets/IMG_8466_1752308828503.PNG
+ create mode 100644 attached_assets/IMG_8467_1752309613281.PNG
+ create mode 100644 attached_assets/IMG_8468_1752310481283.PNG
+ create mode 100644 attached_assets/IMG_8469_1752311017062.PNG
+ create mode 100644 attached_assets/IMG_8474_1752313666391.jpg
+ create mode 100644 attached_assets/IMG_8475_1752314712999.PNG
+ create mode 100644 attached_assets/IMG_8476_1752314712998.PNG
+ create mode 100644 attached_assets/IMG_8483_1752316588300.jpg
+ create mode 100644 attached_assets/IMG_8485_1752333580045.jpg
+ create mode 100644 attached_assets/IMG_8486_1752334030668.jpg
+ create mode 100644 attached_assets/IMG_8492_1752336978744.PNG
+ create mode 100644 attached_assets/IMG_8505_1752386455175.PNG
+ create mode 100644 attached_assets/IMG_8508 2_1752389184633.PNG
+ create mode 100644 attached_assets/IMG_8508_1752387995935.PNG
+ create mode 100644 attached_assets/IMG_8509_1752389089774.PNG
+ create mode 100644 attached_assets/IMG_8510_1752389079988.PNG
+ create mode 100644 attached_assets/IMG_8511_1752389453457.jpg
+ create mode 100644 attached_assets/IMG_8512_1752389456438.PNG
+ create mode 100644 attached_assets/IMG_8516_1752390500618.PNG
+ create mode 100644 attached_assets/IMG_8517_1752390500617.PNG
+ create mode 100644 attached_assets/IMG_8518_1752390500617.PNG
+ create mode 100644 attached_assets/IMG_8519_1752391164956.jpg
+ create mode 100644 attached_assets/IMG_8522_1752392920430.PNG
+ create mode 100644 attached_assets/IMG_8523_1752392998332.PNG
+ create mode 100644 attached_assets/IMG_8525_1752393134862.PNG
+ create mode 100644 attached_assets/IMG_8529_1752393768326.PNG
+ create mode 100644 attached_assets/IMG_8530_1752393768326.PNG
+ create mode 100644 attached_assets/IMG_8531_1752393768321.PNG
+ create mode 100644 attached_assets/IMG_8534_1752397904119.PNG
+ create mode 100644 attached_assets/IMG_8537 2_1752398225871.PNG
+ create mode 100644 attached_assets/IMG_8537_1752397293002.PNG
+ create mode 100644 attached_assets/IMG_8538_1752397295401.PNG
+ create mode 100644 attached_assets/IMG_8539_1752397658608.PNG
+ create mode 100644 attached_assets/IMG_8541_1752397612840.PNG
+ create mode 100644 attached_assets/IMG_8552_1752399014862.PNG
+ create mode 100644 attached_assets/IMG_8554_1752401038738.PNG
+ create mode 100644 attached_assets/IMG_8555_1752400913760.PNG
+ create mode 100644 attached_assets/IMG_8556_1752400664679.jpg
+ create mode 100644 attached_assets/IMG_8560_1752410997470.PNG
+ create mode 100644 attached_assets/IMG_8564_1752411642966.PNG
+ create mode 100644 attached_assets/IMG_8569_1752414186597.PNG
+ create mode 100644 attached_assets/IMG_8570_1752414436276.PNG
+ create mode 100644 attached_assets/IMG_8571_1752414794172.PNG
+ create mode 100644 attached_assets/IMG_8572_1752414911587.PNG
+ create mode 100644 attached_assets/IMG_8573_1752415362387.PNG
+ create mode 100644 attached_assets/IMG_8574_1752415507029.PNG
+ create mode 100644 attached_assets/IMG_8575_1752415942123.PNG
+ create mode 100644 attached_assets/IMG_8576_1752415939748.PNG
+ create mode 100644 attached_assets/IMG_8578_1752414376874.PNG
+ create mode 100644 attached_assets/IMG_8579_1752416149085.PNG
+ create mode 100644 attached_assets/IMG_8580_1752416271594.PNG
+ create mode 100644 attached_assets/IMG_8581_1752416357872.PNG
+ create mode 100644 attached_assets/IMG_8582_1752416777355.PNG
+ create mode 100644 attached_assets/IMG_8585_1752417751470.PNG
+ create mode 100644 attached_assets/IMG_8593_1752466414919.PNG
+ create mode 100644 attached_assets/IMG_8597_1752467058170.PNG
+ create mode 100644 attached_assets/IMG_8597_1752467197432.PNG
+ create mode 100644 attached_assets/IMG_8602_1752469994047.jpg
+ create mode 100644 attached_assets/IMG_8609_1752470627980.PNG
+ create mode 100644 attached_assets/IMG_8613_1752472099327.PNG
+ create mode 100644 attached_assets/IMG_8614_1752471630121.PNG
+ create mode 100644 attached_assets/IMG_8616_1752471928690.PNG
+ create mode 100644 attached_assets/IMG_8617_1752471998233.PNG
+ create mode 100644 attached_assets/IMG_8618_1752472270105.PNG
+ create mode 100644 attached_assets/IMG_8622_1752473104157.PNG
+ create mode 100644 attached_assets/IMG_8623_1752472818202.PNG
+ create mode 100644 attached_assets/IMG_8624_1752472818201.PNG
+ create mode 100644 attached_assets/IMG_8625_1752473002080.jpg
+ create mode 100644 attached_assets/IMG_8628_1752475911615.PNG
+ create mode 100644 attached_assets/IMG_8629 2_1752475911614.PNG
+ create mode 100644 attached_assets/IMG_8631_1752475254588.jpg
+ create mode 100644 attached_assets/IMG_8634_1752476793581.jpg
+ create mode 100644 attached_assets/IMG_8634_1752477112439.jpg
+ create mode 100644 attached_assets/IMG_8637_1752478648225.PNG
+ create mode 100644 attached_assets/IMG_8638_1752478648225.PNG
+ create mode 100644 attached_assets/IMG_8639_1752478648224.PNG
+ create mode 100644 attached_assets/IMG_8640_1752478815478.PNG
+ create mode 100644 attached_assets/IMG_8643_1752479690908.jpg
+ create mode 100644 attached_assets/IMG_8644_1752479757025.jpg
+ create mode 100644 attached_assets/IMG_8645_1752480071177.PNG
+ create mode 100644 attached_assets/IMG_8646_1752480677971.PNG
+ create mode 100644 attached_assets/IMG_8647_1752482139394.PNG
+ create mode 100644 attached_assets/IMG_8647_1752482447162.PNG
+ create mode 100644 attached_assets/IMG_8649_1752482476743.jpg
+ create mode 100644 attached_assets/IMG_8650_1752483050788.jpg
+ create mode 100644 attached_assets/IMG_8651_1752485307313.PNG
+ create mode 100644 attached_assets/IMG_8652_1752485384159.PNG
+ create mode 100644 attached_assets/IMG_8654_1752485437479.PNG
+ create mode 100644 attached_assets/IMG_8656_1752486566925.PNG
+ create mode 100644 attached_assets/IMG_8657_1752486593069.PNG
+ create mode 100644 attached_assets/IMG_8658_1752486631841.PNG
+ create mode 100644 attached_assets/IMG_8659_1752487092303.PNG
+ create mode 100644 attached_assets/IMG_8660_1752487092302.PNG
+ create mode 100644 attached_assets/IMG_8661_1752487725298.PNG
+ create mode 100644 attached_assets/IMG_8662_1752487725297.PNG
+ create mode 100644 attached_assets/IMG_8663_1752488288483.PNG
+ create mode 100644 attached_assets/IMG_8664 2_1752488288482.PNG
+ create mode 100644 attached_assets/IMG_8665_1752488900162.PNG
+ create mode 100644 attached_assets/IMG_8666_1752489723395.PNG
+ create mode 100644 attached_assets/IMG_8667_1752489818475.PNG
+ create mode 100644 attached_assets/IMG_8668_1752489686703.PNG
+ create mode 100644 attached_assets/IMG_8669_1752489686702.PNG
+ create mode 100644 attached_assets/IMG_8671 2_1752492230310.PNG
+ create mode 100644 attached_assets/IMG_8672 2_1752492161797.PNG
+ create mode 100644 attached_assets/IMG_8674_1752492435307.PNG
+ create mode 100644 attached_assets/IMG_8676_1752494561130.jpg
+ create mode 100644 attached_assets/IMG_8677_1752494561129.PNG
+ create mode 100644 attached_assets/IMG_8686_1752515940293.PNG
+ create mode 100644 attached_assets/IMG_8695_1752522721203.PNG
+ create mode 100644 attached_assets/IMG_8696_1752522952306.PNG
+ create mode 100644 attached_assets/IMG_8697_1752523098109.PNG
+ create mode 100644 attached_assets/IMG_8698_1752565728936.PNG
+ create mode 100644 attached_assets/IMG_8699_1752565728935.PNG
+ create mode 100644 attached_assets/IMG_8700_1752567062880.PNG
+ create mode 100644 attached_assets/IMG_8701_1752567062880.PNG
+ create mode 100644 attached_assets/IMG_8702_1752568590229.PNG
+ create mode 100644 attached_assets/IMG_8703_1752568590229.PNG
+ create mode 100644 attached_assets/IMG_8711_1752572751264.jpg
+ create mode 100644 attached_assets/IMG_8712_1752573002227.jpg
+ create mode 100644 attached_assets/IMG_8713_1752573864265.PNG
+ create mode 100644 attached_assets/IMG_8714_1752574556546.jpg
+ create mode 100644 attached_assets/IMG_8719_1752599134884.PNG
+ create mode 100644 attached_assets/IMG_8720_1752599134883.PNG
+ create mode 100644 attached_assets/IMG_8725_1752657715898.PNG
+ create mode 100644 attached_assets/IMG_8726 2_1752657863779.PNG
+ create mode 100644 attached_assets/IMG_8726_1752657713476.PNG
+ create mode 100644 attached_assets/IMG_8727_1752658036634.PNG
+ create mode 100644 attached_assets/IMG_8727_1752658233751.PNG
+ create mode 100644 attached_assets/IMG_8728_1752658247099.PNG
+ create mode 100644 attached_assets/IMG_8729_1752658358267.PNG
+ create mode 100644 attached_assets/IMG_8731 2_1752674487333.PNG
+ create mode 100644 attached_assets/IMG_8731_1752657574195.PNG
+ create mode 100644 attached_assets/IMG_8732_1752657656857.PNG
+ create mode 100644 attached_assets/IMG_8737_1752656459895.png
+ create mode 100644 attached_assets/IMG_8739_1752656459895.png
+ create mode 100644 attached_assets/IMG_8742 2_1752730587018.PNG
+ create mode 100644 attached_assets/IMG_8742_1752692626463.PNG
+ create mode 100644 attached_assets/IMG_8743_1752689878242.PNG
+ create mode 100644 attached_assets/IMG_8744_1752689743782.PNG
+ create mode 100644 attached_assets/IMG_8745_1752689633812.PNG
+ create mode 100644 attached_assets/IMG_8746_1752689606969.jpg
+ create mode 100644 attached_assets/IMG_8748_1752680323465.jpg
+ create mode 100644 attached_assets/IMG_8752_1752730276925.PNG
+ create mode 100644 attached_assets/IMG_8753_1752730177158.PNG
+ create mode 100644 attached_assets/IMG_8756_1752736554432.PNG
+ create mode 100644 attached_assets/IMG_8847_1753075867501.PNG
+ create mode 100644 attached_assets/IMG_8848_1753075844138.PNG
+ create mode 100644 attached_assets/IMG_9A2B445EF9FD-1_1752592946702.jpeg
+ create mode 100644 attached_assets/IMG_9A38A043D4DD-1_1752490467544.jpeg
+ create mode 100644 attached_assets/IMG_A7B77FF950D0-1_1752467494414.jpeg
+ create mode 100644 attached_assets/IMG_D77E190D475F-1_1752572643231.jpeg
+ create mode 100644 attached_assets/IMG_E314BA9A4022-1_1752466843381.jpeg
+ create mode 100644 attached_assets/IMG_F2BE7F613D1C-1_1752473181021.jpeg
+ create mode 100644 attached_assets/IMG_F38DCF75890A-1_1751888354909.jpeg
+ create mode 100644 attached_assets/IMG_F59CD3CD2D84-1_1752411919719.jpeg
+ create mode 100644 attached_assets/Pasted--End-Room-Flow-Final-Will-Completion-Sequence-Overview-After-a-Will-reaches-its-scheduled-en-1751805374439_1751805374439.txt
+ create mode 100644 attached_assets/Pasted--Hey-I-d-like-to-redesign-this-screen-so-that-it-fits-entirely-on-a-single-iPhone-screen-no-scroll-1752389076605_1752389076606.txt
+ create mode 100644 attached_assets/Pasted--UI-Implementation-Plan-App-Launch-Screen-Will-Splash-Purpose-Show-a-quick-splash-screen-1752601733921_1752601733922.txt
+ create mode 100644 attached_assets/Pasted-Here-s-a-structured-debug-strategy-to-help-the-developer-resolve-the-splash-screen-issue-once-and-fo-1752604146868_1752604146869.txt
+ create mode 100644 attached_assets/Pasted-Hey-team-a-few-final-UI-consistency-and-styling-requests-based-on-current-testing-across-iPhone--1752335873448_1752335873449.txt
+ create mode 100644 attached_assets/Pasted-Last-login-Sat-Jul-5-14-20-30-on-ttys000-pciacciog-Porfirios-MacBook-Air-git-pull-fatal-not-a-1751711119920_1751711119921.txt
+ create mode 100644 attached_assets/Pasted-Last-login-Sat-Jul-5-14-20-30-on-ttys000-pciacciog-Porfirios-MacBook-Air-git-pull-fatal-not-a-1751711171900_1751711171900.txt
+ create mode 100644 attached_assets/Pasted-This-screen-should-mark-a-respectful-close-to-the-group-s-commitment-with-a-tone-of-clarity-accomp-1752411105773_1752411105774.txt
+ create mode 100644 attached_assets/Pasted-WILL-SETUP-FLOW-SIMPLIFIED-OVERVIEW-1-USER-AUTHENTICATION-CIRCLE-SETUP-Unauthenticated-users-la-1753069048143_1753069048144.txt
+ create mode 100644 attached_assets/Pasted-You-re-absolutely-right-the-current-Sign-In-Sign-Up-page-feels-misaligned-overly-spaced-and-no-1752516308213_1752516308214.txt
+ create mode 100644 attached_assets/Pasted-import-useState-from-react-import-useParams-useLocation-from-wouter-import-useMutat-1752822408186_1752822408187.txt
+ create mode 100644 attached_assets/Pasted-owser-pciacciog-Porfirios-MacBook-Air-App-pod-Capac-1752852637168_1752852637170.txt
+ create mode 100644 attached_assets/ScreenRecording_07-12-2025 17-33-33_1_1752316433055.MP4
+ create mode 100644 "attached_assets/Screenshot 2025-07-07 at 6.29.10\342\200\257PM_1751888031552.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-07 at 6.31.30\342\200\257PM_1751887991919.png"
+ create mode 100644 "attached_assets/Screenshot 2025-07-12 at 10.58.47\342\200\257PM_1752336067783.jpeg"
+ create mode 100644 "attached_assets/Screenshot 2025-07-14 at 6.36.54\342\200\257PM_1752493045687.jpeg"
+ create mode 100644 "attached_assets/Screenshot 2025-07-14 at 6.36.54\342\200\257PM_1752493135267.jpeg"
+ create mode 100644 "attached_assets/Screenshot 2025-07-19 at 2.41.05\342\200\257PM_1752911098442.png"
+ create mode 100644 attached_assets/image_1751711528402.png
+ create mode 100644 attached_assets/image_1751711872105.png
+ create mode 100644 attached_assets/image_1751777556911.png
+ create mode 100644 attached_assets/image_1751778019911.png
+ create mode 100644 attached_assets/image_1751782742632.png
+ create mode 100644 attached_assets/image_1751789813933.png
+ create mode 100644 attached_assets/image_1751790042980.png
+ create mode 100644 attached_assets/image_1751791154143.png
+ create mode 100644 attached_assets/image_1751791182134.png
+ create mode 100644 attached_assets/image_1751804237016.png
+ create mode 100644 attached_assets/image_1751804894134.png
+ create mode 100644 attached_assets/image_1751805949572.png
+ create mode 100644 attached_assets/image_1751806164821.png
+ create mode 100644 attached_assets/image_1751806223575.png
+ create mode 100644 attached_assets/image_1751806431212.png
+ create mode 100644 attached_assets/image_1751806666999.png
+ create mode 100644 attached_assets/image_1751807022729.png
+ create mode 100644 attached_assets/image_1751807321517.png
+ create mode 100644 attached_assets/image_1751807594219.png
+ create mode 100644 attached_assets/image_1751808112576.png
+ create mode 100644 attached_assets/image_1751808183057.png
+ create mode 100644 attached_assets/image_1751808349195.png
+ create mode 100644 attached_assets/image_1751808461515.png
+ create mode 100644 attached_assets/image_1751809088551.png
+ create mode 100644 attached_assets/image_1751809584821.png
+ create mode 100644 attached_assets/image_1751810512820.png
+ create mode 100644 attached_assets/image_1751810740083.png
+ create mode 100644 attached_assets/image_1751810784085.png
+ create mode 100644 attached_assets/image_1751810968273.png
+ create mode 100644 attached_assets/image_1751811275565.png
+ create mode 100644 attached_assets/image_1751811418288.png
+ create mode 100644 attached_assets/image_1751811978119.png
+ create mode 100644 attached_assets/image_1751812409634.png
+ create mode 100644 attached_assets/image_1751812577311.png
+ create mode 100644 attached_assets/image_1751812704152.png
+ create mode 100644 attached_assets/image_1751812754781.png
+ create mode 100644 attached_assets/image_1751812916725.png
+ create mode 100644 attached_assets/image_1751813206045.png
+ create mode 100644 attached_assets/image_1751813321581.png
+ create mode 100644 attached_assets/image_1751813632331.png
+ create mode 100644 attached_assets/image_1751813849147.png
+ create mode 100644 attached_assets/image_1751814289448.png
+ create mode 100644 attached_assets/image_1751814296983.png
+ create mode 100644 attached_assets/image_1751814374524.png
+ create mode 100644 attached_assets/image_1751882366711.png
+ create mode 100644 attached_assets/image_1751888091329.png
+ create mode 100644 attached_assets/image_1751888255672.png
+ create mode 100644 attached_assets/image_1751889413289.png
+ create mode 100644 attached_assets/image_1751889664459.png
+ create mode 100644 attached_assets/image_1751992800275.png
+ create mode 100644 attached_assets/image_1752303447100.png
+ create mode 100644 attached_assets/image_1752305724529.png
+ create mode 100644 attached_assets/image_1752335184655.png
+ create mode 100644 attached_assets/image_1752335197298.png
+ create mode 100644 attached_assets/image_1752335350384.png
+ create mode 100644 attached_assets/image_1752516278875.png
+ create mode 100644 attached_assets/image_1752516288435.png
+ create mode 100644 attached_assets/image_1752516403783.png
+ create mode 100644 attached_assets/image_1752521270298.png
+ create mode 100644 attached_assets/image_1752521481560.png
+ create mode 100644 attached_assets/image_1752521662172.png
+ create mode 100644 attached_assets/image_1752521665858.png
+ create mode 100644 attached_assets/image_1752566260629.png
+ create mode 100644 attached_assets/image_1752566271603.png
+ create mode 100644 attached_assets/image_1752567424305.png
+ create mode 100644 attached_assets/image_1752567430178.png
+ create mode 100644 attached_assets/image_1752598984908.png
+ create mode 100644 attached_assets/image_1752601916999.png
+ create mode 100644 attached_assets/image_1752602672854.png
+ create mode 100644 attached_assets/image_1752602963105.png
+ create mode 100644 attached_assets/image_1752606543103.png
+ create mode 100644 attached_assets/image_1752826509904.png
+ create mode 100644 attached_assets/image_1752827347274.png
+ create mode 100644 attached_assets/image_1752827659966.png
+ create mode 100644 attached_assets/image_1752827844378.png
+ create mode 100644 attached_assets/image_1752827937664.png
+ create mode 100644 attached_assets/image_1752828056021.png
+ create mode 100644 attached_assets/image_1752828162448.png
+ create mode 100644 attached_assets/image_1752828304707.png
+ create mode 100644 attached_assets/image_1752828313315.png
+ create mode 100644 attached_assets/image_1752828799942.png
+ create mode 100644 attached_assets/image_1752829691751.png
+ create mode 100644 attached_assets/image_1752829779202.png
+ create mode 100644 attached_assets/image_1752829944490.png
+ create mode 100644 attached_assets/image_1752835240723.png
+ create mode 100644 attached_assets/image_1752835456704.png
+ create mode 100644 attached_assets/image_1752835605521.png
+ create mode 100644 attached_assets/image_1752852142760.png
+ create mode 100644 attached_assets/image_1752852888340.png
+ create mode 100644 attached_assets/image_1752912211347.png
+ create mode 100644 attached_assets/image_1752912430934.png
+ create mode 100644 attached_assets/image_1753074616470.png
+ create mode 100644 attached_assets/image_1753075196493.png
+ create mode 100755 build-mobile-with-video.sh
+ create mode 100644 certs/README.md
+ create mode 100644 client/src/components/AdvancedVideoRoom.tsx
+ create mode 100644 client/src/components/DailyVideoRoom.tsx
+ create mode 100644 client/src/components/EmbeddedVideoRoom.tsx
+ create mode 100644 client/src/components/EndRoom.tsx
+ create mode 100644 client/src/components/EndRoomCountdown.tsx
+ create mode 100644 client/src/components/EndRoomTooltip.tsx
+ create mode 100644 client/src/components/FinalWillSummary.tsx
+ create mode 100644 client/src/components/MobileVideoRoom.tsx
+ create mode 100644 client/src/components/SimpleVideoRoom.tsx
+ create mode 100644 client/src/components/SplashScreen.tsx
+ create mode 100644 client/src/components/WillInstructionModal.tsx
+ create mode 100644 client/src/components/ui/HelpIcon.tsx
+ create mode 100644 client/src/components/ui/design-system.tsx
+ create mode 100644 client/src/components/ui/mobile-layout.tsx
+ create mode 100644 client/src/hooks/useAppRefresh.ts
+ create mode 100644 client/src/pages/Auth-backup.tsx
+ create mode 100644 client/src/services/NotificationService.ts
+ create mode 100644 docs/APPLE_DEVELOPER_SETUP_CHECKLIST.md
+ create mode 100644 docs/DEPLOYMENT_WORKFLOW.md
+ create mode 100644 docs/PUSH_NOTIFICATIONS.md
+ create mode 100644 docs/PUSH_NOTIFICATIONS_SETUP.md
+ create mode 100644 docs/SIMPLE_NOTIFICATION_SETUP.md
+ create mode 100755 fix-ios-build.sh
+ create mode 100644 fix-missing-end-rooms.js
+ create mode 100644 fix-will-37.js
+ create mode 100644 ios-screenshot-setup.md
+ rename ios/App/{App.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist => App/App.entitlements} (73%)
+ create mode 100644 ios/App/App/Info.plist.additions
+ create mode 100644 privacy-policy.html
+ create mode 100644 server/daily.ts
+ create mode 100644 server/pushNotificationService.ts
+ create mode 100644 server/scheduler.ts
+ create mode 100755 sync-mobile.sh
+ create mode 100644 test-privacy.html
+Auto-merging ios/App/App.xcodeproj/project.pbxproj
+CONFLICT (content): Merge conflict in ios/App/App.xcodeproj/project.pbxproj
+Auto-merging ios/App/App/Info.plist
+CONFLICT (content): Merge conflict in ios/App/App/Info.plist
+Auto-merging package-lock.json
+CONFLICT (content): Merge conflict in package-lock.json
+Auto-merging package.json
+CONFLICT (content): Merge conflict in package.json
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Unmerged paths:
+  (use "git restore --staged <file>..." to unstage)
+  (use "git add <file>..." to mark resolution)
+	both modified:   ios/App/App.xcodeproj/project.pbxproj
+	both modified:   ios/App/App/Info.plist
+	both modified:   package-lock.json
+	both modified:   package.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	Podfile
+	capacitor.config.json
+	ios/App/App.xcworkspace/
+	ios/App/Podfile.lock
+
+no changes added to commit (use "git add" and/or "git commit -a")
+The stash entry is kept in case you need it again.
+pciacciog@Porfirios-MacBook-Air will % 
