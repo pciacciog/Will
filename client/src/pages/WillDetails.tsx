@@ -142,17 +142,8 @@ export default function WillDetails() {
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       
-      // Send acknowledgment notification
-      if (will?.title) {
-        try {
-          await notificationService.sendAcknowledgmentNotification(
-            'needed',
-            will.title
-          );
-        } catch (error) {
-          console.error('Failed to send acknowledgment notification:', error);
-        }
-      }
+      // Note: No notification needed for individual acknowledgment
+      // Notification sent when all members acknowledge
       
       toast({
         title: "Will Acknowledged",

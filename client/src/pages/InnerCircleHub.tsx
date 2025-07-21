@@ -226,15 +226,9 @@ export default function InnerCircleHub() {
             await notificationService.sendWillStartedNotification(will.title);
           }
           
-          // Will completed and needs acknowledgment
-          if (willStatus === 'completed' && previousWillStatus !== 'completed' && will?.title) {
-            await notificationService.sendAcknowledgmentNotification('needed', will.title);
-          }
-          
-          // End Room is ready to join
-          if (willStatus === 'waiting_for_end_room' && previousWillStatus !== 'waiting_for_end_room' && will?.endRoomScheduledAt) {
-            const endRoomTime = formatEndRoomTime(will.endRoomScheduledAt);
-            await notificationService.sendEndRoomNotification('scheduled', endRoomTime);
+          // Ready for new Will (all members acknowledged)
+          if (willStatus === 'no_will' && previousWillStatus === 'completed') {
+            await notificationService.sendReadyForNewWillNotification();
           }
           
         } catch (error) {

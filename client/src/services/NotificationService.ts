@@ -158,7 +158,7 @@ export class NotificationService {
     }
   }
 
-  async sendCommitmentReceivedNotification(memberName: string, willTitle: string) {
+  async sendWillProposedNotification(creatorName: string, willTitle: string) {
     if (!this.initialized) await this.initialize();
 
     try {
@@ -166,66 +166,39 @@ export class NotificationService {
         notifications: [
           {
             id: Date.now(),
-            title: "New commitment received! 🤝",
-            body: `${memberName} just committed to "${willTitle}"`,
+            title: "New Will proposed! 📝",
+            body: `${creatorName} has proposed starting a new will`,
             schedule: { at: new Date(Date.now() + 1000) },
             sound: 'default',
             smallIcon: 'ic_stat_icon_config_sample',
             iconColor: '#067DFD',
-            extra: { type: 'commitment_received', memberName, willTitle }
+            extra: { type: 'will_proposed', creatorName, willTitle }
           }
         ]
       });
     } catch (error) {
-      console.error('Error sending commitment notification:', error);
+      console.error('Error sending will proposed notification:', error);
     }
   }
 
-  async sendWillScheduledNotification(willTitle: string, startDate: string) {
-    if (!this.initialized) await this.initialize();
-
-    try {
-      const startTime = new Date(startDate).toLocaleDateString('en-US', { 
-        weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' 
-      });
-
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            id: Date.now(),
-            title: "Will scheduled! 📅",
-            body: `"${willTitle}" starts ${startTime}`,
-            schedule: { at: new Date(Date.now() + 1000) },
-            sound: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
-            iconColor: '#1EB854',
-            extra: { type: 'will_scheduled', willTitle, startDate }
-          }
-        ]
-      });
-    } catch (error) {
-      console.error('Error sending will scheduled notification:', error);
-    }
-  }
-
-  async sendEndRoomNotification(type: 'scheduled' | 'starting' | 'ending', endRoomTime: string) {
+  async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string) {
     if (!this.initialized) await this.initialize();
 
     const notifications = {
-      scheduled: {
-        title: "End Room ceremony scheduled 🎭",
-        body: `Your reflection session is set for ${endRoomTime}`,
+      '24_hours': {
+        title: "End Room tomorrow 📅",
+        body: `Your End Room ceremony is scheduled for tomorrow at ${endRoomTime}`,
         color: '#8B5CF6'
       },
-      starting: {
+      '15_minutes': {
+        title: "End Room starting soon ⏰",
+        body: `Your End Room ceremony starts in 15 minutes`,
+        color: '#F59E0B'
+      },
+      'live': {
         title: "End Room is live! 🎭",
         body: "Join now for your circle's reflection ceremony",
         color: '#8B5CF6'
-      },
-      ending: {
-        title: "End Room closing soon ⏰",
-        body: "Your ceremony ends in 10 minutes",
-        color: '#F59E0B'
       }
     };
 
@@ -249,72 +222,26 @@ export class NotificationService {
     }
   }
 
-  async sendAcknowledgmentNotification(type: 'needed' | 'ready', willTitle: string, acknowledgedCount?: number, totalCount?: number) {
+  async sendReadyForNewWillNotification() {
     if (!this.initialized) await this.initialize();
-
-    const message = type === 'needed' 
-      ? `Review and acknowledge completion of "${willTitle}"`
-      : `All members acknowledged - you can start a new Will!`;
-
-    const title = type === 'needed' 
-      ? "Will completed! ✅" 
-      : "Ready for new Will! 🚀";
 
     try {
       await LocalNotifications.schedule({
         notifications: [
           {
             id: Date.now(),
-            title,
-            body: message,
-            schedule: { at: new Date(Date.now() + 1000) },
-            sound: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
-            iconColor: type === 'needed' ? '#F59E0B' : '#1EB854',
-            extra: { 
-              type: `acknowledgment_${type}`, 
-              willTitle, 
-              acknowledgedCount, 
-              totalCount 
-            }
-          }
-        ]
-      });
-    } catch (error) {
-      console.error('Error sending acknowledgment notification:', error);
-    }
-  }
-
-  async sendDailyWillReminder(willTitle: string, dayNumber: number) {
-    if (!this.initialized) await this.initialize();
-
-    const encouragements = [
-      "How's your Will going today?",
-      "Keep the momentum going!",
-      "Your circle believes in you!",
-      "Another day, another step forward!",
-      "You've got this!"
-    ];
-
-    const message = encouragements[dayNumber % encouragements.length];
-
-    try {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            id: Date.now(),
-            title: `Day ${dayNumber} of your Will 💪`,
-            body: `${message} Working on: "${willTitle}"`,
+            title: "Ready for new Will! 🚀",
+            body: "All members acknowledged - you can start a new Will!",
             schedule: { at: new Date(Date.now() + 1000) },
             sound: 'default',
             smallIcon: 'ic_stat_icon_config_sample',
             iconColor: '#1EB854',
-            extra: { type: 'daily_reminder', willTitle, dayNumber }
+            extra: { type: 'ready_for_new_will' }
           }
         ]
       });
     } catch (error) {
-      console.error('Error sending daily reminder:', error);
+      console.error('Error sending ready for new will notification:', error);
     }
   }
 }

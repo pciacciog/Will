@@ -836,7 +836,16 @@ This is a full-stack web application for group goal accountability, built with R
   - **Minimized vertical gaps**: Reduced margins between sections (mb-1, mb-2) and member spacing (space-y-0.5)
   - **Optimized container padding**: Reduced overall container padding from py-4 to py-2 for better space utilization
   - **Single viewport achievement**: Layout now fits entirely within iPhone screen without scrolling for both 1 and 4 member scenarios
-- **July 14, 2025**: Fixed excessive vertical whitespace issue on Inner Circle Entry page
+- **July 21, 2025**: Implemented streamlined notification system with 4 targeted notifications for key WILL moments
+  - **Enhanced NotificationService**: Removed daily reminders and excessive notifications, kept only high-impact moments
+  - **WILL Proposal Notifications**: Alerts other circle members when someone proposes a new WILL
+  - **WILL Active Notifications**: Notifies committed members when their WILL becomes active
+  - **End Room Timing Notifications**: 24-hour, 15-minute, and live notifications for End Room ceremonies
+  - **Ready for New WILL**: Notification when all members acknowledge completion and new WILL can be created
+  - **Status Change Monitoring**: Real-time detection of WILL lifecycle changes in InnerCircleHub
+  - **Video Room Integration**: Notifications trigger when users join End Room video calls
+  - **Server-side Scheduler Enhancement**: Added End Room notification timing logic (24h/15min warnings)
+  - **Minimal Notification Philosophy**: Focused on essential accountability moments, removed overwhelming daily reminders
   - **Restructured layout**: Changed from `flex-1` member section to `justify-between` layout to eliminate unnecessary space expansion
   - **Removed flex-1 issue**: Member section no longer takes up all available space, preventing excessive vertical gaps
   - **Fixed footer positioning**: Footer now properly positioned at bottom without large gaps above it

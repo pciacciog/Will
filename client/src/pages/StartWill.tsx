@@ -108,15 +108,15 @@ export default function StartWill() {
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       
-      // Send notification about WILL creation
-      if (willData.what && willData.startDate) {
+      // Send notification about WILL proposal to other members
+      if (willData.what && user?.firstName) {
         try {
-          await notificationService.sendWillScheduledNotification(
-            willData.what,
-            willData.startDate
+          await notificationService.sendWillProposedNotification(
+            user.firstName,
+            willData.what
           );
         } catch (error) {
-          console.error('Failed to send WILL creation notification:', error);
+          console.error('Failed to send WILL proposal notification:', error);
         }
       }
       

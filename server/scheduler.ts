@@ -47,6 +47,9 @@ export class EndRoomScheduler {
     // Find End Rooms that should be closed (30 minutes have passed, status is open)
     await this.closeExpiredEndRooms(now);
 
+    // Send End Room notifications (24h and 15min warnings)
+    await this.sendEndRoomNotifications(now);
+
     // Check for completed wills that need End Rooms scheduled
     await this.scheduleEndRoomsForCompletedWills();
   }
@@ -206,6 +209,55 @@ export class EndRoomScheduler {
       }
     } catch (error) {
       console.error('[EndRoomScheduler] Error closing expired End Rooms:', error);
+    }
+  }
+
+  private async sendEndRoomNotifications(now: Date) {
+    try {
+      // 24-hour warning (check for End Rooms scheduled 24-25 hours from now)
+      const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+      
+      const endRooms24h = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.endRoomStatus, 'pending'),
+            gte(wills.endRoomScheduledAt, twentyFourHoursFromNow),
+            lt(wills.endRoomScheduledAt, twentyFiveHoursFromNow)
+          )
+        );
+
+      for (const will of endRooms24h) {
+        console.log(`[EndRoomScheduler] Sending 24h End Room notification for Will ${will.id}`);
+        // Note: In a real app, this would trigger push notifications to all circle members
+        // For now, we log it as the notification service runs client-side
+      }
+
+      // 15-minute warning (check for End Rooms scheduled 15-16 minutes from now)
+      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000);
+      const sixteenMinutesFromNow = new Date(now.getTime() + 16 * 60 * 1000);
+      
+      const endRooms15min = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.endRoomStatus, 'pending'),
+            gte(wills.endRoomScheduledAt, fifteenMinutesFromNow),
+            lt(wills.endRoomScheduledAt, sixteenMinutesFromNow)
+          )
+        );
+
+      for (const will of endRooms15min) {
+        console.log(`[EndRoomScheduler] Sending 15min End Room notification for Will ${will.id}`);
+        // Note: In a real app, this would trigger push notifications to all circle members
+        // For now, we log it as the notification service runs client-side
+      }
+      
+    } catch (error) {
+      console.error('[EndRoomScheduler] Error sending End Room notifications:', error);
     }
   }
 

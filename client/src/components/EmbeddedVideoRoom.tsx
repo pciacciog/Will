@@ -40,10 +40,10 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
           setIsJoined(true);
           setError(null);
           
-          // Send End Room starting notification
+          // Send End Room live notification
           try {
             const { notificationService } = await import('@/services/NotificationService');
-            await notificationService.sendEndRoomNotification('starting', 'now');
+            await notificationService.sendEndRoomNotification('live', 'now');
           } catch (error) {
             console.error('Failed to send End Room notification:', error);
           }

@@ -64,17 +64,8 @@ export default function SubmitCommitment() {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
       
-      // Send notification about commitment submission
-      if (will?.title) {
-        try {
-          await notificationService.sendCommitmentReceivedNotification(
-            "You", // Will show as user's own commitment
-            will.title
-          );
-        } catch (error) {
-          console.error('Failed to send commitment notification:', error);
-        }
-      }
+      // Note: No notification needed for commitment submission
+      // Notifications are sent at key lifecycle moments only
       
       toast({
         title: "Commitment Submitted",

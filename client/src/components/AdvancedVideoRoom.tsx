@@ -85,10 +85,10 @@ export function AdvancedVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Ad
         setJoinStartTime(new Date());
         console.log('Successfully initialized iframe Daily call');
         
-        // Send End Room starting notification for mobile
+        // Send End Room live notification for mobile
         try {
           const { notificationService } = await import('@/services/NotificationService');
-          await notificationService.sendEndRoomNotification('starting', 'now');
+          await notificationService.sendEndRoomNotification('live', 'now');
         } catch (error) {
           console.error('Failed to send End Room notification:', error);
         }
