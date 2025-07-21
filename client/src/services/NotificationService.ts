@@ -40,9 +40,30 @@ export class NotificationService {
             await PushNotifications.register();
             
             // Listen for registration success
-            PushNotifications.addListener('registration', (token) => {
+            PushNotifications.addListener('registration', async (token) => {
               console.log('Push registration success, token:', token.value);
-              // TODO: Send this token to server for storage
+              
+              // Send device token to server for storage
+              try {
+                const response = await fetch('/api/push-tokens', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    deviceToken: token.value,
+                    platform: 'ios' // Since this is mainly for iOS
+                  })
+                });
+                
+                if (response.ok) {
+                  console.log('Device token successfully stored on server');
+                } else {
+                  console.error('Failed to store device token on server');
+                }
+              } catch (error) {
+                console.error('Error sending device token to server:', error);
+              }
             });
             
             // Listen for registration errors
@@ -71,8 +92,8 @@ export class NotificationService {
     }
   }
 
-  // IMPORTANT: This only sends LOCAL notifications to the same device
-  // For real cross-device push notifications, see docs/PUSH_NOTIFICATIONS.md
+  // These methods now trigger SERVER-SIDE push notifications to all circle members
+  // The server will send real iOS/Android push notifications that appear on lock screens
   async sendPushNotification(pusherName: string, willTitle: string) {
     if (!this.initialized) {
       await this.initialize();
@@ -136,110 +157,83 @@ export class NotificationService {
 
   // WILL LIFECYCLE NOTIFICATIONS
   async sendWillStartedNotification(willTitle: string) {
-    if (!this.initialized) await this.initialize();
-
     try {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            id: Date.now(),
-            title: "Your Will has started! 🎯",
-            body: `Time to begin your commitment: "${willTitle}"`,
-            schedule: { at: new Date(Date.now() + 1000) },
-            sound: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
-            iconColor: '#1EB854',
-            extra: { type: 'will_started', willTitle }
-          }
-        ]
+      // Send server-side push notification to all committed members
+      const response = await fetch('/api/notifications/will-started', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          willTitle: willTitle
+        })
       });
+      
+      if (!response.ok) {
+        console.error('Failed to send will started notification via server');
+      }
     } catch (error) {
       console.error('Error sending will started notification:', error);
     }
   }
 
   async sendWillProposedNotification(creatorName: string, willTitle: string) {
-    if (!this.initialized) await this.initialize();
-
     try {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            id: Date.now(),
-            title: "New Will proposed! 📝",
-            body: `${creatorName} has proposed starting a new will`,
-            schedule: { at: new Date(Date.now() + 1000) },
-            sound: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
-            iconColor: '#067DFD',
-            extra: { type: 'will_proposed', creatorName, willTitle }
-          }
-        ]
+      // Send server-side push notification to all other circle members
+      const response = await fetch('/api/notifications/will-proposed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          creatorName: creatorName,
+          willTitle: willTitle
+        })
       });
+      
+      if (!response.ok) {
+        console.error('Failed to send will proposed notification via server');
+      }
     } catch (error) {
       console.error('Error sending will proposed notification:', error);
     }
   }
 
   async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string) {
-    if (!this.initialized) await this.initialize();
-
-    const notifications = {
-      '24_hours': {
-        title: "End Room tomorrow 📅",
-        body: `Your End Room ceremony is scheduled for tomorrow at ${endRoomTime}`,
-        color: '#8B5CF6'
-      },
-      '15_minutes': {
-        title: "End Room starting soon ⏰",
-        body: `Your End Room ceremony starts in 15 minutes`,
-        color: '#F59E0B'
-      },
-      'live': {
-        title: "End Room is live! 🎭",
-        body: "Join now for your circle's reflection ceremony",
-        color: '#8B5CF6'
-      }
-    };
-
     try {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            id: Date.now(),
-            title: notifications[type].title,
-            body: notifications[type].body,
-            schedule: { at: new Date(Date.now() + 1000) },
-            sound: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
-            iconColor: notifications[type].color,
-            extra: { type: `end_room_${type}`, endRoomTime }
-          }
-        ]
+      // Send server-side push notification to all circle members
+      const response = await fetch('/api/notifications/end-room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: type,
+          endRoomTime: endRoomTime
+        })
       });
+      
+      if (!response.ok) {
+        console.error('Failed to send end room notification via server');
+      }
     } catch (error) {
       console.error('Error sending end room notification:', error);
     }
   }
 
   async sendReadyForNewWillNotification() {
-    if (!this.initialized) await this.initialize();
-
     try {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            id: Date.now(),
-            title: "Ready for new Will! 🚀",
-            body: "All members acknowledged - you can start a new Will!",
-            schedule: { at: new Date(Date.now() + 1000) },
-            sound: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
-            iconColor: '#1EB854',
-            extra: { type: 'ready_for_new_will' }
-          }
-        ]
+      // Send server-side push notification to all circle members
+      const response = await fetch('/api/notifications/ready-for-new-will', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
+      
+      if (!response.ok) {
+        console.error('Failed to send ready for new will notification via server');
+      }
     } catch (error) {
       console.error('Error sending ready for new will notification:', error);
     }

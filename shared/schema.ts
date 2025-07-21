@@ -125,6 +125,16 @@ export const pageContents = pgTable("page_contents", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const deviceTokens = pgTable("device_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  deviceToken: text("device_token").notNull(),
+  platform: varchar("platform", { length: 10 }).notNull(), // ios, android
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   circleMembers: many(circleMembers),
@@ -133,6 +143,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   willAcknowledgments: many(willAcknowledgments),
   dailyProgress: many(dailyProgress),
   willPushes: many(willPushes),
+  deviceTokens: many(deviceTokens),
 }));
 
 export const circlesRelations = relations(circles, ({ one, many }) => ({
@@ -228,6 +239,13 @@ export const pageContentsRelations = relations(pageContents, ({ one }) => ({
   }),
 }));
 
+export const deviceTokensRelations = relations(deviceTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [deviceTokens.userId],
+    references: [users.id],
+  }),
+}));
+
 // Schemas
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -304,3 +322,11 @@ export const insertPageContentSchema = createInsertSchema(pageContents).omit({
 });
 export type InsertPageContent = z.infer<typeof insertPageContentSchema>;
 export type PageContent = typeof pageContents.$inferSelect;
+
+export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertDeviceToken = z.infer<typeof insertDeviceTokenSchema>;
+export type DeviceToken = typeof deviceTokens.$inferSelect;

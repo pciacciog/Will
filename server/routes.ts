@@ -11,13 +11,16 @@ import {
   insertWillPushSchema,
   insertBlogPostSchema,
   insertPageContentSchema,
+  insertDeviceTokenSchema,
   willCommitments,
+  deviceTokens,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { dailyService } from "./daily";
+import { pushNotificationService } from "./pushNotificationService";
 
 function generateInviteCode(): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -1087,6 +1090,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Daily.co test error:", error);
       res.status(500).json({ status: 'error', message: error.message });
+    }
+  });
+
+  // Push notification API routes
+  app.post('/api/push-tokens', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { deviceToken, platform } = req.body;
+      
+      if (!deviceToken || !platform) {
+        return res.status(400).json({ message: "Device token and platform are required" });
+      }
+      
+      // Store or update device token for this user
+      await db
+        .insert(deviceTokens)
+        .values({
+          userId,
+          deviceToken,
+          platform,
+          isActive: true
+        })
+        .onConflictDoUpdate({
+          target: [deviceTokens.userId, deviceTokens.deviceToken],
+          set: {
+            platform,
+            isActive: true,
+            updatedAt: new Date()
+          }
+        });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error storing device token:", error);
+      res.status(500).json({ message: "Failed to store device token" });
+    }
+  });
+
+  app.post('/api/notifications/will-proposed', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { creatorName, willTitle } = req.body;
+      
+      // Get user's circle to find other members
+      const userCircle = await storage.getUserCircle(userId);
+      if (!userCircle) {
+        return res.status(404).json({ message: "User not in a circle" });
+      }
+      
+      // Get all circle members except the creator
+      const members = await storage.getCircleMembers(userCircle.id);
+      const otherMembers = members
+        .filter(member => member.userId !== userId)
+        .map(member => member.userId);
+      
+      // Send push notifications to all other circle members
+      await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers);
+      
+      res.json({ success: true, message: "Will proposed notifications sent" });
+    } catch (error) {
+      console.error("Error sending will proposed notifications:", error);
+      res.status(500).json({ message: "Failed to send notifications" });
+    }
+  });
+
+  app.post('/api/notifications/will-started', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { willTitle } = req.body;
+      
+      // Get user's circle and active will
+      const userCircle = await storage.getUserCircle(userId);
+      if (!userCircle) {
+        return res.status(404).json({ message: "User not in a circle" });
+      }
+      
+      // Get all committed members of the active will
+      const activeWills = await storage.getCircleWills(userCircle.id);
+      const activeWill = activeWills.find(will => will.status === 'active');
+      
+      if (activeWill) {
+        const committedMembers = activeWill.commitments?.map(c => c.userId) || [];
+        await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers);
+      }
+      
+      res.json({ success: true, message: "Will started notifications sent" });
+    } catch (error) {
+      console.error("Error sending will started notifications:", error);
+      res.status(500).json({ message: "Failed to send notifications" });
+    }
+  });
+
+  app.post('/api/notifications/end-room', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, endRoomTime } = req.body;
+      
+      // Get user's circle members
+      const userCircle = await storage.getUserCircle(userId);
+      if (!userCircle) {
+        return res.status(404).json({ message: "User not in a circle" });
+      }
+      
+      const members = await storage.getCircleMembers(userCircle.id);
+      const memberIds = members.map(member => member.userId);
+      
+      // Send push notifications for End Room timing
+      await pushNotificationService.sendEndRoomNotification(type, endRoomTime, memberIds);
+      
+      res.json({ success: true, message: "End room notifications sent" });
+    } catch (error) {
+      console.error("Error sending end room notifications:", error);
+      res.status(500).json({ message: "Failed to send notifications" });
+    }
+  });
+
+  app.post('/api/notifications/ready-for-new-will', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user's circle members
+      const userCircle = await storage.getUserCircle(userId);
+      if (!userCircle) {
+        return res.status(404).json({ message: "User not in a circle" });
+      }
+      
+      const members = await storage.getCircleMembers(userCircle.id);
+      const memberIds = members.map(member => member.userId);
+      
+      // Send push notifications that circle is ready for new will
+      await pushNotificationService.sendReadyForNewWillNotification(memberIds);
+      
+      res.json({ success: true, message: "Ready for new will notifications sent" });
+    } catch (error) {
+      console.error("Error sending ready for new will notifications:", error);
+      res.status(500).json({ message: "Failed to send notifications" });
     }
   });
 
