@@ -234,6 +234,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Will routes
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Will creation - req.user:", req.user);
+      console.log("Will creation - req.isAuthenticated():", req.isAuthenticated());
+      
+      if (!req.user || !req.user.id) {
+        console.error("User not properly authenticated:", req.user);
+        return res.status(401).json({ message: "User authentication failed" });
+      }
+      
       const userId = req.user.id;
       
       // Prepare will data with proper types
