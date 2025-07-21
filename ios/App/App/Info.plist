@@ -49,6 +49,8 @@
         <string>This app needs camera access to enable video calls during your Will End Room ceremonies.</string>
         <key>NSMicrophoneUsageDescription</key>
         <string>This app needs microphone access to enable video calls during your Will End Room ceremonies.</string>
+        <key>NSUserNotificationsUsageDescription</key>
+        <string>This app needs notification access to send you reminders about your Will commitments and circle member activities.</string>
         <key>NSAppTransportSecurity</key>
         <dict>
                 <key>NSAllowsArbitraryLoads</key>
