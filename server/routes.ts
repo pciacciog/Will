@@ -1127,7 +1127,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { deviceToken, platform } = req.body;
       
+      console.log(`[DEBUG] Device token registration attempt - User ID: ${userId}, Platform: ${platform}, Token: ${deviceToken?.substring(0, 20)}...`);
+      
       if (!deviceToken || !platform) {
+        console.log("[DEBUG] Missing device token or platform");
         return res.status(400).json({ message: "Device token and platform are required" });
       }
       
@@ -1149,6 +1152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
       
+      console.log(`[DEBUG] Device token successfully stored for user ${userId}`);
       res.json({ success: true });
     } catch (error) {
       console.error("Error storing device token:", error);
