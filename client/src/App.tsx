@@ -27,6 +27,14 @@ function Router() {
   // Debug logging
   console.log('Router debug:', { isAuthenticated, isLoading, user: user?.id, location });
 
+  // Initialize notifications AFTER authentication
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log('User authenticated - initializing push notifications');
+      notificationService.initialize().catch(console.error);
+    }
+  }, [isAuthenticated, user]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -64,12 +72,6 @@ function Router() {
 }
 
 function App() {
-  useEffect(() => {
-    // Initialize notification service when app starts
-    console.log('App mounted - initializing notifications');
-    notificationService.initialize().catch(console.error);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
