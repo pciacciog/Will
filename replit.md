@@ -837,6 +837,12 @@ This is a full-stack web application for group goal accountability, built with R
   - **Optimized container padding**: Reduced overall container padding from py-4 to py-2 for better space utilization
   - **Single viewport achievement**: Layout now fits entirely within iPhone screen without scrolling for both 1 and 4 member scenarios
 - **July 21, 2025**: Implemented and activated comprehensive iOS push notification system for real lock screen notifications
+- **July 21, 2025**: Fixed critical "Can't find variable: user" error in StartWill component and iOS notification permission issues
+  - Added missing useAuth import and hook call to StartWill.tsx to resolve JavaScript error during Will creation
+  - Enhanced Capacitor configuration with PushNotifications and LocalNotifications plugin settings for proper iOS permission handling
+  - Fixed authentication session management for mobile app - users must sign out and back in to re-establish proper authentication
+  - Updated mobile build with notification permission configuration to enable WILL app in iPhone Settings > Notifications
+  - Resolved frontend JavaScript errors preventing Will creation and device token registration on iOS platform
   - **Enhanced NotificationService**: Converted from local-only to server-side push notifications using Apple Push Notification service (APNs)
   - **Device Token Registration**: iOS devices automatically register push tokens with server on app launch using authenticated requests
   - **Database Schema**: Added device_tokens table to store user device associations for targeted notifications

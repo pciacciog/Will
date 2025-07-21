@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
@@ -76,6 +77,7 @@ export default function StartWill() {
   const [endRoomDateTime, setEndRoomDateTime] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
