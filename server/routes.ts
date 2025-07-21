@@ -326,19 +326,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send push notifications to other circle members
       try {
+        console.log("Attempting to send push notifications...");
         const members = await storage.getCircleMembers(circle.id);
+        console.log("Circle members found:", members?.length);
+        
         const otherMembers = members
           .filter(member => member.userId !== userId)
           .map(member => member.userId);
         
+        console.log("Other members to notify:", otherMembers.length);
+        
         if (otherMembers.length > 0) {
           const creator = await storage.getUser(userId);
+          console.log("Creator found:", creator?.firstName, creator?.lastName);
+          
           const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Someone';
           await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers);
           console.log(`Sent Will proposed notifications to ${otherMembers.length} members`);
+        } else {
+          console.log("No other members to notify");
         }
       } catch (notificationError) {
         console.error("Error sending will proposed notifications:", notificationError);
+        console.error("Notification error stack:", notificationError.stack);
         // Don't fail the will creation if notifications fail
       }
 
