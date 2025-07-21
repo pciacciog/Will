@@ -20,27 +20,33 @@ class PushNotificationService {
   }
 
   private initializeAPNProvider() {
-    // For production, you need:
-    // 1. Apple Developer account with Push Notification capability
-    // 2. APNs certificate or key file
-    // 3. App ID configured for push notifications
-    
-    // Example configuration (you would need actual certificates):
-    /*
-    const options = {
-      token: {
-        key: process.env.APNS_KEY_PATH || './certs/AuthKey.p8', // Path to .p8 key file
-        keyId: process.env.APNS_KEY_ID || 'YOUR_KEY_ID', // Key ID from Apple Developer
-        teamId: process.env.APNS_TEAM_ID || 'YOUR_TEAM_ID', // Team ID from Apple Developer
-      },
-      production: process.env.NODE_ENV === 'production', // Use production APNs for production
-    };
-    
-    this.apnProvider = new apn.Provider(options);
-    */
-    
-    // For now, we'll simulate the service
-    console.log('[PushNotificationService] Initialized (simulation mode - needs APNs certificates for production)');
+    // Check if APNs credentials are available
+    const hasAPNSCredentials = process.env.APNS_KEY_PATH && 
+                              process.env.APNS_KEY_ID && 
+                              process.env.APNS_TEAM_ID;
+
+    if (hasAPNSCredentials) {
+      try {
+        const options = {
+          token: {
+            key: process.env.APNS_KEY_PATH!, // Path to .p8 key file
+            keyId: process.env.APNS_KEY_ID!, // Key ID from Apple Developer
+            teamId: process.env.APNS_TEAM_ID!, // Team ID from Apple Developer
+          },
+          production: process.env.NODE_ENV === 'production', // Use production APNs for production
+        };
+        
+        this.apnProvider = new apn.Provider(options);
+        console.log(`[PushNotificationService] Initialized with APNs (${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'} mode)`);
+      } catch (error) {
+        console.error('[PushNotificationService] Failed to initialize APNs provider:', error);
+        console.log('[PushNotificationService] Falling back to simulation mode');
+        this.apnProvider = null;
+      }
+    } else {
+      console.log('[PushNotificationService] APNs credentials not found - running in simulation mode');
+      console.log('[PushNotificationService] Set APNS_KEY_PATH, APNS_KEY_ID, and APNS_TEAM_ID to enable real push notifications');
+    }
   }
 
   async sendToUser(userId: string, payload: PushNotificationPayload): Promise<boolean> {
