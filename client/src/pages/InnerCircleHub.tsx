@@ -19,6 +19,7 @@ import { MobileVideoRoom } from "@/components/MobileVideoRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
+import { notificationService } from "@/services/NotificationService";
 
 function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
@@ -213,6 +214,42 @@ export default function InnerCircleHub() {
   });
 
   const willStatus = getWillStatus(will, circle?.members?.length || 0);
+  const [previousWillStatus, setPreviousWillStatus] = useState<string | null>(null);
+
+  // Monitor for status changes and send notifications
+  useEffect(() => {
+    if (willStatus && previousWillStatus && willStatus !== previousWillStatus) {
+      const sendStatusNotification = async () => {
+        try {
+          // Will just became active
+          if (willStatus === 'active' && previousWillStatus !== 'active' && will?.title) {
+            await notificationService.sendWillStartedNotification(will.title);
+          }
+          
+          // Will completed and needs acknowledgment
+          if (willStatus === 'completed' && previousWillStatus !== 'completed' && will?.title) {
+            await notificationService.sendAcknowledgmentNotification('needed', will.title);
+          }
+          
+          // End Room is ready to join
+          if (willStatus === 'waiting_for_end_room' && previousWillStatus !== 'waiting_for_end_room' && will?.endRoomScheduledAt) {
+            const endRoomTime = formatEndRoomTime(will.endRoomScheduledAt);
+            await notificationService.sendEndRoomNotification('scheduled', endRoomTime);
+          }
+          
+        } catch (error) {
+          console.error('Failed to send status change notification:', error);
+        }
+      };
+      
+      sendStatusNotification();
+    }
+    
+    // Update previous status for next comparison
+    if (willStatus !== previousWillStatus) {
+      setPreviousWillStatus(willStatus);
+    }
+  }, [willStatus, previousWillStatus, will?.title, will?.endRoomScheduledAt]);
 
   const leaveCircleMutation = useMutation({
     mutationFn: async () => {

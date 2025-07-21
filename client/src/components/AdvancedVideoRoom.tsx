@@ -79,11 +79,19 @@ export function AdvancedVideoRoom({ roomUrl, onLeave, durationMinutes = 30 }: Ad
       setIsLoading(true);
       
       // For iframe approach, we simulate joining
-      const joinTimeout = setTimeout(() => {
+      const joinTimeout = setTimeout(async () => {
         setIsJoined(true);
         setIsLoading(false);
         setJoinStartTime(new Date());
         console.log('Successfully initialized iframe Daily call');
+        
+        // Send End Room starting notification for mobile
+        try {
+          const { notificationService } = await import('@/services/NotificationService');
+          await notificationService.sendEndRoomNotification('starting', 'now');
+        } catch (error) {
+          console.error('Failed to send End Room notification:', error);
+        }
       }, 3000); // Increased timeout to give iframe more time to load
       
       // Mobile fallback timeout - if iframe doesn't work on mobile, show error after 8 seconds

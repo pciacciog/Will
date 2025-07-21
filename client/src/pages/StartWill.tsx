@@ -14,6 +14,7 @@ import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
+import { notificationService } from "@/services/NotificationService";
 import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart } from "lucide-react";
 
 // Helper function to calculate next Monday at 12:00 AM
@@ -101,11 +102,23 @@ export default function StartWill() {
       });
       return response.json();
     },
-    onSuccess: (will) => {
+    onSuccess: async (will) => {
       // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      
+      // Send notification about WILL creation
+      if (willData.what && willData.startDate) {
+        try {
+          await notificationService.sendWillScheduledNotification(
+            willData.what,
+            willData.startDate
+          );
+        } catch (error) {
+          console.error('Failed to send WILL creation notification:', error);
+        }
+      }
       
       // Add the creator's commitment
       addCommitmentMutation.mutate({

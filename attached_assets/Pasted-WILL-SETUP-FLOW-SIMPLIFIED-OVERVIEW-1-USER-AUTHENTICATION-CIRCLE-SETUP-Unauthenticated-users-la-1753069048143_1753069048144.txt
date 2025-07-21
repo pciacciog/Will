@@ -1,0 +1,94 @@
+WILL SETUP FLOW – SIMPLIFIED OVERVIEW
+1. USER AUTHENTICATION & CIRCLE SETUP
+Unauthenticated users land on the marketing page and click "Get Started" → /auth.
+
+Authentication:
+
+Sign In: Email + Password
+
+Sign Up: First Name, Last Name, Email, Password
+
+Post-authentication: User is redirected to Home.
+
+Circle Setup:
+
+Create Circle: Generates invite code (6 characters).
+
+Join Circle: Enter code to join an existing circle (2–4 members).
+
+Circle Hub (/hub): Displays members and current Will status.
+
+2. WILL CREATION (BY CREATOR)
+Trigger: Click “Start a Will” in the Inner Circle Hub → /start-will
+
+Step 1: When
+
+Choose either a preset week (Mon 12:00 AM – Sun 12:00 PM) or custom dates.
+
+End date must be after start date.
+
+Step 2: What
+
+Enter a commitment (max 75 characters). Example: “I will work out daily.”
+
+Step 3: Why
+
+Enter a private motivation (max 75 characters). Example: “Because I want to feel stronger.”
+
+Step 4: End Room
+
+Schedule a 30-minute reflection session (must be within 48 hours after Will ends).
+
+Video room created via Daily.co.
+
+Finalization:
+
+Will is saved in the database with status = "pending".
+
+Creator's commitment is saved.
+
+Circle members see the pending Will in their Hub.
+
+3. COMMITMENT FLOW (BY OTHER MEMBERS)
+Trigger: Members visit Will Details → click “Submit Commitment”.
+
+Step 1: What
+
+Input their own “I will...” statement.
+
+Step 2: Why
+
+Private motivation input.
+
+Step 3: Confirm End Room
+
+Shows date/time for End Room. Click “Let’s do it” to confirm.
+
+Once all members commit:
+
+Will status changes to "scheduled".
+
+4. WILL STATUS STATES
+Pending: Waiting for member commitments.
+
+Scheduled: All committed, waiting for start date.
+
+Active: Will is in progress between start and end dates.
+
+Waiting for End Room: Will is done; waiting for reflection session.
+
+Completed: End Room finished; waiting for users to acknowledge.
+
+Archived: All members acknowledged; Will cycle is complete.
+
+5. KEY FEATURES
+Will Details Page: Shows timeline, End Room info, commitments.
+
+Commitment Editing: Only editable before Will becomes "scheduled".
+
+End Room: 30-min video call via Daily.co.
+
+Final Summary: Modal with Will info; users must acknowledge to archive.
+
+Responsive Design: Optimized for mobile and tablet views.
+

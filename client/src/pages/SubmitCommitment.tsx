@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
+import { notificationService } from "@/services/NotificationService";
 import { HelpCircle, ArrowLeft, ArrowRight, CheckCircle, Heart, Calendar, Handshake } from "lucide-react";
 
 export default function SubmitCommitment() {
@@ -56,12 +57,24 @@ export default function SubmitCommitment() {
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      
+      // Send notification about commitment submission
+      if (will?.title) {
+        try {
+          await notificationService.sendCommitmentReceivedNotification(
+            "You", // Will show as user's own commitment
+            will.title
+          );
+        } catch (error) {
+          console.error('Failed to send commitment notification:', error);
+        }
+      }
       
       toast({
         title: "Commitment Submitted",

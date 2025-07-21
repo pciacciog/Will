@@ -36,9 +36,17 @@ export function EmbeddedVideoRoom({ roomUrl, onLeave }: EmbeddedVideoRoomProps) 
         console.log('Daily.co call object created successfully');
 
         // Set up event listeners
-        callObject.on('joined-meeting', () => {
+        callObject.on('joined-meeting', async () => {
           setIsJoined(true);
           setError(null);
+          
+          // Send End Room starting notification
+          try {
+            const { notificationService } = await import('@/services/NotificationService');
+            await notificationService.sendEndRoomNotification('starting', 'now');
+          } catch (error) {
+            console.error('Failed to send End Room notification:', error);
+          }
         });
 
         callObject.on('left-meeting', () => {

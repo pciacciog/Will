@@ -133,7 +133,7 @@ export default function WillDetails() {
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Close the Final Will Summary modal
       setShowFinalSummary(false);
       
@@ -141,6 +141,18 @@ export default function WillDetails() {
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      
+      // Send acknowledgment notification
+      if (will?.title) {
+        try {
+          await notificationService.sendAcknowledgmentNotification(
+            'needed',
+            will.title
+          );
+        } catch (error) {
+          console.error('Failed to send acknowledgment notification:', error);
+        }
+      }
       
       toast({
         title: "Will Acknowledged",
