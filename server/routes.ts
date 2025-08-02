@@ -1261,6 +1261,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test push notification endpoint  
+  app.post('/api/notifications/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { title, body } = req.body;
+      
+      const testPayload = {
+        title: title || "Test Push Notification",
+        body: body || "This is a test push notification from your WILL app",
+        category: 'test',
+        data: { type: 'test', timestamp: Date.now() }
+      };
+      
+      const success = await pushNotificationService.sendToUser(userId, testPayload);
+      
+      if (success) {
+        res.json({ success: true, message: "Test notification sent successfully" });
+      } else {
+        res.status(400).json({ success: false, message: "No device tokens found for user" });
+      }
+    } catch (error) {
+      console.error("Error sending test notification:", error);
+      res.status(500).json({ message: "Failed to send test notification" });
+    }
+  });
+
   // Simple admin endpoints for direct browser access
   app.get('/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
     try {

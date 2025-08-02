@@ -1,0 +1,50 @@
+
+
+I’ve already configured the Apple Developer environment (App ID, provisioning profiles, certificates, entitlements, etc.) in Xcode, and I’ve synced the latest changes to GitHub. I’d like your help ensuring that everything on the Capacitor and Replit backend/server side is correctly set up to support this.
+
+ Please confirm the following:
+1. Dependencies Installed:
+    * @capacitor/core
+    * @capacitor/cli
+    * @capacitor/ios
+    * @capacitor/push-notifications
+2. Capacitor is Initialized and iOS is Added
+    * Ensure npx cap init was run with correct app name and bundle ID.
+    * Confirm npx cap add ios has been executed.
+3. Capacitor Sync
+    * Run npx cap sync ios from the Mac terminal (NOT from Replit) to reflect all changes from my latest Xcode provisioning and entitlements configuration.
+4. iOS Project Opens and Builds Properly
+    * Confirm that npx cap open ios launches Xcode and the project builds successfully with no missing Capacitor plugin or config issues.
+
+ Replit Server + Environment Configuration – Please help validate:
+1. Environment Secrets are correctly stored in Replit for APNs:
+    * APNS_PRIVATE_KEY ✅
+    * APNS_KEY_ID ✅
+    * APNS_TEAM_ID ✅
+    * APNS_TOPIC ✅ (matches iOS bundle ID)
+2. Backend Push Notification Code
+    * Confirm the backend (e.g., pushNotificationService.ts) properly initializes the apn.Provider using these secrets.
+    * Ensure it does not default to simulation mode due to missing or misnamed env variables.
+    * Example block: ts CopyEdit   const apnProvider = new apn.Provider({
+    *   token: {
+    *     key: process.env.APNS_PRIVATE_KEY,
+    *     keyId: process.env.APNS_KEY_ID,
+    *     teamId: process.env.APNS_TEAM_ID,
+    *   },
+    *   production: false,
+    * });
+    *   
+3. Device Token Registration Endpoint
+    * Make sure there's an API route like /api/device-token/register that:
+        * Accepts POST requests with device token
+        * Stores the token in the DB
+4. Notification Sending Logic
+    * Confirm that the server has an API (or callable function) to trigger sending a test push to a stored device token.
+    * Ensure this code uses the proper topic (bundle ID) and is not hardcoded incorrectly.
+5. Server Runs Without Errors
+    * Validate the server (tsx server/index.ts) launches successfully and listens for requests.
+    * If any issues occur with tsx or runtime, please install/fix them.
+
+🧠 Goal:
+I want to confirm that everything is clean, functional, and correctly wired between Replit, Capacitor, and the iOS app. Once the setup is confirmed, I will run the app on a real iPhone and test registration and delivery end-to-end.
+Thanks so much — please let me know once you've verified each section or if you need anything from my side to move forward.

@@ -21,7 +21,7 @@ class PushNotificationService {
 
   private initializeAPNProvider() {
     // Check if APNs credentials are available
-    const hasAPNSCredentials = process.env.APNS_KEY_PATH && 
+    const hasAPNSCredentials = process.env.APNS_PRIVATE_KEY && 
                               process.env.APNS_KEY_ID && 
                               process.env.APNS_TEAM_ID;
 
@@ -29,7 +29,7 @@ class PushNotificationService {
       try {
         const options = {
           token: {
-            key: process.env.APNS_KEY_PATH!, // Path to .p8 key file
+            key: process.env.APNS_PRIVATE_KEY!, // Private key content from Apple Developer
             keyId: process.env.APNS_KEY_ID!, // Key ID from Apple Developer
             teamId: process.env.APNS_TEAM_ID!, // Team ID from Apple Developer
           },
@@ -45,7 +45,7 @@ class PushNotificationService {
       }
     } else {
       console.log('[PushNotificationService] APNs credentials not found - running in simulation mode');
-      console.log('[PushNotificationService] Set APNS_KEY_PATH, APNS_KEY_ID, and APNS_TEAM_ID to enable real push notifications');
+      console.log('[PushNotificationService] Set APNS_PRIVATE_KEY, APNS_KEY_ID, and APNS_TEAM_ID to enable real push notifications');
     }
   }
 
@@ -98,7 +98,7 @@ class PushNotificationService {
       };
       notification.badge = payload.badge || 1;
       notification.sound = payload.sound || 'default';
-      notification.topic = process.env.APNS_BUNDLE_ID || 'com.porfirio.will'; // Your app's bundle ID
+      notification.topic = process.env.APNS_TOPIC || 'com.porfirio.will'; // Your app's bundle ID
       notification.payload = payload.data || {};
 
       const result = await this.apnProvider.send(notification, deviceToken);
