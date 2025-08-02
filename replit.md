@@ -22,7 +22,7 @@ Preferred communication style: Simple, everyday language.
 ### Technical Implementations
 - **Frontend**: React (TypeScript), Wouter for routing, TanStack Query for server state management, Vite for building.
 - **Backend**: Express.js (TypeScript), Drizzle ORM for database interaction, Passport.js for authentication. Standalone server architecture (index-standalone.ts) eliminates vite dependency for deployment.
-- **Build Process**: ESBuild-only production builds for deployment compatibility, bypassing vite dependencies that caused deployment failures.
+- **Build Process**: ESBuild-only production builds for deployment compatibility, bypassing vite dependencies that caused deployment failures. Package.json scripts updated to use standalone server architecture (August 2025).
 - **Authentication**: Custom email/password authentication system, integrated with Replit's OIDC initially (later disabled for direct public access). Sessions are managed via Express sessions with PostgreSQL storage.
 - **Will System**: Structured goal commitments with status tracking (pending, scheduled, active, completed, waiting_for_end_room), individual member commitments, and progress acknowledgment. Includes features like "Prescribed Weekly Will" scheduling.
 - **Circle Management**: Invite codes for joining, strict member limits (2-4), and single-circle membership per user.
