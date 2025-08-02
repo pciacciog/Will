@@ -147,8 +147,23 @@ if (process.env.NODE_ENV === 'production') {
     }
   });
 } else {
-  // In development, proxy to vite server (only if needed)
-  console.log('Development mode: API-only server running');
+  // In development, serve static files from dist as well
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
+  
+  // Serve index.html for all non-API routes (SPA routing)
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api/')) {
+      const indexPath = path.join(distPath, 'index.html');
+      if (require('fs').existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send('Frontend not found - run build first');
+      }
+    }
+  });
+  
+  console.log('Development mode: Serving frontend from dist/');
 }
 
 const PORT = process.env.PORT || 5000;
