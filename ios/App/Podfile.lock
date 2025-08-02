@@ -1,0 +1,46 @@
+PODS:
+  - Capacitor (7.4.2):
+    - CapacitorCordova
+  - CapacitorBrowser (7.0.1):
+    - Capacitor
+  - CapacitorCordova (7.4.2)
+  - CapacitorDevice (7.0.1):
+    - Capacitor
+  - CapacitorLocalNotifications (7.0.1):
+    - Capacitor
+  - CapacitorPushNotifications (7.0.1):
+    - Capacitor
+
+DEPENDENCIES:
+  - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
+  - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorDevice (from `../../node_modules/@capacitor/device`)"
+  - "CapacitorLocalNotifications (from `../../node_modules/@capacitor/local-notifications`)"
+  - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
+
+EXTERNAL SOURCES:
+  Capacitor:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorBrowser:
+    :path: "../../node_modules/@capacitor/browser"
+  CapacitorCordova:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorDevice:
+    :path: "../../node_modules/@capacitor/device"
+  CapacitorLocalNotifications:
+    :path: "../../node_modules/@capacitor/local-notifications"
+  CapacitorPushNotifications:
+    :path: "../../node_modules/@capacitor/push-notifications"
+
+SPEC CHECKSUMS:
+  Capacitor: 9d9e481b79ffaeacaf7a85d6a11adec32bd33b59
+  CapacitorBrowser: 6299776d496e968505464884d565992faa20444a
+  CapacitorCordova: 5e58d04631bc5094894ac106e2bf1da18a9e6151
+  CapacitorDevice: c6f6d587dd310527f8a48bf09c4e7b4a4cf14329
+  CapacitorLocalNotifications: c2212755b33d2513b8bb325096ce3a64d4039ae3
+  CapacitorPushNotifications: 6a2794788c583dd89215f1805ca4bced1b13dbdf
+
+PODFILE CHECKSUM: a873d68e57175ebb2dcaae922940124a6b70d670
+
+COCOAPODS: 1.16.2
