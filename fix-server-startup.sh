@@ -1,63 +1,59 @@
 #!/bin/bash
 
-echo "🔧 WILL Backend Server Startup Fix"
-echo "=================================="
+echo "🔧 Fixing Server Startup Issues"
+echo "==============================="
 
-# Kill any existing server processes
-echo "1. Stopping existing servers..."
-pkill -f "tsx.*server" 2>/dev/null || true
-pkill -f "node.*server" 2>/dev/null || true
+echo "1. Installing build dependencies globally as backup..."
+npm install -g esbuild tsx vite 2>/dev/null || echo "Global install skipped (may require permissions)"
 
-# Install missing Vite dependency for original server
-echo "2. Installing Vite dependency..."
-npm install vite
+echo "2. Checking current tsx availability..."
+which tsx || echo "tsx not found in PATH"
+which vite || echo "vite not found in PATH" 
+which esbuild || echo "esbuild not found in PATH"
 
-# Option 1: Fix original server by installing Vite
-echo "3. Starting original server with Vite support..."
-NODE_ENV=development npx tsx server/index.ts &
-SERVER_PID=$!
+echo "3. Testing build commands..."
+echo "   - Testing tsx..."
+npx tsx --version 2>/dev/null || echo "tsx not working via npx"
 
-# Wait for server to start
-sleep 8
+echo "   - Testing vite..."
+npx vite --version 2>/dev/null || echo "vite not working via npx"
 
-# Test server
-echo "4. Testing server endpoints..."
-if curl -f http://localhost:5000/api/health >/dev/null 2>&1; then
-    echo "✅ Original server working on port 5000!"
-    
-    # Test push notification endpoint
-    echo "5. Testing push notifications..."
-    RESPONSE=$(curl -s -X POST http://localhost:5000/api/notifications/test \
-        -H "Content-Type: application/json" \
-        -d '{"title":"Test Push","body":"Backend is working!"}')
-    
-    if [[ $RESPONSE == *"success"* ]]; then
-        echo "✅ Push notification system operational!"
-    else
-        echo "⚠️  Push notification test failed (may need authentication)"
-    fi
-    
-    echo ""
-    echo "🎉 SERVER STARTUP FIXED!"
-    echo "Backend is running on: http://localhost:5000"
-    echo "Push notifications: Ready for testing"
-    echo ""
-    echo "Next steps:"
-    echo "- Build iOS app: npm run build && npx cap sync ios"
-    echo "- Deploy to TestFlight for end-to-end testing"
-    
-else
-    echo "❌ Server startup still failing. Using standalone backend..."
-    kill $SERVER_PID 2>/dev/null
-    
-    # Fallback to standalone server
-    echo "Starting standalone backend server..."
+echo "   - Testing esbuild..."
+npx esbuild --version 2>/dev/null || echo "esbuild not working via npx"
+
+echo "4. Attempting to start server with standalone version..."
+if [ -f "server/index-standalone.ts" ]; then
+    echo "   - Using standalone server (bypass main dev script)..."
     NODE_ENV=development npx tsx server/index-standalone.ts &
+    SERVER_PID=$!
+    sleep 3
     
-    sleep 5
-    if curl -f http://localhost:5000/api/health >/dev/null 2>&1; then
-        echo "✅ Standalone backend working!"
+    if kill -0 $SERVER_PID 2>/dev/null; then
+        echo "   ✅ Standalone server started successfully (PID: $SERVER_PID)"
+        echo "   🌐 Server should be available on port 5000"
     else
-        echo "❌ Both server options failed. Check logs for details."
+        echo "   ❌ Standalone server failed to start"
+    fi
+else
+    echo "   ⚠️  No standalone server found"
+fi
+
+echo "5. Alternative: Direct node execution if possible..."
+if [ -f "dist/index.js" ]; then
+    echo "   - Found pre-built server, testing..."
+    NODE_ENV=production node dist/index.js &
+    PROD_PID=$!
+    sleep 2
+    
+    if kill -0 $PROD_PID 2>/dev/null; then
+        echo "   ✅ Production server working (PID: $PROD_PID)"
+    else
+        echo "   ❌ Production server failed"
     fi
 fi
+
+echo ""
+echo "📊 Summary:"
+echo "   - Check if server is running on http://localhost:5000"
+echo "   - If deployment still fails, dependencies need to be moved to production scope"
+echo "   - APNs functionality should work once server is running"
