@@ -1,0 +1,74 @@
+We’re encountering a critical server startup failure that appears to be tied to a vite import or dependency in our backend. Despite successful push notification implementation, we can’t get the server to boot because of this module resolution issue. I’d appreciate your help in deeply diagnosing and resolving this backend problem.
+
+💥 Current Behavior
+When attempting to run:
+
+bash
+Copy
+Edit
+NODE_ENV=development npx tsx server/index.ts
+We receive the following fatal error:
+
+javascript
+Copy
+Edit
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from /home/runner/workspace/server/vite.ts
+We are not intentionally using Vite on the backend — so this may be a leftover import, misconfigured module, or some bundling artifact.
+
+✅ What We’ve Verified So Far
+The error is blocking server startup entirely — so no push tokens can be registered, and no APIs are live.
+
+We’ve confirmed this is not a push notification or APNs credential issue. The failure happens before that logic is hit.
+
+We are using tsx to run the backend TypeScript:
+
+ini
+Copy
+Edit
+NODE_ENV=development npx tsx server/index.ts
+The client side does use Vite for building the frontend — and that works fine in isolation.
+
+The file /server/vite.ts or a related file seems to be trying to import from vite, which fails.
+
+🎯 Request
+Can you help us with the following:
+
+Trace what’s importing vite inside the /server directory.
+
+Is it server/index.ts?
+
+Is vite.ts being imported or dynamically included?
+
+Are there configuration files (e.g., .tsconfig, .replit, vite.config.ts) that may be unintentionally causing this?
+
+Identify whether any Capacitor plugin or Replit deployment script is injecting vite into the backend runtime.
+
+Confirm whether Vite is intentionally needed on the server.
+
+If so, please outline what dependency or logic is requiring it.
+
+If not, please help remove or isolate it from the backend to allow clean startup.
+
+Recommend or implement a clean server start script.
+
+We want the backend to run independently from the frontend.
+
+Ideally: npx tsx server/index.ts runs without needing Vite.
+
+(Optional) If the Vite import cannot be safely removed, can we move forward with a temporary isolated file (e.g. server/push-test.ts) that runs the APNs logic without importing the full backend?
+
+🧱 Supporting Info
+Our project has both client/ and server/ folders.
+
+We use Capacitor for iOS push notifications.
+
+We’ve already verified that environment secrets (APNS_PRIVATE_KEY, etc.) are set.
+
+The push notification infrastructure itself is confirmed as implemented — the only blocker is this Vite-linked server boot issue.
+
+🧠 Summary
+This isn’t a frontend issue — it’s a backend resolution problem caused by a lingering Vite dependency. Please help us track down exactly why the server is trying to load Vite, and provide a clear path to either remove that dependency or isolate the backend for standalone execution.
+
+Once this is fixed, we can complete end-to-end push testing.
+
+Thanks so much! Let me know what you find or if you need anything from my side.
