@@ -1,4 +1,5 @@
 import apn from 'node-apn';
+import fs from 'fs';
 import { db } from './db';
 import { deviceTokens } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -25,22 +26,44 @@ class PushNotificationService {
                               process.env.APNS_KEY_ID && 
                               process.env.APNS_TEAM_ID;
 
-    if (hasAPNSCredentials) {
+    // Check for fixed .p8 key file first, then fall back to environment variable
+    const fixedKeyPath = './AuthKey_4J2R866V2R_fixed.p8';
+    const hasFixedKeyFile = fs.existsSync(fixedKeyPath);
+    
+    if (hasFixedKeyFile && process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID) {
       try {
-        // Handle Node.js 18+ OpenSSL compatibility issues with .p8 keys
-        let privateKey = process.env.APNS_PRIVATE_KEY!;
+        console.log('[PushNotificationService] Using fixed .p8 key file for APNs initialization');
         
-        // Clean and format the key
+        const options = {
+          token: {
+            key: fs.readFileSync(fixedKeyPath),
+            keyId: process.env.APNS_KEY_ID!,
+            teamId: process.env.APNS_TEAM_ID!,
+          },
+          production: process.env.NODE_ENV === 'production',
+        };
+        
+        this.apnProvider = new apn.Provider(options);
+        console.log(`[PushNotificationService] Successfully initialized APNs with fixed .p8 key (${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'} mode)`);
+        console.log('[PushNotificationService] Real push notifications ENABLED - no longer in simulation mode');
+      } catch (error) {
+        console.error('[PushNotificationService] Failed to initialize APNs provider with fixed key:', error);
+        console.log('[PushNotificationService] Falling back to simulation mode');
+        this.apnProvider = null;
+      }
+    } else if (hasAPNSCredentials) {
+      // Fallback to environment variable method
+      try {
+        console.log('[PushNotificationService] Fixed key file not found, trying environment variable');
+        
+        let privateKey = process.env.APNS_PRIVATE_KEY!;
         privateKey = privateKey.trim();
         
-        // Ensure proper PKCS8 format with correct headers
         if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
-          // Replace any existing headers with PKCS8 format
           privateKey = privateKey.replace(/-----BEGIN.*?-----/, '-----BEGIN PRIVATE KEY-----');
           privateKey = privateKey.replace(/-----END.*?-----/, '-----END PRIVATE KEY-----');
         }
         
-        // Try creating APNs provider with OpenSSL legacy support
         const options = {
           token: {
             key: privateKey,
@@ -48,33 +71,23 @@ class PushNotificationService {
             teamId: process.env.APNS_TEAM_ID!,
           },
           production: process.env.NODE_ENV === 'production',
-          // Add legacy OpenSSL provider options for Node 18+ compatibility
-          ...(process.version.startsWith('v18') || process.version.startsWith('v20') ? {
-            rejectUnauthorized: false // For development compatibility
-          } : {})
         };
         
         this.apnProvider = new apn.Provider(options);
-        console.log(`[PushNotificationService] Successfully initialized APNs (${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'} mode)`);
-      } catch (error) {
+        console.log(`[PushNotificationService] Initialized APNs with environment key (${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'} mode)`);
+      } catch (error: any) {
         console.error('[PushNotificationService] Failed to initialize APNs provider:', error);
         
-        // For OpenSSL DECODER errors, provide specific guidance
-        if (error.message && error.message.includes('DECODER routines::unsupported')) {
-          console.log('[PushNotificationService] OpenSSL compatibility issue detected');
-          console.log('[PushNotificationService] This is likely due to .p8 key format incompatibility with Node.js 18+');
-          console.log('[PushNotificationService] Falling back to enhanced simulation mode');
-          
-          // Set a flag to indicate this specific error type
+        if (error?.message && error.message.includes('DECODER routines::unsupported')) {
+          console.log('[PushNotificationService] OpenSSL compatibility issue - consider using fixed .p8 key file');
           this.apnProvider = 'simulation_openssl_error' as any;
         } else {
-          console.log('[PushNotificationService] Falling back to simulation mode');
           this.apnProvider = null;
         }
       }
     } else {
       console.log('[PushNotificationService] APNs credentials not found - running in simulation mode');
-      console.log('[PushNotificationService] Set APNS_PRIVATE_KEY, APNS_KEY_ID, and APNS_TEAM_ID to enable real push notifications');
+      console.log('[PushNotificationService] Provide fixed .p8 key file or set APNS_PRIVATE_KEY, APNS_KEY_ID, and APNS_TEAM_ID');
     }
   }
 
@@ -110,7 +123,7 @@ class PushNotificationService {
 
   private async sendToDevice(deviceToken: string, payload: PushNotificationPayload): Promise<boolean> {
     try {
-      if (!this.apnProvider || this.apnProvider === 'simulation_openssl_error') {
+      if (!this.apnProvider || (this.apnProvider as any) === 'simulation_openssl_error') {
         // Enhanced simulation mode with OpenSSL error context
         const reason = this.apnProvider === 'simulation_openssl_error' 
           ? 'OpenSSL compatibility issue with .p8 key format'

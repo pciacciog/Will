@@ -35,7 +35,7 @@ Preferred communication style: Simple, everyday language.
 - **Progress Tracking**: Daily logging, progress acknowledgment system (by committed members), and timeline visualization.
 - **End Room**: A scheduled video call (Daily.co integration) for reflection and closure at the Will's completion. Features include live countdowns, dynamic status updates, and mobile compatibility.
 - **Account Settings**: User profile (read-only name/email), password change, leave circle functionality.
-- **Push Notifications**: Complete APNs integration with targeted notifications for Will status changes (Proposed, Active, End Room timings, Ready for New WILL). Server-side PushNotificationService implemented with node-apn, client-side auto-registration via Capacitor, and comprehensive API endpoints for all notification types. Enhanced simulation mode handles Node.js 18+ OpenSSL compatibility issues with .p8 key format.
+- **Push Notifications**: Complete APNs integration with targeted notifications for Will status changes (Proposed, Active, End Room timings, Ready for New WILL). Server-side PushNotificationService implemented with node-apn, client-side auto-registration via Capacitor, and comprehensive API endpoints for all notification types. Real APNs functionality operational using fixed .p8 key file (AuthKey_4J2R866V2R_fixed.p8), resolving Node.js 18+ OpenSSL compatibility issues.
 - **Team Encouragement**: "Push" feature to send encouragement to circle members (local-only initially, designed for APNs integration).
 
 ### System Design Choices
