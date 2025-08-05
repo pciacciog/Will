@@ -152,10 +152,11 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(distPath));
   
   // Serve index.html for all non-API routes (SPA routing)
-  app.get('*', (req, res) => {
+  app.get('*', async (req, res) => {
     if (!req.path.startsWith('/api/')) {
       const indexPath = path.join(distPath, 'index.html');
-      if (require('fs').existsSync(indexPath)) {
+      const fs = await import('fs');
+      if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
       } else {
         res.status(404).send('Frontend not found - run build first');
