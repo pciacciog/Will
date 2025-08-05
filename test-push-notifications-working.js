@@ -1,169 +1,100 @@
-#!/usr/bin/env node
+// Test script to verify push notification functionality
+// Run this in browser console on the iOS app
 
-// Comprehensive push notification system test for WILL app
-import http from 'http';
+console.log('🔔 Testing iOS Push Notifications');
 
-console.log('📱 WILL Push Notification System - Comprehensive Test');
-console.log('====================================================');
-
-async function testPushNotificationSystem() {
-  console.log('1. Testing server availability...');
-  
+// 1. Test device token registration
+async function testDeviceRegistration() {
+  console.log('1. Testing device registration...');
   try {
-    // Test server health
-    const healthResponse = await makeRequest('/api/health');
-    if (healthResponse.status === 200) {
-      console.log('   ✅ Server is running and responsive');
-      const healthData = JSON.parse(healthResponse.body);
-      console.log('   📊 Server Status:', healthData);
-    } else {
-      throw new Error(`Server returned status ${healthResponse.status}`);
-    }
-
-    console.log('\n2. Testing push notification endpoints...');
+    const response = await fetch('/api/auth/me');
+    const user = await response.json();
+    console.log('User ID:', user.id);
     
-    // Test all 4 notification types
-    const notificationTests = [
-      {
-        name: 'Test Notification',
-        endpoint: '/api/notifications/test',
-        payload: { title: 'Test Push', body: 'Testing WILL push notification system' }
-      }
-    ];
-
-    for (const test of notificationTests) {
-      console.log(`   Testing ${test.name}...`);
-      
-      try {
-        const response = await makeRequest(test.endpoint, 'POST', test.payload);
-        
-        if (response.status === 200 || response.status === 400) {
-          // 400 is expected if no device tokens are registered yet
-          console.log(`   ✅ ${test.name} endpoint operational`);
-          
-          if (response.status === 400) {
-            console.log('      ℹ️  No device tokens registered (expected in development)');
-          } else {
-            console.log('      📤 Notification sent successfully');
-          }
-        } else {
-          console.log(`   ⚠️  ${test.name} returned status ${response.status}`);
-        }
-      } catch (error) {
-        console.log(`   ❌ ${test.name} failed:`, error.message);
-      }
-    }
-
-    console.log('\n3. Testing device token registration...');
+    // Check if device is registered
+    const deviceResponse = await fetch('/api/notifications/status');
+    const status = await deviceResponse.json();
+    console.log('Device status:', status);
     
-    // Test device token registration
-    const tokenTest = {
-      deviceToken: 'test-device-token-' + Date.now(),
-      platform: 'ios'
-    };
-    
-    try {
-      const tokenResponse = await makeRequest('/api/push-tokens', 'POST', tokenTest);
-      
-      if (tokenResponse.status === 200) {
-        console.log('   ✅ Device token registration working');
-      } else if (tokenResponse.status === 401 || tokenResponse.status === 403) {
-        console.log('   ℹ️  Device token registration requires authentication (expected)');
-      } else {
-        console.log(`   ⚠️  Device token registration returned status ${tokenResponse.status}`);
-      }
-    } catch (error) {
-      console.log('   ⚠️  Device token test requires authentication');
-    }
-
-    console.log('\n4. APNs Integration Status...');
-    
-    // Check APNs configuration
-    const apnsConfigured = !!(
-      process.env.APNS_PRIVATE_KEY && 
-      process.env.APNS_KEY_ID && 
-      process.env.APNS_TEAM_ID &&
-      process.env.APNS_TOPIC
-    );
-    
-    if (apnsConfigured) {
-      console.log('   ✅ APNs credentials configured');
-      console.log('   📋 Configuration:');
-      console.log('      - APNS_KEY_ID: Set');
-      console.log('      - APNS_TEAM_ID: Set');
-      console.log('      - APNS_TOPIC: Set');
-      console.log('      - APNS_PRIVATE_KEY: Set');
-      console.log('   ⚠️  OpenSSL compatibility issue detected (Node.js 18+ with .p8 keys)');
-      console.log('   💡 Running in enhanced simulation mode for development');
-    } else {
-      console.log('   ⚠️  APNs credentials not fully configured');
-    }
-
-    console.log('\n5. System Architecture Status...');
-    console.log('   ✅ PushNotificationService: Implemented');
-    console.log('   ✅ Device Token Management: Operational');
-    console.log('   ✅ Database Schema: Configured');
-    console.log('   ✅ API Endpoints: All 4 notification types available');
-    console.log('   ✅ Client Integration: NotificationService ready');
-    console.log('   ✅ Error Handling: Comprehensive fallbacks');
-
-    console.log('\n6. Development Testing Workflow...');
-    console.log('   📱 iOS App Testing:');
-    console.log('      1. Build: npm run build && npx cap sync ios');
-    console.log('      2. Deploy to TestFlight or physical device');
-    console.log('      3. Launch app - device token registers automatically');
-    console.log('      4. Test notification flow through app');
-    
-    console.log('\n   🔧 API Testing:');
-    console.log('      - Health check: GET /api/health');
-    console.log('      - Test push: POST /api/notifications/test');
-    console.log('      - Device token: POST /api/push-tokens');
-
-    console.log('\n🎉 PUSH NOTIFICATION SYSTEM STATUS: READY FOR TESTING');
-    console.log('');
-    console.log('📋 Summary:');
-    console.log('   • Backend server: ✅ Running');
-    console.log('   • Push service: ✅ Operational (simulation mode)');
-    console.log('   • API endpoints: ✅ All available');
-    console.log('   • Client integration: ✅ Complete');
-    console.log('   • Database: ✅ Configured');
-    console.log('');
-    console.log('🚀 Next Step: Deploy iOS app for end-to-end testing');
-    console.log('   The OpenSSL issue affects JWT signing but system is fully functional');
-    console.log('   In production, consider using Node.js 16 or updated .p8 key format');
-
+    return user.id;
   } catch (error) {
-    console.log('\n❌ System Test Failed');
-    console.log('Error:', error.message);
-    console.log('\n💡 Troubleshooting:');
-    console.log('   - Ensure server is running: NODE_ENV=development npx tsx server/index-standalone.ts');
-    console.log('   - Check server logs for errors');
-    console.log('   - Verify environment variables are set');
+    console.error('Registration test failed:', error);
   }
 }
 
-async function makeRequest(path, method = 'GET', data = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'localhost',
-      port: 5000,
-      path,
-      method,
-      headers: { 'Content-Type': 'application/json' }
-    };
-
-    const req = http.request(options, (res) => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => {
-        resolve({ status: res.statusCode, body, headers: res.headers });
-      });
+// 2. Test manual notification
+async function testManualNotification(userId) {
+  console.log('2. Testing manual notification...');
+  try {
+    const response = await fetch('/api/notifications/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        title: 'Test Notification',
+        body: 'This is a test push notification from WILL app!'
+      })
     });
-
-    req.on('error', reject);
-    if (data) req.write(JSON.stringify(data));
-    req.end();
-  });
+    
+    const result = await response.json();
+    console.log('Test notification result:', result);
+  } catch (error) {
+    console.error('Manual notification test failed:', error);
+  }
 }
 
-testPushNotificationSystem().catch(console.error);
+// 3. Test WILL-specific notifications
+async function testWillNotifications(userId) {
+  console.log('3. Testing WILL notifications...');
+  
+  const notifications = [
+    { type: 'will_proposed', title: 'New WILL Proposed!', body: 'Someone proposed a new commitment in your circle' },
+    { type: 'will_active', title: 'WILL is Active!', body: 'Your commitment has started - time to begin!' },
+    { type: 'end_room_24h', title: 'End Room Tomorrow', body: 'Your End Room is scheduled for tomorrow' },
+    { type: 'end_room_15min', title: 'End Room Starting Soon', body: 'Your End Room starts in 15 minutes' },
+    { type: 'ready_for_new_will', title: 'Ready for New WILL', body: 'Time to create your next commitment!' }
+  ];
+  
+  for (const notification of notifications) {
+    try {
+      const response = await fetch('/api/notifications/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          type: notification.type,
+          title: notification.title,
+          body: notification.body
+        })
+      });
+      
+      const result = await response.json();
+      console.log(`${notification.type} result:`, result);
+      
+      // Wait 2 seconds between notifications
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    } catch (error) {
+      console.error(`${notification.type} failed:`, error);
+    }
+  }
+}
+
+// Run all tests
+async function runAllTests() {
+  console.log('🚀 Starting comprehensive push notification tests...');
+  
+  const userId = await testDeviceRegistration();
+  if (!userId) {
+    console.error('❌ Device registration failed - stopping tests');
+    return;
+  }
+  
+  await testManualNotification(userId);
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  await testWillNotifications(userId);
+  
+  console.log('✅ All tests completed!');
+}
+
+// Auto-run tests
+runAllTests();
