@@ -1122,6 +1122,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Push notification API routes
+  
+  // Device status check for push notifications
+  app.get('/api/notifications/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      console.log('[Notifications] Checking status for user:', userId);
+      
+      // Check if user has a registered device token
+      const [deviceToken] = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.userId, userId));
+        
+      const status = {
+        registered: !!deviceToken,
+        token: deviceToken?.token ? deviceToken.token.substring(0, 20) + '...' : null,
+        platform: deviceToken?.platform || null,
+        lastUpdated: deviceToken?.updatedAt || null
+      };
+      
+      console.log('[Notifications] Device status:', status);
+      res.json(status);
+    } catch (error) {
+      console.error('[Notifications] Error checking status:', error);
+      res.status(500).json({ 
+        registered: false, 
+        error: 'Failed to check device status' 
+      });
+    }
+  });
+
   app.post('/api/push-tokens', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
