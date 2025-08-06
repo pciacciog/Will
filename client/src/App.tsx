@@ -20,6 +20,7 @@ import EditWill from "@/pages/EditWill";
 import EditCommitment from "@/pages/EditCommitment";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
+import NotificationTest from "@/pages/NotificationTest";
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location] = useLocation();
@@ -63,6 +64,7 @@ function Router() {
             <Route path="/will/:id/edit-commitment/:commitmentId" component={EditCommitment} />
             <Route path="/admin" component={Admin} />
             <Route path="/webadmin" component={AdminDashboard} />
+            <Route path="/notification-test" component={NotificationTest} />
           </>
         )}
         <Route component={NotFound} />
