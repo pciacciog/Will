@@ -76,13 +76,16 @@ export function setupAuth(app: Express) {
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: string, done) => {
     try {
+      console.log('[Auth] Deserializing user:', id);
       const user = await storage.getUser(id);
       if (!user) {
+        console.log('[Auth] User not found during deserialization');
         return done(null, false);
       }
+      console.log('[Auth] User deserialized successfully:', user.email);
       done(null, user);
     } catch (error) {
-      console.error("Error deserializing user:", error);
+      console.error("[Auth] Error deserializing user:", error);
       done(null, false);
     }
   });
@@ -142,6 +145,14 @@ export function setupAuth(app: Express) {
   app.get("/api/logout", logoutHandler);
 
   app.get("/api/user", (req, res) => {
+    console.log('[Auth] /api/user called, authenticated:', req.isAuthenticated());
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    res.json(req.user);
+  });
+  
+  // Add the /api/auth/me route for compatibility
+  app.get("/api/auth/me", (req, res) => {
+    console.log('[Auth] /api/auth/me called, authenticated:', req.isAuthenticated());
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });

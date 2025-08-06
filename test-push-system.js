@@ -7,7 +7,7 @@ console.log('📱 Make sure you granted notification permission when prompted');
 // Test 1: Check if user is logged in and device registered
 async function checkDeviceStatus() {
   try {
-    const authResponse = await fetch('/api/auth/me');
+    const authResponse = await fetch('/api/user');
     if (!authResponse.ok) {
       console.log('❌ Not logged in - please sign in first');
       return null;
