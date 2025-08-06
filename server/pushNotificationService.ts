@@ -151,14 +151,35 @@ class PushNotificationService {
       notification.topic = process.env.APNS_TOPIC || 'com.porfirio.will'; // Your app's bundle ID
       notification.payload = payload.data || {};
 
+      console.log(`[PushNotificationService] Sending notification to device: ${deviceToken.substring(0, 20)}...`);
+      console.log(`[PushNotificationService] Title: ${payload.title}`);
+      console.log(`[PushNotificationService] Body: ${payload.body}`);
+      console.log(`[PushNotificationService] Environment: ${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'}`);
+      
       const result = await this.apnProvider.send(notification, deviceToken);
       
+      console.log(`[PushNotificationService] APNs Response:`, {
+        sent: result.sent.length,
+        failed: result.failed.length
+      });
+      
       if (result.failed.length > 0) {
-        console.error('[PushNotificationService] Failed to send:', result.failed);
+        console.error('[PushNotificationService] Failed deliveries:');
+        result.failed.forEach((failure) => {
+          console.error(`  Device: ${failure.device}`);
+          console.error(`  Status: ${failure.status}`);
+          console.error(`  Response: ${failure.response?.reason}`);
+        });
         return false;
       }
 
-      console.log('[PushNotificationService] Successfully sent notification');
+      if (result.sent.length > 0) {
+        console.log(`[PushNotificationService] ✅ Successfully sent to ${result.sent.length} device(s)`);
+        result.sent.forEach((sent) => {
+          console.log(`  ✅ Sent to: ${sent.device.substring(0, 20)}...`);
+        });
+      }
+      
       return true;
     } catch (error) {
       console.error('[PushNotificationService] Error sending to device:', error);
