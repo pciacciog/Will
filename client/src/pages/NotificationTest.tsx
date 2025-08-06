@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { notificationService } from "@/services/NotificationService";
 
@@ -56,9 +56,9 @@ export default function NotificationTest() {
   };
 
   // Load status on component mount
-  useState(() => {
+  useEffect(() => {
     checkStatus();
-  });
+  }, []);
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">

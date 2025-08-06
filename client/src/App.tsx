@@ -47,6 +47,9 @@ function Router() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Switch>
+        {/* Routes available without authentication */}
+        <Route path="/notification-test" component={NotificationTest} />
+        
         {!isAuthenticated ? (
           <>
             <Route path="/" component={Landing} />
@@ -64,7 +67,6 @@ function Router() {
             <Route path="/will/:id/edit-commitment/:commitmentId" component={EditCommitment} />
             <Route path="/admin" component={Admin} />
             <Route path="/webadmin" component={AdminDashboard} />
-            <Route path="/notification-test" component={NotificationTest} />
           </>
         )}
         <Route component={NotFound} />
