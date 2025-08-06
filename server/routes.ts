@@ -1137,7 +1137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
       const status = {
         registered: !!deviceToken,
-        token: deviceToken?.token ? deviceToken.token.substring(0, 20) + '...' : null,
+        token: deviceToken?.deviceToken ? deviceToken.deviceToken.substring(0, 20) + '...' : null,
         platform: deviceToken?.platform || null,
         lastUpdated: deviceToken?.updatedAt || null
       };
