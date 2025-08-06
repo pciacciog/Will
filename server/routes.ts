@@ -1165,23 +1165,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Device token and platform are required" });
       }
       
-      // Store or update device token for this user
-      await db
-        .insert(deviceTokens)
-        .values({
-          userId,
-          deviceToken,
-          platform,
-          isActive: true
-        })
-        .onConflictDoUpdate({
-          target: [deviceTokens.userId, deviceTokens.deviceToken],
-          set: {
+      // First try to find existing token for this user
+      const existingToken = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.userId, userId))
+        .limit(1);
+      
+      if (existingToken.length > 0) {
+        // Update existing token
+        await db
+          .update(deviceTokens)
+          .set({
+            deviceToken,
             platform,
             isActive: true,
             updatedAt: new Date()
-          }
-        });
+          })
+          .where(eq(deviceTokens.userId, userId));
+        console.log(`[Notifications] Updated existing device token for user ${userId}`);
+      } else {
+        // Insert new token
+        await db
+          .insert(deviceTokens)
+          .values({
+            userId,
+            deviceToken,
+            platform,
+            isActive: true
+          });
+        console.log(`[Notifications] Inserted new device token for user ${userId}`);
+      }
       
       console.log(`[Notifications] Device token successfully stored for user ${userId}`);
       res.json({ success: true, message: "Device token registered successfully" });
@@ -1207,23 +1221,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Token and platform are required" });
       }
       
-      // Store or update device token for this user
-      await db
-        .insert(deviceTokens)
-        .values({
-          userId,
-          deviceToken: actualToken,
-          platform,
-          isActive: true
-        })
-        .onConflictDoUpdate({
-          target: [deviceTokens.userId, deviceTokens.deviceToken],
-          set: {
+      // First try to find existing token for this user
+      const existingToken = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.userId, userId))
+        .limit(1);
+      
+      if (existingToken.length > 0) {
+        // Update existing token
+        await db
+          .update(deviceTokens)
+          .set({
+            deviceToken: actualToken,
             platform,
             isActive: true,
             updatedAt: new Date()
-          }
-        });
+          })
+          .where(eq(deviceTokens.userId, userId));
+        console.log(`[Notifications] Updated existing device token for user ${userId} via /register`);
+      } else {
+        // Insert new token
+        await db
+          .insert(deviceTokens)
+          .values({
+            userId,
+            deviceToken: actualToken,
+            platform,
+            isActive: true
+          });
+        console.log(`[Notifications] Inserted new device token for user ${userId} via /register`);
+      }
       
       console.log(`[Notifications] Device token successfully registered for user ${userId}`);
       res.json({ success: true, message: "Device token registered successfully" });
