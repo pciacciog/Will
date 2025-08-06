@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Smartphone, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { notificationService } from "@/services/NotificationService";
@@ -90,14 +89,13 @@ export default function NotificationTest() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span>Registration Status:</span>
-                  <Badge variant={deviceStatus.registered ? "default" : "secondary"}>
+                  <span className={`px-2 py-1 rounded text-sm ${deviceStatus.registered ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
                     {deviceStatus.registered ? (
-                      <CheckCircle className="h-3 w-3 mr-1" />
+                      <><CheckCircle className="h-3 w-3 mr-1 inline" />Registered</>
                     ) : (
-                      <XCircle className="h-3 w-3 mr-1" />
+                      <><XCircle className="h-3 w-3 mr-1 inline" />Not Registered</>
                     )}
-                    {deviceStatus.registered ? 'Registered' : 'Not Registered'}
-                  </Badge>
+                  </span>
                 </div>
                 {deviceStatus.token && (
                   <div className="flex items-center justify-between">
@@ -110,7 +108,7 @@ export default function NotificationTest() {
                 {deviceStatus.platform && (
                   <div className="flex items-center justify-between">
                     <span>Platform:</span>
-                    <Badge variant="outline">{deviceStatus.platform}</Badge>
+                    <span className="px-2 py-1 bg-gray-100 rounded text-sm">{deviceStatus.platform}</span>
                   </div>
                 )}
                 {deviceStatus.lastUpdated && (
