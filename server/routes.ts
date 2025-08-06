@@ -1158,10 +1158,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { deviceToken, platform } = req.body;
       
-      console.log(`[DEBUG] Device token registration attempt - User ID: ${userId}, Platform: ${platform}, Token: ${deviceToken?.substring(0, 20)}...`);
+      console.log(`[Notifications] Device token registration attempt - User ID: ${userId}, Platform: ${platform}, Token: ${deviceToken?.substring(0, 20)}...`);
       
       if (!deviceToken || !platform) {
-        console.log("[DEBUG] Missing device token or platform");
+        console.log("[Notifications] Missing device token or platform");
         return res.status(400).json({ message: "Device token and platform are required" });
       }
       
@@ -1183,11 +1183,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
       
-      console.log(`[DEBUG] Device token successfully stored for user ${userId}`);
-      res.json({ success: true });
+      console.log(`[Notifications] Device token successfully stored for user ${userId}`);
+      res.json({ success: true, message: "Device token registered successfully" });
     } catch (error) {
-      console.error("Error storing device token:", error);
+      console.error("[Notifications] Error storing device token:", error);
       res.status(500).json({ message: "Failed to store device token" });
+    }
+  });
+
+  // Alias route for device registration (alternative naming)
+  app.post('/api/notifications/register', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { token, deviceToken, platform } = req.body;
+      
+      // Accept either 'token' or 'deviceToken' field name
+      const actualToken = token || deviceToken;
+      
+      console.log(`[Notifications] Device registration via /register - User ID: ${userId}, Platform: ${platform}, Token: ${actualToken?.substring(0, 20)}...`);
+      
+      if (!actualToken || !platform) {
+        console.log("[Notifications] Missing token or platform");
+        return res.status(400).json({ message: "Token and platform are required" });
+      }
+      
+      // Store or update device token for this user
+      await db
+        .insert(deviceTokens)
+        .values({
+          userId,
+          deviceToken: actualToken,
+          platform,
+          isActive: true
+        })
+        .onConflictDoUpdate({
+          target: [deviceTokens.userId, deviceTokens.deviceToken],
+          set: {
+            platform,
+            isActive: true,
+            updatedAt: new Date()
+          }
+        });
+      
+      console.log(`[Notifications] Device token successfully registered for user ${userId}`);
+      res.json({ success: true, message: "Device token registered successfully" });
+    } catch (error) {
+      console.error("[Notifications] Error registering device token:", error);
+      res.status(500).json({ message: "Failed to register device token" });
     }
   });
 
