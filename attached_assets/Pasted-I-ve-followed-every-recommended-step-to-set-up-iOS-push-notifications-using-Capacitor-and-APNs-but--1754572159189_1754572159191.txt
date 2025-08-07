@@ -1,0 +1,59 @@
+I’ve followed every recommended step to set up iOS push notifications using Capacitor and APNs, but the registration event still doesn't emit a device token. Here's a full diagnosis for context:
+
+✅ Confirmed Working
+Permissions:
+PushNotifications.requestPermissions() returns { receive: "granted" }
+
+Register Call:
+PushNotifications.register() executes without errors
+
+Listeners Attached:
+addListener('registration'), registrationError, pushNotificationReceived, and pushNotificationActionPerformed all attach successfully with no errors
+
+Authentication:
+Frontend is logged in and user session is active (isAuthenticated: true)
+
+Entitlements Match:
+aps-environment set to development
+NODE_ENV on Replit is also development → using APNs sandbox ✅
+
+App Rebuild & Install:
+Full uninstall from device
+Then rebuilt with:
+
+bash
+Copy
+Edit
+npm run build
+npx cap copy ios
+npx cap open ios
+App installed to real device via Xcode ✅
+
+❌ Still Not Working
+No registration event fires
+
+No device token returned
+
+No registrationError either
+
+🔍 Hypotheses
+Replit Backend Issue?
+Even though .p8 file is configured and backend supports APNs, could there be an issue with how the backend is expected to receive tokens (e.g., /api/push-tokens endpoint or middleware blocking)?
+
+Silent Rejection by APNs?
+Apple doesn’t emit tokens if device, provisioning profile, or entitlements are subtly misaligned (e.g., missing permissions, device not added to profile, wrong capabilities, etc.)
+
+Replit Build Layer
+Is there a layer in Replit (like proxying or container networking) that might interfere with Apple’s device registration during token handoff?
+
+Request
+Could someone from Replit help:
+
+Confirm that the backend .p8 setup is valid (already live in server)
+
+Ensure no Replit-specific environment constraints block APNs token generation
+
+Help debug why the registration event isn’t being triggered despite complete setup
+
+Thank you 🙏 Let me know if you’d like to review the .entitlements file or device logs directly.
+
