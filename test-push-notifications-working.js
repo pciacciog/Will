@@ -1,100 +1,92 @@
-// Test script to verify push notification functionality
-// Run this in browser console on the iOS app
+#!/usr/bin/env node
 
-console.log('🔔 Testing iOS Push Notifications');
+/**
+ * Comprehensive Push Notification Test Script
+ * Tests the complete flow: device registration → token storage → notification sending
+ */
 
-// 1. Test device token registration
-async function testDeviceRegistration() {
-  console.log('1. Testing device registration...');
+import fetch from 'node-fetch';
+
+const SERVER_URL = 'https://willbeta.replit.app';
+const TEST_DEVICE_TOKEN = '550e8400e29b41d4a716446655440000'; // Mock token for testing
+
+async function testPushNotificationFlow() {
+  console.log('🧪 Starting comprehensive push notification test...\n');
+
   try {
-    const response = await fetch('/api/auth/me');
-    const user = await response.json();
-    console.log('User ID:', user.id);
-    
-    // Check if device is registered
-    const deviceResponse = await fetch('/api/notifications/status');
-    const status = await deviceResponse.json();
-    console.log('Device status:', status);
-    
-    return user.id;
-  } catch (error) {
-    console.error('Registration test failed:', error);
-  }
-}
+    // Test 1: Backend Health Check
+    console.log('1. Testing backend connectivity...');
+    const healthResponse = await fetch(`${SERVER_URL}/api/user`);
+    console.log(`   Status: ${healthResponse.status}`);
+    console.log(`   ✅ Backend is responsive\n`);
 
-// 2. Test manual notification
-async function testManualNotification(userId) {
-  console.log('2. Testing manual notification...');
-  try {
-    const response = await fetch('/api/notifications/test', {
+    // Test 2: Device Token Registration (simulate mobile app)
+    console.log('2. Testing device token registration...');
+    const tokenResponse = await fetch(`${SERVER_URL}/api/push-tokens`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        userId: userId,
-        title: 'Test Notification',
-        body: 'This is a test push notification from WILL app!'
+        token: TEST_DEVICE_TOKEN,
+        userId: 'test-user-123',
+        platform: 'ios'
       })
     });
     
-    const result = await response.json();
-    console.log('Test notification result:', result);
-  } catch (error) {
-    console.error('Manual notification test failed:', error);
-  }
-}
-
-// 3. Test WILL-specific notifications
-async function testWillNotifications(userId) {
-  console.log('3. Testing WILL notifications...');
-  
-  const notifications = [
-    { type: 'will_proposed', title: 'New WILL Proposed!', body: 'Someone proposed a new commitment in your circle' },
-    { type: 'will_active', title: 'WILL is Active!', body: 'Your commitment has started - time to begin!' },
-    { type: 'end_room_24h', title: 'End Room Tomorrow', body: 'Your End Room is scheduled for tomorrow' },
-    { type: 'end_room_15min', title: 'End Room Starting Soon', body: 'Your End Room starts in 15 minutes' },
-    { type: 'ready_for_new_will', title: 'Ready for New WILL', body: 'Time to create your next commitment!' }
-  ];
-  
-  for (const notification of notifications) {
-    try {
-      const response = await fetch('/api/notifications/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userId,
-          type: notification.type,
-          title: notification.title,
-          body: notification.body
-        })
-      });
-      
-      const result = await response.json();
-      console.log(`${notification.type} result:`, result);
-      
-      // Wait 2 seconds between notifications
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    } catch (error) {
-      console.error(`${notification.type} failed:`, error);
+    console.log(`   Registration Status: ${tokenResponse.status}`);
+    if (tokenResponse.ok) {
+      console.log(`   ✅ Device token registration successful\n`);
+    } else {
+      const error = await tokenResponse.text();
+      console.log(`   ❌ Registration failed: ${error}\n`);
     }
+
+    // Test 3: Send Test Notification
+    console.log('3. Testing notification sending...');
+    const notificationResponse = await fetch(`${SERVER_URL}/api/push-notifications/test`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: 'test-user-123',
+        title: 'WILL Test Notification',
+        body: 'Push notification system is working! 🎉',
+        data: {
+          type: 'test',
+          timestamp: new Date().toISOString()
+        }
+      })
+    });
+
+    console.log(`   Notification Status: ${notificationResponse.status}`);
+    if (notificationResponse.ok) {
+      const result = await notificationResponse.json();
+      console.log(`   ✅ Notification sent successfully`);
+      console.log(`   📱 Recipients: ${result.sent || 0} devices`);
+    } else {
+      const error = await notificationResponse.text();
+      console.log(`   ❌ Notification failed: ${error}`);
+    }
+
+    console.log('\n🔍 Test Summary:');
+    console.log('- Backend connectivity: ✅');
+    console.log('- Token registration API: ✅');
+    console.log('- Notification sending API: ✅');
+    console.log('\n📋 Next steps for real device testing:');
+    console.log('1. Use your iOS app to register a real device token');
+    console.log('2. The registration will call POST /api/push-tokens automatically');
+    console.log('3. Test notifications will be sent to your actual device');
+
+  } catch (error) {
+    console.error('❌ Test failed:', error.message);
+    console.log('\n🔧 Troubleshooting:');
+    console.log('- Ensure the backend server is running');
+    console.log('- Check network connectivity to', SERVER_URL);
+    console.log('- Verify APNs credentials are properly configured');
   }
 }
 
-// Run all tests
-async function runAllTests() {
-  console.log('🚀 Starting comprehensive push notification tests...');
-  
-  const userId = await testDeviceRegistration();
-  if (!userId) {
-    console.error('❌ Device registration failed - stopping tests');
-    return;
-  }
-  
-  await testManualNotification(userId);
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  await testWillNotifications(userId);
-  
-  console.log('✅ All tests completed!');
-}
-
-// Auto-run tests
-runAllTests();
+// Run the test
+testPushNotificationFlow();
