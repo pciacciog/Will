@@ -36,18 +36,21 @@ export class NotificationService {
           if (pushPermission.receive === 'granted') {
             console.log('Push notification permissions granted');
             
-            // Register for push notifications
-            await PushNotifications.register();
+            // CRITICAL: Set up listeners BEFORE calling register() to avoid race condition
+            console.log('Setting up push notification listeners...');
             
             // Listen for registration success
             PushNotifications.addListener('registration', async (token) => {
-              console.log('Push registration success, token:', token.value);
+              console.log('✅ Push registration success! Token received:', token.value);
+              console.log('Token length:', token.value.length);
+              console.log('Token type:', typeof token.value);
               
               // Send device token to server for storage
               try {
                 // Import apiRequest dynamically to avoid module issues
                 const { apiRequest } = await import('../lib/queryClient');
                 
+                console.log('Sending device token to backend...');
                 const response = await apiRequest('/api/push-tokens', {
                   method: 'POST',
                   body: JSON.stringify({
@@ -57,29 +60,38 @@ export class NotificationService {
                 });
                 
                 if (response.ok) {
-                  console.log('Device token successfully stored on server');
+                  console.log('✅ Device token successfully stored on server');
                 } else {
-                  console.error('Failed to store device token on server');
+                  console.error('❌ Failed to store device token on server. Status:', response.status);
+                  const errorText = await response.text();
+                  console.error('Server response:', errorText);
                 }
               } catch (error) {
-                console.error('Error sending device token to server:', error);
+                console.error('❌ Error sending device token to server:', error);
               }
             });
             
             // Listen for registration errors
             PushNotifications.addListener('registrationError', (err) => {
-              console.error('Push registration error:', err.error);
+              console.error('❌ Push registration error:', err.error);
+              console.error('Error details:', JSON.stringify(err, null, 2));
             });
             
             // Listen for incoming push notifications
             PushNotifications.addListener('pushNotificationReceived', (notification) => {
-              console.log('Push notification received:', notification);
+              console.log('📱 Push notification received:', notification);
             });
             
             // Listen for push notification actions
             PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-              console.log('Push notification action performed:', notification);
+              console.log('🔔 Push notification action performed:', notification);
             });
+            
+            console.log('All listeners set up. Now registering for push notifications...');
+            
+            // Register for push notifications AFTER setting up listeners
+            await PushNotifications.register();
+            console.log('PushNotifications.register() called successfully');
           }
         } catch (pushError) {
           console.warn('Push notifications not available:', pushError);
