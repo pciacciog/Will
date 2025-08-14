@@ -1,0 +1,58 @@
+[Log] Router debug [iPhone]: – {isAuthenticated: false, isLoading: false, user: undefined, …} (index-BTI5CFsX.js, line 298)
+{isAuthenticated: false, isLoading: false, user: undefined, location: "/auth"}Object
+[Log] Submitting login: – {email: "randy@me.com", password: "Realmadrid!fc10"} (index-BTI5CFsX.js, line 248)
+[Log] native CapacitorHttp.request (#11119660) (user-script:2, line 345)
+[Log] {callbackId: "11119660", pluginId: "CapacitorHttp", methodName: "request", options: Object}ObjectcallbackId: "11119660"methodName: "request"options: {url: "https://willbeta.replit.app/api/login", method: "POST", data: "{\"email\":\"randy@me.com\",\"password\":\"Realmadrid!fc10\"}", dataType: "json", headers: {content-type: "application/json"}}ObjectpluginId: "CapacitorHttp"type: "message"Object Prototype (user-script:2, line 346)
+[Log] result CapacitorHttp.request (#11119660) (user-script:2, line 325)
+[Log] {data: Object, status: 200, url: "https://willbeta.replit.app/api/login", headers: Object}Objectdata: {updatedAt: "2025-06-28T09:16:25.205Z", createdAt: "2025-06-28T09:16:25.205Z", isActive: true, firstName: "Randy", id: "17511021851866udaucmnr", …}Objectheaders: {access-control-allow-credentials: "true", x-powered-by: "Express", x-cloud-trace-context: "52e88ac4379316b8d183186929ddfa82;o=1", set-cookie: "connect.sid=s%3AYxX5bwj9zfGNNLtC52mtzoH4hmRGSpA4.c…, 15 Aug 2025 15:26:05 GMT; Secure; SameSite=None", access-control-allow-methods: "GET, POST, PUT, DELETE, OPTIONS", …}Objectstatus: 200url: "https://willbeta.replit.app/api/login"Object Prototype (user-script:2, line 330)
+[Debug] CapacitorHttp fetch 1755185164199 /api/login: 1257.490ms (user-script:2, line 551)
+[Log] Login success, user: – {updatedAt: "2025-06-28T09:16:25.205Z", createdAt: "2025-06-28T09:16:25.205Z", isActive: true, …} (index-BTI5CFsX.js, line 248)
+{updatedAt: "2025-06-28T09:16:25.205Z", createdAt: "2025-06-28T09:16:25.205Z", isActive: true, firstName: "Randy", id: "17511021851866udaucmnr", …}Object
+[Log] Setting showSplashOnHome to true in localStorage (index-BTI5CFsX.js, line 248)
+[Log] Router debug [iPhone]: – {isAuthenticated: true, isLoading: false, user: "17511021851866udaucmnr", …} (index-BTI5CFsX.js, line 298)
+{isAuthenticated: true, isLoading: false, user: "17511021851866udaucmnr", location: "/"}Object
+[Log] Home component debug: – {will: undefined, willStatus: "no_will", isActiveWill: false, …} (index-BTI5CFsX.js, line 248)
+{will: undefined, willStatus: "no_will", isActiveWill: false, userCommitment: null, userId: "17511021851866udaucmnr", …}Object
+[Log] Home useEffect: shouldShowSplash = – "true" (index-BTI5CFsX.js, line 248)
+[Log] Setting showSplash to true (index-BTI5CFsX.js, line 248)
+[Log] User authenticated - initializing push notifications (index-BTI5CFsX.js, line 298)
+[Log] native LocalNotifications.requestPermissions (#11119661) (user-script:2, line 345)
+[Log] {callbackId: "11119661", pluginId: "LocalNotifications", methodName: "requestPermissions", options: {}}ObjectcallbackId: "11119661"methodName: "requestPermissions"options: {}ObjectpluginId: "LocalNotifications"type: "message"Object Prototype (user-script:2, line 346)
+[Log] Rendering splash screen from Home component (index-BTI5CFsX.js, line 248)
+[Log] Rendering splash screen from Home component (index-BTI5CFsX.js, line 248, x2)
+[Log] result LocalNotifications.requestPermissions (#11119661) (user-script:2, line 325)
+[Log] {display: "granted"}Objectdisplay: "granted"Object Prototype (user-script:2, line 330)
+[Log] Local notification permissions granted (index-BTI5CFsX.js, line 248)
+[Log] native PushNotifications.requestPermissions (#11119662) (user-script:2, line 345)
+[Log] {callbackId: "11119662", pluginId: "PushNotifications", methodName: "requestPermissions", options: {}}ObjectcallbackId: "11119662"methodName: "requestPermissions"options: {}ObjectpluginId: "PushNotifications"type: "message"Object Prototype (user-script:2, line 346)
+[Log] result PushNotifications.requestPermissions (#11119662) (user-script:2, line 325)
+[Log] {receive: "granted"}Objectreceive: "granted"Object Prototype (user-script:2, line 330)
+[Log] Push notification permissions granted (index-BTI5CFsX.js, line 248)
+[Log] native PushNotifications.register (#11119663) (user-script:2, line 345)
+[Log] {callbackId: "11119663", pluginId: "PushNotifications", methodName: "register", options: {}}ObjectcallbackId: "11119663"methodName: "register"options: {}ObjectpluginId: "PushNotifications"type: "message"Object Prototype (user-script:2, line 346)
+[Log] result PushNotifications.register (#11119663) (user-script:2, line 325)
+[Log] undefinedNo Properties (user-script:2, line 330)
+[Log] native PushNotifications.addListener (#11119664) (user-script:2, line 345)
+[Log] {callbackId: "11119664", pluginId: "PushNotifications", methodName: "addListener", options: {eventName: "registration"}}ObjectcallbackId: "11119664"methodName: "addListener"options: {eventName: "registration"}ObjectpluginId: "PushNotifications"type: "message"Object Prototype (user-script:2, line 346)
+[Log] native PushNotifications.addListener (#11119665) (user-script:2, line 345)
+[Log] {callbackId: "11119665", pluginId: "PushNotifications", methodName: "addListener", options: {eventName: "registrationError"}}ObjectcallbackId: "11119665"methodName: "addListener"options: {eventName: "registrationError"}ObjectpluginId: "PushNotifications"type: "message"Object Prototype (user-script:2, line 346)
+[Log] native PushNotifications.addListener (#11119666) (user-script:2, line 345)
+[Log] Object (user-script:2, line 346)
+
+callbackId: "11119666"
+
+methodName: "addListener"
+
+options: {eventName: "pushNotificationReceived"}
+
+pluginId: "PushNotifications"
+
+type: "message"
+
+Object Prototype
+
+[Log] native PushNotifications.addListener (#11119667) (user-script:2, line 345)
+[Log] {callbackId: "11119667", pluginId: "PushNotifications", methodName: "addListener", options: {eventName: "pushNotificationActionPerformed"}}ObjectcallbackId: "11119667"methodName: "addListener"options: {eventName: "pushNotificationActionPerformed"}ObjectpluginId: "PushNotifications"type: "message"Object Prototype (user-script:2, line 346)
+[Log] Splash screen completed (index-BTI5CFsX.js, line 248)
+[Log] Home component debug: – {will: Object, willStatus: "active", isActiveWill: true, …} (index-BTI5CFsX.js, line 248)
+{will: Object, willStatus: "active", isActiveWill: true, userCommitment: Object, userId: "17511021851866udaucmnr", …}Object
