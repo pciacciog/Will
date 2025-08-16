@@ -1,0 +1,54 @@
+Please fact-check the WILL push notification setup end-to-end. Do not change anything yet—just verify and report.
+
+A) Server / Replit
+	1.	Process & mode
+	•	Confirm the running server process, port, and NODE_ENV.
+	•	Print whether APNs is initialized in sandbox or production mode.
+	•	Verify APNS_TOPIC is com.porfirio.will.
+	2.	APNs credentials
+	•	Confirm the file AuthKey_4J2R866V2R_fixed.p8 exists at project root and is the key actually used by the running process.
+	•	Verify environment variables in Replit Secrets:
+	•	APNS_KEY_ID=4J2R866V2R
+	•	APNS_TEAM_ID=<team id>
+	•	APNS_TOPIC=com.porfirio.will
+	3.	Endpoints present
+	•	List the HTTP routes and confirm these exist and are wired:
+	•	POST /api/push-tokens
+	•	GET /api/notifications/status
+	•	POST /api/notifications/test
+	4.	Logs on startup
+	•	Provide the exact startup log lines related to APNs init (success/fallback/simulation).
+
+B) Backend behavior
+	1.	Token storage
+	•	Confirm DB table for device tokens exists and schema matches what the server code expects.
+	•	Show a sample of the most recent stored tokens (mask sensitive parts).
+	2.	Test endpoint
+	•	Without changing auth, confirm that POST /api/notifications/test is reachable when authenticated and that it attempts to send via APNs (show server log lines for a test invocation, no need to actually push).
+
+C) Frontend (Capacitor) – Code presence
+	1.	Confirm the presence of the push setup in the repo:
+	•	client/src/services/NotificationService.ts includes:
+	•	Permission request
+	•	PushNotifications.register()
+	•	Listeners for registration, registrationError, pushNotificationReceived, pushNotificationActionPerformed
+	•	POST to /api/push-tokens on registration
+	2.	Confirm capacitor.config.json has:
+	•	server.url pointing to the deployed Replit URL currently in use by the device.
+
+D) Observed on device (to align with our logs)
+
+Please acknowledge these as facts based on user-provided console logs (no action needed, just confirm consistency with expectations):
+	•	Login succeeds (/api/login returns 200 and session cookie is set).
+	•	LocalNotifications.requestPermissions() → { display: "granted" }.
+	•	PushNotifications.requestPermissions() → { receive: "granted" }.
+	•	PushNotifications.register() is called.
+	•	Neither registration nor registrationError listener fires (no token captured).
+
+E) Report back with:
+	•	The exact values/mode for items in A, B, C.
+	•	The precise log lines for APNs initialization and any send attempts.
+	•	Confirmation that the code paths in NotificationService.ts match what’s described.
+	•	Any discrepancies between deployed server config and the repo (e.g., different APNs file path or topic at runtime).
+
+Again: please do not modify config or code yet—just verify and report the facts so we can line them up with what we see on the iPhone.
