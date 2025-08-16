@@ -58,4 +58,15 @@ Preferred communication style: Simple, everyday language.
 - **Daily.co**: Video conferencing API for End Room functionality.
 - **node-apn**: For Apple Push Notification service integration.
 - **@capacitor/core**, **@capacitor/ios**: For iOS mobile app development and native features.
+
+## Recent Changes
+
+### August 16, 2025 - Push Notification Development Status
+- **Issue**: Push notification race condition preventing device token registration
+- **Root Cause**: Event listeners attached after PushNotifications.register() call in NotificationService.ts
+- **Backend Status**: 100% complete and operational (APNs service working with production .p8 key)
+- **Apple Developer**: All configurations verified correct (Bundle ID, entitlements, provisioning profile)
+- **Fix Required**: Reorder listener attachment before register() call in client/src/services/NotificationService.ts
+- **Decision**: Outsourcing to consultant developer due to time constraints
+- **Next Steps**: Consultant technical brief created with comprehensive implementation details
 ```
