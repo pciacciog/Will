@@ -1,0 +1,67 @@
+TL;DR: Apple rejected v1.0 (Submission ID: 478e9620-84c3-40cc-852e-4a897bfca977) for Guideline 2.3.8 – Accurate Metadata because our app icons are placeholders. Please replace all icons in the asset catalog with a finalized, consistent design and resubmit a new build.
+
+What to do
+
+Replace the App Icon set
+
+Update the asset catalog at:
+
+Swift/iOS native: ios/<AppName>/Assets.xcassets/AppIcon.appiconset/
+
+React Native: ios/<AppName>/Images.xcassets/AppIcon.appiconset/
+
+Flutter: ios/Runner/Assets.xcassets/AppIcon.appiconset/
+
+Provide one finalized design (no placeholders, no text like “AppIcon”, no default template).
+
+Generate every required size, including:
+
+App Store (Marketing): 1024×1024 PNG (no alpha)
+
+iPhone: 180×180 (@3x), 120×120 (@2x)
+
+iPad: 167×167, 152×152, 76×76
+
+Spotlight/Settings: 80×80, 58×58, 40×40, 29×29 (and their @2x/@3x variants)
+
+Ensure all sizes are the same artwork scaled—no color/style mismatches.
+
+Verify Contents.json matches the files (no missing or extra entries).
+
+Design/format constraints
+
+PNG, no transparency (alpha disabled) for the 1024×1024 “Marketing Icon”.
+
+Square artwork; iOS applies the rounded mask automatically—don’t pre-round.
+
+No borders too close to the edge; keep safe margins so the mask doesn’t clip.
+
+Clean up overrides
+
+In Info.plist, ensure no custom CFBundleIcons/CFBundleAlternateIcons are pointing to old names.
+
+Remove any legacy icon files in the project that aren’t referenced by the asset catalog.
+
+Build & upload
+
+Bump Build number (e.g., from 1 → 2).
+
+Clean build folder, archive, and upload via Xcode (or Transporter).
+
+In App Store Connect → the new build, confirm the 1024×1024 Marketing Icon is present.
+
+Add a short note in Resolution Center: “Replaced placeholder icons with finalized, consistent artwork across all sizes per 2.3.8.”
+
+Acceptance checklist (please confirm back)
+
+ All icon slots in AppIcon.appiconset are filled with the same final design.
+
+ Contents.json aligns with the actual filenames and scales.
+
+ 1024×1024 Marketing Icon exists, PNG, no alpha, correct branding.
+
+ No alternate/legacy icon overrides in Info.plist.
+
+ New build uploaded and attached to the 1.0 submission; note added in Resolution Center.
+
+If you’d like me to supply a ready-to-drop icon set (all sizes + Contents.json) from a single 1024×1024 master, tell me the final artwork and I’ll generate the full AppIcon.appiconset for you.

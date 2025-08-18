@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WILL App Icon Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 20px; margin: 20px 0; }
+        .icon-item { text-align: center; }
+        canvas { border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 10px; background: #10B981; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>WILL App Icon Generator</h1>
+    <p>Generates all required iOS app icon sizes for App Store submission</p>
+    
+    <button onclick="generateAllIcons()">Generate All Icons</button>
+    <button onclick="downloadAll()">Download All Icons</button>
+    
+    <div id="iconGrid" class="icon-grid"></div>
+
+    <script>
+        const iconSizes = [
+            { name: 'AppIcon-20@2x.png', size: 40 },
+            { name: 'AppIcon-20@3x.png', size: 60 },
+            { name: 'AppIcon-29@2x.png', size: 58 },
+            { name: 'AppIcon-29@3x.png', size: 87 },
+            { name: 'AppIcon-40@2x.png', size: 80 },
+            { name: 'AppIcon-40@3x.png', size: 120 },
+            { name: 'AppIcon-60@2x.png', size: 120 },
+            { name: 'AppIcon-60@3x.png', size: 180 },
+            { name: 'AppIcon-1024.png', size: 1024 }
+        ];
+        
+        let generatedIcons = {};
+
+        function drawWillIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 1024;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#10B981');
+            gradient.addColorStop(1, '#059669');
+            
+            // Draw rounded rectangle background
+            const radius = size * 0.176; // iOS standard radius ratio
+            ctx.fillStyle = gradient;
+            roundedRect(ctx, 0, 0, size, size, radius);
+            ctx.fill();
+            
+            // Draw hand icon
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = size * 0.02;
+            
+            // Scale and position hand
+            const handScale = size * 0.0008;
+            const handX = size * 0.3;
+            const handY = size * 0.2;
+            
+            ctx.save();
+            ctx.translate(handX, handY);
+            ctx.scale(handScale, handScale);
+            
+            // Simplified hand path
+            ctx.beginPath();
+            ctx.moveTo(200, 50);
+            ctx.bezierCurveTo(220, 30, 260, 30, 280, 50);
+            ctx.lineTo(280, 180);
+            ctx.lineTo(320, 160);
+            ctx.bezierCurveTo(340, 150, 370, 160, 380, 180);
+            ctx.lineTo(420, 320);
+            ctx.bezierCurveTo(430, 350, 420, 380, 400, 400);
+            ctx.lineTo(300, 480);
+            ctx.lineTo(120, 480);
+            ctx.lineTo(100, 460);
+            ctx.bezierCurveTo(80, 440, 70, 410, 80, 380);
+            ctx.lineTo(80, 200);
+            ctx.bezierCurveTo(80, 150, 120, 120, 160, 120);
+            ctx.bezierCurveTo(180, 120, 200, 100, 200, 80);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add thumb
+            ctx.beginPath();
+            ctx.ellipse(150, 180, 30, 80, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Add WILL text (only on larger icons)
+            if (size >= 80) {
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const fontSize = Math.max(size * 0.12, 12);
+                ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+                
+                ctx.fillText('WILL', size / 2, size * 0.75);
+            }
+        }
+        
+        function roundedRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        function generateAllIcons() {
+            const grid = document.getElementById('iconGrid');
+            grid.innerHTML = '';
+            generatedIcons = {};
+            
+            iconSizes.forEach(iconSpec => {
+                const container = document.createElement('div');
+                container.className = 'icon-item';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = iconSpec.size;
+                canvas.height = iconSpec.size;
+                canvas.style.width = '80px';
+                canvas.style.height = '80px';
+                
+                drawWillIcon(canvas, iconSpec.size);
+                
+                // Store the image data
+                canvas.toBlob(blob => {
+                    generatedIcons[iconSpec.name] = blob;
+                });
+                
+                const label = document.createElement('div');
+                label.textContent = `${iconSpec.name}\n${iconSpec.size}×${iconSpec.size}`;
+                label.style.fontSize = '10px';
+                label.style.marginTop = '5px';
+                
+                container.appendChild(canvas);
+                container.appendChild(label);
+                grid.appendChild(container);
+            });
+        }
+        
+        function downloadAll() {
+            Object.entries(generatedIcons).forEach(([filename, blob]) => {
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            });
+        }
+        
+        // Auto-generate on page load
+        window.onload = () => {
+            setTimeout(generateAllIcons, 100);
+        };
+    </script>
+</body>
+</html>
