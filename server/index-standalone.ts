@@ -130,6 +130,11 @@ registerRoutes(app);
 endRoomScheduler.start();
 console.log('[EndRoomScheduler] Scheduler started');
 
+// Serve icon generator before catch-all routes
+app.get('/icon-generator.html', (req: Request, res: Response) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'icon-generator.html'));
+});
+
 // In production, serve static files from dist
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(process.cwd(), 'dist');
