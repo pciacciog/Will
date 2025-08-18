@@ -1,0 +1,61 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="4" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background with rounded corners -->
+  <rect width="1024" height="1024" rx="180" fill="url(#bgGradient)"/>
+  
+  <!-- Hand icon representing WILL/commitment -->
+  <g transform="translate(312, 200)">
+    <!-- Simplified hand gesture -->
+    <path d="M200 50 C220 30, 260 30, 280 50 
+             L280 180 
+             L320 160 
+             C340 150, 370 160, 380 180
+             L420 320
+             C430 350, 420 380, 400 400
+             L300 480
+             L120 480
+             L100 460
+             C80 440, 70 410, 80 380
+             L80 200
+             C80 150, 120 120, 160 120
+             C180 120, 200 100, 200 80
+             Z" 
+          fill="white" 
+          filter="url(#shadow)"
+          stroke="none"/>
+    
+    <!-- Thumb -->
+    <ellipse cx="150" cy="180" rx="30" ry="80" fill="white" filter="url(#shadow)"/>
+  </g>
+  
+  <!-- WILL text -->
+  <text x="512" y="700" 
+        font-family="Arial, Helvetica, sans-serif" 
+        font-size="120" 
+        font-weight="bold" 
+        text-anchor="middle" 
+        fill="white"
+        filter="url(#shadow)">
+    WILL
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="512" y="800" 
+        font-family="Arial, Helvetica, sans-serif" 
+        font-size="48" 
+        font-weight="normal" 
+        text-anchor="middle" 
+        fill="white"
+        opacity="0.9">
+    Commitment Platform
+  </text>
+</svg>
