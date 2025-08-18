@@ -21,6 +21,7 @@ import EditCommitment from "@/pages/EditCommitment";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
 import NotificationTest from "@/pages/NotificationTest";
+import IconGenerator from "@/pages/IconGenerator";
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location] = useLocation();
@@ -49,6 +50,7 @@ function Router() {
       <Switch>
         {/* Routes available without authentication */}
         <Route path="/notification-test" component={NotificationTest} />
+        <Route path="/icon-generator" component={IconGenerator} />
         
         {!isAuthenticated ? (
           <>
