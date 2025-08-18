@@ -1,0 +1,91 @@
+Subject: App icon fix (2.3.8) — make artwork consistent + redesign hand to match spec
+
+Why this change is required
+
+Apple rejected 1.0 for Guideline 2.3.8 – Accurate Metadata.
+
+Our current icon set mixes two different artworks (some show only the hand, others show hand + “WILL”). Apple expects the same artwork across all sizes to avoid user confusion.
+
+The hand mark reads poorly at small sizes; it doesn’t clearly look like a hand.
+
+Direction (single, consistent artwork)
+
+Use one master design for all sizes.
+
+No text inside the icon. Per HIG, text is illegible/fragile at small sizes and creates inconsistency.
+
+Keep the “WILL” wordmark for marketing/screens, not inside the app icon.
+
+Visual spec (match the attached reference)
+
+Background: emerald gradient rounded square (iOS will mask the corners—design as a full square; don’t pre-round).
+
+Gradient suggestion: #13A67C → #0D7F63 (top-left to bottom-right), subtle noise/texture optional but very light.
+
+Symbol: clean outlined palm/raised hand centered.
+
+Stroke: proportionally ~8–10% of icon width (e.g., ~82–100 px on the 1024 master).
+
+Stroke joins/caps: round.
+
+Color: white; no drop shadows.
+
+Proportions: hand height ≈ 64–68% of canvas; keep safe margin ≥ 12% on all sides so iOS mask doesn’t clip.
+
+Draw the thumb distinctly; ensure finger spacing reads at 40×40 preview.
+
+Contrast/accessibility: WCAG AA contrast vs. background at small sizes.
+
+Deliverables
+
+Master source: SVG (preferred) or Figma file of the hand logo on gradient background.
+
+1024×1024 PNG (no alpha) marketing icon.
+
+Regenerate all iPhone sizes from the same artwork (no text):
+
+20@2x = 40×40
+
+20@3x = 60×60
+
+29@2x = 58×58
+
+29@3x = 87×87
+
+40@2x = 80×80
+
+40@3x = 120×120
+
+60@2x = 120×120
+
+60@3x = 180×180
+
+1024×1024 (marketing, PNG no alpha)
+
+If the target is Universal (iPhone + iPad), also export:
+
+76×76, 152×152, 167×167.
+
+Update AppIcon.appiconset/Contents.json to map only these files. Remove any entries that include text variants.
+
+Generator updates (if keeping the HTML tool)
+
+Enforce single artwork mode (toggle off the “WILL” text entirely).
+
+Lock stroke thickness and safe margins relative to canvas.
+
+Export with exact filenames used by Contents.json.
+
+Ensure the 1024 export has alpha removed.
+
+QA checklist (please confirm)
+
+ Every slot in AppIcon.appiconset uses the same artwork (no mixed “with text/without text”).
+
+ 1024×1024 is PNG without alpha.
+
+ Icon reads clearly at 40×40 and 58×58 (no blobby fingers).
+
+ Info.plist has no CFBundleAlternateIcons or custom icon overrides.
+
+ New build archived & uploaded; App Store Connect shows the Marketing Icon preview.
