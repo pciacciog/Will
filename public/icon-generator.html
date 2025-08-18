@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WILL App Icon Generator</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px; 
+            background: #f8fafc;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #10B981; margin-bottom: 10px; }
+        .subtitle { color: #6b7280; margin-bottom: 30px; }
+        .icon-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+            gap: 20px; 
+            margin: 30px 0; 
+        }
+        .icon-item { 
+            text-align: center; 
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        canvas { 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button { 
+            padding: 12px 24px; 
+            margin: 8px; 
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #6b7280;
+            margin-top: 8px;
+            line-height: 1.3;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background: #ecfdf5;
+            border: 1px solid #10B981;
+            border-radius: 8px;
+            color: #065f46;
+            display: none;
+        }
+        .instructions {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            color: #1e40af;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WILL App Icon Generator</h1>
+        <p class="subtitle">Generate all required iOS app icon sizes for App Store submission</p>
+        
+        <button class="button" onclick="generateAllIcons()" id="generateBtn">Generate All Icons</button>
+        <button class="button" onclick="downloadAll()" id="downloadBtn" disabled>Download All Icons as ZIP</button>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click "Generate All Icons" to create all required sizes</li>
+                <li>Click "Download All Icons as ZIP" to get the complete icon set</li>
+                <li>Extract the ZIP file and copy all PNG files to: <code>ios/App/App/Assets.xcassets/AppIcon.appiconset/</code></li>
+                <li>Delete the old <code>AppIcon-512@2x.png</code> file</li>
+                <li>Build and upload your app to resolve the App Store rejection</li>
+            </ol>
+        </div>
+        
+        <div id="iconGrid" class="icon-grid"></div>
+    </div>
+
+    <!-- Include JSZip for creating ZIP files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    
+    <script>
+        const iconSizes = [
+            { name: 'AppIcon-20@2x.png', size: 40, desc: 'Settings 2x' },
+            { name: 'AppIcon-20@3x.png', size: 60, desc: 'Settings 3x' },
+            { name: 'AppIcon-29@2x.png', size: 58, desc: 'Settings 2x' },
+            { name: 'AppIcon-29@3x.png', size: 87, desc: 'Settings 3x' },
+            { name: 'AppIcon-40@2x.png', size: 80, desc: 'Spotlight 2x' },
+            { name: 'AppIcon-40@3x.png', size: 120, desc: 'Spotlight 3x' },
+            { name: 'AppIcon-60@2x.png', size: 120, desc: 'iPhone 2x' },
+            { name: 'AppIcon-60@3x.png', size: 180, desc: 'iPhone 3x' },
+            { name: 'AppIcon-1024.png', size: 1024, desc: 'App Store' }
+        ];
+        
+        let generatedIcons = {};
+        let iconBlobs = {};
+
+        function showStatus(message) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.style.display = 'block';
+        }
+
+        function drawWillIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 1024;
+            
+            // Clear canvas with white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#10B981');
+            gradient.addColorStop(1, '#059669');
+            
+            // Draw background (iOS will add rounded corners automatically)
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw simplified hand icon in white
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = Math.max(size * 0.005, 1);
+            
+            // Calculate hand dimensions
+            const centerX = size / 2;
+            const centerY = size * 0.4;
+            const handWidth = size * 0.25;
+            const handHeight = size * 0.35;
+            
+            // Draw palm
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, handWidth * 0.6, handHeight * 0.8, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw fingers
+            const fingerWidth = handWidth * 0.15;
+            const fingerPositions = [-0.6, -0.2, 0.2, 0.6];
+            
+            fingerPositions.forEach((pos, index) => {
+                const fingerX = centerX + pos * handWidth;
+                const fingerY = centerY - handHeight * 0.4;
+                const fingerHeight = handHeight * (0.5 + index * 0.1);
+                
+                ctx.beginPath();
+                ctx.ellipse(fingerX, fingerY, fingerWidth, fingerHeight, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw thumb
+            ctx.beginPath();
+            ctx.ellipse(centerX - handWidth * 0.8, centerY + handHeight * 0.2, fingerWidth * 1.2, handHeight * 0.4, -0.5, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Add WILL text for larger icons
+            if (size >= 80) {
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = `bold ${Math.max(size * 0.08, 12)}px -apple-system, BlinkMacSystemFont, Arial, sans-serif`;
+                
+                // Add text shadow for better readability
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = size * 0.01;
+                ctx.shadowOffsetY = size * 0.005;
+                
+                ctx.fillText('WILL', centerX, size * 0.8);
+                
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+            }
+        }
+
+        function generateAllIcons() {
+            const grid = document.getElementById('iconGrid');
+            const generateBtn = document.getElementById('generateBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            grid.innerHTML = '';
+            generatedIcons = {};
+            iconBlobs = {};
+            
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+            showStatus('Generating all icon sizes...');
+            
+            let completed = 0;
+            
+            iconSizes.forEach((iconSpec, index) => {
+                const container = document.createElement('div');
+                container.className = 'icon-item';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = iconSpec.size;
+                canvas.height = iconSpec.size;
+                canvas.style.width = '80px';
+                canvas.style.height = '80px';
+                
+                drawWillIcon(canvas, iconSpec.size);
+                
+                const label = document.createElement('div');
+                label.className = 'label';
+                label.innerHTML = `<strong>${iconSpec.name}</strong><br>${iconSpec.size}×${iconSpec.size}<br>${iconSpec.desc}`;
+                
+                container.appendChild(canvas);
+                container.appendChild(label);
+                grid.appendChild(container);
+                
+                // Convert canvas to blob
+                canvas.toBlob(blob => {
+                    iconBlobs[iconSpec.name] = blob;
+                    completed++;
+                    
+                    if (completed === iconSizes.length) {
+                        generateBtn.disabled = false;
+                        generateBtn.textContent = 'Generate All Icons';
+                        downloadBtn.disabled = false;
+                        showStatus(`✅ Generated ${iconSizes.length} icon files successfully!`);
+                    }
+                });
+            });
+        }
+        
+        async function downloadAll() {
+            if (Object.keys(iconBlobs).length === 0) {
+                alert('Please generate icons first');
+                return;
+            }
+            
+            showStatus('Creating ZIP file...');
+            
+            const zip = new JSZip();
+            
+            // Add all icon files to ZIP
+            Object.entries(iconBlobs).forEach(([filename, blob]) => {
+                zip.file(filename, blob);
+            });
+            
+            // Generate ZIP file
+            try {
+                const content = await zip.generateAsync({type: "blob"});
+                
+                // Download ZIP file
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'WILL-App-Icons.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('✅ ZIP file downloaded! Extract and copy all PNG files to your iOS project.');
+            } catch (error) {
+                showStatus('❌ Error creating ZIP file: ' + error.message);
+            }
+        }
+        
+        // Auto-generate on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                generateAllIcons();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
