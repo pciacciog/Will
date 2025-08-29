@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import UserNotifications
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -8,7 +9,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        let tokenString = deviceToken.map { String(format: "%02x", $0) }.joined() print("Device Token: \(tokenString)")
+        
+        // Register for remote notifications
+        UNUserNotificationCenter.current().delegate = self
+        application.registerForRemoteNotifications()
+        
         return true
     }
 
@@ -46,5 +51,68 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
+    
+    // MARK: - Push Notification Delegate Methods
+    
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        // Convert device token to string
+        let tokenString = deviceToken.map { String(format: "%02x", $0) }.joined()
+        print("🟢 Device Token Successfully Registered: \(tokenString)")
+        
+        // Send to Capacitor layer for JavaScript access
+        NotificationCenter.default.post(
+            name: NSNotification.Name("CapacitorDeviceTokenReceived"),
+            object: nil,
+            userInfo: ["token": tokenString]
+        )
+        
+        // Also send directly to PushNotifications plugin if available
+        if let bridge = (window?.rootViewController as? CAPBridgeViewController)?.bridge {
+            bridge.triggerJSEvent(eventName: "pushNotificationRegistration", target: "window", data: ["value": tokenString])
+        }
+    }
+    
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("🔴 Failed to register for remote notifications: \(error.localizedDescription)")
+        
+        // Notify Capacitor layer of failure
+        NotificationCenter.default.post(
+            name: NSNotification.Name("CapacitorDeviceTokenError"),
+            object: nil,
+            userInfo: ["error": error.localizedDescription]
+        )
+        
+        // Also send error to PushNotifications plugin if available
+        if let bridge = (window?.rootViewController as? CAPBridgeViewController)?.bridge {
+            bridge.triggerJSEvent(eventName: "pushNotificationRegistrationError", target: "window", data: ["error": error.localizedDescription])
+        }
+    }
+}
 
+// MARK: - UNUserNotificationCenterDelegate
+
+extension AppDelegate: UNUserNotificationCenterDelegate {
+    
+    // Handle notification when app is in foreground
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        print("📱 Received notification while in foreground: \(notification.request.content.title)")
+        
+        // Show notification even when app is in foreground
+        completionHandler([.banner, .sound, .badge])
+    }
+    
+    // Handle notification tap when app is in background/killed
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        print("🔔 User tapped notification: \(response.notification.request.content.title)")
+        
+        // Send notification data to Capacitor layer
+        let userInfo = response.notification.request.content.userInfo
+        NotificationCenter.default.post(
+            name: NSNotification.Name("CapacitorPushNotificationTapped"),
+            object: nil,
+            userInfo: userInfo
+        )
+        
+        completionHandler()
+    }
 }
