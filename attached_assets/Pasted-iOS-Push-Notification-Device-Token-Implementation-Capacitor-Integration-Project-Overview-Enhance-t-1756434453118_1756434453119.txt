@@ -1,0 +1,152 @@
+iOS Push Notification Device Token Implementation (Capacitor Integration)
+Project Overview
+Enhance the existing Capacitor iOS application to properly implement device token acquisition and push notification handling. The app should integrate with the existing server-side push notification service while maintaining compatibility with the Capacitor framework.
+Current Codebase Analysis
+Existing Framework: Capacitor-based hybrid app
+Server Integration: Node.js backend with APNs service already implemented
+Current Issue: AppDelegate has malformed token handling code that needs correction
+Database: Device tokens stored with userId mapping
+Notification Categories: Pre-defined templates for will lifecycle events
+Technical Requirements
+Core Functionality
+Fix Existing Implementation: Correct the malformed token conversion code in AppDelegate
+Capacitor Integration: Ensure push notifications work seamlessly with Capacitor plugins
+Token Management: Implement proper device token registration and server synchronization
+Permission Handling: Request user permission for notifications with proper error handling
+Server Communication: Integrate with existing PushNotificationService backend
+Implementation Details
+1. AppDelegate Corrections
+Current Broken Code:
+let tokenString = deviceToken.map { String(format: "%02x", $0) }.joined() print("Device Token: \(tokenString)")
+Required Fix:
+Implement proper didRegisterForRemoteNotificationsWithDeviceToken delegate method
+Fix token conversion logic
+Add proper error handling with didFailToRegisterForRemoteNotificationsWithError
+Integrate with Capacitor's notification handling
+2. Enhanced AppDelegate Methods
+func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    let tokenString = deviceToken.map { String(format: "%02x", $0) }.joined()
+    print("Device Token: \(tokenString)")
+    
+    // Send to Capacitor layer for JavaScript access
+    NotificationCenter.default.post(
+        name: NSNotification.Name("CapacitorDeviceTokenReceived"),
+        object: nil,
+        userInfo: ["token": tokenString]
+    )
+}
+func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+    print("Failed to register for remote notifications: \(error.localizedDescription)")
+    
+    // Notify Capacitor layer of failure
+    NotificationCenter.default.post(
+        name: NSNotification.Name("CapacitorDeviceTokenError"),
+        object: nil,
+        userInfo: ["error": error.localizedDescription]
+    )
+}
+3. Capacitor Plugin Integration
+Create Custom Push Notification Plugin:
+Extend existing Capacitor functionality
+Provide JavaScript interface for token management
+Handle permission requests from web layer
+Sync tokens with server backend
+4. Web Layer Implementation (TypeScript/JavaScript)
+interface DeviceTokenManager {
+  requestPermissions(): Promise<PermissionStatus>;
+  getDeviceToken(): Promise<string | null>;
+  syncTokenWithServer(userId: string): Promise<boolean>;
+  handleTokenRefresh(): void;
+}
+5. Server Integration Points
+Existing Backend Endpoints to Leverage:
+Device token storage in database
+User-token mapping functionality
+Notification categorization system
+APNs provider with simulation fallback
+Required API Endpoints:
+// POST /api/device-token
+interface RegisterTokenRequest {
+  userId: string;
+  deviceToken: string;
+  platform: 'ios' | 'android';
+}
+// DELETE /api/device-token/:userId/:token
+interface UnregisterTokenRequest {
+  userId: string;
+  deviceToken: string;
+}
+UI/UX Requirements (Web Layer)
+Settings Screen: Push notification preferences
+Token Display: Development/debug view for token verification
+Permission Status: Visual indicator of notification permissions
+Test Notifications: Admin interface to test notification delivery
+Error Handling: User-friendly error messages for permission issues
+Integration with Existing Notification System
+Leverage Existing Categories:
+will_proposed: New will proposal notifications
+will_started: Will commitment start notifications
+end_room_24_hours: 24-hour End Room reminders
+end_room_15_minutes: 15-minute End Room reminders
+end_room_live: Live End Room notifications
+ready_for_new_will: New will availability notifications
+Testing Scenarios
+Fresh Install: Permission request and token acquisition
+Permission Granted: Token sync with server
+Permission Denied: Graceful handling with settings redirect
+Token Refresh: Handle iOS token updates
+Server Integration: Test with existing notification templates
+Capacitor Bridge: Verify web-native communication
+Background/Foreground: Handle app state transitions
+Code Structure
+iOS/
+├── App/
+│   ├── AppDelegate.swift (fix existing implementation)
+│   └── Podfile (ensure push notification capabilities)
+├── Plugins/
+│   └── PushNotificationPlugin/ (custom Capacitor plugin)
+│       ├── PushNotificationPlugin.swift
+│       ├── PushNotificationPlugin.m
+│       └── PushNotificationPlugin.js
+Web/
+├── services/
+│   ├── pushNotificationService.ts (client-side)
+│   └── deviceTokenManager.ts
+└── components/
+    └── NotificationSettings.tsx
+Platform-Specific Considerations
+Capacitor Compatibility: Ensure iOS 13+ support aligns with Capacitor requirements
+Plugin Architecture: Follow Capacitor plugin development guidelines
+Native Bridge: Implement proper data passing between layers
+Certificate Management: Work with existing APNs configuration
+Server-Side Enhancements
+Extend Existing PushNotificationService:
+Add device token management endpoints
+Implement token validation and cleanup
+Add user-device association tracking
+Enhance simulation mode with web socket updates
+Security Considerations
+Token Validation: Verify token format (64 hex characters)
+User Association: Secure token-user mapping
+Token Rotation: Handle iOS token refresh scenarios
+API Authentication: Secure token registration endpoints
+Expected Deliverables
+Fixed AppDelegate: Corrected push notification delegate methods
+Capacitor Plugin: Custom plugin for push notification management
+Web Integration: TypeScript service for token management
+Server Endpoints: API integration with existing backend
+Testing Suite: Comprehensive testing of notification flow
+Documentation: Integration guide and troubleshooting
+Success Criteria
+AppDelegate properly handles device token registration
+Seamless Capacitor-native communication
+Device tokens successfully stored in existing database
+Integration with existing notification categories
+Production-ready error handling and fallback modes
+Comprehensive logging for debugging
+Migration Notes
+Preserve Existing: Don't break current Capacitor functionality
+Backward Compatibility: Ensure existing web code continues working
+Gradual Rollout: Implement with feature flags for safe deployment
+Testing: Validate against existing notification templates
+Documentation: Update deployment and configuration guides
