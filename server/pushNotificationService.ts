@@ -93,12 +93,16 @@ class PushNotificationService {
 
   async sendToUser(userId: string, payload: PushNotificationPayload): Promise<boolean> {
     try {
+      console.log(`[PushNotificationService] 🔍 DEBUG: Processing notification for user ${userId}`);
+      
       // Get user's device tokens
       const userTokens = await db
         .select()
         .from(deviceTokens)
         .where(eq(deviceTokens.userId, userId));
 
+      console.log(`[PushNotificationService] 🔍 DEBUG: Found ${userTokens.length} device token(s) for user ${userId}`);
+      
       if (userTokens.length === 0) {
         console.log(`[PushNotificationService] No device tokens found for user ${userId}`);
         return false;
@@ -106,7 +110,9 @@ class PushNotificationService {
 
       // In production, send to all user's devices
       for (const tokenRecord of userTokens) {
-        await this.sendToDevice(tokenRecord.deviceToken, payload);
+        console.log(`[PushNotificationService] 🔍 DEBUG: Sending to device token ${tokenRecord.deviceToken.substring(0, 20)}... (belongs to user ${userId})`);
+        console.log(`[PushNotificationService] 🔍 DEBUG: Token details: Platform=${tokenRecord.platform}, Active=${tokenRecord.isActive}, Updated=${tokenRecord.updatedAt}`);
+        await this.sendToDevice(tokenRecord.deviceToken, payload, userId); // Pass userId for logging
       }
 
       return true;
@@ -117,18 +123,30 @@ class PushNotificationService {
   }
 
   async sendToMultipleUsers(userIds: string[], payload: PushNotificationPayload): Promise<void> {
-    const promises = userIds.map(userId => this.sendToUser(userId, payload));
+    console.log(`[PushNotificationService] 🔍 DEBUG: Starting notification send to ${userIds.length} users`);
+    console.log(`[PushNotificationService] 🔍 DEBUG: Target user IDs: ${userIds.join(', ')}`);
+    console.log(`[PushNotificationService] 🔍 DEBUG: Notification: "${payload.title}" - "${payload.body}"`);
+    
+    const promises = userIds.map((userId, index) => {
+      console.log(`[PushNotificationService] 🔍 DEBUG: Processing user ${index + 1}/${userIds.length}: ${userId}`);
+      return this.sendToUser(userId, payload);
+    });
+    
     await Promise.all(promises);
+    console.log(`[PushNotificationService] 🔍 DEBUG: Completed notification send to all ${userIds.length} users`);
   }
 
-  private async sendToDevice(deviceToken: string, payload: PushNotificationPayload): Promise<boolean> {
+  private async sendToDevice(deviceToken: string, payload: PushNotificationPayload, userId?: string): Promise<boolean> {
     try {
+      const userInfo = userId ? ` (for user ${userId})` : '';
+      console.log(`[PushNotificationService] 🔍 DEBUG: sendToDevice called with token ${deviceToken.substring(0, 20)}...${userInfo}`);
+      
       if (!this.apnProvider || this.apnProvider === null) {
         // Enhanced simulation mode with OpenSSL error context
         const reason = 'APNs credentials not configured';
           
         console.log(`[PushNotificationService] SIMULATION MODE (${reason})`);
-        console.log(`  Would send to device: ${deviceToken.substring(0, 10)}...${deviceToken.substring(-4)}`);
+        console.log(`  Would send to device: ${deviceToken.substring(0, 10)}...${deviceToken.substring(-4)}${userInfo}`);
         console.log(`  Title: ${payload.title}`);
         console.log(`  Body: ${payload.body}`);
         console.log(`  Category: ${payload.category || 'default'}`);
@@ -149,38 +167,48 @@ class PushNotificationService {
       notification.topic = process.env.APNS_TOPIC || 'com.porfirio.will'; // Your app's bundle ID
       notification.payload = payload.data || {};
 
-      console.log(`[PushNotificationService] Sending notification to device: ${deviceToken.substring(0, 20)}...`);
+      console.log(`[PushNotificationService] 🔍 DEBUG: Sending notification to device: ${deviceToken.substring(0, 20)}...${userInfo}`);
       console.log(`[PushNotificationService] Title: ${payload.title}`);
       console.log(`[PushNotificationService] Body: ${payload.body}`);
       console.log(`[PushNotificationService] APNs Environment: SANDBOX (development tokens only)`);
+      console.log(`[PushNotificationService] 🔍 DEBUG: APNs Topic: ${notification.topic}`);
       
       const result = await this.apnProvider.send(notification, deviceToken);
       
-      console.log(`[PushNotificationService] APNs Response:`, {
+      console.log(`[PushNotificationService] 🔍 DEBUG: APNs Response for device ${deviceToken.substring(0, 20)}...${userInfo}:`, {
         sent: result.sent.length,
         failed: result.failed.length
       });
       
       if (result.failed.length > 0) {
-        console.error('[PushNotificationService] Failed deliveries:');
+        console.error(`[PushNotificationService] ❌ Failed deliveries for user ${userId || 'unknown'}:`);
         result.failed.forEach((failure) => {
-          console.error(`  Device: ${failure.device}`);
+          console.error(`  Device: ${failure.device}${userInfo}`);
           console.error(`  Status: ${failure.status}`);
           console.error(`  Response: ${failure.response?.reason}`);
+          
+          // Special handling for 403 errors
+          if (failure.status === 403) {
+            console.error(`  🔍 DEBUG: 403 Error Analysis for ${userInfo}:`);
+            console.error(`    - This usually means ENVIRONMENT MISMATCH`);
+            console.error(`    - Server is using: SANDBOX APNs`);
+            console.error(`    - Device token might be from: PRODUCTION environment`);
+            console.error(`    - Solution: Regenerate token with development provisioning profile`);
+          }
         });
         return false;
       }
 
       if (result.sent.length > 0) {
-        console.log(`[PushNotificationService] ✅ Successfully sent to ${result.sent.length} device(s)`);
+        console.log(`[PushNotificationService] ✅ Successfully sent to ${result.sent.length} device(s)${userInfo}`);
         result.sent.forEach((sent) => {
-          console.log(`  ✅ Sent to: ${sent.device.substring(0, 20)}...`);
+          console.log(`  ✅ Sent to: ${sent.device.substring(0, 20)}...${userInfo}`);
         });
       }
       
       return true;
     } catch (error) {
-      console.error('[PushNotificationService] Error sending to device:', error);
+      console.error(`[PushNotificationService] Error sending to device${userId ? ` (user ${userId})` : ''}:`, error);
       return false;
     }
   }
