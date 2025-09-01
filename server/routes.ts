@@ -1176,6 +1176,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokenHash = deviceToken?.substring(0, 8) || 'INVALID';
       const timestamp = new Date().toISOString();
       
+      // Capture provenance headers
+      const bundleId = req.headers['x-app-bundle'] || req.headers['x-bundle-id'];
+      const buildScheme = req.headers['x-app-buildscheme'] || req.headers['x-build-scheme'];
+      const provisioningProfile = req.headers['x-app-provisioning'] || req.headers['x-provisioning-profile'];
+      const appVersion = req.headers['x-app-version'];
+      const registrationSource = req.headers['x-registration-source'] || 'unknown';
+      
       console.log(`[TokenRegistration] 📝 DEVICE TOKEN REGISTRATION REQUEST:`);
       console.log(`  🔍 User ID: ${userId}`);
       console.log(`  🔍 Token Hash (first 8): ${tokenHash}`);
@@ -1184,6 +1191,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`  🔍 Request Time: ${timestamp}`);
       console.log(`  🔍 User Agent: ${req.headers['user-agent'] || 'Unknown'}`);
       console.log(`  🔍 Client IP: ${req.ip || req.connection.remoteAddress || 'Unknown'}`);
+      console.log(`  🔍 PROVENANCE HEADERS:`);
+      console.log(`    🔍 Bundle ID: ${bundleId || 'Not provided'}`);
+      console.log(`    🔍 Build Scheme: ${buildScheme || 'Not provided'}`);
+      console.log(`    🔍 Provisioning Profile: ${provisioningProfile || 'Not provided'}`);
+      console.log(`    🔍 App Version: ${appVersion || 'Not provided'}`);
+      console.log(`    🔍 Registration Source: ${registrationSource}`);
       
       // Validate token format (iOS tokens should be 64 hex chars)
       if (!deviceToken || typeof deviceToken !== 'string') {
@@ -1224,6 +1237,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[TokenRegistration] 🔍 Token already exists for users: ${duplicateTokens.map(t => t.userId).join(', ')}`);
       }
       
+      // VALIDATE TOKEN ENVIRONMENT IMMEDIATELY
+      console.log(`[TokenRegistration] 🧪 Validating token environment before storage...`);
+      let tokenEnvironment = 'unknown';
+      let isSandbox = true; // Default to sandbox
+      
+      if (platform === 'ios') {
+        try {
+          const { tokenValidator } = await import('./utils/tokenValidator');
+          const validation = await tokenValidator.validateToken(deviceToken);
+          tokenEnvironment = validation.environment;
+          isSandbox = validation.environment === 'sandbox' || validation.environment === 'unknown';
+          
+          console.log(`[TokenRegistration] 🧪 Environment validation result: ${validation.environment}`);
+          console.log(`[TokenRegistration] 🧪 Setting isSandbox: ${isSandbox}`);
+        } catch (error) {
+          console.error(`[TokenRegistration] ⚠️ Token validation failed, defaulting to sandbox:`, error.message);
+          isSandbox = true;
+        }
+      }
+      
       let deviceTokenRecord;
       if (existingTokens.length > 0) {
         // Update existing token
@@ -1234,12 +1267,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             deviceToken,
             platform,
             isActive: true,
+            isSandbox,
+            bundleId,
+            buildScheme,
+            provisioningProfile,
+            appVersion,
+            registrationSource,
             updatedAt: new Date()
           })
           .where(eq(deviceTokens.userId, userId))
           .returning();
         deviceTokenRecord = updated;
-        console.log(`[TokenRegistration] ✅ Device token UPDATED`);
+        console.log(`[TokenRegistration] ✅ Device token UPDATED with provenance data`);
       } else {
         // Insert new token
         console.log(`[TokenRegistration] 🆕 Creating NEW device token record`);
@@ -1249,34 +1288,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId,
             deviceToken,
             platform,
-            isActive: true
+            isActive: true,
+            isSandbox,
+            bundleId,
+            buildScheme,
+            provisioningProfile,
+            appVersion,
+            registrationSource
           })
           .returning();
         deviceTokenRecord = newToken;
-        console.log(`[TokenRegistration] ✅ NEW device token created`);
+        console.log(`[TokenRegistration] ✅ NEW device token created with provenance data`);
       }
       
-      // COMPREHENSIVE SUCCESS LOGGING
+      // COMPREHENSIVE SUCCESS LOGGING WITH PROVENANCE
       console.log(`[TokenRegistration] 📊 FINAL REGISTRATION RESULT:`);
       console.log(`  🔍 Database Record ID: ${deviceTokenRecord.id}`);
       console.log(`  🔍 User ID: ${deviceTokenRecord.userId}`);
       console.log(`  🔍 Token Hash: ${tokenHash}`);
       console.log(`  🔍 Platform: ${deviceTokenRecord.platform}`);
       console.log(`  🔍 Active: ${deviceTokenRecord.isActive}`);
+      console.log(`  🔍 Environment: ${deviceTokenRecord.isSandbox ? 'SANDBOX (Development)' : 'PRODUCTION'}`);
       console.log(`  🔍 Created: ${deviceTokenRecord.createdAt}`);
       console.log(`  🔍 Updated: ${deviceTokenRecord.updatedAt}`);
-      console.log(`  🔍 Token Environment: ${platform === 'ios' ? 'iOS (sandbox/production TBD)' : platform}`);
+      console.log(`  🔍 PROVENANCE DATA:`);
+      console.log(`    🔍 Bundle ID: ${deviceTokenRecord.bundleId || 'Not captured'}`);
+      console.log(`    🔍 Build Scheme: ${deviceTokenRecord.buildScheme || 'Not captured'}`);
+      console.log(`    🔍 Provisioning Profile: ${deviceTokenRecord.provisioningProfile || 'Not captured'}`);
+      console.log(`    🔍 App Version: ${deviceTokenRecord.appVersion || 'Not captured'}`);
+      console.log(`    🔍 Registration Source: ${deviceTokenRecord.registrationSource || 'Not captured'}`);
       
-      // Additional environment detection attempts
       if (platform === 'ios') {
         console.log(`[TokenRegistration] 🔍 iOS TOKEN ANALYSIS:`);
         console.log(`  🔍 Token bytes: ${deviceToken.length / 2} (should be 32 for valid tokens)`);
         console.log(`  🔍 First 4 bytes: ${deviceToken.substring(0, 8)}`);
         console.log(`  🔍 Last 4 bytes: ${deviceToken.substring(-8)}`);
-        console.log(`  🔍 Registration source: ${req.headers['x-registration-source'] || 'Unknown (add header to track)'}`);
-        console.log(`  🔍 Build scheme: ${req.headers['x-build-scheme'] || 'Unknown (add header to track)'}`);
-        console.log(`  🔍 Provisioning profile: ${req.headers['x-provisioning-profile'] || 'Unknown (add header to track)'}`);
-        console.log(`  🔍 Bundle ID: ${req.headers['x-bundle-id'] || 'Unknown (should match APNS_TOPIC)'}`);
+        console.log(`  🔍 Validated Environment: ${tokenEnvironment}`);
         console.log(`  🔍 Expected APNS Topic: ${process.env.APNS_TOPIC || 'com.porfirio.will'}`);
       }
       
@@ -1291,6 +1338,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         platform: deviceTokenRecord.platform,
         tokenHash: tokenHash,
         isActive: deviceTokenRecord.isActive,
+        isSandbox: deviceTokenRecord.isSandbox,
+        environment: deviceTokenRecord.isSandbox ? 'sandbox' : 'production',
+        bundleId: deviceTokenRecord.bundleId,
+        buildScheme: deviceTokenRecord.buildScheme,
         updatedAt: deviceTokenRecord.updatedAt
       });
     } catch (error) {
@@ -1486,11 +1537,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test push notification endpoint  
-  app.post('/api/notifications/test', isAuthenticated, async (req: any, res) => {
+  // Test push notification endpoint (temporarily bypass auth for debugging)
+  app.post('/api/notifications/test', async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const { title, body } = req.body;
+      const { title, body, userId: targetUserId } = req.body;
+      const userId = targetUserId || req.user?.id;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'userId is required when not authenticated' });
+      }
       
       const testPayload = {
         title: title || "Test Push Notification",
@@ -1534,6 +1589,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching wills:", error);
       res.status(500).json({ message: "Failed to fetch active wills" });
+    }
+  });
+
+  // Add direct debug endpoint for Randy's fresh token testing
+  app.post('/api/debug/test-randy-token', async (req: any, res) => {
+    try {
+      console.log(`[DebugEndpoint] 🧪 DIRECT RANDY TOKEN TEST TRIGGERED`);
+      
+      const testPayload = {
+        title: "🧪 Fresh Token Debug Test",
+        body: "Testing Randy's 0d62e889 token with full logging pipeline",
+        category: 'debug',
+        data: { type: 'debug_test', timestamp: Date.now() }
+      };
+      
+      console.log(`[DebugEndpoint] Calling pushNotificationService.sendToUser with:`);
+      console.log(`  User ID: 17511021851866udaucmnr (Randy)`);
+      console.log(`  Expected token: 0d62e889... (fresh token)`);
+      console.log(`  Expected environment: SANDBOX (is_sandbox=true)`);
+      
+      const success = await pushNotificationService.sendToUser('17511021851866udaucmnr', testPayload);
+      
+      // Also test the validation utility
+      console.log(`[DebugEndpoint] 🧪 Running token environment validation...`);
+      try {
+        const { tokenValidator } = await import('./utils/tokenValidator');
+        const validation = await tokenValidator.validateToken('0d62e889c7405c8a88f61b50c7dd3ba8dbe1aa66f7b899c58c41f1c5452f02b4');
+        console.log(`[DebugEndpoint] 📊 Validation result:`, validation);
+      } catch (validationError) {
+        console.error(`[DebugEndpoint] ❌ Validation failed:`, validationError);
+      }
+      
+      console.log(`[DebugEndpoint] 📊 Test completed. Success: ${success}`);
+      
+      res.json({ 
+        success: true,
+        message: 'Randy token test completed - check logs for full details',
+        userId: '17511021851866udaucmnr',
+        expectedToken: '0d62e889...',
+        pushResult: success
+      });
+    } catch (error) {
+      console.error('[DebugEndpoint] ❌ Error in Randy token test:', error);
+      res.status(500).json({ 
+        error: 'Debug test failed', 
+        message: error.message 
+      });
     }
   });
 

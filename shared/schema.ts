@@ -131,6 +131,13 @@ export const deviceTokens = pgTable("device_tokens", {
   deviceToken: text("device_token").notNull(),
   platform: varchar("platform", { length: 10 }).notNull(), // ios, android
   isActive: boolean("is_active").notNull().default(true),
+  // Token provenance tracking
+  isSandbox: boolean("is_sandbox").default(true), // true for development tokens, false for production
+  bundleId: varchar("bundle_id", { length: 255 }), // X-App-Bundle header
+  buildScheme: varchar("build_scheme", { length: 50 }), // X-App-BuildScheme header (Debug/Release)
+  provisioningProfile: varchar("provisioning_profile", { length: 255 }), // X-App-Provisioning header
+  appVersion: varchar("app_version", { length: 50 }), // X-App-Version header
+  registrationSource: varchar("registration_source", { length: 100 }), // Where token was registered
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
