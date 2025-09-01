@@ -40,7 +40,7 @@ class PushNotificationService {
             keyId: process.env.APNS_KEY_ID!,
             teamId: process.env.APNS_TEAM_ID!,
           },
-          production: process.env.NODE_ENV === 'production',
+          production: false, // Force sandbox mode to match iOS development environment
         };
         
         this.apnProvider = new apn.Provider(options);
@@ -70,7 +70,7 @@ class PushNotificationService {
             keyId: process.env.APNS_KEY_ID!,
             teamId: process.env.APNS_TEAM_ID!,
           },
-          production: process.env.NODE_ENV === 'production',
+          production: false, // Force sandbox mode to match iOS development environment
         };
         
         this.apnProvider = new apn.Provider(options);
@@ -123,11 +123,9 @@ class PushNotificationService {
 
   private async sendToDevice(deviceToken: string, payload: PushNotificationPayload): Promise<boolean> {
     try {
-      if (!this.apnProvider || (this.apnProvider as any) === 'simulation_openssl_error') {
+      if (!this.apnProvider || this.apnProvider === null) {
         // Enhanced simulation mode with OpenSSL error context
-        const reason = this.apnProvider === 'simulation_openssl_error' 
-          ? 'OpenSSL compatibility issue with .p8 key format'
-          : 'APNs credentials not configured';
+        const reason = 'APNs credentials not configured';
           
         console.log(`[PushNotificationService] SIMULATION MODE (${reason})`);
         console.log(`  Would send to device: ${deviceToken.substring(0, 10)}...${deviceToken.substring(-4)}`);
