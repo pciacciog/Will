@@ -1255,209 +1255,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/push-tokens', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { deviceToken, platform } = req.body;
+      const { deviceToken, platform = 'ios' } = req.body;
       
-      console.log(`[TokenRegistration] 🔐 AUTHENTICATED TOKEN REGISTRATION/UPDATE:`);
+      console.log(`[TokenRegistration] 🔐 ROBUST TOKEN OWNERSHIP TRANSFER:`);
       console.log(`  🔍 User ID: ${userId}`);
       console.log(`  🔍 Token Hash: ${deviceToken?.substring(0, 8)}...`);
       console.log(`  🔍 Platform: ${platform}`);
       
-      // Check if this token exists with 'pending' userId (from unauthenticated registration)
-      const pendingToken = await db
-        .select()
-        .from(deviceTokens)
-        .where(eq(deviceTokens.deviceToken, deviceToken));
-        
-      if (pendingToken.length > 0 && pendingToken[0].userId === 'pending-tokens') {
-        console.log(`  ✅ Found pending token, associating with authenticated user ${userId}`);
-        await db
-          .update(deviceTokens)
-          .set({ 
-            userId: userId,
-            updatedAt: new Date(),
-            registrationSource: 'authenticated_association'
-          })
-          .where(eq(deviceTokens.deviceToken, deviceToken));
-          
-        console.log(`[TokenRegistration] ✅ Token ${deviceToken.substring(0, 8)}... now associated with user ${userId}`);
-        return res.json({ success: true, message: 'Token associated with authenticated user' });
+      if (!deviceToken) {
+        return res.status(400).json({ error: 'Device token is required' });
       }
       
-      // COMPREHENSIVE TOKEN REGISTRATION LOGGING (for new tokens)
-      const tokenHash = deviceToken?.substring(0, 8) || 'INVALID';
-      const timestamp = new Date().toISOString();
-      
-      // Capture provenance headers
-      const bundleId = req.headers['x-app-bundle'] || req.headers['x-bundle-id'];
-      const buildScheme = req.headers['x-app-buildscheme'] || req.headers['x-build-scheme'];
-      const provisioningProfile = req.headers['x-app-provisioning'] || req.headers['x-provisioning-profile'];
-      const appVersion = req.headers['x-app-version'];
-      const registrationSource = req.headers['x-registration-source'] || 'unknown';
-      
-      console.log(`[TokenRegistration] 📝 DEVICE TOKEN REGISTRATION REQUEST:`);
-      console.log(`  🔍 User ID: ${userId}`);
-      console.log(`  🔍 Token Hash (first 8): ${tokenHash}`);
-      console.log(`  🔍 Platform: ${platform}`);
-      console.log(`  🔍 Token Length: ${deviceToken?.length || 0} chars`);
-      console.log(`  🔍 Request Time: ${timestamp}`);
-      console.log(`  🔍 User Agent: ${req.headers['user-agent'] || 'Unknown'}`);
-      console.log(`  🔍 Client IP: ${req.ip || req.connection.remoteAddress || 'Unknown'}`);
-      console.log(`  🔍 PROVENANCE HEADERS:`);
-      console.log(`    🔍 Bundle ID: ${bundleId || 'Not provided'}`);
-      console.log(`    🔍 Build Scheme: ${buildScheme || 'Not provided'}`);
-      console.log(`    🔍 Provisioning Profile: ${provisioningProfile || 'Not provided'}`);
-      console.log(`    🔍 App Version: ${appVersion || 'Not provided'}`);
-      console.log(`    🔍 Registration Source: ${registrationSource}`);
-      
-      // Validate token format (iOS tokens should be 64 hex chars)
-      if (!deviceToken || typeof deviceToken !== 'string') {
-        console.error(`[TokenRegistration] ❌ Invalid token format: not a string`);
-        return res.status(400).json({ error: 'Device token must be a string' });
-      }
-      
-      if (!platform) {
-        console.error(`[TokenRegistration] ❌ Missing platform`);
-        return res.status(400).json({ error: 'Platform is required' });
-      }
-      
-      if (platform === 'ios' && !/^[0-9a-fA-F]{64}$/.test(deviceToken)) {
-        console.error(`[TokenRegistration] ❌ Invalid iOS token format: ${deviceToken.length} chars, expected 64 hex`);
-        console.error(`  🔍 Token pattern: ${deviceToken.match(/[^0-9a-fA-F]/g)?.join('') || 'valid hex'}`);
-      } else {
-        console.log(`  ✅ Token format: Valid ${platform} token`);
-      }
-      
-      // Check for existing tokens for this user
-      const existingTokens = await db
-        .select()
-        .from(deviceTokens)
-        .where(eq(deviceTokens.userId, userId));
-        
-      console.log(`[TokenRegistration] 🔍 Existing tokens for user: ${existingTokens.length}`);
-      existingTokens.forEach((token, idx) => {
-        console.log(`  🔍 Token ${idx + 1}: ${token.deviceToken.substring(0, 8)}... (${token.platform}, updated: ${token.updatedAt})`);
-      });
-      
-      // Check if this exact token already exists (across all users)
-      const duplicateTokens = await db
-        .select()
-        .from(deviceTokens)
-        .where(eq(deviceTokens.deviceToken, deviceToken));
-        
-      if (duplicateTokens.length > 0) {
-        console.log(`[TokenRegistration] 🔍 Token already exists for users: ${duplicateTokens.map(t => t.userId).join(', ')}`);
-      }
-      
-      // VALIDATE TOKEN ENVIRONMENT IMMEDIATELY
-      console.log(`[TokenRegistration] 🧪 Validating token environment before storage...`);
-      let tokenEnvironment = 'unknown';
-      let isSandbox = true; // Default to sandbox
-      
-      if (platform === 'ios') {
-        try {
-          const { tokenValidator } = await import('./utils/tokenValidator');
-          const validation = await tokenValidator.validateToken(deviceToken);
-          tokenEnvironment = validation.environment;
-          isSandbox = validation.environment === 'sandbox' || validation.environment === 'unknown';
-          
-          console.log(`[TokenRegistration] 🧪 Environment validation result: ${validation.environment}`);
-          console.log(`[TokenRegistration] 🧪 Setting isSandbox: ${isSandbox}`);
-        } catch (error) {
-          console.error(`[TokenRegistration] ⚠️ Token validation failed, defaulting to sandbox:`, error.message);
-          isSandbox = true;
-        }
-      }
-      
-      let deviceTokenRecord;
-      if (existingTokens.length > 0) {
-        // Update existing token
-        console.log(`[TokenRegistration] 🔄 UPDATING existing device token record`);
-        const [updated] = await db
-          .update(deviceTokens)
-          .set({
-            deviceToken,
-            platform,
-            isActive: true,
-            isSandbox,
-            bundleId,
-            buildScheme,
-            provisioningProfile,
-            appVersion,
-            registrationSource,
+      // 🔥 ALWAYS update ownership, regardless of current state
+      // This handles ALL scenarios: new tokens, pending tokens, tokens from other users
+      await db
+        .insert(deviceTokens)
+        .values({
+          deviceToken: deviceToken,
+          userId: userId,
+          platform: platform,
+          registrationSource: 'authenticated_ownership_transfer'
+        })
+        .onConflictDoUpdate({
+          target: deviceTokens.deviceToken,
+          set: {
+            userId: userId, // Always transfer ownership to current user
+            registrationSource: 'authenticated_ownership_transfer',
             updatedAt: new Date()
-          })
-          .where(eq(deviceTokens.userId, userId))
-          .returning();
-        deviceTokenRecord = updated;
-        console.log(`[TokenRegistration] ✅ Device token UPDATED with provenance data`);
-      } else {
-        // Insert new token
-        console.log(`[TokenRegistration] 🆕 Creating NEW device token record`);
-        const [newToken] = await db
-          .insert(deviceTokens)
-          .values({
-            userId,
-            deviceToken,
-            platform,
-            isActive: true,
-            isSandbox,
-            bundleId,
-            buildScheme,
-            provisioningProfile,
-            appVersion,
-            registrationSource
-          })
-          .returning();
-        deviceTokenRecord = newToken;
-        console.log(`[TokenRegistration] ✅ NEW device token created with provenance data`);
-      }
+          }
+        });
       
-      // COMPREHENSIVE SUCCESS LOGGING WITH PROVENANCE
-      console.log(`[TokenRegistration] 📊 FINAL REGISTRATION RESULT:`);
-      console.log(`  🔍 Database Record ID: ${deviceTokenRecord.id}`);
-      console.log(`  🔍 User ID: ${deviceTokenRecord.userId}`);
-      console.log(`  🔍 Token Hash: ${tokenHash}`);
-      console.log(`  🔍 Platform: ${deviceTokenRecord.platform}`);
-      console.log(`  🔍 Active: ${deviceTokenRecord.isActive}`);
-      console.log(`  🔍 Environment: ${deviceTokenRecord.isSandbox ? 'SANDBOX (Development)' : 'PRODUCTION'}`);
-      console.log(`  🔍 Created: ${deviceTokenRecord.createdAt}`);
-      console.log(`  🔍 Updated: ${deviceTokenRecord.updatedAt}`);
-      console.log(`  🔍 PROVENANCE DATA:`);
-      console.log(`    🔍 Bundle ID: ${deviceTokenRecord.bundleId || 'Not captured'}`);
-      console.log(`    🔍 Build Scheme: ${deviceTokenRecord.buildScheme || 'Not captured'}`);
-      console.log(`    🔍 Provisioning Profile: ${deviceTokenRecord.provisioningProfile || 'Not captured'}`);
-      console.log(`    🔍 App Version: ${deviceTokenRecord.appVersion || 'Not captured'}`);
-      console.log(`    🔍 Registration Source: ${deviceTokenRecord.registrationSource || 'Not captured'}`);
-      
-      if (platform === 'ios') {
-        console.log(`[TokenRegistration] 🔍 iOS TOKEN ANALYSIS:`);
-        console.log(`  🔍 Token bytes: ${deviceToken.length / 2} (should be 32 for valid tokens)`);
-        console.log(`  🔍 First 4 bytes: ${deviceToken.substring(0, 8)}`);
-        console.log(`  🔍 Last 4 bytes: ${deviceToken.substring(-8)}`);
-        console.log(`  🔍 Validated Environment: ${tokenEnvironment}`);
-        console.log(`  🔍 Expected APNS Topic: ${process.env.APNS_TOPIC || 'com.porfirio.will'}`);
-      }
-      
-      console.log(`[TokenRegistration] ✅ Device token registration COMPLETED successfully`);
-      console.log(`[TokenRegistration] 🎉 User ${userId} can now receive push notifications`);
-      
-      res.json({ 
-        success: true, 
-        message: 'Device token stored successfully',
-        deviceId: deviceTokenRecord.id,
-        userId: userId,
-        platform: deviceTokenRecord.platform,
-        tokenHash: tokenHash,
-        isActive: deviceTokenRecord.isActive,
-        isSandbox: deviceTokenRecord.isSandbox,
-        environment: deviceTokenRecord.isSandbox ? 'sandbox' : 'production',
-        bundleId: deviceTokenRecord.bundleId,
-        buildScheme: deviceTokenRecord.buildScheme,
-        updatedAt: deviceTokenRecord.updatedAt
-      });
+      console.log(`✅ [TokenRegistration] Token ${deviceToken.substring(0, 8)}... now owned by user ${userId}`);
+      res.json({ success: true, message: 'Token ownership transferred successfully' });
     } catch (error) {
-      console.error("[TokenRegistration] ❌ Error storing device token:", error);
-      res.status(500).json({ message: "Failed to store device token", error: error.message });
+      console.error('[TokenRegistration] ❌ Error during token ownership transfer:', error);
+      res.status(500).json({ message: 'Failed to transfer token ownership', error: error.message });
     }
   });
 

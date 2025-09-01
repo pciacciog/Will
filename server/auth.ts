@@ -123,8 +123,49 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", passport.authenticate("local"), async (req: any, res) => {
+    try {
+      const user = req.user;
+      
+      // 🔥 CRITICAL: Always transfer device token ownership on login
+      const deviceToken = req.body.deviceToken || req.headers['x-device-token'];
+      
+      if (deviceToken) {
+        console.log(`🔄 [Login] Transferring token ownership to user ${user.id}`);
+        console.log(`📱 Token: ${deviceToken.substring(0, 8)}...`);
+        
+        // Import database dependencies
+        const { db } = await import('./storage');
+        const { deviceTokens } = await import('../shared/schema');
+        const { sql } = await import('drizzle-orm');
+        
+        // Always transfer token ownership, regardless of current state
+        await db
+          .insert(deviceTokens)
+          .values({
+            deviceToken: deviceToken,
+            userId: user.id,
+            platform: 'ios',
+            registrationSource: 'login_transfer'
+          })
+          .onConflictDoUpdate({
+            target: deviceTokens.deviceToken,
+            set: {
+              userId: user.id,
+              registrationSource: 'login_transfer',
+              updatedAt: new Date()
+            }
+          });
+        
+        console.log(`✅ [Login] Token ${deviceToken.substring(0, 8)}... now owned by user ${user.id}`);
+      }
+      
+      res.status(200).json(user);
+    } catch (error) {
+      console.error('❌ [Login] Error during token ownership transfer:', error);
+      // Don't fail login due to token transfer issues
+      res.status(200).json(req.user);
+    }
   });
 
   // Handle both GET and POST for logout

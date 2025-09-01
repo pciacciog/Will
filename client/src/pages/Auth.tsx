@@ -21,9 +21,31 @@ export default function Auth() {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
+      // 🔥 CRITICAL: Send device token with login request for immediate ownership transfer
+      const deviceTokenData = localStorage.getItem('pendingDeviceToken');
+      let deviceToken = null;
+      
+      if (deviceTokenData) {
+        try {
+          const tokenInfo = JSON.parse(deviceTokenData);
+          deviceToken = tokenInfo.token;
+          console.log(`📱 [Login] Sending device token with login: ${deviceToken?.substring(0, 8)}...`);
+        } catch (error) {
+          console.warn('Failed to parse stored device token:', error);
+        }
+      }
+      
+      const loginPayload = {
+        ...credentials,
+        deviceToken // Send device token for immediate ownership transfer
+      };
+      
       const res = await apiRequest('/api/login', {
         method: 'POST',
-        body: JSON.stringify(credentials)
+        body: JSON.stringify(loginPayload),
+        headers: deviceToken ? {
+          'X-Device-Token': deviceToken // Also send in headers for redundancy
+        } : undefined
       });
       return await res.json();
     },
@@ -31,15 +53,12 @@ export default function Auth() {
       console.log('Login success, user:', user);
       queryClient.setQueryData(['/api/user'], user);
       
-      // Send pending device token now that user is authenticated
-      try {
-        const { sendPendingDeviceToken } = await import('../services/NotificationService');
-        const tokenSent = await sendPendingDeviceToken();
-        if (tokenSent) {
-          console.log('📱 Device token successfully linked to user account');
-        }
-      } catch (error) {
-        console.error('Failed to send pending device token:', error);
+      // 🔥 NEW: Token ownership already transferred by login endpoint
+      // Clear the pending token since it's now owned by the user
+      const deviceTokenData = localStorage.getItem('pendingDeviceToken');
+      if (deviceTokenData) {
+        localStorage.removeItem('pendingDeviceToken');
+        console.log('✅ [Login] Cleared pending device token - ownership transferred to user');
       }
       
       // Invalidate queries to ensure fresh data

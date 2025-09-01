@@ -1,0 +1,80 @@
+Fix 1: Update Login Endpoint to Always Transfer Token Ownership
+javascript// In routes.ts - modify the login endpoint
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  
+  try {
+    const user = await authenticateUser(email, password);
+    
+    if (user) {
+      // 🔥 NEW: Get device token from client
+      const deviceToken = req.body.deviceToken || req.headers['x-device-token'];
+      
+      if (deviceToken) {
+        // 🔥 CRITICAL: Transfer token ownership to current user
+        await db.query(`
+          INSERT INTO device_tokens (device_token, user_id, platform, registration_source) 
+          VALUES (?, ?, 'ios', 'login_transfer') 
+          ON CONFLICT(device_token) 
+          DO UPDATE SET 
+            user_id = ?, 
+            registration_source = 'login_transfer',
+            updated_at = NOW()
+        `, [deviceToken, user.id, user.id]);
+        
+        console.log(`🔄 Token ownership transferred to user ${user.id}`);
+      }
+      
+      res.json({ success: true, user });
+    }
+  } catch (error) {
+    res.status(401).json({ error: 'Login failed' });
+  }
+});
+Fix 2: Modify Client to Send Token with Login
+javascript// In NotificationService.ts or wherever login happens
+async function loginUser(email, password) {
+  const deviceToken = localStorage.getItem('deviceToken');
+  
+  const response = await fetch('/api/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Device-Token': deviceToken  // Send token with login
+    },
+    body: JSON.stringify({ 
+      email, 
+      password,
+      deviceToken  // Also in body for redundancy
+    })
+  });
+  
+  // Handle response...
+}
+Fix 3: Remove Dependency on "Pending" State
+The current approach is fragile because it assumes tokens are always "pending" when users log in. Instead:
+javascript// Replace the current association logic with:
+app.post('/api/push-tokens', isAuthenticated, async (req, res) => {
+  const { deviceToken } = req.body;
+  const userId = req.user.id;
+  
+  // 🔥 ALWAYS update ownership, regardless of current state
+  await db.query(`
+    INSERT INTO device_tokens (device_token, user_id, platform) 
+    VALUES (?, ?, 'ios') 
+    ON CONFLICT(device_token) 
+    DO UPDATE SET user_id = ?
+  `, [deviceToken, userId, userId]);
+  
+  console.log(`✅ Token now owned by user ${userId}`);
+  res.json({ success: true });
+});
+📝 Recommendation for Replit:
+Your current approach will fail in shared device scenarios. You need to:
+
+✅ Always transfer token ownership on login (not just associate pending ones)
+✅ Send device token with every login request
+✅ Use ON CONFLICT DO UPDATE to handle ownership transfers
+✅ Test with User A logout → User B login scenario
+
+The key principle missing: Every login should potentially transfer device token ownership, not just move pending tokens.
