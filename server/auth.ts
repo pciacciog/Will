@@ -126,9 +126,14 @@ export function setupAuth(app: Express) {
   app.post("/api/login", passport.authenticate("local"), async (req: any, res) => {
     try {
       const user = req.user;
+      console.log(`🔍 [Login] Request body:`, JSON.stringify(req.body, null, 2));
+      console.log(`🔍 [Login] Request headers:`, JSON.stringify(req.headers, null, 2));
       
       // 🔥 CRITICAL: Always transfer device token ownership on login
       const deviceToken = req.body.deviceToken || req.headers['x-device-token'];
+      console.log(`🔍 [Login] Looking for device token...`);
+      console.log(`🔍 [Login] Body token: ${req.body.deviceToken ? req.body.deviceToken.substring(0, 8) + '...' : 'NONE'}`);
+      console.log(`🔍 [Login] Header token: ${req.headers['x-device-token'] ? req.headers['x-device-token'].substring(0, 8) + '...' : 'NONE'}`);
       
       if (deviceToken) {
         console.log(`🔄 [Login] Transferring token ownership to user ${user.id}`);

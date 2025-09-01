@@ -25,14 +25,20 @@ export default function Auth() {
       const deviceTokenData = localStorage.getItem('pendingDeviceToken');
       let deviceToken = null;
       
+      console.log(`🔍 [Login] Checking for stored device token...`);
+      console.log(`🔍 [Login] Raw localStorage data:`, deviceTokenData);
+      
       if (deviceTokenData) {
         try {
           const tokenInfo = JSON.parse(deviceTokenData);
           deviceToken = tokenInfo.token;
           console.log(`📱 [Login] Sending device token with login: ${deviceToken?.substring(0, 8)}...`);
+          console.log(`🔍 [Login] Full token info:`, tokenInfo);
         } catch (error) {
           console.warn('Failed to parse stored device token:', error);
         }
+      } else {
+        console.log(`⚠️ [Login] No device token found in localStorage`);
       }
       
       const loginPayload = {
