@@ -1,0 +1,30 @@
+ To Native ->  CapacitorHttp request 29259836
+⚡️  [log] - Submitting login: {"email":"randy@me.com","password":"Realmadrid!fc10"}
+⚡️  TO JS {"headers":{"expires":"Mon, 01 Sep 2025 17:20:57 GMT","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","set-cookie":"connect.sid=s%3Adl685DmOttHFKVvZem3MbMXWMTHgAT3p.XeKKnIv7h1J
+⚡️  [log] - Login success, user: {"role":"user","isActive":true,"password":"4348b767b256b44d4ac7a17d1cb5682a6fbad97d5f8118a3c3841f6bb875937b4a876cda2afe11f1e595db0f6ae6c1a46f46383a92ca533e3ce2dc8f070e20b5.b2479220ac57855331a7dd113cbea731","id":"17511021851866udaucmnr","updatedAt":"2025-06-28T09:16:25.205Z","profileImageUrl":null,"lastName":"Orton","email":"randy@me.com","createdAt":"2025-06-28T09:16:25.205Z","firstName":"Randy"}
+⚡️  [log] - Setting showSplashOnHome to true in localStorage
+⚡️  [log] - Router debug [iPhone]: {"isAuthenticated":true,"isLoading":false,"user":"17511021851866udaucmnr","location":"/"}
+⚡️  [log] - Home component debug: {"willStatus":"no_will","isActiveWill":false,"userCommitment":null,"userId":"17511021851866udaucmnr"}
+⚡️  [log] - Home useEffect: shouldShowSplash = true
+⚡️  [log] - Setting showSplash to true
+⚡️  [log] - User authenticated - initializing push notifications
+⚡️  To Native ->  LocalNotifications requestPermissions 29259837
+⚡️  [log] - Rendering splash screen from Home component
+⚡️  [log] - Rendering splash screen from Home component
+⚡️  [log] - Rendering splash screen from Home component
+⚡️  [log] - Splash screen completed
+⚡️  [log] - Home component debug: {"will":{"id":92,"circleId":2,"createdBy":"1750914771667m6hrmtciq","startDate":"2025-09-08T04:00:00.000Z","endDate":"2025-09-14T16:00:00.000Z","endRoomScheduledAt":"2025-09-14T16:09:00.000Z","endRoomOpenedAt":null,"endRoomUrl":"https://cloud-055bd7fea5f145d08c0142cbcf237051.daily.co/will-92-endroom-1756742998004","endRoomStatus":"pending","status":"pending","createdAt":"2025-09-01T16:09:57.976Z","commitments":[{"id":146,"willId":92,"userId":"1750914771667m6hrmtciq","what":"m","why":"m","createdAt":"2025-09-01T16:09:59.937Z","user":{"id":"1750914771667m6hrmtciq","email":"porfiriociaccio@marinaplastics.com","password":"774ffc0a7ee03e6750ac9540503a9f582d31c147b62e7daf9cbaffdf96d32ec3b3b452196761a3399a05a11a8b63259e42bc8f6f666a6f97f3edf90226e9d617.e4f741fe0cb16d50c9a613b4264c9100","firstName":"John","lastName":"Doe","profileImageUrl":null,"role":"user","isActive":true,"createdAt":"2025-06-26T05:12:51.676Z","updatedAt":"2025-06-26T05:12:51.676Z"}}],"memberCount":"4","commitmentCount":1,"acknowledgedCount":"0","hasUserAcknowledged":false},"willStatus":"pending","isActiveWill":false,"userCommitment":null,"userId":"17511021851866udaucmnr","commitments":[{"id":146,"willId":92,"userId":"1750914771667m6hrmtciq","what":"m","why":"m","createdAt":"2025-09-01T16:09:59.937Z","user":{"id":"1750914771667m6hrmtciq","email":"porfiriociaccio@marinaplastics.com","password":"774ffc0a7ee03e6750ac9540503a9f582d31c147b62e7daf9cbaffdf96d32ec3b3b452196761a3399a05a11a8b63259e42bc8f6f666a6f97f3edf90226e9d617.e4f741fe0cb16d50c9a613b4264c9100","firstName":"John","lastName":"Doe","profileImageUrl":null,"role":"user","isActive":true,"createdAt":"2025-06-26T05:12:51.676Z","updatedAt":"2025-06-26T05:12:51.676Z"}}]}
+⚡️  TO JS {"display":"granted"}
+⚡️  [log] - Local notification permissions granted
+⚡️  To Native ->  PushNotifications requestPermissions 29259838
+⚡️  TO JS {"receive":"granted"}
+⚡️  [log] - Push notification permissions granted
+⚡️  To Native ->  PushNotifications register 29259839
+⚡️  TO JS undefined
+🟢 Device Token Successfully Registered: d8d26bc7e66a7baa4790ebee356b9bb36904d344f1caf3debcb150489cba0fcd
+⚡️  To Native ->  PushNotifications addListener 29259840
+⚡️  To Native ->  PushNotifications addListener 29259841
+⚡️  To Native ->  PushNotifications addListener 29259842
+⚡️  To Native ->  PushNotifications addListener 29259843
+⚡️  [log] - Router debug [iPhone]: {"isAuthenticated":true,"isLoading":false,"user":"17511021851866udaucmnr","location":"/hub"}
+⚡️  [log] - Router debug [iPhone]: {"isAuthenticated":true,"isLoading":false,"user":"17511021851866udaucmnr","location":"/hub"}
