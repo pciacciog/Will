@@ -1,0 +1,68 @@
+Issue Summary
+We're experiencing inconsistent logging visibility that blocks reliable diagnosis of our React/Capacitor mobile app (iOS) with backend deployed on Replit. Critical logs from the iOS native layer and WebView are not appearing in Replit's Deployment Console, leaving us "blind" to essential parts of our system during production troubleshooting.
+Current Log Visibility
+Xcode (iOS) Console Shows:
+
+🟢 Device Token Successfully Registered: 0d62e889c7405c8a88f61b50c7dd3ba8dbe1aa66f7b899c58c41f1c5452f02b4
+⚡️ WebView loaded
+⚡️ [log] - Router debug [iPhone]: {"isAuthenticated":false,"isLoading":true,"location":"/"}
+⚡️ [log] - Router debug [iPhone]: {"isAuthenticated":false,"isLoading":false,"location":"/"}
+
+Replit Deployment Console Shows:
+
+2025-09-01 11:27:07.42 e07a3dc9 User [Auth] /api/user called, authenticated: false
+2025-09-01 11:28:00.52 c4b0c330 User [EndRoomScheduler] Checking for End Rooms at 2025-09-01T15:28:00.529Z
+
+Architecture Context
+Our system has three distinct logging contexts:
+
+Native iOS layer (AppDelegate) - logs via print()/OSLog
+WebView/JavaScript - logs via console.log
+Server process on Replit - logs to stdout/stderr
+
+By default, these operate as separate processes with independent consoles.
+Hypotheses to Validate
+Please confirm or deny each of the following:
+
+Process Scope: Replit Deployment Console only captures stdout/stderr from the Replit server process, not client/mobile logs—therefore native iOS print()/OSLog and WebView console.log won't surface unless explicitly relayed.
+Stream Filtering: Some logs might be written to stderr and filtered or rate-limited by the Replit runner.
+Environment/Level Filters: Environment (prod vs dev) or logger level filters (e.g., INFO/WARN) could be suppressing certain log categories.
+Message Routing: The device-token message is emitted in the native layer only and never reaches the backend; unless we forward it, it won't appear in Replit logs.
+
+Requested Actions
+1. Console Scope Clarification
+Please tell us exactly what Replit's Deployment Console captures by default:
+
+Process scope (server-only vs multi-process)
+stdout vs stderr handling
+Log size/retention limits
+Rate limiting policies
+
+2. Remote Client Log Support
+Confirm whether the console can ingest remote client logs (mobile/web) natively. If supported, provide the mechanism:
+
+console.log → server bridge
+WebSocket tail
+Logging agent
+Replit-specific logging endpoint
+
+3. Minimal Routing Approach
+If native support isn't available, propose the minimal approach to surface our existing messages without creating new log events:
+Option A - WebView Bridge: Enable console bridge from WebView/JS to backend (e.g., window console patch forwarding to /api/log), then verify messages appear in Replit logs.
+Option B - Native iOS Relay: Emit the existing native iOS log ("Device Token Successfully Registered...") to backend via current code path (same call that registers device token with server) so backend prints message to stdout.
+4. Step-by-Step Verification Checks
+Provide instructions for:
+
+Verifying stdout/stderr capture on Replit (and whether stderr is suppressed)
+Viewing raw process logs (no filtering)
+Confirming log levels/filters for current deployment
+Identifying relevant Replit configuration files (Nix, Procfile, replit.nix, replit_deploy.toml) affecting logging capture
+
+5. Diagnostic Flags
+Please identify any diagnostic flags we can temporarily enable in production without code changes (e.g., environment variables toggling log level) that would route existing logs rather than add new ones.
+Verification Plan
+Once implemented, we'll follow this plan to confirm resolution:
+
+Fresh iOS Launch: Trigger app launch → watch for "Device Token Successfully Registered" in Replit console
+API Synchronization: Hit /api/user from app → confirm both iOS and Replit show synchronized timestamps/messages
+WebView Bridge: Confirm "⚡️ WebView loaded" messages appear in Replit console (if bridged)
