@@ -138,7 +138,7 @@ export class NotificationService {
   }
 
   // Send stored device token to server (called after authentication)
-  public async sendPendingTokenToServer(): Promise<boolean> {
+  public async sendPendingTokenToServer(forceAuthenticated: boolean = false): Promise<boolean> {
     try {
       const storedTokenData = localStorage.getItem('pendingDeviceToken');
       if (!storedTokenData) {
@@ -148,28 +148,59 @@ export class NotificationService {
       
       const tokenData = JSON.parse(storedTokenData);
       console.log('📤 Attempting to send stored device token to server...');
+      console.log(`🔍 Force authenticated: ${forceAuthenticated}`);
       
       // Import apiRequest dynamically to avoid module issues
       const { apiRequest } = await import('../lib/queryClient');
       
-      // First try the unauthenticated endpoint for immediate token storage
       let response;
-      try {
-        response = await fetch('/api/push-tokens/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            deviceToken: tokenData.token,
-            platform: tokenData.platform
-          })
-        });
-        
-        if (response.ok) {
-          console.log('✅ Device token sent via unauthenticated endpoint');
-        } else {
-          console.warn('⚠️ Unauthenticated endpoint failed, trying authenticated endpoint...');
+      
+      if (forceAuthenticated) {
+        // User is authenticated - use authenticated endpoint to trigger token association
+        console.log('🔐 User authenticated - using authenticated endpoint for token association');
+        try {
+          response = await apiRequest('/api/push-tokens', {
+            method: 'POST',
+            body: JSON.stringify({
+              deviceToken: tokenData.token,
+              platform: tokenData.platform
+            })
+          });
+          console.log('✅ Token sent via authenticated endpoint for association');
+        } catch (error) {
+          console.error('❌ Authenticated endpoint failed:', error);
+          return false;
+        }
+      } else {
+        // User not authenticated - try unauthenticated endpoint first
+        console.log('🔓 User not authenticated - trying unauthenticated endpoint first');
+        try {
+          response = await fetch('/api/push-tokens/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              deviceToken: tokenData.token,
+              platform: tokenData.platform
+            })
+          });
+          
+          if (response.ok) {
+            console.log('✅ Device token sent via unauthenticated endpoint (pending association)');
+          } else {
+            console.warn('⚠️ Unauthenticated endpoint failed, trying authenticated endpoint...');
+            // Fall back to authenticated endpoint
+            response = await apiRequest('/api/push-tokens', {
+              method: 'POST',
+              body: JSON.stringify({
+                deviceToken: tokenData.token,
+                platform: tokenData.platform
+              })
+            });
+          }
+        } catch (error) {
+          console.warn('⚠️ Unauthenticated endpoint unavailable, trying authenticated endpoint...');
           // Fall back to authenticated endpoint
           response = await apiRequest('/api/push-tokens', {
             method: 'POST',
@@ -179,16 +210,6 @@ export class NotificationService {
             })
           });
         }
-      } catch (error) {
-        console.warn('⚠️ Unauthenticated endpoint unavailable, trying authenticated endpoint...');
-        // Fall back to authenticated endpoint
-        response = await apiRequest('/api/push-tokens', {
-          method: 'POST',
-          body: JSON.stringify({
-            deviceToken: tokenData.token,
-            platform: tokenData.platform
-          })
-        });
       }
       
       if (response.ok) {
@@ -353,6 +374,12 @@ export class NotificationService {
     } catch (error) {
       console.error('Error sending ready for new will notification:', error);
     }
+  }
+  
+  // Called when user becomes authenticated to associate pending tokens
+  public async onUserAuthenticated(): Promise<boolean> {
+    console.log('🔐 User authenticated - attempting to associate pending device tokens');
+    return await this.sendPendingTokenToServer(true); // Force use of authenticated endpoint
   }
 }
 

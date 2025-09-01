@@ -40,6 +40,8 @@ function Router() {
     if (isAuthenticated && user) {
       console.log('User authenticated - initializing push notifications');
       notificationService.initialize().catch(console.error);
+      // CRITICAL: Associate any pending device tokens with the authenticated user
+      notificationService.onUserAuthenticated().catch(console.error);
     }
   }, [isAuthenticated, user]);
 
