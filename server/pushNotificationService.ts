@@ -110,18 +110,17 @@ class PushNotificationService {
 
       // ENVIRONMENT GUARDRAILS: Filter tokens by environment compatibility
       const serverIsSandbox = true; // We're always in sandbox mode during development
+      
+      // 🧪 TESTING OVERRIDE: Accept both sandbox and production tokens for comprehensive testing
+      console.log(`[PushNotificationService] 🧪 TESTING MODE: Accepting all tokens regardless of environment`);
       const compatibleTokens = userTokens.filter(token => {
         if (token.platform !== 'ios') return true; // Non-iOS tokens are always compatible
         
         const tokenIsSandbox = token.isSandbox ?? true; // Default to sandbox if null
-        const compatible = serverIsSandbox === tokenIsSandbox;
+        const compatible = true; // 🧪 OVERRIDE: Accept all tokens for testing
         
-        if (!compatible) {
-          console.log(`[PushNotificationService] ⚠️ SKIPPED: Token ${token.deviceToken.substring(0, 8)}... environment mismatch`);
-          console.log(`  🔍 Server: ${serverIsSandbox ? 'SANDBOX' : 'PRODUCTION'}`);
-          console.log(`  🔍 Token: ${tokenIsSandbox ? 'SANDBOX' : 'PRODUCTION'}`);
-          console.log(`  🔍 Action: Skipping to prevent 403 error`);
-        }
+        console.log(`[PushNotificationService] 🧪 TESTING: Token ${token.deviceToken.substring(0, 8)}... - Server: ${serverIsSandbox ? 'SANDBOX' : 'PRODUCTION'}, Token: ${tokenIsSandbox ? 'SANDBOX' : 'PRODUCTION'}`);
+        console.log(`  🔍 Action: ALLOWING for comprehensive testing (normally would ${serverIsSandbox === tokenIsSandbox ? 'ALLOW' : 'SKIP'})`);
         
         return compatible;
       });
@@ -148,11 +147,11 @@ class PushNotificationService {
           const serverEnv = 'SANDBOX'; // We're always sandbox in development
           
           if (tokenRecord.isSandbox === false) {
-            console.log(`[PushNotificationService] ⚠️ GUARDRAIL TRIGGERED: Skipping production token on sandbox server`);
+            console.log(`[PushNotificationService] 🧪 TESTING OVERRIDE: Allowing production token on sandbox server for testing`);
             console.log(`  🔍 Token: ${tokenRecord.deviceToken.substring(0, 8)}... is PRODUCTION`);
             console.log(`  🔍 Server: SANDBOX`);
-            console.log(`  🔍 Action: Skipped to prevent 403 error`);
-            continue; // Skip this token
+            console.log(`  🔍 Action: PROCEEDING (expect 403 error, but useful for debugging)`);
+            // 🧪 TESTING: Don't skip, let it fail with proper error logging
           }
         }
         
