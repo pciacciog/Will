@@ -18,6 +18,8 @@ export class NotificationService {
   async initialize() {
     if (this.initialized) return;
 
+    console.log('🔍 DEBUG: NotificationService initialize() called');
+    
     try {
       // Request local notification permissions
       const localPermission = await LocalNotifications.requestPermissions();
@@ -30,6 +32,7 @@ export class NotificationService {
 
       // Only try push notifications on native platforms
       if (Capacitor.isNativePlatform()) {
+        console.log('🔍 DEBUG: Native platform detected, setting up push notifications');
         try {
           const pushPermission = await PushNotifications.requestPermissions();
           
@@ -37,11 +40,12 @@ export class NotificationService {
             console.log('Push notification permissions granted');
             
             // CRITICAL: Set up listeners BEFORE calling register() to avoid race condition
-            console.log('Setting up push notification listeners...');
+            console.log('🔍 DEBUG: Setting up push notification listeners...');
             
             // Listen for registration success from Capacitor plugin
             PushNotifications.addListener('registration', async (token) => {
               console.log('✅ Push registration success via Capacitor! Token received:', token.value);
+              console.log('🔍 DEBUG: Capacitor listener triggered, calling saveDeviceToken');
               await this.saveDeviceToken(token.value);
             });
             
@@ -52,14 +56,24 @@ export class NotificationService {
             });
             
             // ENHANCED: Also listen for native AppDelegate events (our new implementation)
+            console.log('🔍 DEBUG: Setting up window event listeners for AppDelegate bridge...');
             window.addEventListener('pushNotificationRegistration', async (event: any) => {
               console.log('✅ Push registration success via AppDelegate! Token received:', event.detail.value);
+              console.log('🔍 DEBUG: AppDelegate window listener triggered, calling saveDeviceToken');
               await this.saveDeviceToken(event.detail.value);
             });
             
             window.addEventListener('pushNotificationRegistrationError', (event: any) => {
               console.error('❌ Push registration error via AppDelegate:', event.detail.error);
             });
+            
+            // ENHANCED: Listen for NotificationCenter events from AppDelegate
+            console.log('🔍 DEBUG: Setting up NotificationCenter listeners...');
+            // Create a custom event listener for NotificationCenter events
+            const handleNotificationCenterEvent = (eventName: string) => {
+              console.log(`🔍 DEBUG: Setting up listener for NotificationCenter event: ${eventName}`);
+              // This will be triggered by native NotificationCenter posts
+            };
             
             // Listen for incoming push notifications
             PushNotifications.addListener('pushNotificationReceived', (notification) => {
@@ -71,18 +85,23 @@ export class NotificationService {
               console.log('🔔 Push notification action performed:', notification);
             });
             
-            console.log('All listeners set up. Now registering for push notifications...');
+            console.log('🔍 DEBUG: All listeners set up. Now registering for push notifications...');
             
             // Register for push notifications AFTER setting up listeners
             await PushNotifications.register();
-            console.log('PushNotifications.register() called successfully');
+            console.log('🔍 DEBUG: PushNotifications.register() called successfully');
+          } else {
+            console.log('🔍 DEBUG: Push notification permissions denied');
           }
         } catch (pushError) {
           console.warn('Push notifications not available:', pushError);
         }
+      } else {
+        console.log('🔍 DEBUG: Not on native platform, skipping push notifications');
       }
       
       this.initialized = true;
+      console.log('🔍 DEBUG: NotificationService initialization completed');
     } catch (error) {
       console.error('Error initializing notifications:', error);
     }
@@ -91,9 +110,11 @@ export class NotificationService {
   // Store device token locally (to be sent after authentication)
   private async saveDeviceToken(deviceToken: string): Promise<void> {
     try {
+      console.log('🔍 DEBUG: saveDeviceToken() called with token');
       console.log('📱 Device token received, storing locally until authentication');
       console.log('Token length:', deviceToken.length);
       console.log('Token preview:', deviceToken.substring(0, 20) + '...');
+      console.log('🔍 DEBUG: About to store in localStorage...');
       
       // Store in localStorage with timestamp
       const tokenData = {
@@ -104,12 +125,15 @@ export class NotificationService {
       
       localStorage.setItem('pendingDeviceToken', JSON.stringify(tokenData));
       console.log('✅ Device token stored locally, will send to server after login');
+      console.log('🔍 DEBUG: localStorage content:', localStorage.getItem('pendingDeviceToken'));
       
       // Try to send immediately in case user is already logged in
+      console.log('🔍 DEBUG: Attempting to send pending token to server immediately...');
       await this.sendPendingTokenToServer();
       
     } catch (error) {
       console.error('❌ Error storing device token locally:', error);
+      console.error('🔍 DEBUG: Error details:', error);
     }
   }
 
@@ -306,4 +330,13 @@ export const notificationService = NotificationService.getInstance();
 // Export method for authentication flow integration
 export const sendPendingDeviceToken = () => {
   return notificationService.sendPendingTokenToServer();
+};
+
+// TEST HELPER: Manually simulate device token reception (for debugging)
+export const simulateDeviceToken = async (testToken: string = "test_token_" + Date.now()) => {
+  console.log('🧪 TEST: Manually simulating device token reception');
+  const service = NotificationService.getInstance();
+  // Call the private method via the service instance
+  await (service as any).saveDeviceToken(testToken);
+  return testToken;
 };

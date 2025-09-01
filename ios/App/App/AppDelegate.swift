@@ -58,18 +58,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Convert device token to string
         let tokenString = deviceToken.map { String(format: "%02x", $0) }.joined()
         print("🟢 Device Token Successfully Registered: \(tokenString)")
+        print("🔍 DEBUG: Token length = \(tokenString.count)")
+        print("🔍 DEBUG: About to send token to JavaScript layer...")
         
         // Send to Capacitor layer for JavaScript access
+        print("🔍 DEBUG: Posting to NotificationCenter with name 'CapacitorDeviceTokenReceived'")
         NotificationCenter.default.post(
             name: NSNotification.Name("CapacitorDeviceTokenReceived"),
             object: nil,
             userInfo: ["token": tokenString]
         )
+        print("🔍 DEBUG: NotificationCenter.post completed")
         
         // Also send directly to PushNotifications plugin if available
         if let bridge = (window?.rootViewController as? CAPBridgeViewController)?.bridge {
+            print("🔍 DEBUG: Bridge found, triggering JS event 'pushNotificationRegistration'")
             bridge.triggerJSEvent(eventName: "pushNotificationRegistration", target: "window", data: ["value": tokenString])
+            print("🔍 DEBUG: bridge.triggerJSEvent completed")
+        } else {
+            print("🔍 DEBUG: No bridge found - cannot send via triggerJSEvent")
         }
+        
+        print("🔍 DEBUG: All native token sending attempts completed")
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
