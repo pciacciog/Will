@@ -167,42 +167,87 @@ class PushNotificationService {
       notification.topic = process.env.APNS_TOPIC || 'com.porfirio.will'; // Your app's bundle ID
       notification.payload = payload.data || {};
 
-      console.log(`[PushNotificationService] 🔍 DEBUG: Sending notification to device: ${deviceToken.substring(0, 20)}...${userInfo}`);
-      console.log(`[PushNotificationService] Title: ${payload.title}`);
-      console.log(`[PushNotificationService] Body: ${payload.body}`);
-      console.log(`[PushNotificationService] APNs Environment: SANDBOX (development tokens only)`);
-      console.log(`[PushNotificationService] 🔍 DEBUG: APNs Topic: ${notification.topic}`);
+      // COMPREHENSIVE APNS REQUEST LOGGING
+      const tokenHash = deviceToken.substring(0, 8);
+      const apnsId = `apns-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
+      console.log(`[PushNotificationService] 📤 OUTGOING APNs REQUEST:`);
+      console.log(`  🔍 Request ID: ${apnsId}`);
+      console.log(`  🔍 Target Device: ${tokenHash}...${userInfo}`);
+      console.log(`  🔍 Endpoint: api.sandbox.push.apple.com (SANDBOX - forced in development)`);
+      console.log(`  🔍 Auth Method: JWT (p8 key)`);
+      console.log(`  🔍 Team ID: ${process.env.APNS_TEAM_ID}`);
+      console.log(`  🔍 Key ID: ${process.env.APNS_KEY_ID}`);
+      console.log(`  🔍 Topic (Bundle ID): ${notification.topic}`);
+      console.log(`  🔍 Push Type: alert`);
+      console.log(`  🔍 Priority: 10`);
+      console.log(`  🔍 Payload Size: ${JSON.stringify(notification.payload).length} bytes`);
+      console.log(`  🔍 Title: "${payload.title}"`);
+      console.log(`  🔍 Body: "${payload.body}"`);
+      console.log(`  🔍 Badge: ${notification.badge}`);
+      console.log(`  🔍 Sound: ${notification.sound}`)
+      
+      const startTime = Date.now();
       const result = await this.apnProvider.send(notification, deviceToken);
+      const duration = Date.now() - startTime;
       
-      console.log(`[PushNotificationService] 🔍 DEBUG: APNs Response for device ${deviceToken.substring(0, 20)}...${userInfo}:`, {
-        sent: result.sent.length,
-        failed: result.failed.length
-      });
+      // COMPREHENSIVE APNS RESPONSE LOGGING
+      console.log(`[PushNotificationService] 📥 APNs RESPONSE (${duration}ms):`);
+      console.log(`  🔍 Request ID: ${apnsId}`);
+      console.log(`  🔍 Sent: ${result.sent.length}, Failed: ${result.failed.length}`);
       
       if (result.failed.length > 0) {
-        console.error(`[PushNotificationService] ❌ Failed deliveries for user ${userId || 'unknown'}:`);
+        console.error(`[PushNotificationService] ❌ FAILED DELIVERIES:`);
         result.failed.forEach((failure) => {
-          console.error(`  Device: ${failure.device}${userInfo}`);
-          console.error(`  Status: ${failure.status}`);
-          console.error(`  Response: ${failure.response?.reason}`);
+          console.error(`  🔍 Request ID: ${apnsId}`);
+          console.error(`  🔍 Device: ${tokenHash}...${userInfo}`);
+          console.error(`  🔍 HTTP Status: ${failure.status}`);
+          console.error(`  🔍 APNs Reason: ${failure.response?.reason || 'Unknown'}`);
+          console.error(`  🔍 Response Headers: ${JSON.stringify(failure.response || {}, null, 2)}`);
+          console.error(`  🔍 Timestamp: ${new Date().toISOString()}`)
           
-          // Special handling for 403 errors
-          if (failure.status === 403) {
-            console.error(`  🔍 DEBUG: 403 Error Analysis for ${userInfo}:`);
-            console.error(`    - This usually means ENVIRONMENT MISMATCH`);
-            console.error(`    - Server is using: SANDBOX APNs`);
-            console.error(`    - Device token might be from: PRODUCTION environment`);
-            console.error(`    - Solution: Regenerate token with development provisioning profile`);
+          // Enhanced error analysis
+          const status = String(failure.status);
+          const reason = failure.response?.reason;
+          
+          if (status === '403') {
+            console.error(`  🔍 403 FORBIDDEN - Detailed Analysis:`);
+            if (reason === 'InvalidProviderToken') {
+              console.error(`    ❌ Auth Issue: JWT token invalid (check Key ID, Team ID, private key)`);
+            } else if (reason === 'BadDeviceToken') {
+              console.error(`    ❌ Token Issue: Device token invalid or expired`);
+            } else if (reason === 'TopicDisallowed') {
+              console.error(`    ❌ Topic Issue: Bundle ID mismatch or unauthorized topic`);
+            } else {
+              console.error(`    ❌ Environment Issue: Token/Server environment mismatch`);
+              console.error(`    ❌ Server: SANDBOX (development mode)`);
+              console.error(`    ❌ Token likely from: PRODUCTION environment`);
+              console.error(`    ❌ Solution: Regenerate token with development provisioning profile`);
+            }
+          } else if (status === '400') {
+            console.error(`  🔍 400 BAD REQUEST: ${reason || 'Malformed request'}`);
+          } else if (status === '410') {
+            console.error(`  🔍 410 GONE: Device token no longer valid (app uninstalled)`);
+          } else if (status === '413') {
+            console.error(`  🔍 413 PAYLOAD TOO LARGE: Notification payload exceeds 4KB limit`);
+          } else if (status === '429') {
+            console.error(`  🔍 429 RATE LIMITED: Too many requests for this device token`);
+          } else if (status === '500') {
+            console.error(`  🔍 500 INTERNAL ERROR: APNs server issue (retry recommended)`);
           }
+          
+          console.error(`  🔍 Full Response:`, JSON.stringify(failure.response, null, 2));
         });
         return false;
       }
 
       if (result.sent.length > 0) {
-        console.log(`[PushNotificationService] ✅ Successfully sent to ${result.sent.length} device(s)${userInfo}`);
+        console.log(`[PushNotificationService] ✅ SUCCESSFUL DELIVERIES:`);
         result.sent.forEach((sent) => {
-          console.log(`  ✅ Sent to: ${sent.device.substring(0, 20)}...${userInfo}`);
+          console.log(`  🔍 Request ID: ${apnsId}`);
+          console.log(`  🔍 Device: ${tokenHash}...${userInfo}`);
+          console.log(`  🔍 APNs ID: ${sent.device}`);
+          console.log(`  🔍 Status: Delivered successfully`);
         });
       }
       

@@ -1,0 +1,32 @@
+I’d like your help digging deeper into the 403 “Bad Environment Key in Token” error. Replit’s initial take was that it’s an environment mismatch (server = sandbox, token = production). But Randy’s current build is clearly Development (Managed Profile, Apple Development cert, Debug scheme), so it should be generating sandbox tokens. That makes me think the issue may be stale tokens, APNs config, or user/token mapping rather than the local build.
+To narrow this down, could you help review the following areas?
+
+1. Capture Full APNs Response
+* Do our logs capture the exact JSON reason APNs returns (InvalidProviderToken, BadDeviceToken, TopicDisallowed, etc.)?
+* Are we logging the apns-id header to trace individual requests?
+* Do we log outgoing headers (apns-topic, apns-push-type, apns-priority, etc.) to confirm what’s being sent?
+2. Verify Endpoint & Auth
+* Which endpoint are we actually hitting: api.sandbox.push.apple.com or api.push.apple.com?
+* Which auth method is in use: p8 key (JWT) or certificate?
+    * If p8: do Key ID, Team ID, and bundle ID all align with the app’s provisioning profile?
+    * If cert: is it definitely the development cert, with the correct bundle ID?
+* Does the server explicitly set apns-topic, and does it exactly match the app’s bundle ID?
+3. Token Provenance & Freshness
+* What token value is stored for Randy’s device, and when was it created/last updated?
+* Could this token be a stale production token left over from an earlier TestFlight/Ad Hoc build?
+* Is the token stored in raw format (64 hex chars), unmodified?
+* Can we confirm via logs that the token came from a build with aps-environment=development?
+4. App Entitlements / Build
+* From Randy’s installed app, does the .ipa show aps-environment=development in entitlements?
+* Are there multiple app targets (e.g., com.company.app vs. com.company.app.dev)? If so, which one generated his build, and does that match the server’s apns-topic?
+* Any post-build signing or CI steps that could have swapped certs or entitlements?
+5. User/Device Mapping
+* Logs show: No device tokens found for user 175248… but device 6f701eec…eb61f is tied to 175110… (Randy).
+* How does the server choose which user ID → device ID → token mapping to use?
+* Could the push attempt simply be targeting the wrong user ID?
+* Do we allow multiple tokens per device, and if so, which one is chosen at send time?
+
+7. Observability / Next Steps
+* On token registration, can we log: {userId, deviceId, bundleId, scheme, provisioning=dev|dist, apsEnv=dev|prod, tokenHashFirst8, createdAt}?
+* On push send, log: {userId, deviceId, tokenHashFirst8, endpoint=sandbox|prod, apns-topic, push-type, apns-id, apns-reason}.
+* Is there a way to run a validation script that tests a given token against both sandbox and production to confirm its environment?

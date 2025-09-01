@@ -1172,23 +1172,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { deviceToken, platform } = req.body;
       
-      console.log(`[Notifications] Device token registration attempt - User ID: ${userId}, Platform: ${platform}, Token: ${deviceToken?.substring(0, 20)}...`);
+      // COMPREHENSIVE TOKEN REGISTRATION LOGGING
+      const tokenHash = deviceToken?.substring(0, 8) || 'INVALID';
+      const timestamp = new Date().toISOString();
       
-      if (!deviceToken || !platform) {
-        console.log("[Notifications] Missing device token or platform");
-        return res.status(400).json({ message: "Device token and platform are required" });
+      console.log(`[TokenRegistration] 📝 DEVICE TOKEN REGISTRATION REQUEST:`);
+      console.log(`  🔍 User ID: ${userId}`);
+      console.log(`  🔍 Token Hash (first 8): ${tokenHash}`);
+      console.log(`  🔍 Platform: ${platform}`);
+      console.log(`  🔍 Token Length: ${deviceToken?.length || 0} chars`);
+      console.log(`  🔍 Request Time: ${timestamp}`);
+      console.log(`  🔍 User Agent: ${req.headers['user-agent'] || 'Unknown'}`);
+      console.log(`  🔍 Client IP: ${req.ip || req.connection.remoteAddress || 'Unknown'}`);
+      
+      // Validate token format (iOS tokens should be 64 hex chars)
+      if (!deviceToken || typeof deviceToken !== 'string') {
+        console.error(`[TokenRegistration] ❌ Invalid token format: not a string`);
+        return res.status(400).json({ error: 'Device token must be a string' });
       }
       
-      // First try to find existing token for this user
-      const existingToken = await db
+      if (!platform) {
+        console.error(`[TokenRegistration] ❌ Missing platform`);
+        return res.status(400).json({ error: 'Platform is required' });
+      }
+      
+      if (platform === 'ios' && !/^[0-9a-fA-F]{64}$/.test(deviceToken)) {
+        console.error(`[TokenRegistration] ❌ Invalid iOS token format: ${deviceToken.length} chars, expected 64 hex`);
+        console.error(`  🔍 Token pattern: ${deviceToken.match(/[^0-9a-fA-F]/g)?.join('') || 'valid hex'}`);
+      } else {
+        console.log(`  ✅ Token format: Valid ${platform} token`);
+      }
+      
+      // Check for existing tokens for this user
+      const existingTokens = await db
         .select()
         .from(deviceTokens)
-        .where(eq(deviceTokens.userId, userId))
-        .limit(1);
+        .where(eq(deviceTokens.userId, userId));
+        
+      console.log(`[TokenRegistration] 🔍 Existing tokens for user: ${existingTokens.length}`);
+      existingTokens.forEach((token, idx) => {
+        console.log(`  🔍 Token ${idx + 1}: ${token.deviceToken.substring(0, 8)}... (${token.platform}, updated: ${token.updatedAt})`);
+      });
       
-      if (existingToken.length > 0) {
+      // Check if this exact token already exists (across all users)
+      const duplicateTokens = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.deviceToken, deviceToken));
+        
+      if (duplicateTokens.length > 0) {
+        console.log(`[TokenRegistration] 🔍 Token already exists for users: ${duplicateTokens.map(t => t.userId).join(', ')}`);
+      }
+      
+      let deviceTokenRecord;
+      if (existingTokens.length > 0) {
         // Update existing token
-        await db
+        console.log(`[TokenRegistration] 🔄 UPDATING existing device token record`);
+        const [updated] = await db
           .update(deviceTokens)
           .set({
             deviceToken,
@@ -1196,26 +1236,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isActive: true,
             updatedAt: new Date()
           })
-          .where(eq(deviceTokens.userId, userId));
-        console.log(`[Notifications] Updated existing device token for user ${userId}`);
+          .where(eq(deviceTokens.userId, userId))
+          .returning();
+        deviceTokenRecord = updated;
+        console.log(`[TokenRegistration] ✅ Device token UPDATED`);
       } else {
         // Insert new token
-        await db
+        console.log(`[TokenRegistration] 🆕 Creating NEW device token record`);
+        const [newToken] = await db
           .insert(deviceTokens)
           .values({
             userId,
             deviceToken,
             platform,
             isActive: true
-          });
-        console.log(`[Notifications] Inserted new device token for user ${userId}`);
+          })
+          .returning();
+        deviceTokenRecord = newToken;
+        console.log(`[TokenRegistration] ✅ NEW device token created`);
       }
       
-      console.log(`[Notifications] Device token successfully stored for user ${userId}`);
-      res.json({ success: true, message: "Device token registered successfully" });
+      // COMPREHENSIVE SUCCESS LOGGING
+      console.log(`[TokenRegistration] 📊 FINAL REGISTRATION RESULT:`);
+      console.log(`  🔍 Database Record ID: ${deviceTokenRecord.id}`);
+      console.log(`  🔍 User ID: ${deviceTokenRecord.userId}`);
+      console.log(`  🔍 Token Hash: ${tokenHash}`);
+      console.log(`  🔍 Platform: ${deviceTokenRecord.platform}`);
+      console.log(`  🔍 Active: ${deviceTokenRecord.isActive}`);
+      console.log(`  🔍 Created: ${deviceTokenRecord.createdAt}`);
+      console.log(`  🔍 Updated: ${deviceTokenRecord.updatedAt}`);
+      console.log(`  🔍 Token Environment: ${platform === 'ios' ? 'iOS (sandbox/production TBD)' : platform}`);
+      
+      // Additional environment detection attempts
+      if (platform === 'ios') {
+        console.log(`[TokenRegistration] 🔍 iOS TOKEN ANALYSIS:`);
+        console.log(`  🔍 Token bytes: ${deviceToken.length / 2} (should be 32 for valid tokens)`);
+        console.log(`  🔍 First 4 bytes: ${deviceToken.substring(0, 8)}`);
+        console.log(`  🔍 Last 4 bytes: ${deviceToken.substring(-8)}`);
+        console.log(`  🔍 Registration source: ${req.headers['x-registration-source'] || 'Unknown (add header to track)'}`);
+        console.log(`  🔍 Build scheme: ${req.headers['x-build-scheme'] || 'Unknown (add header to track)'}`);
+        console.log(`  🔍 Provisioning profile: ${req.headers['x-provisioning-profile'] || 'Unknown (add header to track)'}`);
+        console.log(`  🔍 Bundle ID: ${req.headers['x-bundle-id'] || 'Unknown (should match APNS_TOPIC)'}`);
+        console.log(`  🔍 Expected APNS Topic: ${process.env.APNS_TOPIC || 'com.porfirio.will'}`);
+      }
+      
+      console.log(`[TokenRegistration] ✅ Device token registration COMPLETED successfully`);
+      console.log(`[TokenRegistration] 🎉 User ${userId} can now receive push notifications`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Device token stored successfully',
+        deviceId: deviceTokenRecord.id,
+        userId: userId,
+        platform: deviceTokenRecord.platform,
+        tokenHash: tokenHash,
+        isActive: deviceTokenRecord.isActive,
+        updatedAt: deviceTokenRecord.updatedAt
+      });
     } catch (error) {
-      console.error("[Notifications] Error storing device token:", error);
-      res.status(500).json({ message: "Failed to store device token" });
+      console.error("[TokenRegistration] ❌ Error storing device token:", error);
+      res.status(500).json({ message: "Failed to store device token", error: error.message });
+    }
+  });
+
+  // Token environment validation endpoint
+  app.post('/api/push-tokens/validate', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { deviceToken } = req.body;
+      
+      if (!deviceToken) {
+        return res.status(400).json({ error: 'Device token is required' });
+      }
+      
+      console.log(`[TokenValidation] 🧪 Validating token environment: ${deviceToken.substring(0, 8)}...`);
+      
+      // Import the validator dynamically
+      const { tokenValidator } = await import('./utils/tokenValidator');
+      const validationResult = await tokenValidator.validateToken(deviceToken);
+      
+      console.log(`[TokenValidation] ✅ Validation complete for ${deviceToken.substring(0, 8)}...`);
+      
+      res.json({
+        success: true,
+        validation: validationResult
+      });
+    } catch (error) {
+      console.error('[TokenValidation] ❌ Error validating token:', error);
+      res.status(500).json({ 
+        error: 'Token validation failed', 
+        message: error.message 
+      });
     }
   });
 
