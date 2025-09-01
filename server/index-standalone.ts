@@ -186,10 +186,10 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     process.env.APNS_TOPIC
   );
   
-  console.log(`Push Notifications: ${apnsConfigured ? 'ENABLED (Production APNs)' : 'SIMULATION MODE'}`);
+  console.log(`Push Notifications: ${apnsConfigured ? 'ENABLED (Sandbox APNs for Development)' : 'SIMULATION MODE'}`);
   
   if (apnsConfigured) {
-    console.log('✅ APNs credentials configured - real notifications will be sent');
+    console.log('✅ APNs credentials configured - real sandbox notifications will be sent');
   } else {
     console.log('ℹ️  Running in simulation mode - notifications logged to console');
   }

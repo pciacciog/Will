@@ -44,7 +44,7 @@ class PushNotificationService {
         };
         
         this.apnProvider = new apn.Provider(options);
-        console.log(`[PushNotificationService] Successfully initialized APNs with fixed .p8 key (${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'} mode)`);
+        console.log(`[PushNotificationService] Successfully initialized APNs with fixed .p8 key (SANDBOX mode - forced for development)`);
         console.log('[PushNotificationService] Real push notifications ENABLED - no longer in simulation mode');
       } catch (error) {
         console.error('[PushNotificationService] Failed to initialize APNs provider with fixed key:', error);
@@ -74,7 +74,7 @@ class PushNotificationService {
         };
         
         this.apnProvider = new apn.Provider(options);
-        console.log(`[PushNotificationService] Initialized APNs with environment key (${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'} mode)`);
+        console.log(`[PushNotificationService] Initialized APNs with environment key (SANDBOX mode - forced for development)`);
       } catch (error: any) {
         console.error('[PushNotificationService] Failed to initialize APNs provider:', error);
         
@@ -152,7 +152,7 @@ class PushNotificationService {
       console.log(`[PushNotificationService] Sending notification to device: ${deviceToken.substring(0, 20)}...`);
       console.log(`[PushNotificationService] Title: ${payload.title}`);
       console.log(`[PushNotificationService] Body: ${payload.body}`);
-      console.log(`[PushNotificationService] Environment: ${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'}`);
+      console.log(`[PushNotificationService] APNs Environment: SANDBOX (development tokens only)`);
       
       const result = await this.apnProvider.send(notification, deviceToken);
       
