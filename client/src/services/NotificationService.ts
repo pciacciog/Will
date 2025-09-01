@@ -152,13 +152,44 @@ export class NotificationService {
       // Import apiRequest dynamically to avoid module issues
       const { apiRequest } = await import('../lib/queryClient');
       
-      const response = await apiRequest('/api/push-tokens', {
-        method: 'POST',
-        body: JSON.stringify({
-          deviceToken: tokenData.token,
-          platform: tokenData.platform
-        })
-      });
+      // First try the unauthenticated endpoint for immediate token storage
+      let response;
+      try {
+        response = await fetch('/api/push-tokens/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            deviceToken: tokenData.token,
+            platform: tokenData.platform
+          })
+        });
+        
+        if (response.ok) {
+          console.log('✅ Device token sent via unauthenticated endpoint');
+        } else {
+          console.warn('⚠️ Unauthenticated endpoint failed, trying authenticated endpoint...');
+          // Fall back to authenticated endpoint
+          response = await apiRequest('/api/push-tokens', {
+            method: 'POST',
+            body: JSON.stringify({
+              deviceToken: tokenData.token,
+              platform: tokenData.platform
+            })
+          });
+        }
+      } catch (error) {
+        console.warn('⚠️ Unauthenticated endpoint unavailable, trying authenticated endpoint...');
+        // Fall back to authenticated endpoint
+        response = await apiRequest('/api/push-tokens', {
+          method: 'POST',
+          body: JSON.stringify({
+            deviceToken: tokenData.token,
+            platform: tokenData.platform
+          })
+        });
+      }
       
       if (response.ok) {
         console.log('✅ Device token successfully sent to server and linked to user');

@@ -1196,12 +1196,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // UNAUTHENTICATED token registration endpoint (for initial token capture)
+  app.post('/api/push-tokens/register', async (req: any, res) => {
+    try {
+      const { deviceToken, platform, userId } = req.body;
+      
+      console.log(`[TokenRegistration] 🆕 UNAUTHENTICATED TOKEN REGISTRATION:`);
+      console.log(`  🔍 Token Hash: ${deviceToken?.substring(0, 8)}...`);
+      console.log(`  🔍 Platform: ${platform}`);
+      console.log(`  🔍 User ID (if provided): ${userId || 'none'}`);
+      console.log(`  🔍 Request Time: ${new Date().toISOString()}`);
+      
+      if (!deviceToken || !platform) {
+        return res.status(400).json({ error: 'Device token and platform are required' });
+      }
+      
+      // Store token without user association initially
+      // Will be updated once user authenticates
+      const tokenData = {
+        userId: userId || 'pending-tokens', // Use system user for unauthenticated tokens
+        deviceToken,
+        platform,
+        isActive: true,
+        isSandbox: true, // Assume sandbox for development
+        registrationSource: 'unauthenticated_registration'
+      };
+      
+      // Check if this exact token already exists
+      const existingToken = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.deviceToken, deviceToken));
+      
+      if (existingToken.length > 0) {
+        console.log(`[TokenRegistration] ✅ Token already exists, updating timestamp`);
+        await db
+          .update(deviceTokens)
+          .set({ 
+            updatedAt: new Date(),
+            isActive: true,
+            registrationSource: 'unauthenticated_update'
+          })
+          .where(eq(deviceTokens.deviceToken, deviceToken));
+      } else {
+        console.log(`[TokenRegistration] ✅ Storing new token for later user association`);
+        await db.insert(deviceTokens).values(tokenData);
+      }
+      
+      console.log(`[TokenRegistration] ✅ Token ${deviceToken.substring(0, 8)}... stored successfully`);
+      res.json({ success: true, message: 'Token registered, will be associated with user upon login' });
+      
+    } catch (error) {
+      console.error("[TokenRegistration] ❌ Error in unauthenticated registration:", error);
+      res.status(500).json({ error: 'Failed to register token' });
+    }
+  });
+
   app.post('/api/push-tokens', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { deviceToken, platform } = req.body;
       
-      // COMPREHENSIVE TOKEN REGISTRATION LOGGING
+      console.log(`[TokenRegistration] 🔐 AUTHENTICATED TOKEN REGISTRATION/UPDATE:`);
+      console.log(`  🔍 User ID: ${userId}`);
+      console.log(`  🔍 Token Hash: ${deviceToken?.substring(0, 8)}...`);
+      console.log(`  🔍 Platform: ${platform}`);
+      
+      // Check if this token exists with 'pending' userId (from unauthenticated registration)
+      const pendingToken = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.deviceToken, deviceToken));
+        
+      if (pendingToken.length > 0 && pendingToken[0].userId === 'pending-tokens') {
+        console.log(`  ✅ Found pending token, associating with authenticated user ${userId}`);
+        await db
+          .update(deviceTokens)
+          .set({ 
+            userId: userId,
+            updatedAt: new Date(),
+            registrationSource: 'authenticated_association'
+          })
+          .where(eq(deviceTokens.deviceToken, deviceToken));
+          
+        console.log(`[TokenRegistration] ✅ Token ${deviceToken.substring(0, 8)}... now associated with user ${userId}`);
+        return res.json({ success: true, message: 'Token associated with authenticated user' });
+      }
+      
+      // COMPREHENSIVE TOKEN REGISTRATION LOGGING (for new tokens)
       const tokenHash = deviceToken?.substring(0, 8) || 'INVALID';
       const timestamp = new Date().toISOString();
       
