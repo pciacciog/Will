@@ -107,6 +107,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client log bridge endpoint
+  app.post('/api/logs', async (req: any, res) => {
+    try {
+      const { level = 'info', message, source = 'client', timestamp, userAgent } = req.body;
+      
+      // Format client log for server console
+      const clientInfo = userAgent ? ` [${userAgent}]` : '';
+      const logMessage = `[Client${clientInfo}] ${message}`;
+      
+      // Output to server console based on level
+      switch (level) {
+        case 'error':
+          console.error(logMessage);
+          break;
+        case 'warn':
+          console.warn(logMessage);
+          break;
+        default:
+          console.log(logMessage);
+          break;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error processing client log:", error);
+      res.status(500).json({ message: "Failed to process log" });
+    }
+  });
+
   // Circle routes
   app.post('/api/circles', isAuthenticated, async (req: any, res) => {
     try {

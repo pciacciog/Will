@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { notificationService } from "@/services/NotificationService";
 import { useLocation } from "wouter";
+import { logBridge } from "@/lib/logBridge";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Auth from "@/pages/Auth";
@@ -28,6 +29,11 @@ function Router() {
 
   // Debug logging
   console.log('Router debug:', { isAuthenticated, isLoading, user: user?.id, location });
+
+  // Initialize log bridge immediately (works without authentication)
+  useEffect(() => {
+    logBridge.initialize();
+  }, []);
 
   // Initialize notifications AFTER authentication
   useEffect(() => {
