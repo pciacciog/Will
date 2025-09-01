@@ -27,9 +27,21 @@ export default function Auth() {
       });
       return await res.json();
     },
-    onSuccess: (user) => {
+    onSuccess: async (user) => {
       console.log('Login success, user:', user);
       queryClient.setQueryData(['/api/user'], user);
+      
+      // Send pending device token now that user is authenticated
+      try {
+        const { sendPendingDeviceToken } = await import('../services/NotificationService');
+        const tokenSent = await sendPendingDeviceToken();
+        if (tokenSent) {
+          console.log('📱 Device token successfully linked to user account');
+        }
+      } catch (error) {
+        console.error('Failed to send pending device token:', error);
+      }
+      
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       // Set a flag to show splash screen on first Home load
@@ -55,9 +67,21 @@ export default function Auth() {
       });
       return await res.json();
     },
-    onSuccess: (user) => {
+    onSuccess: async (user) => {
       console.log('Registration success, user:', user);
       queryClient.setQueryData(['/api/user'], user);
+      
+      // Send pending device token now that user is authenticated
+      try {
+        const { sendPendingDeviceToken } = await import('../services/NotificationService');
+        const tokenSent = await sendPendingDeviceToken();
+        if (tokenSent) {
+          console.log('📱 Device token successfully linked to new user account');
+        }
+      } catch (error) {
+        console.error('Failed to send pending device token:', error);
+      }
+      
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       // Set a flag to show splash screen on first Home load

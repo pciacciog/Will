@@ -88,33 +88,68 @@ export class NotificationService {
     }
   }
 
-  // Helper method to save device token to server
+  // Store device token locally (to be sent after authentication)
   private async saveDeviceToken(deviceToken: string): Promise<void> {
     try {
+      console.log('📱 Device token received, storing locally until authentication');
       console.log('Token length:', deviceToken.length);
-      console.log('Token type:', typeof deviceToken);
+      console.log('Token preview:', deviceToken.substring(0, 20) + '...');
+      
+      // Store in localStorage with timestamp
+      const tokenData = {
+        token: deviceToken,
+        platform: 'ios',
+        timestamp: new Date().toISOString()
+      };
+      
+      localStorage.setItem('pendingDeviceToken', JSON.stringify(tokenData));
+      console.log('✅ Device token stored locally, will send to server after login');
+      
+      // Try to send immediately in case user is already logged in
+      await this.sendPendingTokenToServer();
+      
+    } catch (error) {
+      console.error('❌ Error storing device token locally:', error);
+    }
+  }
+
+  // Send stored device token to server (called after authentication)
+  public async sendPendingTokenToServer(): Promise<boolean> {
+    try {
+      const storedTokenData = localStorage.getItem('pendingDeviceToken');
+      if (!storedTokenData) {
+        console.log('📱 No pending device token to send');
+        return false;
+      }
+      
+      const tokenData = JSON.parse(storedTokenData);
+      console.log('📤 Attempting to send stored device token to server...');
       
       // Import apiRequest dynamically to avoid module issues
       const { apiRequest } = await import('../lib/queryClient');
       
-      console.log('Sending device token to backend...');
       const response = await apiRequest('/api/push-tokens', {
         method: 'POST',
         body: JSON.stringify({
-          deviceToken: deviceToken,
-          platform: 'ios' // Since this is mainly for iOS
+          deviceToken: tokenData.token,
+          platform: tokenData.platform
         })
       });
       
       if (response.ok) {
-        console.log('✅ Device token successfully stored on server');
+        console.log('✅ Device token successfully sent to server and linked to user');
+        // Clear the pending token since it's now stored on server
+        localStorage.removeItem('pendingDeviceToken');
+        return true;
       } else {
-        console.error('❌ Failed to store device token on server. Status:', response.status);
+        console.error('❌ Failed to send device token to server. Status:', response.status);
         const errorText = await response.text();
         console.error('Server response:', errorText);
+        return false;
       }
     } catch (error) {
-      console.error('❌ Error sending device token to server:', error);
+      console.error('❌ Error sending pending device token to server:', error);
+      return false;
     }
   }
 
@@ -267,3 +302,8 @@ export class NotificationService {
 }
 
 export const notificationService = NotificationService.getInstance();
+
+// Export method for authentication flow integration
+export const sendPendingDeviceToken = () => {
+  return notificationService.sendPendingTokenToServer();
+};

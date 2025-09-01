@@ -329,6 +329,13 @@ export default function InnerCircleHub() {
 
   const handleLogout = async () => {
     try {
+      // Clear any pending device token so it doesn't link to next user
+      const pendingToken = localStorage.getItem('pendingDeviceToken');
+      if (pendingToken) {
+        console.log('🗑️ Clearing pending device token on logout');
+        localStorage.removeItem('pendingDeviceToken');
+      }
+      
       await fetch('/api/logout', { method: 'POST' });
       window.location.href = '/';
     } catch (error) {
