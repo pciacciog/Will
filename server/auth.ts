@@ -134,13 +134,17 @@ export function setupAuth(app: Express) {
         console.log(`🔄 [Login] Transferring token ownership to user ${user.id}`);
         console.log(`📱 Token: ${deviceToken.substring(0, 8)}...`);
         
-        // Import database dependencies
-        const { db } = await import('./storage');
+        // Import database dependencies  
+        const { neon } = await import('@neondatabase/serverless');
+        const { drizzle } = await import('drizzle-orm/neon-http');
         const { deviceTokens } = await import('../shared/schema');
-        const { sql } = await import('drizzle-orm');
+        
+        // Create database connection
+        const sqlConnection = neon(process.env.DATABASE_URL!);
+        const dbConnection = drizzle(sqlConnection);
         
         // Always transfer token ownership, regardless of current state
-        await db
+        await dbConnection
           .insert(deviceTokens)
           .values({
             deviceToken: deviceToken,
