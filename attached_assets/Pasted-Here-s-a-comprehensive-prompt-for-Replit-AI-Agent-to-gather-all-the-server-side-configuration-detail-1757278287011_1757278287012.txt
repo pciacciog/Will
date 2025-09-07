@@ -1,0 +1,52 @@
+Here's a comprehensive prompt for Replit AI Agent to gather all the server-side configuration details we need:
+
+PROMPT FOR REPLIT AI AGENT:
+I need you to provide detailed information about the current APNs (Apple Push Notification) configuration in my server to diagnose a BadEnvironmentKeyInToken error. Please output the following information:
+APNs Configuration Details Needed:
+1. APNs Endpoint URL:
+
+What exact URL is the server using to send notifications?
+Should be api.sandbox.push.apple.com:443 for development/sandbox
+Should be api.push.apple.com:443 for production
+
+2. APNs Credentials:
+
+What APNS_BUNDLE_ID is configured in environment variables?
+What APNS_TEAM_ID is being used?
+What APNS_KEY_ID is being used?
+How is the server determining to use SANDBOX vs PRODUCTION mode?
+
+3. Current Environment Detection:
+
+Show the exact logic that determines whether server runs in SANDBOX or PRODUCTION
+What triggers the "SANDBOX mode - forced for development" message in logs?
+
+4. APNs Library Configuration:
+
+What APNs library are you using? (node-apn, apn2, etc.)
+Show the exact initialization code for the APNs client
+What parameters are passed to the APNs client constructor?
+
+5. Request Details:
+
+Show the exact headers being sent with APNs requests
+What apns-topic header is being used?
+Any other APNs-specific headers?
+
+Expected Output Format:
+=== APNs SERVER CONFIGURATION ===
+Endpoint: [URL]
+Bundle ID: [ID]  
+Team ID: [ID]
+Key ID: [ID]
+Environment Mode: [SANDBOX/PRODUCTION]
+Library: [name and version]
+
+=== INITIALIZATION CODE ===
+[Show the actual APNs client setup code]
+
+=== REQUEST HEADERS ===
+[Show headers sent to APNs]
+Context:
+We're getting BadEnvironmentKeyInToken (403) from Apple's APNs server. The iOS app is properly configured for development with aps-environment: development, so the issue might be server-side configuration rather than the device token being wrong.
+Please provide all this information so we can verify the server is properly configured for SANDBOX/development environment.
