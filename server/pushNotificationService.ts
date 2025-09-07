@@ -27,7 +27,7 @@ class PushNotificationService {
                               process.env.APNS_TEAM_ID;
 
     // Check for fixed .p8 key file first, then fall back to environment variable
-    const fixedKeyPath = './AuthKey_4J2R866V2R_fixed.p8';
+    const fixedKeyPath = './AuthKey_87W6BN7P29.p8';
     const hasFixedKeyFile = fs.existsSync(fixedKeyPath);
     
     if (hasFixedKeyFile && process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID) {
