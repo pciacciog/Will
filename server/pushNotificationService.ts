@@ -108,19 +108,24 @@ class PushNotificationService {
         return false;
       }
 
-      // ENVIRONMENT GUARDRAILS: Filter tokens by environment compatibility
+      // ENVIRONMENT GUARDRAILS: Filter tokens by environment compatibility (Issue 1 fix)
       const serverIsSandbox = true; // We're always in sandbox mode during development
-      
-      // 🧪 TESTING OVERRIDE: Accept both sandbox and production tokens for comprehensive testing
-      console.log(`[PushNotificationService] 🧪 TESTING MODE: Accepting all tokens regardless of environment`);
       const compatibleTokens = userTokens.filter(token => {
         if (token.platform !== 'ios') return true; // Non-iOS tokens are always compatible
         
         const tokenIsSandbox = token.isSandbox ?? true; // Default to sandbox if null
-        const compatible = true; // 🧪 OVERRIDE: Accept all tokens for testing
+        const compatible = serverIsSandbox === tokenIsSandbox;
         
-        console.log(`[PushNotificationService] 🧪 TESTING: Token ${token.deviceToken.substring(0, 8)}... - Server: ${serverIsSandbox ? 'SANDBOX' : 'PRODUCTION'}, Token: ${tokenIsSandbox ? 'SANDBOX' : 'PRODUCTION'}`);
-        console.log(`  🔍 Action: ALLOWING for comprehensive testing (normally would ${serverIsSandbox === tokenIsSandbox ? 'ALLOW' : 'SKIP'})`);
+        console.log(`[PushNotificationService] 🔍 Token ${token.deviceToken.substring(0, 8)}... - Server: ${serverIsSandbox ? 'SANDBOX' : 'PRODUCTION'}, Token: ${tokenIsSandbox ? 'SANDBOX' : 'PRODUCTION'}`);
+        
+        if (!compatible) {
+          console.log(`[PushNotificationService] ⚠️ SKIPPED: Token ${token.deviceToken.substring(0, 8)}... environment mismatch`);
+          console.log(`  🔍 Server: ${serverIsSandbox ? 'SANDBOX' : 'PRODUCTION'}`);
+          console.log(`  🔍 Token: ${tokenIsSandbox ? 'SANDBOX' : 'PRODUCTION'}`);
+          console.log(`  🔍 Action: Skipping to prevent 403 error`);
+        } else {
+          console.log(`  ✅ COMPATIBLE: Environment match - allowing notification`);
+        }
         
         return compatible;
       });
@@ -141,17 +146,17 @@ class PushNotificationService {
         console.log(`[PushNotificationService] 🔍 DEBUG: Token details: Platform=${tokenRecord.platform}, Active=${tokenRecord.isActive}, Environment=${tokenRecord.isSandbox ? 'SANDBOX' : 'PRODUCTION'}, Updated=${tokenRecord.updatedAt}`);
         console.log(`[PushNotificationService] 🔍 DEBUG: Provenance: Bundle=${tokenRecord.bundleId || 'N/A'}, Scheme=${tokenRecord.buildScheme || 'N/A'}, Profile=${tokenRecord.provisioningProfile || 'N/A'}, Version=${tokenRecord.appVersion || 'N/A'}`);
         
-        // ENVIRONMENT GUARDRAIL CHECK
+        // ENVIRONMENT GUARDRAIL CHECK (Issue 1 fix)
         if (tokenRecord.platform === 'ios') {
           const tokenEnv = tokenRecord.isSandbox ? 'SANDBOX' : 'PRODUCTION';
           const serverEnv = 'SANDBOX'; // We're always sandbox in development
           
           if (tokenRecord.isSandbox === false) {
-            console.log(`[PushNotificationService] 🧪 TESTING OVERRIDE: Allowing production token on sandbox server for testing`);
+            console.log(`[PushNotificationService] ⚠️ GUARDRAIL TRIGGERED: Skipping production token on sandbox server`);
             console.log(`  🔍 Token: ${tokenRecord.deviceToken.substring(0, 8)}... is PRODUCTION`);
             console.log(`  🔍 Server: SANDBOX`);
-            console.log(`  🔍 Action: PROCEEDING (expect 403 error, but useful for debugging)`);
-            // 🧪 TESTING: Don't skip, let it fail with proper error logging
+            console.log(`  🔍 Action: Skipped to prevent 403 error`);
+            continue; // Skip this token to prevent 403 errors
           }
         }
         

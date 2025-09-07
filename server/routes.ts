@@ -1152,6 +1152,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Push notification API routes
   
+  // Device token storage API (Issue 2 fix)
+  app.post('/api/device-token', async (req: any, res) => {
+    try {
+      const { deviceToken, userId } = req.body;
+      
+      console.log(`[DeviceToken] 📱 NEW TOKEN REGISTRATION:`);
+      console.log(`  🔍 Token Hash: ${deviceToken?.substring(0, 8)}...`);
+      console.log(`  🔍 User ID: ${userId}`);
+      console.log(`  🔍 Request Time: ${new Date().toISOString()}`);
+      
+      if (!deviceToken) {
+        return res.status(400).json({ error: 'Device token is required' });
+      }
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      
+      // Verify user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Detect token environment (Issue 1 fix)
+      const environment = detectTokenEnvironment(req.headers, 'ios');
+      console.log(`  🔍 Detected Environment: ${environment}`);
+      
+      const tokenData = {
+        userId,
+        deviceToken,
+        platform: 'ios',
+        isActive: true,
+        isSandbox: environment === 'SANDBOX',
+        bundleId: req.headers['x-app-bundle'] as string,
+        buildScheme: req.headers['x-app-buildscheme'] as string,
+        provisioningProfile: req.headers['x-app-provisioning'] as string,
+        appVersion: req.headers['x-app-version'] as string,
+        registrationSource: 'api_device_token'
+      };
+      
+      // Check if token already exists
+      const existingToken = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.deviceToken, deviceToken));
+      
+      if (existingToken.length > 0) {
+        console.log(`[DeviceToken] ✅ Updating existing token`);
+        await db
+          .update(deviceTokens)
+          .set({ 
+            userId,
+            isActive: true,
+            isSandbox: environment === 'SANDBOX',
+            updatedAt: new Date(),
+            registrationSource: 'api_device_token_update'
+          })
+          .where(eq(deviceTokens.deviceToken, deviceToken));
+      } else {
+        console.log(`[DeviceToken] ✅ Storing new token`);
+        await db.insert(deviceTokens).values(tokenData);
+      }
+      
+      console.log(`[DeviceToken] ✅ Token ${deviceToken.substring(0, 8)}... registered for user ${userId} (${environment})`);
+      res.json({ 
+        success: true, 
+        message: `Token registered successfully as ${environment}`,
+        environment 
+      });
+      
+    } catch (error) {
+      console.error("[DeviceToken] ❌ Error registering token:", error);
+      res.status(500).json({ error: 'Failed to register device token' });
+    }
+  });
+  
   // Device status check for push notifications
   app.get('/api/notifications/status', async (req: any, res) => {
     try {
@@ -1218,7 +1295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deviceToken,
         platform,
         isActive: true,
-        isSandbox: true, // Assume sandbox for development
+        isSandbox: detectTokenEnvironment(req.headers, platform) === 'SANDBOX', // Issue 1 fix: proper environment detection
         registrationSource: 'unauthenticated_registration'
       };
       
@@ -1584,4 +1661,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Issue 1 fix: Smart token environment detection
+function detectTokenEnvironment(headers: any, platform: string): 'SANDBOX' | 'PRODUCTION' {
+  if (platform !== 'ios') return 'SANDBOX'; // Only iOS has environment complexity
+  
+  // Extract app metadata from headers
+  const buildScheme = headers['x-app-buildscheme'] || '';
+  const provisioningProfile = headers['x-app-provisioning'] || '';
+  const bundleId = headers['x-app-bundle'] || '';
+  
+  console.log(`[TokenEnvironment] 🔍 DETECTION:`);
+  console.log(`  🔍 Build Scheme: ${buildScheme}`);
+  console.log(`  🔍 Provisioning: ${provisioningProfile}`);
+  console.log(`  🔍 Bundle ID: ${bundleId}`);
+  
+  // Primary detection: Build scheme
+  if (buildScheme.toLowerCase() === 'debug') {
+    console.log(`  ✅ SANDBOX detected (Debug build)`);
+    return 'SANDBOX';
+  }
+  
+  if (buildScheme.toLowerCase() === 'release') {
+    console.log(`  ✅ PRODUCTION detected (Release build)`);
+    return 'PRODUCTION';
+  }
+  
+  // Secondary detection: Provisioning profile keywords
+  const provisioningLower = provisioningProfile.toLowerCase();
+  if (provisioningLower.includes('development') || provisioningLower.includes('debug')) {
+    console.log(`  ✅ SANDBOX detected (Development provisioning)`);
+    return 'SANDBOX';
+  }
+  
+  if (provisioningLower.includes('distribution') || provisioningLower.includes('appstore') || provisioningLower.includes('production')) {
+    console.log(`  ✅ PRODUCTION detected (Distribution provisioning)`);
+    return 'PRODUCTION';
+  }
+  
+  // Fallback: In development server, default to SANDBOX
+  const serverEnv = process.env.NODE_ENV;
+  if (serverEnv === 'development') {
+    console.log(`  🔄 SANDBOX fallback (Development server + ambiguous token)`);
+    return 'SANDBOX';
+  }
+  
+  // Ultimate fallback: PRODUCTION for production servers
+  console.log(`  🔄 PRODUCTION fallback (Production server + ambiguous token)`);
+  return 'PRODUCTION';
 }

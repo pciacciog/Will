@@ -1,0 +1,42 @@
+Here's a comprehensive prompt for Replit AI Agent:
+
+PROMPT FOR REPLIT AI AGENT:
+I need you to fix two critical issues with push notifications in my Node.js/Express app:
+ISSUE 1: Fix Token Environment Detection Bug
+My PushNotificationService is incorrectly classifying DEVELOPMENT tokens as PRODUCTION tokens. I've verified through Apple's CloudKit console that device token 51db5eba5b82c1c83d75203acbae734af4a57b3fee2c3b3ce11ae433b19b00ea is a valid DEVELOPMENT token, but my server logs show:
+[PushNotificationService] ⚠️ SKIPPED: Token 51db5eba... environment mismatch
+🔍 Server: SANDBOX
+🔍 Token: PRODUCTION  ← This detection is WRONG
+What to fix: Find the logic in PushNotificationService that determines token environment (SANDBOX vs PRODUCTION) and fix the detection algorithm. The token above should be detected as SANDBOX/DEVELOPMENT, not PRODUCTION.
+ISSUE 2: Implement Device Token Storage API
+My iOS app successfully registers device tokens (visible in logs: 🟢 Device Token Successfully Registered: 51db5eba...) but these tokens aren't being saved to the database.
+What to implement:
+
+Create API endpoint POST /api/device-token that accepts:
+json{
+  "deviceToken": "string",
+  "userId": "string" 
+}
+
+Store tokens in database with fields:
+
+userId (foreign key to users table)
+deviceToken (string)
+environment (SANDBOX/PRODUCTION - detect correctly!)
+createdAt/updatedAt timestamps
+Handle duplicate tokens (update existing records)
+
+
+Update the token retrieval logic in PushNotificationService to query this new storage
+
+Current Server Environment:
+
+Running in SANDBOX mode (development APNs)
+Using Prisma ORM
+Express.js framework
+Already has APNs configured with proper credentials
+
+Expected Outcome:
+After fixes, when I create a Will, the push notification should successfully send to users with stored device tokens, with logs showing:
+[PushNotificationService] ✅ SENT: Token 51db5eba... (SANDBOX match)
+Please locate the relevant files, implement the fixes, and ensure the environment detection logic correctly identifies DEVELOPMENT tokens as SANDBOX-compatible.
