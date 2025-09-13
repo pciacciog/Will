@@ -1162,14 +1162,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Push notification API routes
   
-  // Device token storage API (Issue 2 fix)
+  // Device token storage API with deduplication (Race Condition Fix)
   app.post('/api/device-token', async (req: any, res) => {
     try {
       const { deviceToken, userId } = req.body;
       
       console.log(`[DeviceToken] 📱 NEW TOKEN REGISTRATION:`);
-      console.log(`  🔍 Token Hash: ${deviceToken?.substring(0, 8)}...`);
-      console.log(`  🔍 User ID: ${userId}`);
+      console.log(`  🔍 Token Hash: ${deviceToken?.substring(0, 10)}...`);
+      console.log(`  🔍 Incoming User ID: ${userId}`);
       console.log(`  🔍 Request Time: ${new Date().toISOString()}`);
       
       if (!deviceToken) {
@@ -1179,6 +1179,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ error: 'User ID is required' });
       }
+
+      // 🔒 CRITICAL: Check if token already exists and is associated to prevent race condition
+      const existingToken = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.deviceToken, deviceToken))
+        .limit(1);
+        
+      if (existingToken.length > 0) {
+        const existing = existingToken[0];
+        console.log(`[DeviceToken] Found existing token with userId: ${existing.userId}`);
+        
+        // If token is already associated with a real user, SKIP registration to prevent duplicate reset
+        if (existing.userId && existing.userId !== 'pending' && existing.userId !== null) {
+          console.log(`🔒 [DeviceToken] Token already associated with user ${existing.userId}, preventing duplicate registration`);
+          return res.json({ 
+            success: true, 
+            message: 'Token already associated with user',
+            action: 'skipped_duplicate',
+            alreadyAssociated: true,
+            tokenHash: deviceToken.substring(0, 10) + '...'
+          });
+        }
+        
+        // Token exists but still pending - allow update
+        console.log(`🔄 [DeviceToken] Token exists but pending, allowing update`);
+      }
+      
+      // Proceed with registration only for new tokens or truly pending tokens
+      console.log(`🔄 [DeviceToken] Proceeding with registration...`);
       
       // Handle pending tokens (not yet associated with a user)
       let finalUserId = userId;
@@ -1209,12 +1239,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appVersion: req.headers['x-app-version'] as string,
         registrationSource: finalUserId ? 'api_device_token' : 'api_device_token_pending'
       };
-      
-      // Check if token already exists
-      const existingToken = await db
-        .select()
-        .from(deviceTokens)
-        .where(eq(deviceTokens.deviceToken, deviceToken));
       
       if (existingToken.length > 0) {
         console.log(`[DeviceToken] ✅ Updating existing token`);

@@ -1,0 +1,128 @@
+URGENT: Token Association Function Not Running During Login
+❌ CRITICAL ISSUE IDENTIFIED
+The associatePendingTokens function is NOT being called during the login process.
+Evidence:
+
+Token registration logs appear during login: ✅ Token 91df829a... registered for pending association
+ZERO association logs appear during login
+Missing logs that should show: [PendingTokens] Looking for pending device tokens to associate with user...
+New tokens remain with userId: NULL in database after login
+
+Conclusion: Either the association function isn't being called, or it's being called before the token registration completes.
+
+🔍 ROOT CAUSE ANALYSIS
+Two critical problems:
+Problem 1: Association Function Not Called
+The login endpoint may be missing the call to associatePendingTokens(user.id)
+Problem 2: Timing Issue
+If association IS being called, it's happening before the token registration completes, so it finds no pending tokens to associate
+
+🚨 IMMEDIATE FIXES REQUIRED
+FIX 1: Verify Association Function is Called During Login
+Check your login endpoint and ensure it includes:
+javascript// After successful authentication
+const user = await authenticateUser(credentials);
+
+// CRITICAL: This line must be present and executed
+console.log(`🔍 [Login] About to associate pending tokens for user ${user.id}`);
+await associatePendingTokens(user.id);
+console.log(`✅ [Login] Token association completed for user ${user.id}`);
+
+// Return success response
+If this call is missing, ADD IT to your login endpoint.
+FIX 2: Add Delay/Retry for Token Association
+The token registration may be happening asynchronously during login. Add retry logic:
+javascriptasync function associatePendingTokensWithRetry(userId, maxRetries = 3, delay = 1000) {
+    console.log(`🔄 [PendingTokens] Starting association with retry for user ${userId}`);
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        console.log(`🔄 [PendingTokens] Association attempt ${attempt}/${maxRetries}`);
+        
+        const result = await associatePendingTokens(userId);
+        
+        if (result.tokensAssociated > 0) {
+            console.log(`✅ [PendingTokens] Successfully associated ${result.tokensAssociated} tokens on attempt ${attempt}`);
+            return result;
+        }
+        
+        if (attempt < maxRetries) {
+            console.log(`⏳ [PendingTokens] No tokens found, waiting ${delay}ms before retry ${attempt + 1}`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    
+    console.log(`⚠️ [PendingTokens] No pending tokens found after ${maxRetries} attempts for user ${userId}`);
+    return { tokensAssociated: 0 };
+}
+FIX 3: Modify Login Endpoint to Use Retry Logic
+javascript// In your login endpoint, replace the direct call with:
+await associatePendingTokensWithRetry(user.id, 3, 2000); // 3 attempts, 2 second delay
+
+🧪 DIAGNOSTIC STEPS
+Step 1: Add Debug Logging to Login Endpoint
+javascriptapp.post('/api/login', async (req, res) => {
+    // ... authentication logic ...
+    
+    console.log('🔍 [Login] User authenticated successfully:', user.id);
+    console.log('🔍 [Login] About to check for pending device tokens...');
+    
+    // Check if there are ANY pending tokens before association
+    const pendingCheck = await db.query(
+        'SELECT COUNT(*) as count FROM device_tokens WHERE user_id IS NULL OR user_id = $1',
+        ['pending']
+    );
+    console.log('🔍 [Login] Total pending tokens in database:', pendingCheck.rows[0].count);
+    
+    // Call association function
+    console.log('🔍 [Login] Calling associatePendingTokens...');
+    const associationResult = await associatePendingTokensWithRetry(user.id);
+    console.log('🔍 [Login] Association result:', associationResult);
+    
+    // ... return response ...
+});
+Step 2: Enhanced Association Function Debugging
+javascriptasync function associatePendingTokens(userId) {
+    console.log('🔍 [PendingTokens] === ASSOCIATION FUNCTION CALLED ===');
+    console.log('🔍 [PendingTokens] Target user ID:', userId);
+    console.log('🔍 [PendingTokens] Timestamp:', new Date().toISOString());
+    
+    // Query for pending tokens
+    const pendingTokens = await db.query(`
+        SELECT token, platform, environment, created_at 
+        FROM device_tokens 
+        WHERE user_id IS NULL OR user_id = $1
+        ORDER BY created_at DESC
+    `, ['pending']);
+    
+    console.log('🔍 [PendingTokens] Raw query result:', {
+        rowCount: pendingTokens.rowCount,
+        tokens: pendingTokens.rows.map(row => ({
+            token: row.token.substring(0, 10) + '...',
+            platform: row.platform,
+            created_at: row.created_at
+        }))
+    });
+    
+    if (pendingTokens.rows.length === 0) {
+        console.log('⚠️ [PendingTokens] No pending tokens found for association');
+        return { tokensAssociated: 0 };
+    }
+    
+    // ... rest of association logic ...
+}
+
+🎯 EXPECTED BEHAVIOR AFTER FIX
+During login, you should see these logs:
+🔍 [Login] User authenticated successfully: 17511021851866udaucmnr
+🔍 [Login] About to check for pending device tokens...
+🔍 [Login] Total pending tokens in database: 1
+🔍 [Login] Calling associatePendingTokens...
+🔍 [PendingTokens] === ASSOCIATION FUNCTION CALLED ===
+🔍 [PendingTokens] Found 1 pending tokens to associate
+✅ [PendingTokens] Successfully associated 1 tokens with user 17511021851866udaucmnr
+
+🚨 CRITICAL ACTION ITEMS
+
+Verify associatePendingTokens(user.id) is called in login endpoint
+Add the retry logic to handle timing issues
+Add comprehensive debug logging

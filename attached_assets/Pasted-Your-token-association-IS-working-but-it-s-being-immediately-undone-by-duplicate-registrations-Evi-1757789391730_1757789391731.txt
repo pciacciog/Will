@@ -1,0 +1,100 @@
+Your token association IS working, but it's being immediately undone by duplicate registrations.
+Evidence from server logs:
+
+14:39:58 - Token 91df829a... registered with userId: pending ✅
+14:40:35 - associatePendingTokens runs, finds 2 pending tokens ✅
+14:40:36 - SAME token 91df829a... registered AGAIN ❌
+Result: Second registration overwrites the association, resets userId back to NULL
+
+This is a classic race condition where the solution is undoing itself.
+
+🔧 IMMEDIATE FIX REQUIRED
+Problem: iOS app is registering the same token multiple times
+
+Once on app launch
+Again after login/push setup
+The second registration resets the association
+
+Solution: Add server-side deduplication to prevent duplicate registrations from overwriting associations
+
+📝 SERVER-SIDE FIX NEEDED
+Modify your device token registration endpoint to:
+
+Check if token already exists and is associated
+Skip registration if token is already associated with a user
+Only allow registration updates for truly pending tokens
+
+Add this logic to your /api/device-token endpoint:
+javascript// Before processing registration
+const existingToken = await db.query(
+  'SELECT user_id FROM device_tokens WHERE token = $1',
+  [deviceToken]
+);
+
+if (existingToken.rows.length > 0) {
+  const currentUserId = existingToken.rows[0].user_id;
+  
+  // If token is already associated with a user, don't re-register
+  if (currentUserId && currentUserId !== 'pending') {
+    console.log(`🔒 [DeviceToken] Token already associated with user ${currentUserId}, skipping registration`);
+    return res.json({ 
+      success: true, 
+      message: 'Token already associated',
+      action: 'skipped'
+    });
+  }
+}
+
+// Only proceed with registration if token is truly pending or new
+console.log(`🔄 [DeviceToken] Proceeding with registration for pending token`);
+// ... existing registration logic
+
+🎯 ALTERNATIVE: iOS-SIDE DEDUPLICATION
+If you prefer to fix on iOS side, add this to AppDelegate.swift:
+swiftfunc sendTokenDirectlyToServer(token: String) {
+    // Check if we already successfully registered this token
+    let lastSuccessfulToken = UserDefaults.standard.string(forKey: "last_successful_token")
+    let lastSuccessTime = UserDefaults.standard.double(forKey: "last_success_time")
+    let timeSinceSuccess = Date().timeIntervalSince1970 - lastSuccessTime
+    
+    if lastSuccessfulToken == token && timeSinceSuccess < 3600 { // 1 hour
+        print("🔒 iOS DIRECT: Token already successfully registered, skipping duplicate")
+        return
+    }
+    
+    // Your existing sendTokenDirectlyToServer code...
+    
+    // On successful response (status 200):
+    if httpResponse.statusCode == 200 {
+        print("🔥 iOS DIRECT: ✅ SUCCESS - Token registered directly with server!")
+        
+        // Store successful registration to prevent duplicates
+        UserDefaults.standard.set(token, forKey: "last_successful_token")
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "last_success_time")
+        
+        // Your existing success handling...
+    }
+}
+
+🚨 RECOMMENDED APPROACH
+Fix this on the server side because:
+
+More reliable than client-side deduplication
+Prevents race conditions from any source
+Protects against multiple devices/apps
+Easier to debug and monitor
+
+Server-side logic should be:
+
+If token exists and has a real user_id → Skip registration
+If token exists and user_id is pending/null → Update registration
+If token doesn't exist → Create new registration
+
+
+🧪 TESTING VERIFICATION
+After implementing the fix, you should see:
+First registration:
+[DeviceToken] ✅ Token 91df829a... registered for pending association
+Second registration attempt:
+🔒 [DeviceToken] Token already associated with user 12345, skipping registration
+Result: Token stays associated, notifications work.

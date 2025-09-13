@@ -118,8 +118,8 @@ export function setupAuth(app: Express) {
         
         // Associate any pending device tokens with the new user
         try {
-          await associatePendingTokens(user.id);
-          console.log(`✅ [Registration] Associated pending tokens with new user ${user.id}`);
+          const associationResult = await associatePendingTokensWithRetry(user.id);
+          console.log(`✅ [Registration] Associated pending tokens with new user ${user.id}:`, associationResult);
         } catch (error) {
           console.error('❌ [Registration] Error associating pending tokens:', error);
           // Don't fail registration due to token association issues
@@ -184,11 +184,12 @@ export function setupAuth(app: Express) {
         console.log(`ℹ️ [Login] No device token in request - will check for pending tokens`);
       }
       
-      // 🔥 CRITICAL: Always associate any pending device tokens after login
+      // 🔥 CRITICAL: Always associate any pending device tokens after login with retry logic
       try {
-        console.log(`🔍 [Login] Checking for pending device tokens to associate with user ${user.id}`);
-        await associatePendingTokens(user.id);
-        console.log(`✅ [Login] Pending token association completed for user ${user.id}`);
+        console.log(`✅ [Login] User authenticated: ${user.email}`);
+        console.log(`🔍 [Login] Starting pending token association for user: ${user.id}`);
+        const associationResult = await associatePendingTokensWithRetry(user.id);
+        console.log(`✅ [Login] Token association completed:`, associationResult);
       } catch (error) {
         console.error(`❌ [Login] Error associating pending tokens for user ${user.id}:`, error);
         // Don't fail login due to token association issues
@@ -270,22 +271,22 @@ export function setupAuth(app: Express) {
     }
   }
 
-  // CRITICAL: Associate ALL pending device tokens with authenticated user
-  async function associatePendingTokens(userId: string): Promise<void> {
-    try {
-      console.log(`🔍 [PendingTokens] Looking for pending device tokens to associate with user ${userId}`);
+  // Enhanced association function with retry logic for timing issues
+  async function associatePendingTokensWithRetry(userId: string, maxRetries: number = 3, delayMs: number = 2000): Promise<{ tokensAssociated: number }> {
+    console.log(`🔄 [PendingTokens] Starting association with retry for user ${userId}`);
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      console.log(`🔄 [PendingTokens] Association attempt ${attempt}/${maxRetries}`);
       
-      // Import database dependencies  
+      // Check for pending tokens before attempting association
       const { neon } = await import('@neondatabase/serverless');
       const { drizzle } = await import('drizzle-orm/neon-http');
       const { deviceTokens } = await import('../shared/schema');
       const { eq, isNull, or } = await import('drizzle-orm');
       
-      // Create database connection
       const sqlConnection = neon(process.env.DATABASE_URL!);
       const dbConnection = drizzle(sqlConnection);
       
-      // Find all pending tokens (userId is null OR userId is "pending") 
       const pendingTokens = await dbConnection
         .select()
         .from(deviceTokens)
@@ -296,15 +297,74 @@ export function setupAuth(app: Express) {
           )
         );
         
-      console.log(`🔍 [PendingTokens] Found ${pendingTokens.length} pending tokens to associate`);
+      const pendingCount = pendingTokens.length;
+      console.log(`🔍 [PendingTokens] Found ${pendingCount} pending tokens on attempt ${attempt}`);
+      
+      if (pendingCount > 0) {
+        // Found pending tokens, attempt association
+        const result = await associatePendingTokens(userId);
+        
+        if (result.tokensAssociated > 0) {
+          console.log(`✅ [PendingTokens] Successfully associated ${result.tokensAssociated} tokens on attempt ${attempt}`);
+          return result;
+        }
+      }
+      
+      // If no tokens found or association failed, wait and retry
+      if (attempt < maxRetries) {
+        console.log(`⏳ [PendingTokens] Waiting ${delayMs}ms before retry ${attempt + 1}`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+    
+    console.log(`⚠️ [PendingTokens] No pending tokens associated after ${maxRetries} attempts for user ${userId}`);
+    return { tokensAssociated: 0 };
+  }
+
+  // CRITICAL: Associate ALL pending device tokens with authenticated user
+  async function associatePendingTokens(userId: string): Promise<{ tokensAssociated: number }> {
+    console.log('🔍 [PendingTokens] === ASSOCIATION FUNCTION EXECUTING ===');
+    console.log('🔍 [PendingTokens] Target user ID:', userId);
+    console.log('🔍 [PendingTokens] Timestamp:', new Date().toISOString());
+    
+    try {
+      // Import database dependencies  
+      const { neon } = await import('@neondatabase/serverless');
+      const { drizzle } = await import('drizzle-orm/neon-http');
+      const { deviceTokens } = await import('../shared/schema');
+      const { eq, isNull, or } = await import('drizzle-orm');
+      
+      // Create database connection
+      const sqlConnection = neon(process.env.DATABASE_URL!);
+      const dbConnection = drizzle(sqlConnection);
+      
+      // Find all pending tokens (userId is null OR userId is "pending") with detailed logging
+      const pendingTokens = await dbConnection
+        .select()
+        .from(deviceTokens)
+        .where(
+          or(
+            isNull(deviceTokens.userId),
+            eq(deviceTokens.userId, "pending")
+          )
+        );
+        
+      console.log('🔍 [PendingTokens] Query results:');
+      console.log('  - Row count:', pendingTokens.length);
+      console.log('  - Tokens found:', pendingTokens.map(row => ({
+        tokenHash: row.deviceToken.substring(0, 10) + '...',
+        platform: row.platform,
+        currentUserId: row.userId,
+        createdAt: row.createdAt
+      })));
       
       if (pendingTokens.length === 0) {
-        console.log(`ℹ️ [PendingTokens] No pending tokens found for user ${userId}`);
-        return;
+        console.log('⚠️ [PendingTokens] No pending tokens found to associate');
+        return { tokensAssociated: 0 };
       }
       
       // First, deactivate old tokens for this user to prevent notification conflicts
-      const oldTokenCount = await dbConnection
+      const deactivateResult = await dbConnection
         .update(deviceTokens)
         .set({ 
           isActive: false,
@@ -312,14 +372,14 @@ export function setupAuth(app: Express) {
         })
         .where(eq(deviceTokens.userId, userId));
         
-      console.log(`🔄 [PendingTokens] Deactivated ${oldTokenCount} old tokens for user ${userId}`);
+      console.log(`🔄 [PendingTokens] Deactivated old tokens for user ${userId}`);
       
       // Associate each pending token with the authenticated user
       let associatedCount = 0;
       for (const token of pendingTokens) {
-        console.log(`🔗 [PendingTokens] Associating token ${token.deviceToken.substring(0, 8)}... with user ${userId}`);
+        console.log(`🔗 [PendingTokens] Associating token ${token.deviceToken.substring(0, 10)}... with user ${userId}`);
         
-        await dbConnection
+        const updateResult = await dbConnection
           .update(deviceTokens)
           .set({
             userId: userId,
@@ -332,19 +392,21 @@ export function setupAuth(app: Express) {
         associatedCount++;
       }
       
-      console.log(`✅ [PendingTokens] Successfully associated ${associatedCount} pending tokens with user ${userId}`);
-      
-      // Verify the association worked
+      // Verification query
       const verifyTokens = await dbConnection
         .select()
         .from(deviceTokens)
         .where(eq(deviceTokens.userId, userId));
         
-      console.log(`✅ [PendingTokens] Verification: User ${userId} now has ${verifyTokens.length} active tokens`);
+      console.log(`✅ [PendingTokens] Transaction completed successfully`);
+      console.log(`✅ [PendingTokens] Associated ${associatedCount} pending tokens with user ${userId}`);
+      console.log(`✅ [PendingTokens] User ${userId} now has ${verifyTokens.length} active tokens`);
+      
+      return { tokensAssociated: associatedCount };
       
     } catch (error) {
-      console.error(`❌ [PendingTokens] Error associating pending tokens with user ${userId}:`, error);
-      throw error; // Re-throw to ensure calling code handles the error
+      console.error('🚨 [PendingTokens] Association failed:', error);
+      throw error;
     }
   }
   

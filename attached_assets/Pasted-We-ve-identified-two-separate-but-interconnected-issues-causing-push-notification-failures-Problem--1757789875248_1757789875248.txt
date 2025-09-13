@@ -1,0 +1,229 @@
+We've identified two separate but interconnected issues causing push notification failures:
+Problem 1: Race Condition (Duplicate Registration)
+What's happening:
+
+Token gets registered with userId: pending ✅
+Association function runs and associates token with user ✅
+Same token gets registered AGAIN, resetting back to pending ❌
+
+Evidence: Server logs show same token hash 91df829a... being registered multiple times, undoing successful associations.
+Problem 2: Missing/Broken Association During Login
+What's happening:
+
+User logs in successfully ✅
+No association logs appear during login ❌
+Association function either not called or called at wrong time
+
+Evidence: Zero [PendingTokens] logs during login process, tokens remain NULL in database.
+
+🎯 WHY BOTH PROBLEMS MUST BE FIXED
+If we only fix Problem 2 (association):
+
+Association works temporarily
+Duplicate registration immediately undoes it
+Tokens reset back to pending
+Push notifications still fail
+
+If we only fix Problem 1 (duplicates):
+
+Duplicates stop, but tokens never get associated
+Tokens stay pending forever
+Push notifications still fail
+
+Both fixes are required for a working solution.
+
+🔧 SOLUTION PART 1: Prevent Duplicate Registration Race Condition
+Why this comes first: We must protect successful associations from being overwritten.
+Root cause: iOS app or timing issues cause same token to be registered multiple times, each registration resets the token back to pending status.
+Fix: Add server-side deduplication logic to registration endpoint.
+Implementation:
+javascript// In your /api/device-token endpoint, ADD THIS LOGIC BEFORE processing registration:
+
+app.post('/api/device-token', async (req, res) => {
+    const { deviceToken, userId, platform, environment } = req.body;
+    
+    console.log('[DeviceToken] Registration request received');
+    console.log('Token hash:', deviceToken.substring(0, 10) + '...');
+    console.log('Incoming userId:', userId);
+    
+    try {
+        // CRITICAL: Check if token already exists and is associated
+        const existingToken = await db.query(
+            'SELECT user_id, platform, environment, created_at FROM device_tokens WHERE token = $1',
+            [deviceToken]
+        );
+        
+        if (existingToken.rows.length > 0) {
+            const existing = existingToken.rows[0];
+            console.log('Found existing token with user_id:', existing.user_id);
+            
+            // If token is already associated with a real user, SKIP registration
+            if (existing.user_id && existing.user_id !== 'pending' && existing.user_id !== null) {
+                console.log(`🔒 [DeviceToken] Token already associated with user ${existing.user_id}, preventing duplicate registration`);
+                return res.json({ 
+                    success: true, 
+                    message: 'Token already associated with user',
+                    action: 'skipped_duplicate',
+                    associatedUserId: existing.user_id
+                });
+            }
+            
+            // Token exists but still pending - allow update
+            console.log('🔄 [DeviceToken] Token exists but pending, allowing update');
+        }
+        
+        // Proceed with registration only for new tokens or truly pending tokens
+        console.log('🔄 [DeviceToken] Proceeding with registration...');
+        
+        // Your existing registration logic here...
+        
+    } catch (error) {
+        console.error('[DeviceToken] Registration error:', error);
+        res.status(500).json({ success: false, error: 'Registration failed' });
+    }
+});
+This prevents: Associated tokens from being reset to pending by duplicate registrations.
+
+🔧 SOLUTION PART 2: Fix Association Function Execution
+Why this comes second: Once duplicates are prevented, we can focus on making association work reliably.
+Root cause: Association function either not called during login, or called before token registration completes.
+Implementation Step 1: Verify Association is Called
+javascript// In your login endpoint, ensure this code exists:
+
+app.post('/api/login', async (req, res) => {
+    try {
+        // ... authentication logic ...
+        const user = await authenticateUser(credentials);
+        
+        console.log('✅ [Login] User authenticated:', user.email);
+        console.log('🔍 [Login] Starting pending token association for user:', user.id);
+        
+        // CRITICAL: This call must be present
+        const associationResult = await associatePendingTokensWithRetry(user.id);
+        
+        console.log('✅ [Login] Token association completed:', associationResult);
+        
+        // Return success response...
+        
+    } catch (error) {
+        console.error('[Login] Error:', error);
+        res.status(500).json({ success: false, error: 'Login failed' });
+    }
+});
+Implementation Step 2: Add Retry Logic for Timing Issues
+javascript// ADD this new function to handle timing issues:
+
+async function associatePendingTokensWithRetry(userId, maxRetries = 3, delayMs = 2000) {
+    console.log(`🔄 [PendingTokens] Starting association with retry for user ${userId}`);
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        console.log(`🔄 [PendingTokens] Association attempt ${attempt}/${maxRetries}`);
+        
+        // Check for pending tokens before attempting association
+        const pendingCheck = await db.query(`
+            SELECT COUNT(*) as count, 
+                   array_agg(token) as tokens 
+            FROM device_tokens 
+            WHERE (user_id IS NULL OR user_id = $1) 
+            AND created_at > NOW() - INTERVAL '1 hour'
+        `, ['pending']);
+        
+        const pendingCount = parseInt(pendingCheck.rows[0].count);
+        console.log(`🔍 [PendingTokens] Found ${pendingCount} pending tokens on attempt ${attempt}`);
+        
+        if (pendingCount > 0) {
+            // Found pending tokens, attempt association
+            const result = await associatePendingTokens(userId);
+            
+            if (result.tokensAssociated > 0) {
+                console.log(`✅ [PendingTokens] Successfully associated ${result.tokensAssociated} tokens on attempt ${attempt}`);
+                return result;
+            }
+        }
+        
+        // If no tokens found or association failed, wait and retry
+        if (attempt < maxRetries) {
+            console.log(`⏳ [PendingTokens] Waiting ${delayMs}ms before retry ${attempt + 1}`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+    }
+    
+    console.log(`⚠️ [PendingTokens] No pending tokens associated after ${maxRetries} attempts for user ${userId}`);
+    return { tokensAssociated: 0 };
+}
+Implementation Step 3: Enhanced Association Function Logging
+javascript// MODIFY your existing associatePendingTokens function to add comprehensive logging:
+
+async function associatePendingTokens(userId) {
+    console.log('🔍 [PendingTokens] === ASSOCIATION FUNCTION EXECUTING ===');
+    console.log('🔍 [PendingTokens] Target user ID:', userId);
+    console.log('🔍 [PendingTokens] Timestamp:', new Date().toISOString());
+    
+    // Query for pending tokens with detailed logging
+    const pendingTokens = await db.query(`
+        SELECT token, platform, environment, created_at, user_id
+        FROM device_tokens 
+        WHERE user_id IS NULL OR user_id = $1
+        ORDER BY created_at DESC
+    `, ['pending']);
+    
+    console.log('🔍 [PendingTokens] Query results:');
+    console.log('  - Row count:', pendingTokens.rowCount);
+    console.log('  - Tokens found:', pendingTokens.rows.map(row => ({
+        tokenHash: row.token.substring(0, 10) + '...',
+        platform: row.platform,
+        currentUserId: row.user_id,
+        createdAt: row.created_at
+    })));
+    
+    if (pendingTokens.rows.length === 0) {
+        console.log('⚠️ [PendingTokens] No pending tokens found to associate');
+        return { tokensAssociated: 0 };
+    }
+    
+    // Begin transaction for atomic operation
+    await db.query('BEGIN');
+    
+    try {
+        // Deactivate old tokens for this user
+        const deactivateResult = await db.query(
+            'UPDATE device_tokens SET is_active = false WHERE user_id = $1 AND is_active = true',
+            [userId]
+        );
+        console.log(`🔄 [PendingTokens] Deactivated ${deactivateResult.rowCount} old tokens`);
+        
+        // Associate pending tokens
+        let associatedCount = 0;
+        for (const tokenRow of pendingTokens.rows) {
+            const updateResult = await db.query(`
+                UPDATE device_tokens 
+                SET user_id = $1, is_active = true, updated_at = CURRENT_TIMESTAMP
+                WHERE token = $2
+            `, [userId, tokenRow.token]);
+            
+            if (updateResult.rowCount > 0) {
+                console.log(`🔗 [PendingTokens] Associated token ${tokenRow.token.substring(0, 10)}... with user ${userId}`);
+                associatedCount++;
+            }
+        }
+        
+        await db.query('COMMIT');
+        
+        // Verification query
+        const verificationResult = await db.query(
+            'SELECT COUNT(*) as count FROM device_tokens WHERE user_id = $1 AND is_active = true',
+            [userId]
+        );
+        
+        console.log(`✅ [PendingTokens] Transaction completed successfully`);
+        console.log(`✅ [PendingTokens] Associated ${associatedCount} pending tokens with user ${userId}`);
+        console.log(`✅ [PendingTokens] User ${userId} now has ${verificationResult.rows[0].count} active tokens`);
+        
+        return { tokensAssociated: associatedCount };
+        
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error('🚨 [PendingTokens] Association failed, transaction rolled back:', error);
+        throw error;
+    }
+}
