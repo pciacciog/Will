@@ -1,0 +1,411 @@
+
+Will data before validation: {
+2025-09-13 15:57:42.96
+753648fd
+User
+title: 'd',
+2025-09-13 15:57:42.96
+753648fd
+User
+description: 'd',
+2025-09-13 15:57:42.96
+753648fd
+User
+startDate: 2025-09-15T04:00:00.000Z,
+2025-09-13 15:57:42.96
+753648fd
+User
+endDate: 2025-09-21T16:00:00.000Z,
+2025-09-13 15:57:42.96
+753648fd
+User
+createdBy: '1750914771667m6hrmtciq',
+2025-09-13 15:57:42.96
+753648fd
+User
+circleId: 0,
+2025-09-13 15:57:42.96
+753648fd
+User
+endRoomScheduledAt: 2025-09-22T19:57:00.000Z
+2025-09-13 15:57:42.96
+753648fd
+User
+}
+2025-09-13 15:57:43.16
+753648fd
+User
+[DailyService] Creating room with config: {
+2025-09-13 15:57:43.16
+753648fd
+User
+roomName: 'will-119-endroom-1757793463168',
+2025-09-13 15:57:43.16
+753648fd
+User
+expireTime: 1758572820,
+2025-09-13 15:57:43.16
+753648fd
+User
+willId: 119,
+2025-09-13 15:57:43.16
+753648fd
+User
+scheduledStart: '2025-09-22T19:57:00.000Z',
+2025-09-13 15:57:43.16
+753648fd
+User
+createdAt: '2025-09-13T19:57:43.168Z',
+2025-09-13 15:57:43.16
+753648fd
+User
+expiresAt: '2025-09-22T20:27:00.000Z',
+2025-09-13 15:57:43.16
+753648fd
+User
+durationMinutes: 30
+2025-09-13 15:57:43.16
+753648fd
+User
+}
+2025-09-13 15:57:43.16
+753648fd
+User
+[DailyService] Daily.co API Key present: true
+2025-09-13 15:57:43.33
+753648fd
+User
+[DailyService] Daily.co API Response status: 200
+2025-09-13 15:57:43.33
+753648fd
+User
+[DailyService] Daily.co API Response: {"id":"d13347b0-fefa-475b-b3ee-d0051562ff04","name":"will-119-endroom-1757793463168","api_created":true,"privacy":"public","url":"https://cloud-055bd7fea5f145d08c0142cbcf237051.daily.co/will-119-endroom-1757793463168","created_at":"2025-09-13T19:57:43.000Z","config":{"exp":1758572820,"max_participants":10,"enable_chat":true,"enable_hand_raising":false,"enable_knocking":false,"enable_recording":"","eject_at_room_exp":true,"eject_after_elapsed":1800,"lang":"en","enable_network_ui":true,"enable_prejoin_ui":true,"enable_noise_cancellation_ui":false,"enable_people_ui":true,"enable_pip_ui":false}}
+2025-09-13 15:57:43.33
+753648fd
+User
+[DailyService] Room created successfully: https://cloud-055bd7fea5f145d08c0142cbcf237051.daily.co/will-119-endroom-1757793463168
+2025-09-13 15:57:43.38
+753648fd
+User
+Created End Room for Will 119: https://cloud-055bd7fea5f145d08c0142cbcf237051.daily.co/will-119-endroom-1757793463168
+2025-09-13 15:57:43.38
+753648fd
+User
+Attempting to send push notifications...
+2025-09-13 15:57:43.43
+753648fd
+User
+Circle members found: 4
+2025-09-13 15:57:43.43
+753648fd
+User
+Other members to notify: 3
+2025-09-13 15:57:43.48
+753648fd
+User
+Creator found: John Doe
+
+
+2025-09-13 15:57:43.48
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Processing user 3/3: 1752480262240gw7m2h9jf
+2025-09-13 15:57:43.48
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Processing notification for user 1752480262240gw7m2h9jf
+2025-09-13 15:57:43.53
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Found 0 device token(s) for user 1752479860871zdou3ofu4
+2025-09-13 15:57:43.53
+753648fd
+User
+[PushNotificationService] No device tokens found for user 1752479860871zdou3ofu4
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Found 0 device token(s) for user 1752480262240gw7m2h9jf
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] No device tokens found for user 1752480262240gw7m2h9jf
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Found 9 device token(s) for user 17511021851866udaucmnr
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 Token 91df829a... - Server: SANDBOX, Token: PRODUCTION
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] ⚠️ SKIPPED: Token 91df829a... environment mismatch
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Server: SANDBOX
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Token: PRODUCTION
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Action: Skipping to prevent 403 error
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 Token 56eb3489... - Server: SANDBOX, Token: PRODUCTION
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] ⚠️ SKIPPED: Token 56eb3489... environment mismatch
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Server: SANDBOX
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Token: PRODUCTION
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Action: Skipping to prevent 403 error
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 Token 5c29ffe9... - Server: SANDBOX, Token: SANDBOX
+2025-09-13 15:57:43.67
+753648fd
+User
+✅ COMPATIBLE: Environment match - allowing notification
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 Token test1234... - Server: SANDBOX, Token: SANDBOX
+2025-09-13 15:57:43.67
+753648fd
+User
+✅ COMPATIBLE: Environment match - allowing notification
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 Token final_te... - Server: SANDBOX, Token: SANDBOX
+2025-09-13 15:57:43.67
+753648fd
+User
+✅ COMPATIBLE: Environment match - allowing notification
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 Token diagnost... - Server: SANDBOX, Token: SANDBOX
+2025-09-13 15:57:43.67
+753648fd
+User
+✅ COMPATIBLE: Environment match - allowing notification
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 Token 6f80fd25... - Server: SANDBOX, Token: PRODUCTION
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] ⚠️ SKIPPED: Token 6f80fd25... environment mismatch
+
+
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Server: SANDBOX
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Token: PRODUCTION
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Action: Skipping to prevent 403 error
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Processing 4 environment-compatible token(s)
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Sending to device token 5c29ffe91268ba3bdcce... (belongs to user 17511021851866udaucmnr)
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Token details: Platform=ios, Active=false, Environment=SANDBOX, Updated=Mon Sep 01 2025 17:45:18 GMT+0000 (Coordinated Universal Time)
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Provenance: Bundle=com.porfirio.will, Scheme=Debug, Profile=development, Version=N/A
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: sendToDevice called with token 5c29ffe91268ba3bdcce... (for user 17511021851866udaucmnr)
+2025-09-13 15:57:43.67
+753648fd
+User
+[PushNotificationService] 📤 OUTGOING APNs REQUEST:
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Request ID: apns-1757793463678-0u8rvt9n0
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Target Device: 5c29ffe9... (for user 17511021851866udaucmnr)
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Endpoint: api.sandbox.push.apple.com (SANDBOX - forced in development)
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Auth Method: JWT (p8 key)
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Team ID: NXA5BG3PBX
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Key ID: 87W6BN7P29
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Topic (Bundle ID): com.porfirio.will
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Push Type: alert
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Priority: 10
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Payload Size: 45 bytes
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Title: "New Will proposed! 📝"
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Body: "John has proposed starting a new will"
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Badge: undefined
+2025-09-13 15:57:43.67
+753648fd
+User
+🔍 Sound: undefined
+2025-09-13 15:57:43.94
+753648fd
+User
+[PushNotificationService] 📥 APNs RESPONSE (262ms):
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Request ID: apns-1757793463678-0u8rvt9n0
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Sent: 0, Failed: 1
+
+2025-09-13 15:57:43.94
+753648fd
+User
+"reason": "Unregistered",
+2025-09-13 15:57:43.94
+753648fd
+User
+"timestamp": 1757777742340
+2025-09-13 15:57:43.94
+753648fd
+User
+}
+2025-09-13 15:57:43.94
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Sending to device token test123456789... (belongs to user 17511021851866udaucmnr)
+2025-09-13 15:57:43.94
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Token details: Platform=ios, Active=false, Environment=SANDBOX, Updated=Sat Sep 13 2025 18:15:46 GMT+0000 (Coordinated Universal Time)
+2025-09-13 15:57:43.94
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: Provenance: Bundle=N/A, Scheme=N/A, Profile=N/A, Version=N/A
+2025-09-13 15:57:43.94
+753648fd
+User
+[PushNotificationService] 🔍 DEBUG: sendToDevice called with token test123456789... (for user 17511021851866udaucmnr)
+2025-09-13 15:57:43.94
+753648fd
+User
+[PushNotificationService] 📤 OUTGOING APNs REQUEST:
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Request ID: apns-1757793463942-yn46syu31
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Target Device: test1234... (for user 17511021851866udaucmnr)
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Endpoint: api.sandbox.push.apple.com (SANDBOX - forced in development)
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Auth Method: JWT (p8 key)
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Team ID: NXA5BG3PBX
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Key ID: 87W6BN7P29
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Topic (Bundle ID): com.porfirio.will
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Push Type: alert
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Priority: 10
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Payload Size: 45 bytes
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Title: "New Will proposed! 📝"
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Body: "John has proposed starting a new will"
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Badge: undefined
+2025-09-13 15:57:43.94
+753648fd
+User
+🔍 Sound: undefined

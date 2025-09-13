@@ -1269,10 +1269,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         platform: req.body.platform || 'ios',
         isActive: true,
         isSandbox: environment === 'SANDBOX',
-        bundleId: req.headers['x-app-bundle'] as string,
-        buildScheme: req.headers['x-app-buildscheme'] as string,
-        provisioningProfile: req.headers['x-app-provisioning'] as string,
-        appVersion: req.headers['x-app-version'] as string,
+        bundleId: req.body.bundleId || req.headers['x-app-bundle'] as string, // ✅ Check body first, then headers
+        buildScheme: req.body.buildScheme || req.headers['x-app-buildscheme'] as string, // ✅ Check body first, then headers  
+        provisioningProfile: req.body.provisioningProfile || req.headers['x-app-provisioning'] as string, // ✅ Check body first, then headers
+        appVersion: req.body.appVersion || req.headers['x-app-version'] as string, // ✅ Check body first, then headers
         registrationSource: finalUserId ? 'api_device_token' : 'api_device_token_pending'
       };
       
