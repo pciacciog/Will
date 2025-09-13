@@ -557,6 +557,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This allows creation of new wills
       if (acknowledgedCount >= commitmentCount) {
         await storage.updateWillStatus(willId, 'archived');
+        
+        // Send Ready for New Will notification
+        try {
+          const circleMembers = await storage.getCircleMembers(willWithCommitments.circleId);
+          const memberIds = circleMembers.map(member => member.userId);
+          await pushNotificationService.sendReadyForNewWillNotification(memberIds);
+          console.log(`[Routes] Ready for New Will notification sent for Will ${willId}`);
+        } catch (error) {
+          console.error(`[Routes] Failed to send Ready for New Will notification:`, error);
+        }
       }
 
       res.json({

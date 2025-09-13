@@ -1,0 +1,104 @@
+TASK: Fix Missing Push Notification Triggers
+PROBLEM SUMMARY
+The push notification infrastructure is 100% functional (all notification functions work when called manually), but automatic triggers are missing from 5 key locations. The app should send notifications automatically but currently only logs placeholder messages.
+OBJECTIVE
+Add the missing notification service calls to make notifications trigger automatically during normal app flow.
+
+REQUIRED CHANGES
+1. Will Started Notification
+File: server/scheduler.ts around line 72
+Current code:
+typescriptfor (const will of willsToActivate) {
+  console.log(`[EndRoomScheduler] Activating Will ${will.id}`);
+  await storage.updateWillStatus(will.id, 'active');
+}
+Add after updateWillStatus:
+typescript// Send Will Started notification
+try {
+  await pushNotificationService.sendWillStartedNotification(will.id);
+  console.log(`[EndRoomScheduler] Will Started notification sent for Will ${will.id}`);
+} catch (error) {
+  console.error(`[EndRoomScheduler] Failed to send Will Started notification:`, error);
+}
+2. End Room 24h Notification
+File: server/scheduler.ts around line 233
+Current code:
+typescriptconsole.log(`[EndRoomScheduler] Sending 24h End Room notification for Will ${will.id}`);
+// Note: In a real app, this would trigger push notifications...
+Replace the comment with:
+typescripttry {
+  await pushNotificationService.sendEndRoomNotification('24h', will.id);
+  console.log(`[EndRoomScheduler] 24h End Room notification sent for Will ${will.id}`);
+} catch (error) {
+  console.error(`[EndRoomScheduler] Failed to send 24h End Room notification:`, error);
+}
+3. End Room 15min Notification
+File: server/scheduler.ts around line 254
+Current code:
+typescriptconsole.log(`[EndRoomScheduler] Sending 15min End Room notification for Will ${will.id}`);
+// Note: In a real app, this would trigger push notifications...
+Replace the comment with:
+typescripttry {
+  await pushNotificationService.sendEndRoomNotification('15min', will.id);
+  console.log(`[EndRoomScheduler] 15min End Room notification sent for Will ${will.id}`);
+} catch (error) {
+  console.error(`[EndRoomScheduler] Failed to send 15min End Room notification:`, error);
+}
+4. End Room Live Notification
+File: server/scheduler.ts at lines 144, 152, and 160
+Current code:
+typescriptconsole.log(`[EndRoomScheduler] End Room opened for Will ${will.id}`);
+Add after each log:
+typescripttry {
+  await pushNotificationService.sendEndRoomNotification('live', will.id);
+  console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
+} catch (error) {
+  console.error(`[EndRoomScheduler] Failed to send End Room Live notification:`, error);
+}
+5. Ready for New Will Notification
+File: server/routes.ts around line 559
+Current code:
+typescriptif (acknowledgedCount >= commitmentCount) {
+  await storage.updateWillStatus(willId, 'archived');
+}
+Add after updateWillStatus:
+typescript// Send Ready for New Will notification
+try {
+  await pushNotificationService.sendReadyForNewWillNotification(willId);
+  console.log(`[Routes] Ready for New Will notification sent for Will ${willId}`);
+} catch (error) {
+  console.error(`[Routes] Failed to send Ready for New Will notification:`, error);
+}
+
+IMPORTANT REQUIREMENTS
+✅ Import Statement
+Make sure both files have the import at the top:
+typescriptimport { pushNotificationService } from './services/pushNotificationService';
+✅ Error Handling
+
+Wrap ALL notification calls in try-catch blocks
+Log success and failure messages
+Don't let notification failures crash the main app logic
+
+✅ Verification
+After implementation, the following should work automatically:
+
+Will Started notifications when scheduler activates wills
+End Room 24h notifications 24 hours before end
+End Room 15min notifications 15 minutes before end
+End Room Live notifications when End Room opens
+Ready for New Will notifications when all members acknowledge
+
+
+CONTEXT
+
+The pushNotificationService already exists and works perfectly
+All notification functions (sendWillStartedNotification, sendEndRoomNotification, sendReadyForNewWillNotification) are implemented
+The issue is simply that these functions aren't being called at the right times
+This is a straightforward "add the missing function calls" task
+
+SUCCESS CRITERIA
+✅ All 5 notification types trigger automatically during normal app flow
+✅ No notification failures crash the app
+✅ Success/failure logs help with debugging
+✅ Existing app functionality remains unchanged

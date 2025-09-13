@@ -4,6 +4,7 @@ import { wills } from '@shared/schema';
 import { eq, and, or, lt, gte, isNull, isNotNull } from 'drizzle-orm';
 import { dailyService } from './daily';
 import { storage } from './storage';
+import { pushNotificationService } from './pushNotificationService';
 
 export class EndRoomScheduler {
   private isRunning = false;
@@ -58,7 +59,13 @@ export class EndRoomScheduler {
     try {
       // 1. Transition pending/scheduled wills to active (start time has passed)
       const willsToActivate = await db
-        .select()
+        .select({
+          id: wills.id,
+          circleId: wills.circleId,
+          status: wills.status,
+          startDate: wills.startDate,
+          endDate: wills.endDate
+        })
         .from(wills)
         .where(
           and(
@@ -70,6 +77,20 @@ export class EndRoomScheduler {
       for (const will of willsToActivate) {
         console.log(`[EndRoomScheduler] Activating Will ${will.id}`);
         await storage.updateWillStatus(will.id, 'active');
+        
+        // Send Will Started notification
+        try {
+          const willWithCommitments = await storage.getWillWithCommitments(will.id);
+          if (willWithCommitments && willWithCommitments.commitments) {
+            const committedMembers = willWithCommitments.commitments.map(c => c.userId);
+            // Use first commitment's "what" as title or fallback to generic title
+            const willTitle = willWithCommitments.commitments[0]?.what || "Your Will";
+            await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers);
+            console.log(`[EndRoomScheduler] Will Started notification sent for Will ${will.id}`);
+          }
+        } catch (error) {
+          console.error(`[EndRoomScheduler] Failed to send Will Started notification:`, error);
+        }
       }
 
       // 2. Transition active wills to waiting_for_end_room (end time has passed and End Room scheduled)
@@ -142,6 +163,14 @@ export class EndRoomScheduler {
               });
               
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} with video URL: ${endRoom.url}`);
+              try {
+                const circleMembers = await storage.getCircleMembers(will.circleId);
+                const memberIds = circleMembers.map(member => member.userId);
+                await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds);
+                console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
+              } catch (error) {
+                console.error(`[EndRoomScheduler] Failed to send End Room Live notification:`, error);
+              }
             } catch (dailyError) {
               console.error(`[EndRoomScheduler] Failed to create Daily.co room for Will ${will.id}:`, dailyError);
               // Still mark as open even if video creation failed
@@ -150,6 +179,14 @@ export class EndRoomScheduler {
                 endRoomOpenedAt: now
               });
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} but without video room`);
+              try {
+                const circleMembers = await storage.getCircleMembers(will.circleId);
+                const memberIds = circleMembers.map(member => member.userId);
+                await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds);
+                console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
+              } catch (error) {
+                console.error(`[EndRoomScheduler] Failed to send End Room Live notification:`, error);
+              }
             }
           } else {
             // Update status to open (room URL already exists)
@@ -158,6 +195,14 @@ export class EndRoomScheduler {
               endRoomOpenedAt: now
             });
             console.log(`[EndRoomScheduler] End Room opened for Will ${will.id}`);
+            try {
+              const circleMembers = await storage.getCircleMembers(will.circleId);
+              const memberIds = circleMembers.map(member => member.userId);
+              await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds);
+              console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
+            } catch (error) {
+              console.error(`[EndRoomScheduler] Failed to send End Room Live notification:`, error);
+            }
           }
         } catch (error) {
           console.error(`[EndRoomScheduler] Failed to open End Room for Will ${will.id}:`, error);
@@ -214,9 +259,9 @@ export class EndRoomScheduler {
 
   private async sendEndRoomNotifications(now: Date) {
     try {
-      // 24-hour warning (check for End Rooms scheduled 24-25 hours from now)
+      // 24-hour warning (check for End Rooms scheduled 24h-24h1m from now)
       const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+      const twentyFourHoursOneMinuteFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000 + 60 * 1000);
       
       const endRooms24h = await db
         .select()
@@ -225,19 +270,26 @@ export class EndRoomScheduler {
           and(
             eq(wills.endRoomStatus, 'pending'),
             gte(wills.endRoomScheduledAt, twentyFourHoursFromNow),
-            lt(wills.endRoomScheduledAt, twentyFiveHoursFromNow)
+            lt(wills.endRoomScheduledAt, twentyFourHoursOneMinuteFromNow)
           )
         );
 
       for (const will of endRooms24h) {
         console.log(`[EndRoomScheduler] Sending 24h End Room notification for Will ${will.id}`);
-        // Note: In a real app, this would trigger push notifications to all circle members
-        // For now, we log it as the notification service runs client-side
+        try {
+          const circleMembers = await storage.getCircleMembers(will.circleId);
+          const memberIds = circleMembers.map(member => member.userId);
+          const endRoomTime = will.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleTimeString() : 'scheduled time';
+          await pushNotificationService.sendEndRoomNotification('24_hours', endRoomTime, memberIds);
+          console.log(`[EndRoomScheduler] 24h End Room notification sent for Will ${will.id}`);
+        } catch (error) {
+          console.error(`[EndRoomScheduler] Failed to send 24h End Room notification:`, error);
+        }
       }
 
-      // 15-minute warning (check for End Rooms scheduled 15-16 minutes from now)
+      // 15-minute warning (check for End Rooms scheduled 15m-15m1m from now)
       const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000);
-      const sixteenMinutesFromNow = new Date(now.getTime() + 16 * 60 * 1000);
+      const fifteenMinutesOneMinuteFromNow = new Date(now.getTime() + 15 * 60 * 1000 + 60 * 1000);
       
       const endRooms15min = await db
         .select()
@@ -246,14 +298,21 @@ export class EndRoomScheduler {
           and(
             eq(wills.endRoomStatus, 'pending'),
             gte(wills.endRoomScheduledAt, fifteenMinutesFromNow),
-            lt(wills.endRoomScheduledAt, sixteenMinutesFromNow)
+            lt(wills.endRoomScheduledAt, fifteenMinutesOneMinuteFromNow)
           )
         );
 
       for (const will of endRooms15min) {
         console.log(`[EndRoomScheduler] Sending 15min End Room notification for Will ${will.id}`);
-        // Note: In a real app, this would trigger push notifications to all circle members
-        // For now, we log it as the notification service runs client-side
+        try {
+          const circleMembers = await storage.getCircleMembers(will.circleId);
+          const memberIds = circleMembers.map(member => member.userId);
+          const endRoomTime = will.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleTimeString() : 'scheduled time';
+          await pushNotificationService.sendEndRoomNotification('15_minutes', endRoomTime, memberIds);
+          console.log(`[EndRoomScheduler] 15min End Room notification sent for Will ${will.id}`);
+        } catch (error) {
+          console.error(`[EndRoomScheduler] Failed to send 15min End Room notification:`, error);
+        }
       }
       
     } catch (error) {
