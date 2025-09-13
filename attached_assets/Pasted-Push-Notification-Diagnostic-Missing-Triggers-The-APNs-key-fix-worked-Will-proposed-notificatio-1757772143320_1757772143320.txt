@@ -1,0 +1,77 @@
+Push Notification Diagnostic: Missing Triggers
+The APNs key fix worked - "Will proposed" notifications now send successfully. However, 5 other notification triggers are NOT working. I need you to diagnose why these aren't firing:
+Expected Notification Triggers (only #1 works):
+
+✅ WORKING: Will Proposed - When creator starts a new Will
+
+Title: "New Will proposed! 📝"
+Body: "[Creator Name] has proposed starting a new will"
+
+
+❌ NOT WORKING: Will Started - When Will becomes active (all committed + start date arrives)
+
+Title: "Your Will has started! 🎯"
+Body: "Time to begin your commitment: '[Will Title]'"
+
+
+❌ NOT WORKING: End Room 24h Before - Day before End Room ceremony
+
+Title: "End Room tomorrow 📅"
+Body: "Your End Room ceremony is scheduled for tomorrow at [time]"
+
+
+❌ NOT WORKING: End Room 15min Before - Quarter hour before ceremony
+
+Title: "End Room starting soon ⏰"
+Body: "Your End Room ceremony starts in 15 minutes"
+
+
+❌ NOT WORKING: End Room Live - When End Room ceremony begins
+
+Title: "End Room is live! 🎭"
+Body: "Join now for your circle's reflection ceremony"
+
+
+❌ NOT WORKING: Ready for New Will - After Will completed and all acknowledged
+
+Title: "Ready for new Will! 🚀"
+Body: "All members acknowledged - you can start a new Will!"
+
+
+
+Diagnostic Tasks Needed:
+1. Will State Transition Logic:
+
+Show code that changes Will status from pending → scheduled → active
+Check if notification #2 is triggered when Will becomes active at start date
+Verify if there's a scheduler/cron job that activates Wills at their start time
+
+2. End Room Scheduler Analysis:
+
+Examine EndRoomScheduler that runs every minute
+Check if it calculates 24h before, 15min before, and "live" timing
+Verify if notification sends are implemented for these 3 End Room events
+
+3. Will Completion Logic:
+
+Show code that handles Will completion and acknowledgment tracking
+Check if notification #6 is triggered when all members acknowledge
+Verify the logic that determines when a circle is "ready for new Will"
+
+4. Missing Implementation Search:
+
+Search entire codebase for notification triggers #2-#6
+Identify which are completely missing vs partially implemented
+Show any TODO comments or incomplete notification code
+
+Expected Output Format:
+=== NOTIFICATION TRIGGER STATUS ===
+1. Will Proposed: ✅ IMPLEMENTED
+2. Will Started: [❌ MISSING / ⚠️ PARTIAL / ✅ FOUND] at [location]
+3. End Room 24h: [❌ MISSING / ⚠️ PARTIAL / ✅ FOUND] at [location] 
+4. End Room 15min: [❌ MISSING / ⚠️ PARTIAL / ✅ FOUND] at [location]
+5. End Room Live: [❌ MISSING / ⚠️ PARTIAL / ✅ FOUND] at [location]
+6. Ready New Will: [❌ MISSING / ⚠️ PARTIAL / ✅ FOUND] at [location]
+
+=== CODE IMPLEMENTATION NEEDED ===
+[Specific locations where missing triggers should be added]
