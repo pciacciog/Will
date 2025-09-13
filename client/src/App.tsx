@@ -23,6 +23,19 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
 import NotificationTest from "@/pages/NotificationTest";
 import IconGenerator from "@/pages/IconGenerator";
+
+// Global debug helper for easy access
+(window as any).getNotificationDebugInfo = () => {
+  return notificationService.getDebugInfo();
+};
+
+// Log debug info every 10 seconds during development
+if (import.meta.env.DEV) {
+  setInterval(() => {
+    console.log('🔍 PERIODIC DEBUG:', notificationService.getDebugInfo());
+  }, 10000);
+}
+
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location] = useLocation();

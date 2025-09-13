@@ -1,0 +1,288 @@
+We confirmed iOS is generating device tokens, but they're not reaching the server. We need to trace the exact flow: iOS Token → JavaScript Bridge → API Call → Server
+Add comprehensive debugging to identify WHERE the flow breaks.
+
+🚨 CRITICAL: Add This Debug Code IMMEDIATELY
+1. Enhanced NotificationService.ts Debugging
+File: client/src/services/NotificationService.ts
+Add this debugging code to the beginning and throughout your NotificationService:
+typescript// Add at the very top of the file
+console.log('🔥 NOTIF SERVICE: File loaded at', new Date().toISOString());
+console.log('🔥 NOTIF SERVICE: Capacitor check:', {
+    isNativePlatform: Capacitor.isNativePlatform(),
+    platform: Capacitor.getPlatform(),
+    isPluginAvailable: !!PushNotifications
+});
+
+export class NotificationService {
+    
+    async initialize() {
+        console.log('🔥 NOTIF SERVICE: initialize() called');
+        console.log('🔥 NOTIF SERVICE: Current timestamp:', Date.now());
+        
+        if (Capacitor.isNativePlatform()) {
+            console.log('🔥 NOTIF SERVICE: ✅ Native platform detected - setting up push notifications');
+            
+            // CRITICAL: Add token registration listener with extensive logging
+            PushNotifications.addListener('registration', (token) => {
+                console.log('🔥 BRIDGE SUCCESS: Token received from iOS!');
+                console.log('🔥 BRIDGE SUCCESS: Full token object:', JSON.stringify(token, null, 2));
+                console.log('🔥 BRIDGE SUCCESS: Token value:', token.value);
+                console.log('🔥 BRIDGE SUCCESS: Token length:', token.value?.length);
+                console.log('🔥 BRIDGE SUCCESS: Token preview:', token.value?.substring(0, 20) + '...');
+                console.log('🔥 BRIDGE SUCCESS: Received at:', new Date().toISOString());
+                
+                // Store in localStorage for persistent debugging
+                localStorage.setItem('debug_bridge_token', token.value);
+                localStorage.setItem('debug_bridge_timestamp', new Date().toISOString());
+                localStorage.setItem('debug_bridge_success', 'true');
+                
+                // Call registration function
+                console.log('🔥 BRIDGE SUCCESS: About to call registerDeviceToken...');
+                this.registerDeviceToken(token.value);
+            });
+
+            // Add registration error listener
+            PushNotifications.addListener('registrationError', (error) => {
+                console.error('🚨 BRIDGE ERROR: Registration failed from iOS bridge');
+                console.error('🚨 BRIDGE ERROR: Error object:', JSON.stringify(error, null, 2));
+                console.error('🚨 BRIDGE ERROR: Error message:', error.message);
+                
+                // Store error for debugging
+                localStorage.setItem('debug_bridge_error', JSON.stringify(error));
+                localStorage.setItem('debug_bridge_timestamp', new Date().toISOString());
+                localStorage.setItem('debug_bridge_success', 'false');
+            });
+
+            console.log('🔥 NOTIF SERVICE: Listeners added successfully');
+            console.log('🔥 NOTIF SERVICE: Requesting permissions...');
+            
+            // Request permissions with detailed logging
+            try {
+                const result = await PushNotifications.requestPermissions();
+                console.log('🔥 NOTIF SERVICE: Permission result:', JSON.stringify(result, null, 2));
+                console.log('🔥 NOTIF SERVICE: Receive permission:', result.receive);
+                
+                if (result.receive === 'granted') {
+                    console.log('🔥 NOTIF SERVICE: ✅ Permissions granted, calling register...');
+                    
+                    // Add delay to ensure iOS is ready
+                    setTimeout(async () => {
+                        console.log('🔥 NOTIF SERVICE: Delayed register call starting...');
+                        await PushNotifications.register();
+                        console.log('🔥 NOTIF SERVICE: Register call completed');
+                    }, 1000);
+                    
+                } else {
+                    console.error('🚨 NOTIF SERVICE: ❌ Permissions denied!');
+                    console.error('🚨 NOTIF SERVICE: Result details:', result);
+                }
+            } catch (permError) {
+                console.error('🚨 NOTIF SERVICE: Permission request failed:', permError);
+            }
+            
+        } else {
+            console.log('🔥 NOTIF SERVICE: ⚠️ Not native platform, skipping push setup');
+            console.log('🔥 NOTIF SERVICE: Platform detected as:', Capacitor.getPlatform());
+        }
+    }
+
+    async registerDeviceToken(token: string) {
+        console.log('🔥 TOKEN REG: registerDeviceToken() function called');
+        console.log('🔥 TOKEN REG: Received token:', token?.substring(0, 20) + '...');
+        console.log('🔥 TOKEN REG: Token length:', token?.length);
+        console.log('🔥 TOKEN REG: Timestamp:', new Date().toISOString());
+        
+        // Validate token
+        if (!token || token.length === 0) {
+            console.error('🚨 TOKEN REG: Invalid token received!');
+            return;
+        }
+        
+        // Store token locally for debugging
+        localStorage.setItem('debug_token_to_register', token);
+        localStorage.setItem('debug_token_reg_timestamp', new Date().toISOString());
+        
+        // Test network connectivity first
+        console.log('🔥 TOKEN REG: Testing network connectivity...');
+        await this.testNetworkConnectivity();
+        
+        // Call API registration
+        console.log('🔥 TOKEN REG: About to call sendTokenToServer...');
+        await this.sendTokenToServer(token);
+    }
+
+    async testNetworkConnectivity() {
+        console.log('🔥 NETWORK TEST: Starting connectivity test...');
+        
+        try {
+            // Test basic connectivity - REPLACE with your actual API base URL
+            const apiBaseUrl = 'YOUR_API_BASE_URL_HERE'; // <- UPDATE THIS
+            const testUrl = `${apiBaseUrl}/api/health`; // or any endpoint that exists
+            
+            console.log('🔥 NETWORK TEST: Testing URL:', testUrl);
+            
+            const response = await fetch(testUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            console.log('🔥 NETWORK TEST: Response received');
+            console.log('🔥 NETWORK TEST: Status:', response.status);
+            console.log('🔥 NETWORK TEST: Status text:', response.statusText);
+            console.log('🔥 NETWORK TEST: Response OK:', response.ok);
+            
+            const responseText = await response.text();
+            console.log('🔥 NETWORK TEST: Response body:', responseText);
+            
+            localStorage.setItem('debug_network_test', 'success');
+            localStorage.setItem('debug_network_status', response.status.toString());
+            
+        } catch (error) {
+            console.error('🚨 NETWORK TEST: Connectivity test failed');
+            console.error('🚨 NETWORK TEST: Error type:', error.constructor.name);
+            console.error('🚨 NETWORK TEST: Error message:', error.message);
+            console.error('🚨 NETWORK TEST: Full error:', error);
+            
+            localStorage.setItem('debug_network_test', 'failed');
+            localStorage.setItem('debug_network_error', error.message);
+        }
+    }
+
+    async sendTokenToServer(token: string) {
+        console.log('🔥 API CALL: Starting sendTokenToServer...');
+        console.log('🔥 API CALL: Token to send:', token?.substring(0, 20) + '...');
+        
+        // REPLACE with your actual API configuration
+        const apiBaseUrl = 'YOUR_API_BASE_URL_HERE'; // <- UPDATE THIS
+        const endpoint = `${apiBaseUrl}/api/device-token/register`;
+        
+        console.log('🔥 API CALL: Full endpoint URL:', endpoint);
+        
+        const payload = {
+            token: token,
+            platform: 'ios',
+            environment: 'sandbox', // or detect dynamically
+            appVersion: '1.0.0', // get from config
+            deviceModel: 'iPhone', // get from device info if available
+            osVersion: 'iOS 17' // get from device info if available
+        };
+        
+        console.log('🔥 API CALL: Request payload:', JSON.stringify(payload, null, 2));
+        console.log('🔥 API CALL: Making fetch request at:', new Date().toISOString());
+        
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            console.log('🔥 API CALL: ✅ Response received');
+            console.log('🔥 API CALL: Status code:', response.status);
+            console.log('🔥 API CALL: Status text:', response.statusText);
+            console.log('🔥 API CALL: Response headers:', Object.fromEntries(response.headers));
+            console.log('🔥 API CALL: Response OK:', response.ok);
+            
+            let responseData;
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType?.includes('application/json')) {
+                responseData = await response.json();
+                console.log('🔥 API CALL: JSON response:', JSON.stringify(responseData, null, 2));
+            } else {
+                responseData = await response.text();
+                console.log('🔥 API CALL: Text response:', responseData);
+            }
+            
+            if (response.ok) {
+                console.log('🔥 API CALL: ✅ SUCCESS - Token registration completed!');
+                
+                // Store success info
+                localStorage.setItem('debug_api_success', 'true');
+                localStorage.setItem('debug_api_response', JSON.stringify(responseData));
+                localStorage.setItem('debug_api_timestamp', new Date().toISOString());
+                
+            } else {
+                console.error('🚨 API CALL: ❌ FAILED - Server returned error status');
+                console.error('🚨 API CALL: Error response:', responseData);
+                
+                localStorage.setItem('debug_api_success', 'false');
+                localStorage.setItem('debug_api_error', JSON.stringify(responseData));
+            }
+            
+        } catch (error) {
+            console.error('🚨 API CALL: ❌ NETWORK ERROR - Request failed completely');
+            console.error('🚨 API CALL: Error type:', error.constructor.name);
+            console.error('🚨 API CALL: Error message:', error.message);
+            console.error('🚨 API CALL: Full error object:', error);
+            
+            // Store error details
+            localStorage.setItem('debug_api_success', 'false');
+            localStorage.setItem('debug_api_error', error.message);
+            localStorage.setItem('debug_api_error_type', error.constructor.name);
+        }
+        
+        console.log('🔥 API CALL: sendTokenToServer completed');
+    }
+
+    // Add debugging utility method
+    getDebugInfo() {
+        const debugInfo = {
+            bridgeToken: localStorage.getItem('debug_bridge_token'),
+            bridgeTimestamp: localStorage.getItem('debug_bridge_timestamp'),
+            bridgeSuccess: localStorage.getItem('debug_bridge_success'),
+            bridgeError: localStorage.getItem('debug_bridge_error'),
+            tokenToRegister: localStorage.getItem('debug_token_to_register'),
+            networkTest: localStorage.getItem('debug_network_test'),
+            networkStatus: localStorage.getItem('debug_network_status'),
+            apiSuccess: localStorage.getItem('debug_api_success'),
+            apiResponse: localStorage.getItem('debug_api_response'),
+            apiError: localStorage.getItem('debug_api_error'),
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('🔍 DEBUG INFO:', JSON.stringify(debugInfo, null, 2));
+        return debugInfo;
+    }
+}
+2. Add Global Debug Helper
+Add this to your main app file (App.tsx or index.ts):
+typescript// Global debug helper for easy access
+(window as any).getNotificationDebugInfo = () => {
+    const notificationService = new NotificationService();
+    return notificationService.getDebugInfo();
+};
+
+// Log debug info every 10 seconds during development
+if (process.env.NODE_ENV === 'development') {
+    setInterval(() => {
+        console.log('🔍 PERIODIC DEBUG CHECK:', new Date().toISOString());
+        (window as any).getNotificationDebugInfo?.();
+    }, 10000);
+}
+3. Add iOS AppDelegate Debug Code
+Update your iOS AppDelegate.swift to include bridge confirmation:
+swiftfunc application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+    
+    // CRITICAL DEBUG LOGS
+    print("🔥 iOS DEBUG: didRegisterForRemoteNotificationsWithDeviceToken called!")
+    print("🔥 iOS DEBUG: Token = \(tokenString)")
+    print("🔥 iOS DEBUG: Token length = \(tokenString.count)")
+    print("🔥 iOS DEBUG: Timestamp = \(Date())")
+    
+    // Store for debugging
+    UserDefaults.standard.set(tokenString, forKey: "debug_ios_token")
+    UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "debug_ios_timestamp")
+    
+    print("🔥 iOS DEBUG: About to call Capacitor bridge...")
+    
+    // Your existing Capacitor bridge code here
+    // This should trigger the JavaScript 'registration' listener
+    
+    print("🔥 iOS DEBUG: Capacitor bridge call completed")
+}
