@@ -361,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const creator = await storage.getUser(userId);
           console.log("Creator found:", creator?.firstName, creator?.lastName);
           
-          const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Someone';
+          const creatorName = creator ? creator.firstName : 'Someone';
           await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers);
           console.log(`Sent Will proposed notifications to ${otherMembers.length} members`);
         } else {
@@ -1466,32 +1466,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/notifications/will-proposed', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { creatorName, willTitle } = req.body;
-      
-      // Get user's circle to find other members
-      const userCircle = await storage.getUserCircle(userId);
-      if (!userCircle) {
-        return res.status(404).json({ message: "User not in a circle" });
-      }
-      
-      // Get all circle members except the creator
-      const members = await storage.getCircleMembers(userCircle.id);
-      const otherMembers = members
-        .filter(member => member.userId !== userId)
-        .map(member => member.userId);
-      
-      // Send push notifications to all other circle members
-      await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers);
-      
-      res.json({ success: true, message: "Will proposed notifications sent" });
-    } catch (error) {
-      console.error("Error sending will proposed notifications:", error);
-      res.status(500).json({ message: "Failed to send notifications" });
-    }
-  });
 
   app.post('/api/notifications/will-started', isAuthenticated, async (req: any, res) => {
     try {
@@ -1544,28 +1518,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/notifications/ready-for-new-will', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      
-      // Get user's circle members
-      const userCircle = await storage.getUserCircle(userId);
-      if (!userCircle) {
-        return res.status(404).json({ message: "User not in a circle" });
-      }
-      
-      const members = await storage.getCircleMembers(userCircle.id);
-      const memberIds = members.map(member => member.userId);
-      
-      // Send push notifications that circle is ready for new will
-      await pushNotificationService.sendReadyForNewWillNotification(memberIds);
-      
-      res.json({ success: true, message: "Ready for new will notifications sent" });
-    } catch (error) {
-      console.error("Error sending ready for new will notifications:", error);
-      res.status(500).json({ message: "Failed to send notifications" });
-    }
-  });
 
   // Test push notification endpoint (temporarily bypass auth for debugging)
   app.post('/api/notifications/test', async (req: any, res) => {
