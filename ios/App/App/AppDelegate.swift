@@ -99,19 +99,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         print("🔥 iOS DIRECT: Server API URL: \(url.absoluteString)")
         
-        // Prepare payload
+        // Prepare payload with REQUIRED bundle data for APNS certificate matching
         let payload: [String: Any] = [
             "deviceToken": token,
             "userId": "pending",
             "platform": "ios",
             "environment": "sandbox",
             "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0",
-            "bundleId": Bundle.main.bundleIdentifier ?? "com.porfirio.will",
-            "buildScheme": Bundle.main.infoDictionary?["CFBundleExecutable"] as? String ?? "debug",
-            "provisioningProfile": Bundle.main.infoDictionary?["CFBundleIdentifier"] as? String ?? "development",
             "deviceModel": UIDevice.current.model,
             "osVersion": UIDevice.current.systemVersion,
-            "source": "direct_ios_api"
+            "source": "direct_ios_api",
+            
+            // CRITICAL FIELDS FOR APNS CERTIFICATE MATCHING:
+            "bundleId": Bundle.main.bundleIdentifier ?? "com.porfirio.will",
+            "buildScheme": getBuildScheme(),
+            "provisioningProfile": getProvisioningProfile()
         ]
         
         print("🔥 iOS DIRECT: Payload prepared: \(payload.keys)")
@@ -195,6 +197,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let bridge = (window?.rootViewController as? CAPBridgeViewController)?.bridge {
             bridge.triggerJSEvent(eventName: "pushNotificationRegistrationError", target: "window", data: ["error": error.localizedDescription])
         }
+    }
+    
+    // HELPER METHODS for Bundle Data Detection
+    
+    func getBuildScheme() -> String {
+        #if DEBUG
+        return "Debug"
+        #else
+        return "Release"
+        #endif
+    }
+    
+    func getProvisioningProfile() -> String {
+        #if DEBUG
+        return "development"
+        #else
+        return "distribution"
+        #endif
     }
 }
 
