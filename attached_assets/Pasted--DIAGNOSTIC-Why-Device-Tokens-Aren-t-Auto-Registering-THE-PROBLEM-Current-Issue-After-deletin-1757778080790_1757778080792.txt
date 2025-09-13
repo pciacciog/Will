@@ -1,0 +1,256 @@
+🔍 DIAGNOSTIC: Why Device Tokens Aren't Auto-Registering
+🚨 THE PROBLEM
+Current Issue: After deleting and reinstalling the app, new device tokens are NOT being automatically registered in the database, causing push notifications to fail.
+What we need: A systematic diagnosis to identify WHERE in the token flow things are breaking.
+
+📋 DIAGNOSTIC CHECKLIST
+Please run through this checklist step-by-step and report your findings:
+1. iOS CLIENT-SIDE DIAGNOSIS
+A. Token Generation Check
+swift// Check if iOS is generating device tokens at all
+func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+    print("🔍 DIAGNOSTIC: Token generated = \(tokenString)")
+    
+    // ADD THIS DEBUG LOG
+    UserDefaults.standard.set(tokenString, forKey: "debug_last_token")
+    UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "debug_token_timestamp")
+    
+    // Your existing token handling code here...
+}
+Questions to answer:
+
+ Is didRegisterForRemoteNotificationsWithDeviceToken being called?
+ What is the actual token string being generated?
+ Is the token different after app reinstall?
+
+B. API Call Check
+swift// Add debugging to your token registration function
+func registerTokenWithServer(_ token: String) {
+    print("🔍 DIAGNOSTIC: Attempting to register token \(token.prefix(10))...")
+    print("🔍 DIAGNOSTIC: API endpoint = \(apiEndpoint)")
+    print("🔍 DIAGNOSTIC: Network reachable = \(isNetworkReachable)")
+    
+    // Add timestamp logging
+    let timestamp = Date().timeIntervalSince1970
+    UserDefaults.standard.set(timestamp, forKey: "debug_last_api_call")
+    
+    // Your existing API call code...
+}
+Questions to answer:
+
+ Is the token registration function being called?
+ What is the exact API endpoint being called?
+ Is the network available when the call is made?
+ What are the request parameters being sent?
+
+C. API Response Check
+swift// Add response debugging
+.responseJSON { response in
+    print("🔍 DIAGNOSTIC: API Response Status = \(response.response?.statusCode ?? -1)")
+    print("🔍 DIAGNOSTIC: API Response Body = \(response.result)")
+    print("🔍 DIAGNOSTIC: API Error = \(response.error?.localizedDescription ?? "none")")
+    
+    // Log response details
+    UserDefaults.standard.set(response.response?.statusCode ?? -1, forKey: "debug_last_status_code")
+    if let data = response.data {
+        UserDefaults.standard.set(String(data: data, encoding: .utf8), forKey: "debug_last_response")
+    }
+}
+Questions to answer:
+
+ What HTTP status code is being returned?
+ What is the actual response body?
+ Are there any network errors?
+
+2. BACKEND API DIAGNOSIS
+A. Endpoint Availability Check
+bash# Test if the registration endpoint exists and responds
+curl -X POST http://your-server.com/api/device-token/register \
+  -H "Content-Type: application/json" \
+  -d '{"token":"diagnostic_test","platform":"ios","environment":"sandbox"}' \
+  -v
+Questions to answer:
+
+ Does the /api/device-token/register endpoint exist?
+ What status code does it return for test requests?
+ Is it properly configured in your routing?
+
+B. Request Logging
+Add this to your registration endpoint:
+javascriptapp.post('/api/device-token/register', (req, res) => {
+    console.log('🔍 DIAGNOSTIC: Registration endpoint hit');
+    console.log('🔍 DIAGNOSTIC: Request body:', JSON.stringify(req.body));
+    console.log('🔍 DIAGNOSTIC: Request headers:', JSON.stringify(req.headers));
+    console.log('🔍 DIAGNOSTIC: Timestamp:', new Date().toISOString());
+    
+    // Your existing endpoint code...
+});
+Questions to answer:
+
+ Is the endpoint being hit when iOS makes the call?
+ What data is actually being received in req.body?
+ Are the request headers correct?
+
+C. Database Operation Check
+javascript// Add database debugging
+try {
+    console.log('🔍 DIAGNOSTIC: Attempting database insert');
+    console.log('🔍 DIAGNOSTIC: Token to insert:', token);
+    
+    const result = await db.query(
+        'INSERT INTO device_tokens (token, platform, environment) VALUES ($1, $2, $3) RETURNING *',
+        [token, platform, environment]
+    );
+    
+    console.log('🔍 DIAGNOSTIC: Database insert successful');
+    console.log('🔍 DIAGNOSTIC: Inserted record:', result.rows[0]);
+    
+} catch (error) {
+    console.log('🔍 DIAGNOSTIC: Database insert failed');
+    console.log('🔍 DIAGNOSTIC: Database error:', error.message);
+    console.log('🔍 DIAGNOSTIC: Error stack:', error.stack);
+}
+Questions to answer:
+
+ Is the database query being executed?
+ Are there any SQL errors?
+ Is the token actually being inserted into the database?
+
+3. DATABASE DIAGNOSIS
+A. Table Structure Check
+sql-- Verify the device_tokens table exists and has correct structure
+\d device_tokens;
+
+-- Check if there are any constraints or triggers that might be preventing inserts
+SELECT conname, pg_get_constraintdef(c.oid) 
+FROM pg_constraint c 
+JOIN pg_class t ON c.conrelid = t.oid 
+WHERE t.relname = 'device_tokens';
+Questions to answer:
+
+ Does the device_tokens table exist?
+ What is the exact table structure?
+ Are there any constraints that might prevent inserts?
+
+B. Recent Activity Check
+sql-- Check for any recent token insertions
+SELECT * FROM device_tokens 
+WHERE created_at > NOW() - INTERVAL '1 hour' 
+ORDER BY created_at DESC;
+
+-- Check total number of tokens in the table
+SELECT COUNT(*) as total_tokens FROM device_tokens;
+
+-- Check for any tokens without user associations
+SELECT COUNT(*) as pending_tokens 
+FROM device_tokens 
+WHERE user_id IS NULL;
+Questions to answer:
+
+ Are any tokens being inserted at all?
+ How many total tokens exist in the database?
+ Are there pending tokens waiting for user association?
+
+4. AUTHENTICATION FLOW DIAGNOSIS
+A. Login Process Check
+javascript// Add debugging to login endpoint
+app.post('/api/auth/login', (req, res) => {
+    console.log('🔍 DIAGNOSTIC: Login endpoint hit');
+    console.log('🔍 DIAGNOSTIC: Device token in request:', req.body.deviceToken);
+    
+    // After successful authentication
+    if (req.body.deviceToken) {
+        console.log('🔍 DIAGNOSTIC: Attempting token association');
+        // Your token association code...
+    } else {
+        console.log('🔍 DIAGNOSTIC: No device token provided in login');
+    }
+});
+Questions to answer:
+
+ Is the device token being included in login requests?
+ Is the token association code being executed?
+ Are there any errors during the association process?
+
+
+🧪 SYSTEMATIC TEST PROCEDURE
+Step 1: Fresh Install Test
+
+Delete app completely
+Reinstall app
+Immediately check iOS logs - look for token generation
+Check server logs - look for API calls
+Check database - look for new token entries
+
+Step 2: Network Timing Test
+
+Fresh install with airplane mode ON
+Turn airplane mode OFF after app launch
+Check if token registration happens when network returns
+Look for retry attempts in logs
+
+Step 3: API Isolation Test
+bash# Test the API endpoint directly
+curl -X POST http://your-server.com/api/device-token/register \
+  -H "Content-Type: application/json" \
+  -d '{"token":"manual_test_123","platform":"ios","environment":"sandbox"}'
+Then check if this token appears in the database.
+
+📊 DIAGNOSTIC REPORT TEMPLATE
+Please provide this information:
+iOS Client Findings:
+
+ Token generation: ✅ Working / ❌ Not working / ⚠️ Partial
+ API call initiation: ✅ Working / ❌ Not working / ⚠️ Partial
+ Network availability: ✅ Available / ❌ Not available / ⚠️ Intermittent
+ Error messages: [Paste any error messages here]
+
+Backend API Findings:
+
+ Endpoint availability: ✅ Working / ❌ Not working / ⚠️ Partial
+ Request reception: ✅ Working / ❌ Not working / ⚠️ Partial
+ Database operations: ✅ Working / ❌ Not working / ⚠️ Partial
+ Error messages: [Paste any error messages here]
+
+Database Findings:
+
+ Table exists: ✅ Yes / ❌ No
+ Recent insertions: ✅ Found / ❌ None found
+ Constraint issues: ✅ None / ❌ Found issues
+ Error messages: [Paste any SQL errors here]
+
+Integration Findings:
+
+ Login includes token: ✅ Yes / ❌ No / ⚠️ Sometimes
+ Association logic runs: ✅ Yes / ❌ No / ⚠️ Sometimes
+ User assignment works: ✅ Yes / ❌ No / ⚠️ Sometimes
+
+
+🎯 EXPECTED OUTCOMES
+If everything is working correctly:
+
+iOS generates token → Server logs show API call → Database shows new record
+User logs in → Server logs show association → Database shows user_id populated
+Push notification sent → Notification received
+
+Common failure points to investigate:
+
+iOS not calling the API at all
+API endpoint not configured/reachable
+Database constraints preventing inserts
+Network timing issues
+Authentication flow not including token
+Token association logic not running
+
+
+🚨 CRITICAL QUESTIONS
+Answer these to identify the root cause:
+
+When you delete/reinstall the app, do you see ANY logs related to device tokens?
+Is the registration API endpoint being called at all?
+Are there any database errors in the server logs?
+Does a manual API call work when you test it directly?
+Is the token being included when the user logs in?
+
+Once we identify WHERE the process breaks, we can fix the specific issue rather than rebuilding everything.
