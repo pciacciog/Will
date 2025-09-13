@@ -53,8 +53,9 @@ function Router() {
     if (isAuthenticated && user) {
       console.log('User authenticated - initializing push notifications');
       notificationService.initialize().catch(console.error);
-      // CRITICAL: Associate any pending device tokens with the authenticated user
-      notificationService.onUserAuthenticated().catch(console.error);
+      // 🔥 DISABLED: Server now handles token association automatically during login
+      // No need for frontend to also attempt token registration - this was causing conflicts
+      console.log('✅ User authenticated - server handles token association automatically');
     }
   }, [isAuthenticated, user]);
 
