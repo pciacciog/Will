@@ -127,7 +127,7 @@ export const pageContents = pgTable("page_contents", {
 
 export const deviceTokens = pgTable("device_tokens", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").references(() => users.id), // Nullable to support pending tokens
   deviceToken: text("device_token").notNull(),
   platform: varchar("platform", { length: 10 }).notNull(), // ios, android
   isActive: boolean("is_active").notNull().default(true),

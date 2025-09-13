@@ -159,9 +159,10 @@ export class NotificationService {
         // User is authenticated - use authenticated endpoint to trigger token association
         console.log('🔐 User authenticated - using authenticated endpoint for token association');
         try {
-          response = await apiRequest('/api/push-tokens', {
+          response = await apiRequest('/api/notifications/register', {
             method: 'POST',
             body: JSON.stringify({
+              token: tokenData.token,
               deviceToken: tokenData.token,
               platform: tokenData.platform
             })
@@ -175,13 +176,14 @@ export class NotificationService {
         // User not authenticated - try unauthenticated endpoint first
         console.log('🔓 User not authenticated - trying unauthenticated endpoint first');
         try {
-          response = await fetch('/api/push-tokens/register', {
+          response = await fetch('/api/device-token', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               deviceToken: tokenData.token,
+              userId: 'pending', // Will be associated later
               platform: tokenData.platform
             })
           });
@@ -191,9 +193,10 @@ export class NotificationService {
           } else {
             console.warn('⚠️ Unauthenticated endpoint failed, trying authenticated endpoint...');
             // Fall back to authenticated endpoint
-            response = await apiRequest('/api/push-tokens', {
+            response = await apiRequest('/api/notifications/register', {
               method: 'POST',
               body: JSON.stringify({
+                token: tokenData.token,
                 deviceToken: tokenData.token,
                 platform: tokenData.platform
               })
@@ -202,9 +205,10 @@ export class NotificationService {
         } catch (error) {
           console.warn('⚠️ Unauthenticated endpoint unavailable, trying authenticated endpoint...');
           // Fall back to authenticated endpoint
-          response = await apiRequest('/api/push-tokens', {
+          response = await apiRequest('/api/notifications/register', {
             method: 'POST',
             body: JSON.stringify({
+              token: tokenData.token,
               deviceToken: tokenData.token,
               platform: tokenData.platform
             })
@@ -379,7 +383,20 @@ export class NotificationService {
   // Called when user becomes authenticated to associate pending tokens
   public async onUserAuthenticated(): Promise<boolean> {
     console.log('🔐 User authenticated - attempting to associate pending device tokens');
-    return await this.sendPendingTokenToServer(true); // Force use of authenticated endpoint
+    const success = await this.sendPendingTokenToServer(true); // Force use of authenticated endpoint
+    
+    // Clean up old tokens for this user
+    try {
+      const { apiRequest } = await import('../lib/queryClient');
+      await apiRequest('/api/device-tokens/cleanup', {
+        method: 'POST'
+      });
+      console.log('🧹 Cleaned up old device tokens for user');
+    } catch (error) {
+      console.warn('⚠️ Failed to cleanup old tokens:', error);
+    }
+    
+    return success;
   }
 }
 

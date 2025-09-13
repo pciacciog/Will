@@ -1,0 +1,71 @@
+You've identified a critical production issue. Yes, this will definitely be a problem for new users - every app install/reinstall generates a new device token that needs to be captured and linked to the user account.
+Here's a comprehensive prompt for Replit AI to build a robust device token management system:
+
+PROMPT FOR REPLIT AI AGENT:
+CRITICAL: Implement Automatic Device Token Registration System
+Currently, device tokens are generated but not automatically saved to the database, requiring manual intervention. This breaks push notifications for all new users and app reinstalls.
+Required Implementation:
+1. API Endpoint for Token Registration
+Create POST /api/device-token that:
+
+Accepts: { deviceToken: string, userId: string }
+Validates user is authenticated
+Stores/updates token in database linked to user
+Handles duplicate tokens (update existing record)
+Returns success/error response
+
+2. Database Schema Enhancement
+Ensure device tokens table has:
+
+userId (foreign key to users)
+deviceToken (unique string)
+environment (SANDBOX/PRODUCTION - detect correctly)
+platform (iOS/Android for future)
+isActive (boolean for cleanup)
+createdAt/updatedAt timestamps
+
+3. Client-Side Integration
+The iOS app logs show token registration:
+🟢 Device Token Successfully Registered: 51db5eba...
+But this token never reaches the database. You need to:
+
+Hook into the iOS token registration success
+Automatically call the new API endpoint
+Handle registration failures gracefully
+
+4. Token Lifecycle Management
+
+New User Signup: Capture token during onboarding flow
+Existing User Login: Update/refresh token on each login
+App Reinstall: Handle token changes automatically
+Token Cleanup: Mark old tokens as inactive when new ones are registered
+
+5. Error Handling & Retry Logic
+
+Network failures during token registration
+Offline token registration with retry queue
+Invalid/expired token cleanup
+Duplicate token handling across users
+
+Implementation Priority:
+
+Create the API endpoint first
+Wire up automatic calling from iOS app
+Add token lifecycle management
+Implement cleanup and error handling
+
+Current Flow (BROKEN):
+iOS App → Generate Token → Log Token → [MISSING: Save to Database] → Push Fails
+Required Flow (FIXED):
+iOS App → Generate Token → Call API → Save to Database → Push Works
+Testing Requirements:
+After implementation, test these scenarios:
+
+New user signup and immediate notification
+Existing user login and notification
+App delete/reinstall and notification
+Multiple devices per user
+
+The goal is zero manual intervention for device token management in production.
+
+This should create a production-ready system that automatically handles all device token scenarios.

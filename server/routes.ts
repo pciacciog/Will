@@ -18,7 +18,7 @@ import {
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
 
@@ -1180,10 +1180,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'User ID is required' });
       }
       
-      // Verify user exists
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+      // Handle pending tokens (not yet associated with a user)
+      let finalUserId = userId;
+      if (userId === 'pending') {
+        console.log(`[DeviceToken] 🔄 Storing pending token for later association`);
+        finalUserId = null; // Store as unassociated
+      } else {
+        // Verify user exists for non-pending tokens
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
       }
       
       // Detect token environment (Issue 1 fix)
@@ -1191,16 +1198,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`  🔍 Detected Environment: ${environment}`);
       
       const tokenData = {
-        userId,
+        userId: finalUserId,
         deviceToken,
-        platform: 'ios',
+        platform: req.body.platform || 'ios',
         isActive: true,
         isSandbox: environment === 'SANDBOX',
         bundleId: req.headers['x-app-bundle'] as string,
         buildScheme: req.headers['x-app-buildscheme'] as string,
         provisioningProfile: req.headers['x-app-provisioning'] as string,
         appVersion: req.headers['x-app-version'] as string,
-        registrationSource: 'api_device_token'
+        registrationSource: finalUserId ? 'api_device_token' : 'api_device_token_pending'
       };
       
       // Check if token already exists
@@ -1214,11 +1221,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await db
           .update(deviceTokens)
           .set({ 
-            userId,
+            userId: finalUserId,
             isActive: true,
             isSandbox: environment === 'SANDBOX',
             updatedAt: new Date(),
-            registrationSource: 'api_device_token_update'
+            registrationSource: finalUserId ? 'api_device_token_update' : 'api_device_token_pending_update'
           })
           .where(eq(deviceTokens.deviceToken, deviceToken));
       } else {
@@ -1226,16 +1233,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await db.insert(deviceTokens).values(tokenData);
       }
       
-      console.log(`[DeviceToken] ✅ Token ${deviceToken.substring(0, 8)}... registered for user ${userId} (${environment})`);
+      const userInfo = finalUserId ? `user ${finalUserId}` : 'pending association';
+      console.log(`[DeviceToken] ✅ Token ${deviceToken.substring(0, 8)}... registered for ${userInfo} (${environment})`);
       res.json({ 
         success: true, 
-        message: `Token registered successfully as ${environment}`,
-        environment 
+        message: `Token registered successfully as ${environment}${finalUserId ? '' : ' (pending user association)'}`,
+        environment,
+        pendingAssociation: !finalUserId
       });
       
     } catch (error) {
       console.error("[DeviceToken] ❌ Error registering token:", error);
       res.status(500).json({ error: 'Failed to register device token' });
+    }
+  });
+
+  // Token cleanup endpoint for lifecycle management - FIXED to preserve current token
+  app.post('/api/device-tokens/cleanup', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { currentToken } = req.body; // Optional: specify current token to preserve
+      
+      // Get all active tokens for user
+      const allTokens = await db
+        .select()
+        .from(deviceTokens)
+        .where(
+          and(
+            eq(deviceTokens.userId, userId),
+            eq(deviceTokens.isActive, true)
+          )
+        )
+        .orderBy(deviceTokens.updatedAt);
+      
+      if (allTokens.length <= 1) {
+        console.log(`[TokenCleanup] User ${userId} has ${allTokens.length} token(s), no cleanup needed`);
+        return res.json({ 
+          success: true, 
+          message: "No cleanup needed - only one active token",
+          tokensAffected: 0
+        });
+      }
+      
+      // Find which token to preserve (current token if specified, otherwise most recent)
+      let tokenToPreserve;
+      if (currentToken) {
+        tokenToPreserve = allTokens.find(t => t.deviceToken === currentToken);
+      }
+      if (!tokenToPreserve) {
+        // If no current token specified or not found, preserve the most recent
+        tokenToPreserve = allTokens[allTokens.length - 1];
+      }
+      
+      // Mark all other tokens as inactive
+      const tokensToDeactivate = allTokens.filter(t => t.id !== tokenToPreserve.id);
+      
+      if (tokensToDeactivate.length === 0) {
+        console.log(`[TokenCleanup] No old tokens to clean up for user ${userId}`);
+        return res.json({ 
+          success: true, 
+          message: "No old tokens to clean up",
+          tokensAffected: 0
+        });
+      }
+      
+      // Deactivate each old token individually to avoid complex WHERE logic
+      const results = [];
+      for (const token of tokensToDeactivate) {
+        const result = await db
+          .update(deviceTokens)
+          .set({
+            isActive: false,
+            updatedAt: new Date()
+          })
+          .where(eq(deviceTokens.id, token.id))
+          .returning();
+        results.push(...result);
+      }
+      
+      console.log(`[TokenCleanup] Marked ${results.length} old token(s) as inactive for user ${userId}, preserved token ${tokenToPreserve.deviceToken.substring(0, 8)}...`);
+      res.json({ 
+        success: true, 
+        message: `Cleaned up ${results.length} old tokens, preserved current token`,
+        tokensAffected: results.length,
+        preservedToken: tokenToPreserve.deviceToken.substring(0, 8) + '...'
+      });
+    } catch (error) {
+      console.error("[TokenCleanup] Error cleaning up tokens:", error);
+      res.status(500).json({ error: 'Failed to cleanup tokens' });
     }
   });
   

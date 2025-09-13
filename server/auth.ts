@@ -113,8 +113,18 @@ export function setupAuth(app: Express) {
         isActive: true,
       });
 
-      req.login(user, (err) => {
+      req.login(user, async (err) => {
         if (err) return next(err);
+        
+        // Associate any pending device tokens with the new user
+        try {
+          await associatePendingTokens(user.id);
+          console.log(`✅ [Registration] Associated pending tokens with new user ${user.id}`);
+        } catch (error) {
+          console.error('❌ [Registration] Error associating pending tokens:', error);
+          // Don't fail registration due to token association issues
+        }
+        
         res.status(201).json(user);
       });
     } catch (error) {
@@ -126,7 +136,10 @@ export function setupAuth(app: Express) {
   app.post("/api/login", passport.authenticate("local"), async (req: any, res) => {
     try {
       const user = req.user;
-      console.log(`🔍 [Login] Request body:`, JSON.stringify(req.body, null, 2));
+      // Log request info without password for security
+      const safeBody = { ...req.body };
+      delete safeBody.password;
+      console.log(`🔍 [Login] Request body (safe):`, JSON.stringify(safeBody, null, 2));
       console.log(`🔍 [Login] Request headers:`, JSON.stringify(req.headers, null, 2));
       
       // 🔥 CRITICAL: Always transfer device token ownership on login
@@ -167,6 +180,9 @@ export function setupAuth(app: Express) {
           });
         
         console.log(`✅ [Login] Token ${deviceToken.substring(0, 8)}... now owned by user ${user.id}`);
+      } else {
+        // No device token in request - client should call association endpoint after login
+        console.log(`ℹ️ [Login] No device token in request. Client should send pending token to /api/notifications/register after login.`);
       }
       
       res.status(200).json(user);
@@ -199,6 +215,51 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
+
+  // SECURE: Device-specific token association for logged-in users
+  // Only associates tokens that match the current user's device, preventing token theft
+  async function associateUserDeviceToken(userId: string, deviceToken?: string): Promise<void> {
+    if (!deviceToken) {
+      console.log(`ℹ️ [TokenAssociation] No device token provided for user ${userId}`);
+      return;
+    }
+    
+    try {
+      // Import database dependencies  
+      const { neon } = await import('@neondatabase/serverless');
+      const { drizzle } = await import('drizzle-orm/neon-http');
+      const { deviceTokens } = await import('../shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Create database connection
+      const sqlConnection = neon(process.env.DATABASE_URL!);
+      const dbConnection = drizzle(sqlConnection);
+      
+      console.log(`🔗 [TokenAssociation] Associating specific token ${deviceToken.substring(0, 8)}... with user ${userId}`);
+      
+      // Only associate the SPECIFIC token provided, not all pending tokens
+      await dbConnection
+        .insert(deviceTokens)
+        .values({
+          deviceToken: deviceToken,
+          userId: userId,
+          platform: 'ios',
+          registrationSource: 'post_login_association'
+        })
+        .onConflictDoUpdate({
+          target: deviceTokens.deviceToken,
+          set: {
+            userId: userId,
+            registrationSource: 'post_login_association',
+            updatedAt: new Date()
+          }
+        });
+      
+      console.log(`✅ [TokenAssociation] Successfully associated token ${deviceToken.substring(0, 8)}... with user ${userId}`);
+    } catch (error) {
+      console.error(`❌ [TokenAssociation] Error associating token with user ${userId}:`, error);
+    }
+  }
   
   // Add the /api/auth/me route for compatibility
   app.get("/api/auth/me", (req, res) => {
