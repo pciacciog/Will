@@ -10,9 +10,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
-        // Register for remote notifications
+        // 🔥 CRITICAL: Register for remote notifications IMMEDIATELY on app launch
+        // This ensures tokens are generated BEFORE user login, fixing the timing issue
         UNUserNotificationCenter.current().delegate = self
-        application.registerForRemoteNotifications()
+        
+        print("🔥 iOS DIRECT: App launched - requesting push notification permissions immediately")
+        
+        // Request permissions and register for notifications right away
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            DispatchQueue.main.async {
+                if granted {
+                    print("🔥 iOS DIRECT: Push notification permissions granted - registering for remote notifications")
+                    application.registerForRemoteNotifications()
+                } else {
+                    print("🚨 iOS DIRECT: Push notification permissions denied")
+                    if let error = error {
+                        print("🚨 iOS DIRECT: Permission error: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
         
         return true
     }
