@@ -1165,6 +1165,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Device token storage API with deduplication (Race Condition Fix)
   app.post('/api/device-token', async (req: any, res) => {
     try {
+      // 🧪 COMPREHENSIVE DIAGNOSTIC LOGGING
+      console.log('🔍 [DIAGNOSTIC] === NEW TOKEN REGISTRATION REQUEST ===');
+      console.log('🔍 [DIAGNOSTIC] Timestamp:', new Date().toISOString());
+      console.log('🔍 [DIAGNOSTIC] Full request body:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 [DIAGNOSTIC] Environment parameter:', req.body.environment);
+      console.log('🔍 [DIAGNOSTIC] Environment type:', typeof req.body.environment);
+      console.log('🔍 [DIAGNOSTIC] Full body keys:', Object.keys(req.body));
+      console.log('🔍 [DIAGNOSTIC] Token hash:', req.body.deviceToken?.substring(0, 10) + '...');
+      console.log('🔍 [DIAGNOSTIC] Bundle ID received:', req.body.bundleId);
+      console.log('🔍 [DIAGNOSTIC] User ID received:', req.body.userId);
+      
       const { deviceToken, userId } = req.body;
       
       console.log(`[DeviceToken] 📱 NEW TOKEN REGISTRATION:`);
@@ -1224,19 +1235,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // 🔧 FIX: Respect explicit environment from iOS app first, then fall back to detection
+      console.log('🔍 [DIAGNOSTIC] === ENVIRONMENT DETECTION LOGIC ===');
       let environment: 'SANDBOX' | 'PRODUCTION';
       const explicitEnv = String(req.body.environment || '').trim().toLowerCase();
+      console.log('🔍 [DIAGNOSTIC] Raw environment value:', req.body.environment);
+      console.log('🔍 [DIAGNOSTIC] Normalized environment value:', explicitEnv);
+      
       if (explicitEnv === 'sandbox') {
         environment = 'SANDBOX';
+        console.log(`✅ [DIAGNOSTIC] iOS explicitly requested SANDBOX - should set is_sandbox: true`);
         console.log(`✅ [DeviceToken] iOS app explicitly requested SANDBOX environment`);
       } else if (explicitEnv === 'production') {
         environment = 'PRODUCTION';
+        console.log(`✅ [DIAGNOSTIC] iOS explicitly requested PRODUCTION - should set is_sandbox: false`);
         console.log(`✅ [DeviceToken] iOS app explicitly requested PRODUCTION environment`);
       } else {
         // Fall back to header-based detection only if iOS didn't specify
         environment = detectTokenEnvironment(req.headers, 'ios');
+        console.log(`⚠️ [DIAGNOSTIC] No explicit environment, falling back to header detection: ${environment}`);
         console.log(`🔍 [DeviceToken] iOS app didn't specify environment, detected: ${environment} (via headers)`);
       }
+      
+      const isSandbox = (environment === 'SANDBOX');
+      console.log('🔍 [DIAGNOSTIC] Final environment decision:');
+      console.log('  - Environment string:', environment);
+      console.log('  - is_sandbox value:', isSandbox);
+      console.log('  - Will be stored as:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
       console.log(`  🔍 Final Environment: ${environment}`);
       
       const tokenData = {
@@ -1269,13 +1293,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await db.insert(deviceTokens).values(tokenData);
       }
       
+      // 🧪 VERIFY DATABASE INSERT
+      console.log('✅ [DIAGNOSTIC] Token stored in database with:');
+      console.log('  - is_sandbox:', environment === 'SANDBOX');
+      console.log('  - bundle_id:', req.body.bundleId || req.headers['x-app-bundle'] || 'null');
+      console.log('  - environment should be:', environment === 'SANDBOX' ? 'SANDBOX' : 'PRODUCTION');
+      console.log('  - token_data_is_sandbox:', tokenData.isSandbox);
+      
       const userInfo = finalUserId ? `user ${finalUserId}` : 'pending association';
       console.log(`[DeviceToken] ✅ Token ${deviceToken.substring(0, 8)}... registered for ${userInfo} (${environment})`);
       res.json({ 
         success: true, 
         message: `Token registered successfully as ${environment}${finalUserId ? '' : ' (pending user association)'}`,
         environment,
-        pendingAssociation: !finalUserId
+        pendingAssociation: !finalUserId,
+        debugInfo: {
+          receivedEnvironment: req.body.environment,
+          normalizedEnvironment: explicitEnv,
+          finalEnvironment: environment,
+          isSandbox: environment === 'SANDBOX'
+        }
       });
       
     } catch (error) {
@@ -1465,6 +1502,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/push-tokens', isAuthenticated, async (req: any, res) => {
     try {
+      // 🧪 ADD DIAGNOSTIC LOGGING TO THIS ENDPOINT TOO
+      console.log('🔍 [DIAGNOSTIC] === /api/push-tokens ENDPOINT HIT ===');
+      console.log('🔍 [DIAGNOSTIC] This endpoint was MISSING environment detection!');
+      console.log('🔍 [DIAGNOSTIC] Full request body:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 [DIAGNOSTIC] Environment parameter:', req.body.environment);
+      
       const userId = req.user.id;
       const { deviceToken, platform = 'ios' } = req.body;
       
@@ -1477,24 +1520,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Device token is required' });
       }
       
+      // 🔧 ADD MISSING ENVIRONMENT DETECTION TO THIS ENDPOINT
+      let environment: 'SANDBOX' | 'PRODUCTION';
+      const explicitEnv = String(req.body.environment || '').trim().toLowerCase();
+      if (explicitEnv === 'sandbox') {
+        environment = 'SANDBOX';
+        console.log(`✅ [DIAGNOSTIC] /api/push-tokens: iOS explicitly requested SANDBOX`);
+      } else if (explicitEnv === 'production') {
+        environment = 'PRODUCTION';  
+        console.log(`✅ [DIAGNOSTIC] /api/push-tokens: iOS explicitly requested PRODUCTION`);
+      } else {
+        environment = detectTokenEnvironment(req.headers, platform);
+        console.log(`⚠️ [DIAGNOSTIC] /api/push-tokens: No explicit environment, detected: ${environment}`);
+      }
+      
+      const isSandbox = (environment === 'SANDBOX');
+      console.log('🔍 [DIAGNOSTIC] /api/push-tokens environment decision:');
+      console.log('  - Environment:', environment);
+      console.log('  - isSandbox:', isSandbox);
+      
       // 🔥 ALWAYS update ownership, regardless of current state
       // This handles ALL scenarios: new tokens, pending tokens, tokens from other users
+      // 🔧 FIXED: Now includes environment detection!
       await db
         .insert(deviceTokens)
         .values({
           deviceToken: deviceToken,
           userId: userId,
           platform: platform,
+          isActive: true,
+          isSandbox: isSandbox, // CRITICAL: Add missing environment detection
           registrationSource: 'authenticated_ownership_transfer'
         })
         .onConflictDoUpdate({
           target: deviceTokens.deviceToken,
           set: {
             userId: userId, // Always transfer ownership to current user
+            isActive: true,
+            isSandbox: isSandbox, // CRITICAL: Update environment on existing tokens
             registrationSource: 'authenticated_ownership_transfer',
             updatedAt: new Date()
           }
         });
+        
+      console.log('✅ [DIAGNOSTIC] /api/push-tokens: Token stored with environment:');
+      console.log('  - isSandbox:', isSandbox);
+      console.log('  - environment:', environment);
       
       console.log(`✅ [TokenRegistration] Token ${deviceToken.substring(0, 8)}... now owned by user ${userId}`);
       res.json({ success: true, message: 'Token ownership transferred successfully' });

@@ -1,0 +1,99 @@
+Despite implementing the fix to respect iOS explicit environment parameters, the newest device token is still being incorrectly classified:
+Evidence from latest database state:
+
+New token: 0b26... (newest token after environment fix)
+Expected: is_sandbox: true (since iOS sends "environment": "sandbox")
+Actual: is_sandbox: false (still being marked as production)
+Missing data: bundle_id: null, build_scheme: null, provisioning_profile: null
+
+Server logs show "BadDeviceToken" error:
+🔍 APNs Reason: BadDeviceToken
+🔍 HTTP Status: 400
+🔍 Response Headers: {"reason": "BadDeviceToken"}
+This confirms the server is still trying to send sandbox tokens through production APNS endpoints.
+
+🔍 DIAGNOSIS NEEDED
+The environment fix isn't working. We need to diagnose why:
+Question 1: Is the iOS parameter being received?
+Add logging to show exactly what the server receives:
+javascriptapp.post('/api/device-token', async (req, res) => {
+    console.log('🔍 [DEBUG] Raw request body received:');
+    console.log('🔍 [DEBUG] environment parameter:', req.body.environment);
+    console.log('🔍 [DEBUG] Full body keys:', Object.keys(req.body));
+    
+    // Your environment detection logic...
+});
+Question 2: Is the environment logic actually executing?
+The fix should show these logs when iOS sends sandbox tokens:
+✅ [DeviceToken] iOS app explicitly requested SANDBOX environment
+Are you seeing this log message? If not, the logic isn't executing.
+Question 3: Is there a different code path?
+Check if there's another registration endpoint or code path being used that bypasses the environment fix.
+Question 4: Missing bundle ID/provisioning data
+The iOS app should be sending bundle ID and provisioning profile data:
+swiftlet payload: [String: Any] = [
+    "token": token,
+    "environment": "sandbox",
+    "bundleId": Bundle.main.bundleIdentifier ?? "",
+    // Add this debug logging in iOS:
+    "debugInfo": [
+        "bundleId": Bundle.main.bundleIdentifier ?? "missing",
+        "buildConfiguration": "Debug", // or detect dynamically
+    ]
+]
+
+🧪 IMMEDIATE DIAGNOSTIC STEPS
+Step 1: Add Comprehensive Request Logging
+javascriptapp.post('/api/device-token', async (req, res) => {
+    console.log('🔍 [DIAGNOSTIC] === NEW TOKEN REGISTRATION REQUEST ===');
+    console.log('🔍 [DIAGNOSTIC] Timestamp:', new Date().toISOString());
+    console.log('🔍 [DIAGNOSTIC] Full request body:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 [DIAGNOSTIC] Environment parameter:', req.body.environment);
+    console.log('🔍 [DIAGNOSTIC] Token hash:', req.body.deviceToken?.substring(0, 10) + '...');
+    
+    // Environment detection logic with detailed logging
+    let environment;
+    if (req.body.environment === 'sandbox') {
+        environment = 'SANDBOX';
+        console.log('✅ [DIAGNOSTIC] iOS explicitly requested SANDBOX - should set is_sandbox: true');
+    } else if (req.body.environment === 'production') {
+        environment = 'PRODUCTION';
+        console.log('✅ [DIAGNOSTIC] iOS explicitly requested PRODUCTION - should set is_sandbox: false');
+    } else {
+        environment = detectTokenEnvironment(req.headers, 'ios');
+        console.log('⚠️ [DIAGNOSTIC] No explicit environment, falling back to header detection:', environment);
+    }
+    
+    const isSandbox = (environment === 'SANDBOX');
+    console.log('🔍 [DIAGNOSTIC] Final environment decision:');
+    console.log('  - Environment string:', environment);
+    console.log('  - is_sandbox value:', isSandbox);
+    console.log('  - Will be stored as:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
+    
+    // Continue with registration...
+});
+Step 2: Verify Database Insert
+Add logging to confirm what actually gets stored:
+javascript// After database insert
+console.log('✅ [DIAGNOSTIC] Token stored in database with:');
+console.log('  - is_sandbox:', isSandbox);
+console.log('  - bundle_id:', req.body.bundleId || 'null');
+console.log('  - environment should be:', isSandbox ? 'SANDBOX' : 'PRODUCTION');
+
+🎯 EXPECTED DIAGNOSTIC RESULTS
+If the fix is working correctly, you should see:
+🔍 [DIAGNOSTIC] Environment parameter: sandbox
+✅ [DIAGNOSTIC] iOS explicitly requested SANDBOX - should set is_sandbox: true
+🔍 [DIAGNOSTIC] Final environment decision: SANDBOX, is_sandbox: true
+✅ [DIAGNOSTIC] Token stored in database with is_sandbox: true
+If you don't see these logs, the fix isn't executing properly.
+
+🚨 CRITICAL QUESTIONS TO ANSWER
+
+Are you seeing the diagnostic logs above when registering a new token?
+What does req.body.environment actually contain?
+Is the environment logic executing at all?
+Is there a different registration endpoint being used?
+Why is bundle_id still null despite iOS app changes?
+
+Please run this diagnostic logging and share the complete server logs from a fresh token registration. This will show exactly why the environment detection is still failing.
