@@ -1223,9 +1223,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Detect token environment (Issue 1 fix)
-      const environment = detectTokenEnvironment(req.headers, 'ios');
-      console.log(`  🔍 Detected Environment: ${environment}`);
+      // 🔧 FIX: Respect explicit environment from iOS app first, then fall back to detection
+      let environment: 'SANDBOX' | 'PRODUCTION';
+      const explicitEnv = String(req.body.environment || '').trim().toLowerCase();
+      if (explicitEnv === 'sandbox') {
+        environment = 'SANDBOX';
+        console.log(`✅ [DeviceToken] iOS app explicitly requested SANDBOX environment`);
+      } else if (explicitEnv === 'production') {
+        environment = 'PRODUCTION';
+        console.log(`✅ [DeviceToken] iOS app explicitly requested PRODUCTION environment`);
+      } else {
+        // Fall back to header-based detection only if iOS didn't specify
+        environment = detectTokenEnvironment(req.headers, 'ios');
+        console.log(`🔍 [DeviceToken] iOS app didn't specify environment, detected: ${environment} (via headers)`);
+      }
+      console.log(`  🔍 Final Environment: ${environment}`);
       
       const tokenData = {
         userId: finalUserId,
@@ -1241,13 +1253,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       if (existingToken.length > 0) {
-        console.log(`[DeviceToken] ✅ Updating existing token`);
+        console.log(`[DeviceToken] ✅ Updating existing token with environment: ${environment}`);
         await db
           .update(deviceTokens)
           .set({ 
             userId: finalUserId,
             isActive: true,
-            isSandbox: environment === 'SANDBOX',
+            isSandbox: environment === 'SANDBOX', // CRITICAL: Update environment on existing tokens
             updatedAt: new Date(),
             registrationSource: finalUserId ? 'api_device_token_update' : 'api_device_token_pending_update'
           })
@@ -1414,7 +1426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deviceToken,
         platform,
         isActive: true,
-        isSandbox: detectTokenEnvironment(req.headers, platform) === 'SANDBOX', // Issue 1 fix: proper environment detection
+        isSandbox: String(req.body.environment || '').trim().toLowerCase() === 'sandbox' ? true : String(req.body.environment || '').trim().toLowerCase() === 'production' ? false : detectTokenEnvironment(req.headers, platform) === 'SANDBOX', // Respect explicit iOS environment parameter with normalization
         registrationSource: 'unauthenticated_registration'
       };
       
@@ -1425,12 +1437,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(deviceTokens.deviceToken, deviceToken));
       
       if (existingToken.length > 0) {
-        console.log(`[TokenRegistration] ✅ Token already exists, updating timestamp`);
+        console.log(`[TokenRegistration] ✅ Token already exists, updating timestamp and environment`);
+        const normalizedEnv = String(req.body.environment || '').trim().toLowerCase();
+        const shouldBeSandbox = normalizedEnv === 'sandbox' ? true : normalizedEnv === 'production' ? false : detectTokenEnvironment(req.headers, platform) === 'SANDBOX';
         await db
           .update(deviceTokens)
           .set({ 
             updatedAt: new Date(),
             isActive: true,
+            isSandbox: shouldBeSandbox, // CRITICAL: Update environment on existing tokens
             registrationSource: 'unauthenticated_update'
           })
           .where(eq(deviceTokens.deviceToken, deviceToken));

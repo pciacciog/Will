@@ -1,0 +1,69 @@
+Thank you for implementing the comprehensive token association and duplicate prevention fixes! The token association is now working perfectly:
+
+✅ Pending tokens are being found and associated with users during login
+✅ Duplicate registrations are being prevented from overwriting associations
+✅ Server logs show successful association: ✅ [PendingTokens] Associated 2 pending tokens with user
+✅ Database confirms tokens are properly linked to user accounts
+
+The association mechanism is functioning flawlessly.
+
+❌ NEW ISSUE: Environment Detection Changed
+However, during the implementation process, something changed in the environment detection logic that's causing a new problem:
+What Changed:
+Previously working token: 5c29ffe91268ba3bdcce15...
+
+Database shows: is_sandbox: true
+Push notifications worked perfectly
+
+New tokens after our fixes: 91df829a... and 56eb348944...
+
+Database shows: is_sandbox: false
+Push notifications failing with "Unregistered" errors
+
+The Problem:
+The iOS app is correctly sending "environment": "sandbox" in the registration request, but your server's environment detection logic is overriding this and incorrectly classifying development tokens as production (is_sandbox: false).
+Evidence from server logs:
+🔄 PRODUCTION fallback (Production server + ambiguous token)
+🔍 Detected Environment: PRODUCTION
+[DeviceToken] ✅ Token registered for pending association (PRODUCTION)
+
+🔧 FIX NEEDED: Restore Sandbox Environment Detection
+Root Cause: When implementing the direct iOS API registration, the environment detection logic started ignoring the iOS app's explicit "environment": "sandbox" parameter and defaulting to production.
+Solution Required:
+
+Respect the iOS environment parameter - When the iOS app explicitly sends "environment": "sandbox", set is_sandbox: true in the database
+Fix the environment detection fallback - The "PRODUCTION fallback" logic should not override explicit sandbox requests
+
+Expected Behavior:
+
+iOS sends: "environment": "sandbox"
+Server should set: is_sandbox: true
+Tokens should work with development/sandbox APNS certificates
+
+
+📝 SPECIFIC CODE CHANGE NEEDED
+In your device token registration endpoint, ensure this logic:
+javascript// Respect explicit environment from iOS app
+let isSandbox = false;
+if (req.body.environment === 'sandbox') {
+    isSandbox = true;
+    console.log('🔍 [DeviceToken] iOS app explicitly requested sandbox environment');
+} else if (req.body.environment === 'production') {
+    isSandbox = false;
+    console.log('🔍 [DeviceToken] iOS app explicitly requested production environment');
+}
+
+// Store with correct environment
+await db.query(`
+    INSERT INTO device_tokens (..., is_sandbox) 
+    VALUES (..., $1)
+`, [..., isSandbox]);
+The environment detection logic should prioritize the explicit parameter from the iOS app rather than overriding it with server-side detection.
+
+🎯 SUMMARY
+
+✅ Token association: Fixed and working perfectly
+✅ Duplicate prevention: Fixed and working perfectly
+❌ Environment detection: Broken - ignoring sandbox requests from iOS
+
+Once the environment detection is fixed to properly set is_sandbox: true for development tokens, push notifications should work perfectly with the robust association system you've implemented.
