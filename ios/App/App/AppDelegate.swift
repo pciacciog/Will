@@ -106,7 +106,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             "platform": "ios",
             "environment": "sandbox",
             "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0",
-            "bundleId": Bundle.main.bundleIdentifier ?? "com.replit.willbeta",
+            "bundleId": Bundle.main.bundleIdentifier ?? "com.porfirio.will",
             "buildScheme": Bundle.main.infoDictionary?["CFBundleExecutable"] as? String ?? "debug",
             "provisioningProfile": Bundle.main.infoDictionary?["CFBundleIdentifier"] as? String ?? "development",
             "deviceModel": UIDevice.current.model,
