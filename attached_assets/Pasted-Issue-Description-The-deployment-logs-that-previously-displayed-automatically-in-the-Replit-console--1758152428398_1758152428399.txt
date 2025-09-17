@@ -1,0 +1,93 @@
+Issue Description
+The deployment logs that previously displayed automatically in the Replit console are no longer visible. This is impacting our ability to debug and monitor the application.
+What Changed
+Previously: Deployment logs would automatically appear in the console, showing:
+
+Server startup messages
+API request logs
+Error messages
+Database operations
+Push notification service logs
+
+Currently: No deployment logs are visible, making it difficult to:
+
+Debug issues
+Monitor API calls
+Track device token registration
+See notification sending attempts
+
+Diagnostic Questions
+1. Console/Terminal Status
+
+Is the Replit console/terminal still functioning?
+Are there any error messages in the console itself?
+Can you run manual commands in the terminal?
+
+2. Application Status
+
+Is the application still running and accessible?
+Are API endpoints responding?
+Is the database connection working?
+
+3. Logging Configuration
+
+Have any logging configurations changed?
+Are console.log statements still in the code?
+Has the logging level been modified?
+
+4. Replit Environment
+
+Have there been any Replit platform updates?
+Are there any Replit-specific settings that might affect log visibility?
+Is this affecting the main console, or just deployment logs?
+
+5. Process Management
+
+Is the Node.js process running correctly?
+Are there multiple processes that might be interfering?
+Has the startup command changed?
+
+Immediate Troubleshooting Steps
+Please try these and report results:
+Step 1: Check Console Visibility
+bash# In Replit terminal, try:
+echo "Test message - can you see this?"
+Step 2: Check Application Process
+bash# Check if your app is running:
+ps aux | grep node
+Step 3: Manual Log Check
+bash# Try to see recent logs:
+pm2 logs
+# or
+npm run dev
+Step 4: Force Log Output
+Add a test log statement to your main server file:
+javascriptconsole.log("🔍 DIAGNOSTIC: Server is running at", new Date().toISOString());
+setInterval(() => {
+    console.log("🔍 DIAGNOSTIC: Heartbeat", new Date().toISOString());
+}, 10000);
+Step 5: Check Replit Console Settings
+
+Look for any console/terminal settings that might have changed
+Check if there's a "show logs" or "show output" toggle
+Verify the console is set to the correct output stream
+
+Expected Response
+Please provide:
+
+Current console status - What do you see in the Replit interface?
+Manual command results - Output from the troubleshooting steps above
+Application accessibility - Can you still access your app at the deployment URL?
+Any error messages - Screenshots or text of any errors you see
+Recent changes - Any code changes or Replit settings modifications
+
+Possible Causes
+Based on common issues:
+
+Replit console settings changed
+Application crashed and restarted without proper logging
+Node.js process redirection changed
+Replit platform update affecting log display
+Console output being redirected or suppressed
+
+This diagnostic information will help identify whether it's a Replit platform issue, application configuration problem, or console display setting.
