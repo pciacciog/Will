@@ -369,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (notificationError) {
         console.error("Error sending will proposed notifications:", notificationError);
-        console.error("Notification error stack:", notificationError.stack);
+        console.error("Notification error stack:", (notificationError as Error).stack);
         // Don't fail the will creation if notifications fail
       }
 
@@ -443,14 +443,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const status = getWillStatus(willWithCommitments, memberCount);
       
       // Auto-update will status if it has transitioned based on time
-      if (status === 'active' && willWithCommitments.status !== 'active') {
+      if (willWithCommitments && status === 'active' && willWithCommitments.status !== 'active') {
         await storage.updateWillStatus(will.id, 'active');
-      } else if (status === 'completed' && willWithCommitments.status !== 'completed') {
+      } else if (willWithCommitments && status === 'completed' && willWithCommitments.status !== 'completed') {
         await storage.updateWillStatus(will.id, 'completed');
       }
       
       // Check if will should be archived (all committed members acknowledged)
-      if (willWithCommitments.status === 'completed' && acknowledgedCount >= commitmentCount) {
+      if (willWithCommitments && willWithCommitments.status === 'completed' && acknowledgedCount >= commitmentCount) {
         await storage.updateWillStatus(will.id, 'archived');
         // Return null to indicate no active will - this allows new Will creation
         return res.json(null);
@@ -1133,7 +1133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, url: room.url, room: room });
     } catch (error) {
       console.error('❌ Error creating Daily.co room for Will 38:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: (error as Error).message });
     }
   });
 
@@ -1156,7 +1156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Daily.co test error:", error);
-      res.status(500).json({ status: 'error', message: error.message });
+      res.status(500).json({ status: 'error', message: (error as Error).message });
     }
   });
 
@@ -1571,7 +1571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: 'Token ownership transferred successfully' });
     } catch (error) {
       console.error('[TokenRegistration] ❌ Error during token ownership transfer:', error);
-      res.status(500).json({ message: 'Failed to transfer token ownership', error: error.message });
+      res.status(500).json({ message: 'Failed to transfer token ownership', error: (error as Error).message });
     }
   });
 
@@ -1600,7 +1600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('[TokenValidation] ❌ Error validating token:', error);
       res.status(500).json({ 
         error: 'Token validation failed', 
-        message: error.message 
+        message: (error as Error).message 
       });
     }
   });
@@ -1673,12 +1673,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not in a circle" });
       }
       
-      // Get all committed members of the active will
-      const activeWills = await storage.getCircleWills(userCircle.id);
-      const activeWill = activeWills.find(will => will.status === 'active');
+      // Get active will from circle
+      const activeWill = await storage.getCircleActiveWill(userCircle.id);
       
       if (activeWill) {
-        const committedMembers = activeWill.commitments?.map(c => c.userId) || [];
+        const willWithCommitments = await storage.getWillWithCommitments(activeWill.id);
+        const committedMembers = willWithCommitments?.commitments?.map((c: any) => c.userId) || [];
         await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers);
       }
       
@@ -1811,7 +1811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('[DebugEndpoint] ❌ Error in Randy token test:', error);
       res.status(500).json({ 
         error: 'Debug test failed', 
-        message: error.message 
+        message: (error as Error).message 
       });
     }
   });
