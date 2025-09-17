@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["nano"]
+packages = ["nano", "unzip"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -22,6 +22,10 @@ externalPort = 3000
 [[ports]]
 localPort = 36767
 externalPort = 3001
+
+[[ports]]
+localPort = 46173
+externalPort = 3002
 
 [workflows]
 runButton = "Project"
