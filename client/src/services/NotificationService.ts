@@ -416,7 +416,7 @@ export class NotificationService {
             body: `${pusherName} wants to encourage you with your Will`,
             schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
             sound: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
+            smallIcon: 'AppIcon',
             iconColor: '#067DFD',
             extra: {
               type: 'will_push',
@@ -447,7 +447,7 @@ export class NotificationService {
             body: `Your Will "${willTitle}" has ${timeRemaining} remaining`,
             schedule: { at: new Date(Date.now() + 1000) },
             sound: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
+            smallIcon: 'AppIcon',
             iconColor: '#1EB854',
             extra: {
               type: 'will_reminder',

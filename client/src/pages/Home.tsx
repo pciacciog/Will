@@ -6,8 +6,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Target, ChevronDown, ChevronUp, Users, Plus, Sparkles } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
+import { User, Circle, Will, WillCommitment, CircleMember } from "@shared/schema";
 
-function getWillStatus(will: any, memberCount: number): string {
+// Extended types for API responses with relations
+type CircleWithMembers = Circle & {
+  members?: CircleMember[];
+};
+
+type WillWithCommitments = Will & {
+  commitments?: WillCommitment[];
+  acknowledgedCount?: number;
+};
+
+type CommitmentWithUser = WillCommitment & {
+  what?: string;
+  commitment?: string;
+};
+
+function getWillStatus(will: WillWithCommitments | undefined, memberCount: number): string {
   if (!will) return 'no_will';
   
   // If will is archived, treat as no will
@@ -58,10 +74,10 @@ function getWillStatus(will: any, memberCount: number): string {
   }
 }
 
-function formatStartTime(startDate: string): string {
+function formatStartTime(startDate: string | Date | null | undefined): string {
   if (!startDate) return '';
   
-  const start = new Date(startDate);
+  const start = startDate instanceof Date ? startDate : new Date(startDate);
   const now = new Date();
   const diffMs = start.getTime() - now.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -92,7 +108,7 @@ export default function Home() {
     }
   }, []);
   
-  const { data: circle, error: circleError } = useQuery({
+  const { data: circle, error: circleError } = useQuery<CircleWithMembers>({
     queryKey: ['/api/circles/mine'],
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
@@ -103,7 +119,7 @@ export default function Home() {
     },
   });
 
-  const { data: will, error: willError } = useQuery({
+  const { data: will, error: willError } = useQuery<WillWithCommitments>({
     queryKey: [`/api/wills/circle/${circle?.id}`],
     enabled: !!circle?.id,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
@@ -115,7 +131,7 @@ export default function Home() {
     },
   });
 
-  const { data: user, isLoading: userLoading } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery<User>({
     queryKey: ['/api/user'],
   });
 
@@ -169,7 +185,9 @@ export default function Home() {
   const isActiveWill = willStatus === 'active' || willStatus === 'scheduled' || willStatus === 'waiting_for_end_room';
   
   // Get user's commitment if they have one
-  const userCommitment = isActiveWill && user ? will?.commitments?.find((c: any) => c.userId === user.id) : null;
+  const userCommitment: CommitmentWithUser | null = isActiveWill && user && will?.commitments 
+    ? will.commitments.find((c) => c.userId === user.id) || null 
+    : null;
   
   // Debug logging
   console.log('Home component debug:', {

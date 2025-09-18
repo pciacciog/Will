@@ -29,7 +29,7 @@
       "presentationOptions": ["badge", "sound", "alert"]
     },
     "LocalNotifications": {
-      "smallIcon": "ic_stat_icon_config_sample",
+      "smallIcon": "AppIcon",
       "iconColor": "#488AFF",
       "sound": "beep.wav"
     }
