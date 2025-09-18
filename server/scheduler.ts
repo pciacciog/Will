@@ -15,19 +15,37 @@ export class EndRoomScheduler {
       return;
     }
 
-    console.log('[EndRoomScheduler] Starting scheduler...');
+    console.log('[EndRoomScheduler] Starting dual scheduler system...');
     this.isRunning = true;
 
-    // Check every minute for End Rooms that need to be opened or closed
-    cron.schedule('* * * * *', async () => {
+    // DUAL SCHEDULER APPROACH (Architect Review Fix):
+    // 1. Heavy operations every 5 minutes (resource efficient)
+    // 2. Lightweight notifications every minute (time-sensitive)
+
+    // Heavy operations scheduler (5 minutes) - resource efficient for transitions, room management
+    cron.schedule('*/5 * * * *', async () => {
       try {
-        await this.processEndRooms();
+        await this.processHeavyOperations();
       } catch (error) {
-        console.error('[EndRoomScheduler] Error processing end rooms:', error);
+        console.error('[EndRoomScheduler] Critical error in heavy operations:', error);
+        console.error('[EndRoomScheduler] Stack trace:', error instanceof Error ? error.stack : 'No stack trace available');
       }
     });
 
-    console.log('[EndRoomScheduler] Scheduler started - checking every minute');
+    // Lightweight notifications scheduler (1 minute) - ensures 24h/15min warning accuracy
+    cron.schedule('* * * * *', async () => {
+      try {
+        const now = new Date();
+        await this.sendEndRoomNotifications(now);
+      } catch (error) {
+        console.error('[EndRoomScheduler] Error in notification scheduler:', error);
+        console.error('[EndRoomScheduler] Stack trace:', error instanceof Error ? error.stack : 'No stack trace available');
+      }
+    });
+
+    console.log('[EndRoomScheduler] Dual scheduler started:');
+    console.log('[EndRoomScheduler] - Heavy operations: every 5 minutes (resource efficient)');
+    console.log('[EndRoomScheduler] - Notifications: every minute (time-sensitive)');
   }
 
   stop() {
@@ -35,10 +53,11 @@ export class EndRoomScheduler {
     console.log('[EndRoomScheduler] Scheduler stopped');
   }
 
-  private async processEndRooms() {
+  private async processHeavyOperations() {
     const now = new Date();
-    console.log(`[EndRoomScheduler] Checking for End Rooms at ${now.toISOString()}`);
+    console.log(`[EndRoomScheduler] Running heavy operations at ${now.toISOString()}`);
 
+    // Heavy database operations and resource-intensive tasks
     // First, transition Will statuses based on dates
     await this.transitionWillStatuses(now);
 
@@ -48,11 +67,16 @@ export class EndRoomScheduler {
     // Find End Rooms that should be closed (30 minutes have passed, status is open)
     await this.closeExpiredEndRooms(now);
 
-    // Send End Room notifications (24h and 15min warnings)
-    await this.sendEndRoomNotifications(now);
-
     // Check for completed wills that need End Rooms scheduled
     await this.scheduleEndRoomsForCompletedWills();
+
+    console.log('[EndRoomScheduler] Heavy operations completed');
+  }
+
+  // Legacy method maintained for backward compatibility
+  private async processEndRooms() {
+    console.log('[EndRoomScheduler] Legacy processEndRooms method called - redirecting to heavy operations');
+    await this.processHeavyOperations();
   }
 
   private async transitionWillStatuses(now: Date) {
@@ -72,7 +96,8 @@ export class EndRoomScheduler {
             or(eq(wills.status, 'pending'), eq(wills.status, 'scheduled')),
             lt(wills.startDate, now)
           )
-        );
+        )
+        .limit(50); // Limit to prevent memory issues in large datasets
 
       for (const will of willsToActivate) {
         console.log(`[EndRoomScheduler] Activating Will ${will.id}`);
@@ -103,7 +128,8 @@ export class EndRoomScheduler {
             lt(wills.endDate, now),
             isNotNull(wills.endRoomScheduledAt)
           )
-        );
+        )
+        .limit(50); // Limit to prevent memory issues in large datasets
 
       for (const will of willsToWaitForEndRoom) {
         console.log(`[EndRoomScheduler] Transitioning Will ${will.id} to waiting_for_end_room`);
@@ -120,7 +146,8 @@ export class EndRoomScheduler {
             lt(wills.endDate, now),
             isNull(wills.endRoomScheduledAt)
           )
-        );
+        )
+        .limit(50); // Limit to prevent memory issues in large datasets
 
       for (const will of willsToComplete) {
         console.log(`[EndRoomScheduler] Completing Will ${will.id} (no End Room)`);
@@ -141,7 +168,8 @@ export class EndRoomScheduler {
             eq(wills.endRoomStatus, 'pending'),
             lt(wills.endRoomScheduledAt, now)
           )
-        );
+        )
+        .limit(20); // Limit to prevent resource exhaustion
 
       for (const will of roomsToOpen) {
         try {
@@ -225,7 +253,8 @@ export class EndRoomScheduler {
             eq(wills.endRoomStatus, 'open'),
             lt(wills.endRoomOpenedAt, thirtyMinutesAgo)
           )
-        );
+        )
+        .limit(20); // Limit to prevent resource exhaustion
 
       for (const will of roomsToClose) {
         try {
@@ -272,7 +301,8 @@ export class EndRoomScheduler {
             gte(wills.endRoomScheduledAt, twentyFourHoursFromNow),
             lt(wills.endRoomScheduledAt, twentyFourHoursOneMinuteFromNow)
           )
-        );
+        )
+        .limit(30); // Limit notification batch size
 
       for (const will of endRooms24h) {
         console.log(`[EndRoomScheduler] Sending 24h End Room notification for Will ${will.id}`);
@@ -300,7 +330,8 @@ export class EndRoomScheduler {
             gte(wills.endRoomScheduledAt, fifteenMinutesFromNow),
             lt(wills.endRoomScheduledAt, fifteenMinutesOneMinuteFromNow)
           )
-        );
+        )
+        .limit(30); // Limit notification batch size
 
       for (const will of endRooms15min) {
         console.log(`[EndRoomScheduler] Sending 15min End Room notification for Will ${will.id}`);

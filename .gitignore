@@ -9,4 +9,5 @@ vite.config.ts.*
 certs/*.p8
 certs/*.pem
 certs/*.cer
+*.p8
 .env.production

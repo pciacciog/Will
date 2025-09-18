@@ -26,35 +26,10 @@ class PushNotificationService {
                               process.env.APNS_KEY_ID && 
                               process.env.APNS_TEAM_ID;
 
-    // Check for fixed .p8 key file first, then fall back to environment variable
-    const fixedKeyPath = './AuthKey_87W6BN7P29.p8';
-    const hasFixedKeyFile = fs.existsSync(fixedKeyPath);
-    
-    if (hasFixedKeyFile && process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID) {
+    if (hasAPNSCredentials) {
+      // Use environment variable method only (security compliance)
       try {
-        console.log('[PushNotificationService] Using fixed .p8 key file for APNs initialization');
-        
-        const options = {
-          token: {
-            key: fs.readFileSync(fixedKeyPath),
-            keyId: process.env.APNS_KEY_ID!,
-            teamId: process.env.APNS_TEAM_ID!,
-          },
-          production: false, // Force sandbox mode to match iOS development environment
-        };
-        
-        this.apnProvider = new apn.Provider(options);
-        console.log(`[PushNotificationService] Successfully initialized APNs with fixed .p8 key (SANDBOX mode - forced for development)`);
-        console.log('[PushNotificationService] Real push notifications ENABLED - no longer in simulation mode');
-      } catch (error) {
-        console.error('[PushNotificationService] Failed to initialize APNs provider with fixed key:', error);
-        console.log('[PushNotificationService] Falling back to simulation mode');
-        this.apnProvider = null;
-      }
-    } else if (hasAPNSCredentials) {
-      // Fallback to environment variable method
-      try {
-        console.log('[PushNotificationService] Fixed key file not found, trying environment variable');
+        console.log('[PushNotificationService] Using environment variable for APNs initialization');
         
         let privateKey = process.env.APNS_PRIVATE_KEY!;
         privateKey = privateKey.trim();
@@ -74,20 +49,20 @@ class PushNotificationService {
         };
         
         this.apnProvider = new apn.Provider(options);
-        console.log(`[PushNotificationService] Initialized APNs with environment key (SANDBOX mode - forced for development)`);
+        console.log(`[PushNotificationService] ✅ APNs ENABLED: Initialized with environment key (SANDBOX mode - forced for development)`);
       } catch (error: any) {
         console.error('[PushNotificationService] Failed to initialize APNs provider:', error);
         
+        // Always set to null on any error to ensure proper simulation mode
+        this.apnProvider = null;
+        
         if (error?.message && error.message.includes('DECODER routines::unsupported')) {
-          console.log('[PushNotificationService] OpenSSL compatibility issue - consider using fixed .p8 key file');
-          this.apnProvider = 'simulation_openssl_error' as any;
-        } else {
-          this.apnProvider = null;
+          console.log('[PushNotificationService] OpenSSL compatibility issue detected - falling back to simulation mode');
         }
       }
     } else {
-      console.log('[PushNotificationService] APNs credentials not found - running in simulation mode');
-      console.log('[PushNotificationService] Provide fixed .p8 key file or set APNS_PRIVATE_KEY, APNS_KEY_ID, and APNS_TEAM_ID');
+      console.log('[PushNotificationService] ⚠️ APNs DISABLED: Credentials not found - running in simulation mode');
+      console.log('[PushNotificationService] To enable real notifications, set APNS_PRIVATE_KEY, APNS_KEY_ID, and APNS_TEAM_ID environment variables');
     }
   }
 
@@ -189,18 +164,18 @@ class PushNotificationService {
       const userInfo = userId ? ` (for user ${userId})` : '';
       console.log(`[PushNotificationService] 🔍 DEBUG: sendToDevice called with token ${deviceToken.substring(0, 20)}...${userInfo}`);
       
-      if (!this.apnProvider || this.apnProvider === null) {
-        // Enhanced simulation mode with OpenSSL error context
-        const reason = 'APNs credentials not configured';
+      if (this.apnProvider === null || this.apnProvider === undefined || typeof this.apnProvider !== 'object') {
+        // Enhanced simulation mode - APNs not properly initialized
+        const reason = this.apnProvider === null ? 'APNs initialization failed or credentials not configured' : 'APNs provider invalid';
           
-        console.log(`[PushNotificationService] SIMULATION MODE (${reason})`);
-        console.log(`  Would send to device: ${deviceToken.substring(0, 10)}...${deviceToken.substring(-4)}${userInfo}`);
-        console.log(`  Title: ${payload.title}`);
-        console.log(`  Body: ${payload.body}`);
-        console.log(`  Category: ${payload.category || 'default'}`);
-        console.log(`  Data:`, JSON.stringify(payload.data, null, 2));
-        console.log(`  Production Mode: ${process.env.NODE_ENV === 'production'}`);
-        console.log('  ✅ Notification would be delivered successfully');
+        console.log(`[PushNotificationService] 📱 SIMULATION MODE (${reason})`);
+        console.log(`  📤 Would send to device: ${deviceToken.substring(0, 10)}...${deviceToken.substring(-4)}${userInfo}`);
+        console.log(`  📋 Title: ${payload.title}`);
+        console.log(`  📝 Body: ${payload.body}`);
+        console.log(`  🏷️ Category: ${payload.category || 'default'}`);
+        console.log(`  📊 Data:`, JSON.stringify(payload.data, null, 2));
+        console.log(`  🔧 Environment: ${process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+        console.log('  ✅ SIMULATION: Notification would be delivered successfully');
         return true;
       }
 
