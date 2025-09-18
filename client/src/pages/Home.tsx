@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, ChevronDown, ChevronUp, Users, Plus, Sparkles } from "lucide-react";
+import { Target, ChevronDown, ChevronUp, Users, Plus, Sparkles, Heart, Hand } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
 
 function getWillStatus(will: any, memberCount: number): string {
@@ -193,11 +193,21 @@ export default function Home() {
             <div className="inline-flex items-center justify-center mb-2">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
-                <h1 className="relative text-3xl font-light text-gray-900 tracking-wide">
-                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                    Will
-                  </span>
-                </h1>
+                <div className="relative flex items-center space-x-3">
+                  {/* Heart Hands Symbol */}
+                  <div className="flex items-center space-x-1">
+                    <div className="relative">
+                      <Heart className="w-8 h-8 text-emerald-600 fill-emerald-200" strokeWidth={1.5} />
+                      <Hand className="absolute -right-1 -bottom-1 w-5 h-5 text-emerald-700" strokeWidth={2} />
+                    </div>
+                  </div>
+                  {/* Will Text */}
+                  <h1 className="text-3xl font-light text-gray-900 tracking-wide">
+                    <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                      Will
+                    </span>
+                  </h1>
+                </div>
               </div>
             </div>
             <p className="text-xs text-gray-500 font-light tracking-wide uppercase">

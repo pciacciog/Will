@@ -417,7 +417,7 @@ export class NotificationService {
             schedule: { at: new Date(Date.now() + 1000) }, // 1 second from now
             sound: 'default',
             smallIcon: 'ic_stat_icon_config_sample',
-            iconColor: '#067DFD',
+            iconColor: '#10B981',
             extra: {
               type: 'will_push',
               willTitle,
@@ -448,7 +448,7 @@ export class NotificationService {
             schedule: { at: new Date(Date.now() + 1000) },
             sound: 'default',
             smallIcon: 'ic_stat_icon_config_sample',
-            iconColor: '#1EB854',
+            iconColor: '#10B981',
             extra: {
               type: 'will_reminder',
               willTitle,
