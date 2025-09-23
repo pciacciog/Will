@@ -1,3 +1,6 @@
+// Fix OpenSSL compatibility issue with Node.js 20
+process.env.NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ' --openssl-legacy-provider';
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { endRoomScheduler } from "./scheduler";
