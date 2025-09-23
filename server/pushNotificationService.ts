@@ -34,6 +34,15 @@ class PushNotificationService {
         let privateKey = process.env.APNS_PRIVATE_KEY!;
         privateKey = privateKey.trim();
         
+        // Fix line breaks if the key is on a single line (common with environment variables)
+        if (privateKey.includes('-----BEGIN PRIVATE KEY-----') && !privateKey.includes('\n')) {
+          privateKey = privateKey
+            .replace('-----BEGIN PRIVATE KEY----- ', '-----BEGIN PRIVATE KEY-----\n')
+            .replace(' -----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----')
+            .replace(/(.{64})/g, '$1\n') // Add line breaks every 64 characters for the key body
+            .replace(/\n-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----'); // Fix the end marker
+        }
+        
         if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
           privateKey = privateKey.replace(/-----BEGIN.*?-----/, '-----BEGIN PRIVATE KEY-----');
           privateKey = privateKey.replace(/-----END.*?-----/, '-----END PRIVATE KEY-----');
