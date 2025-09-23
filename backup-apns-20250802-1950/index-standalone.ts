@@ -130,12 +130,7 @@ registerRoutes(app);
 endRoomScheduler.start();
 console.log('[EndRoomScheduler] Scheduler started');
 
-// Serve icon generator before catch-all routes
-app.get('/icon-generator.html', (req: Request, res: Response) => {
-  res.sendFile(path.join(process.cwd(), 'dist', 'icon-generator.html'));
-});
-
-// In production, serve static files from dist
+// Serve static files from dist in production
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(process.cwd(), 'dist');
   app.use(express.static(distPath));
@@ -143,36 +138,12 @@ if (process.env.NODE_ENV === 'production') {
   // Serve index.html for all non-API routes (SPA routing)
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api/')) {
-      const indexPath = path.join(distPath, 'index.html');
-      if (require('fs').existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(404).send('Frontend not found - check dist/index.html');
-      }
+      res.sendFile(path.join(distPath, 'index.html'));
     }
   });
-} else {
-  // In development, serve static files from dist as well
-  const distPath = path.join(process.cwd(), 'dist');
-  app.use(express.static(distPath));
-  
-  // Serve index.html for all non-API routes (SPA routing)
-  app.get('*', async (req, res) => {
-    if (!req.path.startsWith('/api/')) {
-      const indexPath = path.join(distPath, 'index.html');
-      const fs = await import('fs');
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(404).send('Frontend not found - run build first');
-      }
-    }
-  });
-  
-  console.log('Development mode: Serving frontend from dist/');
 }
 
-const PORT = parseInt(process.env.PORT || '5000', 10);
+const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
@@ -186,10 +157,10 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     process.env.APNS_TOPIC
   );
   
-  console.log(`Push Notifications: ${apnsConfigured ? 'ENABLED (Sandbox APNs for Development)' : 'SIMULATION MODE'}`);
+  console.log(`Push Notifications: ${apnsConfigured ? 'ENABLED (Production APNs)' : 'SIMULATION MODE'}`);
   
   if (apnsConfigured) {
-    console.log('✅ APNs credentials configured - real sandbox notifications will be sent');
+    console.log('✅ APNs credentials configured - real notifications will be sent');
   } else {
     console.log('ℹ️  Running in simulation mode - notifications logged to console');
   }

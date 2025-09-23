@@ -4,26 +4,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, ChevronDown, ChevronUp, Users, Plus, Sparkles } from "lucide-react";
+import { Target, ChevronDown, ChevronUp, Users, Plus, Sparkles, Heart, Hand } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
-import { User, Circle, Will, WillCommitment, CircleMember } from "@shared/schema";
 
-// Extended types for API responses with relations
-type CircleWithMembers = Circle & {
-  members?: CircleMember[];
-};
-
-type WillWithCommitments = Will & {
-  commitments?: WillCommitment[];
-  acknowledgedCount?: number;
-};
-
-type CommitmentWithUser = WillCommitment & {
-  what?: string;
-  commitment?: string;
-};
-
-function getWillStatus(will: WillWithCommitments | undefined, memberCount: number): string {
+function getWillStatus(will: any, memberCount: number): string {
   if (!will) return 'no_will';
   
   // If will is archived, treat as no will
@@ -74,10 +58,10 @@ function getWillStatus(will: WillWithCommitments | undefined, memberCount: numbe
   }
 }
 
-function formatStartTime(startDate: string | Date | null | undefined): string {
+function formatStartTime(startDate: string): string {
   if (!startDate) return '';
   
-  const start = startDate instanceof Date ? startDate : new Date(startDate);
+  const start = new Date(startDate);
   const now = new Date();
   const diffMs = start.getTime() - now.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -108,7 +92,7 @@ export default function Home() {
     }
   }, []);
   
-  const { data: circle, error: circleError } = useQuery<CircleWithMembers>({
+  const { data: circle, error: circleError } = useQuery({
     queryKey: ['/api/circles/mine'],
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
@@ -119,7 +103,7 @@ export default function Home() {
     },
   });
 
-  const { data: will, error: willError } = useQuery<WillWithCommitments>({
+  const { data: will, error: willError } = useQuery({
     queryKey: [`/api/wills/circle/${circle?.id}`],
     enabled: !!circle?.id,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
@@ -131,7 +115,7 @@ export default function Home() {
     },
   });
 
-  const { data: user, isLoading: userLoading } = useQuery<User>({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/user'],
   });
 
@@ -185,9 +169,7 @@ export default function Home() {
   const isActiveWill = willStatus === 'active' || willStatus === 'scheduled' || willStatus === 'waiting_for_end_room';
   
   // Get user's commitment if they have one
-  const userCommitment: CommitmentWithUser | null = isActiveWill && user && will?.commitments 
-    ? will.commitments.find((c) => c.userId === user.id) || null 
-    : null;
+  const userCommitment = isActiveWill && user ? will?.commitments?.find((c: any) => c.userId === user.id) : null;
   
   // Debug logging
   console.log('Home component debug:', {
@@ -211,11 +193,21 @@ export default function Home() {
             <div className="inline-flex items-center justify-center mb-2">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
-                <h1 className="relative text-3xl font-light text-gray-900 tracking-wide">
-                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                    Will
-                  </span>
-                </h1>
+                <div className="relative flex items-center space-x-3">
+                  {/* Heart Hands Symbol */}
+                  <div className="flex items-center space-x-1">
+                    <div className="relative">
+                      <Heart className="w-8 h-8 text-emerald-600 fill-emerald-200" strokeWidth={1.5} />
+                      <Hand className="absolute -right-1 -bottom-1 w-5 h-5 text-emerald-700" strokeWidth={2} />
+                    </div>
+                  </div>
+                  {/* Will Text */}
+                  <h1 className="text-3xl font-light text-gray-900 tracking-wide">
+                    <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                      Will
+                    </span>
+                  </h1>
+                </div>
               </div>
             </div>
             <p className="text-xs text-gray-500 font-light tracking-wide uppercase">
