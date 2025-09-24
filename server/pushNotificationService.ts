@@ -48,17 +48,22 @@ class PushNotificationService {
           privateKey = privateKey.replace(/-----END.*?-----/, '-----END PRIVATE KEY-----');
         }
         
+        // Determine APNs environment based on NODE_ENV
+        const isProduction = process.env.NODE_ENV === 'production';
+        
         const options = {
           token: {
             key: privateKey,
             keyId: process.env.APNS_KEY_ID!,
             teamId: process.env.APNS_TEAM_ID!,
           },
-          production: false, // Force sandbox mode to match iOS development environment
+          production: isProduction, // true for TestFlight/App Store, false for development
         };
         
         this.apnProvider = new apn.Provider(options);
-        console.log(`[PushNotificationService] ✅ APNs ENABLED: Initialized with environment key (SANDBOX mode - forced for development)`);
+        const envMode = isProduction ? 'PRODUCTION' : 'SANDBOX';
+        const endpoint = isProduction ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
+        console.log(`[PushNotificationService] ✅ APNs ENABLED: Initialized with environment key (${envMode} mode - ${endpoint})`);
       } catch (error: any) {
         console.error('[PushNotificationService] Failed to initialize APNs provider:', error);
         
@@ -206,7 +211,10 @@ class PushNotificationService {
       console.log(`[PushNotificationService] 📤 OUTGOING APNs REQUEST:`);
       console.log(`  🔍 Request ID: ${apnsId}`);
       console.log(`  🔍 Target Device: ${tokenHash}...${userInfo}`);
-      console.log(`  🔍 Endpoint: api.sandbox.push.apple.com (SANDBOX - forced in development)`);
+      const isProduction = process.env.NODE_ENV === 'production';
+      const envMode = isProduction ? 'PRODUCTION' : 'SANDBOX';
+      const endpoint = isProduction ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
+      console.log(`  🔍 Endpoint: ${endpoint} (${envMode} - environment determined by NODE_ENV)`);
       console.log(`  🔍 Auth Method: JWT (p8 key)`);
       console.log(`  🔍 Team ID: ${process.env.APNS_TEAM_ID}`);
       console.log(`  🔍 Key ID: ${process.env.APNS_KEY_ID}`);
