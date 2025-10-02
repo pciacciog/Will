@@ -179,29 +179,64 @@ export class DatabaseStorage implements IStorage {
     // 1. Delete device tokens
     await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
     
-    // 2. Delete will-related data
+    // 2. Delete will-related data for this user
     await db.delete(willPushes).where(eq(willPushes.userId, userId));
     await db.delete(dailyProgress).where(eq(dailyProgress.userId, userId));
     await db.delete(willAcknowledgments).where(eq(willAcknowledgments.userId, userId));
     await db.delete(willCommitments).where(eq(willCommitments.userId, userId));
     
-    // 3. Delete wills created by this user
-    await db.delete(wills).where(eq(wills.createdBy, userId));
+    // 3. Delete all wills created by this user and their dependent data
+    const userWills = await db.select({ id: wills.id })
+      .from(wills)
+      .where(eq(wills.createdBy, userId));
     
-    // 4. Delete circle memberships
+    for (const will of userWills) {
+      await db.delete(willPushes).where(eq(willPushes.willId, will.id));
+      await db.delete(dailyProgress).where(eq(dailyProgress.willId, will.id));
+      await db.delete(willAcknowledgments).where(eq(willAcknowledgments.willId, will.id));
+      await db.delete(willCommitments).where(eq(willCommitments.willId, will.id));
+      await db.delete(wills).where(eq(wills.id, will.id));
+    }
+    
+    // 4. Get circles created by this user to handle dependent data
+    const userCircles = await db.select({ id: circles.id })
+      .from(circles)
+      .where(eq(circles.createdBy, userId));
+    
+    // 5. For each circle created by this user, delete remaining dependent data
+    for (const circle of userCircles) {
+      // Get all remaining wills in this circle (created by other members)
+      const circleWills = await db.select({ id: wills.id })
+        .from(wills)
+        .where(eq(wills.circleId, circle.id));
+      
+      // Delete all data for remaining wills in this circle
+      for (const will of circleWills) {
+        await db.delete(willPushes).where(eq(willPushes.willId, will.id));
+        await db.delete(dailyProgress).where(eq(dailyProgress.willId, will.id));
+        await db.delete(willAcknowledgments).where(eq(willAcknowledgments.willId, will.id));
+        await db.delete(willCommitments).where(eq(willCommitments.willId, will.id));
+        await db.delete(wills).where(eq(wills.id, will.id));
+      }
+      
+      // Delete all circle memberships for this circle
+      await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
+      
+      // Delete the circle
+      await db.delete(circles).where(eq(circles.id, circle.id));
+    }
+    
+    // 6. Delete circle memberships where user is a member (not creator)
     await db.delete(circleMembers).where(eq(circleMembers.userId, userId));
     
-    // 5. Delete circles created by this user (if empty or handle appropriately)
-    await db.delete(circles).where(eq(circles.createdBy, userId));
-    
-    // 6. Delete blog posts and page contents
+    // 7. Delete blog posts and page contents
     await db.delete(blogPosts).where(eq(blogPosts.authorId, userId));
     await db.delete(pageContents).where(eq(pageContents.updatedBy, userId));
     
-    // 7. Delete user sessions
+    // 8. Delete user sessions
     await db.delete(sessions).where(sql`sess::jsonb->>'userId' = ${userId}`);
     
-    // 8. Finally, delete the user account
+    // 9. Finally, delete the user account
     await db.delete(users).where(eq(users.id, userId));
   }
 
