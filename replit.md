@@ -35,7 +35,7 @@ Preferred communication style: Simple, everyday language.
 - **Will Creation & Management**: Multi-step guided creation process (When, What, Why, End Room scheduling), editing of personal commitments, role-based permissions (creator can modify Will dates/delete).
 - **Progress Tracking**: Daily logging, progress acknowledgment system (by committed members), and timeline visualization.
 - **End Room**: A scheduled video call (Daily.co integration) for reflection and closure at the Will's completion. Features include live countdowns, dynamic status updates, and mobile compatibility.
-- **Account Settings**: User profile (read-only name/email), password change, leave circle functionality.
+- **Account Settings**: User profile (read-only name/email), password change, leave circle functionality, permanent account deletion (Apple App Store Guideline 5.1.1(v) compliant).
 - **Push Notifications**: Complete APNs integration with targeted notifications for Will status changes (Proposed, Active, End Room timings, Ready for New WILL). Server-side PushNotificationService implemented with node-apn, client-side auto-registration via Capacitor, and comprehensive API endpoints for all notification types. Real APNs functionality operational using fixed .p8 key file (AuthKey_4J2R866V2R_fixed.p8), resolving Node.js 18+ OpenSSL compatibility issues.
 - **Team Encouragement**: "Push" feature to send encouragement to circle members (local-only initially, designed for APNs integration).
 
@@ -60,6 +60,19 @@ Preferred communication style: Simple, everyday language.
 - **@capacitor/core**, **@capacitor/ios**: For iOS mobile app development and native features.
 
 ## Recent Changes
+
+### October 02, 2025 - Account Deletion Implementation (Apple App Store Compliance)
+- **Feature Added**: Permanent account deletion functionality to comply with Apple App Store Guideline 5.1.1(v)
+- **Backend Implementation**: DELETE /api/account endpoint with comprehensive cascading deletion logic
+  - Deletes all user data in correct dependency order: device tokens → will-related data → wills created by user → circles owned by user (with all dependent data) → circle memberships → blog posts/page contents → sessions → user account
+  - Password verification required for security
+  - Handles complex dependency chains: wills created by user in any circle, circles owned by user with other members' data
+- **Frontend UI**: Delete Account section in Account Settings (Security tab)
+  - Clear warning messages about permanent data loss
+  - Password confirmation dialog with AlertDialog component
+  - Automatic redirect to auth page after successful deletion
+- **Data Deletion Coverage**: Removes all traces across 9 database tables (users, circleMembers, wills, willCommitments, willAcknowledgments, dailyProgress, willPushes, deviceTokens, sessions)
+- **Status**: ✅ COMPLETE - Architect-verified cascading deletion logic prevents foreign key violations and orphaned data
 
 ### September 13, 2025 - Push Notification FIXED with Direct iOS API Solution  
 - **Issue Resolved**: Capacitor JavaScript bridge was broken - iOS generated device tokens but registration events never fired in JavaScript
