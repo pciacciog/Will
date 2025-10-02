@@ -1,0 +1,97 @@
+I need you to thoroughly verify that the account deletion feature you implemented 
+is complete, functional, and complies with Apple's App Store requirements.
+
+Please perform a COMPREHENSIVE AUDIT of the account deletion implementation:
+
+## 1. CODE REVIEW & VERIFICATION
+
+### Backend Endpoint Check:
+- Confirm the DELETE endpoint exists and its exact path
+- Show me the complete endpoint code
+- Verify it requires authentication (user must be logged in)
+- Verify it requires password confirmation before deletion
+- List EVERY database table/collection that gets deleted
+- Confirm there's NO soft delete (must be permanent hard delete)
+- Check for proper error handling
+- Verify all database cascading deletes or manual cleanup for related data
+
+### Frontend UI Check:
+- Show me where exactly the "Delete Account" button appears (full navigation path)
+- Confirm the button is in Settings/Account/Profile section
+- Verify there's a warning dialog explaining data loss
+- Verify password confirmation is required
+- Confirm user is logged out after deletion
+- Show me the complete UI component code
+
+## 2. DATA DELETION COMPLETENESS
+
+List ALL data types that get deleted when user deletes account:
+- [ ] User profile/account record
+- [ ] Authentication credentials/passwords
+- [ ] User-generated content (wills, commitments, etc.)
+- [ ] Circle memberships
+- [ ] Circles created by user
+- [ ] Push notification tokens
+- [ ] Session tokens/refresh tokens
+- [ ] User preferences/settings
+- [ ] Any uploaded files/media
+- [ ] Any other user-related data
+
+CRITICAL: Are there ANY user data remnants that remain after deletion?
+If YES, list them and explain why they can't be deleted.
+
+## 3. DATABASE INTEGRITY CHECK
+
+- Show me the order of deletions to prevent foreign key errors
+- Verify no orphaned records remain after deletion
+- Confirm no database constraints are violated during deletion
+- Show the database schema relationships for user data
+
+## 4. APPLE COMPLIANCE VERIFICATION
+
+Confirm each requirement is met:
+- [ ] Deletion is PERMANENT (not temporary deactivation)
+- [ ] Feature is accessible within the app (not requiring website visit)
+- [ ] Clear warnings are shown before deletion
+- [ ] Confirmation step prevents accidental deletion
+- [ ] No requirement to contact customer service
+- [ ] User is informed what data will be deleted
+- [ ] Process completes within the app
+
+## 5. TESTING INSTRUCTIONS
+
+Provide step-by-step instructions for me to manually test:
+1. Exact navigation path to reach "Delete Account"
+2. What I should see at each step
+3. What happens after I confirm deletion
+4. How to verify the account is actually deleted from database
+
+## 6. EDGE CASES & ERROR HANDLING
+
+What happens if:
+- User enters wrong password?
+- Network connection fails during deletion?
+- Database deletion fails partway through?
+- User is an admin of circles with other members?
+- User has pending transactions or commitments?
+
+## 7. SECURITY VERIFICATION
+
+- Confirm only the authenticated user can delete their own account
+- Verify no one else can trigger deletion of another user's account
+- Check that session tokens are invalidated after deletion
+- Confirm deleted data cannot be recovered
+
+## OUTPUT FORMAT:
+
+Please provide:
+1. ✅ or ❌ for each checklist item above
+2. Code snippets showing critical parts (endpoint, UI component, deletion logic)
+3. Complete list of database tables/collections affected
+4. Any issues or concerns found
+5. Screenshots or mockups of the UI if possible
+6. Step-by-step testing guide
+
+CRITICAL QUESTION:
+Is this implementation ready for Apple App Store submission? 
+If NO, what needs to be fixed?
