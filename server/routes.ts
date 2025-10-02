@@ -107,6 +107,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete account route
+  app.delete('/api/account', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { password } = req.body;
+
+      if (!password) {
+        return res.status(400).json({ message: "Password confirmation is required to delete account" });
+      }
+
+      // Get user from database
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Import password comparison function from auth module
+      const { comparePasswords } = await import('./auth');
+      
+      // Verify password
+      const isPasswordValid = await comparePasswords(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ message: "Password is incorrect" });
+      }
+
+      // Delete all user data
+      await storage.deleteUser(userId);
+
+      // Logout user by destroying session
+      req.logout((err: any) => {
+        if (err) {
+          console.error("Error during logout after account deletion:", err);
+        }
+      });
+      
+      res.json({ message: "Account deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      res.status(500).json({ message: "Failed to delete account" });
+    }
+  });
+
   // Client log bridge endpoint
   app.post('/api/logs', async (req: any, res) => {
     try {

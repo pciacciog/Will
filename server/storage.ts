@@ -9,6 +9,8 @@ import {
   willPushes,
   blogPosts,
   pageContents,
+  deviceTokens,
+  sessions,
   type User,
   type InsertUser,
   type UpsertUser,
@@ -42,6 +44,7 @@ export interface IStorage {
   createUser(user: Omit<InsertUser, 'confirmPassword'>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
+  deleteUser(userId: string): Promise<void>;
   
   // Circle operations
   createCircle(circle: InsertCircle): Promise<Circle>;
@@ -168,6 +171,38 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    // Delete all user data in proper order to respect foreign key constraints
+    
+    // 1. Delete device tokens
+    await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
+    
+    // 2. Delete will-related data
+    await db.delete(willPushes).where(eq(willPushes.userId, userId));
+    await db.delete(dailyProgress).where(eq(dailyProgress.userId, userId));
+    await db.delete(willAcknowledgments).where(eq(willAcknowledgments.userId, userId));
+    await db.delete(willCommitments).where(eq(willCommitments.userId, userId));
+    
+    // 3. Delete wills created by this user
+    await db.delete(wills).where(eq(wills.createdBy, userId));
+    
+    // 4. Delete circle memberships
+    await db.delete(circleMembers).where(eq(circleMembers.userId, userId));
+    
+    // 5. Delete circles created by this user (if empty or handle appropriately)
+    await db.delete(circles).where(eq(circles.createdBy, userId));
+    
+    // 6. Delete blog posts and page contents
+    await db.delete(blogPosts).where(eq(blogPosts.authorId, userId));
+    await db.delete(pageContents).where(eq(pageContents.updatedBy, userId));
+    
+    // 7. Delete user sessions
+    await db.delete(sessions).where(sql`sess::jsonb->>'userId' = ${userId}`);
+    
+    // 8. Finally, delete the user account
+    await db.delete(users).where(eq(users.id, userId));
   }
 
   // Circle operations
