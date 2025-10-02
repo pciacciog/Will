@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, User, Shield, Settings } from "lucide-react";
+import { Eye, EyeOff, User, Shield, Settings, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 
 interface AccountSettingsModalProps {
   isOpen: boolean;
@@ -19,9 +21,12 @@ interface AccountSettingsModalProps {
 export default function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
 
   const changePasswordMutation = useMutation({
     mutationFn: async (passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
@@ -84,6 +89,47 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
     }
 
     changePasswordMutation.mutate({ currentPassword, newPassword, confirmPassword });
+  };
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (password: string) => {
+      const res = await apiRequest('/api/account', {
+        method: 'DELETE',
+        body: JSON.stringify({ password })
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted",
+      });
+      setShowDeleteDialog(false);
+      onClose();
+      // Redirect to auth page
+      setTimeout(() => {
+        setLocation('/auth');
+      }, 1000);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    if (!deletePassword) {
+      toast({
+        title: "Error",
+        description: "Please enter your password to confirm account deletion",
+        variant: "destructive",
+      });
+      return;
+    }
+    deleteAccountMutation.mutate(deletePassword);
   };
 
   return (
@@ -253,9 +299,89 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
                 </form>
               </CardContent>
             </Card>
+
+            <Card className="border-red-200">
+              <CardHeader>
+                <CardTitle className="text-lg text-red-600 flex items-center space-x-2">
+                  <Trash2 className="h-5 w-5" />
+                  <span>Delete Account</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
+                  <p className="text-sm font-semibold text-red-800">Warning: This action is permanent and cannot be undone!</p>
+                  <p className="text-sm text-red-700">
+                    Deleting your account will permanently remove:
+                  </p>
+                  <ul className="text-sm text-red-700 list-disc list-inside space-y-1 ml-2">
+                    <li>Your profile and account information</li>
+                    <li>All your Will commitments and progress</li>
+                    <li>Your Inner Circle memberships</li>
+                    <li>All associated data and history</li>
+                  </ul>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                    data-testid="button-delete-account"
+                    className="flex items-center space-x-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete My Account</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>
+                This will permanently delete your account and remove all your data from our servers. 
+                This action cannot be undone.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="deletePassword" className="text-sm font-medium">
+                  Enter your password to confirm
+                </Label>
+                <Input
+                  id="deletePassword"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  data-testid="input-delete-password"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => {
+                setDeletePassword("");
+                setShowDeleteDialog(false);
+              }}
+              data-testid="button-cancel-delete"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              disabled={deleteAccountMutation.isPending || !deletePassword}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-delete"
+            >
+              {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
