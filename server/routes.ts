@@ -69,6 +69,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth routes are handled by setupAuth
 
+  // Update profile route
+  app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { firstName, lastName, email } = req.body;
+
+      if (!firstName || !lastName || !email) {
+        return res.status(400).json({ message: "First name, last name, and email are required" });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email address" });
+      }
+
+      // Check if email is already taken by another user
+      if (email !== req.user.email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ message: "Email is already taken" });
+        }
+      }
+
+      // Update profile
+      const updatedUser = await storage.updateUserProfile(userId, { firstName, lastName, email });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   // Password change route
   app.post('/api/change-password', isAuthenticated, async (req: any, res) => {
     try {
@@ -690,8 +724,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send real push notifications to all other circle members via APNs
       if (memberIds.length > 0) {
         const { pushNotificationService } = await import('./pushNotificationService');
-        await pushNotificationService.sendTeamPushNotification(pusherName, will.title || 'Your Will', memberIds);
-        console.log(`[Push] Sent encouragement notification from ${pusherName} to ${memberIds.length} members for Will: ${will.title}`);
+        const willTitle = (will as any).title || 'Your Will';
+        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds);
+        console.log(`[Push] Sent encouragement notification from ${pusherName} to ${memberIds.length} members for Will: ${willTitle}`);
       }
       
       res.json({

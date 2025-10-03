@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { queryClient } from "@/lib/queryClient";
 
 interface AccountSettingsModalProps {
   isOpen: boolean;
@@ -27,6 +28,40 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  
+  // Profile editing state
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
+  const [email, setEmail] = useState(user?.email || '');
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (profileData: { firstName: string; lastName: string; email: string }) => {
+      const res = await apiRequest('/api/user/profile', {
+        method: 'PUT',
+        body: JSON.stringify(profileData)
+      });
+      return await res.json();
+    },
+    onSuccess: (updatedUser) => {
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated",
+      });
+      // Update local state with the response
+      setFirstName(updatedUser.firstName);
+      setLastName(updatedUser.lastName);
+      setEmail(updatedUser.email);
+      // Invalidate user query to refresh user data
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile",
+        variant: "destructive",
+      });
+    },
+  });
 
   const changePasswordMutation = useMutation({
     mutationFn: async (passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
@@ -53,6 +88,30 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
       });
     },
   });
+
+  const handleUpdateProfile = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!firstName || !lastName || !email) {
+      toast({
+        title: "Error",
+        description: "Please fill in all profile fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateProfileMutation.mutate({ firstName, lastName, email });
+  };
 
   const handleChangePassword = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -159,39 +218,53 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
               <CardHeader>
                 <CardTitle className="text-lg">Profile Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      value={user?.firstName || ''}
-                      readOnly
-                      className="bg-gray-50 cursor-not-allowed"
-                    />
+              <CardContent>
+                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Enter your first name"
+                        required
+                        data-testid="input-profile-firstname"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Enter your last name"
+                        required
+                        data-testid="input-profile-lastname"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="email">Email Address</Label>
                     <Input
-                      id="lastName"
-                      value={user?.lastName || ''}
-                      readOnly
-                      className="bg-gray-50 cursor-not-allowed"
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      required
+                      data-testid="input-profile-email"
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    value={user?.email || ''}
-                    readOnly
-                    className="bg-gray-50 cursor-not-allowed"
-                  />
-                </div>
-                <p className="text-sm text-gray-500">
-                  Profile information is read-only. Contact support to make changes.
-                </p>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={updateProfileMutation.isPending}
+                    data-testid="button-update-profile"
+                  >
+                    {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>

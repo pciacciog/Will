@@ -44,6 +44,7 @@ export interface IStorage {
   createUser(user: Omit<InsertUser, 'confirmPassword'>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
+  updateUserProfile(userId: string, profileData: { firstName: string; lastName: string; email: string }): Promise<User>;
   deleteUser(userId: string): Promise<void>;
   
   // Circle operations
@@ -171,6 +172,25 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+  }
+
+  async updateUserProfile(userId: string, profileData: { firstName: string; lastName: string; email: string }): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error('User not found');
+    }
+    
+    return updatedUser;
   }
 
   async deleteUser(userId: string): Promise<void> {
