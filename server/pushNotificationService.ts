@@ -368,6 +368,21 @@ class PushNotificationService {
 
     await this.sendToMultipleUsers(circleMembers, payload);
   }
+
+  async sendTeamPushNotification(pusherName: string, willTitle: string, circleMembers: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: `${pusherName} has pushed you! 🚀`,
+      body: `Encouragement for your Will: "${willTitle}"`,
+      category: 'team_push',
+      data: {
+        type: 'team_push',
+        pusherName,
+        willTitle
+      }
+    };
+
+    await this.sendToMultipleUsers(circleMembers, payload);
+  }
 }
 
 export const pushNotificationService = new PushNotificationService();

@@ -214,17 +214,9 @@ export default function WillDetails() {
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/push/status`] });
       
-      // Send local notification to encourage teammates
-      if (user && will) {
-        const pusherName = user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}`
-          : user.email;
-        await notificationService.sendPushNotification(pusherName, will.title || 'Your Will');
-      }
-      
       toast({
-        title: "Push Sent!",
-        description: "You have pushed your circle (local notification only - not cross-device)",
+        title: "Push Sent! 🚀",
+        description: "Your circle members will receive a push notification",
       });
     },
     onError: (error: any) => {
@@ -401,7 +393,7 @@ export default function WillDetails() {
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
-                title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Push your teammates (local notification only)'}
+                title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Send encouragement to your teammates'}
               >
                 <Zap className="w-3 h-3 mr-1" />
                 {pushMutation.isPending ? 'Pushing...' : 'Push'}

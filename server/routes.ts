@@ -679,6 +679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get circle members to notify (excluding the pusher)
       const circleMembers = await storage.getCircleMembers(will.circleId);
       const membersToNotify = circleMembers.filter(member => member.userId !== userId);
+      const memberIds = membersToNotify.map(member => member.userId);
 
       // Record the push
       const push = await storage.addWillPush({
@@ -686,22 +687,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
 
-      // Send push notifications to all other circle members
-      // In a real implementation, you would:
-      // 1. Store device tokens for each user
-      // 2. Use APNs for iOS or FCM for cross-platform
-      // 3. Send actual push notifications
+      // Send real push notifications to all other circle members via APNs
+      if (memberIds.length > 0) {
+        const { pushNotificationService } = await import('./pushNotificationService');
+        await pushNotificationService.sendTeamPushNotification(pusherName, will.title || 'Your Will', memberIds);
+        console.log(`[Push] Sent encouragement notification from ${pusherName} to ${memberIds.length} members for Will: ${will.title}`);
+      }
       
-      // For now, we'll return the data so the frontend can handle local notifications
       res.json({
         ...push,
         pusherName,
-        membersToNotify: membersToNotify.map(member => ({
-          id: member.userId,
-          name: member.user.firstName && member.user.lastName 
-            ? `${member.user.firstName} ${member.user.lastName}`
-            : member.user.email
-        }))
+        membersNotified: memberIds.length
       });
     } catch (error) {
       console.error("Error adding push notification:", error);
