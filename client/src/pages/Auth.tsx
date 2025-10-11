@@ -11,6 +11,7 @@ import { ArrowLeft, Hand, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MobileLayout } from "@/components/ui/design-system";
+import { sessionPersistence } from "@/services/SessionPersistence";
 
 export default function Auth() {
   const [, setLocation] = useLocation();
@@ -57,6 +58,13 @@ export default function Auth() {
     },
     onSuccess: async (user) => {
       console.log('Login success, user:', user);
+      
+      // Save JWT token for mobile auth persistence
+      if (user.token) {
+        await sessionPersistence.saveToken(user.token);
+        console.log('✅ [Login] JWT token saved to persistent storage');
+      }
+      
       queryClient.setQueryData(['/api/user'], user);
       
       // 🔥 NEW: Token ownership already transferred by login endpoint
@@ -94,6 +102,13 @@ export default function Auth() {
     },
     onSuccess: async (user) => {
       console.log('Registration success, user:', user);
+      
+      // Save JWT token for mobile auth persistence
+      if (user.token) {
+        await sessionPersistence.saveToken(user.token);
+        console.log('✅ [Registration] JWT token saved to persistent storage');
+      }
+      
       queryClient.setQueryData(['/api/user'], user);
       
       // Send pending device token now that user is authenticated

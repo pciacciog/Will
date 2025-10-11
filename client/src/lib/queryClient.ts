@@ -1,10 +1,19 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { sessionPersistence } from "@/services/SessionPersistence";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const token = await sessionPersistence.getToken();
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
 }
 
 export async function apiRequest(url: string, options?: {
@@ -16,11 +25,17 @@ export async function apiRequest(url: string, options?: {
   const body = options?.body;
   const headers = options?.headers || {};
   
+  // Add auth token if available
+  const authHeaders = await getAuthHeaders();
+  const allHeaders = body 
+    ? { "Content-Type": "application/json", ...authHeaders, ...headers } 
+    : { ...authHeaders, ...headers };
+  
   const res = await fetch(url, {
     method,
-    headers: body ? { "Content-Type": "application/json", ...headers } : headers,
+    headers: allHeaders,
     body,
-    credentials: "include",
+    credentials: "include", // Keep for backward compatibility with web sessions
   });
 
   await throwIfResNotOk(res);
@@ -33,8 +48,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Add auth token if available
+    const authHeaders = await getAuthHeaders();
+    
     const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
+      headers: authHeaders,
+      credentials: "include", // Keep for backward compatibility with web sessions
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

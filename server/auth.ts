@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import connectPg from "connect-pg-simple";
+import jwt from "jsonwebtoken";
 
 declare global {
   namespace Express {
@@ -27,6 +28,32 @@ async function comparePasswords(supplied: string, stored: string) {
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
   return timingSafeEqual(hashedBuf, suppliedBuf);
+}
+
+// JWT token generation and verification for mobile auth persistence
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'development-jwt-secret-change-in-production';
+const JWT_EXPIRES_IN = '7d'; // 7 days for mobile apps
+
+function generateAuthToken(user: SelectUser): string {
+  return jwt.sign(
+    { 
+      id: user.id, 
+      email: user.email,
+      role: user.role 
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+}
+
+export function verifyAuthToken(token: string): { id: string; email: string; role: string } | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
+    return decoded;
+  } catch (error) {
+    console.error('[JWT] Token verification failed:', error);
+    return null;
+  }
 }
 
 export function setupAuth(app: Express) {
@@ -125,7 +152,11 @@ export function setupAuth(app: Express) {
           // Don't fail registration due to token association issues
         }
         
-        res.status(201).json(user);
+        // Generate JWT token for mobile auth persistence
+        const token = generateAuthToken(user);
+        console.log(`🔑 [Registration] Generated JWT token for user ${user.id}`);
+        
+        res.status(201).json({ ...user, token });
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -195,11 +226,16 @@ export function setupAuth(app: Express) {
         // Don't fail login due to token association issues
       }
       
-      res.status(200).json(user);
+      // Generate JWT token for mobile auth persistence
+      const token = generateAuthToken(user);
+      console.log(`🔑 [Login] Generated JWT token for user ${user.id}`);
+      
+      res.status(200).json({ ...user, token });
     } catch (error) {
       console.error('❌ [Login] Error during token ownership transfer:', error);
       // Don't fail login due to token transfer issues
-      res.status(200).json(req.user);
+      const token = generateAuthToken(req.user);
+      res.status(200).json({ ...req.user, token });
     }
   });
 
@@ -220,10 +256,30 @@ export function setupAuth(app: Express) {
   app.post("/api/logout", logoutHandler);
   app.get("/api/logout", logoutHandler);
 
-  app.get("/api/user", (req, res) => {
-    console.log('[Auth] /api/user called, authenticated:', req.isAuthenticated());
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+  app.get("/api/user", async (req, res) => {
+    console.log('[Auth] /api/user called, session authenticated:', req.isAuthenticated());
+    
+    // First try session-based auth (for web)
+    if (req.isAuthenticated()) {
+      return res.json(req.user);
+    }
+    
+    // Then try JWT token auth (for mobile)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const decoded = verifyAuthToken(token);
+      
+      if (decoded) {
+        const user = await storage.getUser(decoded.id);
+        if (user) {
+          console.log(`[Auth] /api/user - User ${user.id} authenticated via JWT token`);
+          return res.json(user);
+        }
+      }
+    }
+    
+    return res.sendStatus(401);
   });
 
   // SECURE: Device-specific token association for logged-in users
@@ -411,17 +467,57 @@ export function setupAuth(app: Express) {
   }
   
   // Add the /api/auth/me route for compatibility
-  app.get("/api/auth/me", (req, res) => {
-    console.log('[Auth] /api/auth/me called, authenticated:', req.isAuthenticated());
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+  app.get("/api/auth/me", async (req, res) => {
+    console.log('[Auth] /api/auth/me called, session authenticated:', req.isAuthenticated());
+    
+    // First try session-based auth (for web)
+    if (req.isAuthenticated()) {
+      return res.json(req.user);
+    }
+    
+    // Then try JWT token auth (for mobile)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const decoded = verifyAuthToken(token);
+      
+      if (decoded) {
+        const user = await storage.getUser(decoded.id);
+        if (user) {
+          console.log(`[Auth] /api/auth/me - User ${user.id} authenticated via JWT token`);
+          return res.json(user);
+        }
+      }
+    }
+    
+    return res.sendStatus(401);
   });
 }
 
-export const isAuthenticated: RequestHandler = (req, res, next) => {
+// Hybrid authentication middleware: supports both session cookies (web) and JWT tokens (mobile)
+export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // First try session-based auth (for web)
   if (req.isAuthenticated()) {
     return next();
   }
+  
+  // Then try JWT token auth (for mobile)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const decoded = verifyAuthToken(token);
+    
+    if (decoded) {
+      // Load the full user object from database
+      const user = await storage.getUser(decoded.id);
+      if (user) {
+        req.user = user;
+        console.log(`[JWT Auth] User ${user.id} authenticated via JWT token`);
+        return next();
+      }
+    }
+  }
+  
   res.status(401).json({ message: "Unauthorized" });
 };
 

@@ -65,13 +65,8 @@ function Router() {
     restoreSession();
   }, []);
 
-  // ISSUE #1 FIX: Save session when user logs in
-  useEffect(() => {
-    if (isAuthenticated && user && sessionRestored) {
-      console.log('[App] User authenticated - saving session to persistent storage');
-      sessionPersistence.saveSession();
-    }
-  }, [isAuthenticated, user, sessionRestored]);
+  // JWT tokens are now saved directly in login/register handlers
+  // No need to save session here anymore
 
   // Initialize notifications AFTER authentication
   useEffect(() => {
