@@ -102,6 +102,25 @@ Preferred communication style: Simple, everyday language.
   - **Files**: server/scheduler.ts (lines 24-52)
   - **Performance**: Same code path, just higher frequency - no regression expected
   - **Status**: ✅ DEPLOYED - Scheduler now logs "Heavy operations: every 1 MINUTE (instant status updates)"
+  
+- **ISSUE #4 FIXED**: iOS App Badge Number Never Clears
+  - **Root Cause**: Badge numbers were set to 1 in every push notification, but no clearing logic existed when app opened
+    - Server sets badge to 1 in pushNotificationService.ts
+    - iOS shows badge on app icon
+    - But badge was NEVER cleared - stayed at "1" even when user opened app
+  - **Solution**: Implemented badge clearing in both iOS native and React/Capacitor layers
+  - **Implementation Details**:
+    - iOS Native (AppDelegate.swift): Added badge clearing in `applicationDidBecomeActive` method
+      - Sets `UIApplication.shared.applicationIconBadgeNumber = 0`
+      - Calls `removeAllDeliveredNotifications()` to clear notification center
+    - React/Capacitor (App.tsx): Added badge clearing with proper async listener management
+      - Clears badge on mount using `PushNotifications.setBadgeCount({ count: 0 })`
+      - Listens for `appStateChange` events to clear badge when app becomes active
+      - Uses `isMounted` flag to prevent race conditions and listener leaks (React StrictMode compatible)
+  - **Files**: ios/App/App/AppDelegate.swift (applicationDidBecomeActive), client/src/App.tsx (badge clearing useEffect)
+  - **Architect Review**: ✅ PASSED - Both native and JS layers clear badges reliably, no listener leaks or race conditions
+  - **Status**: ✅ DEPLOYED - Badge now automatically clears to 0 when app opens
+  - **Expected Behavior**: User receives notification → Badge shows "1" → User opens app → Badge clears to 0
 
 ### October 02, 2025 - Account Deletion Implementation (Apple App Store Compliance)
 - **Feature Added**: Permanent account deletion functionality to comply with Apple App Store Guideline 5.1.1(v)
