@@ -47,7 +47,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused while the application was inactive.
+        // Clear badge number when app becomes active
+        print("🔔 App became active - clearing badge number")
+        UIApplication.shared.applicationIconBadgeNumber = 0
+        
+        // Also request to remove all delivered notifications from notification center
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

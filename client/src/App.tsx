@@ -9,6 +9,8 @@ import { notificationService } from "@/services/NotificationService";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { useLocation } from "wouter";
 import { logBridge } from "@/lib/logBridge";
+import { App as CapacitorApp } from '@capacitor/app';
+import { PushNotifications } from '@capacitor/push-notifications';
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Auth from "@/pages/Auth";
@@ -78,6 +80,51 @@ function Router() {
       console.log('✅ User authenticated - server handles token association automatically');
     }
   }, [isAuthenticated, user]);
+
+  // BADGE CLEARING: Clear iOS badge when app becomes active or mounts
+  useEffect(() => {
+    let isMounted = true;
+    let listenerHandle: any = null;
+
+    const clearBadge = async () => {
+      try {
+        await PushNotifications.setBadgeCount({ count: 0 });
+        console.log('🔔 Badge cleared to 0');
+      } catch (error) {
+        console.log('Badge clearing not available (web or permissions not granted):', error);
+      }
+    };
+
+    // Clear badge immediately on mount
+    clearBadge();
+
+    // Listen for app state changes (when app comes to foreground)
+    const setupListener = async () => {
+      const handle = await CapacitorApp.addListener('appStateChange', async (state) => {
+        if (state.isActive) {
+          console.log('🔔 App became active - clearing badge');
+          clearBadge();
+        }
+      });
+      
+      // Only store handle if component is still mounted
+      if (isMounted) {
+        listenerHandle = handle;
+      } else {
+        // Component unmounted while we were waiting - clean up immediately
+        handle.remove();
+      }
+    };
+    
+    setupListener();
+
+    return () => {
+      isMounted = false;
+      if (listenerHandle) {
+        listenerHandle.remove();
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
