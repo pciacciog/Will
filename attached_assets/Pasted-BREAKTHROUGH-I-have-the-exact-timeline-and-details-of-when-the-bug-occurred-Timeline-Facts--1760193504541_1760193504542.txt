@@ -1,0 +1,62 @@
+BREAKTHROUGH! I have the exact timeline and details of when the bug occurred:
+
+**Timeline & Facts:**
+- **Wednesday, October 8 @ 7:45 PM**: User X downloads the Will app and clicks "Allow" for notifications. Device token is registered. User X NEVER creates an account or logs in - just has the app installed.
+
+- **Thursday, October 9**: I (bebociaccio@me.com) create a Will with my inner circle members.
+
+- **Thursday, October 9 @ 5:05 PM**: I complete the Will. The "all members acknowledged - you can start a new Will" notification is sent.
+
+- **Thursday, October 9 @ 5:05 PM**: User X (who has NO account and is NOT in my circle) receives the "all members acknowledged" notification on their device.
+
+**Critical Additional Detail:**
+User X ONLY received the "all members acknowledged" notification. They did NOT receive other Will notifications like:
+- "Will is active"
+- "Will is starting"
+- Other Will status notifications
+
+This means the bug is SPECIFIC to the "all members acknowledged" notification type - other notifications are correctly filtered!
+
+**What I need you to find:**
+
+1. **Compare ALL notification sending functions**
+   - Show me the code for: sendReadyForNewWillNotification() (the buggy one)
+   - Show me the code for: sendWillActiveNotification() (works correctly)
+   - Show me the code for: any other Will status notifications
+   - **What's different?** Why does "all members acknowledged" go to unassociated tokens but others don't?
+
+2. **Show COMPLETE sendReadyForNewWillNotification() implementation**
+   - Not just the function call from routes.ts
+   - Show me the FULL function body in PushNotificationService
+   - Show me every database query and filtering logic
+   - Is there a different code path for THIS specific notification?
+
+3. **Check for broadcast/global send logic**
+   - Does sendReadyForNewWillNotification() have ANY code that:
+     - Sends to ALL active tokens?
+     - Broadcasts without filtering by userId?
+     - Has a fallback that sends to unassociated tokens?
+   - Search for: `isActive = true` without `userId` filter in this function
+
+4. **SQL NULL matching issue**
+   - When you call: `eq(deviceTokens.userId, userId)` with userId from circle members
+   - Could there be a bug where passing certain values accidentally matches NULL rows?
+   - Test: Does `eq(deviceTokens.userId, null)` or `eq(deviceTokens.userId, undefined)` match NULL database rows?
+
+5. **Historical database evidence**
+   - Query: `SELECT * FROM device_tokens WHERE created_at BETWEEN '2024-10-08 19:00:00' AND '2024-10-09 18:00:00' AND userId IS NULL`
+   - This should show the orphaned token that received the notification
+
+6. **Notification logs from October 9 @ 5:05 PM**
+   - Show me logs of which device tokens received notifications
+   - Filter for: "all members acknowledged" sent around 5:05 PM
+   - Show me the device token that was sent to (should match User X's token)
+
+7. **Code difference analysis**
+   - Why would "all members acknowledged" behave differently than "Will is active"?
+   - Is there a different function, different query, or different filtering logic?
+   - Show me side-by-side comparison
+
+**The bug is SPECIFIC to the "all members acknowledged" notification.** Other notifications correctly filter by circle membership. Find out what's different about this one particular notification type.
+
+My Will was created by bebociaccio@me.com. The unauthorized recipient (User X) has no account. Find the code path that allowed this specific notification to reach an unassociated device token.
