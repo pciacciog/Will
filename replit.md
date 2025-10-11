@@ -62,16 +62,20 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### October 11, 2025 - Critical Bug Fixes: Authentication, Notifications, Status Updates
-- **ISSUE #1 PARTIAL FIX**: User Being Logged Out on App Close
-  - **Root Cause**: Mobile apps (Capacitor) don't persist Express session cookies reliably across app restarts
-  - **Attempted Solution**: Created SessionPersistence service using Capacitor Preferences to save/restore session cookies
-  - **Implementation**: Session cookies saved on login, restored on app launch, cleared on logout
-  - **Files**: client/src/services/SessionPersistence.ts, client/src/App.tsx, client/src/pages/InnerCircleHub.tsx
-  - **Architect Finding**: ⚠️ Restored cookies won't be sent to API due to Capacitor origin mismatch (capacitor://localhost vs API domain)
-  - **Status**: Debugging implemented but fundamental fix requires:
-    - Option A: Use Capacitor's CapacitorCookies API to write cookies for API domain
-    - Option B: Implement bearer token authentication instead of session cookies
-  - **Current State**: Session persistence service deployed with extensive debugging to verify behavior
+- **ISSUE #1 FIXED**: User Being Logged Out on App Close
+  - **Root Cause**: Mobile apps (Capacitor) don't persist Express session cookies reliably across app restarts due to cross-origin limitations (capacitor://localhost vs API domain)
+  - **Solution**: Implemented bearer token authentication using JWT tokens
+  - **Implementation Details**:
+    - Server: JWT token generation on login/register (7-day expiration)
+    - Server: Hybrid authentication middleware supporting both session cookies (web) and JWT tokens (mobile)
+    - Server: Updated /api/user and /api/auth/me to accept JWT bearer tokens
+    - Client: SessionPersistence service stores/retrieves JWT tokens via Capacitor Preferences
+    - Client: queryClient automatically adds Authorization header with JWT token to all API requests
+    - Client: Login/register flows save JWT tokens, logout clears them
+  - **Files**: server/auth.ts, client/src/lib/queryClient.ts, client/src/services/SessionPersistence.ts, client/src/pages/Auth.tsx, client/src/App.tsx
+  - **Architect Review**: ✅ PASSED - Hybrid auth enables JWT-based persistence without breaking web sessions
+  - **Status**: ✅ DEPLOYED - Mobile users will stay logged in after app restart, web users continue using session cookies
+  - **Security Note**: Production must set strong JWT_SECRET environment variable (currently uses fallback for development)
   
 - **ISSUE #2 FIXED**: Notifications Being Sent to Wrong Users
   - **Root Cause**: Device tokens are user-level, not circle-aware - users who left Circle A still receive notifications from Circle A
