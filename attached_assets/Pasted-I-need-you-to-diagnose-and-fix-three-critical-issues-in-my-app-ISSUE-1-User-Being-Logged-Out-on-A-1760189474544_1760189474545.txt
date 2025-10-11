@@ -1,0 +1,32 @@
+I need you to diagnose and fix three critical issues in my app:
+ISSUE #1: User Being Logged Out on App Close
+The app is logging users out every time they close the app, forcing them to re-authenticate. I need persistent authentication sessions.
+Please:
+
+Check where and how authentication tokens are currently being stored
+Verify if we're using persistent storage (AsyncStorage, SecureStore, Keychain, etc.) or just memory/state
+Review the app initialization/launch flow to see if we're checking for existing tokens on startup
+Show me the current authentication persistence implementation
+Provide a solution to keep users logged in across app sessions unless they manually log out
+
+ISSUE #2: Notifications Being Sent to Wrong Users
+A user who is NOT in my inner circle group received a notification that said "all members acknowledged - you can start a new Will!" This notification should ONLY go to members within the specific circle that completed the Will.
+Please:
+
+Locate the code that sends the "all members acknowledged" notification
+Show me how we're currently determining which users receive this notification
+Check if we're properly filtering by circle_id or circle membership
+Identify why a user outside the circle might be receiving these notifications
+Fix the logic to ensure notifications are ONLY sent to users within the specific inner circle group
+
+ISSUE #3: Delayed Will Status Updates
+Will statuses are not updating in real-time. For example, when a Will is supposed to end at 9:10 PM and change to "end room scheduled" status, the status doesn't actually update until 9:13 PM or later.
+Please:
+
+Show me how will status updates are currently being triggered (polling interval, manual refresh, etc.)
+Identify the current refresh/polling frequency
+Check if there's any background job or cron job handling status transitions
+Show me where status checks happen in the frontend
+Provide solutions to make status updates more instantaneous (more aggressive polling, real-time listeners, push notifications, etc.)
+
+For each issue, please show me the relevant code sections and explain what's causing the problem before implementing fixes.
