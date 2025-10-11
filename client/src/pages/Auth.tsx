@@ -94,9 +94,37 @@ export default function Auth() {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string; firstName: string; lastName: string }) => {
+      // ISSUE #2 FIX: Send device token with registration request for immediate ownership transfer
+      const deviceTokenData = localStorage.getItem('pendingDeviceToken');
+      let deviceToken = null;
+      
+      console.log(`🔍 [Registration] Checking for stored device token...`);
+      console.log(`🔍 [Registration] Raw localStorage data:`, deviceTokenData);
+      
+      if (deviceTokenData) {
+        try {
+          const tokenInfo = JSON.parse(deviceTokenData);
+          deviceToken = tokenInfo.token;
+          console.log(`📱 [Registration] Sending device token with registration: ${deviceToken?.substring(0, 8)}...`);
+          console.log(`🔍 [Registration] Full token info:`, tokenInfo);
+        } catch (error) {
+          console.warn('Failed to parse stored device token:', error);
+        }
+      } else {
+        console.log(`⚠️ [Registration] No device token found in localStorage`);
+      }
+      
+      const registerPayload = {
+        ...credentials,
+        deviceToken // Send device token for immediate ownership transfer
+      };
+      
       const res = await apiRequest('/api/register', {
         method: 'POST',
-        body: JSON.stringify(credentials)
+        body: JSON.stringify(registerPayload),
+        headers: deviceToken ? {
+          'X-Device-Token': deviceToken // Also send in headers for redundancy
+        } : undefined
       });
       return await res.json();
     },

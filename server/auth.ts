@@ -119,7 +119,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { email, password, firstName, lastName } = req.body;
+      const { email, password, firstName, lastName, deviceToken: bodyDeviceToken } = req.body;
       
       if (!email || !password || !firstName || !lastName) {
         return res.status(400).json({ message: "All fields are required" });
@@ -143,9 +143,13 @@ export function setupAuth(app: Express) {
       req.login(user, async (err) => {
         if (err) return next(err);
         
+        // ISSUE #2 FIX: Extract device token from request body or header
+        const deviceToken = bodyDeviceToken || req.headers['x-device-token'] as string;
+        console.log(`🔍 [Registration] Device token:`, deviceToken ? deviceToken.substring(0, 10) + '...' : 'NOT PROVIDED');
+        
         // Associate any pending device tokens with the new user
         try {
-          const associationResult = await associatePendingTokensWithRetry(user.id);
+          const associationResult = await associatePendingTokensWithRetry(user.id, deviceToken);
           console.log(`✅ [Registration] Associated pending tokens with new user ${user.id}:`, associationResult);
         } catch (error) {
           console.error('❌ [Registration] Error associating pending tokens:', error);
@@ -215,11 +219,12 @@ export function setupAuth(app: Express) {
         console.log(`ℹ️ [Login] No device token in request - will check for pending tokens`);
       }
       
-      // 🔥 CRITICAL: Always associate any pending device tokens after login with retry logic
+      // 🔥 CRITICAL FIX (ISSUE #2): Always associate pending device tokens after login with retry logic
+      // Now passing deviceToken to only associate THIS device's token, not all NULL tokens globally
       try {
         console.log(`✅ [Login] User authenticated: ${user.email}`);
         console.log(`🔍 [Login] Starting pending token association for user: ${user.id}`);
-        const associationResult = await associatePendingTokensWithRetry(user.id);
+        const associationResult = await associatePendingTokensWithRetry(user.id, deviceToken);
         console.log(`✅ [Login] Token association completed:`, associationResult);
       } catch (error) {
         console.error(`❌ [Login] Error associating pending tokens for user ${user.id}:`, error);
@@ -328,8 +333,9 @@ export function setupAuth(app: Express) {
   }
 
   // Enhanced association function with retry logic for timing issues
-  async function associatePendingTokensWithRetry(userId: string, maxRetries: number = 3, delayMs: number = 2000): Promise<{ tokensAssociated: number }> {
+  async function associatePendingTokensWithRetry(userId: string, deviceToken?: string, maxRetries: number = 3, delayMs: number = 2000): Promise<{ tokensAssociated: number }> {
     console.log(`🔄 [PendingTokens] Starting association with retry for user ${userId}`);
+    console.log(`🔄 [PendingTokens] Device token:`, deviceToken ? deviceToken.substring(0, 10) + '...' : 'NOT PROVIDED');
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       console.log(`🔄 [PendingTokens] Association attempt ${attempt}/${maxRetries}`);
@@ -338,30 +344,48 @@ export function setupAuth(app: Express) {
       const { neon } = await import('@neondatabase/serverless');
       const { drizzle } = await import('drizzle-orm/neon-http');
       const { deviceTokens } = await import('../shared/schema');
-      const { eq, isNull, or } = await import('drizzle-orm');
+      const { eq, isNull, or, and } = await import('drizzle-orm');
       
       const sqlConnection = neon(process.env.DATABASE_URL!);
       const dbConnection = drizzle(sqlConnection);
       
-      const pendingTokens = await dbConnection
-        .select()
-        .from(deviceTokens)
-        .where(
-          or(
-            isNull(deviceTokens.userId),
-            eq(deviceTokens.userId, "pending")
-          )
-        );
+      let pendingTokens;
+      if (deviceToken) {
+        // ISSUE #2 FIX: Only check for the specific device token
+        pendingTokens = await dbConnection
+          .select()
+          .from(deviceTokens)
+          .where(
+            and(
+              eq(deviceTokens.deviceToken, deviceToken),
+              or(
+                isNull(deviceTokens.userId),
+                eq(deviceTokens.userId, "pending")
+              )
+            )
+          );
+      } else {
+        // Fallback to global search (backwards compatibility)
+        pendingTokens = await dbConnection
+          .select()
+          .from(deviceTokens)
+          .where(
+            or(
+              isNull(deviceTokens.userId),
+              eq(deviceTokens.userId, "pending")
+            )
+          );
+      }
         
       const pendingCount = pendingTokens.length;
-      console.log(`🔍 [PendingTokens] Found ${pendingCount} pending tokens on attempt ${attempt}`);
+      console.log(`🔍 [PendingTokens] Found ${pendingCount} pending token(s) on attempt ${attempt}`);
       
       if (pendingCount > 0) {
         // Found pending tokens, attempt association
-        const result = await associatePendingTokens(userId);
+        const result = await associatePendingTokens(userId, deviceToken);
         
         if (result.tokensAssociated > 0) {
-          console.log(`✅ [PendingTokens] Successfully associated ${result.tokensAssociated} tokens on attempt ${attempt}`);
+          console.log(`✅ [PendingTokens] Successfully associated ${result.tokensAssociated} token(s) on attempt ${attempt}`);
           return result;
         }
       }
@@ -377,10 +401,12 @@ export function setupAuth(app: Express) {
     return { tokensAssociated: 0 };
   }
 
-  // CRITICAL: Associate ALL pending device tokens with authenticated user
-  async function associatePendingTokens(userId: string): Promise<{ tokensAssociated: number }> {
+  // CRITICAL FIX (ISSUE #2): Associate ONLY the specific device token with authenticated user
+  // This prevents associating ALL NULL tokens globally, which was causing notifications to wrong users
+  async function associatePendingTokens(userId: string, deviceToken?: string): Promise<{ tokensAssociated: number }> {
     console.log('🔍 [PendingTokens] === ASSOCIATION FUNCTION EXECUTING ===');
     console.log('🔍 [PendingTokens] Target user ID:', userId);
+    console.log('🔍 [PendingTokens] Device token:', deviceToken ? deviceToken.substring(0, 10) + '...' : 'NOT PROVIDED');
     console.log('🔍 [PendingTokens] Timestamp:', new Date().toISOString());
     
     try {
@@ -388,22 +414,41 @@ export function setupAuth(app: Express) {
       const { neon } = await import('@neondatabase/serverless');
       const { drizzle } = await import('drizzle-orm/neon-http');
       const { deviceTokens } = await import('../shared/schema');
-      const { eq, isNull, or } = await import('drizzle-orm');
+      const { eq, isNull, or, and } = await import('drizzle-orm');
       
       // Create database connection
       const sqlConnection = neon(process.env.DATABASE_URL!);
       const dbConnection = drizzle(sqlConnection);
       
-      // Find all pending tokens (userId is null OR userId is "pending") with detailed logging
-      const pendingTokens = await dbConnection
-        .select()
-        .from(deviceTokens)
-        .where(
-          or(
-            isNull(deviceTokens.userId),
-            eq(deviceTokens.userId, "pending")
-          )
-        );
+      // ISSUE #2 FIX: Only find the SPECIFIC device token if provided
+      let pendingTokens;
+      if (deviceToken) {
+        console.log(`🔒 [PendingTokens] SECURE MODE: Only associating specific device token ${deviceToken.substring(0, 10)}...`);
+        pendingTokens = await dbConnection
+          .select()
+          .from(deviceTokens)
+          .where(
+            and(
+              eq(deviceTokens.deviceToken, deviceToken),
+              or(
+                isNull(deviceTokens.userId),
+                eq(deviceTokens.userId, "pending")
+              )
+            )
+          );
+      } else {
+        // Fallback: Find all pending tokens (backwards compatibility, but logs warning)
+        console.log('⚠️ [PendingTokens] WARNING: No device token provided - falling back to global search (INSECURE)');
+        pendingTokens = await dbConnection
+          .select()
+          .from(deviceTokens)
+          .where(
+            or(
+              isNull(deviceTokens.userId),
+              eq(deviceTokens.userId, "pending")
+            )
+          );
+      }
         
       console.log('🔍 [PendingTokens] Query results:');
       console.log('  - Row count:', pendingTokens.length);
@@ -440,12 +485,13 @@ export function setupAuth(app: Express) {
           .set({
             userId: userId,
             isActive: true,
-            registrationSource: 'pending_token_association',
+            registrationSource: 'secure_token_association',
             updatedAt: new Date()
           })
           .where(eq(deviceTokens.deviceToken, token.deviceToken));
           
         associatedCount++;
+        console.log(`✅ [PendingTokens] Token ${token.deviceToken.substring(0, 10)}... now belongs to user ${userId}`);
       }
       
       // Verification query
@@ -455,8 +501,8 @@ export function setupAuth(app: Express) {
         .where(eq(deviceTokens.userId, userId));
         
       console.log(`✅ [PendingTokens] Transaction completed successfully`);
-      console.log(`✅ [PendingTokens] Associated ${associatedCount} pending tokens with user ${userId}`);
-      console.log(`✅ [PendingTokens] User ${userId} now has ${verifyTokens.length} active tokens`);
+      console.log(`✅ [PendingTokens] Associated ${associatedCount} pending token(s) with user ${userId}`);
+      console.log(`✅ [PendingTokens] User ${userId} now has ${verifyTokens.length} active token(s)`);
       
       return { tokensAssociated: associatedCount };
       
