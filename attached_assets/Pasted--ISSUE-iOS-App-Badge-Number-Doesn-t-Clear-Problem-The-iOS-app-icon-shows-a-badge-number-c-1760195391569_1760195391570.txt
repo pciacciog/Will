@@ -1,0 +1,74 @@
+**ISSUE: iOS App Badge Number Doesn't Clear**
+
+**Problem:**
+The iOS app icon shows a badge number (currently showing "1"). When I open the app and view the content, the badge number stays at "1" instead of clearing to 0.
+
+This is the iOS system badge (the red circle with number on the app icon), not an in-app notification indicator.
+
+**What I need you to find and fix:**
+
+1. **Show me where iOS badge numbers are set**
+   - Search for: `setBadgeCount`, `badge`, `applicationIconBadgeNumber`
+   - In iOS code: Check `AppDelegate.swift` or notification handling code
+   - In JavaScript: Check if there's any badge management in the notification service
+
+2. **Show me notification handling when app opens**
+   - What happens in `AppDelegate.swift` when app becomes active?
+   - Is there a `didBecomeActive` or `applicationDidBecomeActive` handler?
+   - Does it call any API to clear badge?
+
+3. **Check for badge clearing API endpoint**
+   - Is there an endpoint like: `POST /api/notifications/clear-badge`?
+   - Or: `POST /api/user/clear-badge`?
+   - Show me if it exists
+
+4. **Show me badge increment code**
+   - When sending push notifications, where do you set the badge number?
+   - In `PushNotificationService.ts`, search for: `badge` in the notification payload
+   - Show me the notification payload structure
+
+5. **Implement badge clearing logic**
+   - When app opens, it should:
+     a) Set badge to 0 locally: `Notifications.setBadgeCount({ count: 0 })`
+     b) (Optional) Call API to sync badge state with server
+   
+6. **Add badge clearing in multiple places:**
+   - App.tsx: When app mounts/becomes active
+   - Notification click handler: When user taps notification
+   - Home/Hub page: When user views their notifications
+
+**Expected iOS behavior:**
+- User receives notification → Badge shows "1"
+- User opens app → Badge immediately clears to 0
+
+**Current behavior:**
+- User receives notification → Badge shows "1"  
+- User opens app → Badge stays at "1" ❌
+
+Show me the current badge handling code and implement automatic badge clearing when the app is opened.
+
+The Fix Likely Needs Two Parts:
+Part 1: Clear Badge on App Open (iOS)
+In AppDelegate.swift or your main app initialization:
+swiftfunc applicationDidBecomeActive(_ application: UIApplication) {
+    // Clear badge when app opens
+    UIApplication.shared.applicationIconBadgeNumber = 0
+}
+Part 2: Clear Badge in React (Capacitor)
+In your App.tsx or similar:
+javascriptimport { App as CapacitorApp } from '@capacitor/app';
+import { Notifications } from '@capacitor/push-notifications';
+
+useEffect(() => {
+  // Clear badge when app becomes active
+  const listener = CapacitorApp.addListener('appStateChange', async (state) => {
+    if (state.isActive) {
+      await Notifications.setBadgeCount({ count: 0 });
+    }
+  });
+
+  // Clear badge on mount
+  Notifications.setBadgeCount({ count: 0 });
+
+  return () => listener.remove();
+}, []);
