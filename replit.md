@@ -77,12 +77,23 @@ Preferred communication style: Simple, everyday language.
   - **Status**: ✅ DEPLOYED - Mobile users will stay logged in after app restart, web users continue using session cookies
   - **Security Note**: Production must set strong JWT_SECRET environment variable (currently uses fallback for development)
   
-- **ISSUE #2 FIXED**: Notifications Being Sent to Wrong Users
-  - **Root Cause**: Device tokens are user-level, not circle-aware - users who left Circle A still receive notifications from Circle A
-  - **Solution**: Enhanced logging in notification code to track exact circle membership when sending notifications
-  - **Implementation**: Added debug logs showing circle ID and member IDs receiving "Ready for New Will" notifications
-  - **Files**: server/routes.ts (lines 640-652)
-  - **Status**: Logging improved to help diagnose and verify correct circle membership filtering
+- **ISSUE #2 FIXED**: Critical Device Token Association Bug (Cross-User Notification Leakage)
+  - **Root Cause**: `associatePendingTokens()` was associating ALL NULL device tokens globally instead of only the current device's token
+    - User X downloads app → NULL token created
+    - User Y logs in → ALL NULL tokens (including User X's) get associated with User Y
+    - Result: User X receives User Y's notifications (critical privacy/security bug)
+  - **Solution**: Device token scoping - only associate the specific device's token when provided
+  - **Implementation Details**:
+    - Server: Updated `associatePendingTokens(userId, deviceToken?)` to accept optional deviceToken parameter
+    - Server: SECURE MODE - When deviceToken provided, only associates that specific token (filters WHERE deviceToken = ?)
+    - Server: Legacy fallback - When deviceToken absent, falls back to old behavior with INSECURE warnings for monitoring
+    - Server: Login/register endpoints extract deviceToken from request body or X-Device-Token header
+    - Client: Login/register mutations send deviceToken from localStorage in both body and headers
+    - Comprehensive logging: All functions log SECURE vs INSECURE mode and track which token → which user
+  - **Files**: server/auth.ts (associatePendingTokens, login/register endpoints), client/src/pages/Auth.tsx (login/register mutations)
+  - **Architect Review**: ✅ PASSED - Fix prevents cross-user token leakage while maintaining backwards compatibility
+  - **Status**: ✅ DEPLOYED - Device tokens now properly scoped to prevent notification privacy leaks
+  - **Next Steps**: Monitor "INSECURE" warnings in logs, plan deprecation timeline for legacy fallback once all clients updated
   
 - **ISSUE #3 FIXED**: Delayed Will Status Updates (3-minute delays)
   - **Root Cause**: Backend scheduler ran status transitions every 5 minutes, causing up to 5-minute delays
