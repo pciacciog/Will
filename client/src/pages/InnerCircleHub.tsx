@@ -336,6 +336,11 @@ export default function InnerCircleHub() {
         localStorage.removeItem('pendingDeviceToken');
       }
       
+      // ISSUE #1 FIX: Clear persisted session
+      const { sessionPersistence } = await import('@/services/SessionPersistence');
+      await sessionPersistence.clearSession();
+      console.log('[Logout] ✅ Session cleared from persistent storage');
+      
       await fetch('/api/logout', { method: 'POST' });
       window.location.href = '/';
     } catch (error) {

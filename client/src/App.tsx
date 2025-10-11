@@ -4,8 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { notificationService } from "@/services/NotificationService";
+import { sessionPersistence } from "@/services/SessionPersistence";
 import { useLocation } from "wouter";
 import { logBridge } from "@/lib/logBridge";
 import NotFound from "@/pages/not-found";
@@ -39,6 +40,7 @@ if (import.meta.env.DEV) {
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location] = useLocation();
+  const [sessionRestored, setSessionRestored] = useState(false);
 
   // Debug logging
   console.log('Router debug:', { isAuthenticated, isLoading, user: user?.id, location });
@@ -47,6 +49,29 @@ function Router() {
   useEffect(() => {
     logBridge.initialize();
   }, []);
+
+  // ISSUE #1 FIX: Restore session on app launch (runs once)
+  useEffect(() => {
+    const restoreSession = async () => {
+      console.log('[App] Attempting to restore session from persistent storage...');
+      const restored = await sessionPersistence.restoreSession();
+      setSessionRestored(true);
+      if (restored) {
+        console.log('[App] ✅ Session restored - user should remain logged in');
+        // Force re-fetch user data with restored session
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      }
+    };
+    restoreSession();
+  }, []);
+
+  // ISSUE #1 FIX: Save session when user logs in
+  useEffect(() => {
+    if (isAuthenticated && user && sessionRestored) {
+      console.log('[App] User authenticated - saving session to persistent storage');
+      sessionPersistence.saveSession();
+    }
+  }, [isAuthenticated, user, sessionRestored]);
 
   // Initialize notifications AFTER authentication
   useEffect(() => {

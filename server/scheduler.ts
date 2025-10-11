@@ -18,12 +18,13 @@ export class EndRoomScheduler {
     console.log('[EndRoomScheduler] Starting dual scheduler system...');
     this.isRunning = true;
 
-    // DUAL SCHEDULER APPROACH (Architect Review Fix):
-    // 1. Heavy operations every 5 minutes (resource efficient)
+    // ISSUE #3 FIX: Changed heavy operations from 5 minutes to 1 minute for instant status updates
+    // DUAL SCHEDULER APPROACH:
+    // 1. Heavy operations every 1 MINUTE (instant status transitions)
     // 2. Lightweight notifications every minute (time-sensitive)
 
-    // Heavy operations scheduler (5 minutes) - resource efficient for transitions, room management
-    cron.schedule('*/5 * * * *', async () => {
+    // ISSUE #3 FIX: Heavy operations scheduler (1 minute) - instant status updates and room management
+    cron.schedule('* * * * *', async () => {
       try {
         await this.processHeavyOperations();
       } catch (error) {
@@ -44,7 +45,7 @@ export class EndRoomScheduler {
     });
 
     console.log('[EndRoomScheduler] Dual scheduler started:');
-    console.log('[EndRoomScheduler] - Heavy operations: every 5 minutes (resource efficient)');
+    console.log('[EndRoomScheduler] - ISSUE #3 FIX: Heavy operations: every 1 MINUTE (instant status updates)');
     console.log('[EndRoomScheduler] - Notifications: every minute (time-sensitive)');
   }
 
