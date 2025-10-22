@@ -291,6 +291,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
 
+      // ISSUE FIX: Recalculate will status when new member joins
+      // When a new member joins, a "scheduled" will (all previous members committed) should revert to "pending"
+      // Only recalculate for pending/scheduled wills - never for active/completed/archived wills
+      const activeWill = await storage.getCircleActiveWill(circle.id);
+      if (activeWill && (activeWill.status === 'pending' || activeWill.status === 'scheduled')) {
+        // Get will with commitments to calculate correct status
+        const willWithCommitments = await storage.getWillWithCommitments(activeWill.id);
+        if (willWithCommitments) {
+          // Get NEW member count (after adding the user)
+          const newMemberCount = await storage.getCircleMemberCount(circle.id);
+          
+          // Calculate what the status SHOULD be based on current state
+          const calculatedStatus = getWillStatus(willWithCommitments, newMemberCount);
+          
+          // Only update if the calculated status differs from database status
+          if (calculatedStatus !== activeWill.status) {
+            await storage.updateWillStatus(activeWill.id, calculatedStatus);
+            console.log(`[Join Circle] Will ${activeWill.id} status updated: ${activeWill.status} → ${calculatedStatus} (new member joined, ${newMemberCount} members total)`);
+          }
+        }
+      }
+
       const circleWithMembers = await storage.getUserCircle(userId);
       res.json(circleWithMembers);
     } catch (error) {

@@ -480,7 +480,9 @@ export default function WillDetails() {
 
 
         {/* Submit Commitment Section */}
-        {will.status === 'pending' && !userHasCommitted && (
+        {/* ISSUE FIX: Allow adding commitments for both 'pending' AND 'scheduled' wills (before start time) */}
+        {/* Never allow adding commitments once will is 'active' or beyond */}
+        {(will.status === 'pending' || will.status === 'scheduled') && !userHasCommitted && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-center">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
