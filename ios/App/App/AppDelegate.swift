@@ -105,11 +105,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         print("🔥 iOS DIRECT: Server API URL: \(url.absoluteString)")
         
         // Prepare payload with REQUIRED bundle data for APNS certificate matching
+        let buildScheme = getBuildScheme()
+        let environment = (buildScheme == "Debug") ? "sandbox" : "production"
+        
         let payload: [String: Any] = [
             "deviceToken": token,
             "userId": "pending",
             "platform": "ios",
-            "environment": "sandbox",
+            "environment": environment,
             "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0",
             "deviceModel": UIDevice.current.model,
             "osVersion": UIDevice.current.systemVersion,
@@ -117,7 +120,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             
             // CRITICAL FIELDS FOR APNS CERTIFICATE MATCHING:
             "bundleId": Bundle.main.bundleIdentifier ?? "com.porfirio.will",
-            "buildScheme": getBuildScheme(),
+            "buildScheme": buildScheme,
             "provisioningProfile": getProvisioningProfile()
         ]
         
