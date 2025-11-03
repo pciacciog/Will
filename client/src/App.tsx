@@ -55,14 +55,31 @@ function Router() {
   // ISSUE #1 FIX: Restore session on app launch (runs once)
   useEffect(() => {
     const restoreSession = async () => {
-      console.log('[App] Attempting to restore session from persistent storage...');
+      console.log('╔════════════════════════════════════════════════════════════╗');
+      console.log('║ APP LAUNCH - SESSION RESTORATION                           ║');
+      console.log('╚════════════════════════════════════════════════════════════╝');
+      console.log('[App] 🚀 App launched at:', new Date().toISOString());
+      console.log('[App] 🔄 Starting session restoration...');
+      
+      const startTime = Date.now();
       const restored = await sessionPersistence.restoreSession();
+      const durationMs = Date.now() - startTime;
+      
       setSessionRestored(true);
+      
+      console.log('[App] 📊 Session restoration completed in', durationMs, 'ms');
+      
       if (restored) {
-        console.log('[App] ✅ Session restored - user should remain logged in');
+        console.log('[App] ✅ SESSION RESTORED SUCCESSFULLY');
+        console.log('[App] ✅ User should remain logged in');
+        console.log('[App] 🔄 Invalidating /api/user query to fetch fresh data...');
         // Force re-fetch user data with restored session
         queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      } else {
+        console.log('[App] ❌ SESSION NOT RESTORED');
+        console.log('[App] ❌ User will be shown login screen');
       }
+      console.log('════════════════════════════════════════════════════════════');
     };
     restoreSession();
   }, []);
@@ -81,31 +98,74 @@ function Router() {
     }
   }, [isAuthenticated, user]);
 
-  // BADGE CLEARING: Clear iOS badge when app becomes active or mounts
+  // APP LIFECYCLE: Monitor app state changes to detect background/foreground transitions
   useEffect(() => {
     let isMounted = true;
     let listenerHandle: any = null;
+    let lastStateChangeTime = Date.now();
+    let appLaunchTime = Date.now();
 
     const clearBadge = async () => {
       try {
         await PushNotifications.setBadgeCount({ count: 0 });
-        console.log('🔔 Badge cleared to 0');
+        console.log('🔔 [App] Badge cleared to 0');
       } catch (error) {
-        console.log('Badge clearing not available (web or permissions not granted):', error);
+        console.log('⚠️ [App] Badge clearing not available (web or permissions not granted):', error);
       }
     };
+
+    console.log('╔════════════════════════════════════════════════════════════╗');
+    console.log('║ APP LIFECYCLE MONITOR INITIALIZED                          ║');
+    console.log('╚════════════════════════════════════════════════════════════╝');
+    console.log(`📱 [App] App launch timestamp: ${new Date(appLaunchTime).toISOString()}`);
+    console.log(`📱 [App] Setting up app state change listener...`);
+    console.log('════════════════════════════════════════════════════════════');
 
     // Clear badge immediately on mount
     clearBadge();
 
-    // Listen for app state changes (when app comes to foreground)
+    // Listen for app state changes (when app comes to foreground/background)
     const setupListener = async () => {
       const handle = await CapacitorApp.addListener('appStateChange', async (state) => {
+        const now = Date.now();
+        const timeSinceLastChange = Math.round((now - lastStateChangeTime) / 1000);
+        const timeSinceLaunch = Math.round((now - appLaunchTime) / 1000);
+        lastStateChangeTime = now;
+        
+        console.log('╔════════════════════════════════════════════════════════════╗');
+        console.log('║ APP STATE CHANGED                                          ║');
+        console.log('╚════════════════════════════════════════════════════════════╝');
+        console.log(`📱 [App] New state: ${state.isActive ? '🟢 ACTIVE (Foreground)' : '🔴 INACTIVE (Background)'}`);
+        console.log(`📱 [App] Change timestamp: ${new Date().toISOString()}`);
+        console.log(`📱 [App] Time since last change: ${timeSinceLastChange} seconds`);
+        console.log(`📱 [App] Time since app launch: ${timeSinceLaunch} seconds`);
+        
         if (state.isActive) {
-          console.log('🔔 App became active - clearing badge');
+          console.log('🔄 [App] App RETURNING TO FOREGROUND');
+          console.log('🔄 [App] This is when storage might have been cleared!');
+          console.log('🔄 [App] Clearing badge...');
           clearBadge();
+          
+          // 🔥 CRITICAL: Check if token still exists after coming back from background
+          console.log('🔍 [App] Checking if auth token survived background...');
+          const token = await sessionPersistence.getToken();
+          if (token) {
+            console.log('✅ [App] Token SURVIVED background period');
+            console.log(`✅ [App] Token preview: ${token.substring(0, 20)}...`);
+          } else {
+            console.log('❌ [App] TOKEN LOST DURING BACKGROUND!');
+            console.log('❌ [App] This is the BUG - storage was cleared!');
+            console.log(`❌ [App] Background duration: ${timeSinceLastChange} seconds (~${Math.round(timeSinceLastChange/60)} minutes)`);
+          }
+        } else {
+          console.log('🔽 [App] App GOING TO BACKGROUND');
+          console.log('🔽 [App] iOS may clear storage if backgrounded long enough');
+          console.log('🔽 [App] Current auth token will be verified on return');
         }
+        console.log('════════════════════════════════════════════════════════════');
       });
+      
+      console.log('✅ [App] App state change listener registered successfully');
       
       // Only store handle if component is still mounted
       if (isMounted) {
@@ -120,6 +180,7 @@ function Router() {
 
     return () => {
       isMounted = false;
+      console.log('🔚 [App] App lifecycle monitor cleanup');
       if (listenerHandle) {
         listenerHandle.remove();
       }

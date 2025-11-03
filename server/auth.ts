@@ -34,8 +34,30 @@ async function comparePasswords(supplied: string, stored: string) {
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'development-jwt-secret-change-in-production';
 const JWT_EXPIRES_IN = '7d'; // 7 days for mobile apps
 
+// 🔥 CRITICAL: Log JWT secret configuration on server startup
+console.log('╔════════════════════════════════════════════════════════════╗');
+console.log('║ JWT AUTHENTICATION CONFIGURATION                           ║');
+console.log('╚════════════════════════════════════════════════════════════╝');
+console.log(`🔐 [JWT] Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🔐 [JWT] JWT_SECRET env var: ${process.env.JWT_SECRET ? 'SET ✅' : 'NOT SET ❌'}`);
+console.log(`🔐 [JWT] SESSION_SECRET env var: ${process.env.SESSION_SECRET ? 'SET ✅' : 'NOT SET ❌'}`);
+console.log(`🔐 [JWT] Using secret source: ${process.env.JWT_SECRET ? 'JWT_SECRET' : process.env.SESSION_SECRET ? 'SESSION_SECRET (fallback)' : 'HARDCODED DEVELOPMENT (INSECURE!)'}`);
+console.log(`🔐 [JWT] Token expiration: ${JWT_EXPIRES_IN}`);
+console.log('════════════════════════════════════════════════════════════');
+
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('╔════════════════════════════════════════════════════════════╗');
+  console.error('║ ⚠️  CRITICAL PRODUCTION WARNING                            ║');
+  console.error('╚════════════════════════════════════════════════════════════╝');
+  console.error('❌ [JWT] JWT_SECRET environment variable is NOT SET in production!');
+  console.error('❌ [JWT] This will cause all existing tokens to be INVALID');
+  console.error('❌ [JWT] Users will be logged out and cannot restore sessions');
+  console.error('❌ [JWT] SET JWT_SECRET immediately in production environment!');
+  console.error('════════════════════════════════════════════════════════════');
+}
+
 function generateAuthToken(user: SelectUser): string {
-  return jwt.sign(
+  const token = jwt.sign(
     { 
       id: user.id, 
       email: user.email,
@@ -44,14 +66,83 @@ function generateAuthToken(user: SelectUser): string {
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
+  
+  console.log(`╔════════════════════════════════════════════════════════════╗`);
+  console.log(`║ JWT TOKEN GENERATED                                        ║`);
+  console.log(`╚════════════════════════════════════════════════════════════╝`);
+  console.log(`🔑 [JWT] User ID: ${user.id}`);
+  console.log(`🔑 [JWT] User Email: ${user.email}`);
+  console.log(`🔑 [JWT] Token preview: ${token.substring(0, 30)}...${token.substring(token.length - 20)}`);
+  console.log(`🔑 [JWT] Token length: ${token.length} chars`);
+  console.log(`🔑 [JWT] Expires in: ${JWT_EXPIRES_IN}`);
+  console.log(`🔑 [JWT] Generated at: ${new Date().toISOString()}`);
+  console.log(`════════════════════════════════════════════════════════════`);
+  
+  return token;
 }
 
 export function verifyAuthToken(token: string): { id: string; email: string; role: string } | null {
+  const tokenPreview = token.substring(0, 20) + '...' + token.substring(token.length - 10);
+  
+  console.log(`🔍 [JWT] Attempting to verify token: ${tokenPreview}`);
+  console.log(`🔍 [JWT] Token length: ${token.length} chars`);
+  console.log(`🔍 [JWT] Verification time: ${new Date().toISOString()}`);
+  
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string; exp?: number; iat?: number };
+    
+    console.log('╔════════════════════════════════════════════════════════════╗');
+    console.log('║ TOKEN VERIFICATION SUCCESS                                 ║');
+    console.log('╚════════════════════════════════════════════════════════════╝');
+    console.log(`✅ [JWT] Token is VALID`);
+    console.log(`✅ [JWT] User ID: ${decoded.id}`);
+    console.log(`✅ [JWT] User Email: ${decoded.email}`);
+    console.log(`✅ [JWT] User Role: ${decoded.role}`);
+    if (decoded.iat) {
+      const issuedAt = new Date(decoded.iat * 1000);
+      const ageMinutes = Math.round((Date.now() - issuedAt.getTime()) / 1000 / 60);
+      console.log(`✅ [JWT] Issued at: ${issuedAt.toISOString()} (${ageMinutes} minutes ago)`);
+    }
+    if (decoded.exp) {
+      const expiresAt = new Date(decoded.exp * 1000);
+      const remainingMinutes = Math.round((expiresAt.getTime() - Date.now()) / 1000 / 60);
+      console.log(`✅ [JWT] Expires at: ${expiresAt.toISOString()} (${remainingMinutes} minutes remaining)`);
+    }
+    console.log('════════════════════════════════════════════════════════════');
+    
     return decoded;
-  } catch (error) {
-    console.error('[JWT] Token verification failed:', error);
+  } catch (error: any) {
+    console.log('╔════════════════════════════════════════════════════════════╗');
+    console.log('║ TOKEN VERIFICATION FAILED                                  ║');
+    console.log('╚════════════════════════════════════════════════════════════╝');
+    
+    if (error.name === 'TokenExpiredError') {
+      console.error(`❌ [JWT] Token has EXPIRED`);
+      console.error(`❌ [JWT] Expired at: ${error.expiredAt ? new Date(error.expiredAt).toISOString() : 'UNKNOWN'}`);
+      console.error(`❌ [JWT] Current time: ${new Date().toISOString()}`);
+      if (error.expiredAt) {
+        const minutesSinceExpiry = Math.round((Date.now() - new Date(error.expiredAt).getTime()) / 1000 / 60);
+        console.error(`❌ [JWT] Expired ${minutesSinceExpiry} minutes ago`);
+      }
+    } else if (error.name === 'JsonWebTokenError') {
+      console.error(`❌ [JWT] Token is INVALID or MALFORMED`);
+      console.error(`❌ [JWT] Error: ${error.message}`);
+      console.error(`❌ [JWT] Possible causes:`);
+      console.error(`❌   - Token was tampered with`);
+      console.error(`❌   - Wrong JWT_SECRET (production vs development mismatch)`);
+      console.error(`❌   - Token format is corrupted`);
+    } else if (error.name === 'NotBeforeError') {
+      console.error(`❌ [JWT] Token is not yet valid (nbf claim)`);
+      console.error(`❌ [JWT] Valid from: ${error.date ? new Date(error.date).toISOString() : 'UNKNOWN'}`);
+    } else {
+      console.error(`❌ [JWT] Unknown verification error`);
+      console.error(`❌ [JWT] Error name: ${error.name}`);
+      console.error(`❌ [JWT] Error message: ${error.message}`);
+      console.error(`❌ [JWT] Full error:`, error);
+    }
+    
+    console.log(`❌ [JWT] Token preview: ${tokenPreview}`);
+    console.log('════════════════════════════════════════════════════════════');
     return null;
   }
 }
