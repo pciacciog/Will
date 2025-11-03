@@ -1,0 +1,70 @@
+CRITICAL BUG: Inconsistent Session Persistence - Users Frequently Logged Out
+Problem Description:
+Users are inconsistently being logged out of the iOS app:
+
+Sometimes: The app maintains the login across multiple closures and reopenings ✓
+Most of the time: Users must re-login when they reopen the app ✗
+Never observed: Session lasting more than several hours
+This ONLY happens in production (App Store version)
+Local testing always maintains login correctly
+This issue was supposedly fixed weeks ago but persists
+
+The inconsistent nature is the key problem - we need to understand WHY it sometimes works and mostly doesn't.
+Investigation Required:
+
+Show me ALL the code related to user authentication and session management:
+
+Where/how do we store that the user is logged in?
+Where/how do we check if the user is logged in when the app opens?
+What determines whether someone stays logged in vs gets logged out?
+
+
+Previous fix attempt:
+
+What was changed to "fix" this issue before?
+Show me those specific code changes
+Why might that fix work sometimes but not consistently?
+
+
+Identify all the places where a user could be logged out:
+
+List every function/location in the code where we clear session/auth data
+Are any of these being triggered unintentionally?
+Could any of these be called based on timing or app lifecycle events?
+
+
+Compare development vs production environments:
+
+What's different between how the app runs locally vs in production?
+Are there different configurations, API endpoints, or build settings?
+Could there be timing differences that explain the inconsistency?
+
+
+Add comprehensive logging:
+
+Log when user login data is saved
+Log when user login data is retrieved
+Log when/why user login data is cleared
+Log all app lifecycle events (open, close, background, foreground)
+Make these logs accessible so we can see what's happening in production
+
+
+Potential causes to investigate:
+
+Async operations not completing before app closes
+Time-based expiration that's not being handled properly
+Network calls failing silently
+iOS Keychain access issues
+Memory/storage being cleared under certain conditions
+Race conditions between different parts of the code
+
+
+
+What I need to understand:
+
+Why does it work SOMETIMES but not MOST times?
+What's the actual difference between when it works vs when it doesn't?
+What changed between local testing (always works) and production (mostly doesn't)?
+
+Goal:
+Users should reliably stay logged in across app closures, just like during testing. We need to find and fix whatever is causing this inconsistent behavior.
