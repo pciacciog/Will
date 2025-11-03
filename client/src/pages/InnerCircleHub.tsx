@@ -11,6 +11,7 @@ import { Copy, Settings, LogOut, UserMinus, ChevronDown, Shield, Users, Target, 
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { getApiUrl } from "@/config/api";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { Browser } from '@capacitor/browser';
 import { DailyVideoRoom } from "@/components/DailyVideoRoom";
@@ -166,7 +167,7 @@ export default function InnerCircleHub() {
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
-    queryFn: () => fetch('/api/circles/mine').then(res => res.json()),
+    queryFn: () => fetch(getApiUrl('/api/circles/mine')).then(res => res.json()),
     enabled: !!user,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
@@ -341,7 +342,7 @@ export default function InnerCircleHub() {
       await sessionPersistence.clearSession();
       console.log('[Logout] ✅ Session cleared from persistent storage');
       
-      await fetch('/api/logout', { method: 'POST' });
+      await fetch(getApiUrl('/api/logout'), { method: 'POST' });
       window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);

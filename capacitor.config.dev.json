@@ -1,10 +1,12 @@
 {
   "appId": "com.porfirio.will",
-  "appName": "WILL",
+  "appName": "WILL (DEV)",
   "webDir": "dist/public",
   "server": {
     "androidScheme": "https",
-    "iosScheme": "https"
+    "iosScheme": "https",
+    "url": "https://willbeta.replit.app",
+    "cleartext": true
   },
   "ios": {
     "scheme": "WILL",

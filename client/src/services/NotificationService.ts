@@ -1,6 +1,7 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
+import { getApiUrl } from '@/config/api';
 
 // Add at the very top of the file
 console.log('🔥 NOTIF SERVICE: File loaded at', new Date().toISOString());
@@ -142,9 +143,8 @@ export class NotificationService {
     console.log('🔥 NETWORK TEST: Starting connectivity test...');
     
     try {
-      // Test basic connectivity - Use current server URL
-      const apiBaseUrl = window.location.origin; // Use current origin
-      const testUrl = `${apiBaseUrl}/api/notifications/status`;
+      // Test basic connectivity
+      const testUrl = getApiUrl('/api/notifications/status');
       
       console.log('🔥 NETWORK TEST: Testing URL:', testUrl);
       
@@ -181,9 +181,8 @@ export class NotificationService {
     console.log('🔥 API CALL: Starting sendTokenToServer...');
     console.log('🔥 API CALL: Token to send:', token?.substring(0, 20) + '...');
     
-    // Use current server URL
-    const apiBaseUrl = window.location.origin;
-    const endpoint = `${apiBaseUrl}/api/device-token`;
+    // Get API endpoint URL
+    const endpoint = getApiUrl('/api/device-token');
     
     console.log('🔥 API CALL: Full endpoint URL:', endpoint);
     
@@ -342,7 +341,7 @@ export class NotificationService {
         // User not authenticated - try unauthenticated endpoint first
         console.log('🔓 User not authenticated - trying unauthenticated endpoint first');
         try {
-          response = await fetch('/api/device-token', {
+          response = await fetch(getApiUrl('/api/device-token'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
