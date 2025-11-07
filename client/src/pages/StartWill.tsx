@@ -18,51 +18,64 @@ import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
 import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Bell } from "lucide-react";
 
-// Helper function to calculate next Monday at 12:00 AM
-function getNextMondayStart(): string {
+// Helper function to get next Monday's date in YYYY-MM-DD format (local timezone)
+// Returns the upcoming Monday:
+// - Sunday: tomorrow (Monday)
+// - Monday: today (user can adjust time to be future)
+// - Tuesday-Saturday: the upcoming Monday
+function getNextMondayDate(): string {
   const now = new Date();
   const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
   
   // Calculate days until next Monday
   let daysUntilMonday;
   if (dayOfWeek === 0) { // Sunday
-    // If it's Sunday after 12:00 PM, use next Monday
-    if (now.getHours() >= 12) {
-      daysUntilMonday = 1;
-    } else {
-      daysUntilMonday = 1;
-    }
+    daysUntilMonday = 1; // Tomorrow is Monday
   } else if (dayOfWeek === 1) { // Monday
-    // If it's Monday, use next Monday (one week from today)
-    daysUntilMonday = 7;
+    daysUntilMonday = 0; // Today is Monday (user can set time in future)
   } else {
-    // Tuesday through Saturday
+    // Tuesday (2) through Saturday (6)
     daysUntilMonday = 8 - dayOfWeek;
   }
   
   const nextMonday = new Date(now);
   nextMonday.setDate(now.getDate() + daysUntilMonday);
-  nextMonday.setHours(0, 0, 0, 0); // 12:00 AM
   
-  return nextMonday.toISOString();
+  // Return in YYYY-MM-DD format (local date)
+  const year = nextMonday.getFullYear();
+  const month = String(nextMonday.getMonth() + 1).padStart(2, '0');
+  const day = String(nextMonday.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
-// Helper function to calculate the Sunday at 12:00 PM of the same week
-function getWeekEndSunday(mondayStart: string): string {
-  const monday = new Date(mondayStart);
+// Helper function to get following Sunday's date in YYYY-MM-DD format (local timezone)
+function getFollowingSundayDate(mondayDateStr: string): string {
+  const [year, month, day] = mondayDateStr.split('-').map(Number);
+  const monday = new Date(year, month - 1, day);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6); // Add 6 days to get to Sunday
-  sunday.setHours(12, 0, 0, 0); // 12:00 PM
   
-  return sunday.toISOString();
+  // Return in YYYY-MM-DD format (local date)
+  const sunYear = sunday.getFullYear();
+  const sunMonth = String(sunday.getMonth() + 1).padStart(2, '0');
+  const sunDay = String(sunday.getDate()).padStart(2, '0');
+  return `${sunYear}-${sunMonth}-${sunDay}`;
 }
 
 export default function StartWill() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
+  
+  // Initialize date/time defaults once on mount
+  const [startDate, setStartDate] = useState(() => getNextMondayDate());
+  const [startTime, setStartTime] = useState('00:00');
+  const [endDate, setEndDate] = useState(() => getFollowingSundayDate(getNextMondayDate()));
+  const [endTime, setEndTime] = useState('12:00');
+  
   const [dailyReminderEnabled, setDailyReminderEnabled] = useState(true);
   const [dailyReminderTime, setDailyReminderTime] = useState('20:00');
+  
   const [willData, setWillData] = useState({
     startDate: '',
     endDate: '',
@@ -173,14 +186,6 @@ export default function StartWill() {
 
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Always use dates from form
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const startDate = formData.get('startDate') as string;
-    const startTime = formData.get('startTime') as string;
-    const endDate = formData.get('endDate') as string;
-    const endTime = formData.get('endTime') as string;
 
     // Combine date and time using utility function
     const startDateTime = createDateTimeFromInputs(startDate, startTime);
@@ -209,11 +214,11 @@ export default function StartWill() {
       return;
     }
 
-    // Store reminder settings (for future use - can be sent to backend when creating Will)
-    console.log('Daily Reminder Settings:', {
-      enabled: dailyReminderEnabled,
-      time: dailyReminderTime
-    });
+    // TODO: Daily reminder settings need to be persisted to backend
+    // For now, log them for future implementation
+    if (dailyReminderEnabled) {
+      console.log('[Will Creation] Daily reminder scheduled for:', dailyReminderTime);
+    }
 
     setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });
     setCurrentStep(2);
@@ -450,8 +455,8 @@ export default function StartWill() {
                   <div>
                     <Input 
                       type="date" 
-                      name="startDate"
-                      defaultValue={new Date(getNextMondayStart()).toISOString().split('T')[0]}
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
                       required 
                       className="w-full"
                       data-testid="input-start-date"
@@ -461,8 +466,8 @@ export default function StartWill() {
                   <div>
                     <Input 
                       type="time" 
-                      name="startTime"
-                      defaultValue="00:00"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
                       required 
                       className="w-full"
                       data-testid="input-start-time"
@@ -479,8 +484,8 @@ export default function StartWill() {
                   <div>
                     <Input 
                       type="date" 
-                      name="endDate"
-                      defaultValue={new Date(getWeekEndSunday(getNextMondayStart())).toISOString().split('T')[0]}
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
                       required 
                       className="w-full"
                       data-testid="input-end-date"
@@ -490,8 +495,8 @@ export default function StartWill() {
                   <div>
                     <Input 
                       type="time" 
-                      name="endTime"
-                      defaultValue="12:00"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
                       required 
                       className="w-full"
                       data-testid="input-end-time"
