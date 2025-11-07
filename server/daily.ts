@@ -21,15 +21,16 @@ interface CreateRoomOptions {
 }
 
 export class DailyService {
-  private apiKey: string;
+  private apiKey: string | null;
   private baseUrl = 'https://api.daily.co/v1';
 
   constructor() {
-    if (!process.env.DAILY_API_KEY) {
-      throw new Error('DAILY_API_KEY environment variable is required');
+    this.apiKey = process.env.DAILY_API_KEY || null;
+    if (!this.apiKey) {
+      console.log('[DailyService] Running in simulation mode - DAILY_API_KEY not configured');
+    } else {
+      console.log('[DailyService] Initialized with API key:', this.apiKey.substring(0, 8) + '...');
     }
-    this.apiKey = process.env.DAILY_API_KEY;
-    console.log('[DailyService] Initialized with API key:', this.apiKey ? this.apiKey.substring(0, 8) + '...' : 'NOT SET');
   }
 
   async createEndRoom({ willId, scheduledStart, durationMinutes = 30 }: CreateRoomOptions): Promise<DailyRoom> {
@@ -48,6 +49,23 @@ export class DailyService {
       durationMinutes
     });
     console.log('[DailyService] Daily.co API Key present:', !!this.apiKey);
+    
+    if (!this.apiKey) {
+      console.log('[DailyService] SIMULATION MODE: Returning mock room data');
+      return {
+        id: `mock-${roomName}`,
+        name: roomName,
+        api_created: false,
+        privacy: 'public',
+        url: `https://mock.daily.co/${roomName}`,
+        created_at: new Date().toISOString(),
+        config: {
+          start_video_off: false,
+          start_audio_off: false,
+          exp: expireTime
+        }
+      };
+    }
     
     const response = await fetch(`${this.baseUrl}/rooms`, {
       method: 'POST',
@@ -96,6 +114,11 @@ export class DailyService {
   }
 
   async deleteRoom(roomName: string): Promise<void> {
+    if (!this.apiKey) {
+      console.log('[DailyService] SIMULATION MODE: Skipping room deletion');
+      return;
+    }
+    
     const response = await fetch(`${this.baseUrl}/rooms/${roomName}`, {
       method: 'DELETE',
       headers: {
@@ -111,6 +134,11 @@ export class DailyService {
   }
 
   async getRoomInfo(roomName: string): Promise<DailyRoom | null> {
+    if (!this.apiKey) {
+      console.log('[DailyService] SIMULATION MODE: Returning null for room info');
+      return null;
+    }
+    
     const response = await fetch(`${this.baseUrl}/rooms/${roomName}`, {
       method: 'GET',
       headers: {
