@@ -174,49 +174,46 @@ export default function StartWill() {
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    let startDateTime: string;
-    let endDateTime: string;
-    
-    if (schedulingMode === 'prescribed') {
-      // Use prescribed weekly schedule
-      startDateTime = getNextMondayStart();
-      endDateTime = getWeekEndSunday(startDateTime);
-    } else {
-      // Use custom dates from form
-      const form = e.target as HTMLFormElement;
-      const formData = new FormData(form);
-      const startDate = formData.get('startDate') as string;
-      const startTime = formData.get('startTime') as string;
-      const endDate = formData.get('endDate') as string;
-      const endTime = formData.get('endTime') as string;
+    // Always use dates from form
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const startDate = formData.get('startDate') as string;
+    const startTime = formData.get('startTime') as string;
+    const endDate = formData.get('endDate') as string;
+    const endTime = formData.get('endTime') as string;
 
-      // Combine date and time using utility function
-      startDateTime = createDateTimeFromInputs(startDate, startTime);
-      endDateTime = createDateTimeFromInputs(endDate, endTime);
+    // Combine date and time using utility function
+    const startDateTime = createDateTimeFromInputs(startDate, startTime);
+    const endDateTime = createDateTimeFromInputs(endDate, endTime);
 
-      // Validation for custom dates
-      const now = new Date();
-      const start = new Date(startDateTime);
-      const end = new Date(endDateTime);
+    // Validation
+    const now = new Date();
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
 
-      if (start <= now) {
-        toast({
-          title: "Invalid Start Date",
-          description: "Start date must be in the future",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (end <= start) {
-        toast({
-          title: "Invalid End Date",
-          description: "End date must be after start date",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (start <= now) {
+      toast({
+        title: "Invalid Start Date",
+        description: "Start date must be in the future",
+        variant: "destructive",
+      });
+      return;
     }
+
+    if (end <= start) {
+      toast({
+        title: "Invalid End Date",
+        description: "End date must be after start date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Store reminder settings (for future use - can be sent to backend when creating Will)
+    console.log('Daily Reminder Settings:', {
+      enabled: dailyReminderEnabled,
+      time: dailyReminderTime
+    });
 
     setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });
     setCurrentStep(2);
