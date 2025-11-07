@@ -161,10 +161,10 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies for production HTTPS
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: false, // Allow JavaScript access for mobile app
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'none', // Required for cross-origin requests from mobile app
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' requires secure=true, so use 'lax' in development
     },
   };
 

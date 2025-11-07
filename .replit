@@ -28,7 +28,7 @@ localPort = 36767
 externalPort = 3001
 
 [[ports]]
-localPort = 41837
+localPort = 41771
 externalPort = 5000
 
 [[ports]]
@@ -59,3 +59,6 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[agent]
+expertMode = true
