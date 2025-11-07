@@ -135,9 +135,9 @@ app.get('/icon-generator.html', (req: Request, res: Response) => {
   res.sendFile(path.join(process.cwd(), 'dist', 'icon-generator.html'));
 });
 
-// In production, serve static files from dist
+// In production, serve static files from dist/public
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(process.cwd(), 'dist');
+  const distPath = path.join(process.cwd(), 'dist', 'public');
   app.use(express.static(distPath));
   
   // Serve index.html for all non-API routes (SPA routing)
@@ -147,13 +147,13 @@ if (process.env.NODE_ENV === 'production') {
       if (require('fs').existsSync(indexPath)) {
         res.sendFile(indexPath);
       } else {
-        res.status(404).send('Frontend not found - check dist/index.html');
+        res.status(404).send('Frontend not found - check dist/public/index.html');
       }
     }
   });
 } else {
-  // In development, serve static files from dist as well
-  const distPath = path.join(process.cwd(), 'dist');
+  // In development, serve static files from dist/public as well
+  const distPath = path.join(process.cwd(), 'dist', 'public');
   app.use(express.static(distPath));
   
   // Serve index.html for all non-API routes (SPA routing)
@@ -169,7 +169,7 @@ if (process.env.NODE_ENV === 'production') {
     }
   });
   
-  console.log('Development mode: Serving frontend from dist/');
+  console.log('Development mode: Serving frontend from dist/public/');
 }
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
