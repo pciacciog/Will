@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,7 +16,7 @@ import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } 
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Bell } from "lucide-react";
 
 // Helper function to calculate next Monday at 12:00 AM
 function getNextMondayStart(): string {
@@ -60,8 +60,9 @@ function getWeekEndSunday(mondayStart: string): string {
 export default function StartWill() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
-  const [schedulingMode, setSchedulingMode] = useState('prescribed'); // 'prescribed' or 'custom'
   const [showTransition, setShowTransition] = useState(false);
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(true);
+  const [dailyReminderTime, setDailyReminderTime] = useState('20:00');
   const [willData, setWillData] = useState({
     startDate: '',
     endDate: '',
@@ -396,6 +397,9 @@ export default function StartWill() {
               {currentStep === 3 && "Why would you like to do this?"}
               {currentStep === 4 && "Schedule Your End Room"}
             </h1>
+            {currentStep === 1 && (
+              <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
+            )}
             {currentStep === 2 && (
               <>
                 <div className="flex justify-center my-3">
@@ -441,120 +445,99 @@ export default function StartWill() {
         {currentStep === 1 && !showTransition && (
           <SectionCard>
             
-            <form onSubmit={handleStep1Submit} className="space-y-4">
-              {/* Scheduling Mode Selection */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-lg font-medium text-gray-900 mb-4 tracking-tight">
-                    Choose a schedule template below
-                  </label>
-                  <RadioGroup value={schedulingMode} onValueChange={setSchedulingMode} className="space-y-4">
-                    <label 
-                      htmlFor="prescribed"
-                      className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        schedulingMode === 'prescribed' 
-                          ? 'border-brandBlue bg-blue-50 ring-2 ring-blue-200' 
-                          : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <RadioGroupItem value="prescribed" id="prescribed" className="sr-only" />
-                      <div className="font-medium text-gray-900 mb-1 tracking-tight">📅 Week Template</div>
-                      <div className="text-sm text-gray-600 tracking-tight">
-                        Starts next Monday at 12:00 AM and ends Sunday at 12:00 PM
-                      </div>
-                    </label>
-                    <label 
-                      htmlFor="custom"
-                      className={`block p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        schedulingMode === 'custom' 
-                          ? 'border-brandBlue bg-blue-50 ring-2 ring-blue-200' 
-                          : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <RadioGroupItem value="custom" id="custom" className="sr-only" />
-                      <div className="font-medium text-gray-900 mb-1 tracking-tight">⚙️ Custom</div>
-                      <div className="text-sm text-gray-600 tracking-tight">
-                        Pick your own start and end times.
-                      </div>
-                    </label>
-                  </RadioGroup>
+            <form onSubmit={handleStep1Submit} className="space-y-6 px-4">
+              {/* Start Date & Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Input 
+                      type="date" 
+                      name="startDate"
+                      defaultValue={new Date(getNextMondayStart()).toISOString().split('T')[0]}
+                      required 
+                      className="w-full"
+                      data-testid="input-start-date"
+                    />
+                    <div className="text-xs text-gray-400 mt-1">MM/DD/YYYY</div>
+                  </div>
+                  <div>
+                    <Input 
+                      type="time" 
+                      name="startTime"
+                      defaultValue="00:00"
+                      required 
+                      className="w-full"
+                      data-testid="input-start-time"
+                    />
+                    <div className="text-xs text-gray-400 mt-1">HH:MM</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* End Date & Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Input 
+                      type="date" 
+                      name="endDate"
+                      defaultValue={new Date(getWeekEndSunday(getNextMondayStart())).toISOString().split('T')[0]}
+                      required 
+                      className="w-full"
+                      data-testid="input-end-date"
+                    />
+                    <div className="text-xs text-gray-400 mt-1">MM/DD/YYYY</div>
+                  </div>
+                  <div>
+                    <Input 
+                      type="time" 
+                      name="endTime"
+                      defaultValue="12:00"
+                      required 
+                      className="w-full"
+                      data-testid="input-end-time"
+                    />
+                    <div className="text-xs text-gray-400 mt-1">HH:MM</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Prescribed Weekly Preview */}
-              {schedulingMode === 'prescribed' && (
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mx-4">
-                  <div>
-                    <div className="font-medium text-gray-900 mb-1 tracking-tight">Selected Schedule</div>
-                    <div className="text-sm text-gray-700 space-y-0.5 tracking-tight">
-                      <div><strong>Start:</strong> {new Date(getNextMondayStart()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 AM</div>
-                      <div><strong>End:</strong> {new Date(getWeekEndSunday(getNextMondayStart())).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at 12:00 PM</div>
-                      <div className="mt-1 text-xs text-gray-600 tracking-tight">This is the schedule for your upcoming <em>Will</em>.</div>
+              {/* Daily Reminder Section */}
+              <div className="space-y-3 pt-2">
+                <label className="block text-sm font-medium text-gray-700 tracking-tight">Daily Reminder</label>
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <Bell className={`w-5 h-5 ${dailyReminderEnabled ? 'text-brandBlue' : 'text-gray-400'}`} />
+                    <div>
+                      {dailyReminderEnabled ? (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-700">Remind me each day at</span>
+                          <Input
+                            type="time"
+                            value={dailyReminderTime}
+                            onChange={(e) => setDailyReminderTime(e.target.value)}
+                            className="w-24 h-8 text-sm"
+                            data-testid="input-reminder-time"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">Reminders off</span>
+                      )}
                     </div>
                   </div>
+                  <Switch
+                    checked={dailyReminderEnabled}
+                    onCheckedChange={setDailyReminderEnabled}
+                    data-testid="toggle-reminder"
+                  />
                 </div>
-              )}
-
-              {/* Custom Date Inputs */}
-              {schedulingMode === 'custom' && (
-                <div className="space-y-3 px-4">
-                  <div className="space-y-3">
-                    {/* Start Date & Time */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Input 
-                            type="date" 
-                            name="startDate"
-                            required 
-                            className="w-full"
-                          />
-                          <div className="text-xs text-gray-400 mt-1">MM/DD/YYYY</div>
-                        </div>
-                        <div>
-                          <Input 
-                            type="time" 
-                            name="startTime"
-                            required 
-                            className="w-full"
-                          />
-                          <div className="text-xs text-gray-400 mt-1">HH:MM</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* End Date & Time */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Input 
-                            type="date" 
-                            name="endDate"
-                            required 
-                            className="w-full"
-                          />
-                          <div className="text-xs text-gray-400 mt-1">MM/DD/YYYY</div>
-                        </div>
-                        <div>
-                          <Input 
-                            type="time" 
-                            name="endTime"
-                            required 
-                            className="w-full"
-                          />
-                          <div className="text-xs text-gray-400 mt-1">HH:MM</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              </div>
               
-              <div className="flex justify-between items-center px-4 pt-2">
+              <div className="flex justify-between items-center pt-2">
                 <div className="flex items-center space-x-2">
-                  <Button type="button" variant="ghost" onClick={handleCancel}>
+                  <Button type="button" variant="ghost" onClick={handleCancel} data-testid="button-cancel">
                     Cancel
                   </Button>
                   {showHelpIcon && (
@@ -564,7 +547,7 @@ export default function StartWill() {
                     />
                   )}
                 </div>
-                <PrimaryButton type="submit">
+                <PrimaryButton type="submit" data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
