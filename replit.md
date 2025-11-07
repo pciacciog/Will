@@ -6,6 +6,21 @@ This is a full-stack web application designed for group goal accountability. Use
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### November 7, 2025: Will Creation "When" Screen Redesign
+- **Removed**: Template selection UI ("Week Template" vs "Custom")
+- **Added**: Direct date/time pickers with smart defaults:
+  - Start date/time: Next Monday at 12:00 AM (or current Monday if today)
+  - End date/time: Following Sunday at 12:00 PM
+  - Daily reminder: Optional toggle with time picker (frontend only, backend TODO)
+- **Implementation**:
+  - Controlled inputs with memoized state initialization to prevent re-render data loss
+  - Local timezone date calculations (YYYY-MM-DD format) to avoid ISO conversion issues
+  - Smart Monday logic: Returns current Monday on Mondays, next Monday on other days
+  - Validation ensures start date is in the future
+- **Files Modified**: `client/src/pages/StartWill.tsx`
+
 ## System Architecture
 
 ### UI/UX Decisions
