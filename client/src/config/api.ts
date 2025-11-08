@@ -25,13 +25,25 @@ const BACKEND_SERVER_URL = 'https://willbeta.replit.app';
  * - Android app: 'https://willbeta.replit.app'
  */
 export function getApiBaseUrl(): string {
+  const isNative = Capacitor.isNativePlatform();
+  const platform = Capacitor.getPlatform();
+  
+  console.log('🌐 [API Config] Platform detection:', {
+    isNative,
+    platform,
+    currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
+    backendUrl: BACKEND_SERVER_URL,
+  });
+  
   // If running in a native Capacitor app (iOS/Android with bundled content)
-  if (Capacitor.isNativePlatform()) {
+  if (isNative) {
+    console.log('📱 [API Config] Using absolute URL for native app:', BACKEND_SERVER_URL);
     return BACKEND_SERVER_URL;
   }
   
   // If running in a web browser (served from same domain as API)
   // Use relative URLs (empty string means "/api/..." goes to current origin)
+  console.log('🌐 [API Config] Using relative URLs for web browser (same origin)');
   return '';
 }
 
