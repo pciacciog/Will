@@ -1,0 +1,113 @@
+# Need Complete Assessment Before Implementing Staging Environment
+
+Before we make any changes, I need to understand the current state of my codebase and infrastructure.
+
+## Background Context:
+
+**What happened:**
+1. On November 3rd, I removed the deployed URL from `capacitor.config.json` to fix an iOS logout bug
+2. This broke my web deployment testing workflow
+3. My iOS app now bundles locally and uses `getApiUrl()` for API routing
+4. I have a production app on the App Store that real users are using
+
+**Current situation:**
+- I need a safe way to test new features (like the "When" screen redesign)
+- I can't risk breaking the production app
+- I want to set up a proper staging environment
+
+## What I Need You To Analyze:
+
+### **1. Current Configuration Files**
+
+Please show me the contents of:
+```bash
+cat capacitor.config.json
+cat capacitor.config.dev.json  # If it exists
+cat client/src/config/api.ts
+```
+
+**Questions:**
+- What bundle ID am I currently using?
+- What's the difference between capacitor.config.json and capacitor.config.dev.json?
+- How is API routing currently configured?
+- Are there already multiple configurations I don't know about?
+
+### **2. Current Environment Variables**
+```bash
+# Show me what environment variables exist
+ls -la .env*
+cat .env 2>/dev/null || echo "No .env file"
+cat .env.local 2>/dev/null || echo "No .env.local"
+cat .env.production 2>/dev/null || echo "No .env.production"
+```
+
+**Questions:**
+- What environment variables are currently set?
+- How does the app know which API URL to use?
+- Are there already staging/production distinctions?
+
+### **3. Current Build Process**
+```bash
+# Show me package.json scripts
+grep -A 20 '"scripts"' package.json
+```
+
+**Questions:**
+- What build commands exist?
+- Are there already separate builds for different environments?
+- How do I currently build for iOS vs web?
+
+### **4. Current Backend/API Setup**
+
+**Questions:**
+- Is this Replit serving both the API and the frontend?
+- What URL is the production iOS app pointing to for API calls?
+- Is there already a separate staging backend, or is everything production?
+- What database is the current API using?
+
+### **5. Current Deployment Setup**
+
+**Questions:**
+- What gets deployed when I click "Deploy" in Replit?
+- Is the deployment only the backend API, or frontend too?
+- What URL is the deployed backend accessible at?
+- Is there already a staging deployment?
+
+### **6. Current APNs/Push Notification Setup**
+
+**Questions:**
+- How many APNs keys/certificates do I have configured?
+- Are they for production, development, or both?
+- Where are these credentials stored (environment variables)?
+- Are notifications already separated by environment?
+
+### **7. Current Database Setup**
+
+**Questions:**
+- What database am I using (Postgres, MongoDB, etc.)?
+- Is there one database or multiple?
+- How is data currently separated (if at all)?
+- Where is the database hosted?
+
+### **8. Current App Store Setup**
+
+**Questions:**
+- What bundle ID is published on the App Store? (`com.will.app`?)
+- Is TestFlight already set up, or do I need to configure it?
+- What version is currently live in production?
+
+## Why I Need This Information:
+
+I want to set up a proper staging environment where I can:
+- Test new features safely
+- Use TestFlight to install staging builds on my phone
+- Keep staging separate from production (different bundle ID, database, API)
+- NOT break anything that's currently working in production
+
+But before we change anything, I need to understand:
+- What already exists
+- What's production vs development
+- What configurations are already in place
+- What might break if we make changes
+
+**Please provide a complete picture of the current state, then we can plan the best approach for adding a staging environment.**
