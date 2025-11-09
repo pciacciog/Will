@@ -1,0 +1,193 @@
+# Complete Migration Verification: Old Repl → New Repl
+
+I've migrated from a corrupted old Repl to this fresh environment. I've added all secrets, but I want to verify EVERYTHING transferred correctly before proceeding.
+
+## **Verification Checklist - Please Help Me Check:**
+
+### **1. Source Code Integrity**
+
+**Check git status:**
+```bash
+git log --oneline -20
+git status
+git diff origin/main  # Or whatever your main branch is
+```
+
+**Questions:**
+- Is all recent code committed and present?
+- Are there uncommitted changes?
+- Does git history match the old Repl?
+- Is the November 3rd config change present?
+
+### **2. All Configuration Files Present**
+
+**Check these files exist and have correct content:**
+```bash
+ls -la capacitor.config.json
+ls -la capacitor.config.dev.json
+ls -la client/src/config/api.ts
+ls -la vite.config.ts
+ls -la tsconfig.json
+ls -la package.json
+ls -la .gitignore
+ls -la .replit
+```
+
+**Show me the contents of critical config files:**
+```bash
+cat capacitor.config.json
+cat client/src/config/api.ts
+cat package.json | grep -A 30 '"scripts"'
+```
+
+### **3. Dependencies Match**
+
+**Compare package versions:**
+```bash
+cat package.json | grep -A 100 '"dependencies"'
+cat package.json | grep -A 100 '"devDependencies"'
+```
+
+**Verify node_modules is healthy:**
+```bash
+ls node_modules/ | wc -l  # Should be ~600+ packages
+ls node_modules/vite  # Should exist now
+ls node_modules/@vitejs/plugin-react  # Should exist
+```
+
+### **4. Environment Variables Complete**
+
+**Check all secrets are set (don't show values, just confirm they exist):**
+```bash
+# Don't echo values, just check if set
+[ -n "$APNS_PRIVATE_KEY" ] && echo "✅ APNS_PRIVATE_KEY set" || echo "❌ APNS_PRIVATE_KEY missing"
+[ -n "$APNS_KEY_ID" ] && echo "✅ APNS_KEY_ID set" || echo "❌ APNS_KEY_ID missing"
+[ -n "$APNS_TEAM_ID" ] && echo "✅ APNS_TEAM_ID set" || echo "❌ APNS_TEAM_ID missing"
+[ -n "$JWT_SECRET" ] && echo "✅ JWT_SECRET set" || echo "❌ JWT_SECRET missing"
+[ -n "$SESSION_SECRET" ] && echo "✅ SESSION_SECRET set" || echo "❌ SESSION_SECRET missing"
+[ -n "$DATABASE_URL" ] && echo "✅ DATABASE_URL set" || echo "❌ DATABASE_URL missing"
+[ -n "$DAILY_API_KEY" ] && echo "✅ DAILY_API_KEY set" || echo "❌ DAILY_API_KEY missing"
+```
+
+**Questions:**
+- Are there any other secrets I might have missed?
+- Were there any `.env` files in the old Repl?
+
+### **5. Database Connection**
+
+**Test database connectivity:**
+```bash
+# Show me what database you're configured to use
+grep -r "DATABASE" server/ client/ --include="*.ts" --include="*.js" | head -20
+```
+
+**Questions:**
+- What database am I using (Postgres, MongoDB, etc.)?
+- Is it hosted externally or within Replit?
+- Can I verify connection works without exposing credentials?
+- Is this the PRODUCTION database? (critical to know)
+
+### **6. Build Output Directories**
+
+**Check what exists:**
+```bash
+ls -la dist/ 2>/dev/null || echo "No dist/ folder"
+ls -la dist/public/ 2>/dev/null || echo "No dist/public/ folder"
+ls -la client/dist/ 2>/dev/null || echo "No client/dist/ folder"
+```
+
+**Questions:**
+- Should any build artifacts exist in version control?
+- Or should dist/ be completely regenerated?
+
+### **7. Server Configuration**
+
+**Check server files:**
+```bash
+ls -la server/
+cat server/index-standalone.ts | grep -A 5 "static\|dist\|express.static"
+cat server/auth.ts | grep -A 3 "sameSite\|secure"
+```
+
+**Questions:**
+- Is server configuration identical to old Repl?
+- Any hardcoded URLs that might point to old Repl?
+
+### **8. File Permissions & Executable Scripts**
+
+**Check for any special permissions:**
+```bash
+find . -type f -executable -not -path "./node_modules/*" -not -path "./.git/*"
+```
+
+### **9. Hidden Files**
+
+**Check for hidden config files that might not have transferred:**
+```bash
+ls -la | grep "^\."
+```
+
+**Common ones to verify:**
+- `.env` (if any)
+- `.gitignore`
+- `.replit`
+- `.npmrc`
+- `.nvmrc`
+
+### **10. iOS Native Files (if applicable)**
+
+**If you have ios/ folder:**
+```bash
+ls -la ios/ 2>/dev/null || echo "No ios/ folder"
+```
+
+**Questions:**
+- Are there native iOS files in this Repl?
+- Or are they only in Xcode on your local machine?
+
+## **Functional Testing - Can You Help Me Test:**
+
+### **Test 1: Development Server**
+```bash
+npm run dev
+```
+**Should:** Start without errors, serve app on port 5000
+
+### **Test 2: Build Process**
+```bash
+npm run build
+```
+**Should:** Complete successfully, create dist/ folder with fresh files
+
+### **Test 3: API Endpoints**
+```bash
+# Test a simple endpoint
+curl http://localhost:5000/api/health || curl http://localhost:5000/
+```
+**Should:** Return something (not 404 or error)
+
+### **Test 4: Authentication**
+**In browser preview:**
+- Can I log in?
+- Does session persist?
+- Do API calls work after login?
+
+## **Migration Issues to Watch For:**
+
+**Common problems when migrating Repls:**
+- ❌ Git remote URL might point to old Repl
+- ❌ Hardcoded URLs in code pointing to old Repl
+- ❌ Different Node.js or npm versions
+- ❌ File paths that worked in old Repl but break in new one
+- ❌ Cached build artifacts causing confusion
+- ❌ Different Replit configuration (.replit file)
+
+## **Summary Request:**
+
+After checking all of the above, please tell me:
+1. ✅ What's confirmed working and identical to old Repl
+2. ⚠️ What's different or missing
+3. ❌ What's broken or needs fixing
+4. 🤔 What you're uncertain about
+
+I want to be 100% confident this new environment is a complete, working copy before we proceed with staging setup or any other changes.
