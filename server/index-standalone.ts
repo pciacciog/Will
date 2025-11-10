@@ -114,16 +114,7 @@ app.get("/privacy-policy", (req, res) => {
   res.send(privacyPolicyHtml);
 });
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({ 
-    status: "ok", 
-    timestamp: new Date().toISOString(),
-    pushNotifications: "enabled" 
-  });
-});
-
-// Register all API routes
+// Register all API routes (includes enhanced /api/health endpoint)
 registerRoutes(app);
 
 // Start End Room scheduler

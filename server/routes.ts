@@ -69,6 +69,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth routes are handled by setupAuth
 
+  // Health check endpoint - verify environment and database connection
+  app.get('/api/health', async (req, res) => {
+    const env = process.env.NODE_ENV || 'development';
+    const databaseType = env === 'staging' ? 'staging' : (env === 'production' ? 'production' : 'development');
+    
+    try {
+      // Test database connection with a simple query
+      const result = await db.execute('SELECT 1 as health');
+      
+      res.json({
+        status: 'ok',
+        environment: env,
+        database: databaseType,
+        databaseConnected: true,
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        services: {
+          daily: process.env.DAILY_API_KEY ? 'configured' : 'simulation',
+          pushNotifications: process.env.APNS_PRIVATE_KEY ? 'configured' : 'simulation'
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        environment: env,
+        database: databaseType,
+        databaseConnected: false,
+        error: 'Database connection failed',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Update profile route
   app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
