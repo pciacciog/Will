@@ -1,0 +1,53 @@
+approve
+
+Proceed with code changes and verification using the notes below.
+
+Authoritative URLs:
+- PRODUCTION_API: https://will-1-porfirioaciacci.replit.app
+- STAGING_API:   https://will-staging-porfirioaciacci.replit.app
+
+Database hosts:
+- Prod host:    ep-cool-sunset-a486pigg.us-east-1.aws.neon.tech
+- Staging host: ep-delicate-hill-aherqaw6.c-3.us-east-1.aws.neon.tech
+(Hosts differ → good. Same DB name 'neondb' is OK.)
+
+A) Environment selection + safety guards (server/db.ts)
+- Prefer APP_ENV over NODE_ENV:
+  const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
+- If env === 'staging':
+  - Throw if DATABASE_URL_STAGING is missing.
+  - Throw if host(DATABASE_URL_STAGING) === host(DATABASE_URL) to prevent accidental prod usage.
+- Keep logging which DB is selected.
+
+B) CORS updates (server/index-standalone.ts & server/index.ts)
+- Replace 'https://willbeta.replit.app' with:
+  - https://will-1-porfirioaciacci.replit.app
+  - https://will-staging-porfirioaciacci.replit.app
+- Keep capacitor://localhost, ionic://localhost, http(s)://localhost as needed.
+- Default fallback origin should be the NEW prod URL.
+
+C) Health endpoint
+- Add GET /api/health/env returning:
+  appEnv, nodeEnv,
+  backendUrlHost (deployed *.replit.app host),
+  usingDbUrlHost, usingDbName,
+  usersCount, databasesAreSame (bool)
+- Do not expose secrets.
+
+D) Client config
+- Do NOT change: client/src/config/api.ts is already correct with the two URLs above.
+
+E) Secrets (I will handle values)
+- I will set APP_ENV=staging in the STAGING Repl.
+- I will set DATABASE_URL_STAGING to the staging Neon connection string (host ep-delicate-hill-…).
+- Leave DATABASE_URL pointing to the prod host (ep-cool-sunset-…).
+
+After you apply code changes:
+1) Restart the server.
+2) Call GET /api/health/env and paste the JSON.
+   Expect:
+   - appEnv = "staging"
+   - usingDbUrlHost = ep-delicate-hill-aherqaw6.c-3.us-east-1.aws.neon.tech
+   - databasesAreSame = false
+   - usersCount ≈ seed count (small)
+3) Confirm CORS includes both prod and staging URLs and no longer lists willbeta.replit.app.

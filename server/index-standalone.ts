@@ -11,7 +11,8 @@ app.use((req, res, next) => {
   
   // Allow specific origins for mobile app with credentials
   const allowedOrigins = [
-    'https://willbeta.replit.app',
+    'https://will-1-porfirioaciacci.replit.app',      // Production backend
+    'https://will-staging-porfirioaciacci.replit.app', // Staging backend
     'capacitor://localhost',
     'http://localhost',
     'ionic://localhost',
@@ -19,10 +20,18 @@ app.use((req, res, next) => {
   ];
   
   const origin = req.get('Origin');
+  
+  // If Origin header is present and in allowlist, echo it back
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-  } else {
-    res.header('Access-Control-Allow-Origin', 'https://willbeta.replit.app');
+  } 
+  // If no Origin header (e.g., CapacitorHttp omits it), allow localhost for dev
+  else if (!origin && (req.get('host') === 'localhost:5000' || req.get('host')?.startsWith('localhost'))) {
+    res.header('Access-Control-Allow-Origin', 'http://localhost');
+  }
+  // Default fallback to production URL for security
+  else {
+    res.header('Access-Control-Allow-Origin', 'https://will-1-porfirioaciacci.replit.app');
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

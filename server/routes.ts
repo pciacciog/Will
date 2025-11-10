@@ -14,11 +14,12 @@ import {
   insertDeviceTokenSchema,
   willCommitments,
   deviceTokens,
+  users,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
-import { db } from "./db";
-import { eq, and, isNull } from "drizzle-orm";
+import { db, pool } from "./db";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
 
@@ -97,6 +98,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         database: databaseType,
         databaseConnected: false,
         error: 'Database connection failed',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Enhanced diagnostic health endpoint for environment verification
+  app.get('/api/health/env', async (req, res) => {
+    const appEnv = process.env.APP_ENV || process.env.NODE_ENV || 'development';
+    const nodeEnv = process.env.NODE_ENV;
+    
+    // Determine which database URL is being used
+    const isStaging = appEnv === 'staging' || nodeEnv === 'staging';
+    const activeDbUrl = isStaging && process.env.DATABASE_URL_STAGING 
+      ? process.env.DATABASE_URL_STAGING 
+      : process.env.DATABASE_URL || '';
+    
+    try {
+      // Extract database host from connection string
+      let dbHost = 'unknown';
+      let dbName = 'unknown';
+      
+      if (activeDbUrl) {
+        try {
+          const dbUrl = new URL(activeDbUrl);
+          dbHost = dbUrl.host;
+        } catch (error) {
+          dbHost = 'invalid-url';
+        }
+      }
+      
+      // Query current database name using pool directly
+      const dbNameResult = await pool.query('SELECT current_database() as db_name');
+      if (dbNameResult.rows && dbNameResult.rows[0]) {
+        dbName = dbNameResult.rows[0].db_name;
+      }
+      
+      // Query users count using Drizzle
+      const usersResult = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+      const usersCount = usersResult && usersResult[0] ? usersResult[0].count : 0;
+      
+      // Check if both DATABASE_URLs are the same
+      const databasesAreSame = process.env.DATABASE_URL === process.env.DATABASE_URL_STAGING;
+      
+      res.json({
+        appEnv,
+        nodeEnv: nodeEnv || '(not set)',
+        backendUrlHost: 'will-staging-porfirioaciacci.replit.app',
+        usingDbUrlHost: dbHost,
+        usingDbName: dbName,
+        usersCount,
+        databaseUrlConfigured: !!process.env.DATABASE_URL,
+        databaseUrlStagingConfigured: !!process.env.DATABASE_URL_STAGING,
+        databasesAreSame,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Failed to query database',
+        message: error.message,
+        appEnv,
+        nodeEnv: nodeEnv || '(not set)',
+        backendUrlHost: 'will-staging-porfirioaciacci.replit.app',
+        databaseUrlConfigured: !!process.env.DATABASE_URL,
+        databaseUrlStagingConfigured: !!process.env.DATABASE_URL_STAGING,
         timestamp: new Date().toISOString()
       });
     }
