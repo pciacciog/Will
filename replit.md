@@ -8,6 +8,26 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 10, 2025: Staging Database Environment Setup
+- **Added**: Environment-aware database connection system
+  - Database selection based on `NODE_ENV` environment variable
+  - Support for separate staging database via `DATABASE_URL_STAGING` secret
+  - Console logging to indicate which database is active
+- **New Scripts**:
+  - `npm run dev:staging` - Run application in staging mode
+  - `npm run db:push:staging` - Push schema to staging database
+  - `npm run seed:staging` - Seed staging database with test data
+- **Test Data**: Staging seed script creates:
+  - 3 test users (test1@staging.com, test2@staging.com, test3@staging.com)
+  - 1 test circle with invite code TEST01
+  - 3 sample wills (active, pending, scheduled)
+  - Sample commitments for testing
+- **Files Modified**: 
+  - `server/db.ts` - Database connection logic
+  - `package.json` - New staging scripts
+  - `server/seed-staging.ts` - New staging seed script
+  - `STAGING-SETUP.md` - Complete setup documentation
+
 ### November 7, 2025: Will Creation "When" Screen Redesign
 - **Removed**: Template selection UI ("Week Template" vs "Custom")
 - **Added**: Direct date/time pickers with smart defaults:
@@ -54,6 +74,8 @@ Preferred communication style: Simple, everyday language.
 
 ### System Design Choices
 - **Database**: PostgreSQL (via Neon serverless) with Drizzle ORM.
+  - Environment-based database routing (development, staging, production)
+  - Schema push system (Drizzle Kit) instead of traditional migrations
 - **API Design**: RESTful API endpoints with JSON responses.
 - **Error Handling**: Comprehensive error handling and redirect logic.
 - **Timezone Handling**: Consistent UTC storage with local time display.
