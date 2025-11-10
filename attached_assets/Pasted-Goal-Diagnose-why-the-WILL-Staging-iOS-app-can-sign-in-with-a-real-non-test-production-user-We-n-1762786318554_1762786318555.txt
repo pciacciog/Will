@@ -1,0 +1,85 @@
+Goal: Diagnose why the WILL Staging iOS app can sign in with a real (non-test) production user.
+We need to confirm three links in the chain:
+1) Client (staging app) → which backend URL?
+2) Staging backend → which database?
+3) Auth code → is it reading the correct users table in the correct DB?
+
+Operate in VERIFY-FIRST mode; show findings and diffs before applying changes.
+
+CONTEXT (stack):
+- Backend: Express + Drizzle ORM + Neon (Postgres)
+- DB selector: DATABASE_URL / DATABASE_URL_STAGING based on APP_ENV (or NODE_ENV)
+- Tables (from shared/schema.ts): users, sessions, circles, wills, deviceTokens, etc.
+- Staging app bundle ID: com.porfirio.will.staging
+
+TASKS
+
+A) Confirm this Repl’s role
+1. Print this Repl’s public URL (call it BACKEND_URL_DETECTED).
+2. Print process.env.APP_ENV and process.env.NODE_ENV.
+3. If APP_ENV is not set to "staging" here, ask before changing anything.
+
+B) Health endpoint (add if missing; show diff first)
+Create or reveal a GET /health/env endpoint that returns:
+{
+  appEnv: process.env.APP_ENV || process.env.NODE_ENV,
+  baseUrl: BACKEND_URL_DETECTED (host only),
+  usingDbUrlHost: new URL(activeDbUrl).host,
+  usingDbName: result of `select current_database()`,
+  usersCount: count(*) from users (SAFE),  // good heuristic
+}
+Implementation notes:
+- Determine activeDbUrl = (APP_ENV === 'staging') ? DATABASE_URL_STAGING : DATABASE_URL
+- Query with the existing Pool (no new client)
+
+C) Verify client → backend routing
+1. Search client code for environment-aware API selection:
+   - likely in: client/src/config/api.ts (or similar)
+   - grep for: getApiUrl, VITE_APP_ENV, App.getInfo, 'replit.app', 'willbeta', 'staging'
+2. Show the code path that decides STAGING vs PRODUCTION, and list the actual URLs it resolves to.
+3. Confirm that the STAGING path uses THIS Repl’s BACKEND_URL_DETECTED (hostnames must match).
+4. If it still points to the old production URL, prepare a minimal diff to update only the STAGING URL (show diff; do not apply yet).
+
+D) Verify backend → database wiring
+1. Show server/db.ts (or wherever the Pool/drizzle is created).
+2. Print the exact logic for choosing the DB URL based on APP_ENV/NODE_ENV.
+3. Confirm that when APP_ENV === 'staging', it uses DATABASE_URL_STAGING exclusively.
+4. Check for any fallback paths that might silently use DATABASE_URL (prod) when DATABASE_URL_STAGING is missing. If found, propose a "safety halt" guard (message only, no apply yet).
+
+E) Runtime truth (use /health/env)
+1. Call GET /health/env on THIS Repl and paste the JSON.
+2. Interpret:
+   - appEnv should be "staging"
+   - usingDbName should be the staging DB (e.g., will_staging), not production
+   - usersCount should be small (close to our seeded number, e.g., ~3–10), not the large prod count
+
+F) Sanity checks on auth & sessions
+1. Show the login/auth code path:
+   - Where users are queried (which table), and which db instance is imported.
+   - Where sessions are stored (sessions table); confirm it uses the same db instance.
+2. Verify there is no cross-environment user fetching (e.g., hardcoded prod connection or external identity hitting prod DB).
+
+G) Findings & root cause
+Summarize which of these is the issue:
+- CAUSE A: Client STAGING app still calls production backend URL.
+- CAUSE B: Staging backend connects to production database.
+- CAUSE C: Auth/session code imports a prod-scoped db client or uses a different connection.
+- CAUSE D: Fallback path when DATABASE_URL_STAGING missing defaults to prod DB.
+- CAUSE E: Some proxy/redirect is forwarding staging to prod.
+
+H) Proposed minimal fixes (diffs only, wait for approval)
+1. If A: Update client staging URL to BACKEND_URL_DETECTED.
+2. If B/D: Set APP_ENV=staging and ensure DATABASE_URL_STAGING is present in this Repl’s Secrets; add a guard:
+   - if (APP_ENV==='staging' && !DATABASE_URL_STAGING) throw Error('Safety halt…');
+   - optional: reject if staging host matches known prod host.
+3. If C: Ensure all auth/session imports use the shared db instance created from the env-aware Pool.
+4. Re-run /health/env to verify: appEnv, db host, db name, usersCount.
+
+I) Report back
+- BACKEND_URL_DETECTED
+- appEnv/NODE_ENV
+- /health/env JSON
+- Client API staging URL value (path/file)
+- DB selection logic snippet (path/file)
+- Root cause classification (A/B/C/D/E)
+- Proposed diffs (do not apply until I approve)
