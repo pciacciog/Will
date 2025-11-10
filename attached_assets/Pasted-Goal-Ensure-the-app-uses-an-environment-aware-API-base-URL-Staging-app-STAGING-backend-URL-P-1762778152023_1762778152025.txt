@@ -1,0 +1,125 @@
+Goal: Ensure the app uses an environment-aware API base URL:
+- Staging app → STAGING backend URL
+- Production app → PRODUCTION backend URL
+
+Please do the following, step by step, and report results after each step.
+
+1) Detect current API config
+- Search for a centralized API URL or environment switch:
+  - Look for files like: src/config/api.ts, client/src/config/api.ts, src/config.ts
+  - Grep for strings like: API_BASE_URL, getApiUrl, VITE_APP_ENV, Capacitor App.getInfo, willbeta.replit.app, staging
+- If an environment-aware API config already exists, show me:
+  - File path
+  - The code snippet that selects STAGING vs PRODUCTION
+  - Which URLs it uses for each env
+  Then STOP here and confirm it's correct.
+
+2) If NOT found, create a single source of truth file
+- Create file: src/config/api.ts
+- Use this implementation (TypeScript). NOTE: replace <YOUR_STAGING_URL> with the actual staging URL of THIS Repl (not production), and leave PRODUCTION_API as the production URL.
+
+--- src/config/api.ts ---
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+
+const PRODUCTION_API = 'https://willbeta.replit.app';
+const STAGING_API    = '<YOUR_STAGING_URL>'; // e.g., https://will-staging.<username>.replit.app
+const LOCAL_API      = 'http://localhost:5000'; // optional for web dev
+
+let cachedApiUrl: string | null = null;
+let initPromise: Promise<string> | null = null;
+
+async function detectEnvAndUrl(): Promise<string> {
+  // Build-time override (if used): VITE_APP_ENV=staging|production
+  const buildEnv = (import.meta as any)?.env?.VITE_APP_ENV;
+  if (buildEnv === 'staging') return STAGING_API;
+  if (buildEnv === 'production') return PRODUCTION_API;
+
+  // Native runtime detection via bundle identifier (Capacitor App)
+  try {
+    const info = await App.getInfo(); // { id: 'com.porfirio.will' | 'com.porfirio.will.staging', ... }
+    if (info?.id === 'com.porfirio.will.staging') return STAGING_API;
+    return PRODUCTION_API;
+  } catch {
+    // Web fallback: choose LOCAL for dev; change to PRODUCTION if preferred
+    if (!Capacitor.isNativePlatform()) return LOCAL_API;
+    return PRODUCTION_API;
+  }
+}
+
+export async function getApiUrl(): Promise<string> {
+  if (cachedApiUrl) return cachedApiUrl;
+  if (!initPromise) {
+    initPromise = detectEnvAndUrl().then((url) => {
+      cachedApiUrl = url;
+      return url;
+    });
+  }
+  return initPromise;
+}
+
+export function getApiUrlSync(): string {
+  return cachedApiUrl ?? PRODUCTION_API;
+}
+--- end file ---
+
+3) Wire up a centralized HTTP client
+- If the codebase already has a central fetch/axios wrapper, integrate getApiUrl() there.
+- Otherwise, create:
+  - src/api/client.ts (fetch wrapper) OR src/api/axios.ts (axios instance)
+Use one of the following patterns:
+
+--- src/api/client.ts ---
+import { getApiUrl } from '@/config/api';
+
+export async function apiFetch(path: string, init?: RequestInit) {
+  const base = await getApiUrl();
+  const url  = new URL(path, base).toString();
+  return fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    ...init,
+  });
+}
+--- end file ---
+
+OR
+
+--- src/api/axios.ts ---
+import axios from 'axios';
+import { getApiUrl } from '@/config/api';
+
+let instance: ReturnType<typeof axios.create> | null = null;
+
+export async function getAxios() {
+  if (instance) return instance;
+  instance = axios.create({ baseURL: await getApiUrl() });
+  return instance;
+}
+--- end file ---
+
+4) Refactor call sites (minimal change)
+- Search for fetch/axios calls that hardcode the backend URL or join it manually.
+- Replace with apiFetch('/path', opts) OR (await getAxios()).get('/path'), etc.
+- Do this incrementally: update at least the main critical paths (auth/session, Wills CRUD, reminders) so staging and prod definitely route correctly.
+
+5) Use the correct STAGING URL
+- Confirm the actual public URL of THIS staging Repl (Run the Repl and copy the https://...replit.app link).
+- Insert that as STAGING_API in src/config/api.ts.
+- Show me the exact URL you set.
+
+6) Startup initialization
+- Ensure the app calls await getApiUrl() once at startup (e.g., in the root component) to avoid the first request racing the detection.
+- If not present, add a small init call in the app bootstrap.
+
+7) Verification
+- Print out (console.log) the resolved base URL on app load.
+- From the app, hit a simple endpoint (e.g., GET /health/env if available) and show the response.
+- Confirm that:
+  - Staging app resolves to the STAGING_API
+  - Production app resolves to the PRODUCTION_API
+  - Web dev resolves to LOCAL_API (if desired)
+
+8) Report back
+- Summarize what existed vs what you created.
+- List the files changed and how many call sites were updated.
+- Paste the resolved URLs for each environment (staging/prod/web).

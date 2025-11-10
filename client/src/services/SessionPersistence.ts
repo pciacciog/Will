@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
-import { getApiUrl } from '@/config/api';
+import { getApiPath } from '@/config/api';
 
 const AUTH_TOKEN_KEY = 'auth_token';
 const TOKEN_TIMESTAMP_KEY = 'auth_token_timestamp';
@@ -169,7 +169,7 @@ class SessionPersistenceService {
     // 🔥 NEW: Validate token with server before claiming session restored
     console.log('🔐 [SessionPersistence] Token found - validating with server...');
     try {
-      const response = await fetch(getApiUrl('/api/user'), {
+      const response = await fetch(getApiPath('/api/user'), {
         headers: { Authorization: `Bearer ${token}` },
         credentials: 'include'
       });

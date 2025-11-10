@@ -1,7 +1,7 @@
 // Client-side console bridge to forward critical logs to server
 // This ensures mobile device logs appear in Replit deployment console
 
-import { getApiUrl } from '@/config/api';
+import { getApiPath } from '@/config/api';
 
 class LogBridge {
   private originalConsole: {
@@ -152,7 +152,7 @@ class LogBridge {
 
   private async sendToServer(logEntry: any) {
     try {
-      const response = await fetch(getApiUrl('/api/logs'), {
+      const response = await fetch(getApiPath('/api/logs'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

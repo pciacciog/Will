@@ -9,6 +9,7 @@ import { notificationService } from "@/services/NotificationService";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { useLocation } from "wouter";
 import { logBridge } from "@/lib/logBridge";
+import { getApiUrl } from "@/config/api";
 import { App as CapacitorApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
 import NotFound from "@/pages/not-found";
@@ -47,9 +48,18 @@ function Router() {
   // Debug logging
   console.log('Router debug:', { isAuthenticated, isLoading, user: user?.id, location });
 
-  // Initialize log bridge immediately (works without authentication)
+  // Initialize API URL detection and log bridge immediately (works without authentication)
   useEffect(() => {
-    logBridge.initialize();
+    const initializeApp = async () => {
+      // Warm up the API URL cache by detecting environment
+      const apiUrl = await getApiUrl();
+      console.log('🌐 [App] API URL initialized:', apiUrl || '(relative URLs)');
+      
+      // Initialize log bridge
+      logBridge.initialize();
+    };
+    
+    initializeApp();
   }, []);
 
   // ISSUE #1 FIX: Restore session on app launch (runs once)

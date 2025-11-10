@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { notificationService } from "@/services/NotificationService";
-import { getApiUrl } from "@/config/api";
+import { getApiPath } from "@/config/api";
 
 export default function NotificationTest() {
   const [initializeStatus, setInitializeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -10,7 +10,7 @@ export default function NotificationTest() {
 
   const checkStatus = async () => {
     try {
-      const response = await fetch(getApiUrl('/api/notifications/status'));
+      const response = await fetch(getApiPath('/api/notifications/status'));
       const status = await response.json();
       setDeviceStatus(status);
     } catch (error) {
@@ -36,7 +36,7 @@ export default function NotificationTest() {
 
   const handleTestNotification = async () => {
     try {
-      const response = await fetch(getApiUrl('/api/notifications/test'), {
+      const response = await fetch(getApiPath('/api/notifications/test'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

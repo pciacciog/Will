@@ -1,6 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { sessionPersistence } from "@/services/SessionPersistence";
-import { getApiUrl } from "@/config/api";
+import { getApiPath } from "@/config/api";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -27,7 +27,7 @@ export async function apiRequest(url: string, options?: {
   const headers = options?.headers || {};
   
   // Convert relative URLs to absolute URLs for native apps
-  const fullUrl = getApiUrl(url);
+  const fullUrl = getApiPath(url);
   
   // Add auth token if available
   const authHeaders = await getAuthHeaders();
@@ -56,7 +56,7 @@ export const getQueryFn: <T>(options: {
     const authHeaders = await getAuthHeaders();
     
     // Convert relative URLs to absolute URLs for native apps
-    const fullUrl = getApiUrl(queryKey[0] as string);
+    const fullUrl = getApiPath(queryKey[0] as string);
     
     const res = await fetch(fullUrl, {
       headers: authHeaders,
