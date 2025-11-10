@@ -10,7 +10,7 @@
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
-const PRODUCTION_API = 'https://willbeta.replit.app';
+const PRODUCTION_API = 'https://will-1-porfirioaciacci.replit.app';
 const STAGING_API    = 'https://will-staging-porfirioaciacci.replit.app'; // TODO: Update after deploying staging Repl
 const LOCAL_API      = 'http://localhost:5000'; // For web dev testing
 
@@ -115,8 +115,8 @@ export function getApiUrlSync(): string {
  * 
  * Examples:
  * - Web (relative): getApiPath('/api/user') → '/api/user'
- * - iOS staging: getApiPath('/api/user') → 'https://will-staging.replit.app/api/user'
- * - iOS production: getApiPath('/api/user') → 'https://willbeta.replit.app/api/user'
+ * - iOS staging: getApiPath('/api/user') → 'https://will-staging-porfirioaciacci.replit.app/api/user'
+ * - iOS production: getApiPath('/api/user') → 'https://will-1-porfirioaciacci.replit.app/api/user'
  */
 export function getApiPath(path: string): string {
   const baseUrl = getApiUrlSync();

@@ -23,7 +23,7 @@ Successfully implemented environment-aware API configuration for the WILL app to
 
 **API URLs:**
 ```typescript
-const PRODUCTION_API = 'https://willbeta.replit.app';
+const PRODUCTION_API = 'https://will-1-porfirioaciacci.replit.app';
 const STAGING_API    = 'https://will-staging-porfirioaciacci.replit.app'; // ⚠️ UPDATE AFTER DEPLOY
 const LOCAL_API      = 'http://localhost:5000';
 ```
@@ -174,7 +174,7 @@ Check VITE_APP_ENV?
   ```
   📱 [API Config] Native app detected: { bundleId: 'com.porfirio.will', ... }
   ✅ [API Config] PRODUCTION app detected → Using PRODUCTION backend
-  🎯 [API Config] Final API URL: https://willbeta.replit.app
+  🎯 [API Config] Final API URL: https://will-1-porfirioaciacci.replit.app
   ```
 
 ### ✅ Web Browser:
@@ -229,7 +229,7 @@ Should return user data if authenticated, or 401 if not.
 ```
 📱 [API Config] Native app detected: { bundleId: 'com.porfirio.will' }
 ✅ [API Config] PRODUCTION app detected → Using PRODUCTION backend
-🎯 [API Config] Final API URL: https://willbeta.replit.app
+🎯 [API Config] Final API URL: https://will-1-porfirioaciacci.replit.app
 ```
 
 ### Web Browser (Development):
