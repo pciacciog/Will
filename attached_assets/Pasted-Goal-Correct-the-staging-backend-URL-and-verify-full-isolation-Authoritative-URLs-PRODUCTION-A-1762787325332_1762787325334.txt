@@ -1,0 +1,60 @@
+Goal: Correct the staging backend URL and verify full isolation.
+
+Authoritative URLs:
+- PRODUCTION_API: https://will-1-porfirioaciacci.replit.app
+- STAGING_API:   https://will-staging-porfirioaciacci.replit.app   (this is the correct staging URL)
+
+Operate in VERIFY-FIRST mode. Show me findings and diffs before applying.
+
+1) Confirm deployment URL
+- Print THIS Repl’s deployed public URL (the *.replit.app domain created by Deploy/Publish), not the temporary worf/dev tunnel.
+- Assert it equals: https://will-staging-porfirioaciacci.replit.app
+- If it doesn’t, explain why and what to change in Deploy settings to make it match.
+
+2) Client API config
+- Open client/src/config/api.ts (or the central API config).
+- Ensure the STAGING path resolves exactly to:
+  const STAGING_API = 'https://will-staging-porfirioaciacci.replit.app';
+- Ensure production remains:
+  const PRODUCTION_API = 'https://will-1-porfirioaciacci.replit.app';
+- Show the current values. If different, prepare a minimal diff (do not apply yet).
+
+3) CORS allowlist
+- In server code (server/index*.ts), list the allowed origins.
+- Replace any old/incorrect origins with:
+  - https://will-1-porfirioaciacci.replit.app  (prod)
+  - https://will-staging-porfirioaciacci.replit.app  (staging)
+  - capacitor://localhost, ionic://localhost, http://localhost, https://localhost  (keep as needed)
+- Show the proposed diff (do not apply yet).
+
+4) Environment selection and DB safety
+- Show server/db.ts logic for choosing the DB URL.
+- It must prefer APP_ENV over NODE_ENV:
+    const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
+- If env === 'staging', it MUST use DATABASE_URL_STAGING and throw if missing.
+- Add an extra guard: if env === 'staging' and the host of DATABASE_URL_STAGING equals the host of DATABASE_URL, throw.
+- Prepare the minimal diff if needed (do not apply yet).
+
+5) Secrets
+- Print (redacted hostnames only) for:
+  - DATABASE_URL
+  - DATABASE_URL_STAGING
+  - APP_ENV
+- If APP_ENV is not 'staging' in this Repl, propose setting it to 'staging' (no change yet).
+
+6) Health endpoint
+- If not present, propose adding GET /api/health/env that returns:
+  {
+    appEnv, nodeEnv,
+    backendUrlHost: <this Repl’s deployed *.replit.app host>,
+    usingDbUrlHost, usingDbName,
+    usersCount
+  }
+- Show the diff only.
+
+7) Plan + Apply (after approval)
+- Summarize all diffs.
+- After my "approve", apply changes, restart server, then:
+  - Call GET /api/health/env and paste the JSON.
+  - Confirm appEnv = "staging", backendUrlHost = "will-staging-porfirioaciacci.replit.app",
+    and usingDbName = the staging DB, with a small usersCount (seed values).
