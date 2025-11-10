@@ -1,0 +1,135 @@
+# Step 3: Create Staging Database
+
+I'm implementing a staging environment and need help with the database setup.
+
+## Current Production Setup:
+
+My production database is on Neon (PostgreSQL). I need to:
+1. Create a separate staging database
+2. Mirror the production schema
+3. Seed with test data
+
+## What I Need Your Help With:
+
+### **1. Show Me Current Database Schema**
+
+Can you show me:
+```bash
+# Find migration files
+find . -name "*migration*" -o -name "*schema*" | grep -v node_modules
+
+# Or show me the Prisma schema if using Prisma
+cat prisma/schema.prisma 2>/dev/null || echo "Not using Prisma"
+
+# Or show me SQL migration files
+ls -la server/migrations/ 2>/dev/null || ls -la db/migrations/ 2>/dev/null
+```
+
+**I need to understand:**
+- What tables exist in production?
+- How is the schema defined (Prisma, raw SQL, migration files)?
+- What's the full database structure?
+
+### **2. Database Connection Configuration**
+
+Show me how the app currently connects to the database:
+```bash
+# Find database connection code
+grep -r "DATABASE_URL\|createConnection\|Pool\|prisma" server/ --include="*.ts" --include="*.js" | head -20
+```
+
+**I need to understand:**
+- How does the backend connect to the database?
+- Is it using Prisma, pg, or another client?
+- Where is the connection initialized?
+
+### **3. Help Me Create Staging Database**
+
+**My plan:**
+
+**On Neon (I'll do this part):**
+1. Log into Neon dashboard
+2. Create new database called `will_staging`
+3. Get the connection string: `postgresql://user:pass@host/will_staging`
+
+**In Replit (need your help):**
+1. Add `DATABASE_URL_STAGING` secret with the staging connection string
+2. Modify backend to use correct database based on environment
+
+**Questions:**
+- How should I configure the backend to use different databases per environment?
+- Should I add an environment variable like `NODE_ENV=staging`?
+- Do I need to modify the database connection code?
+
+### **4. Run Migrations on Staging DB**
+
+Once staging database is created, I need to:
+```bash
+# Run migrations against staging database
+DATABASE_URL=$DATABASE_URL_STAGING npm run migrate
+# or whatever the migration command is
+```
+
+**Questions:**
+- What's the command to run migrations?
+- Can you show me all available database-related scripts in package.json?
+- How do I ensure migrations run against staging DB, not production?
+
+### **5. Seed Test Data**
+
+I need to create test data for staging:
+
+**Test Users:**
+- test1@staging.com
+- test2@staging.com  
+- test3@staging.com
+
+**Test Inner Circle:**
+- "Test Circle" with the 3 test users
+
+**Test Wills:**
+- Sample Wills with various states (active, completed, etc.)
+
+**Questions:**
+- Can you show me the table structure so I know what fields to populate?
+- Is there an existing seed script I can modify?
+- Should I create a `seed-staging.sql` file or use code to seed?
+
+## What I'll Do Next:
+
+After you provide the above information:
+1. I'll create `will_staging` database in Neon
+2. Add `DATABASE_URL_STAGING` secret to staging Repl
+3. Configure backend to use correct database
+4. Run migrations on staging DB
+5. Seed with test data
+6. Verify staging backend connects successfully
+
+Please help me understand the current database setup so I can safely create an isolated staging environment!
+```
+
+---
+
+## **What Replit Should Provide:**
+
+They should show you:
+
+1. **Schema files** (Prisma schema or SQL migrations)
+2. **Database connection code** (how backend connects)
+3. **Migration commands** (how to run migrations)
+4. **Table structure** (so you know what to seed)
+
+---
+
+## **Once You Have That Info:**
+
+### **You'll Do (in Neon dashboard):**
+
+1. **Create new database:**
+   - Name: `will_staging`
+   - Region: Same as production (for consistency)
+   - Copy connection string
+
+2. **Add to Replit staging secrets:**
+```
+   DATABASE_URL_STAGING=postgresql://username:password@host.neon.tech/will_staging?sslmode=require

@@ -1,0 +1,135 @@
+I'm implementing a staging environment and need help setting up a dedicated staging database that mirrors production.
+
+Current Production Setup
+
+Provider: Neon (PostgreSQL)
+
+One database: Production only
+
+Goal: Create a staging database that mirrors schema, runs the same migrations, and contains test data.
+
+What I Need You to Help With
+1. Inspect Current Schema
+
+Please locate and show the current database schema or migration system.
+
+# Find migration or schema files
+find . -name "*migration*" -o -name "*schema*" | grep -v node_modules
+
+# If using Prisma:
+cat prisma/schema.prisma 2>/dev/null || echo "Not using Prisma"
+
+# Or show SQL migration files:
+ls -la server/migrations/ 2>/dev/null || ls -la db/migrations/ 2>/dev/null
+
+
+Goal:
+Understand:
+
+What tables exist
+
+How schema is defined (Prisma, raw SQL, etc.)
+
+The overall structure of the database
+
+2. Show Database Connection Code
+
+Find where and how the app connects to the database.
+
+# Search for connection logic
+grep -r "DATABASE_URL\|createConnection\|Pool\|PrismaClient" server/ --include="*.ts" --include="*.js" | head -20
+
+
+Goal:
+Determine:
+
+Which client is used (Prisma, pg, etc.)
+
+Where the connection is initialized
+
+How DATABASE_URL is referenced
+
+3. Create and Configure the Staging Database
+
+My plan:
+
+On Neon (manual step):
+
+Create new database: will_staging
+
+Copy the connection string (e.g. postgresql://user:pass@host/will_staging)
+
+In Replit (your help):
+
+Add secret:
+DATABASE_URL_STAGING=postgresql://user:pass@host/will_staging
+
+Modify backend connection logic to switch databases depending on environment.
+
+Questions:
+
+How do we switch between databases based on NODE_ENV (e.g. staging vs production)?
+
+Where should this logic live in the codebase?
+
+Do we need to adjust any migration scripts or ORM config?
+
+4. Run Migrations on Staging Database
+
+Once the staging DB exists, I’ll need to apply all existing migrations:
+
+DATABASE_URL=$DATABASE_URL_STAGING npm run migrate
+# or equivalent command used for production migrations
+
+
+Please show me:
+
+The migration command(s) in package.json
+
+How to target a specific database URL
+
+How to verify migrations applied correctly
+
+5. Seed Test Data
+
+After migrations, I’ll populate basic test data:
+
+Seed targets:
+
+Users: test1@staging.com, test2@staging.com, test3@staging.com
+
+Inner Circle: “Test Circle” containing those users
+
+Wills: Sample active, pending, and completed entries
+
+Questions:
+
+What’s the table structure for these entities?
+
+Is there a current seed script I can adapt?
+
+Should I create a seed-staging.sql file or a JS/TS seed script?
+
+What You Should Return
+
+Schema files or migration directory path
+
+Database connection logic snippet
+
+Migration command(s) and config
+
+Table structure for Users / Circles / Wills
+
+My Next Steps (after your output)
+
+Create will_staging DB in Neon
+
+Add DATABASE_URL_STAGING secret to Replit
+
+Update backend connection logic to respect environment
+
+Run migrations on staging DB
+
+Seed test data
+
+Verify staging backend connects and serves correctly
