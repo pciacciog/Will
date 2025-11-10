@@ -3,17 +3,17 @@ require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
 platform :ios, '14.0'
 use_frameworks!
 
-# workaround to avoid Xcode caching of Pods that requires
-# Product -> Clean Build Folder after new Cordova plugins installed
-# Requires CocoaPods 1.6 or newer
+# Avoid IO path caching issues after plugin changes
 install! 'cocoapods', :disable_input_output_paths => true
 
 def capacitor_pods
   pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
   pod 'CapacitorBrowser', :path => '../../node_modules/@capacitor/browser'
   pod 'CapacitorDevice', :path => '../../node_modules/@capacitor/device'
   pod 'CapacitorLocalNotifications', :path => '../../node_modules/@capacitor/local-notifications'
+  pod 'CapacitorPreferences', :path => '../../node_modules/@capacitor/preferences'
   pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'
 end
 
@@ -22,6 +22,14 @@ target 'App' do
   # Add your Pods here
 end
 
+# >>> ADD THIS BLOCK <<<
+target 'AppStaging' do
+  capacitor_pods
+  # Add your Pods here (same plugins as App)
+end
+# <<< END ADD >>>
+
 post_install do |installer|
   assertDeploymentTarget(installer)
 end
+

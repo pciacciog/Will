@@ -3,7 +3,7 @@ import Capacitor
 import Foundation
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     var window: UIWindow?
     
@@ -88,7 +88,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Also send directly to PushNotifications plugin if available
         if let bridge = (window?.rootViewController as? CAPBridgeViewController)?.bridge {
-            bridge.triggerJSEvent(eventName: "pushNotificationRegistration", target: "window", data: ["value": tokenString])
+            // Convert dictionary to JSON string
+            if let jsonData = try? JSONSerialization.data(withJSONObject: ["value": tokenString], options: []),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                bridge.triggerJSEvent(eventName: "pushNotificationRegistration", target: "window", data: jsonString)
+            }
         }
     }
     
@@ -203,7 +207,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Also send error to PushNotifications plugin if available
         if let bridge = (window?.rootViewController as? CAPBridgeViewController)?.bridge {
-            bridge.triggerJSEvent(eventName: "pushNotificationRegistrationError", target: "window", data: ["error": error.localizedDescription])
+            if let jsonData = try? JSONSerialization.data(withJSONObject: ["error": error.localizedDescription], options: []),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                bridge.triggerJSEvent(eventName: "pushNotificationRegistrationError", target: "window", data: jsonString)
+            }
         }
     }
     
@@ -228,7 +235,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 // MARK: - UNUserNotificationCenterDelegate
 
-extension AppDelegate: UNUserNotificationCenterDelegate {
+extension AppDelegate {
     
     // Handle notification when app is in foreground
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
