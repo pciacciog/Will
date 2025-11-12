@@ -1,0 +1,22 @@
+Issue #1: Delayed End Room Join Prompt
+- On Nov 9, the End Room was scheduled to open at 5:00 PM. The backend opened it on time, but the app UI stayed in "End Room Scheduled" status without showing the join prompt. Only after closing/reopening the app (2 minutes later) did the UI update to allow entry.
+- Root suspicion: No real-time check for time-based transitions; relies on manual refresh or sparse polling.
+
+Issue #2: Status Skipping Scheduled Phase
+- On Nov 9, a Will ended at 12:00 PM with End Room at 5:00 PM. Initially, UI showed "Will Complete - Ready to Review" (with blue button), skipping "End Room Scheduled." It corrected to "Scheduled" after ~5 minutes.
+- Another example: Will ended 10/27/25 at 7:30 AM, End Room 8:00 PM. At 8:58 AM, UI jumped from "Active" to "Complete" before correcting to "Scheduled" minutes later.
+- Root suspicion: Backend async processing delays or frontend fetching stale data during transitions; possible timezone/UTC issues in date handling.
+
+Issue #3: Post-Video Call UI Mismatch
+- After a Will video call (part of End Room), UI showed "Create New Will" screen instead of "Final Review Summary." Inner Circle details were missing, but backend blocked creation with error: "Not all users have acknowledged completion."
+- Root suspicion: Frontend navigated prematurely assuming completion, while backend awaited full reflections; no instant sync post-event.
+
+These issues seem interconnected due to inadequate real-time syncing (no WebSockets in MVP), sparse polling, caching, or refresh triggers. The app uses client pulls (e.g., GET /pushes/:id) and remote notifications only for specific events, not all status changes.
+
+Now, before proposing fixes, confirm your current setup by describing:
+1. How status updates for Pushes/Wills are handled (e.g., backend logic for transitioning statuses like Active → Scheduled → Complete, including any cron jobs, hooks, or async queues).
+2. Frontend refresh mechanisms (e.g., polling intervals on Push Detail/Circle screens, app resume hooks, or Capacitor background refresh).
+3. Notification integration (local for reminders, remote for events like End Room start; how device tokens are managed).
+4. API endpoints involved (e.g., GET /pushes/:id, PATCH /pushes/:id) and any caching (client-side or server-side).
+5. Handling of timezones/DST (e.g., use of created_tz in checkins table).
+6. Any existing error handling for desync (e.g., spinners, force-reloads).
