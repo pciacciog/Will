@@ -96,8 +96,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         }
     }
     
-        guard let url = URL(string: "https://willbeta.replit.app/api/device-token") else {
-    // NEW METHOD: Direct API call to server
     func sendTokenDirectlyToServer(token: String) {
         print("🔥 iOS DIRECT: sendTokenDirectlyToServer() method called")
         
