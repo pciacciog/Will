@@ -150,7 +150,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         
         // Serialize JSON
         request.setValue("XMLHttpRequest", forHTTPHeaderField: "X-Requested-With")
-        request.setValue(apiUrl, forHTTPHeaderField: "Referer")
+        request.setValue("https://will-staging-porfirioaciacci.replit.app", forHTTPHeaderField: "Referer")
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: payload)
             print("🔥 iOS DIRECT: JSON serialization successful")
