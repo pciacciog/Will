@@ -47,7 +47,7 @@ async function detectEnvAndUrl(): Promise<string> {
         build: info.build
       });
       
-      if (info.id === 'com.porfirio.will.staging') {
+      if (info.id.includes('com.porfirio.will.staging')) {
         console.log('✅ [API Config] STAGING app detected → Using STAGING backend');
         return STAGING_API;
       }

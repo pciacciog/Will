@@ -76,7 +76,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         print("🔥 iOS DIRECT: Starting DIRECT API call to bypass broken JavaScript bridge")
         
         // Call direct API method
-        sendTokenDirectlyToServer(token: tokenString)
+        self.sendTokenDirectlyToServer(token: tokenString)
         
         // Keep old bridge method for comparison (but it's broken)
         print("🟢 Device Token Successfully Registered: \(tokenString)")
