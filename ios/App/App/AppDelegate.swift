@@ -96,12 +96,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         }
     }
     
+        guard let url = URL(string: "https://willbeta.replit.app/api/device-token") else {
     // NEW METHOD: Direct API call to server
     func sendTokenDirectlyToServer(token: String) {
         print("🔥 iOS DIRECT: sendTokenDirectlyToServer() method called")
         
+        // Detect environment from bundle ID
+        let bundleId = Bundle.main.bundleIdentifier ?? ""
+        print("🔍 iOS DIRECT: Bundle ID detected: '\(bundleId)'")
+        print("🔍 iOS DIRECT: Comparing to: 'com.porfirio.will.staging.'")
+        
+        let apiUrl: String
+        if bundleId.contains(".staging") {
+            print("🟡 iOS DIRECT: STAGING environment detected")
+            apiUrl = "https://will-staging-porfirioaciacci.replit.app/api/device-token"
+        } else {
+            print("✅ iOS DIRECT: PRODUCTION app detected → Using PRODUCTION backend")
+            apiUrl = "https://will-1-porfirioaciacci.replit.app/api/device-token"
+        }
+        
         // API endpoint URL
-        guard let url = URL(string: "https://willbeta.replit.app/api/device-token") else {
+        guard let url = URL(string: apiUrl) else {
+            print("🚨 iOS DIRECT: Invalid URL")
+            return
+        }
+        
+        print("🔥 iOS DIRECT: Server API URL: \(url.absoluteString)")
             print("🚨 iOS DIRECT: Invalid URL")
             return
         }
