@@ -149,6 +149,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         // Serialize JSON
+        request.setValue("XMLHttpRequest", forHTTPHeaderField: "X-Requested-With")
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: payload)
             print("🔥 iOS DIRECT: JSON serialization successful")
