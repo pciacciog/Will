@@ -120,11 +120,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         }
         
         print("🔥 iOS DIRECT: Server API URL: \(url.absoluteString)")
-            print("🚨 iOS DIRECT: Invalid URL")
-            return
-        }
-        
-        print("🔥 iOS DIRECT: Server API URL: \(url.absoluteString)")
         
         // Prepare payload with REQUIRED bundle data for APNS certificate matching
         let buildScheme = getBuildScheme()
