@@ -59,7 +59,7 @@ export const getQueryFn: <T>(options: {
     const fullUrl = getApiPath(queryKey[0] as string);
     
     const res = await fetch(fullUrl, {
-      headers: authHeaders,
+      headers: { "X-Requested-With": "XMLHttpRequest", ...authHeaders },
       credentials: "include", // Keep for backward compatibility with web sessions
     });
 
