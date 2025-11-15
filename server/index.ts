@@ -20,18 +20,20 @@ app.use((req, res, next) => {
   ];
   
   const origin = req.get('Origin');
+  const userAgent = req.get('User-Agent') || '';
+  const isCapacitorApp = userAgent.includes('Capacitor') || !origin;
   
   // If Origin header is present and in allowlist, echo it back
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
   } 
-  // If no Origin header (e.g., CapacitorHttp omits it), allow localhost for dev
-  else if (!origin && (req.get('host') === 'localhost:5000' || req.get('host')?.startsWith('localhost'))) {
-    res.header('Access-Control-Allow-Origin', 'http://localhost');
+  // If no Origin header or Capacitor app, allow staging URL (this is staging environment)
+  else if (isCapacitorApp || !origin) {
+    res.header('Access-Control-Allow-Origin', 'https://will-staging-porfirioaciacci.replit.app');
   }
-  // Default fallback to production URL for security
+  // Default fallback to staging URL for this environment
   else {
-    res.header('Access-Control-Allow-Origin', 'https://will-1-porfirioaciacci.replit.app');
+    res.header('Access-Control-Allow-Origin', 'https://will-staging-porfirioaciacci.replit.app');
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
