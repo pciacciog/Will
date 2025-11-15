@@ -1,0 +1,73 @@
+ First 50 Lines of server/index-standalone.ts:
+ 1→ import express, { type Request, Response, NextFunction } from "express";
+ 2→ import { registerRoutes } from "./routes";
+ 3→ import { endRoomScheduler } from "./scheduler";
+ 4→ import path from "path";
+ 5→
+ 6→ const app = express();
+ 7→
+ 8→ // Configure app to be publicly accessible
+ 9→ app.use((req, res, next) => {
+10→   res.header('X-Replit-Public', 'true');
+11→   
+12→   // Allow specific origins for mobile app with credentials
+13→   const allowedOrigins = [
+14→     'https://will-1-porfirioaciacci.replit.app',     ✅ NEW PRODUCTION URL
+15→     'capacitor://localhost',
+16→     'http://localhost',
+17→     'ionic://localhost',
+18→     'https://localhost'
+19→   ];
+20→   
+21→   const origin = req.get('Origin');
+22→   if (origin && allowedOrigins.includes(origin)) {
+23→     res.header('Access-Control-Allow-Origin', origin);
+24→   } else {
+25→     res.header('Access-Control-Allow-Origin', 'https://will-1-porfirioaciacci.replit.app');  ✅
+26→   }
+27→   
+28→   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+29→   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
+30→   res.header('Access-Control-Allow-Credentials', 'true');
+31→   
+32→   // Handle preflight requests
+33→   if (req.method === 'OPTIONS') {
+34→     res.sendStatus(200);
+35→     return;
+36→   }
+37→   
+38→   next();
+39→ });
+40→
+41→ app.use(express.json());
+42→ app.use(express.urlencoded({ extended: false }));
+43→
+44→ const privacyPolicyHtml = `
+45→ <!DOCTYPE html>
+46→ <html lang="en">
+47→ <head>
+48→     <meta charset="UTF-8">
+49→     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+50→     <title>WILL App - Privacy Policy</title>
+
+✅ Confirmed: Lines 14 and 25 show the NEW production URL is correctly configured.
+
+2. Environment Variables:
+# Checked for:
+APP_ENV              → ❌ Not set
+REPLIT_DEPLOYMENT    → ❌ Not set
+NODE_ENV             → ❌ Not set
+# But found:
+REPLIT_ENVIRONMENT   → ✅ production
+
+📊 Summary:
+Production Server Status:
+
+✅ CORS configured with NEW production URL: https://will-1-porfirioaciacci.replit.app
+✅ Default origin set to NEW production URL
+✅ Local dev origins preserved (capacitor, localhost, ionic)
+✅ Environment: REPLIT_ENVIRONMENT=production
+Note: NODE_ENV is not set as an environment variable, but it's set at runtime via the npm scripts:
+
+Dev: NODE_ENV=development npm run dev
+Prod: NODE_ENV=production npm run start
