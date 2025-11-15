@@ -863,7 +863,7 @@ export default function InnerCircleHub() {
           }}
           onAcknowledge={() => acknowledgeMutation.mutate()}
           isAcknowledging={acknowledgeMutation.isPending}
-          currentUserId={user?.id}
+          currentUserId={user?.id ? Number(user.id) : undefined}
           acknowledgedCount={will.acknowledgedCount || 0}
           commitmentCount={will.commitmentCount || 0}
         />

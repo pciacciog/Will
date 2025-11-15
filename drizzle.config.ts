@@ -1,7 +1,8 @@
 import { defineConfig } from "drizzle-kit";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
+// This staging Repl uses only DATABASE_URL_STAGING
+if (!process.env.DATABASE_URL_STAGING) {
+  throw new Error("DATABASE_URL_STAGING is required. Ensure the staging database is provisioned.");
 }
 
 export default defineConfig({
@@ -9,6 +10,6 @@ export default defineConfig({
   schema: "./shared/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: process.env.DATABASE_URL_STAGING,
   },
 });

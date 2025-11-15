@@ -108,11 +108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const appEnv = process.env.APP_ENV || process.env.NODE_ENV || 'development';
     const nodeEnv = process.env.NODE_ENV;
     
-    // Determine which database URL is being used
-    const isStaging = appEnv === 'staging' || nodeEnv === 'staging';
-    const activeDbUrl = isStaging && process.env.DATABASE_URL_STAGING 
-      ? process.env.DATABASE_URL_STAGING 
-      : process.env.DATABASE_URL || '';
+    // This staging Repl uses only DATABASE_URL_STAGING
+    const activeDbUrl = process.env.DATABASE_URL_STAGING || '';
     
     try {
       // Extract database host from connection string
@@ -138,9 +135,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const usersResult = await db.select({ count: sql<number>`count(*)::int` }).from(users);
       const usersCount = usersResult && usersResult[0] ? usersResult[0].count : 0;
       
-      // Check if both DATABASE_URLs are the same
-      const databasesAreSame = process.env.DATABASE_URL === process.env.DATABASE_URL_STAGING;
-      
       res.json({
         appEnv,
         nodeEnv: nodeEnv || '(not set)',
@@ -148,9 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         usingDbUrlHost: dbHost,
         usingDbName: dbName,
         usersCount,
-        databaseUrlConfigured: !!process.env.DATABASE_URL,
         databaseUrlStagingConfigured: !!process.env.DATABASE_URL_STAGING,
-        databasesAreSame,
         timestamp: new Date().toISOString()
       });
     } catch (error: any) {
@@ -160,7 +152,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appEnv,
         nodeEnv: nodeEnv || '(not set)',
         backendUrlHost: 'will-staging-porfirioaciacci.replit.app',
-        databaseUrlConfigured: !!process.env.DATABASE_URL,
         databaseUrlStagingConfigured: !!process.env.DATABASE_URL_STAGING,
         timestamp: new Date().toISOString()
       });
