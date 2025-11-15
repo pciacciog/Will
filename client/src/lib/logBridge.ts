@@ -157,6 +157,8 @@ class LogBridge {
         headers: {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+          'Referer': 'https://will-staging-porfirioaciacci.replit.app'
         },
         body: JSON.stringify(logEntry),
       });

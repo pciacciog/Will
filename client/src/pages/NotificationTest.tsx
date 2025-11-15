@@ -10,7 +10,13 @@ export default function NotificationTest() {
 
   const checkStatus = async () => {
     try {
-      const response = await fetch(getApiPath('/api/notifications/status'));
+      const response = await fetch(getApiPath('/api/notifications/status'), {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+          'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+        }
+      });
       const status = await response.json();
       setDeviceStatus(status);
     } catch (error) {
@@ -38,7 +44,12 @@ export default function NotificationTest() {
     try {
       const response = await fetch(getApiPath('/api/notifications/test'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+          'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+        },
         body: JSON.stringify({
           title: 'WILL Test Notification',
           body: 'This is a test of the WILL push notification system!'

@@ -170,7 +170,12 @@ class SessionPersistenceService {
     console.log('🔐 [SessionPersistence] Token found - validating with server...');
     try {
       const response = await fetch(getApiPath('/api/user'), {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          "X-Requested-With": "XMLHttpRequest",
+          "Origin": "https://will-staging-porfirioaciacci.replit.app",
+          "Referer": "https://will-staging-porfirioaciacci.replit.app",
+          Authorization: `Bearer ${token}` 
+        },
         credentials: 'include'
       });
       

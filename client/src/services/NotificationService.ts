@@ -152,6 +152,9 @@ export class NotificationService {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+          'Referer': 'https://will-staging-porfirioaciacci.replit.app'
         }
       });
       
@@ -200,6 +203,9 @@ export class NotificationService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+          'Referer': 'https://will-staging-porfirioaciacci.replit.app'
         },
         body: JSON.stringify(payload)
       });
@@ -345,6 +351,9 @@ export class NotificationService {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+              'Referer': 'https://will-staging-porfirioaciacci.replit.app'
             },
             body: JSON.stringify({
               deviceToken: tokenData.token,

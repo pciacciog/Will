@@ -165,17 +165,15 @@ export default function InnerCircleHub() {
   // Automatically refresh data when app comes back to foreground (mobile & web)
   useAppRefresh();
 
-  const { data: circle } = useQuery({
+  const { data: circle } = useQuery<any>({
     queryKey: ['/api/circles/mine'],
-    queryFn: () => fetch(getApiPath('/api/circles/mine')).then(res => res.json()),
     enabled: !!user,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
   });
 
-  const { data: will } = useQuery({
+  const { data: will } = useQuery<any>({
     queryKey: [`/api/wills/circle/${circle?.id}`],
-    queryFn: () => fetch(`/api/wills/circle/${circle?.id}`).then(res => res.json()),
     enabled: !!circle?.id,
     staleTime: 0, // Always consider data stale for immediate updates
     refetchInterval: (data: any) => {
@@ -342,7 +340,14 @@ export default function InnerCircleHub() {
       await sessionPersistence.clearSession();
       console.log('[Logout] ✅ Session cleared from persistent storage');
       
-      await fetch(getApiPath('/api/logout'), { method: 'POST' });
+      await fetch(getApiPath('/api/logout'), { 
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+          'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+        }
+      });
       window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);

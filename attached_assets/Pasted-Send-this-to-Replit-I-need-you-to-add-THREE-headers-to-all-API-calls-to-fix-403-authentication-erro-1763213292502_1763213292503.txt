@@ -1,0 +1,220 @@
+Send this to Replit:
+I need you to add THREE headers to all API calls to fix 403 authentication errors on iOS.
+
+THE THREE HEADERS TO ADD EVERYWHERE:
+1. "X-Requested-With": "XMLHttpRequest"
+2. "Origin": "https://will-staging-porfirioaciacci.replit.app"
+3. "Referer": "https://will-staging-porfirioaciacci.replit.app"
+
+MAKE THESE EXACT CHANGES:
+
+═══════════════════════════════════════════════════════════
+
+CHANGE 1: client/src/lib/queryClient.ts
+
+In the apiRequest() function (Line 20-47), change this line:
+```typescript
+const allHeaders = body 
+  ? { "Content-Type": "application/json", ...authHeaders, ...headers } 
+  : { ...authHeaders, ...headers };
+```
+
+To this:
+```typescript
+const allHeaders = {
+  "X-Requested-With": "XMLHttpRequest",
+  "Origin": "https://will-staging-porfirioaciacci.replit.app",
+  "Referer": "https://will-staging-porfirioaciacci.replit.app",
+  ...(body ? { "Content-Type": "application/json" } : {}),
+  ...authHeaders,
+  ...headers
+};
+```
+
+In getQueryFn() (Line 54-72), change this:
+```typescript
+const res = await fetch(fullUrl, {
+  headers: { "X-Requested-With": "XMLHttpRequest", ...authHeaders },
+  credentials: "include",
+});
+```
+
+To this:
+```typescript
+const res = await fetch(fullUrl, {
+  headers: { 
+    "X-Requested-With": "XMLHttpRequest",
+    "Origin": "https://will-staging-porfirioaciacci.replit.app",
+    "Referer": "https://will-staging-porfirioaciacci.replit.app",
+    ...authHeaders 
+  },
+  credentials: "include",
+});
+```
+
+═══════════════════════════════════════════════════════════
+
+CHANGE 2: client/src/services/SessionPersistence.ts
+
+Line 172-175, change this:
+```typescript
+const response = await fetch(getApiPath('/api/user'), {
+  headers: { Authorization: `Bearer ${token}` },
+  credentials: 'include'
+});
+```
+
+To this:
+```typescript
+const response = await fetch(getApiPath('/api/user'), {
+  headers: { 
+    "X-Requested-With": "XMLHttpRequest",
+    "Origin": "https://will-staging-porfirioaciacci.replit.app",
+    "Referer": "https://will-staging-porfirioaciacci.replit.app",
+    Authorization: `Bearer ${token}` 
+  },
+  credentials: 'include'
+});
+```
+
+═══════════════════════════════════════════════════════════
+
+CHANGE 3: client/src/services/NotificationService.ts
+
+Find ALL fetch() calls and add the three headers. There are 4 locations:
+
+A) Line 151-156 (Network test):
+```typescript
+const response = await fetch(testUrl, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+    'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+  }
+});
+```
+
+B) Line 199-205 (Device token registration):
+```typescript
+const response = await fetch(endpoint, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+    'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+  },
+  body: JSON.stringify(payload)
+});
+```
+
+C) Line 344-354 (Unauthenticated fallback):
+```typescript
+response = await fetch(getApiPath('/api/device-token'), {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+    'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+  },
+  body: JSON.stringify({...})
+});
+```
+
+═══════════════════════════════════════════════════════════
+
+CHANGE 4: client/src/lib/logBridge.ts
+
+Line 155-162, change this:
+```typescript
+const response = await fetch(getApiPath('/api/logs'), {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+  },
+  body: JSON.stringify(logEntry),
+});
+```
+
+To this:
+```typescript
+const response = await fetch(getApiPath('/api/logs'), {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+    'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+  },
+  body: JSON.stringify(logEntry),
+});
+```
+
+═══════════════════════════════════════════════════════════
+
+CHANGE 5: client/src/pages/InnerCircleHub.tsx
+
+A) Line 168-174 (Circle data) - change to use getQueryFn:
+```typescript
+const { data: circle } = useQuery({
+  queryKey: ['/api/circles/mine'],
+  queryFn: getQueryFn({ queryKey: ['/api/circles/mine'] }),
+  enabled: !!user,
+});
+```
+
+B) Line 176-178 (Will data) - keep as is, just use proper queryFn from queryClient
+
+C) Line 345 (Logout):
+```typescript
+await fetch(getApiPath('/api/logout'), { 
+  method: 'POST',
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest',
+    'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+    'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+  }
+});
+```
+
+═══════════════════════════════════════════════════════════
+
+CHANGE 6: client/src/pages/NotificationTest.tsx
+
+Line 13:
+```typescript
+const response = await fetch(getApiPath('/api/notifications/status'), {
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest',
+    'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+    'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+  }
+});
+```
+
+Line 39-43:
+```typescript
+const response = await fetch(getApiPath('/api/notifications/test'), {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Origin': 'https://will-staging-porfirioaciacci.replit.app',
+    'Referer': 'https://will-staging-porfirioaciacci.replit.app'
+  },
+  body: JSON.stringify({ type: testType })
+});
+```
+
+═══════════════════════════════════════════════════════════
+
+After making these changes:
+1. Run: npm run build
+2. Run: npx cap sync ios
+3. Test the iOS app
+
+These changes add the required headers to bypass Replit's security checks.

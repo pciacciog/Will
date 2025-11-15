@@ -31,9 +31,14 @@ export async function apiRequest(url: string, options?: {
   
   // Add auth token if available
   const authHeaders = await getAuthHeaders();
-  const allHeaders = body 
-    ? { "Content-Type": "application/json", ...authHeaders, ...headers } 
-    : { ...authHeaders, ...headers };
+  const allHeaders = {
+    "X-Requested-With": "XMLHttpRequest",
+    "Origin": "https://will-staging-porfirioaciacci.replit.app",
+    "Referer": "https://will-staging-porfirioaciacci.replit.app",
+    ...(body ? { "Content-Type": "application/json" } : {}),
+    ...authHeaders,
+    ...headers
+  };
   
   const res = await fetch(fullUrl, {
     method,
@@ -59,7 +64,12 @@ export const getQueryFn: <T>(options: {
     const fullUrl = getApiPath(queryKey[0] as string);
     
     const res = await fetch(fullUrl, {
-      headers: { "X-Requested-With": "XMLHttpRequest", ...authHeaders },
+      headers: { 
+        "X-Requested-With": "XMLHttpRequest",
+        "Origin": "https://will-staging-porfirioaciacci.replit.app",
+        "Referer": "https://will-staging-porfirioaciacci.replit.app",
+        ...authHeaders 
+      },
       credentials: "include", // Keep for backward compatibility with web sessions
     });
 
