@@ -1,0 +1,84 @@
+Here's a comprehensive prompt for Replit:
+
+DIAGNOSTIC REQUEST: Frontend-Backend State Synchronization Issues
+Hi Replit, I'm experiencing critical state synchronization problems in my Will app where the frontend is not immediately reflecting backend state changes. This is causing poor user experience and confusion. Let me explain the issues:
+PROBLEM SUMMARY:
+The backend appears to be correctly transitioning through will states, but the frontend shows stale/incorrect status information until something triggers a refresh (app restart, waiting several minutes, etc.).
+SPECIFIC ISSUES OBSERVED:
+Issue #1 - End Room Join Delay (Nov 9):
+
+End room was scheduled to open at 5:00 PM
+At 5:00 PM, I tried to join but the UI still showed "End Room Scheduled" status without the prompt to join
+Only after closing the app completely and reopening 2 minutes later did the status update and allow me to enter
+The backend HAD opened the end room at 5:00 PM, but the frontend didn't reflect this
+
+Issue #2 - Status Skipping/Wrong Order (Nov 9):
+
+A will ended at 12:00 PM with end room scheduled for 5:00 PM
+When I opened the app after 12:00 PM, it showed "Will Complete - Ready to Review" with the Final Review Summary button
+This is WRONG - it should show "End Room Scheduled" status because the will isn't complete until AFTER the end room finishes
+A few minutes later, the status corrected itself to "End Room Scheduled"
+Similar issue on 10/27/25: Will ended at 7:30 AM, end room scheduled for 8:00 PM. At 8:58 AM, status jumped from "Will Active" directly to "Will Complete - Ready to Review", then later corrected to "End Room Scheduled"
+
+Issue #3 - Post-End Room Confusion (Nov 9):
+
+After the will video call ended, instead of seeing the "Review Final Summary" page, I saw the "Create New Will" page
+My inner circle users and code were not displayed
+App prevented creating a new will with message "not all users have acknowledged completion"
+Frontend was completely out of sync with backend state
+
+MY HYPOTHESIS:
+All three issues stem from the same root cause: the frontend is not immediately detecting or fetching backend state changes. The backend logic appears correct, but the frontend either:
+
+Isn't polling frequently enough
+Only checks state on app open/specific user actions
+Has caching issues serving stale data
+Lacks real-time update mechanisms for critical state transitions
+
+WHAT I NEED FROM YOU:
+Please locate and share the following code so we can diagnose the synchronization issue:
+
+Will State Fetching Logic:
+
+Where/how does the frontend fetch the current will status from the backend?
+What API endpoints are called to get will state?
+Show me the API client code that handles these requests
+
+
+Update Trigger Mechanisms:
+
+When/how often does the app check for will state updates?
+Is there polling? If so, what's the interval?
+Are there specific lifecycle events (app foreground, component mount, etc.) that trigger state fetches?
+Do you use WebSockets, push notifications, or any real-time update system?
+
+
+State Management Code:
+
+Where is will state stored? (React Context, Redux, local component state, localStorage, etc.)
+Show me the state management setup for will status
+Any caching mechanisms that might serve stale data?
+
+
+UI Components Displaying Status:
+
+The component(s) that render "Will Active", "End Room Scheduled", "Will Complete - Ready to Review" statuses
+The component that shows the end room join button
+The component that handles post-end-room navigation
+
+
+Backend State Transition Logic (if helpful):
+
+How does the backend determine when a will transitions from "Active" → "End Room Scheduled" → "Complete"?
+Are there scheduled jobs or triggers that update will status?
+
+
+
+GOAL:
+Identify exactly where the frontend-backend sync is breaking down and implement a solution that ensures the UI immediately reflects backend state changes, especially during critical transitions like:
+
+Will ending → End room scheduled
+End room opening → Join button available
+End room completing → Review summary available
+
+Please start by showing me the code related to how the frontend fetches and manages will state, then we can trace through the flow together.

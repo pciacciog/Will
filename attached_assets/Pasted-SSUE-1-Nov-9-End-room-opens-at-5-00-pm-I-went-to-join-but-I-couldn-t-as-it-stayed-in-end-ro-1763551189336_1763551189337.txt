@@ -1,0 +1,22 @@
+SSUE #1
+ 
+ 
+Nov 9 - End room opens at 5:00 pm. I went to join but I couldn’t as it stayed in “end room scheduled status without the prompt to join”. Only after I closed the app and went in 2 minutes after did I see the status change and the ability to to enter the end room was opened. Good pointing out that - The end room per se did open at 5:00 pm on the backend, however, the application did not reflect or give user the ability to immediately at that time be able to enter into the room.
+ 
+ 
+ISSUE #2 - Status not refleciting
+ 
+Nov 9 - The will ended at 12:00 pm. The Will end room was scheduled for 5:00 pm. I joined the application after the wil had ended and I saw that the wills status reflected “Will complete” - Ready to Review with the “Final Review Summary blue button” .  This is not the expected behavior. The he behavior its supped to go into the will end room scheduled status before it goes into the will complete, because will is not complete until after the end room is finished. I then joined about 5 minutes later and I saw that the status changed to how it was sussed to; the wild scheduled interface. It looks to be in general like the application is lagging when updating the reflection of the will statuses to the user interface. 
+ 
+I had another instance of this where The Will between Porfirio Ciaccio and Teofilo Carbonell ended on 10/27/25, 7:30 am. The End room was scheduled for 10/27/25, 8:00 pm - 10/27/25, 8:30 pm. It was currently 10/27/25 8:58 am. The problem is that I noticed that my will went from “Will active” directly to “Will Complete - Ready to Review” status before “ Scheduled Will - End Room” status (as if it skipped this phase). Coincidentally though, Inoticed that few minutes later it changed to Will - End Room Scheduled which is how it should have behaved from the beginning but I am startled because it took a while to get there to that updated status…
+ 
+Issue #3
+ 
+ 
+
+Nov 9 - after will video call ended, i had a a bug where instead of seeing the review final summary page, i saw the option to create a new will page and my inner circle users and code were not reflected, but the app did not let me go thru with setting up a new will though  because it said “not all users have acknowledged completion”  So its like the front end was out of sync with the backend.
+
+ 
+ 
+ 
+I suspect that issue #1 and issue #2 and issue #3 are related… what are you rthoghts?
