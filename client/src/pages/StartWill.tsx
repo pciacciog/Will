@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,7 +15,7 @@ import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } 
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Bell } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart } from "lucide-react";
 
 // Helper function to get next Monday's date in YYYY-MM-DD format (local timezone)
 // Returns the upcoming Monday:
@@ -72,9 +71,6 @@ export default function StartWill() {
   const [startTime, setStartTime] = useState('00:00');
   const [endDate, setEndDate] = useState(() => getFollowingSundayDate(getNextMondayDate()));
   const [endTime, setEndTime] = useState('12:00');
-  
-  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(true);
-  const [dailyReminderTime, setDailyReminderTime] = useState('20:00');
   
   const [willData, setWillData] = useState({
     startDate: '',
@@ -212,12 +208,6 @@ export default function StartWill() {
         variant: "destructive",
       });
       return;
-    }
-
-    // TODO: Daily reminder settings need to be persisted to backend
-    // For now, log them for future implementation
-    if (dailyReminderEnabled) {
-      console.log('[Will Creation] Daily reminder scheduled for:', dailyReminderTime);
     }
 
     setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });
@@ -505,39 +495,8 @@ export default function StartWill() {
                   </div>
                 </div>
               </div>
-
-              {/* Daily Reminder Section */}
-              <div className="space-y-3 pt-2">
-                <label className="block text-sm font-medium text-gray-700 tracking-tight">Daily Reminder</label>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center space-x-3">
-                    <Bell className={`w-5 h-5 ${dailyReminderEnabled ? 'text-brandBlue' : 'text-gray-400'}`} />
-                    <div>
-                      {dailyReminderEnabled ? (
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-700">Remind me each day at</span>
-                          <Input
-                            type="time"
-                            value={dailyReminderTime}
-                            onChange={(e) => setDailyReminderTime(e.target.value)}
-                            className="w-24 h-8 text-sm"
-                            data-testid="input-reminder-time"
-                          />
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400">Reminders off</span>
-                      )}
-                    </div>
-                  </div>
-                  <Switch
-                    checked={dailyReminderEnabled}
-                    onCheckedChange={setDailyReminderEnabled}
-                    data-testid="toggle-reminder"
-                  />
-                </div>
-              </div>
               
-              <div className="flex justify-between items-center pt-2">
+              <div className="flex justify-between items-center pt-4">
                 <div className="flex items-center space-x-2">
                   <Button type="button" variant="ghost" onClick={handleCancel} data-testid="button-cancel">
                     Cancel
