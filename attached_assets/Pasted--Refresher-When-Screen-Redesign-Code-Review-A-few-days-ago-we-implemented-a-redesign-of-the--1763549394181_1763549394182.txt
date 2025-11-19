@@ -1,0 +1,117 @@
+# Refresher: "When" Screen Redesign - Code Review
+
+A few days ago, we implemented a redesign of the "When" screen in the Will creation flow. I've since been setting up staging environment and need to:
+
+1. **Review what was changed** - Remind me of the specific code modifications
+2. **Locate the changes** - Show me exactly where in the codebase
+
+## Original Requirements (Reminder):
+
+**What we removed:**
+- "Week Template" selection card
+- "Custom" option card  
+- "Selected Schedule" confirmation box
+- All template selection logic
+
+**What we added:**
+- Direct date/time pickers for Start
+- Direct date/time pickers for End
+- Daily Reminder toggle (default ON)
+- Time picker for reminder (default 8:00 PM)
+- Smart defaults: Next Monday 12 AM → Following Sunday 12 PM
+
+## What I Need Now:
+
+### **1. Show Me The Modified File**
+```bash
+# Show the current StartWill.tsx (or wherever "When" screen lives)
+cat client/src/pages/StartWill.tsx
+
+# Or if it's a different file:
+find client/src -name "*Will*.tsx" -o -name "*When*.tsx"
+```
+
+### **2. Highlight Key Changes**
+
+Can you show me specifically:
+
+**a) The "When" step UI section:**
+- Where are the date/time pickers?
+- Where is the reminder toggle?
+- What does the form structure look like?
+
+**b) State management:**
+- What state variables were added for the new fields?
+- How are start/end dates stored?
+- How is reminder configuration stored?
+
+**c) Removed code:**
+- Confirm "Week Template" logic is gone
+- Confirm template selection state is removed
+
+### **3. Git Diff (If Available)**
+
+Can you show me what changed?
+```bash
+git log --oneline -10
+git diff HEAD~5 client/src/pages/StartWill.tsx
+```
+
+Or tell me which commit has these changes?
+
+### **4. Verify Data Structure**
+
+Show me how the form data is submitted:
+- What format is start/end date in?
+- How is reminder stored in the Will object?
+- Does backend need any changes to handle this?
+
+## Goal:
+
+I want to understand exactly what code exists now so I can:
+- Build the staging app with confidence
+- Know what to test
+- Understand if any follow-up work is needed
+
+Please provide a clear walkthrough of the current "When" screen implementation!
+```
+
+---
+
+## **What You Should Get Back:**
+
+Replit should show you:
+
+### **1. File Location**
+```
+client/src/pages/StartWill.tsx (or similar)
+Lines: XXX-YYY (the "When" step section)
+2. Key Code Sections
+State Variables:
+typescriptconst [startDate, setStartDate] = useState<string>('');
+const [endDate, setEndDate] = useState<string>('');
+const [reminderEnabled, setReminderEnabled] = useState<boolean>(true);
+const [reminderTime, setReminderTime] = useState<string>('20:00');
+UI Components:
+tsx{/* Step 1: When */}
+<IonInput 
+  type="datetime-local"
+  value={startDate}
+  onIonChange={e => setStartDate(e.detail.value)}
+/>
+
+<IonToggle 
+  checked={reminderEnabled}
+  onIonChange={e => setReminderEnabled(e.detail.checked)}
+/>
+Form Submission:
+typescriptconst submitWhen = () => {
+  const willData = {
+    start: startDate,
+    end: endDate,
+    reminder: {
+      enabled: reminderEnabled,
+      time: reminderTime
+    }
+  };
+};
