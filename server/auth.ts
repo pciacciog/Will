@@ -24,7 +24,24 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
+  // Handle case where password is undefined/null
+  if (!stored || typeof stored !== 'string') {
+    console.error('❌ [Auth] Invalid stored password - password is undefined or not a string');
+    return false;
+  }
+  
+  // Check if password has the expected format (hash.salt)
+  if (!stored.includes('.')) {
+    console.error('❌ [Auth] Invalid stored password format - missing salt separator');
+    return false;
+  }
+  
   const [hashed, salt] = stored.split(".");
+  if (!hashed || !salt) {
+    console.error('❌ [Auth] Invalid stored password format - missing hash or salt');
+    return false;
+  }
+  
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
   return timingSafeEqual(hashedBuf, suppliedBuf);
@@ -179,13 +196,26 @@ export function setupAuth(app: Express) {
       passwordField: 'password'
     }, async (email, password, done) => {
       try {
+        console.log(`🔍 [Auth] Login attempt for email: ${email}`);
         const user = await storage.getUserByEmail(email);
-        if (!user || !(await comparePasswords(password, user.password))) {
+        
+        if (!user) {
+          console.log(`❌ [Auth] User not found: ${email}`);
           return done(null, false);
-        } else {
-          return done(null, user);
         }
+        
+        console.log(`✅ [Auth] User found: ${email}, checking password...`);
+        const passwordMatch = await comparePasswords(password, user.password);
+        
+        if (!passwordMatch) {
+          console.log(`❌ [Auth] Password mismatch for user: ${email}`);
+          return done(null, false);
+        }
+        
+        console.log(`✅ [Auth] Password verified for user: ${email}`);
+        return done(null, user);
       } catch (error) {
+        console.error(`❌ [Auth] Error during authentication:`, error);
         return done(error);
       }
     }),
