@@ -21,57 +21,7 @@ import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-
-function getWillStatus(will: any, memberCount: number): string {
-  if (!will) return 'no_will';
-  
-  // If will is archived, treat as no will
-  if (will.status === 'archived') return 'no_will';
-  
-  // If will has explicit status, use it (for End Room flow)
-  if (will.status === 'waiting_for_end_room') {
-    return will.status;
-  }
-  
-  // Special handling for completed status
-  if (will.status === 'completed') {
-    const committedMemberCount = will.commitments?.length || 0;
-    const acknowledgedCount = will.acknowledgedCount || 0;
-    
-    // If all committed members have acknowledged, show no_will to allow new Will creation
-    if (acknowledgedCount >= committedMemberCount) {
-      return 'no_will';
-    }
-    return 'completed';
-  }
-  
-  const now = new Date();
-  const startDate = new Date(will.startDate);
-  const endDate = new Date(will.endDate);
-
-  if (now >= endDate) {
-    // Will should transition to waiting_for_end_room, but check acknowledgments
-    const committedMemberCount = will.commitments?.length || 0;
-    const acknowledgedCount = will.acknowledgedCount || 0;
-    
-    if (acknowledgedCount >= committedMemberCount) {
-      return 'no_will'; // All committed members acknowledged, can start new will
-    }
-    return 'completed';
-  } else if (now >= startDate) {
-    return 'active';
-  } else {
-    // Check commitment count to determine pending vs scheduled
-    const commitmentCount = will.commitments?.length || 0;
-    if (commitmentCount < memberCount) {
-      return 'pending';
-    } else if (commitmentCount >= memberCount) {
-      return 'scheduled';
-    } else {
-      return 'pending';
-    }
-  }
-}
+import { getWillStatus } from "@/lib/willStatus";
 
 function formatTimeRemaining(endDate: string): string {
   const now = new Date();
@@ -176,19 +126,59 @@ export default function InnerCircleHub() {
     queryKey: [`/api/wills/circle/${circle?.id}`],
     enabled: !!circle?.id,
     staleTime: 0, // Always consider data stale for immediate updates
+    // INTELLIGENT POLLING STRATEGY:
+    // - Aggressive polling (5s) ONLY during critical 5-minute windows before transitions
+    // - Most of the time polls at 15s-30s intervals
+    // - useAppRefresh() invalidates on visibility change for instant updates when app opens
+    // - refetchOnWindowFocus in queryClient.ts ensures paused polling when backgrounded
+    // Expected load: ~1-2 req/sec during critical moments, ~1 req/30s normally
     refetchInterval: (data: any) => {
-      if (!data) return 120000;
+      if (!data || !user?.id) return 30000; // Wait for user data before intelligent polling
       
-      const willStatus = getWillStatus(data, circle?.members?.length || 0);
+      const willStatus = getWillStatus(data, user.id);
       
-      // More frequent updates for completed wills awaiting acknowledgment
+      // Real-time updates for completed wills awaiting acknowledgment
       if (willStatus === 'completed') {
         return 5000; // 5 seconds for real-time acknowledgment counter
       }
       
-      // More frequent updates for wills waiting for end room
+      // Intelligent polling for End Room status transitions
       if (willStatus === 'waiting_for_end_room') {
-        return 30000; // 30 seconds for end room status updates
+        // Check if End Room is about to open or is already open
+        if (data?.endRoomScheduledAt) {
+          const now = new Date();
+          const scheduled = new Date(data.endRoomScheduledAt);
+          const diff = scheduled.getTime() - now.getTime();
+          
+          // Very frequent if End Room opens within 5 minutes
+          if (diff <= 5 * 60 * 1000 && diff > 0) {
+            return 5000; // Every 5 seconds - catch the exact moment it opens
+          }
+          
+          // Very frequent if End Room time has passed (room should be open)
+          if (diff <= 0) {
+            return 5000; // Every 5 seconds - ensure join button appears immediately
+          }
+        }
+        
+        return 15000; // Every 15 seconds otherwise (faster than old 30s)
+      }
+      
+      // Intelligent polling when Will is close to ending
+      if (willStatus === 'active' && data?.endDate) {
+        const now = new Date();
+        const end = new Date(data.endDate);
+        const diff = end.getTime() - now.getTime();
+        
+        // Very frequent if ending within 5 minutes
+        if (diff <= 5 * 60 * 1000 && diff > 0) {
+          return 5000; // Every 5 seconds - catch transition to waiting_for_end_room
+        }
+        
+        // Frequent if ending within 1 hour
+        if (diff <= 60 * 60 * 1000 && diff > 0) {
+          return 15000; // Every 15 seconds
+        }
       }
       
       // More frequent updates when will is close to starting
@@ -197,22 +187,22 @@ export default function InnerCircleHub() {
         const start = new Date(data.startDate);
         const diff = start.getTime() - now.getTime();
         
-        // Update every 10 seconds if starting within 5 minutes
+        // Update every 5 seconds if starting within 5 minutes
         if (diff > 0 && diff <= 5 * 60 * 1000) {
-          return 10000;
+          return 5000;
         }
-        // Update every 30 seconds if starting within 1 hour
+        // Update every 15 seconds if starting within 1 hour
         if (diff > 0 && diff <= 60 * 60 * 1000) {
-          return 30000;
+          return 15000;
         }
       }
       
-      // Default: update every 2 minutes
-      return 120000;
+      // Default: update every 30 seconds (reduced from 2 minutes)
+      return 30000;
     }
   });
 
-  const willStatus = getWillStatus(will, circle?.members?.length || 0);
+  const willStatus = getWillStatus(will, user?.id);
   const [previousWillStatus, setPreviousWillStatus] = useState<string | null>(null);
 
   // Monitor for status changes and send notifications

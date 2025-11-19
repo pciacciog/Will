@@ -1,0 +1,54 @@
+Excellent diagnostic work! Your analysis is spot-on. Yes, please proceed with implementing all the fixes you've identified. Here's what I need:
+IMPLEMENTATION PRIORITY:
+1. Fix getWillStatus() Logic (CRITICAL - Fix Issue #2)
+
+Update getWillStatus() in both InnerCircleHub.tsx and Home.tsx
+Make it trust the backend will.status field FIRST before doing any date-based calculations
+Remove the client-side date logic that's overriding backend status
+Implement the solution you proposed where backend status takes precedence
+
+2. Speed Up Polling Intervals (CRITICAL - Fix Issue #1)
+
+Update the refetchInterval logic in InnerCircleHub.tsx
+Implement the intelligent polling you proposed:
+
+5 seconds when End Room opens within 5 minutes or is already open
+5 seconds when Will is ending within 5 minutes
+15 seconds for waiting_for_end_room status generally
+5 seconds for completed status (acknowledgments)
+30 seconds default (down from 2 minutes)
+
+
+
+3. Add End Room Status Display (IMPORTANT - Fix Issue #1 & #3)
+
+Update UI components to check will.endRoomStatus
+Show "Join End Room Now" button when endRoomStatus === 'open'
+Show scheduled time when endRoomStatus === 'pending'
+Ensure proper navigation after End Room completion
+
+TESTING REQUIREMENTS:
+After implementing, please verify:
+
+When a Will ends at 12:00 PM with End Room scheduled for 5:00 PM, the status shows "End Room Scheduled" (not "Will Complete")
+At 5:00 PM when End Room opens, the join button appears within 5 seconds
+After End Room completes, navigation goes to "Review Final Summary" (not "Create New Will")
+No more status "skipping" or incorrect state displays
+
+SAFETY CHECKS:
+
+Make sure we're not breaking any existing functionality
+Test with the staging database/environment
+Verify the changes work for all will lifecycle phases:
+
+pending → scheduled → active → waiting_for_end_room → completed
+
+
+
+QUESTIONS FOR YOU:
+
+Should we also add any visual indicators to show when the app is polling/refreshing data?
+Do we need to update any other components beyond InnerCircleHub.tsx and Home.tsx?
+Should we consider adding WebSocket support for truly real-time updates in the future, or is the improved polling sufficient?
+
+Please proceed with the implementation and let me know if you encounter any issues or need clarification on any part of the solution.

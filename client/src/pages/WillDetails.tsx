@@ -15,6 +15,7 @@ import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, A
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
+import { getWillStatus } from "@/lib/willStatus";
 
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -100,11 +101,48 @@ export default function WillDetails() {
     enabled: !!id && !!user,
     staleTime: 0, // Always consider data stale for immediate updates
     refetchInterval: (data) => {
-      if (!data) return 30000;
+      if (!data || !user?.id) return 30000; // Wait for user data before intelligent polling
       
-      // More frequent updates for completed wills awaiting acknowledgment
-      if (data.status === 'completed') {
+      // Use centralized getWillStatus for consistency with Hub/Home
+      const willStatus = getWillStatus(data, user.id);
+      
+      // Real-time updates for completed wills awaiting acknowledgment
+      if (willStatus === 'completed') {
         return 5000; // 5 seconds for real-time acknowledgment counter
+      }
+      
+      // Intelligent polling for End Room status transitions
+      if (willStatus === 'waiting_for_end_room') {
+        // Check if End Room is about to open or is already open
+        if (data?.endRoomScheduledAt) {
+          const now = new Date();
+          const scheduled = new Date(data.endRoomScheduledAt);
+          const diff = scheduled.getTime() - now.getTime();
+          
+          // Very frequent if End Room opens within 5 minutes or has passed
+          if (diff <= 5 * 60 * 1000) {
+            return 5000; // Every 5 seconds
+          }
+        }
+        
+        return 15000; // Every 15 seconds otherwise
+      }
+      
+      // Frequent polling when Will is close to ending
+      if (willStatus === 'active' && data?.endDate) {
+        const now = new Date();
+        const end = new Date(data.endDate);
+        const diff = end.getTime() - now.getTime();
+        
+        // Very frequent if ending within 5 minutes
+        if (diff <= 5 * 60 * 1000 && diff > 0) {
+          return 5000; // Every 5 seconds
+        }
+        
+        // Frequent if ending within 1 hour
+        if (diff <= 60 * 60 * 1000 && diff > 0) {
+          return 15000; // Every 15 seconds
+        }
       }
       
       return 30000; // Default 30 seconds
