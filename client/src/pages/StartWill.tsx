@@ -617,20 +617,13 @@ export default function StartWill() {
           </SectionCard>
         )}
         
-        {/* Step 4: End Room Scheduling - NOW OPTIONAL! */}
+        {/* Step 4: End Room Scheduling */}
         {currentStep === 4 && !showTransition && (
           <SectionCard>
-            <div className="px-4 mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">How would you like to complete this Will?</h2>
-              <p className="text-sm text-gray-600">
-                Choose whether to schedule a live video call (End Room) or use asynchronous reviews.
-              </p>
-            </div>
-
             <form onSubmit={handleStep4Submit} className="space-y-3">
               <div className="px-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <span className="text-gray-500">(Optional)</span> Schedule an End Room video call after your <em>Will</em> ends on {willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}
+                  Schedule an End Room video call after your <em>Will</em> ends on {willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}
                 </label>
                 
                 {/* Input field with proper mobile containment */}
@@ -642,119 +635,52 @@ export default function StartWill() {
                     max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
                     value={endRoomDateTime}
                     onChange={(e) => setEndRoomDateTime(e.target.value)}
+                    required
                     className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                     data-testid="input-end-room-datetime"
                   />
-                  <div className="text-xs text-gray-400 mt-1 text-center">MM/DD/YYYY HH:MM (optional)</div>
+                  <div className="text-xs text-gray-400 mt-1 text-center">MM/DD/YYYY HH:MM</div>
                 </div>
               </div>
 
-              {/* Warning Box - Only show if End Room is scheduled */}
-              {endRoomDateTime && (
-                <div className="bg-red-50 border border-red-300 rounded-xl p-3 mt-3 mx-4">
-                  <div className="mb-1 flex items-center">
-                    <svg className="w-3 h-3 text-red-600 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-xs font-medium text-red-800">END ROOM RULES:</span>
-                  </div>
-                  <ul className="space-y-0 text-xs text-red-600 break-words">
-                    <li className="flex items-start">
-                      <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                      <span>Opens automatically at the scheduled date and runs for 30 minutes</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                      <span>Cannot be rescheduled once the <strong>Will</strong> is active</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                      <span>Closes automatically after 30 minutes expire — regardless of attendance</span>
-                    </li>
-                  </ul>
+              {/* Warning Box */}
+              <div className="bg-red-50 border border-red-300 rounded-xl p-3 mt-3 mx-4">
+                <div className="mb-1 flex items-center">
+                  <svg className="w-3 h-3 text-red-600 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xs font-medium text-red-800">END ROOM RULES:</span>
                 </div>
-              )}
-
-              {/* Info Box - Show when End Room is not scheduled */}
-              {!endRoomDateTime && (
-                <div className="bg-blue-50 border border-blue-300 rounded-xl p-3 mt-3 mx-4">
-                  <div className="mb-1 flex items-center">
-                    <svg className="w-3 h-3 text-blue-600 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-xs font-medium text-blue-800">WILL REVIEW (ASYNCHRONOUS):</span>
-                  </div>
-                  <ul className="space-y-0 text-xs text-blue-600 break-words">
-                    <li className="flex items-start">
-                      <span className="w-1 h-1 bg-blue-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                      <span>Circle members complete individual reflections after the Will ends</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="w-1 h-1 bg-blue-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                      <span>No need to coordinate schedules or join video calls</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="w-1 h-1 bg-blue-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                      <span>Reflections are shared with the circle once everyone completes theirs</span>
-                    </li>
-                  </ul>
-                </div>
-              )}
+                <ul className="space-y-0 text-xs text-red-600 break-words">
+                  <li className="flex items-start">
+                    <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
+                    <span>Opens automatically at the scheduled date and runs for 30 minutes</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
+                    <span>Cannot be rescheduled once the <strong>Will</strong> is active</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
+                    <span>Closes automatically after 30 minutes expire — regardless of attendance</span>
+                  </li>
+                </ul>
+              </div>
 
               <div className="border-t border-gray-200 pt-3 mt-3">
                 <div className="flex flex-col space-y-3 px-4">
-                  {/* Show schedule button only if user entered a time */}
-                  {endRoomDateTime && (
-                    <button
-                      type="submit"
-                      disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                      className={`w-full px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-center transition-colors duration-200 ${
-                        createWillMutation.isPending || addCommitmentMutation.isPending
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-brandGreen text-white hover:bg-green-600'
-                      }`}
-                      data-testid="button-schedule-and-create"
-                    >
-                      <span className="text-sm font-medium">
-                        {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Schedule End Room & Create Will'}
-                      </span>
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </button>
-                  )}
-
-                  {/* Skip button - primary CTA when no End Room scheduled */}
                   <button
-                    type="button"
-                    onClick={() => {
-                      const finalWillData = {
-                        ...willData,
-                        endRoomScheduledAt: null,
-                        circleId: circle?.id,
-                      };
-                      
-                      createWillMutation.mutate({
-                        title: finalWillData.what || "Group Goal",
-                        description: finalWillData.why || "Group commitment",
-                        startDate: finalWillData.startDate,
-                        endDate: finalWillData.endDate,
-                        endRoomScheduledAt: null,
-                        circleId: finalWillData.circleId,
-                      });
-                      
-                      setWillData(finalWillData);
-                    }}
-                    disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                    type="submit"
+                    disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
                     className={`w-full px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-center transition-colors duration-200 ${
-                      createWillMutation.isPending || addCommitmentMutation.isPending
+                      !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : endRoomDateTime
-                          ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                          : 'bg-brandGreen text-white hover:bg-green-600'
+                        : 'bg-brandGreen text-white hover:bg-green-600'
                     }`}
-                    data-testid="button-skip-end-room"
+                    data-testid="button-schedule-and-create"
                   >
                     <span className="text-sm font-medium">
-                      {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will (Use Asynchronous Review)'}
+                      {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Schedule End Room & Create Will'}
                     </span>
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </button>
