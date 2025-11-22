@@ -32,11 +32,11 @@ Preferred communication style: Simple, everyday language.
   - 5-second polling for will_review state to ensure real-time UI updates
   - Proper query invalidation after mutations (`/api/wills`, `/api/wills/:id/reviews`, `/api/wills/:id/review-status`)
   - Review-status query enabled for both will_review AND completed states to prevent stale UI
-- **End Room Now Optional**:
-  - Will creation Step 4: Users can skip End Room entirely (endRoomScheduledAt can be null)
-  - Dynamic button text: "Schedule End Room & Create Will" vs "Create Will (Use Asynchronous Review)"
-  - Conditional info boxes explain both completion paths based on user's choice
-  - **Note**: UX could be improved in future iteration by presenting Will Review as primary default with End Room as opt-in
+- **Will Creation Flow**:
+  - End Room scheduling remains a required step during Will creation (Step 4)
+  - Users must schedule an End Room date/time before creating the Will
+  - The scheduled End Room is NOT mandatory to attend - actual attendance is naturally optional
+  - Will Review (mandatory reflection) happens when the Will ends, regardless of End Room attendance
 - **Architecture Decisions**:
   - Will Review is now the **primary** completion mechanism
   - End Room remains available for circles who want synchronous video reflection
