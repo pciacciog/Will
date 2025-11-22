@@ -240,7 +240,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { email, password, firstName, lastName, deviceToken: bodyDeviceToken } = req.body;
+      const { email, password, firstName, lastName, timezone, deviceToken: bodyDeviceToken } = req.body;
       
       if (!email || !password || !firstName || !lastName) {
         return res.status(400).json({ message: "All fields are required" });
@@ -251,11 +251,16 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email already exists" });
       }
 
+      // TIMEZONE FIX: Use provided timezone or default to America/New_York
+      const userTimezone = timezone || 'America/New_York';
+      console.log(`🌍 [Registration] Setting user timezone: ${userTimezone}`);
+
       const user = await storage.createUser({
         email,
         password: await hashPassword(password),
         firstName,
         lastName,
+        timezone: userTimezone,
         profileImageUrl: null,
         role: 'user',
         isActive: true,

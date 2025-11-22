@@ -1,0 +1,127 @@
+DECISION: Implement Option B - Proper Per-User Timezone Solution
+You're absolutely right - let's do this properly. Your current fix removes incorrect information, but we need to show the correct information instead. I want you to implement Option B: the complete per-user timezone solution.
+This aligns with the timezone golden rule: Store UTC, compare in UTC, display in user's timezone.
+Implementation Plan - Please Execute
+Phase 1: Add Timezone to User Schema ✅
+
+
+typescript
+// shared/schema.ts
+export const users = pgTable('users', {
+  // ... existing fields
+  timezone: varchar('timezone', { length: 50 }).default('America/New_York'),
+});
+Action:
+1. Add the timezone column to the schema
+2. Run migration to add column to database
+3. Backfill existing users with default timezone: 'America/New_York' (or use 'America/Detroit' for me since I'm in Michigan)
+Phase 2: Capture Timezone on Signup/First Launch ✅
+Frontend - Detect timezone:
+
+
+typescript
+// During signup or first app launch
+const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+// Returns: "America/Detroit", "America/Los_Angeles", etc.
+
+// Save to backend
+await updateUserProfile({ timezone: userTimezone });
+Where to implement:
+* Signup flow (best place)
+* First app launch (fallback)
+* Settings page (allow users to change manually)
+Phase 3: Format Notifications Per-User ✅
+Update scheduler notification code:
+
+
+typescript
+// server/scheduler.ts - around line 327 & 356
+
+// OLD (your current band-aid fix):
+const endRoomTime = new Date(will.endRoomScheduledAt).toISOString();
+// Notification body: "Your End Room ceremony is scheduled for tomorrow"
+
+// NEW (proper fix):
+for (const member of circleMembers) {
+  // Get this user's timezone from database
+  const user = await storage.getUserById(member.userId);
+  const userTimezone = user?.timezone || 'America/New_York'; // fallback
+  
+  // Format the time in THIS user's timezone
+  const endRoomTime = new Date(will.endRoomScheduledAt)
+    .toLocaleTimeString('en-US', {
+      timeZone: userTimezone,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  // Returns: "5:00 PM" for EST user, "2:00 PM" for PST user
+  
+  // Send notification with correctly formatted time
+  await sendEndRoomNotification(
+    '24_hours',
+    endRoomTime, // Now shows correct time for THIS user
+    [member.expoPushToken]
+  );
+}
+
+// Update notification body in pushNotificationService.ts
+body: `Your End Room ceremony is scheduled for tomorrow at ${endRoomTime}`
+// Michigan user sees: "tomorrow at 5:00 PM" ✓
+// California user sees: "tomorrow at 2:00 PM" ✓
+Key points:
+* Loop through each user individually
+* Get each user's timezone from database
+* Format time specifically for that user
+* Send personalized notification
+Phase 4: Update Existing Frontend Display (if needed) ✅
+Verify frontend is using correct timezone:
+
+
+typescript
+// Should already be doing this, but verify:
+const displayTime = new Date(utcTimestamp).toLocaleTimeString('en-US', {
+  // Browser automatically uses user's local timezone
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true
+});
+Frontend should already work correctly since browser automatically converts to local time. Just verify this is happening everywhere dates are displayed.
+Testing Checklist
+After implementation, please test:
+Test 1: New User Signup
+* User signs up
+* Timezone automatically detected and saved
+* Check database: SELECT id, email, timezone FROM users WHERE id = [new_user_id];
+* Should see: America/Detroit or similar
+Test 2: Existing User Backfill
+* Run migration
+* Check my user record: SELECT timezone FROM users WHERE id = [my_user_id];
+* Should see: America/New_York (default) or update to America/Detroit
+Test 3: Notification Formatting
+* Schedule an End Room for tomorrow 5:00 PM EST
+* Wait for 24-hour reminder notification (or trigger manually)
+* Notification should say: "Your End Room ceremony is scheduled for tomorrow at 5:00 PM"
+* Check server logs to verify it formatted with my timezone
+Test 4: Multi-Timezone (If Possible)
+* Create test user in different timezone (e.g., PST)
+* Both users in same Inner Circle
+* Schedule End Room
+* Verify each user sees time in their own timezone
+
+Migration Script
+Please create and run this migration:
+
+
+sql
+-- Add timezone column
+ALTER TABLE users 
+ADD COLUMN timezone VARCHAR(50) DEFAULT 'America/New_York';
+
+-- Update my user specifically to Michigan timezone
+UPDATE users 
+SET timezone = 'America/Detroit'
+WHERE id = [my_user_id]; -- Replace with my actual user ID
+
+-- Verify
+SELECT id, email, timezone FROM users;

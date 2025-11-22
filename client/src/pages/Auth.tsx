@@ -114,8 +114,13 @@ export default function Auth() {
         console.log(`⚠️ [Registration] No device token found in localStorage`);
       }
       
+      // TIMEZONE FIX: Detect user's timezone on signup
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log(`🌍 [Registration] Detected timezone: ${userTimezone}`);
+      
       const registerPayload = {
         ...credentials,
+        timezone: userTimezone, // Send timezone for storage
         deviceToken // Send device token for immediate ownership transfer
       };
       

@@ -323,12 +323,33 @@ export class EndRoomScheduler {
         console.log(`[EndRoomScheduler] Sending 24h End Room notification for Will ${will.id}`);
         try {
           const circleMembers = await storage.getCircleMembers(will.circleId);
-          const memberIds = circleMembers.map(member => member.userId);
-          // TIMEZONE FIX: Send ISO timestamp instead of formatted time
-          // Mobile app will format in user's local timezone
-          const endRoomTime = will.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toISOString() : '';
-          await pushNotificationService.sendEndRoomNotification('24_hours', endRoomTime, memberIds);
-          console.log(`[EndRoomScheduler] 24h End Room notification sent for Will ${will.id}`);
+          
+          // TIMEZONE FIX: Send personalized notifications per user with their timezone
+          for (const member of circleMembers) {
+            try {
+              // Get user's timezone from database
+              const userTimezone = member.user.timezone || 'America/New_York';
+              
+              // Format time in user's timezone
+              const endRoomTime = will.endRoomScheduledAt 
+                ? new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', {
+                    timeZone: userTimezone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })
+                : 'scheduled time';
+              
+              console.log(`[EndRoomScheduler] User ${member.user.firstName} (${userTimezone}): End Room at ${endRoomTime}`);
+              
+              // Send personalized notification to this user
+              await pushNotificationService.sendEndRoomNotification('24_hours', endRoomTime, [member.userId]);
+            } catch (memberError) {
+              console.error(`[EndRoomScheduler] Failed to send notification to user ${member.userId}:`, memberError);
+            }
+          }
+          
+          console.log(`[EndRoomScheduler] 24h End Room notifications sent for Will ${will.id}`);
         } catch (error) {
           console.error(`[EndRoomScheduler] Failed to send 24h End Room notification:`, error);
         }
@@ -354,12 +375,33 @@ export class EndRoomScheduler {
         console.log(`[EndRoomScheduler] Sending 15min End Room notification for Will ${will.id}`);
         try {
           const circleMembers = await storage.getCircleMembers(will.circleId);
-          const memberIds = circleMembers.map(member => member.userId);
-          // TIMEZONE FIX: Send ISO timestamp instead of formatted time
-          // Mobile app will format in user's local timezone
-          const endRoomTime = will.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toISOString() : '';
-          await pushNotificationService.sendEndRoomNotification('15_minutes', endRoomTime, memberIds);
-          console.log(`[EndRoomScheduler] 15min End Room notification sent for Will ${will.id}`);
+          
+          // TIMEZONE FIX: Send personalized notifications per user with their timezone
+          for (const member of circleMembers) {
+            try {
+              // Get user's timezone from database
+              const userTimezone = member.user.timezone || 'America/New_York';
+              
+              // Format time in user's timezone  
+              const endRoomTime = will.endRoomScheduledAt 
+                ? new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', {
+                    timeZone: userTimezone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })
+                : 'scheduled time';
+              
+              console.log(`[EndRoomScheduler] User ${member.user.firstName} (${userTimezone}): End Room at ${endRoomTime}`);
+              
+              // Send personalized notification to this user
+              await pushNotificationService.sendEndRoomNotification('15_minutes', endRoomTime, [member.userId]);
+            } catch (memberError) {
+              console.error(`[EndRoomScheduler] Failed to send notification to user ${member.userId}:`, memberError);
+            }
+          }
+          
+          console.log(`[EndRoomScheduler] 15min End Room notifications sent for Will ${will.id}`);
         } catch (error) {
           console.error(`[EndRoomScheduler] Failed to send 15min End Room notification:`, error);
         }

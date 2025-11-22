@@ -23,13 +23,20 @@ Preferred communication style: Simple, everyday language.
 - **Bug Fixed #1**: User ID type mismatch in acknowledgment logic (string vs number comparison)
   - Changed `currentUserId` from `number` to `string` in FinalWillSummary component
   - Now correctly identifies participating users for acknowledgment button display
-- **Bug Fixed #2**: 5-hour timezone discrepancy in push notifications
-  - Root cause: Server formatting UTC times with `.toLocaleTimeString()` which showed "10:00 PM" for 22:00 UTC
-  - User in Michigan (EST, UTC-5) expected "5:00 PM"
-  - Fix: Changed scheduler to send ISO timestamps instead of formatted times
-  - Fix: Removed specific time from 24-hour notification body text
-  - ISO timestamp included in notification data payload for mobile app to format in user's local timezone
-  - Files modified: `server/scheduler.ts` (lines 332, 363), `server/pushNotificationService.ts` (line 334-358)
+- **Bug Fixed #2**: 5-hour timezone discrepancy in push notifications (PROPER FIX IMPLEMENTED)
+  - **Root cause**: Server formatting UTC times with `.toLocaleTimeString()` which showed "10:00 PM" for 22:00 UTC instead of "5:00 PM" EST
+  - **Solution**: Implemented per-user timezone system
+  - **Database Schema**: Added `timezone` column to users table (default: "America/New_York")
+  - **Timezone Detection**: Browser automatically detects and sends timezone during signup via `Intl.DateTimeFormat().resolvedOptions().timeZone`
+  - **Per-User Formatting**: Scheduler now formats notifications individually per user using their stored timezone
+  - **Example**: Michigan user (America/Detroit) sees "5:00 PM", California user (America/Los_Angeles) sees "2:00 PM" for same End Room
+  - **Architecture**: Store UTC → Compare UTC → Display in user's timezone (golden rule)
+  - Files modified: 
+    - `shared/schema.ts` (added timezone column)
+    - `client/src/pages/Auth.tsx` (timezone detection on signup)
+    - `server/auth.ts` (timezone storage in registration)
+    - `server/scheduler.ts` (per-user notification formatting)
+    - `server/pushNotificationService.ts` (restored time display in notification body)
 
 ### November 10, 2025: Staging Database Environment Setup
 - **Added**: Environment-aware database connection system
