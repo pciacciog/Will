@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
   profileImageUrl: varchar("profile_image_url"),
+  timezone: varchar("timezone", { length: 50 }).notNull().default("America/New_York"),
   role: varchar("role", { length: 20 }).notNull().default("user"), // user, admin
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
