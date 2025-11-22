@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { EndRoom } from "@/components/EndRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
+import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge } from "@/components/ui/design-system";
 import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
@@ -111,6 +112,12 @@ export default function WillDetails() {
         return 5000; // 5 seconds for real-time acknowledgment counter
       }
       
+      // NEW FEATURE: Real-time updates for will_review status
+      // Poll frequently to detect when all members have submitted reviews
+      if (willStatus === 'will_review') {
+        return 5000; // Every 5 seconds - show immediate feedback when reviews complete
+      }
+      
       // Intelligent polling for End Room status transitions
       if (willStatus === 'waiting_for_end_room') {
         // Check if End Room is about to open or is already open
@@ -154,6 +161,21 @@ export default function WillDetails() {
     enabled: !!user,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
+  });
+
+  // NEW FEATURE: Fetch review status to check if user has reviewed
+  // Enable for both will_review and completed to maintain state
+  const { data: reviewStatus, isLoading: isReviewStatusLoading } = useQuery<any>({
+    queryKey: [`/api/wills/${id}/review-status`],
+    enabled: !!id && !!user && (will?.status === 'will_review' || will?.status === 'completed'),
+    refetchInterval: 5000, // Poll frequently during review phase
+  });
+
+  // NEW FEATURE: Fetch submitted reviews to display
+  const { data: reviews, isLoading: isReviewsLoading } = useQuery<any>({
+    queryKey: [`/api/wills/${id}/reviews`],
+    enabled: !!id && !!user && (will?.status === 'will_review' || will?.status === 'completed'),
+    refetchInterval: 10000, // Poll for new reviews
   });
 
   const acknowledgeMutation = useMutation({
@@ -342,12 +364,15 @@ export default function WillDetails() {
                 will.status === 'active' ? 'bg-green-100 text-green-800' :
                 will.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                 will.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                will.status === 'will_review' ? 'bg-purple-100 text-purple-800' :
                 will.status === 'waiting_for_end_room' ? 'bg-purple-100 text-purple-800' :
                 will.status === 'completed' ? 'bg-gray-100 text-gray-800' :
                 'bg-gray-100 text-gray-800'
               }`}
+              data-testid="badge-will-status"
             >
-              {will.status === 'waiting_for_end_room' ? 'Pending End Room' : 
+              {will.status === 'will_review' ? 'Review' :
+               will.status === 'waiting_for_end_room' ? 'Pending End Room' : 
                will.status === 'active' ? 'Active' :
                will.status === 'pending' ? 'Pending' :
                will.status === 'scheduled' ? 'Scheduled' :
@@ -540,6 +565,96 @@ export default function WillDetails() {
                 Submit My Commitment
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Will Review Section - NEW FEATURE */}
+        {will.status === 'will_review' && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4" data-testid="section-will-review-details">
+            {isReviewStatusLoading ? (
+              <div className="text-center py-4" data-testid="review-loading">
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                  <CheckCircle className="w-6 h-6 text-purple-600" />
+                </div>
+                <p className="text-sm text-gray-600">Loading review status...</p>
+              </div>
+            ) : reviewStatus?.needsReview ? (
+              <WillReviewFlow 
+                willId={will.id} 
+                onComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
+                  toast({
+                    title: "Review Completed",
+                    description: "Thank you for sharing your reflection!",
+                  });
+                }}
+              />
+            ) : (
+              <div className="text-center" data-testid="review-submitted-message">
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Review Submitted</h3>
+                <p className="text-sm text-gray-600">
+                  Waiting for other circle members to complete their reviews...
+                </p>
+                {reviewStatus && (
+                  <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                    {reviewStatus.reviewCount} of {reviewStatus.totalMembers} members reviewed
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Display Submitted Reviews */}
+        {(will.status === 'will_review' || will.status === 'completed') && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4" data-testid="section-reviews-display">
+            <div className="flex items-center mb-4">
+              <CheckCircle className="w-5 h-5 text-purple-600 mr-2" />
+              <h3 className="text-base font-semibold text-gray-900">Circle Reflections</h3>
+            </div>
+            {isReviewsLoading ? (
+              <div className="text-center py-4" data-testid="reviews-loading">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-16 bg-gray-200 rounded-lg"></div>
+                  <div className="h-16 bg-gray-200 rounded-lg"></div>
+                </div>
+                <p className="text-sm text-gray-600 mt-3">Loading reflections...</p>
+              </div>
+            ) : reviews && reviews.length > 0 ? (
+              <div className="space-y-3">
+                {reviews.map((review: any) => (
+                  <div key={review.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3" data-testid={`review-${review.id}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-gray-900" data-testid={`review-author-${review.id}`}>
+                        {review.user.firstName}
+                      </span>
+                      <Badge className={review.followThrough === 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} data-testid={`review-follow-through-${review.id}`}>
+                        {review.followThrough === 'yes' ? '✓ Completed' : '✗ Not Completed'}
+                      </Badge>
+                    </div>
+                    {review.shareWithCircle && review.reflection && (
+                      <p className="text-sm text-gray-700 italic" data-testid={`review-reflection-${review.id}`}>
+                        "{review.reflection}"
+                      </p>
+                    )}
+                    {!review.shareWithCircle && (
+                      <p className="text-xs text-gray-500 italic" data-testid={`review-private-${review.id}`}>
+                        Private reflection
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4" data-testid="reviews-empty">
+                <p className="text-sm text-gray-500">No reviews submitted yet</p>
+              </div>
+            )}
           </div>
         )}
 
