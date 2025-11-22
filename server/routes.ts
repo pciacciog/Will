@@ -629,11 +629,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const status = getWillStatus(willWithCommitments, memberCount);
       
-      // Auto-update will status if it has transitioned based on time
-      if (willWithCommitments && status === 'active' && willWithCommitments.status !== 'active') {
-        await storage.updateWillStatus(will.id, 'active');
-      } else if (willWithCommitments && status === 'completed' && willWithCommitments.status !== 'completed') {
-        await storage.updateWillStatus(will.id, 'completed');
+      // JIT (Just-In-Time) state checks: Update will status immediately when requested
+      // This ensures correct state even if scheduler hasn't run (dev restarts, deployment sleep, etc.)
+      if (willWithCommitments && status !== willWithCommitments.status) {
+        console.log(`[JIT] Transitioning Will ${will.id}: ${willWithCommitments.status} → ${status}`);
+        await storage.updateWillStatus(will.id, status);
+        
+        // Update the object to reflect the new status
+        willWithCommitments.status = status;
       }
       
       // NOTE: Do NOT auto-archive here! Frontend getWillStatus() handles showing 'no_will'
@@ -671,11 +674,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const status = getWillStatus(willWithCommitments, memberCount);
       
-      // Auto-update will status if it has transitioned based on time
-      if (status === 'active' && willWithCommitments.status !== 'active') {
-        await storage.updateWillStatus(willId, 'active');
-      } else if (status === 'completed' && willWithCommitments.status !== 'completed') {
-        await storage.updateWillStatus(willId, 'completed');
+      // JIT (Just-In-Time) state checks: Update will status immediately when requested
+      // This ensures correct state even if scheduler hasn't run (dev restarts, deployment sleep, etc.)
+      if (status !== willWithCommitments.status) {
+        console.log(`[JIT] Transitioning Will ${willId}: ${willWithCommitments.status} → ${status}`);
+        await storage.updateWillStatus(willId, status);
+        
+        // Update the object to reflect the new status
+        willWithCommitments.status = status;
       }
 
       // Get progress for each commitment

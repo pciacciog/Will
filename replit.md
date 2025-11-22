@@ -8,6 +8,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 22, 2025: Just-In-Time State Transitions & Scheduler Analysis
+- **Critical Discovery**: Background scheduler does NOT run 24/7 in Replit development environment
+  - Dev servers restart frequently (every few minutes when workspace is reopened)
+  - Scheduler logs only show activity from current session (no historical logs from 11/19-11/21)
+  - This explained why Will #4 showed "Active" on 11/21 despite ending on 11/19
+- **Solution Implemented**: Just-In-Time (JIT) state checks in GET endpoints
+  - `/api/wills/circle/:circleId` now transitions Will status on every request
+  - `/api/wills/:id/details` now transitions Will status on every request
+  - State transitions happen immediately when data is requested, regardless of scheduler
+  - Works correctly even if scheduler hasn't run (dev restarts, deployment sleep, etc.)
+- **Logging Added**: `[JIT]` prefix shows when endpoints perform state transitions
+- **Architecture**: Scheduler still runs as backup, but JIT checks are primary reliability mechanism
+- **Bug Fixed**: User ID type mismatch in acknowledgment logic (string vs number comparison)
+  - Changed `currentUserId` from `number` to `string` in FinalWillSummary component
+  - Now correctly identifies participating users for acknowledgment button display
+
 ### November 10, 2025: Staging Database Environment Setup
 - **Added**: Environment-aware database connection system
   - Database selection based on `NODE_ENV` environment variable

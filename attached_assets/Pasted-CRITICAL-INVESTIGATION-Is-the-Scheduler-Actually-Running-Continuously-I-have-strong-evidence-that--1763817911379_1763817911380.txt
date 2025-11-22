@@ -1,0 +1,130 @@
+CRITICAL INVESTIGATION: Is the Scheduler Actually Running Continuously?
+I have strong evidence that the scheduler is NOT running continuously as designed. Here's the smoking gun:
+The Evidence
+What Should Happen:
+
+Scheduler runs every 1 minute via cron '* * * * *'
+Will ended on 11/19/2025 at 3:00 PM
+Scheduler should have transitioned it to completed within 1 minute (by 3:01 PM)
+By 11/21 (2 days later), the Will should have been in completed status for 48+ hours
+
+What Actually Happened:
+
+Will ended on 11/19 at 3:00 PM
+On 11/21 (2 DAYS later), I opened the app and it showed "Will Active" ❌
+5 minutes after opening the app, it suddenly changed to "Will Complete" ✓
+The scheduler appeared to "wake up" only when I accessed the app
+
+Critical Questions
+1. Is the scheduler process actually running 24/7?
+bash# Check if the cron job is registered and running
+# Show me the logs from the ENTIRE period 11/19 - 11/21
+grep "\[SCHEDULER\]" /tmp/logs/*.log | head -100
+Expected: Should see scheduler logs every 1 minute, 24/7, even when no users are accessing the app
+Actual: I suspect we'll see NO scheduler logs until I accessed the app on 11/21
+2. Is this a Replit deployment issue?
+Replit deployments can have "sleep" behavior where:
+
+Free/Hobby tier deployments sleep after inactivity
+The app only "wakes up" when an HTTP request comes in
+Background processes (like cron jobs) don't run while sleeping
+
+Are we on a tier that allows 24/7 background processes?
+
+What Replit deployment tier are we using?
+Is "Always On" enabled?
+Are we experiencing container sleep/wake cycles?
+
+3. How is the scheduler initialized?
+Show me:
+typescript// server/index.ts or wherever the app starts
+// How is the scheduler started?
+Is it:
+typescript// ✅ GOOD - Starts immediately on server boot
+startScheduler(); 
+app.listen(3000);
+Or:
+typescript// ❌ BAD - Only runs on first request
+app.use((req, res, next) => {
+  if (!schedulerStarted) {
+    startScheduler();
+    schedulerStarted = true;
+  }
+  next();
+});
+4. Check actual process uptime:
+bash# How long has the Node process been running?
+ps aux | grep node
+
+# Check if server restarts frequently
+ls -lth /tmp/logs/*.log | head -10
+5. Verify cron job registration:
+typescript// In server/scheduler.ts
+console.log('[SCHEDULER] Registering cron job: * * * * *');
+const job = cron.schedule('* * * * *', async () => {
+  console.log('[SCHEDULER] ⏰ Cron triggered at:', new Date().toISOString());
+  // ... rest of code
+});
+console.log('[SCHEDULER] Cron job registered:', job ? 'SUCCESS' : 'FAILED');
+My Hypothesis
+The scheduler is NOT running continuously. Instead:
+
+Replit container sleeps after inactivity (no HTTP requests for X minutes)
+Cron jobs don't run while container is asleep
+When I open the app on 11/21:
+
+HTTP request wakes up the container
+Scheduler starts running
+Processes 2 days of backlog within 5 minutes
+Updates Will status from "Active" → "Completed"
+
+
+
+This explains:
+
+✅ Why Will showed "Active" 2 days after ending
+✅ Why status corrected itself 5 minutes after I opened the app
+✅ Why this happens repeatedly (not a one-time bug)
+
+Solutions (In Order of Preference)
+Solution 1: Enable "Always On" (If Available)
+
+Upgrade Replit deployment to a tier that supports 24/7 processes
+Enable "Always On" setting
+Scheduler will run continuously even without user traffic
+
+Solution 2: Implement Just-In-Time State Checks (Most Robust)
+
+Add state transition logic to GET endpoints
+State transitions happen the moment data is requested
+Doesn't rely on any background process
+Works regardless of deployment tier or sleep behavior
+
+typescript// Every time someone requests will data, check if transitions are needed
+const will = await getWill(id);
+
+// Check RIGHT NOW if state should transition
+if (will.status === 'active' && new Date() >= new Date(will.endDate)) {
+  // Transition immediately, don't wait for scheduler
+  await transitionWillToCompleted(will);
+}
+Solution 3: External Ping Service
+
+Use a service like UptimeRobot or Cron-job.org
+Ping your API every 1-5 minutes
+Keeps the container awake and scheduler running
+
+Solution 4: Move to Different Hosting
+
+Deploy to a platform with guaranteed 24/7 processes
+Railway, Fly.io, AWS, Heroku (paid tiers)
+No sleep behavior
+
+Immediate Action Needed
+Please investigate:
+
+Check scheduler logs from 11/19-11/21 - Did it run continuously or only after I accessed the app?
+What Replit tier are we on? - Free, Hacker, Pro?
+Is "Always On" enabled? - Check deployment settings
+Show me server startup logs - When does the scheduler actually start?
+Implement JIT state checks - This makes the app work correctly regardless of scheduler issues
