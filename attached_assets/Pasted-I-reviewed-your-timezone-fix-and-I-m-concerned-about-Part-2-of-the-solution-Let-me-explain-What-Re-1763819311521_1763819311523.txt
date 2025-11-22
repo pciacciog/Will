@@ -1,0 +1,106 @@
+I reviewed your timezone fix and I'm concerned about Part 2 of the solution. Let me explain:
+What Replit Changed
+Part 1: ✅ Good - Send ISO timestamps
+typescript// Before: const endRoomTime = new Date(will.endRoomScheduledAt).toLocaleTimeString();
+// After: const endRoomTime = new Date(will.endRoomScheduledAt).toISOString();
+This is correct - ISO timestamps preserve timezone info.
+Part 2: ⚠️ PROBLEM - Removed time from notification body
+typescript// Before: body: `Your End Room ceremony is scheduled for tomorrow at ${endRoomTime}`
+// After: body: "Your End Room ceremony is scheduled for tomorrow"
+The Problem
+This removes the time entirely from the notification message! Now users will see:
+
+"Your End Room ceremony is scheduled for tomorrow"
+
+But they won't know WHAT TIME tomorrow! This defeats the purpose of the notification.
+Better Solution
+The notification body should still show the time, but formatted correctly. Here's what Replit should do instead:
+Option A: Format with User's Timezone (Best)
+You need to:
+
+Store the user's timezone in their profile (e.g., America/Detroit)
+Format using that timezone when creating notifications
+
+typescript// Get user's timezone from their profile
+const userTimezone = await getUserTimezone(userId); // e.g., "America/Detroit"
+
+// Format in user's timezone
+const endRoomTime = new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', {
+  timeZone: userTimezone,
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true
+});
+// Result: "5:00 PM" (correct for EST user)
+
+// Notification body
+body: `Your End Room ceremony is scheduled for tomorrow at ${endRoomTime}`
+// Shows: "Your End Room ceremony is scheduled for tomorrow at 5:00 PM" ✓
+Option B: Let Mobile App Format (Acceptable Alternative)
+If your mobile app can format notification bodies dynamically:
+
+Send the ISO timestamp in a notification data field
+Have the mobile app format the notification body client-side using the device's timezone
+
+But this requires mobile app changes and most push notification systems don't support dynamic body formatting.
+Questions for Replit
+Please answer these:
+
+Do you store user timezone in the database?
+
+sql   -- Is there a timezone column in users table?
+   SELECT column_name FROM information_schema.columns 
+   WHERE table_name = 'users' AND column_name LIKE '%zone%';
+
+Can you add timezone to user profile?
+
+typescript   // shared/schema.ts
+   timezone: varchar("timezone", { length: 50 }).default("America/New_York")
+
+Where do you detect/capture user timezone?
+
+During signup/onboarding?
+From browser: Intl.DateTimeFormat().resolvedOptions().timeZone?
+Manual selection in settings?
+
+
+Can the mobile app format notification bodies?
+
+Is this iOS only, or also Android?
+Can you pass data and format the body client-side?
+
+
+
+Recommended Fix
+Please implement Option A properly:
+typescript// In server/scheduler.ts
+
+// Get user timezone (add this helper function)
+async function getUserTimezone(userId: string): Promise<string> {
+  const user = await storage.getUserById(userId);
+  return user?.timezone || 'America/New_York'; // Default to EST
+}
+
+// In the 24-hour notification section (around line 327)
+for (const member of circleMembers) {
+  const userTimezone = await getUserTimezone(member.userId);
+  
+  const endRoomTime = new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', {
+    timeZone: userTimezone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+  
+  await sendEndRoomNotification(
+    '24_hours',
+    endRoomTime, // Now correctly formatted for THIS user's timezone
+    member.expoPushToken
+  );
+}
+Action Items
+
+Revert Part 2 of the fix (add time back to notification body)
+Add timezone column to users table
+Capture user timezone on signup or first app launch
+Format notifications per-user using their stored timezone
