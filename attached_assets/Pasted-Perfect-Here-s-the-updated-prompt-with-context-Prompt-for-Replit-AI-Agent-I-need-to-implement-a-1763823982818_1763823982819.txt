@@ -1,0 +1,154 @@
+Perfect! Here's the updated prompt with context:
+
+Prompt for Replit AI Agent:
+"I need to implement a new mandatory Will Review feature based on real user feedback and usage patterns.
+CONTEXT & REASONING:
+After observing how users actually interact with the app, we discovered a critical UX problem:
+The Problem:
+
+Almost no one consistently joins the End Room video calls
+Coordinating 3-4 people for a synchronous call at a specific time is a major logistical burden
+Users DO want accountability and a moment of honest reflection ("Did I do what I said I'd do?")
+But the current End Room requirement creates friction that prevents Will completion
+
+The Solution:
+We're making reflection mandatory but lightweight, and making End Room optional:
+
+Every user MUST acknowledge their follow-through and share a brief reflection with their circle
+This happens asynchronously (no coordination needed)
+End Room becomes an optional add-on for circles that want synchronous connection
+The reflection ritual becomes the core accountability mechanism
+
+What We're Building:
+A new "Will Review" state that replaces "Waiting for End Room" with a required 3-step flow:
+
+Acknowledge: "Did you follow through?" (Yes/Mostly/No)
+Reflect: Write a brief note (up to 200 characters)
+Share: Post to circle (required, cannot skip)
+
+This keeps the accountability ritual intact while removing the scheduling burden.
+
+BACKEND CHANGES NEEDED:
+
+Database Schema Updates
+
+Add new Will status: will_review (replaces waiting_for_end_room)
+Create new table: will_reviews with columns:
+
+id (primary key)
+will_id (foreign key to wills table)
+user_id (foreign key to users table)
+follow_through (enum: 'yes', 'mostly', 'no')
+reflection_text (varchar 200)
+created_at (timestamp)
+
+
+Update Will state machine to include will_review state
+
+
+API Endpoints to Create
+
+POST /api/wills/{will_id}/review - Submit a user's review
+
+Request body: { follow_through: string, reflection_text: string }
+Validates: user is member of the Will's circle, review hasn't been submitted yet, text ≤ 200 chars
+Returns: success + check if all members have reviewed
+
+
+GET /api/wills/{will_id}/reviews - Fetch all reviews for a Will
+
+Returns: array of reviews with user info
+
+
+GET /api/wills/{will_id}/review-status - Check current user's review status
+
+Returns: { has_reviewed: boolean, review: object | null }
+
+
+
+
+State Transition Logic
+
+When a Will's end_date passes, automatically change status from active to will_review
+When a user submits their review, check if ALL circle members have reviewed:
+
+If YES and NO End Room exists: move to completed
+If YES and End Room exists but hasn't happened: keep in will_review (show End Room countdown)
+If YES and End Room already happened: move to completed
+
+
+End Room scheduling should now be OPTIONAL during Will creation
+
+
+
+FRONTEND CHANGES NEEDED:
+
+Home Screen Updates
+
+For Wills in will_review state, show a "Review" button
+This should be prominent and clearly indicate action is needed
+
+
+New Screen: Will Review Flow
+
+Create a multi-step modal or screen with three steps:
+
+Step 1: Acknowledge
+
+Header: "Did you follow through?"
+Display the user's original commitment ("I will...")
+Three buttons: "Yes" / "Mostly" / "No"
+Store selection and proceed to Step 2
+
+Step 2: Reflect
+
+Header: "Share your experience"
+Text input with 200 character limit (show counter)
+Placeholder: "What did you learn? How did it go?"
+"Next" button to proceed
+
+Step 3: Share
+
+Show summary: their answer + reflection text
+Button: "Share with Circle" (required, cannot skip)
+On tap: POST to review endpoint
+Show loading state while submitting
+
+
+Post-Review Experience
+
+After successful submission:
+
+If NO End Room: Show Will completion summary
+If End Room exists and hasn't happened: Show "End Room scheduled for [date/time]" with countdown
+If End Room happened: Show completion summary
+
+
+
+
+Will Details Page Updates
+
+Once reviews start coming in, show a "Reviews" section
+Display each member's follow-through answer and reflection
+Show who hasn't reviewed yet (for transparency)
+
+
+Will Creation Updates
+
+Make End Room scheduling OPTIONAL (add a toggle or "Skip End Room" option)
+Update UI to clarify that Review is mandatory, End Room is optional
+
+
+
+STATE MANAGEMENT:
+
+Update frontend Will status handling to recognize will_review state
+Ensure proper routing when user taps "Review" button
+Handle case where user navigates away mid-review (save draft? or restart?)
+
+IMPORTANT NOTES:
+
+This Review step is MANDATORY - users cannot dismiss it or skip it
+All circle members must complete Review before Will can move to completed
+End Room becomes an optional add-on, not required for Will completion
+Keep the existing End Room video call functionality intact for circles that want it

@@ -65,7 +65,7 @@ export const wills = pgTable("wills", {
   endRoomOpenedAt: timestamp("end_room_opened_at"),
   endRoomUrl: varchar("end_room_url", { length: 500 }),
   endRoomStatus: varchar("end_room_status", { length: 20 }).default("pending"), // pending, open, completed
-  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, waiting_for_end_room, completed
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, will_review, waiting_for_end_room, completed
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -83,6 +83,15 @@ export const willAcknowledgments = pgTable("will_acknowledgments", {
   willId: integer("will_id").notNull().references(() => wills.id),
   userId: varchar("user_id").notNull().references(() => users.id),
   acknowledgedAt: timestamp("acknowledged_at").defaultNow(),
+});
+
+export const willReviews = pgTable("will_reviews", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  followThrough: varchar("follow_through", { length: 10 }).notNull(), // yes, mostly, no
+  reflectionText: varchar("reflection_text", { length: 200 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const dailyProgress = pgTable("daily_progress", {
@@ -149,6 +158,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   createdCircles: many(circles),
   willCommitments: many(willCommitments),
   willAcknowledgments: many(willAcknowledgments),
+  willReviews: many(willReviews),
   dailyProgress: many(dailyProgress),
   willPushes: many(willPushes),
   deviceTokens: many(deviceTokens),
@@ -185,6 +195,7 @@ export const willsRelations = relations(wills, ({ one, many }) => ({
   }),
   commitments: many(willCommitments),
   acknowledgments: many(willAcknowledgments),
+  reviews: many(willReviews),
   dailyProgress: many(dailyProgress),
   pushes: many(willPushes),
 }));
@@ -207,6 +218,17 @@ export const willAcknowledgmentsRelations = relations(willAcknowledgments, ({ on
   }),
   user: one(users, {
     fields: [willAcknowledgments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const willReviewsRelations = relations(willReviews, ({ one }) => ({
+  will: one(wills, {
+    fields: [willReviews.willId],
+    references: [wills.id],
+  }),
+  user: one(users, {
+    fields: [willReviews.userId],
     references: [users.id],
   }),
 }));
@@ -338,3 +360,10 @@ export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
 });
 export type InsertDeviceToken = z.infer<typeof insertDeviceTokenSchema>;
 export type DeviceToken = typeof deviceTokens.$inferSelect;
+
+export const insertWillReviewSchema = createInsertSchema(willReviews).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertWillReview = z.infer<typeof insertWillReviewSchema>;
+export type WillReview = typeof willReviews.$inferSelect;
