@@ -78,7 +78,7 @@ export default function StartWill() {
     what: '',
     why: '',
     circleId: null as number | null,
-    endRoomScheduledAt: '',
+    endRoomScheduledAt: '' as string | null,
   });
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [whyCharCount, setWhyCharCount] = useState(0);
@@ -90,7 +90,7 @@ export default function StartWill() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: circle } = useQuery({
+  const { data: circle } = useQuery<any>({
     queryKey: ['/api/circles/mine'],
   });
 
@@ -504,7 +504,7 @@ export default function StartWill() {
                     />
                   )}
                 </div>
-                <PrimaryButton type="submit" data-testid="button-next">
+                <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
@@ -549,7 +549,7 @@ export default function StartWill() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </button>
-                <PrimaryButton type="submit">
+                <PrimaryButton>
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
@@ -609,7 +609,7 @@ export default function StartWill() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </button>
-                <PrimaryButton type="submit">
+                <PrimaryButton>
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>

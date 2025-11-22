@@ -8,6 +8,49 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 22, 2025: Will Review System - Asynchronous Completion Flow
+- **Major Feature**: Replaced mandatory End Room video ceremonies with lightweight asynchronous Will Review system
+  - **Motivation**: Poor End Room attendance (video call coordination difficult)
+  - **Solution**: Optional End Room + mandatory Will Review for completion
+- **Database Schema**: Added `will_reviews` table
+  - Columns: id, willId, userId, followThrough (yes/no/partial), reflection (text, 200 chars), shareWithCircle (boolean)
+  - Unique constraint on (willId, userId) to prevent duplicate reviews
+- **Backend Implementation**: Three new API endpoints
+  - `POST /api/wills/:id/review` - Submit individual review (circle member authorization)
+  - `GET /api/wills/:id/reviews` - Fetch all submitted reviews for a Will (circle member authorization)
+  - `GET /api/wills/:id/review-status` - Check review status (hasUserReviewed, needsReview, progress count)
+- **State Machine Updates**: New `will_review` status + redundant completion paths
+  - `active` → `will_review` (when endDate passes, triggered by scheduler + JIT)
+  - `will_review` → `completed` when **EITHER**: (a) all members submit reviews OR (b) all members acknowledge (prevents deadlock)
+  - Scheduler checks both paths every minute to ensure timely transitions
+- **Frontend Components**:
+  - `WillReviewFlow.tsx` - 3-step form (Acknowledge → Reflect → Share) using shadcn Form + useForm + zodResolver
+  - Circle Hub: Shows "Review" button for will_review state
+  - Will Details: Conditionally renders review flow (if user hasn't reviewed) or submitted reviews display
+  - Loading states, empty states, and progress indicators for all review-related UI
+- **Query Strategy**: 
+  - 5-second polling for will_review state to ensure real-time UI updates
+  - Proper query invalidation after mutations (`/api/wills`, `/api/wills/:id/reviews`, `/api/wills/:id/review-status`)
+  - Review-status query enabled for both will_review AND completed states to prevent stale UI
+- **End Room Now Optional**:
+  - Will creation Step 4: Users can skip End Room entirely (endRoomScheduledAt can be null)
+  - Dynamic button text: "Schedule End Room & Create Will" vs "Create Will (Use Asynchronous Review)"
+  - Conditional info boxes explain both completion paths based on user's choice
+  - **Note**: UX could be improved in future iteration by presenting Will Review as primary default with End Room as opt-in
+- **Architecture Decisions**:
+  - Will Review is now the **primary** completion mechanism
+  - End Room remains available for circles who want synchronous video reflection
+  - Reflections are private by default, shared only if user opts in
+  - Follow-through is self-reported (yes/no/partial) with optional reflection
+- **Files Modified**: 
+  - `shared/schema.ts` (will_reviews table, will_review status)
+  - `server/routes.ts` (3 new endpoints)
+  - `server/scheduler.ts` (redundant completion logic)
+  - `client/src/components/WillReviewFlow.tsx` (new component)
+  - `client/src/pages/WillDetails.tsx` (review UI integration)
+  - `client/src/pages/InnerCircleHub.tsx` (review button)
+  - `client/src/pages/StartWill.tsx` (optional End Room)
+
 ### November 22, 2025: Critical Timezone Bug Fixed + JIT State Transitions
 - **Critical Discovery**: Background scheduler does NOT run 24/7 in Replit development environment
   - Dev servers restart frequently (every few minutes when workspace is reopened)
