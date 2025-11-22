@@ -6,8 +6,8 @@
  * 
  * Backend scheduler (server/scheduler.ts) runs every minute and handles ALL state transitions:
  * - pending/scheduled → active (when start time passes)
- * - active → waiting_for_end_room (when end time passes + End Room scheduled)
- * - active → completed (when end time passes + no End Room)
+ * - active → will_review (when end time passes - NEW FEATURE)
+ * - will_review → completed (when all members submit reviews)
  * - End Room: pending → open (when scheduled time passes)
  */
 
@@ -20,7 +20,12 @@ export function getWillStatus(will: any, userId?: string): string {
   // If will is archived, treat as no will
   if (will.status === 'archived') return 'no_will';
   
-  // Trust backend for waiting_for_end_room (will ended, end room scheduled/open)
+  // NEW FEATURE: Trust backend for will_review (will ended, waiting for member reviews)
+  if (will.status === 'will_review') {
+    return will.status;
+  }
+  
+  // Legacy: Trust backend for waiting_for_end_room (for backward compatibility)
   if (will.status === 'waiting_for_end_room') {
     return will.status;
   }

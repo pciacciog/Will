@@ -38,27 +38,35 @@ function getWillStatus(will: any, memberCount: number): string {
   const startDate = new Date(will.startDate);
   const endDate = new Date(will.endDate);
 
-  // If the will has an explicit status of 'completed', respect it (for legacy wills)
-  if (will.status === 'completed') {
-    return 'completed';
+  // Respect terminal states
+  if (will.status === 'completed' || will.status === 'archived') {
+    return will.status;
   }
 
-  // If the will has End Room data, use the will's status directly
-  if (will.endRoomScheduledAt) {
-    return will.status || 'waiting_for_end_room';
+  // NEW FEATURE: Respect will_review state (mandatory reflection phase)
+  if (will.status === 'will_review') {
+    return 'will_review';
   }
 
+  // Legacy: Respect waiting_for_end_room state (for backward compatibility)
+  if (will.status === 'waiting_for_end_room') {
+    return 'waiting_for_end_room';
+  }
+
+  // JIT state transitions based on dates
   if (now >= endDate) {
-    return 'waiting_for_end_room'; // Will transition to completed after End Room
+    // Will has ended - transition to will_review for mandatory reflection
+    return 'will_review';
   } else if (now >= startDate) {
+    // Will is currently active
     return 'active';
   } else {
-    // Check commitment count to determine pending vs scheduled
+    // Will hasn't started yet - check commitment count
     const commitmentCount = will.commitments?.length || 0;
     if (commitmentCount < memberCount) {
-      return 'pending';
+      return 'pending'; // Waiting for members to commit
     } else {
-      return 'scheduled';
+      return 'scheduled'; // All committed, waiting for start date
     }
   }
 }
@@ -754,9 +762,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`[ACKNOWLEDGE] Acknowledgment counts - Acknowledged: ${acknowledgedCount}, Committed: ${commitmentCount}`);
 
-      // If all committed members have acknowledged, the will is fully completed and can be archived
+      // NEW FEATURE: If Will is in will_review and all members acknowledge, transition to completed
+      // This provides a fallback path if members skip the review flow
+      if (willWithCommitments.status === 'will_review' && acknowledgedCount >= commitmentCount) {
+        console.log(`[ACKNOWLEDGE] All members acknowledged in will_review - transitioning to completed`);
+        await storage.updateWillStatus(willId, 'completed');
+        // Update the local copy to reflect the new status
+        willWithCommitments.status = 'completed';
+      }
+
+      // If all committed members have acknowledged and Will is completed, archive it
       // This allows creation of new wills
-      if (acknowledgedCount >= commitmentCount) {
+      if (willWithCommitments.status === 'completed' && acknowledgedCount >= commitmentCount) {
         console.log(`[ACKNOWLEDGE] 🎉 All members acknowledged - archiving Will ${willId}`);
         await storage.updateWillStatus(willId, 'archived');
         
