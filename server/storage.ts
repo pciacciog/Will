@@ -5,6 +5,7 @@ import {
   wills,
   willCommitments,
   willAcknowledgments,
+  willReviews,
   dailyProgress,
   willPushes,
   blogPosts,
@@ -24,6 +25,8 @@ import {
   type InsertWillCommitment,
   type WillAcknowledgment,
   type InsertWillAcknowledgment,
+  type WillReview,
+  type InsertWillReview,
   type DailyProgress,
   type InsertDailyProgress,
   type WillPush,
@@ -83,6 +86,12 @@ export interface IStorage {
   addWillAcknowledgment(acknowledgment: InsertWillAcknowledgment): Promise<WillAcknowledgment>;
   getWillAcknowledgmentCount(willId: number): Promise<number>;
   hasUserAcknowledged(willId: number, userId: string): Promise<boolean>;
+  
+  // Will review operations
+  addWillReview(review: InsertWillReview): Promise<WillReview>;
+  getWillReview(willId: number, userId: string): Promise<(WillReview & { user: User }) | undefined>;
+  getWillReviews(willId: number): Promise<(WillReview & { user: User })[]>;
+  getWillReviewCount(willId: number): Promise<number>;
   
   // Daily progress operations
   markDailyProgress(progress: InsertDailyProgress): Promise<DailyProgress>;
@@ -444,6 +453,54 @@ export class DatabaseStorage implements IStorage {
       .from(willAcknowledgments)
       .where(and(eq(willAcknowledgments.willId, willId), eq(willAcknowledgments.userId, userId)));
     return !!result;
+  }
+
+  // Will review operations
+  async addWillReview(review: InsertWillReview): Promise<WillReview> {
+    const [newReview] = await db.insert(willReviews).values(review).returning();
+    return newReview;
+  }
+
+  async getWillReview(willId: number, userId: string): Promise<(WillReview & { user: User }) | undefined> {
+    const [result] = await db
+      .select({
+        id: willReviews.id,
+        willId: willReviews.willId,
+        userId: willReviews.userId,
+        followThrough: willReviews.followThrough,
+        reflectionText: willReviews.reflectionText,
+        createdAt: willReviews.createdAt,
+        user: users,
+      })
+      .from(willReviews)
+      .leftJoin(users, eq(willReviews.userId, users.id))
+      .where(and(eq(willReviews.willId, willId), eq(willReviews.userId, userId)));
+    return result as (WillReview & { user: User }) | undefined;
+  }
+
+  async getWillReviews(willId: number): Promise<(WillReview & { user: User })[]> {
+    const results = await db
+      .select({
+        id: willReviews.id,
+        willId: willReviews.willId,
+        userId: willReviews.userId,
+        followThrough: willReviews.followThrough,
+        reflectionText: willReviews.reflectionText,
+        createdAt: willReviews.createdAt,
+        user: users,
+      })
+      .from(willReviews)
+      .leftJoin(users, eq(willReviews.userId, users.id))
+      .where(eq(willReviews.willId, willId));
+    return results as (WillReview & { user: User })[];
+  }
+
+  async getWillReviewCount(willId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(willReviews)
+      .where(eq(willReviews.willId, willId));
+    return result.count;
   }
 
   // Daily progress operations

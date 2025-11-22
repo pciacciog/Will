@@ -7,6 +7,7 @@ import {
   insertWillSchema,
   insertWillCommitmentSchema,
   insertWillAcknowledgmentSchema,
+  insertWillReviewSchema,
   insertDailyProgressSchema,
   insertWillPushSchema,
   insertBlogPostSchema,
@@ -786,6 +787,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error acknowledging will:", error);
       res.status(500).json({ message: "Failed to acknowledge will" });
+    }
+  });
+
+  // Will Review endpoints
+  app.post('/api/wills/:id/review', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const { followThrough, reflectionText } = req.body;
+
+      // Validate input
+      const reviewData = insertWillReviewSchema.parse({
+        willId,
+        userId,
+        followThrough,
+        reflectionText,
+      });
+
+      // Check if user has committed to this will
+      const hasCommitted = await storage.hasUserCommitted(willId, userId);
+      if (!hasCommitted) {
+        return res.status(403).json({ message: "Only users who committed to this Will can submit a review" });
+      }
+
+      // Check if user already submitted a review
+      const existingReview = await storage.getWillReview(willId, userId);
+      if (existingReview) {
+        return res.status(400).json({ message: "You have already submitted a review for this Will" });
+      }
+
+      // Validate reflection text length
+      if (reflectionText.length > 200) {
+        return res.status(400).json({ message: "Reflection text must be 200 characters or less" });
+      }
+
+      // Validate followThrough value
+      if (!['yes', 'mostly', 'no'].includes(followThrough)) {
+        return res.status(400).json({ message: "Follow-through must be 'yes', 'mostly', or 'no'" });
+      }
+
+      // Add review
+      const review = await storage.addWillReview(reviewData);
+
+      // Check if all committed members have reviewed
+      const willWithCommitments = await storage.getWillWithCommitments(willId);
+      if (!willWithCommitments) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+
+      const commitmentCount = willWithCommitments.commitments?.length || 0;
+      const reviewCount = await storage.getWillReviewCount(willId);
+      const allReviewed = reviewCount >= commitmentCount;
+
+      // If all members reviewed, check if End Room exists
+      if (allReviewed) {
+        if (!willWithCommitments.endRoomScheduledAt) {
+          // No End Room - move directly to completed
+          await storage.updateWillStatus(willId, 'completed');
+        } else {
+          // End Room exists - check if it already happened
+          const now = new Date();
+          const endRoomEnd = new Date(new Date(willWithCommitments.endRoomScheduledAt).getTime() + 30 * 60 * 1000);
+          if (now >= endRoomEnd) {
+            // End Room already happened - move to completed
+            await storage.updateWillStatus(willId, 'completed');
+          }
+          // Otherwise stay in will_review until End Room happens
+        }
+      }
+
+      res.json({
+        ...review,
+        reviewCount,
+        commitmentCount,
+        allReviewed
+      });
+    } catch (error) {
+      console.error("Error submitting will review:", error);
+      res.status(500).json({ message: "Failed to submit will review" });
+    }
+  });
+
+  app.get('/api/wills/:id/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+
+      // Get will to ensure it exists
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+
+      // Authorization: Check if user has committed to this will (circle member verification)
+      const hasCommitted = await storage.hasUserCommitted(willId, userId);
+      if (!hasCommitted) {
+        return res.status(403).json({ message: "Only members who committed to this Will can view reviews" });
+      }
+
+      // Get all reviews for this will with user info
+      const reviews = await storage.getWillReviews(willId);
+
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching will reviews:", error);
+      res.status(500).json({ message: "Failed to fetch will reviews" });
+    }
+  });
+
+  app.get('/api/wills/:id/review-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+
+      // Get will to ensure it exists
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+
+      // Authorization: Check if user has committed to this will (circle member verification)
+      const hasCommitted = await storage.hasUserCommitted(willId, userId);
+      if (!hasCommitted) {
+        return res.status(403).json({ message: "Only members who committed to this Will can view review status" });
+      }
+
+      // Get user's review for this will
+      const review = await storage.getWillReview(willId, userId);
+
+      res.json({
+        hasReviewed: !!review,
+        review: review || null
+      });
+    } catch (error) {
+      console.error("Error fetching review status:", error);
+      res.status(500).json({ message: "Failed to fetch review status" });
     }
   });
 
