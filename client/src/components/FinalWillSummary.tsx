@@ -10,7 +10,7 @@ interface FinalWillSummaryProps {
   onAcknowledge: () => void;
   will: any;
   isAcknowledging?: boolean;
-  currentUserId?: number;
+  currentUserId?: string;
   hasUserAcknowledged?: boolean;
   acknowledgedCount?: number;
   commitmentCount?: number;
