@@ -164,11 +164,17 @@ export default function WillDetails() {
   });
 
   // NEW FEATURE: Fetch review status to check if user has reviewed
-  // Enable for both will_review and completed to maintain state
+  // Enable as soon as user/id exist - backend will handle authorization
   const { data: reviewStatus, isLoading: isReviewStatusLoading } = useQuery<any>({
     queryKey: [`/api/wills/${id}/review-status`],
-    enabled: !!id && !!user && (will?.status === 'will_review' || will?.status === 'completed'),
-    refetchInterval: 5000, // Poll frequently during review phase
+    enabled: !!id && !!user,
+    refetchInterval: (data) => {
+      // Only poll when Will is in review or completed status
+      if (will?.status === 'will_review' || will?.status === 'completed') {
+        return 5000; // Poll frequently during review phase
+      }
+      return false; // Don't poll for other statuses
+    },
   });
 
   // NEW FEATURE: Fetch submitted reviews to display
@@ -655,6 +661,33 @@ export default function WillDetails() {
                 <p className="text-sm text-gray-500">No reviews submitted yet</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* End Room Countdown - Show during will_review after user submits review */}
+        {will.status === 'will_review' && 
+         will.endRoomScheduledAt && 
+         will.endRoomStatus === 'pending' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" data-testid="section-end-room-countdown">
+            {isReviewStatusLoading ? (
+              <div className="text-center py-4">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                  <Video className="w-5 h-5 text-blue-600" />
+                </div>
+                <p className="text-sm text-gray-600">Loading End Room details...</p>
+              </div>
+            ) : reviewStatus && reviewStatus.hasReviewed ? (
+              <div className="text-center">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Video className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">End Room Coming Up</h3>
+                <EndRoomCountdown will={will} />
+                <p className="text-sm text-gray-600 mt-3">
+                  This <em>Will</em> will complete after the End Room finishes. Join at the scheduled time to reflect together with your circle!
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
 

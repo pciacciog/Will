@@ -933,9 +933,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user's review for this will
       const review = await storage.getWillReview(willId, userId);
 
+      // Get total review count and member count for progress display
+      const reviewCount = await storage.getWillReviewCount(willId);
+      const willWithCommitments = await storage.getWillWithCommitments(willId);
+      const totalMembers = willWithCommitments?.commitments?.length || 0;
+
       res.json({
         hasReviewed: !!review,
-        review: review || null
+        needsReview: !review, // Inverse of hasReviewed for frontend convenience
+        review: review || null,
+        reviewCount,
+        totalMembers
       });
     } catch (error) {
       console.error("Error fetching review status:", error);
