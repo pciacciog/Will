@@ -82,6 +82,8 @@ export class EndRoomScheduler {
 
   private async transitionWillStatuses(now: Date) {
     try {
+      console.log(`[SCHEDULER] Checking Will status transitions at ${now.toISOString()}`);
+      
       // 1. Transition pending/scheduled wills to active (start time has passed)
       const willsToActivate = await db
         .select({
@@ -100,8 +102,12 @@ export class EndRoomScheduler {
         )
         .limit(50); // Limit to prevent memory issues in large datasets
 
+      if (willsToActivate.length > 0) {
+        console.log(`[SCHEDULER] Found ${willsToActivate.length} Wills to activate`);
+      }
+
       for (const will of willsToActivate) {
-        console.log(`[EndRoomScheduler] Activating Will ${will.id}`);
+        console.log(`[SCHEDULER] ⏩ Activating Will ${will.id} (started at ${will.startDate.toISOString()})`);
         await storage.updateWillStatus(will.id, 'active');
         
         // Send Will Started notification
@@ -132,8 +138,12 @@ export class EndRoomScheduler {
         )
         .limit(50); // Limit to prevent memory issues in large datasets
 
+      if (willsToWaitForEndRoom.length > 0) {
+        console.log(`[SCHEDULER] Found ${willsToWaitForEndRoom.length} Wills to transition to waiting_for_end_room`);
+      }
+
       for (const will of willsToWaitForEndRoom) {
-        console.log(`[EndRoomScheduler] Transitioning Will ${will.id} to waiting_for_end_room`);
+        console.log(`[SCHEDULER] ⏸️ Transitioning Will ${will.id} to waiting_for_end_room (ended at ${will.endDate.toISOString()}, End Room at ${will.endRoomScheduledAt?.toISOString()})`);
         await storage.updateWillStatus(will.id, 'waiting_for_end_room');
       }
 
@@ -150,8 +160,12 @@ export class EndRoomScheduler {
         )
         .limit(50); // Limit to prevent memory issues in large datasets
 
+      if (willsToComplete.length > 0) {
+        console.log(`[SCHEDULER] Found ${willsToComplete.length} Wills to complete (no End Room)`);
+      }
+
       for (const will of willsToComplete) {
-        console.log(`[EndRoomScheduler] Completing Will ${will.id} (no End Room)`);
+        console.log(`[SCHEDULER] ✅ Completing Will ${will.id} (ended at ${will.endDate.toISOString()}, no End Room)`);
         await storage.updateWillStatus(will.id, 'completed');
       }
     } catch (error) {

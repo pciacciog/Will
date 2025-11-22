@@ -710,23 +710,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const willId = parseInt(req.params.id);
 
+      console.log(`[ACKNOWLEDGE] User ${userId} attempting to acknowledge Will ${willId}`);
+
       // Check if user has committed to this will
       const hasCommitted = await storage.hasUserCommitted(willId, userId);
+      console.log(`[ACKNOWLEDGE] User committed check: ${hasCommitted}`);
       if (!hasCommitted) {
+        console.log(`[ACKNOWLEDGE] ❌ User ${userId} has not committed to Will ${willId} - rejecting`);
         return res.status(403).json({ message: "Only users who submitted commitments can acknowledge completion" });
       }
 
       // Check if user already acknowledged
       const hasAcknowledged = await storage.hasUserAcknowledged(willId, userId);
+      console.log(`[ACKNOWLEDGE] User already acknowledged check: ${hasAcknowledged}`);
       if (hasAcknowledged) {
+        console.log(`[ACKNOWLEDGE] ⚠️ User ${userId} already acknowledged Will ${willId}`);
         return res.status(400).json({ message: "You have already acknowledged this Will" });
       }
 
       // Add acknowledgment
+      console.log(`[ACKNOWLEDGE] Creating acknowledgment for User ${userId}, Will ${willId}`);
       const acknowledgment = await storage.addWillAcknowledgment({
         willId,
         userId,
       });
+      console.log(`[ACKNOWLEDGE] ✅ Acknowledgment created:`, acknowledgment);
 
       // Check if all committed members have acknowledged
       const willWithCommitments = await storage.getWillWithCommitments(willId);
@@ -737,9 +745,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const commitmentCount = willWithCommitments.commitments?.length || 0;
       const acknowledgedCount = await storage.getWillAcknowledgmentCount(willId);
 
+      console.log(`[ACKNOWLEDGE] Acknowledgment counts - Acknowledged: ${acknowledgedCount}, Committed: ${commitmentCount}`);
+
       // If all committed members have acknowledged, the will is fully completed and can be archived
       // This allows creation of new wills
       if (acknowledgedCount >= commitmentCount) {
+        console.log(`[ACKNOWLEDGE] 🎉 All members acknowledged - archiving Will ${willId}`);
         await storage.updateWillStatus(willId, 'archived');
         
         // ISSUE #2 FIX: Send Ready for New Will notification ONLY to CURRENT circle members
@@ -755,8 +766,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error) {
           console.error(`[Routes] ❌ Failed to send Ready for New Will notification:`, error);
         }
+      } else {
+        console.log(`[ACKNOWLEDGE] ⏳ Waiting for more acknowledgments (${acknowledgedCount}/${commitmentCount})`);
       }
 
+      console.log(`[ACKNOWLEDGE] ✅ Sending response with acknowledgedCount=${acknowledgedCount}`);
       res.json({
         ...acknowledgment,
         acknowledgedCount,

@@ -1,0 +1,143 @@
+CRITICAL BUGS: Will Status Not Transitioning + Acknowledgment Not Working
+I'm experiencing two severe bugs with Will state transitions:
+BUG #1: Will Showing "Active" 2 Days After End Time
+TIMELINE:
+
+Will: 11/19/2025 10:00 AM - 11/19/2025 3:00 PM (5 hour duration)
+End Room: 11/19/2025 3:30 PM - 11/19/2025 4:00 PM
+Current date: 11/21/2025 (2 days after Will ended)
+
+OBSERVED BEHAVIOR:
+
+Opened app on 11/21
+Status showed: "Will Active" ❌ (WRONG - should be "waiting_for_end_room" or "completed")
+5 minutes later, status corrected to: "Will Complete - Ready to Review" ✓
+
+QUESTION: Why didn't the backend scheduler transition the Will from active → waiting_for_end_room (or completed) when it ended on 11/19 at 3:00 PM?
+BUG #2: Acknowledgment Not Clearing "Will Complete" Status
+OBSERVED BEHAVIOR:
+
+Status: "Will Complete - Ready to Review"
+Clicked "Review Final Summary" button
+Acknowledged the completion
+Status remained stuck at "Will Complete - Ready to Review" ❌
+Expected: Status should change to "no_will" and show "Create New Will" button ✓
+
+TIMELINE:
+
+Acknowledged on 11/21
+Closed app, waited 3 minutes - still stuck
+Now 11/22 7:43 AM - STILL stuck in "Will Complete - Ready to Review"
+
+DIAGNOSTIC INVESTIGATION NEEDED
+1. Backend Scheduler Health Check
+File: server/scheduler.ts
+Please verify:
+
+✅ Is the scheduler running? Check logs for '* * * * *' cron job execution
+✅ When did it last run processHeavyOperations()?
+✅ Are there any errors in the scheduler logs?
+✅ Is it successfully transitioning Wills from active → waiting_for_end_room/completed?
+
+Add logging:
+typescript// In processHeavyOperations()
+console.log('[SCHEDULER] Running at:', new Date());
+console.log('[SCHEDULER] Wills transitioned:', result);
+2. Database State Check
+Please run these queries for my Will (11/19/2025 10:00 AM - 3:00 PM):
+sql-- Check Will status
+SELECT id, status, startDate, endDate, endRoomScheduledAt, 
+       acknowledgedCount, created_at, updated_at
+FROM wills 
+WHERE startDate >= '2025-11-19 10:00:00'
+ORDER BY created_at DESC;
+
+-- Check acknowledgments
+SELECT wa.*, u.name 
+FROM will_acknowledgments wa
+JOIN users u ON wa.user_id = u.id
+WHERE wa.will_id = [WILL_ID];
+
+-- Check commitments count
+SELECT COUNT(*) as committed_members
+FROM commitments
+WHERE will_id = [WILL_ID];
+Expected vs Actual:
+
+status: Should be 'completed' (not 'active')
+acknowledgedCount: Should be 1 (after I acknowledged)
+Committed members: Should be 1 (just me - Bebo Ciaccio)
+
+3. Acknowledgment Endpoint Check
+File: server/routes.ts (the /api/wills/:willId/acknowledge endpoint)
+Please verify:
+
+✅ Does the endpoint increment acknowledgedCount?
+✅ Does it create a record in will_acknowledgments table?
+✅ Does it return hasUserAcknowledged: true?
+✅ Are there any errors when I acknowledge?
+
+Add logging:
+typescriptconsole.log('[ACKNOWLEDGE] User:', userId, 'Will:', willId);
+console.log('[ACKNOWLEDGE] Before:', { acknowledgedCount: will.acknowledgedCount });
+console.log('[ACKNOWLEDGE] After:', { acknowledgedCount: updatedCount });
+4. Frontend Status Logic Check
+File: client/src/lib/willStatus.ts
+The logic should be:
+typescriptif (will.status === 'completed') {
+  if (userId && will.hasUserAcknowledged) {
+    const committedMemberCount = will.commitments?.length || 0;
+    const acknowledgedCount = will.acknowledgedCount || 0;
+    if (acknowledgedCount >= committedMemberCount) {
+      return 'no_will'; // ✅ Should happen here!
+    }
+  }
+  return 'completed'; // ❌ Stuck here!
+}
+Debug questions:
+
+Is will.hasUserAcknowledged returning true after acknowledgment?
+Is will.acknowledgedCount equal to will.commitments.length?
+Is the API returning updated data after acknowledgment?
+
+5. React Query Cache Check
+After acknowledging, is React Query refetching the Will data?
+Check in InnerCircleHub.tsx:
+
+Does the onSuccess callback in the acknowledge mutation invalidate the query?
+Is refetchInterval still running after acknowledgment?
+
+ROOT CAUSE HYPOTHESES
+Hypothesis A: Backend Scheduler Not Running
+
+Scheduler crashed or isn't executing
+Wills are never transitioning from active → completed
+Explains why Will showed "active" 2 days after ending
+
+Hypothesis B: Acknowledgment Not Persisting
+
+Acknowledge endpoint fails silently
+acknowledgedCount not incrementing in database
+Frontend thinks it acknowledged but backend doesn't reflect it
+
+Hypothesis C: Frontend Not Refetching After Acknowledge
+
+Acknowledgment succeeds in backend
+React Query cache not invalidated
+Frontend showing stale data
+
+Hypothesis D: Logic Bug in hasUserAcknowledged
+
+Backend not returning hasUserAcknowledged: true for current user
+Frontend status check fails: if (userId && will.hasUserAcknowledged)
+Never reaches return 'no_will'
+
+IMMEDIATE ACTION PLAN
+Please:
+
+Check scheduler logs - Is it running? Any errors?
+Query the database - What's the actual state of my Will?
+Add debug logging - To scheduler, acknowledge endpoint, and frontend status logic
+Test acknowledgment flow - Create a test Will, complete it, acknowledge it, verify it clears
+
+This is completely blocking me from creating new Wills. After I acknowledge a completed Will
