@@ -324,7 +324,9 @@ export class EndRoomScheduler {
         try {
           const circleMembers = await storage.getCircleMembers(will.circleId);
           const memberIds = circleMembers.map(member => member.userId);
-          const endRoomTime = will.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleTimeString() : 'scheduled time';
+          // TIMEZONE FIX: Send ISO timestamp instead of formatted time
+          // Mobile app will format in user's local timezone
+          const endRoomTime = will.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toISOString() : '';
           await pushNotificationService.sendEndRoomNotification('24_hours', endRoomTime, memberIds);
           console.log(`[EndRoomScheduler] 24h End Room notification sent for Will ${will.id}`);
         } catch (error) {
@@ -353,7 +355,9 @@ export class EndRoomScheduler {
         try {
           const circleMembers = await storage.getCircleMembers(will.circleId);
           const memberIds = circleMembers.map(member => member.userId);
-          const endRoomTime = will.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toLocaleTimeString() : 'scheduled time';
+          // TIMEZONE FIX: Send ISO timestamp instead of formatted time
+          // Mobile app will format in user's local timezone
+          const endRoomTime = will.endRoomScheduledAt ? new Date(will.endRoomScheduledAt).toISOString() : '';
           await pushNotificationService.sendEndRoomNotification('15_minutes', endRoomTime, memberIds);
           console.log(`[EndRoomScheduler] 15min End Room notification sent for Will ${will.id}`);
         } catch (error) {

@@ -8,7 +8,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### November 22, 2025: Just-In-Time State Transitions & Scheduler Analysis
+### November 22, 2025: Critical Timezone Bug Fixed + JIT State Transitions
 - **Critical Discovery**: Background scheduler does NOT run 24/7 in Replit development environment
   - Dev servers restart frequently (every few minutes when workspace is reopened)
   - Scheduler logs only show activity from current session (no historical logs from 11/19-11/21)
@@ -20,9 +20,16 @@ Preferred communication style: Simple, everyday language.
   - Works correctly even if scheduler hasn't run (dev restarts, deployment sleep, etc.)
 - **Logging Added**: `[JIT]` prefix shows when endpoints perform state transitions
 - **Architecture**: Scheduler still runs as backup, but JIT checks are primary reliability mechanism
-- **Bug Fixed**: User ID type mismatch in acknowledgment logic (string vs number comparison)
+- **Bug Fixed #1**: User ID type mismatch in acknowledgment logic (string vs number comparison)
   - Changed `currentUserId` from `number` to `string` in FinalWillSummary component
   - Now correctly identifies participating users for acknowledgment button display
+- **Bug Fixed #2**: 5-hour timezone discrepancy in push notifications
+  - Root cause: Server formatting UTC times with `.toLocaleTimeString()` which showed "10:00 PM" for 22:00 UTC
+  - User in Michigan (EST, UTC-5) expected "5:00 PM"
+  - Fix: Changed scheduler to send ISO timestamps instead of formatted times
+  - Fix: Removed specific time from 24-hour notification body text
+  - ISO timestamp included in notification data payload for mobile app to format in user's local timezone
+  - Files modified: `server/scheduler.ts` (lines 332, 363), `server/pushNotificationService.ts` (line 334-358)
 
 ### November 10, 2025: Staging Database Environment Setup
 - **Added**: Environment-aware database connection system

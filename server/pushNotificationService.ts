@@ -328,10 +328,12 @@ class PushNotificationService {
   }
 
   async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string, circleMembers: string[]): Promise<void> {
+    // TIMEZONE FIX: Don't format time in notification body
+    // The ISO timestamp is included in the data payload for the mobile app to format correctly
     const notifications = {
       '24_hours': {
         title: "End Room tomorrow 📅",
-        body: `Your End Room ceremony is scheduled for tomorrow at ${endRoomTime}`,
+        body: "Your End Room ceremony is scheduled for tomorrow",
       },
       '15_minutes': {
         title: "End Room starting soon ⏰",
@@ -349,7 +351,7 @@ class PushNotificationService {
       category: `end_room_${type}`,
       data: {
         type: `end_room_${type}`,
-        endRoomTime,
+        endRoomTime, // ISO timestamp for mobile app to format in user's timezone
       }
     };
 

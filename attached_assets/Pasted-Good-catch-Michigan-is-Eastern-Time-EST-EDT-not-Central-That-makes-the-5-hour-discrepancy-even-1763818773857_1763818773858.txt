@@ -1,0 +1,230 @@
+Good catch - Michigan is Eastern Time (EST/EDT), not Central! That makes the 5-hour discrepancy even more telling. Let me create a comprehensive prompt to map out the entire time handling architecture:
+
+COMPREHENSIVE TIMEZONE AUDIT: Map All Time-Related Code
+I need a complete understanding of how time/dates/timezones are handled throughout the entire application to fix the timezone bugs.
+My Context
+
+My location: Michigan = Eastern Time (EST/EDT)
+EST offset from UTC: -5 hours (winter)
+EDT offset from UTC: -4 hours (summer/daylight saving)
+Current: November = EST, so UTC-5
+
+The 5-hour discrepancy makes sense now:
+
+Backend likely storing times in UTC
+Display showing UTC time as if it were local time
+17:00 UTC displayed as "5:00 PM" instead of converting to 12:00 PM EST
+
+Complete Audit Needed
+Please map out EVERY place in the codebase where time/dates are:
+
+Created
+Stored
+Retrieved
+Converted
+Displayed
+Compared
+
+1. DATABASE LAYER
+Schema Check:
+typescript// Show me from shared/schema.ts
+- What type are date fields? (timestamp, timestamptz, datetime?)
+- Do they store timezone info?
+- Examples: startDate, endDate, endRoomScheduledAt, created_at, etc.
+Query Examples:
+sql-- Show me actual stored values
+SELECT id, 
+       start_date, 
+       end_date, 
+       end_room_scheduled_at,
+       created_at
+FROM wills 
+WHERE end_room_scheduled_at IS NOT NULL
+ORDER BY created_at DESC 
+LIMIT 3;
+
+-- What timezone is PostgreSQL using?
+SHOW TIMEZONE;
+
+-- Are timestamps stored WITH or WITHOUT timezone?
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'wills' 
+AND column_name LIKE '%date%' OR column_name LIKE '%at';
+2. BACKEND - TIME CREATION
+Search for all places where dates are created:
+bash# Find where Will start/end dates are set
+rg "new Date|Date\.parse|moment\(|dayjs\(" server/ --type ts
+
+# Find specific Will creation
+rg "startDate.*=|endDate.*=|endRoomScheduledAt.*=" server/ --type ts
+Key questions:
+
+When a user creates a Will and picks "November 24, 5:00 PM", how is that converted to a Date object?
+What timezone is assumed during creation?
+Is user timezone sent from frontend?
+
+Example code to find:
+typescript// How does this work?
+const will = await createWill({
+  startDate: req.body.startDate, // What format/timezone is this?
+  endDate: req.body.endDate,
+  endRoomScheduledAt: req.body.endRoomScheduledAt
+});
+3. BACKEND - TIME COMPARISONS (Scheduler)
+Scheduler Logic:
+typescript// Show me ALL time comparisons in server/scheduler.ts
+// Examples:
+- if (now >= startDate) // Transition to active
+- if (now >= endDate) // Transition to waiting_for_end_room
+- if (now >= endRoomScheduledAt) // Open end room
+Critical questions:
+
+What timezone is now? (Server's timezone = likely UTC)
+What timezone are the stored dates in?
+Are comparisons comparing apples-to-apples?
+
+4. BACKEND - NOTIFICATION GENERATION
+Find the notification code:
+bash# Find where the "end room ceremony is scheduled for tomorrow at 10:00 PM" text is generated
+rg "end room ceremony|scheduled for tomorrow" server/ --type ts
+
+# Find notification scheduling
+rg "sendPushNotification|scheduleNotification|24.*hour.*reminder" server/ --type ts
+Show me:
+
+How is the time formatted for the notification message?
+What timezone is used for formatting?
+Is user's timezone fetched from their profile?
+
+Example to find:
+typescript// Something like this exists - find it!
+const notificationMessage = `Your end room ceremony is scheduled for ${formatDate(endRoomScheduledAt)}`;
+5. FRONTEND - TIME DISPLAY
+Search for all date formatting in the frontend:
+bash# Find date display functions
+rg "format.*date|toLocale|formatDisplay" client/src/ --type ts
+
+# Find specific time displays
+rg "startDate|endDate|scheduledAt" client/src/components --type tsx
+Show me:
+
+How are Will start/end times displayed in the UI?
+How is End Room scheduled time displayed?
+What timezone functions are used?
+
+Example patterns to find:
+typescript// How are these formatted?
+<div>{formatDateTime(will.startDate)}</div>
+<div>{formatDateTime(will.endRoomScheduledAt)}</div>
+6. FRONTEND - TIME INPUT
+When creating a Will:
+bash# Find Will creation forms
+rg "CreateWill|WillForm|date.*picker|time.*picker" client/src/ --type tsx
+Show me:
+
+How does the user pick start/end times?
+What timezone is assumed when they pick "5:00 PM"?
+How is that sent to the backend?
+
+Example to find:
+typescript// What does the date picker send?
+<DateTimePicker 
+  value={startDate}
+  onChange={(date) => setStartDate(date)}
+/>
+
+// How is it submitted?
+fetch('/api/wills', {
+  body: JSON.stringify({
+    startDate: startDate.toISOString() // ??? What format
+  })
+})
+7. USER TIMEZONE DETECTION/STORAGE
+Critical questions:
+
+Do you store the user's timezone in their profile?
+How do you detect it? (Browser API, IP geolocation, manual selection?)
+Where is it used?
+
+Search for:
+bash# Find timezone detection/storage
+rg "timezone|timeZone|Intl\.DateTimeFormat|getTimezoneOffset" --type ts
+
+# Find user profile schema
+rg "timezone" shared/schema.ts
+8. UTILITY FUNCTIONS
+Find all date utility functions:
+bash# Look for date utility files
+find . -name "*date*.ts" -o -name "*time*.ts"
+
+# Search for date formatting functions
+rg "export.*function.*format|export.*function.*date" --type ts
+```
+
+**Show me:**
+- All date formatting helper functions
+- All date parsing helper functions
+- Any timezone conversion utilities
+
+## Specific Files to Examine
+
+Please provide detailed analysis of these files:
+
+1. **shared/schema.ts** - How are date fields defined?
+2. **server/routes.ts** - How are dates created/parsed in Will creation endpoint?
+3. **server/scheduler.ts** - How are dates compared? What timezone is `now`?
+4. **server/notifications.ts** (if exists) - How are notification times formatted?
+5. **client/src/components/** - Any date pickers or time selectors?
+6. **client/src/lib/** - Any date utility functions?
+
+## The Output I Need
+
+Please create a comprehensive map showing:
+```
+DATA FLOW MAP:
+
+1. USER INPUT (Frontend)
+   "I want my Will to start Nov 24, 5:00 PM"
+   ↓
+   [How is this captured? What timezone?]
+   ↓
+
+2. FRONTEND → BACKEND
+   [What format is sent? ISO string? Unix timestamp? With timezone?]
+   ↓
+
+3. BACKEND PROCESSING
+   [How is it parsed? What timezone is assumed?]
+   ↓
+
+4. DATABASE STORAGE
+   [What is stored? Example value? With/without timezone info?]
+   ↓
+
+5. DATABASE RETRIEVAL
+   [What comes back? Still UTC? Converted?]
+   ↓
+
+6. BACKEND → FRONTEND
+   [What format is sent back?]
+   ↓
+
+7. FRONTEND DISPLAY
+   [How is it displayed to user? What timezone conversion happens?]
+
+8. SCHEDULER COMPARISONS
+   [What timezone is used for "is it time yet?" checks?]
+
+9. NOTIFICATIONS
+   [How are times formatted in push notification text?]
+Ultimate Goal
+Once I understand the complete picture, I can identify:
+
+✅ Where UTC is properly used
+❌ Where timezone conversions are missing
+❌ Where wrong timezones are assumed
+❌ Where timezone info is lost
+✅ What needs to be fixed for consistent, correct timezone handling
+
+Please provide this comprehensive audit so we can fix the timezone issues once and for all.
