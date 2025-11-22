@@ -142,6 +142,12 @@ export default function InnerCircleHub() {
         return 5000; // 5 seconds for real-time acknowledgment counter
       }
       
+      // NEW FEATURE: Real-time updates for will_review status
+      // Poll frequently to detect when all members have submitted reviews
+      if (willStatus === 'will_review') {
+        return 5000; // Every 5 seconds - show immediate feedback when reviews complete
+      }
+      
       // Intelligent polling for End Room status transitions
       if (willStatus === 'waiting_for_end_room') {
         // Check if End Room is about to open or is already open
@@ -721,6 +727,40 @@ export default function InnerCircleHub() {
               <div className="mt-3 mb-3 px-4">
                 <PrimaryButton onClick={handleViewWillDetails} size="lg" fullWidth>
                   <>View <em>Will</em> Details</>
+                </PrimaryButton>
+              </div>
+            </div>
+          )}
+
+          {willStatus === 'will_review' && (
+            <div className="p-4" data-testid="section-will-review">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold tracking-tight" data-testid="text-will-review-heading">
+                      <em>Will</em> Review
+                    </h3>
+                    <p className="text-sm text-muted-foreground tracking-tight" data-testid="text-will-review-description">
+                      Reflect on your experience
+                    </p>
+                  </div>
+                </div>
+                <Badge className="bg-purple-100 text-purple-800" data-testid="badge-will-review">
+                  Review
+                </Badge>
+              </div>
+              
+              <div className="mt-3 mb-3">
+                <PrimaryButton 
+                  onClick={() => setLocation(`/will/${will.id}`)}
+                  size="lg"
+                  fullWidth
+                  data-testid="button-submit-will-review"
+                >
+                  Submit Your Review
                 </PrimaryButton>
               </div>
             </div>
