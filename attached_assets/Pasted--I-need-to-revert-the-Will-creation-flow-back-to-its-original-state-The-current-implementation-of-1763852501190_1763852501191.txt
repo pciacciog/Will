@@ -1,0 +1,24 @@
+"I need to revert the Will creation flow back to its original state. 
+ The current implementation offers two separate paths (schedule End Room OR use async review), but this is too complex.
+The End Room scheduling should remain exactly as it was before - users still go through the 'Schedule End Room' step during Will creation (Step 4 in the Start Will flow).
+
+What Changed (and needs reverting):
+* During Will creation, we added UI elements suggesting End Room was 'optional' or a toggle to skip it
+* Please remove any 'Skip End Room' options or language suggesting it's optional during creation
+* Restore the original Step 4: End Room scheduling as a standard required step in the Will creation flow
+What Should Stay:
+* The new Will Review feature (acknowledge follow-through, write reflection, share with circle)
+* The will_review state that triggers when a Will ends
+* All the review endpoints and UI we just built
+* The review flow that shows on Will Details page during will_review state
+The Key Insight: End Room is 'optional' only in the sense that users don't have to actually join it for the Will to complete. But they still schedule it during Will creation as part of the standard flow. The Will Review (which is mandatory) happens separately when the Will ends, regardless of whether people joined the End Room or not.
+
+What I Want:
+* Remove the choice/branching - there should be ONE path
+* Keep End Room scheduling as a standard required step (Step 4) in Will creation
+* Remove the 'Create Will (Use Asynchronous Review)' button
+* Remove all the explanatory text about choosing between options
+* Just have a simple date/time picker for scheduling the End Room (required field)
+* Keep it exactly like the original flow before we added Will Review
+
+The Key Point: Will Review is NOT an alternative to End Room - it's a mandatory step that happens for EVERY Will when it ends, regardless of whether an End Room was scheduled. The End Room is always scheduled during creation, but actual attendance is naturally optional (no penalties if people don't join).

@@ -97,11 +97,11 @@ export default function WillDetails() {
   const [showFinalSummary, setShowFinalSummary] = useState(false);
 
 
-  const { data: will, isLoading, error } = useQuery({
+  const { data: will, isLoading, error } = useQuery<any>({
     queryKey: [`/api/wills/${id}/details`],
     enabled: !!id && !!user,
     staleTime: 0, // Always consider data stale for immediate updates
-    refetchInterval: (data) => {
+    refetchInterval: (data: any) => {
       if (!data || !user?.id) return 30000; // Wait for user data before intelligent polling
       
       // Use centralized getWillStatus for consistency with Hub/Home
@@ -156,7 +156,7 @@ export default function WillDetails() {
     },
   });
 
-  const { data: circle } = useQuery({
+  const { data: circle } = useQuery<any>({
     queryKey: ['/api/circles/mine'],
     enabled: !!user,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
@@ -258,7 +258,7 @@ export default function WillDetails() {
   });
 
   // Push notification query and mutation
-  const { data: pushStatus, isLoading: isPushLoading } = useQuery({
+  const { data: pushStatus, isLoading: isPushLoading } = useQuery<any>({
     queryKey: [`/api/wills/${id}/push/status`],
     enabled: !!will && will.status === 'active',
     refetchInterval: 30000,
