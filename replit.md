@@ -8,6 +8,29 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 22, 2025: End Room Countdown for Will Review Status
+- **UX Enhancement**: Added End Room countdown display for users waiting during `will_review` status
+  - **Problem**: Users who submitted reviews early were stuck waiting hours (e.g., 3.5 hours from 6 PM to 9:30 PM) with no indication they needed to return for the End Room
+  - **Solution**: Blue countdown card appears after user submits review, showing live timer and clear messaging
+- **Backend API Enhancement**: Expanded `/api/wills/:id/review-status` endpoint response
+  - Now returns: `hasReviewed`, `needsReview`, `reviewCount`, `totalMembers`
+  - Complete data contract for frontend review flow and countdown display
+  - Note: Currently uses 3 storage calls (optimization opportunity for future)
+- **Frontend Implementation**: 
+  - Query enabling logic fixed - now enables immediately when `id` and `user` exist (no timing gap)
+  - Smart polling - only polls at 5-second intervals during `will_review` or `completed` status
+  - Loading states added - shows spinner while review status loads
+  - Countdown card displays: Video icon, "End Room Coming Up" title, live countdown timer, explanatory text
+- **User Experience Flow**:
+  1. Will ends (status → `will_review`)
+  2. User submits review
+  3. **NEW**: Countdown card appears showing time until End Room
+  4. User understands they need to return for End Room
+  5. End Room completes → Will transitions to `completed`
+- **Files Modified**:
+  - `server/routes.ts` (enhanced review-status endpoint)
+  - `client/src/pages/WillDetails.tsx` (countdown UI + query logic)
+
 ### November 22, 2025: Will Review System - Asynchronous Completion Flow
 - **Major Feature**: Replaced mandatory End Room video ceremonies with lightweight asynchronous Will Review system
   - **Motivation**: Poor End Room attendance (video call coordination difficult)
