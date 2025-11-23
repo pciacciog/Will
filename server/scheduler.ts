@@ -294,11 +294,28 @@ export class EndRoomScheduler {
         try {
           console.log(`[EndRoomScheduler] Closing End Room for Will ${will.id}`);
           
-          // Update status to completed and will status to completed
+          // Step 1: Update End Room status to completed
           await storage.updateWillEndRoom(will.id, { endRoomStatus: 'completed' });
-          await storage.updateWillStatus(will.id, 'completed');
+          console.log(`[EndRoomScheduler] End Room status set to 'completed' for Will ${will.id}`);
 
-          // Clean up the Daily room if it exists
+          // Step 2: Check if ALL members have submitted reviews
+          const willWithCommitments = await storage.getWillWithCommitments(will.id);
+          if (willWithCommitments) {
+            const commitmentCount = willWithCommitments.commitments?.length || 0;
+            const reviewCount = await storage.getWillReviewCount(will.id);
+            const allReviewsSubmitted = reviewCount >= commitmentCount;
+
+            if (allReviewsSubmitted) {
+              // BOTH conditions met: End Room finished + All reviews submitted
+              console.log(`[EndRoomScheduler] ✅ All ${reviewCount}/${commitmentCount} reviews submitted - Transitioning Will ${will.id} to completed`);
+              await storage.updateWillStatus(will.id, 'completed');
+            } else {
+              // End Room finished, but NOT all reviews submitted yet
+              console.log(`[EndRoomScheduler] ⏳ End Room finished, but only ${reviewCount}/${commitmentCount} reviews submitted - Will ${will.id} stays in will_review`);
+            }
+          }
+
+          // Step 3: Clean up the Daily room if it exists
           if (will.endRoomUrl) {
             const roomName = will.endRoomUrl.split('/').pop();
             if (roomName) {
@@ -309,8 +326,6 @@ export class EndRoomScheduler {
               }
             }
           }
-
-          console.log(`[EndRoomScheduler] End Room closed and Will ${will.id} marked as completed`);
         } catch (error) {
           console.error(`[EndRoomScheduler] Failed to close End Room for Will ${will.id}:`, error);
         }

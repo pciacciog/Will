@@ -1,0 +1,70 @@
+"There's a critical bug in the Will completion logic. Currently, when the End Room closes, the Will immediately transitions to completed WITHOUT checking if all members have submitted their reviews. This is incorrect.
+Current Broken Behavior (Line 299 in scheduler.ts):
+When End Room closes at 9:30 PM:
+await storage.updateWillStatus(will.id, 'completed');
+→ Will becomes completed immediately
+→ Members who haven't reviewed yet are locked out
+→ This bypasses the review requirement entirely
+Required Correct Behavior:
+The Will should ONLY transition to completed when BOTH conditions are met:
+
+✅ End Room has finished (end time has passed)
+✅ ALL circle members have submitted their reviews
+
+These two conditions can happen in ANY order:
+Case A: All reviews done BEFORE End Room finishes
+
+Reviews complete at 7:00 PM ✓
+End Room finishes at 9:30 PM ✓
+→ Will transitions to completed at 9:30 PM
+
+Case B: End Room finishes BEFORE all reviews are done
+
+End Room finishes at 9:30 PM ✓
+Only 2 of 4 members have reviewed
+→ Will STAYS in will_review (NOT completed)
+Last 2 members submit reviews at 10:00 PM and 10:30 PM ✓
+→ Will transitions to completed at 10:30 PM (when last review comes in)
+
+Changes Needed:
+
+Fix Line 299 in scheduler.ts:
+
+Do NOT auto-complete the Will when End Room closes
+Instead: Just update endRoomStatus to 'completed'
+Then check: Are all reviews also submitted?
+If YES → transition Will to completed
+If NO → keep Will in will_review (waiting for remaining reviews)
+
+
+Add Review Check After End Room Closes:
+
+   // After End Room closes:
+   await storage.updateEndRoomStatus(will.id, 'completed');
+   
+   // NOW check if all reviews are in:
+   const allReviewsSubmitted = await checkAllMembersReviewed(will.id);
+   
+   if (allReviewsSubmitted) {
+     await storage.updateWillStatus(will.id, 'completed');
+   } else {
+     // Keep in will_review, waiting for remaining reviews
+   }
+
+Block Review Submissions During End Room (UI):
+
+When endRoomStatus === 'open' (9:00-9:30 PM), disable the review form
+Show message: "End Room is in progress. You can submit your review after the session."
+After End Room closes (endRoomStatus === 'completed'), re-enable the form
+
+
+Update Review Submission Logic (Lines 150-182):
+
+When a review is submitted, check:
+
+Are all members reviewed now? ✓
+Has End Room finished? ✓
+
+
+If BOTH true → transition Will to completed
+If only reviews are done → stay in will_review (waiting for End Room)
