@@ -148,7 +148,7 @@ export class EndRoomScheduler {
       }
 
       // 3. Check will_review Wills and transition to completed when BOTH conditions are met:
-      // Condition A: All members have reviewed (or acknowledged as fallback)
+      // Condition A: ALL members have submitted their reviews (mandatory)
       // Condition B: End Room has finished (or no End Room scheduled)
       const willsInReview = await db
         .select()
@@ -163,12 +163,9 @@ export class EndRoomScheduler {
 
           const commitmentCount = willWithCommitments.commitments?.length || 0;
           const reviewCount = await storage.getWillReviewCount(will.id);
-          const acknowledgmentCount = await storage.getWillAcknowledgmentCount(will.id);
 
-          // CONDITION A: Check if all members have reviewed or acknowledged
-          const allReviewed = reviewCount >= commitmentCount;
-          const allAcknowledged = acknowledgmentCount >= commitmentCount;
-          const conditionA_ReviewsComplete = allReviewed || allAcknowledged;
+          // CONDITION A: ALL members must submit reviews (acknowledgments do NOT count)
+          const conditionA_ReviewsComplete = reviewCount >= commitmentCount;
 
           // CONDITION B: Check if End Room has finished (or doesn't exist)
           const hasEndRoom = !!will.endRoomScheduledAt;
@@ -178,15 +175,15 @@ export class EndRoomScheduler {
           if (conditionA_ReviewsComplete && conditionB_EndRoomComplete) {
             // BOTH conditions met - transition to completed
             console.log(`[SCHEDULER] ✅ BOTH conditions met for Will ${will.id}:`);
-            console.log(`[SCHEDULER]    - Reviews: ${reviewCount}/${commitmentCount} (allReviewed: ${allReviewed})`);
-            console.log(`[SCHEDULER]    - End Room: ${endRoomFinished ? 'finished' : 'no End Room scheduled'}`);
+            console.log(`[SCHEDULER]    - Reviews: ${reviewCount}/${commitmentCount} reviews submitted ✓`);
+            console.log(`[SCHEDULER]    - End Room: ${endRoomFinished ? 'finished ✓' : 'no End Room scheduled ✓'}`);
             console.log(`[SCHEDULER] → Transitioning Will ${will.id} to completed`);
             await storage.updateWillStatus(will.id, 'completed');
           } else {
             // At least one condition NOT met - keep in will_review
             const missingConditions = [];
             if (!conditionA_ReviewsComplete) {
-              missingConditions.push(`reviews (${reviewCount}/${commitmentCount})`);
+              missingConditions.push(`reviews (${reviewCount}/${commitmentCount} submitted)`);
             }
             if (!conditionB_EndRoomComplete) {
               missingConditions.push(`End Room (status: ${will.endRoomStatus})`);
