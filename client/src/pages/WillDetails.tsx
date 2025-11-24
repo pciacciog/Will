@@ -164,24 +164,20 @@ export default function WillDetails() {
   });
 
   // NEW FEATURE: Fetch review status to check if user has reviewed
-  // Enable as soon as user/id exist - backend will handle authorization
+  // Only enable when Will is in will_review or completed status
   const { data: reviewStatus, isLoading: isReviewStatusLoading } = useQuery<any>({
     queryKey: [`/api/wills/${id}/review-status`],
-    enabled: !!id && !!user,
-    refetchInterval: (data) => {
-      // Only poll when Will is in review or completed status
-      if (will?.status === 'will_review' || will?.status === 'completed') {
-        return 5000; // Poll frequently during review phase
-      }
-      return false; // Don't poll for other statuses
-    },
+    enabled: !!id && !!user && (will?.status === 'will_review' || will?.status === 'completed'),
+    refetchInterval: 5000, // Poll frequently during review phase
+    staleTime: 0,
   });
 
   // NEW FEATURE: Fetch submitted reviews to display
   const { data: reviews, isLoading: isReviewsLoading } = useQuery<any>({
     queryKey: [`/api/wills/${id}/reviews`],
     enabled: !!id && !!user && (will?.status === 'will_review' || will?.status === 'completed'),
-    refetchInterval: 10000, // Poll for new reviews
+    refetchInterval: 5000, // Poll for new reviews
+    staleTime: 0,
   });
 
   const acknowledgeMutation = useMutation({
