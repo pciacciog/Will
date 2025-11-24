@@ -193,9 +193,11 @@ export default function WillDetails() {
   // Debug logging for query states
   console.log('[WillDetails] Query States:', {
     reviewStatusLoading: isReviewStatusLoading,
-    reviewStatusError: reviewStatusError?.message,
+    reviewStatusError: reviewStatusError,
+    reviewStatusData: reviewStatus,
     reviewsLoading: isReviewsLoading,
-    reviewsError: reviewsError?.message,
+    reviewsError: reviewsError,
+    reviewsData: reviews,
   });
 
   const acknowledgeMutation = useMutation({
@@ -598,7 +600,7 @@ export default function WillDetails() {
                 </div>
                 <p className="text-sm text-gray-600">Loading review status...</p>
                 <div className="mt-3 text-xs text-left bg-yellow-50 p-2 rounded border border-yellow-200">
-                  <strong>Debug:</strong> Will status: {will?.status || 'undefined'} | Queries enabled: {String(shouldEnableReviewQueries)} | Error: {(reviewStatusError as any)?.message || 'none'}
+                  <strong>Debug:</strong> Will status: {will?.status || 'undefined'} | Queries enabled: {String(shouldEnableReviewQueries)} | isLoading: {String(isReviewStatusLoading)} | Data: {reviewStatus ? 'HAS DATA' : 'NO DATA'} | Error: {(reviewStatusError as any)?.message || 'none'}
                 </div>
               </div>
             ) : reviewStatus?.needsReview ? (

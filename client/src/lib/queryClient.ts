@@ -63,6 +63,16 @@ export const getQueryFn: <T>(options: {
     // Convert relative URLs to absolute URLs for native apps
     const fullUrl = getApiPath(queryKey[0] as string);
     
+    // DEBUG: Log fetch attempts for review endpoints
+    if (queryKey[0]?.toString().includes('review')) {
+      console.log('[QueryClient] 🔍 FETCH ATTEMPT:', {
+        queryKey,
+        fullUrl,
+        hasAuthHeaders: !!authHeaders.Authorization,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     const res = await fetch(fullUrl, {
       headers: { 
         "X-Requested-With": "XMLHttpRequest",
@@ -72,6 +82,16 @@ export const getQueryFn: <T>(options: {
       },
       credentials: "include", // Keep for backward compatibility with web sessions
     });
+
+    // DEBUG: Log responses for review endpoints
+    if (queryKey[0]?.toString().includes('review')) {
+      console.log('[QueryClient] 📥 FETCH RESPONSE:', {
+        queryKey,
+        status: res.status,
+        statusText: res.statusText,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
