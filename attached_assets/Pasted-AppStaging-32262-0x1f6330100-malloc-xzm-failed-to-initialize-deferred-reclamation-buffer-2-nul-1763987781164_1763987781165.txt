@@ -1,0 +1,314 @@
+AppStaging(32262,0x1f6330100) malloc: xzm: failed to initialize deferred reclamation buffer [2] (null)
+CLIENT OF UIKIT REQUIRES UPDATE: This process does not adopt UIScene lifecycle. This will become an assert in a future version.
+🔥 iOS DIRECT: App launched - requesting push notification permissions immediately
+Could not create a sandbox extension for '/var/containers/Bundle/Application/C69F59C2-98BC-4A01-A425-B5B914366034/AppStaging.app'
+⚡️  Loading app at capacitor://localhost...
+🔔 App became active - clearing badge number
+🔥 iOS DIRECT: Push notification permissions granted - registering for remote notifications
+App is being debugged, do not track this hang
+Hang detected: 0.45s (debugger attached, not reporting)
+void * _Nullable NSMapGet(NSMapTable * _Nonnull, const void * _Nullable): map table argument is NULL
+🔥 iOS DIRECT: Device Token Generated: 4d2d24bc38725e6683e2...
+🔥 iOS DIRECT: Starting DIRECT API call to bypass broken JavaScript bridge
+🔥 iOS DIRECT: sendTokenDirectlyToServer() method called
+🔍 iOS DIRECT: Bundle ID detected: 'com.porfirio.will.staging.'
+🔍 iOS DIRECT: Comparing to: 'com.porfirio.will.staging.'
+🟡 iOS DIRECT: STAGING environment detected
+🔥 iOS DIRECT: Server API URL: https://will-staging-porfirioaciacci.replit.app/api/device-token
+🔥 iOS DIRECT: Payload prepared: ["osVersion", "source", "deviceToken", "platform", "buildScheme", "appVersion", "deviceModel", "environment", "userId", "bundleId", "provisioningProfile"]
+🔥 iOS DIRECT: JSON serialization successful
+🔥 iOS DIRECT: Making HTTP request at 2025-11-24 12:34:54 +0000
+Updated list with error: DownloadFailed
+Updated list with error: DownloadFailed
+🟢 Device Token Successfully Registered: 4d2d24bc38725e6683e2428f6d1702b0a565b6414996f009823d430671fbe3cc
+App is being debugged, do not track this hang
+Hang detected: 0.78s (debugger attached, not reporting)
+⚡️  JS Eval error A JavaScript exception occurred
+Updated list with error: DownloadFailed
+Updated list with error: DownloadFailed
+nw_connection_copy_connected_local_endpoint_block_invoke [C3] Client called nw_connection_copy_connected_local_endpoint on unconnected nw_connection
+nw_connection_copy_connected_remote_endpoint_block_invoke [C3] Client called nw_connection_copy_connected_remote_endpoint on unconnected nw_connection
+nw_connection_copy_protocol_metadata_internal_block_invoke [C3] Client called nw_connection_copy_protocol_metadata_internal on unconnected nw_connection
+Updated list with error: DownloadFailed
+App is being debugged, do not track this hang
+Hang detected: 1.52s (debugger attached, not reporting)
+App is being debugged, do not track this hang
+Hang detected: 0.81s (debugger attached, not reporting)
+🔥 iOS DIRECT: HTTP Response Status: 200
+🔥 iOS DIRECT: ✅ SUCCESS - Token registered directly with server!
+🔥 iOS DIRECT: ✅ JavaScript bridge successfully bypassed!
+App is being debugged, do not track this hang
+Hang detected: 1.09s (debugger attached, not reporting)
+⚡️  To Native ->  Preferences get 113827819
+⚡️  To Native ->  App getInfo 113827820
+⚡️  To Native ->  Preferences get 113827821
+⚡️  To Native ->  App addListener 113827822
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ SessionPersistence Service Initialized                     ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 🔍 [SessionPersistence] Platform: ios
+⚡️  [log] - 🔍 [SessionPersistence] isNativePlatform: true
+⚡️  [log] - 🔍 [SessionPersistence] Timestamp: 2025-11-24T12:34:58.289Z
+⚡️  [log] - 🔍 [SessionPersistence] User Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - 🔥 NOTIF SERVICE: File loaded at 2025-11-24T12:34:58.289Z
+⚡️  [log] - 🔥 NOTIF SERVICE: Capacitor check: {"isNativePlatform":true,"platform":"ios","isPluginAvailable":true}
+⚡️  [log] - Router debug: {"isAuthenticated":false,"isLoading":true,"location":"/"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  WebView loaded
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: EMPTY
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache empty - checking Capacitor Preferences...
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP LAUNCH - SESSION RESTORATION                           ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - [App] 🚀 App launched at: 2025-11-24T12:34:58.330Z
+⚡️  [log] - [App] 🔄 Starting session restoration...
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ RESTORING SESSION ON APP LAUNCH                           ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 🔄 [SessionPersistence] App launch time: 2025-11-24T12:34:58.330Z
+⚡️  [log] - 🔄 [SessionPersistence] Platform: ios
+App is being debugged, do not track this hang
+Hang detected: 0.53s (debugger attached, not reporting)
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: EMPTY
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache empty - checking Capacitor Preferences...
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP LIFECYCLE MONITOR INITIALIZED                          ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 📱 [App] App launch timestamp: 2025-11-24T12:34:58.330Z
+⚡️  [log] - 📱 [App] Setting up app state change listener...
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  TO JS {"value":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjM1NDg3NzcwOTMzajhzaDMyZDIiLCJlbWFpbCI6ImJlYm9jaWFjY2lvQG1lLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzYzOTc5NjY5LCJleHAiOjE3NjQ1ODQ0Njl9._e0JU9aktJrRXW0cdlqjjCocVlDG0cvbIFMZfFC6O7M"}
+⚡️  TO JS {"id":"com.porfirio.will.staging.","build":"1.2","name":"WILL STAGING","version":"1.2"}
+⚡️  TO JS {"value":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjM1NDg3NzcwOTMzajhzaDMyZDIiLCJlbWFpbCI6ImJlYm9jaWFjY2lvQG1lLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzYzOTc5NjY5LCJleHAiOjE3NjQ1ODQ0Njl9._e0JU9aktJrRXW0cdlqjjCocVlDG0cvbIFMZfFC6O7M"}
+⚡️  [log] - ⚠️ [App] Badge clearing not available (web or permissions not granted): {"code":"UNIMPLEMENTED"}
+⚡️  [log] - ✅ [App] App state change listener registered successfully
+App is being debugged, do not track this hang
+Hang detected: 0.26s (debugger attached, not reporting)
+App is being debugged, do not track this hang
+Hang detected: 0.49s (debugger attached, not reporting)
+⚡️  To Native ->  Preferences get 113827823
+⚡️  TO JS {"value":"2025-11-24T10:21:09.260Z"}
+⚡️  [log] - 📱 [API Config] Native app detected: {"bundleId":"com.porfirio.will.staging.","version":"1.2","build":"1.2"}
+⚡️  [log] - ✅ [API Config] STAGING app detected → Using STAGING backend
+⚡️  To Native ->  Preferences get 113827824
+⚡️  [log] - 🎯 [API Config] Final API URL: https://will-staging-porfirioaciacci.replit.app
+⚡️  [log] - 🌐 [App] API URL initialized: https://will-staging-porfirioaciacci.replit.app
+⚡️  [log] - [LogBridge] Console bridge initialized - client logs will appear in server console
+⚡️  TO JS {"value":"2025-11-24T10:21:09.260Z"}
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ TOKEN RESTORED FROM PREFERENCES                            ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - ✅ [SessionPersistence] Token found in Capacitor Preferences!
+⚡️  [log] - ✅ [SessionPersistence] Token length: 225 chars
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - ✅ [SessionPersistence] Originally saved at: 2025-11-24T10:21:09.260Z
+⚡️  [log] - ✅ [SessionPersistence] Time since save: 134 minutes
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ TOKEN RESTORED FROM PREFERENCES                            ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - ✅ [SessionPersistence] Token found in Capacitor Preferences!
+⚡️  [log] - ✅ [SessionPersistence] Token length: 225 chars
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - ✅ [SessionPersistence] Originally saved at: 2025-11-24T10:21:09.260Z
+⚡️  [log] - ✅ [SessionPersistence] Time since save: 134 minutes
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - 🔐 [SessionPersistence] Token found - validating with server...
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ SESSION SUCCESSFULLY RESTORED                              ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  To Native ->  CapacitorHttp request 113827825
+⚡️  [log] - ✅ [SessionPersistence] Token VALID - User authenticated
+⚡️  [log] - ✅ [SessionPersistence] User ID: 17635487770933j8sh32d2
+⚡️  [log] - ✅ [SessionPersistence] User Email: bebociaccio@me.com
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  To Native ->  CapacitorHttp request 113827826
+⚡️  To Native ->  CapacitorHttp request 113827827
+⚡️  To Native ->  LocalNotifications requestPermissions 113827828
+⚡️  To Native ->  CapacitorHttp request 113827829
+⚡️  To Native ->  CapacitorHttp request 113827830
+⚡️  [log] - [App] 📊 Session restoration completed in 2986 ms
+⚡️  [log] - [App] ✅ SESSION RESTORED SUCCESSFULLY
+⚡️  [log] - [App] ✅ User should remain logged in
+⚡️  [log] - [App] 🔄 Invalidating /api/user query to fetch fresh data...
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"17635487770933j8sh32d2","location":"/"}
+⚡️  [log] - Home component debug: {"willStatus":"no_will","isActiveWill":false,"userCommitment":null,"userId":"17635487770933j8sh32d2"}
+⚡️  [log] - Home useEffect: shouldShowSplash = null
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - User authenticated - initializing push notifications
+⚡️  [log] - 🔥 NOTIF SERVICE: initialize() called
+⚡️  [log] - 🔥 NOTIF SERVICE: Current timestamp: 1763987701349
+⚡️  [log] - ✅ User authenticated - server handles token association automatically
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"17635487770933j8sh32d2","location":"/"}
+⚡️  [log] - Home component debug: {"willStatus":"no_will","isActiveWill":false,"userCommitment":null,"userId":"17635487770933j8sh32d2"}
+⚡️  TO JS {"display":"granted"}
+⚡️  TO JS {"data":{"success":true},"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","access-control-allow-headers":"Origin,
+⚡️  [log] - Local notification permissions granted
+⚡️  [log] - 🔥 NOTIF SERVICE: ✅ Native platform detected - setting up push notifications
+⚡️  [log] - 🔥 NOTIF SERVICE: Listeners added successfully
+⚡️  To Native ->  CapacitorHttp request 113827831
+⚡️  [log] - 🔥 NOTIF SERVICE: Requesting permissions...
+⚡️  To Native ->  PushNotifications addListener 113827832
+⚡️  To Native ->  PushNotifications addListener 113827833
+⚡️  To Native ->  PushNotifications requestPermissions 113827834
+⚡️  TO JS {"data":{"success":true},"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","access-control-allow-headers":"Origin,
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","status":200,"data":{"success":true},"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-
+⚡️  TO JS {"receive":"granted"}
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","status":200,"data":{"success":true},"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-
+⚡️  [log] - Home component debug: {"willStatus":"no_will","isActiveWill":false,"userCommitment":null,"userId":"17635487770933j8sh32d2"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - 🔥 NOTIF SERVICE: Permission result: {
+  "receive": "granted"
+}
+⚡️  [log] - 🔥 NOTIF SERVICE: Receive permission: granted
+⚡️  To Native ->  CapacitorHttp request 113827835
+⚡️  [log] - 🔥 NOTIF SERVICE: ✅ Permissions granted, calling register...
+⚡️  [log] - 🔥 NOTIF SERVICE: NotificationService initialization completed
+⚡️  TO JS {"data":{"success":true},"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","access-control-allow-headers":"Origin,
+⚡️  TO JS {"data":{"success":true},"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","access-control-allow-headers":"Origin,
+⚡️  TO JS {"data":{"success":true},"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","access-control-allow-headers":"Origin,
+⚡️  [log] - Home component debug: {"will":{"id":9,"circleId":2,"createdBy":"17635487770933j8sh32d2","startDate":"2025-11-24T12:00:00.000Z","endDate":"2025-11-24T12:03:00.000Z","endRoomScheduledAt":"2025-11-24T12:06:00.000Z","endRoomOpenedAt":"2025-11-24T12:06:00.014Z","endRoomUrl":"https://mock.daily.co/will-9-endroom-1763985960243","endRoomStatus":"open","status":"will_review","createdAt":"2025-11-24T11:58:12.491Z","commitments":[{"id":8,"willId":9,"userId":"17635487770933j8sh32d2","what":"Test Will Review flow","why":"To verify the new review system works correctly","createdAt":"2025-11-24T11:58:28.126Z","user":{"id":"17635487770933j8sh32d2","email":"bebociaccio@me.com","password":"0c06e8d91d8e568c6bf6a698efd13dbb50d1cc7f54826cedab7a2bc96807b35ee317052513bcc356e25b0e676a4103951351e18b2f3055aa4412df5e6390b876.af66d74f5adb7ef5406612568679359e","firstName":"Bebo","lastName":"Ciaccio","profileImageUrl":null,"role":"user","isActive":true,"createdAt":"2025-11-19T10:39:37.112Z","updatedAt":"2025-11-19T10:39:37.112Z"}}],"memberCount":"1","commitmentCount":1,"acknowledgedCount":"0","hasUserAcknowledged":false},"willStatus":"will_review","isActiveWill":false,"userCommitment":null,"userId":"17635487770933j8sh32d2","commitments":[{"id":8,"willId":9,"userId":"17635487770933j8sh32d2","what":"Test Will Review flow","why":"To verify the new review system works correctly","createdAt":"2025-11-24T11:58:28.126Z","user":{"id":"17635487770933j8sh32d2","email":"bebociaccio@me.com","password":"0c06e8d91d8e568c6bf6a698efd13dbb50d1cc7f54826cedab7a2bc96807b35ee317052513bcc356e25b0e676a4103951351e18b2f3055aa4412df5e6390b876.af66d74f5adb7ef5406612568679359e","firstName":"Bebo","lastName":"Ciaccio","profileImageUrl":null,"role":"user","isActive":true,"createdAt":"2025-11-19T10:39:37.112Z","updatedAt":"2025-11-19T10:39:37.112Z"}}]}
+⚡️  To Native ->  PushNotifications register 113827836
+⚡️  [log] - 🔥 NOTIF SERVICE: Delayed register call starting...
+⚡️  TO JS undefined
+🔥 iOS DIRECT: Device Token Generated: 4d2d24bc38725e6683e2...
+🔥 iOS DIRECT: Starting DIRECT API call to bypass broken JavaScript bridge
+🔥 iOS DIRECT: sendTokenDirectlyToServer() method called
+🔍 iOS DIRECT: Bundle ID detected: 'com.porfirio.will.staging.'
+🔍 iOS DIRECT: Comparing to: 'com.porfirio.will.staging.'
+🟡 iOS DIRECT: STAGING environment detected
+🔥 iOS DIRECT: Server API URL: https://will-staging-porfirioaciacci.replit.app/api/device-token
+🔥 iOS DIRECT: Payload prepared: ["osVersion", "provisioningProfile", "deviceModel", "deviceToken", "appVersion", "buildScheme", "platform", "source", "environment", "userId", "bundleId"]
+🔥 iOS DIRECT: JSON serialization successful
+🔥 iOS DIRECT: Making HTTP request at 2025-11-24 12:35:03 +0000
+🟢 Device Token Successfully Registered: 4d2d24bc38725e6683e2428f6d1702b0a565b6414996f009823d430671fbe3cc
+⚡️  [log] - 🔥 NOTIF SERVICE: Register call completed
+🔥 iOS DIRECT: HTTP Response Status: 200
+🔥 iOS DIRECT: ✅ SUCCESS - Token registered directly with server!
+🔥 iOS DIRECT: ✅ JavaScript bridge successfully bypassed!
+App is being debugged, do not track this hang
+Hang detected: 0.55s (debugger attached, not reporting)
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"17635487770933j8sh32d2","location":"/hub"}
+⚡️  To Native ->  CapacitorHttp request 113827837
+⚡️  To Native ->  CapacitorHttp request 113827838
+App is being debugged, do not track this hang
+Hang detected: 0.28s (debugger attached, not reporting)
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"17635487770933j8sh32d2","location":"/hub"}
+App is being debugged, do not track this hang
+Hang detected: 0.61s (debugger attached, not reporting)
+App is being debugged, do not track this hang
+Hang detected: 0.35s (debugger attached, not reporting)
+⚡️  TO JS {"data":{"success":true},"status":200,"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","access-control-allow-head
+App is being debugged, do not track this hang
+Hang detected: 0.39s (debugger attached, not reporting)
+⚡️  TO JS {"data":{"success":true},"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-methods":"GET
+App is being debugged, do not track this hang
+Hang detected: 0.44s (debugger attached, not reporting)
+App is being debugged, do not track this hang
+Hang detected: 0.41s (debugger attached, not reporting)
+App is being debugged, do not track this hang
+Hang detected: 0.42s (debugger attached, not reporting)
+⚡️  To Native ->  CapacitorHttp request 113827839
+⚡️  To Native ->  CapacitorHttp request 113827840
+⚡️  To Native ->  CapacitorHttp request 113827841
+⚡️  To Native ->  CapacitorHttp request 113827842
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"17635487770933j8sh32d2","location":"/will/9"}
+⚡️  [log] - [WillDetails] Review Query Conditions: {"id":"9","hasUser":true,"shouldEnable":false}
+⚡️  [log] - [WillDetails] Query States: {"reviewStatusLoading":false,"reviewStatusError":null,"reviewsLoading":false,"reviewsError":null}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"17635487770933j8sh32d2","location":"/will/9"}
+⚡️  [log] - [WillDetails] Review Query Conditions: {"id":"9","hasUser":true,"shouldEnable":false}
+⚡️  [log] - [WillDetails] Query States: {"reviewStatusLoading":false,"reviewStatusError":null,"reviewsLoading":false,"reviewsError":null}
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","status":200,"data":{"success":true},"headers":{"strict-transport-security":"max-age=63072000; includeSubDomains","content-type":"application\/json; charset=utf-8","access-control-allow-
+⚡️  TO JS {"status":200,"headers":{"access-control-allow-credentials":"true","etag":"W\/\"10-oV4hJxRVSENxc\/wX8+mA4\/Pe4tA\"","content-type":"application\/json; charset=utf-8","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","server":"Google Frontend",
+⚡️  TO JS {"data":{"success":true},"status":200,"headers":{"x-replit-public":"true","content-length":"16","content-type":"application\/json; charset=utf-8","access-control-allow-credentials":"true","strict-transport-security":"max-age=63072000; includeSubDomains","x
+⚡️  TO JS {"status":200,"headers":{"via":"1.1 google","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","date":"Mon, 24 Nov 2025 12:35:08 GMT","x-cloud-trace-context":"ce1b90532fb81e7d641c83907addfce6","access-control-allow-methods":"GET, POST, PUT, DEL
+App is being debugged, do not track this hang
+Hang detected: 0.85s (debugger attached, not reporting)
+App is being debugged, do not track this hang
+Hang detected: 0.48s (debugger attached, not reporting)
+⚡️  [log] - [WillDetails] Review Query Conditions: {"id":"9","hasUser":true,"willStatus":"will_review","shouldEnable":true}
+⚡️  [log] - [WillDetails] Query States: {"reviewStatusLoading":true,"reviewStatusError":null,"reviewsLoading":true,"reviewsError":null}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  To Native ->  CapacitorHttp request ⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+113827843
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - [QueryClient] 🔍 FETCH ATTEMPT: {"queryKey":["/api/wills/9/review-status"],"fullUrl":"https://will-staging-porfirioaciacci.replit.app/api/wills/9/review-status","hasAuthHeaders":true,"timestamp":"2025-11-24T12:35:09.455Z"}
+⚡️  [log] - [QueryClient] 🔍 FETCH ATTEMPT: {"queryKey":["/api/wills/9/reviews"],"fullUrl":"https://will-staging-porfirioaciacci.replit.app/api/wills/9/reviews","hasAuthHeaders":true,"timestamp":"2025-11-24T12:35:09.456Z"}
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","status":200,"data":{"success":true},"headers":{"via":"1.1 google","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","date":"Mon, 24 Nov 2025 12:35:09 GMT","x-cloud-trace-co
+App is being debugged, do not track this hang
+Hang detected: 0.28s (debugger attached, not reporting)
+⚡️  TO JS {"isActive":false}
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP STATE CHANGED                                          ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 📱 [App] New state: 🔴 INACTIVE (Background)
+⚡️  [log] - 📱 [App] Change timestamp: 2025-11-24T12:35:15.424Z
+⚡️  [log] - 📱 [App] Time since last change: 17 seconds
+⚡️  [log] - 📱 [App] Time since app launch: 17 seconds
+⚡️  [log] - 🔽 [App] App GOING TO BACKGROUND
+⚡️  [log] - 🔽 [App] iOS may clear storage if backgrounded long enough
+⚡️  [log] - 🔽 [App] Current auth token will be verified on return
+⚡️  [log] - ════════════════════════════════════════════════════════════
+🔔 App became active - clearing badge number
+⚡️  TO JS {"isActive":true}
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP STATE CHANGED                                          ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 📱 [App] New state: 🟢 ACTIVE (Foreground)
+⚡️  [log] - 📱 [App] Change timestamp: 2025-11-24T12:35:26.964Z
+⚡️  [log] - 📱 [App] Time since last change: 12 seconds
+⚡️  [log] - 📱 [App] Time since app launch: 29 seconds
+⚡️  [log] - 🔄 [App] App RETURNING TO FOREGROUND
+⚡️  [log] - 🔄 [App] This is when storage might have been cleared!
+⚡️  [log] - 🔄 [App] Clearing badge...
+⚡️  [log] - 🔍 [App] Checking if auth token survived background...
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...FMZfFC6O7M
+⚡️  [log] - ✅ [App] Token SURVIVED background period
+⚡️  [log] - ✅ [App] Token preview: eyJhbGciOiJIUzI1NiIs...
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - ⚠️ [App] Badge clearing not available (web or permissions not granted): {"code":"UNIMPLEMENTED"}

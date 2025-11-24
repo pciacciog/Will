@@ -1,6 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { getApiPath } from "@/config/api";
+import { Capacitor } from "@capacitor/core";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -17,6 +18,24 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
+// Get platform-appropriate headers
+function getPlatformHeaders(): Record<string, string> {
+  // On native platforms (iOS/Android), Capacitor HTTP handles CORS automatically
+  // Only add explicit CORS headers on web platform
+  if (Capacitor.isNativePlatform()) {
+    return {
+      "X-Requested-With": "XMLHttpRequest",
+    };
+  }
+  
+  // Web platform - add explicit CORS headers
+  return {
+    "X-Requested-With": "XMLHttpRequest",
+    "Origin": "https://will-staging-porfirioaciacci.replit.app",
+    "Referer": "https://will-staging-porfirioaciacci.replit.app",
+  };
+}
+
 export async function apiRequest(url: string, options?: {
   method?: string;
   body?: string;
@@ -31,21 +50,27 @@ export async function apiRequest(url: string, options?: {
   
   // Add auth token if available
   const authHeaders = await getAuthHeaders();
+  const platformHeaders = getPlatformHeaders();
   const allHeaders = {
-    "X-Requested-With": "XMLHttpRequest",
-    "Origin": "https://will-staging-porfirioaciacci.replit.app",
-    "Referer": "https://will-staging-porfirioaciacci.replit.app",
+    ...platformHeaders,
     ...(body ? { "Content-Type": "application/json" } : {}),
     ...authHeaders,
     ...headers
   };
   
-  const res = await fetch(fullUrl, {
+  // On native platforms, credentials are handled by the native HTTP plugin via JWT token
+  // Only use credentials: "include" on web for cookie-based session compatibility
+  const fetchOptions: RequestInit = {
     method,
     headers: allHeaders,
     body,
-    credentials: "include", // Keep for backward compatibility with web sessions
-  });
+  };
+  
+  if (!Capacitor.isNativePlatform()) {
+    fetchOptions.credentials = "include";
+  }
+  
+  const res = await fetch(fullUrl, fetchOptions);
 
   await throwIfResNotOk(res);
   return res;
@@ -59,6 +84,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Add auth token if available
     const authHeaders = await getAuthHeaders();
+    const platformHeaders = getPlatformHeaders();
     
     // Convert relative URLs to absolute URLs for native apps
     const fullUrl = getApiPath(queryKey[0] as string);
@@ -68,20 +94,27 @@ export const getQueryFn: <T>(options: {
       console.log('[QueryClient] 🔍 FETCH ATTEMPT:', {
         queryKey,
         fullUrl,
+        isNative: Capacitor.isNativePlatform(),
+        platform: Capacitor.getPlatform(),
         hasAuthHeaders: !!authHeaders.Authorization,
         timestamp: new Date().toISOString()
       });
     }
     
-    const res = await fetch(fullUrl, {
+    // Build fetch options with platform-specific configuration
+    const fetchOptions: RequestInit = {
       headers: { 
-        "X-Requested-With": "XMLHttpRequest",
-        "Origin": "https://will-staging-porfirioaciacci.replit.app",
-        "Referer": "https://will-staging-porfirioaciacci.replit.app",
+        ...platformHeaders,
         ...authHeaders 
       },
-      credentials: "include", // Keep for backward compatibility with web sessions
-    });
+    };
+    
+    // Only include credentials on web platform
+    if (!Capacitor.isNativePlatform()) {
+      fetchOptions.credentials = "include";
+    }
+    
+    const res = await fetch(fullUrl, fetchOptions);
 
     // DEBUG: Log responses for review endpoints
     if (queryKey[0]?.toString().includes('review')) {
