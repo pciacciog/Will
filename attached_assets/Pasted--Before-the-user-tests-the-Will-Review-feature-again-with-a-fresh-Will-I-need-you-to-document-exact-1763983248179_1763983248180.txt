@@ -1,0 +1,54 @@
+"Before the user tests the Will Review feature again with a fresh Will, I need you to document exactly what was implemented so we're all aligned.
+Part 1: Code Changes Made
+Please provide a complete list of what you changed to implement the Will Review feature:
+Database Changes:
+* What tables were added? (schemas, columns)
+* What new enum values were added to will_status?
+* List all migration files created
+Backend Changes:
+* scheduler.ts: What changed in the state transition logic?
+    * Show the exact lines where Wills transition from active → will_review
+    * Show the logic for will_review → completed (the two-condition check)
+* API routes: What new endpoints were created?
+    * Full list with their purpose
+* State machine: Document the complete Will lifecycle now
+Frontend Changes:
+* What new components were created?
+* What pages were modified?
+* Where does the Will Review UI appear and under what conditions?
+
+Part 2: Expected Behavior - Complete Will Flow
+Walk me through what a user should experience from Will creation to completion:
+1. Will Creation
+* Step 1: When
+* Step 2: What
+* Step 3: Why
+* Step 4: End Room (what happens here?)
+2. Will States & Transitions Document each state and what triggers the transition:
+* pending → when/how → next state?
+* scheduled → when/how → next state?
+* active → when/how → next state?
+* will_review → when/how → next state?
+* completed → when/how → next state?
+* archived → when/how → next state?
+3. The Will Review Process (Step-by-step user experience)
+* When does a Will enter will_review state? (specific trigger)
+* What does the user see on the Home screen?
+* What happens when they click "Review"?
+* Walk through all 3 steps of the review form
+* What happens after they submit?
+* What do they see if End Room is scheduled vs not scheduled?
+
+5. Timeline Example Use this scenario to show expected behavior at each timestamp:
+* Will ends: Nov 24 at 2:00 PM
+* End Room scheduled: Nov 24 at 5:00 PM (5:00-5:30 PM)
+* User A opens app: 2:15 PM
+* User A submits review: 2:20 PM
+* User B opens app: 3:00 PM
+* User B submits review: 3:05 PM
+* All reviews complete: 3:05 PM
+* User A opens app again: 4:00 PM
+* End Room time arrives: 5:00 PM
+* End Room finishes: 5:30 PM
+* User A opens app: 6:00 PM
+At each timestamp, what status is the Will in? What does each user see?
