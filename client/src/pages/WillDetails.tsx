@@ -165,19 +165,37 @@ export default function WillDetails() {
 
   // NEW FEATURE: Fetch review status to check if user has reviewed
   // Only enable when Will is in will_review or completed status
-  const { data: reviewStatus, isLoading: isReviewStatusLoading } = useQuery<any>({
+  const shouldEnableReviewQueries = !!id && !!user && (will?.status === 'will_review' || will?.status === 'completed');
+  
+  // Debug logging for mobile
+  console.log('[WillDetails] Review Query Conditions:', {
+    id,
+    hasUser: !!user,
+    willStatus: will?.status,
+    shouldEnable: shouldEnableReviewQueries
+  });
+  
+  const { data: reviewStatus, isLoading: isReviewStatusLoading, error: reviewStatusError } = useQuery<any>({
     queryKey: [`/api/wills/${id}/review-status`],
-    enabled: !!id && !!user && (will?.status === 'will_review' || will?.status === 'completed'),
-    refetchInterval: 5000, // Poll frequently during review phase
+    enabled: shouldEnableReviewQueries,
+    refetchInterval: shouldEnableReviewQueries ? 5000 : false, // Poll frequently during review phase
     staleTime: 0,
   });
 
   // NEW FEATURE: Fetch submitted reviews to display
-  const { data: reviews, isLoading: isReviewsLoading } = useQuery<any>({
+  const { data: reviews, isLoading: isReviewsLoading, error: reviewsError } = useQuery<any>({
     queryKey: [`/api/wills/${id}/reviews`],
-    enabled: !!id && !!user && (will?.status === 'will_review' || will?.status === 'completed'),
-    refetchInterval: 5000, // Poll for new reviews
+    enabled: shouldEnableReviewQueries,
+    refetchInterval: shouldEnableReviewQueries ? 5000 : false, // Poll for new reviews
     staleTime: 0,
+  });
+  
+  // Debug logging for query states
+  console.log('[WillDetails] Query States:', {
+    reviewStatusLoading: isReviewStatusLoading,
+    reviewStatusError: reviewStatusError?.message,
+    reviewsLoading: isReviewsLoading,
+    reviewsError: reviewsError?.message,
   });
 
   const acknowledgeMutation = useMutation({
@@ -579,6 +597,9 @@ export default function WillDetails() {
                   <CheckCircle className="w-6 h-6 text-purple-600" />
                 </div>
                 <p className="text-sm text-gray-600">Loading review status...</p>
+                <div className="mt-3 text-xs text-left bg-yellow-50 p-2 rounded border border-yellow-200">
+                  <strong>Debug:</strong> Will status: {will?.status || 'undefined'} | Queries enabled: {String(shouldEnableReviewQueries)} | Error: {(reviewStatusError as any)?.message || 'none'}
+                </div>
               </div>
             ) : reviewStatus?.needsReview ? (
               <WillReviewFlow 
