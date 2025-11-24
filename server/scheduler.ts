@@ -127,12 +127,17 @@ export class EndRoomScheduler {
 
       // 2. NEW FEATURE: Transition active wills to will_review (end time has passed)
       // All Wills now go to will_review first for mandatory reflection
+      // Also handles legacy 'waiting_for_end_room' status for backward compatibility
       const willsToReview = await db
         .select()
         .from(wills)
         .where(
           and(
-            or(eq(wills.status, 'active'), eq(wills.status, 'scheduled')),
+            or(
+              eq(wills.status, 'active'),
+              eq(wills.status, 'scheduled'),
+              eq(wills.status, 'waiting_for_end_room') // Legacy status migration
+            ),
             lt(wills.endDate, now)
           )
         )
