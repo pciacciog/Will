@@ -593,30 +593,7 @@ export default function WillDetails() {
         {/* Will Review Section - NEW FEATURE */}
         {will.status === 'will_review' && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-4" data-testid="section-will-review-details">
-            {isReviewStatusLoading ? (
-              <div className="text-center py-4" data-testid="review-loading">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
-                  <CheckCircle className="w-6 h-6 text-purple-600" />
-                </div>
-                <p className="text-sm text-gray-600">Loading review status...</p>
-                <div className="mt-3 text-xs text-left bg-yellow-50 p-2 rounded border border-yellow-200">
-                  <strong>Debug:</strong> Will status: {will?.status || 'undefined'} | Queries enabled: {String(shouldEnableReviewQueries)} | isLoading: {String(isReviewStatusLoading)} | Data: {reviewStatus ? 'HAS DATA' : 'NO DATA'} | Error: {(reviewStatusError as any)?.message || 'none'}
-                </div>
-              </div>
-            ) : reviewStatus?.needsReview ? (
-              <WillReviewFlow 
-                willId={will.id} 
-                onComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
-                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
-                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
-                  toast({
-                    title: "Review Completed",
-                    description: "Thank you for sharing your reflection!",
-                  });
-                }}
-              />
-            ) : (
+            {reviewStatus?.hasReviewed ? (
               <div className="text-center" data-testid="review-submitted-message">
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <CheckCircle className="w-6 h-6 text-purple-600" />
@@ -631,6 +608,19 @@ export default function WillDetails() {
                   </p>
                 )}
               </div>
+            ) : (
+              <WillReviewFlow 
+                willId={will.id} 
+                onComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
+                  toast({
+                    title: "Review Completed",
+                    description: "Thank you for sharing your reflection!",
+                  });
+                }}
+              />
             )}
           </div>
         )}
