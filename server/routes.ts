@@ -38,22 +38,19 @@ function getWillStatus(will: any, memberCount: number): string {
   const startDate = new Date(will.startDate);
   const endDate = new Date(will.endDate);
 
-  // Respect terminal states
+  // Respect terminal states - these should never be recalculated
   if (will.status === 'completed' || will.status === 'archived') {
     return will.status;
   }
 
-  // NEW FEATURE: Respect will_review state (mandatory reflection phase)
+  // Respect will_review state - mandatory reflection phase should persist
   if (will.status === 'will_review') {
     return 'will_review';
   }
 
-  // Legacy: Respect waiting_for_end_room state (for backward compatibility)
-  if (will.status === 'waiting_for_end_room') {
-    return 'waiting_for_end_room';
-  }
-
-  // JIT state transitions based on dates
+  // FIXED: Always use date-based calculation for non-terminal statuses
+  // This ensures 'waiting_for_end_room' (legacy) gets properly transitioned
+  // to 'will_review' when the Will has ended
   if (now >= endDate) {
     // Will has ended - transition to will_review for mandatory reflection
     return 'will_review';

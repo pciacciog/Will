@@ -25,9 +25,11 @@ export function getWillStatus(will: any, userId?: string): string {
     return will.status;
   }
   
-  // Legacy: Trust backend for waiting_for_end_room (for backward compatibility)
+  // FIXED: Legacy 'waiting_for_end_room' should be treated as 'will_review'
+  // The backend now transitions these properly, but if we see it client-side,
+  // display it as will_review so the WillReviewFlow modal appears correctly
   if (will.status === 'waiting_for_end_room') {
-    return will.status;
+    return 'will_review';
   }
   
   // Trust backend for active status (will is currently running)
