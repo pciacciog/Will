@@ -1,0 +1,69 @@
+Please look at the attached screenshot of the “Your Why” step (the one that shows:
+
+the Will text at the top: "I will Test"
+
+“Your Why – Private, only you can see this”
+
+the “Because” label
+
+the multi-line text field
+
+Back / Next buttons
+
+Right now, the layout feels visually unpolished:
+
+The “Because” label sits inside/over the text area border and makes the text field look like it’s “spilling over” the container.
+
+The text box seems to have multiple borders / strong blue outlines, which feels heavy and not very premium.
+
+The "I will Test" quote at the top looks a bit like it’s just floating, without a clear container.
+
+Overall spacing/padding doesn’t feel very intentional.
+
+I’d like you to refine this screen so it feels calmer, more professional, and consistent with a premium iOS experience, while still keeping the same basic function.
+
+Guidance (you can interpret and adapt as you think best):
+
+Label & text area relationship
+
+Ideally, “Because” should sit outside the text area, above it, like a normal label.
+
+The text area itself should be a clean, single bordered field – no overlapping label inside the border.
+
+Text area styling
+
+Try to avoid the “double border” / thick blue outline look.
+
+Use a single, subtle border with rounded corners and good padding so it feels spacious.
+
+On focus, a slight color change or a slightly stronger border is fine, but it should still look minimal and intentional.
+
+Will quote at the top
+
+Consider placing "I will Test" (the Will statement) inside a simple, light card or container so it feels anchored to the layout and visually distinct from the input below, instead of floating.
+
+Spacing & hierarchy
+
+Add consistent spacing between:
+
+the Will statement and the “Your Why” section
+
+the “Your Why” label, the privacy subtitle, the “Because” label, and the text area
+
+The overall screen should feel balanced and easy on the eyes.
+
+Copy / structure
+
+You don’t need to change the text content unless something feels off – the main goal is visual clarity and layout.
+
+If you think “Because” can be expressed more cleanly (e.g., just using “Your Why” as the label and a single text area), feel free to propose a small improvement.
+
+Please:
+
+Adjust the layout and styling of this screen according to these principles, using your judgment to keep it aligned with the rest of the app’s design system.
+
+Share the updated JSX / styling for this component.
+
+Briefly explain what you changed and why (especially how you handled the “Because” label, borders, and spacing).
+
+The main goal is for this screen to feel clean, intentional, and premium – not like the text is spilling out of the container.

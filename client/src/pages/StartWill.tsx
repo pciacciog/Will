@@ -560,51 +560,60 @@ export default function StartWill() {
         {/* Step 3: Why */}
         {currentStep === 3 && !showTransition && (
           <SectionCard>
-
-            {/* Beautified What Preview */}
+            {/* Will Statement Preview - Grounded Card */}
             {willData.what && (
-              <div className="text-center italic text-lg px-4 py-3 border rounded-md shadow-sm text-gray-800 bg-white mb-3">
-                "I will {willData.what}"
+              <div className="bg-gray-50 rounded-xl px-5 py-4 mb-6">
+                <p className="text-center text-gray-800 text-lg font-medium italic leading-relaxed">
+                  "I will {willData.what}"
+                </p>
               </div>
             )}
             
-            <form onSubmit={handleStep3Submit} className="space-y-3">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
-                  <span className="text-xs text-gray-500 flex items-center tracking-tight">
+            <form onSubmit={handleStep3Submit} className="space-y-5">
+              {/* Your Why Section */}
+              <div className="space-y-3">
+                {/* Header with label and privacy note */}
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold text-gray-900">Your Why</label>
+                  <span className="text-xs text-gray-400 flex items-center">
                     <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     Private - only you can see this
                   </span>
                 </div>
-                <div className="relative">
-                  <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                    <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
-                    <Textarea 
-                      name="why"
-                      required 
-                      rows={2} 
-                      maxLength={75}
-                      value={willData.why}
-                      onChange={(e) => {
-                        setWillData({ ...willData, why: e.target.value });
-                        setWhyCharCount(e.target.value.length);
-                      }}
-                      placeholder="I like how I feel after I talk to her"
-                      className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400" 
-                    />
-                  </div>
+                
+                {/* Because label - outside the text area */}
+                <p className="text-sm text-gray-600">
+                  Remember this when it gets tough.
+                </p>
+                
+                {/* Clean text area with "Because" prefix */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Because</label>
+                  <Textarea 
+                    name="why"
+                    required 
+                    rows={3} 
+                    maxLength={75}
+                    value={willData.why}
+                    onChange={(e) => {
+                      setWillData({ ...willData, why: e.target.value });
+                      setWhyCharCount(e.target.value.length);
+                    }}
+                    placeholder="I like how I feel after I talk to her"
+                    className="w-full resize-none text-base leading-relaxed bg-white border border-gray-200 rounded-xl px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-200 transition-colors" 
+                  />
+                  <div className="text-xs text-gray-400 text-right">{whyCharCount} / 75</div>
                 </div>
-                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whyCharCount} / 75</div>
               </div>
               
-              <div className="flex justify-between items-center">
+              {/* Navigation Buttons */}
+              <div className="flex justify-between items-center pt-2">
                 <button 
                   type="button" 
                   onClick={() => setCurrentStep(2)}
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  className="bg-white border border-gray-200 text-gray-600 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors flex items-center"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
