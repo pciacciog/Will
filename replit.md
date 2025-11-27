@@ -1,7 +1,11 @@
 # Replit.md
 
 ## Overview
-This full-stack web application facilitates group goal accountability through "Inner Circles" where 2-4 users define and track "wills" (goal commitments). It supports daily progress tracking, mutual accountability, and a structured goal lifecycle to foster personal growth via shared commitment and consistent action.
+This full-stack web application facilitates goal accountability through two modes:
+1. **Solo Mode**: Personal accountability without circle coordination - immediate-start personal goals with simple review-based completion
+2. **Inner Circle Mode**: Group accountability with 2-4 users defining and tracking "wills" (goal commitments) together
+
+Both modes support daily progress tracking, Will commitments with reviews, and structured goal lifecycles to foster personal growth via consistent action.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -30,14 +34,24 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Authentication**: Email/password sign-up/sign-in, secure password changes.
-- **Circle Management**: Create/join circles, display member list.
+- **Mode Selection**: Users choose between Solo Mode (personal goals) or Inner Circle Mode (group accountability).
+- **Solo Mode**: 
+  - Personal Will creation without circle coordination
+  - Immediate start (no waiting for others)
+  - 3-step flow: When → What → Why (no End Room)
+  - Single-user review for completion
+  - Route: `/solo/hub`, `/solo/start-will`
+- **Inner Circle Mode**:
+  - Circle Management: Create/join circles, display member list
+  - 4-step Will flow: When → What → Why → End Room (optional)
+  - Team coordination with mutual accountability
 - **Will Creation & Management**: Multi-step guided creation, commitment editing, role-based permissions.
 - **Progress Tracking**: Daily logging, progress acknowledgment, timeline visualization.
-- **End Room**: Scheduled video calls (Daily.co) for reflection and closure (now optional for attendance, but scheduled).
+- **End Room**: Scheduled video calls (Daily.co) for reflection and closure (circle mode only, optional).
 - **Will Review**: Mandatory asynchronous review for Will completion.
 - **Account Settings**: User profile, password change, leave circle, permanent account deletion.
 - **Push Notifications**: APNs integration for Will status, End Room timings, personalized per-user timezone.
-- **Team Encouragement**: "Push" feature to send encouragement.
+- **Team Encouragement**: "Push" feature to send encouragement (circle mode only).
 
 ### System Design Choices
 - **Database**: PostgreSQL (Neon serverless) with Drizzle ORM.
