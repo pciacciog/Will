@@ -809,15 +809,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const willId = parseInt(req.params.id);
+      
+      console.log(`[REVIEW] ========================================`);
+      console.log(`[REVIEW] POST /api/wills/${willId}/review`);
+      console.log(`[REVIEW] User ID: ${userId}`);
+      console.log(`[REVIEW] Request body:`, JSON.stringify(req.body, null, 2));
+      
       const { followThrough, reflectionText } = req.body;
+      
+      console.log(`[REVIEW] Extracted - followThrough: "${followThrough}", reflectionText: "${reflectionText}"`);
 
       // Validate input
-      const reviewData = insertWillReviewSchema.parse({
-        willId,
-        userId,
-        followThrough,
-        reflectionText,
-      });
+      let reviewData;
+      try {
+        reviewData = insertWillReviewSchema.parse({
+          willId,
+          userId,
+          followThrough,
+          reflectionText,
+        });
+        console.log(`[REVIEW] Zod validation passed:`, reviewData);
+      } catch (zodError: any) {
+        console.error(`[REVIEW] ❌ Zod validation FAILED:`, zodError.errors || zodError.message);
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: zodError.errors || zodError.message 
+        });
+      }
 
       // Check if user has committed to this will
       const hasCommitted = await storage.hasUserCommitted(willId, userId);
@@ -877,9 +895,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         commitmentCount,
         allReviewed
       });
-    } catch (error) {
-      console.error("Error submitting will review:", error);
-      res.status(500).json({ message: "Failed to submit will review" });
+    } catch (error: any) {
+      console.error(`[REVIEW] ❌ FATAL ERROR submitting will review:`);
+      console.error(`[REVIEW] Error name:`, error?.name);
+      console.error(`[REVIEW] Error message:`, error?.message);
+      console.error(`[REVIEW] Error stack:`, error?.stack);
+      console.error(`[REVIEW] Full error:`, error);
+      res.status(500).json({ 
+        message: "Failed to submit will review",
+        error: error?.message || "Unknown error"
+      });
     }
   });
 
