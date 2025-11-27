@@ -195,7 +195,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
               <div className="text-center">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 1: Acknowledge</h2>
                 <p className="text-gray-500 text-sm">
-                  How was your follow-through this week?
+                  Did you follow through this week?
                 </p>
               </div>
 
@@ -297,23 +297,25 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
           {/* Step 2: Expand */}
           {step === 2 && (
             <div className="space-y-5" data-testid="step-2-expand">
-              {/* Header with centered title and Skip in top-right */}
-              <div className="relative">
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
-                  <p className="text-gray-500 text-sm">
-                    You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
-                    Add a short note for your circle if you'd like.
-                  </p>
-                </div>
+              {/* Skip button in top-right corner of card */}
+              <div className="flex justify-end -mt-1 -mr-1 mb-3">
                 <button
                   type="button"
                   onClick={handleSkip}
-                  className="absolute top-0 right-0 text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded transition-colors duration-200"
+                  className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
                   data-testid="button-skip"
                 >
                   Skip
                 </button>
+              </div>
+              
+              {/* Header - centered title */}
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
+                <p className="text-gray-500 text-sm">
+                  You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
+                  Add a short note for your circle if you'd like.
+                </p>
               </div>
 
               <FormField
@@ -381,7 +383,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                 {/* Follow-through Answer Section */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500 font-medium">Follow-through</span>
+                    <span className="text-sm text-gray-500 font-medium">Followed-through?</span>
                     <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
                       followThroughValue === "yes" 
                         ? "bg-emerald-100 text-emerald-700"
