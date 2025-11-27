@@ -1,0 +1,126 @@
+You’re working on the Set Your Timeline (Step 1 – When) screen — the one with:
+
+“Set Your Timeline” as the title
+
+“When will your Will begin and end?”
+
+Start / End date + time fields
+
+Cancel / Next buttons
+
+I’d like to refine both the copy/layout and the date/time selection logic so the screen feels cleaner, more intuitive, and smarter.
+
+You can adjust spacing, styling, or exact implementation details as you see fit, as long as the behavior and intent below are respected.
+
+1. Copy & helper text
+Keep:
+
+Title: “Set Your Timeline”
+
+Subtitle:
+
+Keep or use: “When will your Will begin and end?”
+
+Add concise helper text under the subtitle (or just above the Start/End card):
+
+“Defaults to next Mon–Sun.”
+
+This is just to explain why the fields are pre-filled the way they are. Keep it small and muted (helper text style).
+
+Remove redundant format hints
+
+Please remove the “MM/DD/YYYY” and “HH:MM” labels under each field — they’re visually noisy and redundant when we’re already showing formatted dates like “Dec 1, 2025”.
+
+2. Default weekly template behavior (Mon–Sun)
+
+We already have the behavior that:
+
+Start defaults to next Monday
+
+End defaults to the following Sunday
+
+Please keep that, but make sure it’s aligned with the helper text “Defaults to next Mon–Sun.”
+
+If you need to recompute:
+
+On load, calculate the next Monday in the future (relative to “now”)
+
+Set End = Start + 6 days
+
+3. Smart constraints for Start date/time (no past values)
+
+Right now, the user can scroll to a past date/time even though the system ultimately prevents it. I’d like this to be smarter and more intuitive:
+
+The Start picker should not allow selecting any moment in the past.
+
+The earliest selectable Start should be:
+
+“right now” or
+
+the next rounded time slot (e.g., next 15-minute block) — use your judgment here.
+
+Implementation-wise, please:
+
+Use the appropriate props for the picker to set a minimum date/time (e.g., minDate, minimumDate, or equivalent), based on the current time.
+
+Ideally, the picker also initially scrolls to that minimum value so the user lands in the valid region right away.
+
+The user should never be able to actually select a past time as Start — those options should be disabled / not reachable.
+
+4. Smart constraints for End date/time (must be after Start)
+
+The End picker should only show valid options after the chosen Start:
+
+Once the user sets a Start date/time, the End date/time:
+
+must be ≥ Start
+
+should use Start as its minimum date/time (minDate / minimumDate).
+
+Behavior I’d like:
+
+When Start changes, if the current End is now before Start, automatically bump End forward:
+
+e.g., default to Start + 6 days (to preserve the weekly feel), or at least set End = Start.
+
+The user should not be allowed to scroll/select an End that is earlier than Start — those options should be disabled.
+
+Again, use the appropriate picker props to enforce this at the UI level, not just with validation errors.
+
+5. Buttons & layout
+
+Primary CTA remains: “Next” (no need to change this).
+
+Keep Cancel as the secondary action.
+
+There is currently a small “?” button between Cancel and Next in the design.
+
+If you think it adds value as a help/info trigger, you can keep it and wire it to a short explanation of how the timeline works.
+
+If it feels confusing or redundant given the new helper text, feel free to remove it — use your judgment for what makes the screen feel clean and intentional.
+
+6. Overall UX goals
+
+The user should immediately understand why dates are pre-filled (weekly template), via the short helper text.
+
+They should never waste time tapping invalid times (no past Start, no End before Start).
+
+The interface should feel simple, calm, and premium — less clutter (no redundant format hints), clear hierarchy.
+
+Deliverables
+
+Updated JSX + styling for this screen:
+
+subtitle + helper text
+
+Start/End inputs without “MM/DD/YYYY / HH:MM” hints
+
+Smart constraints on the date/time pickers:
+
+Start: cannot be in the past
+
+End: cannot be before Start
+
+Any optional improvements you add (e.g., better alignment, minor animations, or a helpful info popover if you keep the “?” button).
+
+A brief explanation of what you changed and how the Start/End selection logic now works from the user’s perspective.

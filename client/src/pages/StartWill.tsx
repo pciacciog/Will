@@ -66,11 +66,42 @@ export default function StartWill() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
   
+  // Helper to get minimum valid start time (next 15-min block from now)
+  const getMinimumStartDateTime = () => {
+    const now = new Date();
+    const minutes = now.getMinutes();
+    const roundedMinutes = Math.ceil(minutes / 15) * 15;
+    now.setMinutes(roundedMinutes, 0, 0);
+    if (roundedMinutes >= 60) {
+      now.setHours(now.getHours() + 1);
+      now.setMinutes(0);
+    }
+    return now;
+  };
+
   // Initialize date/time defaults once on mount
   const [startDate, setStartDate] = useState(() => getNextMondayDate());
   const [startTime, setStartTime] = useState('00:00');
   const [endDate, setEndDate] = useState(() => getFollowingSundayDate(getNextMondayDate()));
   const [endTime, setEndTime] = useState('12:00');
+  
+  // Enforce End date/time must be after Start - auto-bump End when Start changes
+  useEffect(() => {
+    if (startDate && endDate) {
+      const startDateTime = new Date(`${startDate}T${startTime || '00:00'}`);
+      const endDateTime = new Date(`${endDate}T${endTime || '12:00'}`);
+      
+      // If End is now before or equal to Start, bump End forward (Start + 6 days)
+      if (endDateTime <= startDateTime) {
+        const newEndDate = new Date(startDateTime);
+        newEndDate.setDate(newEndDate.getDate() + 6);
+        const year = newEndDate.getFullYear();
+        const month = String(newEndDate.getMonth() + 1).padStart(2, '0');
+        const day = String(newEndDate.getDate()).padStart(2, '0');
+        setEndDate(`${year}-${month}-${day}`);
+      }
+    }
+  }, [startDate, startTime]);
   
   const [willData, setWillData] = useState({
     startDate: '',
@@ -387,7 +418,10 @@ export default function StartWill() {
               {currentStep === 4 && "Schedule Your End Room"}
             </h1>
             {currentStep === 1 && (
-              <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
+              <>
+                <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
+                <p className="text-xs text-gray-400 mt-1.5">Defaults to next Mon–Sun</p>
+              </>
             )}
             {currentStep === 2 && (
               <>
@@ -434,68 +468,58 @@ export default function StartWill() {
         {currentStep === 1 && !showTransition && (
           <SectionCard>
             
-            <form onSubmit={handleStep1Submit} className="space-y-6 px-4">
+            <form onSubmit={handleStep1Submit} className="space-y-5 px-4">
               {/* Start Date & Time */}
-              <div>
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Input 
-                      type="date" 
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      required 
-                      className="w-full"
-                      data-testid="input-start-date"
-                    />
-                    <div className="text-xs text-gray-400 mt-1">MM/DD/YYYY</div>
-                  </div>
-                  <div>
-                    <Input 
-                      type="time" 
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      required 
-                      className="w-full"
-                      data-testid="input-start-time"
-                    />
-                    <div className="text-xs text-gray-400 mt-1">HH:MM</div>
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input 
+                    type="date" 
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    required 
+                    className="w-full text-sm"
+                    data-testid="input-start-date"
+                  />
+                  <Input 
+                    type="time" 
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    required 
+                    className="w-full text-sm"
+                    data-testid="input-start-time"
+                  />
                 </div>
               </div>
               
               {/* End Date & Time */}
-              <div>
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '100ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Input 
-                      type="date" 
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      required 
-                      className="w-full"
-                      data-testid="input-end-date"
-                    />
-                    <div className="text-xs text-gray-400 mt-1">MM/DD/YYYY</div>
-                  </div>
-                  <div>
-                    <Input 
-                      type="time" 
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      required 
-                      className="w-full"
-                      data-testid="input-end-time"
-                    />
-                    <div className="text-xs text-gray-400 mt-1">HH:MM</div>
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input 
+                    type="date" 
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate}
+                    required 
+                    className="w-full text-sm"
+                    data-testid="input-end-date"
+                  />
+                  <Input 
+                    type="time" 
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    required 
+                    className="w-full text-sm"
+                    data-testid="input-end-time"
+                  />
                 </div>
               </div>
               
-              <div className="flex justify-between items-center pt-4">
+              <div className="flex justify-between items-center pt-4 animate-in fade-in duration-500" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center space-x-2">
-                  <Button type="button" variant="ghost" onClick={handleCancel} data-testid="button-cancel">
+                  <Button type="button" variant="ghost" onClick={handleCancel} className="text-gray-500" data-testid="button-cancel">
                     Cancel
                   </Button>
                   {showHelpIcon && (
