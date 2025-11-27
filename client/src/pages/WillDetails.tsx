@@ -627,13 +627,38 @@ export default function WillDetails() {
                   <CheckCircle className="w-6 h-6 text-purple-600" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-2">Review Submitted</h3>
-                <p className="text-sm text-gray-600">
-                  Waiting for other circle members to complete their reviews...
-                </p>
-                {reviewStatus && (
-                  <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                    {reviewStatus.reviewCount} of {reviewStatus.totalMembers} members reviewed
-                  </p>
+                
+                {/* Dynamic messaging based on what's blocking completion */}
+                {reviewStatus && reviewStatus.reviewCount < reviewStatus.totalMembers ? (
+                  // Reviews still incomplete
+                  <>
+                    <p className="text-sm text-gray-600">
+                      Waiting for other circle members to complete their reviews...
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                      {reviewStatus.reviewCount} of {reviewStatus.totalMembers} members reviewed
+                    </p>
+                  </>
+                ) : will.endRoomScheduledAt && (will.endRoomStatus === 'pending' || will.endRoomStatus === 'open') ? (
+                  // All reviews complete, but End Room not finished
+                  <>
+                    <p className="text-sm text-gray-600">
+                      All reviews complete! This <em>Will</em> will finish after the End Room session ends.
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                      {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
+                    </p>
+                  </>
+                ) : (
+                  // Both complete - Will should transition soon
+                  <>
+                    <p className="text-sm text-gray-600">
+                      All requirements met! Finalizing...
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                      {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
+                    </p>
+                  </>
                 )}
               </div>
             ) : (
