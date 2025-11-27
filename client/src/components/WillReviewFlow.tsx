@@ -3,25 +3,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, Check } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const reviewFormSchema = z.object({
-  followThrough: z.enum(["yes", "no"], {
-    required_error: "Please indicate whether you followed through",
+  followThrough: z.enum(["yes", "mostly", "no"], {
+    required_error: "Please select an option",
   }),
   reflection: z
     .string()
-    .min(10, "Reflection must be at least 10 characters")
-    .max(200, "Reflection cannot exceed 200 characters"),
-  shareWithCircle: z.boolean().default(true),
+    .max(200, "Cannot exceed 200 characters"),
 });
 
 type ReviewFormValues = z.infer<typeof reviewFormSchema>;
@@ -40,16 +35,14 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
     defaultValues: {
       followThrough: undefined,
       reflection: "",
-      shareWithCircle: true,
     },
   });
 
   const submitReview = useMutation({
     mutationFn: async (data: ReviewFormValues) => {
-      // Transform frontend field names to match backend expectations
       const payload = {
         followThrough: data.followThrough,
-        reflectionText: data.reflection, // Backend expects 'reflectionText', not 'reflection'
+        reflectionText: data.reflection || "",
       };
       const response = await apiRequest(`/api/wills/${willId}/review`, {
         method: "POST",
@@ -59,8 +52,8 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Review Submitted",
-        description: "Your Will review has been submitted successfully.",
+        title: "Shared with your circle",
+        description: "Your acknowledgment has been shared.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/wills"] });
       queryClient.invalidateQueries({ queryKey: ["/api/wills", willId] });
@@ -95,7 +88,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
       if (!reflectionResult.success) {
         form.setError("reflection", {
           type: "manual",
-          message: reflectionResult.error.errors[0]?.message || "Invalid reflection",
+          message: reflectionResult.error.errors[0]?.message || "Invalid text",
         });
         return;
       }
@@ -108,6 +101,18 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
 
   const onSubmit = (data: ReviewFormValues) => {
     submitReview.mutate(data);
+  };
+
+  const followThroughValue = form.watch("followThrough");
+  const reflectionValue = form.watch("reflection");
+
+  const getFollowThroughLabel = (value: string) => {
+    switch (value) {
+      case "yes": return "Yes";
+      case "mostly": return "Mostly";
+      case "no": return "No";
+      default: return value;
+    }
   };
 
   return (
@@ -152,13 +157,15 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
 
       {/* Form */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          
+          {/* Step 1: Acknowledge */}
           {step === 1 && (
             <div className="space-y-6" data-testid="step-1-acknowledge">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Step 1: Acknowledge</h2>
-                <p className="text-gray-600">
-                  Did you follow through on your commitment this week?
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 1: Acknowledge</h2>
+                <p className="text-gray-500 text-sm">
+                  Did you follow through on your commitment?
                 </p>
               </div>
 
@@ -168,25 +175,76 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <RadioGroup
-                        value={field.value || ""}
-                        onValueChange={field.onChange}
-                        data-testid="radio-group-follow-through"
-                      >
-                        <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-emerald-500 transition-colors">
-                          <RadioGroupItem value="yes" id="yes" data-testid="radio-yes" />
-                          <Label htmlFor="yes" className="flex-1 cursor-pointer text-base">
-                            ✅ Yes, I did it
-                          </Label>
-                        </div>
+                      <div className="space-y-3">
+                        {/* Yes Option */}
+                        <button
+                          type="button"
+                          onClick={() => field.onChange("yes")}
+                          className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
+                            field.value === "yes"
+                              ? "border-emerald-500 bg-emerald-50"
+                              : "border-gray-200 hover:border-gray-300 bg-white"
+                          }`}
+                          data-testid="option-yes"
+                        >
+                          <span className={`font-medium ${field.value === "yes" ? "text-emerald-700" : "text-gray-700"}`}>
+                            Yes
+                          </span>
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                            field.value === "yes"
+                              ? "border-emerald-500 bg-emerald-500"
+                              : "border-gray-300"
+                          }`}>
+                            {field.value === "yes" && <Check className="w-4 h-4 text-white" />}
+                          </div>
+                        </button>
 
-                        <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-red-500 transition-colors">
-                          <RadioGroupItem value="no" id="no" data-testid="radio-no" />
-                          <Label htmlFor="no" className="flex-1 cursor-pointer text-base">
-                            ❌ No, I didn't do it
-                          </Label>
-                        </div>
-                      </RadioGroup>
+                        {/* Mostly Option */}
+                        <button
+                          type="button"
+                          onClick={() => field.onChange("mostly")}
+                          className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
+                            field.value === "mostly"
+                              ? "border-amber-500 bg-amber-50"
+                              : "border-gray-200 hover:border-gray-300 bg-white"
+                          }`}
+                          data-testid="option-mostly"
+                        >
+                          <span className={`font-medium ${field.value === "mostly" ? "text-amber-700" : "text-gray-700"}`}>
+                            Mostly
+                          </span>
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                            field.value === "mostly"
+                              ? "border-amber-500 bg-amber-500"
+                              : "border-gray-300"
+                          }`}>
+                            {field.value === "mostly" && <Check className="w-4 h-4 text-white" />}
+                          </div>
+                        </button>
+
+                        {/* No Option */}
+                        <button
+                          type="button"
+                          onClick={() => field.onChange("no")}
+                          className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
+                            field.value === "no"
+                              ? "border-rose-500 bg-rose-50"
+                              : "border-gray-200 hover:border-gray-300 bg-white"
+                          }`}
+                          data-testid="option-no"
+                        >
+                          <span className={`font-medium ${field.value === "no" ? "text-rose-700" : "text-gray-700"}`}>
+                            No
+                          </span>
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                            field.value === "no"
+                              ? "border-rose-500 bg-rose-500"
+                              : "border-gray-300"
+                          }`}>
+                            {field.value === "no" && <Check className="w-4 h-4 text-white" />}
+                          </div>
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -196,21 +254,24 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
               <Button
                 type="button"
                 onClick={handleNext}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                disabled={!followThroughValue}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50"
                 size="lg"
                 data-testid="button-next-1"
               >
-                Next: Reflect
+                Continue
               </Button>
             </div>
           )}
 
+          {/* Step 2: Expand */}
           {step === 2 && (
-            <div className="space-y-6" data-testid="step-2-reflect">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Step 2: Reflect</h2>
-                <p className="text-gray-600">
-                  Take a moment to reflect on your experience. What did you learn?
+            <div className="space-y-6" data-testid="step-2-expand">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
+                <p className="text-gray-500 text-sm">
+                  You marked this Will as <span className="font-medium">{getFollowThroughLabel(followThroughValue || "")}</span>. 
+                  Add a short note for your circle if you'd like.
                 </p>
               </div>
 
@@ -222,14 +283,12 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Share your thoughts, lessons learned, challenges faced, or victories achieved..."
-                        className="min-h-[120px] resize-none"
+                        className="min-h-[140px] resize-none rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
                         maxLength={200}
                         data-testid="textarea-reflection"
                       />
                     </FormControl>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Minimum 10 characters</span>
+                    <div className="flex justify-end text-xs text-gray-400">
                       <span data-testid="text-char-count">{field.value.length}/200</span>
                     </div>
                     <FormMessage />
@@ -242,7 +301,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                   type="button"
                   onClick={() => setStep(1)}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 rounded-xl"
                   data-testid="button-back-2"
                 >
                   Back
@@ -250,53 +309,52 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                 <Button
                   type="button"
                   onClick={handleNext}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl"
                   size="lg"
                   data-testid="button-next-2"
                 >
-                  Next: Share
+                  Continue
                 </Button>
               </div>
             </div>
           )}
 
+          {/* Step 3: Share */}
           {step === 3 && (
             <div className="space-y-6" data-testid="step-3-share">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Step 3: Share</h2>
-                <p className="text-gray-600">
-                  Would you like to share your reflection with your Inner Circle?
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 3: Share</h2>
+                <p className="text-gray-500 text-sm">
+                  Review before sharing with your circle.
                 </p>
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
-                <div className="prose prose-sm max-w-none">
-                  <p className="text-gray-700 italic" data-testid="text-reflection-preview">
-                    "{form.getValues("reflection")}"
-                  </p>
+              {/* Preview Card */}
+              <div className="bg-gray-50 rounded-xl p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Your answer:</span>
+                  <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+                    followThroughValue === "yes" 
+                      ? "bg-emerald-100 text-emerald-700"
+                      : followThroughValue === "mostly"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-rose-100 text-rose-700"
+                  }`}>
+                    {getFollowThroughLabel(followThroughValue || "")}
+                  </span>
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="shareWithCircle"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <div className="space-y-1">
-                        <FormLabel className="text-base font-medium">Share with Circle</FormLabel>
-                        <p className="text-sm text-gray-500">
-                          Your circle can see your reflection and learn from it
-                        </p>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-share"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                
+                {reflectionValue && (
+                  <div className="pt-2">
+                    <p className="text-gray-700 text-sm leading-relaxed" data-testid="text-reflection-preview">
+                      {reflectionValue}
+                    </p>
+                  </div>
+                )}
+                
+                {!reflectionValue && (
+                  <p className="text-gray-400 text-sm italic">No additional note added.</p>
+                )}
               </div>
 
               <div className="flex gap-3">
@@ -304,7 +362,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                   type="button"
                   onClick={() => setStep(2)}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 rounded-xl"
                   data-testid="button-back-3"
                 >
                   Back
@@ -312,17 +370,17 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                 <Button
                   type="submit"
                   disabled={submitReview.isPending}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl"
                   size="lg"
                   data-testid="button-submit-review"
                 >
                   {submitReview.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Submitting...
+                      Sharing...
                     </>
                   ) : (
-                    "Submit Review"
+                    "Share"
                   )}
                 </Button>
               </div>

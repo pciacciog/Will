@@ -1,0 +1,75 @@
+I’d like you to refine the UX, copy, and visuals for all three steps so they feel like one continuous, intuitive flow, rather than three separate mini-features.
+
+Overall Goals
+* The flow should feel like:
+    1. Acknowledge what happened
+    2. Expand with a bit of context
+    3. Share it with your circle
+* The tone should be:
+    * minimal, clean, and intentional
+    * emotionally honest but not cliché or “coach-y”
+    * consistent with the rest of the app’s visual language
+* Avoid raw emoji icons and UI elements that feel like generic iOS settings (e.g., bright blue toggles).
+
+Step 1 modal flow: Acknowledge
+Current issues:
+* There’s a stray “.” dot appearing to the left of the “Yes, I did it” option.
+* The ✅ and ❌ emoji treatments feel too casual and visually noisy for the brand.
+* We now want three options, not just a binary Yes/No.
+Desired behavior & copy:
+1. The screen title stays: Step 1: Acknowledge
+2. The question text can stay close to: “Did you follow through on your commitment this week?”
+3. There should be three options instead of two:
+    * Yes
+    * Mostly
+    * No
+4. Visually:
+    * Remove the stray dot from the layout (find and delete the source of that character/element).
+    * Redesign the selection UI so it does NOT rely on ✅ / ❌ emojis.
+    * You can choose the exact visual treatment (icons, colors, borders, etc.), but keep it:
+        * minimal and premium
+        * clearly tappable
+        * consistent with our existing button/card patterns
+5. In state/data, represent the answer as something like an enum with three values ("yes" | "mostly" | "no", or similar).
+
+Step 2: Expand
+This is the screen that appears after the user has selected Yes / Mostly / No.
+Conceptually: Step 2 should feel like a direct extension of Step 1, not a new “reflection exercise.” Its purpose is simple: let the user add a short text note that supports their answer and shares what they’d like their circle to know.
+Changes requested:
+1. Title:
+    * Use: Step 2: Expand
+2. Subtitle text (dynamic based on Step 1 answer):
+    * If Yes: “You marked this Will as Yes. Add a short note for your circle if you’d like.” 
+    * If Mostly: “You marked this Will as Mostly. Add a short note for your circle if you’d like.” 
+    * If No: “You marked this Will as No. Add a short note for your circle if you’d like.” 
+3. Text field:
+    * Single multi-line text area.
+    * No placeholder text (intentionally empty to keep it calm and uncluttered).
+    * Delete minimum character requirement but keep maximum
+4. Tone:
+    * Remove the current “Take a moment to reflect… lessons learned, victories achieved…” copy. That feels too generic and heavy.
+    * The feeling should be: “You’ve answered. Now, if you want, add a few words so your circle understands what that answer means.”
+
+Step 3: Share
+This is the final step. It should feel like a simple review + send screen, not another reflection step and not a settings-style toggle.
+Current issues:
+* There is a blue toggle (“Share with Circle”) that looks like a system settings control and feels visually odd in this context.
+* The text frames this as “sharing your reflection,” but in our flow this is just the user’s acknowledgment + short note.
+* The screen feels disconnected from Steps 1 and 2.
+Desired behavior & copy:
+1. Title:
+    * Keep: Step 3: Share
+2. Subtitle: Use something simple and intuitive like one of the following:
+    * “Review before sharing with your circle.”
+3. Main content:
+    * Show a read-only preview of what the user wrote in Step 2 (and implicitly their Step 1 choice).
+    * This should be in a simple, rounded container with a soft background, not stylized as a long quotation block.
+    * The user should recognize this as: “This is what I’m about to send.”
+4. Remove the toggle completely.
+    * Do not use a blue iOS switch here.
+5. Buttons:
+    * Left: Back (secondary).
+    * Right: Share or Submit (primary).
+    * When they tap the primary CTA, we finalize and share the acknowledgment + note with their circle.
+    *  
+6. Keep it short and factual.
