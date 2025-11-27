@@ -760,7 +760,7 @@ export default function InnerCircleHub() {
                   fullWidth
                   data-testid="button-submit-will-review"
                 >
-                  Submit Your Review
+                  Review
                 </PrimaryButton>
               </div>
             </div>
