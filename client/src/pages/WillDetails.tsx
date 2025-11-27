@@ -156,9 +156,13 @@ export default function WillDetails() {
     },
   });
 
+  // Detect solo mode from will data
+  const isSoloMode = will?.mode === 'solo';
+
+  // Only fetch circle data for circle mode wills
   const { data: circle } = useQuery<any>({
     queryKey: ['/api/circles/mine'],
-    enabled: !!user,
+    enabled: !!user && !isSoloMode,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
   });
@@ -248,20 +252,23 @@ export default function WillDetails() {
       setShowFinalSummary(false);
       
       // Invalidate queries efficiently - start with most critical
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      if (isSoloMode) {
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      }
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
-      
-      // Note: No notification needed for individual acknowledgment
-      // Notification sent when all members acknowledge
       
       toast({
         title: "Will Acknowledged",
-        description: "You have acknowledged the completion of this Will. Once all of the members have acknowledged, you will be able to start a new will.",
+        description: isSoloMode 
+          ? "You have acknowledged the completion of this Will. Ready for your next goal!"
+          : "You have acknowledged the completion of this Will. Once all of the members have acknowledged, you will be able to start a new will.",
       });
       
-      // Navigate back to hub immediately - remove artificial delay
-      setLocation('/hub');
+      // Navigate back to appropriate hub
+      setLocation(isSoloMode ? '/solo/hub' : '/hub');
     },
     onError: (error: any) => {
       // Handle "already acknowledged" error gracefully
@@ -469,8 +476,8 @@ export default function WillDetails() {
           </div>
         </div>
 
-        {/* End Room Section */}
-        {will.endRoomScheduledAt && (
+        {/* End Room Section - Only for circle mode */}
+        {!isSoloMode && will.endRoomScheduledAt && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center mb-3">
               <Video className="w-5 h-5 text-blue-600 mr-2" />
@@ -495,15 +502,17 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Circle Commitments Section */}
+        {/* Commitments Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
             <div className="flex items-center">
               <CheckCircle className="w-5 h-5 text-brandGreen mr-2" />
-              <span className="text-base font-semibold text-gray-900 underline">Circle Commitments</span>
+              <span className="text-base font-semibold text-gray-900 underline">
+                {isSoloMode ? 'Your Commitment' : 'Circle Commitments'}
+              </span>
             </div>
-            {/* Push notification button for active wills */}
-            {will.status === 'active' && (
+            {/* Push notification button for active wills - only for circle mode */}
+            {!isSoloMode && will.status === 'active' && (
               <button
                 onClick={() => pushMutation.mutate()}
                 disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
@@ -611,7 +620,10 @@ export default function WillDetails() {
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">Ready to commit?</h3>
               <p className="text-sm text-gray-500 mb-4">
-                Join your circle members by adding your commitment to this will.
+                {isSoloMode 
+                  ? "Define your personal commitment for this will."
+                  : "Join your circle members by adding your commitment to this will."
+                }
               </p>
               <Button 
                 onClick={() => setLocation(`/will/${id}/commit`)}
@@ -634,36 +646,45 @@ export default function WillDetails() {
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-2">Review Submitted</h3>
                 
-                {/* Dynamic messaging based on what's blocking completion */}
-                {reviewStatus && reviewStatus.reviewCount < reviewStatus.totalMembers ? (
-                  // Reviews still incomplete
-                  <>
-                    <p className="text-sm text-gray-600">
-                      Waiting for other circle members to complete their reviews...
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                      {reviewStatus.reviewCount} of {reviewStatus.totalMembers} members reviewed
-                    </p>
-                  </>
-                ) : will.endRoomScheduledAt && (will.endRoomStatus === 'pending' || will.endRoomStatus === 'open') ? (
-                  // All reviews complete, but End Room not finished
-                  <>
-                    <p className="text-sm text-gray-600">
-                      All reviews complete! This <em>Will</em> will finish after the End Room session ends.
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                      {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
-                    </p>
-                  </>
+                {isSoloMode ? (
+                  // Solo mode: simple completion message
+                  <p className="text-sm text-gray-600">
+                    Your review is complete! Your Will is finalizing...
+                  </p>
                 ) : (
-                  // Both complete - Will should transition soon
+                  // Circle mode: Dynamic messaging based on what's blocking completion
                   <>
-                    <p className="text-sm text-gray-600">
-                      All requirements met! Finalizing...
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                      {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
-                    </p>
+                    {reviewStatus && reviewStatus.reviewCount < reviewStatus.totalMembers ? (
+                      // Reviews still incomplete
+                      <>
+                        <p className="text-sm text-gray-600">
+                          Waiting for other circle members to complete their reviews...
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                          {reviewStatus.reviewCount} of {reviewStatus.totalMembers} members reviewed
+                        </p>
+                      </>
+                    ) : will.endRoomScheduledAt && (will.endRoomStatus === 'pending' || will.endRoomStatus === 'open') ? (
+                      // All reviews complete, but End Room not finished
+                      <>
+                        <p className="text-sm text-gray-600">
+                          All reviews complete! This <em>Will</em> will finish after the End Room session ends.
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
+                        </p>
+                      </>
+                    ) : (
+                      // Both complete - Will should transition soon
+                      <>
+                        <p className="text-sm text-gray-600">
+                          All requirements met! Finalizing...
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
+                        </p>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -689,7 +710,9 @@ export default function WillDetails() {
           <div className="bg-white border border-gray-200 rounded-lg p-4" data-testid="section-reviews-display">
             <div className="flex items-center mb-4">
               <CheckCircle className="w-5 h-5 text-purple-600 mr-2" />
-              <h3 className="text-base font-semibold text-gray-900">Circle Reflections</h3>
+              <h3 className="text-base font-semibold text-gray-900">
+                {isSoloMode ? 'Your Reflection' : 'Circle Reflections'}
+              </h3>
             </div>
             {isReviewsLoading ? (
               <div className="text-center py-4" data-testid="reviews-loading">
