@@ -200,6 +200,34 @@ export default function WillDetails() {
     reviewsData: reviews,
   });
 
+  // Fetch end room data when room is open during will_review
+  const shouldEnableEndRoomQuery = !!id && !!user && will?.status === 'will_review' && will?.endRoomStatus === 'open';
+  const { data: endRoomData } = useQuery<any>({
+    queryKey: [`/api/wills/${id}/end-room`],
+    enabled: shouldEnableEndRoomQuery,
+    refetchInterval: shouldEnableEndRoomQuery ? 10000 : false,
+    staleTime: 0,
+  });
+
+  // Handler to join End Room
+  const handleJoinEndRoom = async () => {
+    if (!endRoomData?.endRoomUrl || !endRoomData?.canJoin) {
+      toast({
+        title: "End Room not ready",
+        description: "The video room is being set up. Please try again in a moment.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url: endRoomData.endRoomUrl });
+    } catch (browserError) {
+      window.open(endRoomData.endRoomUrl, '_blank');
+    }
+  };
+
   const acknowledgeMutation = useMutation({
     mutationFn: async () => {
       // Check if user has already acknowledged before making the request
@@ -718,7 +746,15 @@ export default function WillDetails() {
               <p className="text-sm text-gray-600 mt-2 mb-4">
                 Join now to reflect with your circle. This <em>Will</em> will complete after the session ends.
               </p>
-              <EndRoom willId={will.id} />
+              <Button 
+                onClick={handleJoinEndRoom}
+                className="w-full bg-green-600 hover:bg-green-700 text-white text-base py-3"
+                size="lg"
+                data-testid="button-join-end-room"
+              >
+                <Video className="w-5 h-5 mr-2" />
+                Join End Room
+              </Button>
             </div>
           </div>
         )}
