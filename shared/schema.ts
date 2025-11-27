@@ -57,8 +57,9 @@ export const circleMembers = pgTable("circle_members", {
 
 export const wills = pgTable("wills", {
   id: serial("id").primaryKey(),
-  circleId: integer("circle_id").notNull().references(() => circles.id),
+  circleId: integer("circle_id").references(() => circles.id), // Nullable for solo mode
   createdBy: varchar("created_by").notNull().references(() => users.id),
+  mode: varchar("mode", { length: 10 }).notNull().default("circle"), // 'solo' or 'circle'
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   endRoomScheduledAt: timestamp("end_room_scheduled_at"),
@@ -67,7 +68,7 @@ export const wills = pgTable("wills", {
   endRoomStatus: varchar("end_room_status", { length: 20 }).default("pending"), // pending, open, completed
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, will_review, waiting_for_end_room, completed
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [index("IDX_wills_mode").on(table.mode)]);
 
 export const willCommitments = pgTable("will_commitments", {
   id: serial("id").primaryKey(),
