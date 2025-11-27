@@ -648,18 +648,22 @@ export default function WillDetails() {
                       <span className="font-medium text-gray-900" data-testid={`review-author-${review.id}`}>
                         {review.user.firstName}
                       </span>
-                      <Badge className={review.followThrough === 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} data-testid={`review-follow-through-${review.id}`}>
-                        {review.followThrough === 'yes' ? '✓ Completed' : '✗ Not Completed'}
+                      <Badge 
+                        className={
+                          review.followThrough === 'yes' 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : review.followThrough === 'mostly'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
+                        } 
+                        data-testid={`review-follow-through-${review.id}`}
+                      >
+                        {review.followThrough === 'yes' ? 'Yes' : review.followThrough === 'mostly' ? 'Mostly' : 'No'}
                       </Badge>
                     </div>
-                    {review.shareWithCircle && review.reflection && (
-                      <p className="text-sm text-gray-700 italic" data-testid={`review-reflection-${review.id}`}>
-                        "{review.reflection}"
-                      </p>
-                    )}
-                    {!review.shareWithCircle && (
-                      <p className="text-xs text-gray-500 italic" data-testid={`review-private-${review.id}`}>
-                        Private reflection
+                    {review.reflectionText && (
+                      <p className="text-sm text-gray-700" data-testid={`review-reflection-${review.id}`}>
+                        {review.reflectionText}
                       </p>
                     )}
                   </div>
