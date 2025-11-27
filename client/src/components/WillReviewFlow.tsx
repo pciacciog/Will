@@ -282,19 +282,21 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
 
           {/* Step 2: Expand */}
           {step === 2 && (
-            <div className="space-y-6 relative" data-testid="step-2-expand">
-              {/* Subtle Skip button in upper right corner of the card */}
-              <button
-                type="button"
-                onClick={handleSkip}
-                className="absolute -top-3 -right-3 text-xs text-gray-400 hover:text-gray-500 transition-colors py-1 px-2"
-                data-testid="button-skip"
-              >
-                Skip
-              </button>
+            <div className="space-y-5" data-testid="step-2-expand">
+              {/* Structured header bar: Title left, Skip right */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Step 2: Expand</h2>
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200 transition-all duration-200 active:bg-gray-200"
+                  data-testid="button-skip"
+                >
+                  Skip
+                </button>
+              </div>
 
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
                 <p className="text-gray-500 text-sm">
                   You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
                   Add a short note for your circle if you'd like.
