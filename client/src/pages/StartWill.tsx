@@ -15,7 +15,7 @@ import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } 
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video } from "lucide-react";
 
 // Helper function to get next Monday's date in YYYY-MM-DD format (local timezone)
 // Returns the upcoming Monday:
@@ -625,9 +625,19 @@ export default function StartWill() {
         {currentStep === 4 && !showTransition && (
           <SectionCard>
             <form onSubmit={handleStep4Submit} className="space-y-5">
+              {/* Decorative Video Icon with gentle animation */}
+              <div className="flex justify-center mb-2">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
+                  <div className="relative w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border-2 border-blue-100 flex items-center justify-center shadow-md">
+                    <Video className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </div>
+
               {/* Header with instruction */}
-              <div className="px-4">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+              <div className="px-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
                   Choose a time to set up a video call after your <em>Will</em> ends on {willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}
                 </label>
                 
@@ -640,35 +650,40 @@ export default function StartWill() {
                     max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
                     value={endRoomDateTime}
                     onChange={(e) => setEndRoomDateTime(e.target.value)}
-                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all duration-200 hover:border-gray-300"
                     data-testid="input-end-room-datetime"
                   />
                   <div className="text-xs text-gray-400 mt-1.5 text-center">MM/DD/YYYY HH:MM</div>
                 </div>
               </div>
 
-              {/* Info Box - Softer, informational styling */}
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mx-4">
-                <div className="mb-2.5 flex items-center">
-                  <svg className="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-700">How the End Room works</span>
+              {/* Info Box - with subtle gradient and animation */}
+              <div className="relative mx-4 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-xl"></div>
+                <div className="relative bg-white/80 backdrop-blur-sm border border-blue-100/50 rounded-xl p-4 shadow-sm">
+                  <div className="mb-2.5 flex items-center">
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                      <svg className="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">How the End Room works</span>
+                  </div>
+                  <ul className="space-y-2.5 text-sm text-gray-600 ml-1">
+                    <li className="flex items-start animate-in fade-in slide-in-from-left-2 duration-300" style={{ animationDelay: '150ms' }}>
+                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-1.5 mr-2.5 flex-shrink-0"></span>
+                      <span>It will open automatically at the time you choose</span>
+                    </li>
+                    <li className="flex items-start animate-in fade-in slide-in-from-left-2 duration-300" style={{ animationDelay: '250ms' }}>
+                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-1.5 mr-2.5 flex-shrink-0"></span>
+                      <span>It runs for 30 minutes</span>
+                    </li>
+                    <li className="flex items-start animate-in fade-in slide-in-from-left-2 duration-300" style={{ animationDelay: '350ms' }}>
+                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-1.5 mr-2.5 flex-shrink-0"></span>
+                      <span>Once your <em>Will</em> starts, the time can't be changed</span>
+                    </li>
+                  </ul>
                 </div>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start">
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-2.5 flex-shrink-0"></span>
-                    <span>It will open automatically at the time you choose</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-2.5 flex-shrink-0"></span>
-                    <span>It runs for 30 minutes</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-2.5 flex-shrink-0"></span>
-                    <span>Once your <em>Will</em> starts, the time can't be changed</span>
-                  </li>
-                </ul>
               </div>
 
               {/* Action Buttons */}
