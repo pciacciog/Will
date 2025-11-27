@@ -1,0 +1,41 @@
+3. Set Your Timeline Screen
+
+The helper text “Defaults to next Mon–Sun” currently sits under the “When will your Will begin and end?” subtitle.
+
+Please move this helper text into the Start/End section, in whatever placement makes the most visual sense (for example, just above or inside the Start/End card). It belongs closer to the actual date fields since it explains why those dates are prefilled.
+
+The Start/End time picker feels too manual at the moment.
+
+Please update it so that time selection feels more efficient, e.g.:
+
+Allow choosing from a sensible list of time increments (like 15- or 30-minute steps) instead of forcing very granular manual scrolling, and/or
+
+Make it easier to quickly adjust common times (morning/evening) without excessive scrolling.
+
+You can pick the approach that best matches our existing date/time picker setup, as long as selecting a time feels smoother and less tedious.
+
+4. “Why would you like to do this?” Screen
+
+This is the screen that shows the Will statement (e.g., “I will test”) and the “Your Why” section.
+
+Please visually enhance the “I will …” statement so it stands out more clearly as its own element.
+
+For example, place “I will [text]” inside a light card with a border and rounded corners, or a subtle background.
+
+The goal is for the Will statement to feel more distinct, centered, and memorable, not just floating as plain text in the layout.
+
+5. Schedule Your End Room Screen
+
+Right now this screen requires vertical scrolling on iPhone, mainly because elements are stacked with generous spacing. I’d like the layout to be more compact so the main content fits within a single iPhone screen (or as close as reasonably possible) without unnecessary scrolling.
+
+Specifically:
+
+Please move the “Skip End Room” action to the upper-right area of the End Room card/header and make it a clearly visible, tappable button (text button or ghost button is fine).
+
+Please reposition the Back button so it doesn’t sit as a large, full-width element directly above the primary CTA and force extra vertical height. For example, Back could be:
+
+a smaller button aligned to the lower-left, or
+
+a text link under or alongside the main “Create Will” button.
+
+The overall goal is to reduce vertical stacking, keep actions clearly visible, and avoid unnecessary scrolling while preserving clarity.
