@@ -18,6 +18,7 @@ import Auth from "@/pages/Auth";
 import Home from "@/pages/Home";
 import InnerCircle from "@/pages/InnerCircle";
 import InnerCircleHub from "@/pages/InnerCircleHub";
+import SoloHub from "@/pages/SoloHub";
 import StartWill from "@/pages/StartWill";
 import WillDetails from "@/pages/WillDetails";
 import SubmitCommitment from "@/pages/SubmitCommitment";
@@ -222,7 +223,9 @@ function Router() {
             <Route path="/" component={Home} />
             <Route path="/inner-circle" component={InnerCircle} />
             <Route path="/hub" component={InnerCircleHub} />
+            <Route path="/solo-hub" component={SoloHub} />
             <Route path="/start-will" component={StartWill} />
+            <Route path="/solo/start-will" component={StartWill} />
             <Route path="/will/:id" component={WillDetails} />
             <Route path="/will/:id/commit" component={SubmitCommitment} />
             <Route path="/will/:id/edit" component={EditWill} />
