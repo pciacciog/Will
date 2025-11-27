@@ -688,7 +688,7 @@ export default function StartWill() {
                     <span className="text-sm font-medium">
                       {createWillMutation.isPending || addCommitmentMutation.isPending 
                         ? 'Creating...' 
-                        : 'Create Will & Schedule End Room'}
+                        : 'Create Will'}
                     </span>
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </button>
