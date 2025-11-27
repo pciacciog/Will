@@ -1,0 +1,259 @@
+"I want to improve the UX of ALL text input fields across the app to behave like modern messaging apps (WhatsApp/iMessage style). Instead of large static text boxes, they should be compact and auto-grow with content.
+
+The Problem:
+Currently, textareas throughout the app are large empty boxes with fixed heights. This feels awkward and "un-chat-like."
+
+Desired Behavior (Consistent Across App):
+
+Start compact - Single-line height initially
+Auto-grow - Grows line-by-line as user types
+Max height - Caps at 4-6 lines, then scrolls internally
+Tight padding - Modest vertical padding, text feels snug
+
+
+Step 1: Identify All Textarea Usage
+Please search the codebase and list every place where <Textarea> component is used:
+bashrg "<Textarea" --type tsx --type jsx -n
+Expected locations (please verify):
+
+WillReviewFlow.tsx - Step 2 (Expand/Reflect)
+StartWill.tsx - Step 2 (What) and Step 3 (Why)
+SubmitCommitment.tsx - What and Why fields
+EditCommitment.tsx - What and Why fields
+Any other places?
+
+List them all with file paths and line numbers.
+
+Step 2: Create Reusable Auto-Resize Solution
+Option A: Create Custom Hook (Recommended)
+File: client/src/hooks/useAutoResizeTextarea.ts (NEW)
+typescriptimport { useRef, useEffect, useCallback } from 'react';
+
+export function useAutoResizeTextarea(value: string, maxHeight: number = 120) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const resize = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    // Reset height to calculate scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Set height to scrollHeight (content height)
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
+  }, [maxHeight]);
+
+  // Resize when value changes
+  useEffect(() => {
+    resize();
+  }, [value, resize]);
+
+  // Resize on mount
+  useEffect(() => {
+    resize();
+  }, [resize]);
+
+  return { textareaRef, resize };
+}
+Usage example:
+tsximport { useAutoResizeTextarea } from '@/hooks/useAutoResizeTextarea';
+
+function MyComponent() {
+  const [text, setText] = useState('');
+  const { textareaRef, resize } = useAutoResizeTextarea(text);
+
+  return (
+    <Textarea
+      ref={textareaRef}
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        resize();
+      }}
+      rows={1}
+      className="resize-none overflow-y-auto py-2"
+      style={{ maxHeight: '120px' }}
+    />
+  );
+}
+
+Option B: Create Wrapper Component (Alternative)
+File: client/src/components/AutoResizeTextarea.tsx (NEW)
+tsximport { useRef, useEffect, forwardRef } from 'react';
+import { Textarea } from './ui/textarea';
+import { cn } from '@/lib/utils';
+
+interface AutoResizeTextareaProps extends React.ComponentProps<typeof Textarea> {
+  maxHeight?: number;
+}
+
+export const AutoResizeTextarea = forwardRef
+  HTMLTextAreaElement,
+  AutoResizeTextareaProps
+>(({ maxHeight = 120, className, onChange, value, ...props }, ref) => {
+  const internalRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = (ref as any) || internalRef;
+
+  const resize = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
+  };
+
+  useEffect(() => {
+    resize();
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    resize();
+    onChange?.(e);
+  };
+
+  return (
+    <Textarea
+      ref={textareaRef}
+      value={value}
+      onChange={handleChange}
+      rows={1}
+      className={cn(
+        "resize-none overflow-y-auto py-2 px-3",
+        "text-base leading-relaxed transition-all",
+        className
+      )}
+      style={{ maxHeight: `${maxHeight}px` }}
+      {...props}
+    />
+  );
+});
+
+AutoResizeTextarea.displayName = 'AutoResizeTextarea';
+Usage example:
+tsximport { AutoResizeTextarea } from '@/components/AutoResizeTextarea';
+
+<AutoResizeTextarea
+  value={text}
+  onChange={(e) => setText(e.target.value)}
+  placeholder="Type here..."
+  maxLength={200}
+  maxHeight={120}
+/>
+
+Step 3: Apply Consistently Everywhere
+Please update ALL textarea usages with the auto-resize solution:
+1. WillReviewFlow.tsx - Step 2 (Expand)
+tsx// If using hook:
+const { textareaRef, resize } = useAutoResizeTextarea(reflection);
+
+<Textarea
+  ref={textareaRef}
+  value={reflection}
+  onChange={(e) => {
+    setReflection(e.target.value);
+    resize();
+  }}
+  rows={1}
+  className="resize-none overflow-y-auto py-2 px-3 text-base leading-relaxed"
+  style={{ maxHeight: '120px' }}
+  placeholder="What did you learn? How did it go?"
+  maxLength={200}
+/>
+
+// OR if using wrapper:
+<AutoResizeTextarea
+  value={reflection}
+  onChange={(e) => setReflection(e.target.value)}
+  placeholder="What did you learn? How did it go?"
+  maxLength={200}
+  maxHeight={120}
+/>
+2. StartWill.tsx - Step 2 (What) and Step 3 (Why)
+Step 2 - "I will..." field:
+tsxconst { textareaRef: whatRef, resize: resizeWhat } = useAutoResizeTextarea(formData.what);
+
+<Textarea
+  ref={whatRef}
+  value={formData.what}
+  onChange={(e) => {
+    setFormData({ ...formData, what: e.target.value });
+    resizeWhat();
+  }}
+  rows={1}
+  className="resize-none overflow-y-auto py-2 px-3"
+  style={{ maxHeight: '96px' }} // Shorter for "what" (3-4 lines)
+  placeholder="I will..."
+  maxLength={75}
+/>
+Step 3 - "Because..." field:
+tsxconst { textareaRef: whyRef, resize: resizeWhy } = useAutoResizeTextarea(formData.why);
+
+<Textarea
+  ref={whyRef}
+  value={formData.why}
+  onChange={(e) => {
+    setFormData({ ...formData, why: e.target.value });
+    resizeWhy();
+  }}
+  rows={1}
+  className="resize-none overflow-y-auto py-2 px-3"
+  style={{ maxHeight: '96px' }}
+  placeholder="Because..."
+  maxLength={75}
+/>
+3. SubmitCommitment.tsx - What/Why fields
+Apply the same pattern to both textareas in this file.
+4. EditCommitment.tsx - What/Why fields
+Apply the same pattern to both textareas in this file.
+5. Any Other Textareas
+Apply to every other <Textarea> component you found in Step 1.
+
+Step 4: Consistent Styling
+For all textareas, use these consistent classes:
+tsxclassName="
+  resize-none           // Disable manual resize
+  overflow-y-auto       // Enable scroll when max height reached
+  py-2 px-3            // Compact padding (not py-4)
+  text-base            // Normal text size
+  leading-relaxed      // Comfortable line height
+  transition-all       // Smooth height transitions
+  border rounded-md    // Standard border
+  focus:ring-2 focus:ring-purple-500 // Focus state
+"
+Max height guidelines:
+
+Short fields (What/Why - 75 chars): maxHeight: '96px' (~4 lines)
+Medium fields (Reflection - 200 chars): maxHeight: '120px' (~5 lines)
+Long fields (if any): maxHeight: '144px' (~6 lines)
+
+
+Implementation Steps:
+
+✅ Search and list all textarea usages in the app
+✅ Create the hook (useAutoResizeTextarea.ts) OR wrapper component (AutoResizeTextarea.tsx) - your choice which approach you prefer
+✅ Update WillReviewFlow.tsx - Apply to Step 2
+✅ Update StartWill.tsx - Apply to Step 2 and Step 3
+✅ Update SubmitCommitment.tsx - Apply to What/Why
+✅ Update EditCommitment.tsx - Apply to What/Why
+✅ Update any other files with textareas
+✅ Test each updated field to ensure:
+
+Starts compact (1 row)
+Grows smoothly as user types
+Caps at max height and scrolls
+Character counters still work
+Validation still works
+
+
+
+
+Key Requirements:
+
+✅ Consistent behavior across ALL text inputs
+✅ Start compact, grow naturally
+✅ Smooth transitions
+✅ No giant empty boxes
+✅ Feels like modern messaging UI
+✅ Don't break existing validation or character counters
+✅ Maintain accessibility (labels, placeholders, etc.)

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -38,6 +38,21 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
       reflection: "",
     },
   });
+  
+  // Auto-resize for reflection textarea
+  const reflectionRef = useRef<HTMLTextAreaElement>(null);
+  const resizeReflection = useCallback(() => {
+    const textarea = reflectionRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const newHeight = Math.min(textarea.scrollHeight, 120);
+    textarea.style.height = `${newHeight}px`;
+  }, []);
+  
+  const reflectionValue = form.watch("reflection");
+  useEffect(() => {
+    resizeReflection();
+  }, [reflectionValue, resizeReflection]);
 
   const submitReview = useMutation({
     mutationFn: async (data: ReviewFormValues) => {
@@ -105,7 +120,6 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
   };
 
   const followThroughValue = form.watch("followThrough");
-  const reflectionValue = form.watch("reflection");
 
   const getFollowThroughLabel = (value: string) => {
     switch (value) {
@@ -311,7 +325,11 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                     <FormControl>
                       <Textarea
                         {...field}
-                        className="min-h-[140px] resize-none rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
+                        ref={reflectionRef}
+                        rows={1}
+                        className="resize-none overflow-y-auto rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 py-3 px-4 text-base leading-relaxed transition-all"
+                        style={{ maxHeight: '120px' }}
+                        placeholder="What did you learn? How did it go?"
                         maxLength={200}
                         data-testid="textarea-reflection"
                       />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,26 @@ export default function EditCommitment() {
   const [why, setWhy] = useState("");
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [whyCharCount, setWhyCharCount] = useState(0);
+  
+  // Auto-resize refs for textareas
+  const whatRef = useRef<HTMLTextAreaElement>(null);
+  const whyRef = useRef<HTMLTextAreaElement>(null);
+  
+  const resizeTextarea = useCallback((ref: React.RefObject<HTMLTextAreaElement>, maxHeight: number = 96) => {
+    const textarea = ref.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
+  }, []);
+  
+  useEffect(() => {
+    resizeTextarea(whatRef);
+  }, [what, resizeTextarea]);
+  
+  useEffect(() => {
+    resizeTextarea(whyRef);
+  }, [why, resizeTextarea]);
 
   const { data: will, isLoading: willLoading } = useQuery({
     queryKey: [`/api/wills/${willId}/details`],
@@ -204,11 +224,12 @@ export default function EditCommitment() {
               <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
               <div className="relative">
                 <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                  <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">I will</span>
+                  <span className="text-gray-900 font-medium text-base mr-3 mt-0.5 flex-shrink-0">I will</span>
                   <Textarea 
+                    ref={whatRef}
                     name="what"
                     required
-                    rows={2}
+                    rows={1}
                     maxLength={75}
                     value={what}
                     onChange={(e) => {
@@ -216,9 +237,11 @@ export default function EditCommitment() {
                       if (newValue.length <= 75) {
                         setWhat(newValue);
                         setWhatCharCount(newValue.length);
+                        resizeTextarea(whatRef);
                       }
                     }}
-                    className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                    className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400 transition-all"
+                    style={{ maxHeight: '96px' }}
                     placeholder="call my grandmother this week"
                   />
                 </div>
@@ -306,11 +329,12 @@ export default function EditCommitment() {
             </div>
             <div className="relative">
               <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                <span className="text-gray-900 font-medium text-base mr-3 mt-1 flex-shrink-0">Because</span>
+                <span className="text-gray-900 font-medium text-base mr-3 mt-0.5 flex-shrink-0">Because</span>
                 <Textarea 
+                  ref={whyRef}
                   name="why"
                   required
-                  rows={2}
+                  rows={1}
                   maxLength={75}
                   value={why}
                   onChange={(e) => {
@@ -318,10 +342,12 @@ export default function EditCommitment() {
                     if (newValue.length <= 75) {
                       setWhy(newValue);
                       setWhyCharCount(newValue.length);
+                      resizeTextarea(whyRef);
                     }
                   }}
                   placeholder="I like how I feel after I talk to her"
-                  className="flex-1 border-none outline-none resize-none text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                  className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400 transition-all"
+                  style={{ maxHeight: '96px' }}
                 />
               </div>
             </div>
