@@ -28,6 +28,7 @@ interface WillReviewFlowProps {
 
 export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [skippedExpand, setSkippedExpand] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<ReviewFormValues>({
@@ -113,6 +114,21 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
       case "no": return "No";
       default: return value;
     }
+  };
+
+  const getFollowThroughColorClasses = (value: string) => {
+    switch (value) {
+      case "yes": return "text-emerald-600 font-semibold";
+      case "mostly": return "text-amber-600 font-semibold";
+      case "no": return "text-rose-600 font-semibold";
+      default: return "text-gray-700 font-medium";
+    }
+  };
+
+  const handleSkip = () => {
+    form.setValue("reflection", "");
+    setSkippedExpand(true);
+    setStep(3);
   };
 
   return (
@@ -266,11 +282,21 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
 
           {/* Step 2: Expand */}
           {step === 2 && (
-            <div className="space-y-6" data-testid="step-2-expand">
+            <div className="space-y-6 relative" data-testid="step-2-expand">
+              {/* Subtle Skip button in upper right */}
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="absolute top-0 right-0 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                data-testid="button-skip"
+              >
+                Skip
+              </button>
+
               <div className="text-center">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
                 <p className="text-gray-500 text-sm">
-                  You marked this Will as <span className="font-medium">{getFollowThroughLabel(followThroughValue || "")}</span>. 
+                  You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
                   Add a short note for your circle if you'd like.
                 </p>
               </div>
@@ -308,7 +334,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                 </Button>
                 <Button
                   type="button"
-                  onClick={handleNext}
+                  onClick={() => { setSkippedExpand(false); handleNext(); }}
                   className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl"
                   size="lg"
                   data-testid="button-next-2"
@@ -325,15 +351,18 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
               <div className="text-center">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 3: Share</h2>
                 <p className="text-gray-500 text-sm">
-                  Review before sharing with your circle.
+                  {skippedExpand 
+                    ? "Confirm your response to share with your circle."
+                    : "Review before sharing with your circle."
+                  }
                 </p>
               </div>
 
               {/* Preview Card */}
               <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Your answer:</span>
-                  <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+                <div className={`flex items-center ${skippedExpand ? 'justify-center' : 'gap-2'}`}>
+                  {!skippedExpand && <span className="text-sm text-gray-500">Your answer:</span>}
+                  <span className={`text-sm font-medium px-3 py-1 rounded-full ${
                     followThroughValue === "yes" 
                       ? "bg-emerald-100 text-emerald-700"
                       : followThroughValue === "mostly"
@@ -344,7 +373,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                   </span>
                 </div>
                 
-                {reflectionValue && (
+                {!skippedExpand && reflectionValue && (
                   <div className="pt-2">
                     <p className="text-gray-700 text-sm leading-relaxed" data-testid="text-reflection-preview">
                       {reflectionValue}
@@ -352,7 +381,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                   </div>
                 )}
                 
-                {!reflectionValue && (
+                {!skippedExpand && !reflectionValue && (
                   <p className="text-gray-400 text-sm italic">No additional note added.</p>
                 )}
               </div>
@@ -360,7 +389,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
               <div className="flex gap-3">
                 <Button
                   type="button"
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(skippedExpand ? 1 : 2)}
                   variant="outline"
                   className="flex-1 rounded-xl"
                   data-testid="button-back-3"
