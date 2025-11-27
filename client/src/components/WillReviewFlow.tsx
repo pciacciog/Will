@@ -283,11 +283,11 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
           {/* Step 2: Expand */}
           {step === 2 && (
             <div className="space-y-6 relative" data-testid="step-2-expand">
-              {/* Subtle Skip button in upper right */}
+              {/* Subtle Skip button in upper right corner of the card */}
               <button
                 type="button"
                 onClick={handleSkip}
-                className="absolute top-0 right-0 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute -top-3 -right-3 text-xs text-gray-400 hover:text-gray-500 transition-colors py-1 px-2"
                 data-testid="button-skip"
               >
                 Skip
