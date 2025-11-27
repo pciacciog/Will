@@ -46,9 +46,14 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
 
   const submitReview = useMutation({
     mutationFn: async (data: ReviewFormValues) => {
+      // Transform frontend field names to match backend expectations
+      const payload = {
+        followThrough: data.followThrough,
+        reflectionText: data.reflection, // Backend expects 'reflectionText', not 'reflection'
+      };
       const response = await apiRequest(`/api/wills/${willId}/review`, {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       return response.json();
     },
