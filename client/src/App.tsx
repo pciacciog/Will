@@ -223,9 +223,9 @@ function Router() {
             <Route path="/" component={Home} />
             <Route path="/inner-circle" component={InnerCircle} />
             <Route path="/hub" component={InnerCircleHub} />
-            <Route path="/solo-hub" component={SoloHub} />
-            <Route path="/start-will" component={StartWill} />
-            <Route path="/solo/start-will" component={StartWill} />
+            <Route path="/solo/hub" component={SoloHub} />
+            <Route path="/start-will">{() => <StartWill />}</Route>
+            <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/will/:id" component={WillDetails} />
             <Route path="/will/:id/commit" component={SubmitCommitment} />
             <Route path="/will/:id/edit" component={EditWill} />

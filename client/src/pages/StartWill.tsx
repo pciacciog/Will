@@ -61,10 +61,18 @@ function getFollowingSundayDate(mondayDateStr: string): string {
   return `${sunYear}-${sunMonth}-${sunDay}`;
 }
 
-export default function StartWill() {
+interface StartWillProps {
+  isSoloMode?: boolean;
+}
+
+export default function StartWill({ isSoloMode = false }: StartWillProps) {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
+  
+  // Solo mode: 3 steps (When, What, Why) - no End Room
+  // Circle mode: 4 steps (When, What, Why, End Room)
+  const totalSteps = isSoloMode ? 3 : 4;
   
   // Helper to get minimum valid start time (next 15-min block from now)
   const getMinimumStartDateTime = () => {
@@ -168,20 +176,25 @@ export default function StartWill() {
       return response.json();
     },
     onSuccess: async (will) => {
-      // Invalidate all related queries to ensure UI updates everywhere
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-      
-      // Send notification about WILL proposal to other members
-      if (willData.what && user?.firstName) {
-        try {
-          await notificationService.sendWillProposedNotification(
-            user.firstName,
-            willData.what
-          );
-        } catch (error) {
-          console.error('Failed to send WILL proposal notification:', error);
+      if (isSoloMode) {
+        // Invalidate solo-specific queries
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+      } else {
+        // Invalidate all related queries to ensure UI updates everywhere
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+        
+        // Send notification about WILL proposal to other members (circle mode only)
+        if (willData.what && user?.firstName) {
+          try {
+            await notificationService.sendWillProposedNotification(
+              user.firstName,
+              willData.what
+            );
+          } catch (error) {
+            console.error('Failed to send WILL proposal notification:', error);
+          }
         }
       }
       
@@ -213,16 +226,27 @@ export default function StartWill() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate all related queries to ensure UI updates everywhere
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-      
-      toast({
-        title: "Will Created!",
-        description: "Will has been created and is pending review from other members.",
-      });
-      setLocation('/hub');
+      if (isSoloMode) {
+        // Invalidate solo-specific queries
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+        
+        toast({
+          title: "Will Created!",
+          description: "Your solo Will is now active. Time to get started!",
+        });
+        setLocation('/solo/hub');
+      } else {
+        // Invalidate all related queries to ensure UI updates everywhere
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+        
+        toast({
+          title: "Will Created!",
+          description: "Will has been created and is pending review from other members.",
+        });
+        setLocation('/hub');
+      }
     },
     onError: (error) => {
       toast({
@@ -301,21 +325,34 @@ export default function StartWill() {
       return;
     }
 
-    // Update will data and show transition
-    setWillData({
+    const updatedWillData = {
       ...willData,
       why: why.trim(),
-      circleId: circle?.id,
-    });
+      circleId: isSoloMode ? null : circle?.id,
+    };
     
-    // Show transition animation
-    setShowTransition(true);
+    setWillData(updatedWillData);
     
-    // After 3.5 seconds, move to End Room scheduling step
-    setTimeout(() => {
-      setShowTransition(false);
-      setCurrentStep(4);
-    }, 3500);
+    if (isSoloMode) {
+      // Solo mode: Submit directly after Step 3 (no End Room)
+      createWillMutation.mutate({
+        title: updatedWillData.what || "Solo Goal",
+        description: updatedWillData.why || "Personal commitment",
+        startDate: updatedWillData.startDate,
+        endDate: updatedWillData.endDate,
+        endRoomScheduledAt: null,
+        mode: 'solo',
+      });
+    } else {
+      // Circle mode: Show transition animation then go to End Room step
+      setShowTransition(true);
+      
+      // After 3.5 seconds, move to End Room scheduling step
+      setTimeout(() => {
+        setShowTransition(false);
+        setCurrentStep(4);
+      }, 3500);
+    }
   };
 
   const handleStep4Submit = (e: React.FormEvent) => {
@@ -374,7 +411,7 @@ export default function StartWill() {
   };
 
   const handleCancel = () => {
-    setLocation('/hub');
+    setLocation(isSoloMode ? '/solo/hub' : '/hub');
   };
 
   const handleModalStart = () => {
@@ -386,7 +423,8 @@ export default function StartWill() {
     setShowInstructionModal(false);
   };
 
-  if (!circle) {
+  // Only require circle for circle mode
+  if (!isSoloMode && !circle) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
@@ -667,8 +705,12 @@ export default function StartWill() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </button>
-                <PrimaryButton>
-                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                <PrimaryButton disabled={createWillMutation.isPending || addCommitmentMutation.isPending}>
+                  {isSoloMode ? (
+                    createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will'
+                  ) : (
+                    <>Next <ArrowRight className="w-4 h-4 ml-2" /></>
+                  )}
                 </PrimaryButton>
               </div>
             </form>
