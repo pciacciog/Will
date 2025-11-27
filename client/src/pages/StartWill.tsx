@@ -86,6 +86,7 @@ export default function StartWill() {
   const [showHelpIcon, setShowHelpIcon] = useState(false);
   const [endRoomDateTime, setEndRoomDateTime] = useState('');
   const [showEndRoomForm, setShowEndRoomForm] = useState(false);
+  const [showSkipConfirmation, setShowSkipConfirmation] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -408,7 +409,7 @@ export default function StartWill() {
                 <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
               </>
             )}
-            {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">This is where your circle comes together to reflect, share, and honor the effort.</p>}
+            {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">An opportunity for your circle to gather, reflect, share, and honor the effort.</p>}
           </div>
         </div>
       </div>
@@ -623,10 +624,10 @@ export default function StartWill() {
         {/* Step 4: End Room Scheduling */}
         {currentStep === 4 && !showTransition && (
           <SectionCard>
-            <form onSubmit={handleStep4Submit} className="space-y-3">
+            <form onSubmit={handleStep4Submit} className="space-y-4">
               <div className="px-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Schedule an End Room video call after your <em>Will</em> ends on {willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}
+                  Choose a time to set up a video call after your <em>Will</em> ends on {willData.endDate ? new Date(willData.endDate).toLocaleDateString() : '7/20/2025'}
                 </label>
                 
                 {/* Input field with proper mobile containment */}
@@ -638,7 +639,6 @@ export default function StartWill() {
                     max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
                     value={endRoomDateTime}
                     onChange={(e) => setEndRoomDateTime(e.target.value)}
-                    required
                     className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                     data-testid="input-end-room-datetime"
                   />
@@ -646,61 +646,130 @@ export default function StartWill() {
                 </div>
               </div>
 
-              {/* Warning Box */}
-              <div className="bg-red-50 border border-red-300 rounded-xl p-3 mt-3 mx-4">
-                <div className="mb-1 flex items-center">
-                  <svg className="w-3 h-3 text-red-600 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Info Box - Softer, informational styling */}
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mx-4">
+                <div className="mb-2 flex items-center">
+                  <svg className="w-3.5 h-3.5 text-gray-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-xs font-medium text-red-800">END ROOM RULES:</span>
+                  <span className="text-xs font-medium text-gray-700">How the End Room works</span>
                 </div>
-                <ul className="space-y-0 text-xs text-red-600 break-words">
+                <ul className="space-y-1.5 text-xs text-gray-600">
                   <li className="flex items-start">
-                    <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                    <span>Opens automatically at the scheduled date and runs for 30 minutes</span>
+                    <span className="w-1 h-1 bg-gray-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>It will open automatically at the time you choose</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                    <span>Cannot be rescheduled once the <strong>Will</strong> is active</span>
+                    <span className="w-1 h-1 bg-gray-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>It runs for 30 minutes</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="w-1 h-1 bg-red-600 rounded-full mt-1.5 mr-1.5 flex-shrink-0"></span>
-                    <span>Closes automatically after 30 minutes expire — regardless of attendance</span>
+                    <span className="w-1 h-1 bg-gray-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                    <span>Once your <em>Will</em> starts, the time can't be changed</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="border-t border-gray-200 pt-3 mt-3">
+              {/* Action Buttons */}
+              <div className="border-t border-gray-100 pt-4 mt-4">
                 <div className="flex flex-col space-y-3 px-4">
+                  {/* Primary CTA - changes based on whether date/time is entered */}
                   <button
                     type="submit"
-                    disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
-                    className={`w-full px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-center transition-colors duration-200 ${
-                      !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
+                    disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                    className={`w-full px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center transition-colors duration-200 ${
+                      createWillMutation.isPending || addCommitmentMutation.isPending
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         : 'bg-brandGreen text-white hover:bg-green-600'
                     }`}
                     data-testid="button-schedule-and-create"
                   >
                     <span className="text-sm font-medium">
-                      {createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Schedule End Room & Create Will'}
+                      {createWillMutation.isPending || addCommitmentMutation.isPending 
+                        ? 'Creating...' 
+                        : endRoomDateTime 
+                          ? 'Create Will & Schedule End Room' 
+                          : 'Create Will'}
                     </span>
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </button>
 
-                  <button 
-                    type="button" 
-                    onClick={() => setCurrentStep(3)}
-                    className="w-full bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
-                    data-testid="button-back"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </button>
+                  {/* Back and Skip row */}
+                  <div className="flex items-center justify-between">
+                    <button 
+                      type="button" 
+                      onClick={() => setCurrentStep(3)}
+                      className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                      data-testid="button-back"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </button>
+                    
+                    {/* Skip button - only show if date is entered, to allow clearing */}
+                    {endRoomDateTime && (
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setEndRoomDateTime('');
+                        }}
+                        className="text-gray-400 text-sm hover:text-gray-600 transition-colors"
+                        data-testid="button-clear-endroom"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </form>
           </SectionCard>
+        )}
+        
+        {/* Skip End Room Confirmation Modal */}
+        {showSkipConfirmation && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Are you sure you want to skip the End Room?
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                This is your circle's opportunity to gather and reflect at the end of your <em>Will</em>.
+                You can still continue without setting one.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowSkipConfirmation(false)}
+                  className="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSkipConfirmation(false);
+                    setEndRoomDateTime('');
+                    // Submit without End Room
+                    const finalWillData = {
+                      ...willData,
+                      endRoomScheduledAt: null,
+                      circleId: circle?.id,
+                    };
+                    createWillMutation.mutate({
+                      title: finalWillData.what || "Group Goal",
+                      description: finalWillData.why || "Group commitment",
+                      startDate: finalWillData.startDate,
+                      endDate: finalWillData.endDate,
+                      endRoomScheduledAt: null,
+                      circleId: finalWillData.circleId,
+                    });
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-brandGreen text-white rounded-xl text-sm font-medium hover:bg-green-600 transition-colors"
+                >
+                  Skip End Room
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Instruction Modal */}

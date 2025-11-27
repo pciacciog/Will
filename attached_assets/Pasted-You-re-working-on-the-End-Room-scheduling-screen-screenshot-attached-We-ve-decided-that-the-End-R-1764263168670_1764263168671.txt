@@ -1,0 +1,98 @@
+You’re working on the End Room scheduling screen (screenshot attached). We’ve decided that the End Room should feel optional, inviting, and gentle—not mandatory or rule-heavy. I’d like you to make the following updates to the copy, structure, and flow. You can adjust styling and spacing as you see fit so it fits our design system.
+
+1. Keep the main title
+
+Leave as: “Schedule Your End Room”
+
+2. Update the subtitle under the title
+
+Replace the current subtitle with:
+
+“An opportunity for your circle to gather, reflect, share, and honor the effort.”
+
+Tone: calm, optional, inviting.
+
+3. Update the instructional line above the date/time input
+
+Current text is too directive. Please change it to:
+
+“Choose a time to set up a video call after your Will ends on [date].”
+
+(Dynamic date should still populate.)
+
+4. Update the rules/info box
+
+Rename “END ROOM RULES:” to:
+
+“How the End Room works”
+
+Inside, replace the current bullets with these three:
+
+It will open automatically at the time you choose
+
+It runs for 30 minutes
+
+Once your Will starts, the time can’t be changed
+
+If you feel a softer visual treatment fits better (less “error-style red”), feel free to adjust colors or borders.
+
+5. Add a “Skip” option
+
+Because the End Room is optional, add a Skip action somewhere appropriate at the bottom of the page (e.g., near the Back button or near the primary CTA).
+
+The Skip button should:
+
+Let the user skip End Room scheduling
+
+Allow them to continue to creating the Will without setting a time
+
+Not feel visually dominant
+
+6. Add a Skip Confirmation Prompt
+
+When the user taps Skip, show a modal or confirmation prompt such as:
+
+Title:
+
+Are you sure you want to skip the End Room?
+
+Body:
+
+This is your circle’s opportunity to gather and reflect at the end of your Will.
+You can still continue without setting one.
+
+Buttons:
+
+Cancel (secondary)
+
+Skip End Room (primary)
+
+This ensures the user understands it’s optional while still being encouraged to reflect.
+
+Feel free to refine exact phrasing or visual layout as needed.
+
+7. Button logic (primary CTA)
+
+The main action button should change depending on whether a time is selected:
+
+If no date/time is entered:
+“Create Will”
+
+If date/time is entered:
+“Create Will & Schedule End Room”
+
+This makes the flow more intuitive and transparent.
+
+Deliverables
+
+Updated JSX and styling for the End Room screen
+
+Skip button + confirmation modal
+
+Updated text and info box
+
+Any logic changes needed to support conditional CTAs
+
+Short explanation of your changes
+
+This should help the entire page feel optional, calm, and user-friendly while preserving clarity and functionality.
