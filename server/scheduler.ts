@@ -206,13 +206,15 @@ export class EndRoomScheduler {
 
   private async openPendingEndRooms(now: Date) {
     try {
+      // Only open End Rooms for circle mode wills (have circleId)
       const roomsToOpen = await db
         .select()
         .from(wills)
         .where(
           and(
             eq(wills.endRoomStatus, 'pending'),
-            lt(wills.endRoomScheduledAt, now)
+            lt(wills.endRoomScheduledAt, now),
+            isNotNull(wills.circleId) // Solo wills don't have End Rooms
           )
         )
         .limit(20); // Limit to prevent resource exhaustion
@@ -238,7 +240,8 @@ export class EndRoomScheduler {
               
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} with video URL: ${endRoom.url}`);
               try {
-                const circleMembers = await storage.getCircleMembers(will.circleId);
+                // circleId is guaranteed to be non-null here (filtered in query)
+                const circleMembers = await storage.getCircleMembers(will.circleId!);
                 const memberIds = circleMembers.map(member => member.userId);
                 await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds);
                 console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -254,7 +257,8 @@ export class EndRoomScheduler {
               });
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} but without video room`);
               try {
-                const circleMembers = await storage.getCircleMembers(will.circleId);
+                // circleId is guaranteed to be non-null here (filtered in query)
+                const circleMembers = await storage.getCircleMembers(will.circleId!);
                 const memberIds = circleMembers.map(member => member.userId);
                 await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds);
                 console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -270,7 +274,8 @@ export class EndRoomScheduler {
             });
             console.log(`[EndRoomScheduler] End Room opened for Will ${will.id}`);
             try {
-              const circleMembers = await storage.getCircleMembers(will.circleId);
+              // circleId is guaranteed to be non-null here (filtered in query)
+              const circleMembers = await storage.getCircleMembers(will.circleId!);
               const memberIds = circleMembers.map(member => member.userId);
               await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds);
               console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -291,13 +296,15 @@ export class EndRoomScheduler {
     try {
       const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
       
+      // Only close End Rooms for circle mode wills (have circleId)
       const roomsToClose = await db
         .select()
         .from(wills)
         .where(
           and(
             eq(wills.endRoomStatus, 'open'),
-            lt(wills.endRoomOpenedAt, thirtyMinutesAgo)
+            lt(wills.endRoomOpenedAt, thirtyMinutesAgo),
+            isNotNull(wills.circleId) // Solo wills don't have End Rooms
           )
         )
         .limit(20); // Limit to prevent resource exhaustion
@@ -353,6 +360,7 @@ export class EndRoomScheduler {
       const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const twentyFourHoursOneMinuteFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000 + 60 * 1000);
       
+      // Only send notifications for circle mode wills (have circleId)
       const endRooms24h = await db
         .select()
         .from(wills)
@@ -360,7 +368,8 @@ export class EndRoomScheduler {
           and(
             eq(wills.endRoomStatus, 'pending'),
             gte(wills.endRoomScheduledAt, twentyFourHoursFromNow),
-            lt(wills.endRoomScheduledAt, twentyFourHoursOneMinuteFromNow)
+            lt(wills.endRoomScheduledAt, twentyFourHoursOneMinuteFromNow),
+            isNotNull(wills.circleId) // Solo wills don't have End Rooms
           )
         )
         .limit(30); // Limit notification batch size
@@ -368,7 +377,8 @@ export class EndRoomScheduler {
       for (const will of endRooms24h) {
         console.log(`[EndRoomScheduler] Sending 24h End Room notification for Will ${will.id}`);
         try {
-          const circleMembers = await storage.getCircleMembers(will.circleId);
+          // circleId is guaranteed to be non-null here (filtered in query)
+          const circleMembers = await storage.getCircleMembers(will.circleId!);
           
           // TIMEZONE FIX: Send personalized notifications per user with their timezone
           for (const member of circleMembers) {
@@ -405,6 +415,7 @@ export class EndRoomScheduler {
       const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000);
       const fifteenMinutesOneMinuteFromNow = new Date(now.getTime() + 15 * 60 * 1000 + 60 * 1000);
       
+      // Only send notifications for circle mode wills (have circleId)
       const endRooms15min = await db
         .select()
         .from(wills)
@@ -412,7 +423,8 @@ export class EndRoomScheduler {
           and(
             eq(wills.endRoomStatus, 'pending'),
             gte(wills.endRoomScheduledAt, fifteenMinutesFromNow),
-            lt(wills.endRoomScheduledAt, fifteenMinutesOneMinuteFromNow)
+            lt(wills.endRoomScheduledAt, fifteenMinutesOneMinuteFromNow),
+            isNotNull(wills.circleId) // Solo wills don't have End Rooms
           )
         )
         .limit(30); // Limit notification batch size
@@ -420,7 +432,8 @@ export class EndRoomScheduler {
       for (const will of endRooms15min) {
         console.log(`[EndRoomScheduler] Sending 15min End Room notification for Will ${will.id}`);
         try {
-          const circleMembers = await storage.getCircleMembers(will.circleId);
+          // circleId is guaranteed to be non-null here (filtered in query)
+          const circleMembers = await storage.getCircleMembers(will.circleId!);
           
           // TIMEZONE FIX: Send personalized notifications per user with their timezone
           for (const member of circleMembers) {
