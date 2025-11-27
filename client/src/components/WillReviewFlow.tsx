@@ -379,30 +379,35 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
               </div>
 
               {/* Preview Card */}
-              <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-                <div className={`flex items-center ${skippedExpand ? 'justify-center' : 'gap-2'}`}>
-                  {!skippedExpand && <span className="text-sm text-gray-500">Your answer:</span>}
-                  <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                    followThroughValue === "yes" 
-                      ? "bg-emerald-100 text-emerald-700"
-                      : followThroughValue === "mostly"
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-rose-100 text-rose-700"
-                  }`}>
-                    {getFollowThroughLabel(followThroughValue || "")}
-                  </span>
+              <div className="bg-gray-50 rounded-xl p-5 space-y-4">
+                {/* Follow-through Answer Section */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500 font-medium">Follow-through</span>
+                    <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                      followThroughValue === "yes" 
+                        ? "bg-emerald-100 text-emerald-700"
+                        : followThroughValue === "mostly"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-rose-100 text-rose-700"
+                    }`}>
+                      {getFollowThroughLabel(followThroughValue || "")}
+                    </span>
+                  </div>
                 </div>
                 
-                {!skippedExpand && reflectionValue && (
-                  <div className="pt-2">
-                    <p className="text-gray-700 text-sm leading-relaxed" data-testid="text-reflection-preview">
-                      {reflectionValue}
-                    </p>
+                {/* Reflection Section - only show if not skipped */}
+                {!skippedExpand && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <span className="text-sm text-gray-500 font-medium block mb-2">Reflection</span>
+                    {reflectionValue ? (
+                      <p className="text-gray-700 text-sm leading-relaxed" data-testid="text-reflection-preview">
+                        {reflectionValue}
+                      </p>
+                    ) : (
+                      <p className="text-gray-400 text-sm italic">No additional note added.</p>
+                    )}
                   </div>
-                )}
-                
-                {!skippedExpand && !reflectionValue && (
-                  <p className="text-gray-400 text-sm italic">No additional note added.</p>
                 )}
               </div>
 
