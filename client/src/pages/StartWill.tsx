@@ -608,12 +608,14 @@ export default function StartWill() {
         {/* Step 3: Why */}
         {currentStep === 3 && !showTransition && (
           <SectionCard>
-            {/* Will Statement Preview - Grounded Card */}
+            {/* Will Statement Preview - Bordered Card */}
             {willData.what && (
-              <div className="bg-gray-50 rounded-xl px-5 py-4 mb-4">
-                <p className="text-center text-gray-800 text-lg font-medium italic leading-relaxed">
-                  "I will {willData.what}"
-                </p>
+              <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                <div className="bg-white rounded-lg border border-gray-200 px-5 py-4">
+                  <p className="text-center text-gray-800 text-lg font-medium italic leading-relaxed">
+                    "I will {willData.what}"
+                  </p>
+                </div>
               </div>
             )}
             
