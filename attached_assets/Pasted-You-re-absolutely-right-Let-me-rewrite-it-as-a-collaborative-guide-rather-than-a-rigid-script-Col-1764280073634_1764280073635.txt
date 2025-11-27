@@ -1,0 +1,139 @@
+You're absolutely right! Let me rewrite it as a collaborative guide rather than a rigid script:
+
+Collaborative Prompt for Replit:
+"I want to implement a Solo Mode feature alongside the existing Inner Circle mode. I'll explain the goals and provide some implementation suggestions, but please use your judgment on the best approach given your knowledge of the codebase.
+
+What We Want to Accomplish:
+The Vision:
+
+Users can choose between Solo Mode ("No one is watching... but you") and Inner Circle mode ("Grow... together")
+Solo Mode mirrors the Inner Circle concept but for individual accountability
+All existing Inner Circle functionality stays completely intact
+
+Solo Mode Characteristics:
+
+No circle membership required
+No commitments from others (just your own)
+No End Room scheduling or video calls
+Starts immediately when created (no waiting for others)
+Completes immediately after you submit your review
+Otherwise follows the same flow: create commitment → Will becomes active → ends → review → complete
+
+
+High-Level Architecture:
+I'm thinking we need:
+
+Mode Selection Screen - Let users choose Solo vs Circle after login
+Solo Hub Page - Similar to Circle Hub but for individual Wills
+Database Schema Updates - Add mode field, make circleId nullable
+API Endpoints - Handle solo Will creation and fetching
+Modified Will Creation - Support solo mode (skip End Room step)
+Modified Will Details - Conditionally hide circle-specific features
+Scheduler Updates - Handle solo completion (no waiting for others)
+
+
+Key Questions for You:
+Before we start, I'd like your input on:
+1. Database Schema Approach:
+Currently circleId is .notNull(). For solo mode, we need it to be nullable. I'm thinking:
+
+Make circleId nullable
+Add a mode field (varchar 'solo' or 'circle')
+
+Does this approach make sense, or would you suggest a different schema design?
+2. Code Reusability:
+I'm hoping we can reuse:
+
+✅ StartWill.tsx (just skip End Room step for solo)
+✅ WillDetails.tsx (conditionally hide circle features)
+✅ WillReviewFlow component (same 3-step flow)
+
+Are there any components that would be better to duplicate rather than add conditional logic?
+3. State Machine for Solo:
+For solo Wills, I'm thinking:
+
+Skip pending and scheduled states (start as active immediately)
+Transition: active → will_review → completed
+Complete immediately after single review (no End Room waiting)
+
+Does this make sense with the existing scheduler logic, or would you recommend a different approach?
+
+Suggested Implementation Path:
+Here's my proposed order, but please adjust if you see a better approach:
+Phase 1: Database Foundation
+sqlALTER TABLE wills ALTER COLUMN circle_id DROP NOT NULL;
+ALTER TABLE wills ADD COLUMN mode VARCHAR(10) DEFAULT 'circle';
+Question: Should we add any indexes or constraints on the mode field?
+
+Phase 2: Mode Selection UI
+Modify Home.tsx to show two cards:
+
+Solo Mode card → navigates to /solo-hub
+Inner Circle card → navigates to /hub or /inner-circle
+
+Your call: Should this be a complete replacement of the current UI, or should we keep the existing flow and add a toggle/switcher somewhere?
+
+Phase 3: Solo Hub Page
+Create SoloHub.tsx - similar structure to InnerCircleHub.tsx but:
+
+Show only the user's solo Wills
+"Start Your First Will" button instead of circle member UI
+No invite codes or joining logic
+
+Your call: Should this be a completely new component, or can we create a shared base component that both Solo and Circle hubs extend?
+
+Phase 4: Backend API
+Add endpoint(s) for solo Wills:
+
+GET /api/solo/wills - Fetch user's solo Wills
+Modify POST /api/wills - Accept mode parameter, handle solo creation
+
+Question: Should we create separate endpoints for solo vs circle, or modify existing endpoints to handle both modes? What's cleaner?
+
+Phase 5: Will Creation Flow
+Modify StartWill.tsx:
+
+Detect mode via URL param ?mode=solo
+For solo: skip End Room step entirely
+On submit: send mode field, circleId: null for solo
+
+Your call: Is URL param the best way to pass mode, or should we use React state/context?
+
+Phase 6: Will Details Page
+Modify WillDetails.tsx:
+
+Detect will.mode === 'solo'
+Conditionally hide:
+
+End Room sections
+Circle member commitments
+"Waiting for others" messaging
+
+
+Update text: "Circle Reflections" → "Your Reflection" for solo
+
+Question: Should we use conditional rendering within the existing component, or create separate Solo and Circle detail views?
+
+Phase 7: Scheduler Logic
+Modify scheduler.ts completion check:
+
+If mode === 'solo': Complete when single review submitted
+If mode === 'circle': Keep existing two-condition logic (all reviews + End Room)
+
+Your call: Any edge cases I'm missing here?
+
+Important Constraints:
+
+✅ Don't break existing functionality - Inner Circle must work exactly as it does now
+✅ Solo is additive - We're not replacing, we're adding a parallel track
+✅ Reuse components - Where possible, extend existing components rather than duplicate
+
+
+What I Need From You:
+
+Review this plan - Does the overall approach make sense?
+Identify potential issues - Are there complications I'm not seeing?
+Suggest improvements - What would you do differently?
+Propose implementation order - Is my phase order logical, or should we tackle this differently?
+
+Please share your thoughts on the approach before we start coding. I want to make sure we're aligned on the architecture before making changes.
