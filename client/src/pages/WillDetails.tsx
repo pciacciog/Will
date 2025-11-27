@@ -677,7 +677,7 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* End Room Countdown - Show during will_review after user submits review */}
+        {/* End Room Countdown - Show during will_review when End Room is pending */}
         {will.status === 'will_review' && 
          will.endRoomScheduledAt && 
          will.endRoomStatus === 'pending' && (
@@ -701,6 +701,25 @@ export default function WillDetails() {
                 </p>
               </div>
             ) : null}
+          </div>
+        )}
+
+        {/* End Room OPEN - Show join button during will_review when room is open */}
+        {will.status === 'will_review' && 
+         will.endRoomScheduledAt && 
+         will.endRoomStatus === 'open' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4" data-testid="section-end-room-open">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Video className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">End Room is Open!</h3>
+              <EndRoomCountdown will={will} />
+              <p className="text-sm text-gray-600 mt-2 mb-4">
+                Join now to reflect with your circle. This <em>Will</em> will complete after the session ends.
+              </p>
+              <EndRoom willId={will.id} />
+            </div>
           </div>
         )}
 
