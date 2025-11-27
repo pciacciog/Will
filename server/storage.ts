@@ -66,6 +66,8 @@ export interface IStorage {
   // Will operations
   createWill(will: InsertWill): Promise<Will>;
   getCircleActiveWill(circleId: number): Promise<Will | undefined>;
+  getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
+  getUserActiveSoloWill(userId: string): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
   updateWillStatus(willId: number, status: string): Promise<void>;
   updateWill(willId: number, updates: Partial<InsertWill>): Promise<void>;
@@ -364,6 +366,53 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(wills.circleId, circleId),
         sql`status != 'archived'`
+      ))
+      .orderBy(desc(wills.createdAt))
+      .limit(1);
+    return will;
+  }
+
+  async getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]> {
+    // Get all solo wills created by this user
+    const soloWillsList = await db
+      .select()
+      .from(wills)
+      .where(and(
+        eq(wills.createdBy, userId),
+        eq(wills.mode, 'solo')
+      ))
+      .orderBy(desc(wills.createdAt));
+    
+    // For each will, get commitments with user info
+    const willsWithCommitments = await Promise.all(
+      soloWillsList.map(async (will) => {
+        const commitmentsList = await db
+          .select()
+          .from(willCommitments)
+          .innerJoin(users, eq(willCommitments.userId, users.id))
+          .where(eq(willCommitments.willId, will.id));
+        
+        return {
+          ...will,
+          commitments: commitmentsList.map(c => ({
+            ...c.will_commitments,
+            user: c.users,
+          })),
+        };
+      })
+    );
+    
+    return willsWithCommitments;
+  }
+
+  async getUserActiveSoloWill(userId: string): Promise<Will | undefined> {
+    const [will] = await db
+      .select()
+      .from(wills)
+      .where(and(
+        eq(wills.createdBy, userId),
+        eq(wills.mode, 'solo'),
+        sql`status NOT IN ('completed', 'archived')`
       ))
       .orderBy(desc(wills.createdAt))
       .limit(1);

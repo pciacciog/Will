@@ -457,116 +457,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const isSoloMode = req.body.mode === 'solo';
       
       // Prepare will data with proper types
-      const willDataWithDefaults = {
+      const willDataWithDefaults: any = {
         title: req.body.title,
         description: req.body.description,
         startDate: new Date(req.body.startDate),
         endDate: new Date(req.body.endDate),
         createdBy: userId,
-        circleId: 0, // Will be set below after getting circle
+        mode: isSoloMode ? 'solo' : 'circle',
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
       };
       
-      console.log("Will data before validation:", willDataWithDefaults);
+      console.log("Will data before validation:", willDataWithDefaults, "isSoloMode:", isSoloMode);
 
-      // Get user's circle
-      const circle = await storage.getUserCircle(userId);
-      if (!circle) {
-        return res.status(400).json({ message: "You must be in a circle to create a Will" });
-      }
-
-      // Check if circle already has an active will
-      const existingWill = await storage.getCircleActiveWill(circle.id);
-      if (existingWill) {
-        // If will is completed, check if all committed members have acknowledged
-        if (existingWill.status === 'completed') {
-          const existingWillWithCommitments = await storage.getWillWithCommitments(existingWill.id);
-          const commitmentCount = existingWillWithCommitments?.commitments?.length || 0;
-          const acknowledgedCount = await storage.getWillAcknowledgmentCount(existingWill.id);
-          
-          if (acknowledgedCount < commitmentCount) {
-            return res.status(400).json({ 
-              message: "Cannot create new Will until all committed members acknowledge completion of the current one",
-              requiresAcknowledgment: true,
-              acknowledgedCount,
-              commitmentCount
-            });
-          }
-        } else {
-          return res.status(400).json({ message: "Your circle already has an active Will" });
+      if (isSoloMode) {
+        // SOLO MODE: No circle required, starts immediately as active
+        
+        // Check if user already has an active solo will
+        const existingSoloWill = await storage.getUserActiveSoloWill(userId);
+        if (existingSoloWill) {
+          return res.status(400).json({ message: "You already have an active solo Will" });
         }
-      }
+        
+        // Solo wills don't have a circleId
+        willDataWithDefaults.circleId = null;
+        
+        const willData = insertWillSchema.parse(willDataWithDefaults);
+        
+        // Create will
+        const will = await storage.createWill(willData);
+        
+        // Solo wills start immediately as active (no waiting for others)
+        await storage.updateWillStatus(will.id, 'active');
+        
+        console.log(`Created solo Will ${will.id} for user ${userId}, status: active`);
+        
+        res.json({ ...will, status: 'active' });
+      } else {
+        // CIRCLE MODE: Existing logic
+        
+        // Get user's circle
+        const circle = await storage.getUserCircle(userId);
+        if (!circle) {
+          return res.status(400).json({ message: "You must be in a circle to create a Will" });
+        }
 
-      // Set circle ID and validate
-      willDataWithDefaults.circleId = circle.id;
-      const willData = insertWillSchema.parse(willDataWithDefaults);
-      
-      // Create will
-      const will = await storage.createWill(willData);
+        // Check if circle already has an active will
+        const existingWill = await storage.getCircleActiveWill(circle.id);
+        if (existingWill) {
+          // If will is completed, check if all committed members have acknowledged
+          if (existingWill.status === 'completed') {
+            const existingWillWithCommitments = await storage.getWillWithCommitments(existingWill.id);
+            const commitmentCount = existingWillWithCommitments?.commitments?.length || 0;
+            const acknowledgedCount = await storage.getWillAcknowledgmentCount(existingWill.id);
+            
+            if (acknowledgedCount < commitmentCount) {
+              return res.status(400).json({ 
+                message: "Cannot create new Will until all committed members acknowledge completion of the current one",
+                requiresAcknowledgment: true,
+                acknowledgedCount,
+                commitmentCount
+              });
+            }
+          } else {
+            return res.status(400).json({ message: "Your circle already has an active Will" });
+          }
+        }
 
-      // Create End Room if scheduled
-      if (req.body.endRoomScheduledAt) {
+        // Set circle ID and validate
+        willDataWithDefaults.circleId = circle.id;
+        const willData = insertWillSchema.parse(willDataWithDefaults);
+        
+        // Create will
+        const will = await storage.createWill(willData);
+
+        // Create End Room if scheduled
+        if (req.body.endRoomScheduledAt) {
+          try {
+            const endRoomTime = new Date(req.body.endRoomScheduledAt);
+            const willEndDate = new Date(req.body.endDate);
+            
+            // Validate End Room scheduling rules
+            if (!dailyService.isValidEndRoomTime(willEndDate, endRoomTime)) {
+              return res.status(400).json({ 
+                error: 'End Room must be scheduled between the Will end time and 48 hours afterward' 
+              });
+            }
+            
+            const endRoom = await dailyService.createEndRoom({
+              willId: will.id,
+              scheduledStart: endRoomTime,
+            });
+            
+            // Update will with End Room details
+            await storage.updateWillEndRoom(will.id, {
+              endRoomScheduledAt: endRoomTime,
+              endRoomUrl: endRoom.url,
+              endRoomStatus: 'pending',
+            });
+            
+            console.log(`Created End Room for Will ${will.id}: ${endRoom.url}`);
+          } catch (error) {
+            console.error('Error creating End Room:', error);
+            // Continue without End Room - will creation should still succeed
+          }
+        }
+
+        // Send push notifications to other circle members
         try {
-          const endRoomTime = new Date(req.body.endRoomScheduledAt);
-          const willEndDate = new Date(req.body.endDate);
+          console.log("Attempting to send push notifications...");
+          const members = await storage.getCircleMembers(circle.id);
+          console.log("Circle members found:", members?.length);
           
-          // Validate End Room scheduling rules
-          if (!dailyService.isValidEndRoomTime(willEndDate, endRoomTime)) {
-            return res.status(400).json({ 
-              error: 'End Room must be scheduled between the Will end time and 48 hours afterward' 
-            });
+          const otherMembers = members
+            .filter(member => member.userId !== userId)
+            .map(member => member.userId);
+          
+          console.log("Other members to notify:", otherMembers.length);
+          
+          if (otherMembers.length > 0) {
+            const creator = await storage.getUser(userId);
+            console.log("Creator found:", creator?.firstName, creator?.lastName);
+            
+            const creatorName = creator ? creator.firstName : 'Someone';
+            await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers);
+            console.log(`Sent Will proposed notifications to ${otherMembers.length} members`);
+          } else {
+            console.log("No other members to notify");
           }
-          
-          const endRoom = await dailyService.createEndRoom({
-            willId: will.id,
-            scheduledStart: endRoomTime,
-          });
-          
-          // Update will with End Room details
-          await storage.updateWillEndRoom(will.id, {
-            endRoomScheduledAt: endRoomTime,
-            endRoomUrl: endRoom.url,
-            endRoomStatus: 'pending',
-          });
-          
-          console.log(`Created End Room for Will ${will.id}: ${endRoom.url}`);
-        } catch (error) {
-          console.error('Error creating End Room:', error);
-          // Continue without End Room - will creation should still succeed
+        } catch (notificationError) {
+          console.error("Error sending will proposed notifications:", notificationError);
+          console.error("Notification error stack:", (notificationError as Error).stack);
+          // Don't fail the will creation if notifications fail
         }
-      }
 
-      // Send push notifications to other circle members
-      try {
-        console.log("Attempting to send push notifications...");
-        const members = await storage.getCircleMembers(circle.id);
-        console.log("Circle members found:", members?.length);
-        
-        const otherMembers = members
-          .filter(member => member.userId !== userId)
-          .map(member => member.userId);
-        
-        console.log("Other members to notify:", otherMembers.length);
-        
-        if (otherMembers.length > 0) {
-          const creator = await storage.getUser(userId);
-          console.log("Creator found:", creator?.firstName, creator?.lastName);
-          
-          const creatorName = creator ? creator.firstName : 'Someone';
-          await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers);
-          console.log(`Sent Will proposed notifications to ${otherMembers.length} members`);
-        } else {
-          console.log("No other members to notify");
-        }
-      } catch (notificationError) {
-        console.error("Error sending will proposed notifications:", notificationError);
-        console.error("Notification error stack:", (notificationError as Error).stack);
-        // Don't fail the will creation if notifications fail
+        res.json(will);
       }
-
-      res.json(will);
     } catch (error) {
       console.error("Error creating will:", error);
       res.status(500).json({ message: "Failed to create will" });
@@ -598,12 +626,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const circle = await storage.getCircleById(will.circleId);
+      // For solo wills, status is already active - no need to check circle
+      if (will.mode === 'solo') {
+        // Solo will - commitment added, will is already active
+        res.json(commitment);
+        return;
+      }
+
+      // Circle mode - check if all members have committed
+      const circle = await storage.getCircleById(will.circleId!);
       if (!circle) {
         return res.status(404).json({ message: "Circle not found" });
       }
 
-      const memberCount = await storage.getCircleMemberCount(will.circleId);
+      const memberCount = await storage.getCircleMemberCount(will.circleId!);
       const commitmentCount = await storage.getWillCommitmentCount(willId);
 
       // If all members have committed, mark as scheduled
@@ -615,6 +651,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error adding commitment:", error);
       res.status(500).json({ message: "Failed to add commitment" });
+    }
+  });
+
+  // Solo wills endpoint - fetch all solo wills for current user
+  app.get('/api/wills/solo', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const soloWills = await storage.getUserSoloWills(userId);
+      res.json(soloWills);
+    } catch (error) {
+      console.error("Error fetching solo wills:", error);
+      res.status(500).json({ message: "Failed to fetch solo wills" });
     }
   });
 
