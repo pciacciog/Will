@@ -219,7 +219,7 @@ export default function Auth() {
       </div>
       
       {/* Content Area */}
-      <div className="relative h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4" style={{ overscrollBehavior: 'none' }}>
+      <div className="relative h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+5rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4" style={{ overscrollBehavior: 'none' }}>
           
           <div className="max-w-sm mx-auto flex flex-col">
           {/* Header & App Logo */}
