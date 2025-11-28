@@ -156,8 +156,24 @@ export default function WillDetails() {
     },
   });
 
-  // Detect solo mode from will data
+  // Detect solo mode from will data with localStorage fallback for error states
   const isSoloMode = will?.mode === 'solo';
+  
+  // Store the mode when will is loaded so we can use it in error states
+  useEffect(() => {
+    if (will?.mode) {
+      localStorage.setItem('lastWillMode', will.mode);
+    }
+  }, [will?.mode]);
+  
+  // Helper to get the appropriate hub URL even in error states
+  const getHubUrl = () => {
+    if (will?.mode === 'solo') return '/solo/hub';
+    if (will?.mode === 'circle') return '/hub';
+    // Fallback to localStorage for error states
+    const lastMode = localStorage.getItem('lastWillMode');
+    return lastMode === 'solo' ? '/solo/hub' : '/hub';
+  };
 
   // Only fetch circle data for circle mode wills
   const { data: circle } = useQuery<any>({
@@ -238,7 +254,7 @@ export default function WillDetails() {
       if (will?.hasUserAcknowledged) {
         // If already acknowledged, just close modal and navigate
         setShowFinalSummary(false);
-        setLocation(isSoloMode ? '/solo/hub' : '/hub');
+        setLocation(getHubUrl());
         return;
       }
       
@@ -268,13 +284,13 @@ export default function WillDetails() {
       });
       
       // Navigate back to appropriate hub
-      setLocation(isSoloMode ? '/solo/hub' : '/hub');
+      setLocation(getHubUrl());
     },
     onError: (error: any) => {
       // Handle "already acknowledged" error gracefully
       if (error.message?.includes("already acknowledged")) {
         setShowFinalSummary(false);
-        setLocation(isSoloMode ? '/solo/hub' : '/hub');
+        setLocation(getHubUrl());
         return;
       }
       
@@ -303,7 +319,7 @@ export default function WillDetails() {
         title: "Will Deleted",
         description: "The will has been successfully deleted",
       });
-      setLocation(isSoloMode ? '/solo/hub' : '/hub');
+      setLocation(getHubUrl());
     },
     onError: (error: any) => {
       toast({
@@ -390,7 +406,7 @@ export default function WillDetails() {
           <p className="text-gray-600 mb-4">
             {error.message || 'Unable to load Will details'}
           </p>
-          <Button onClick={() => setLocation('/hub')}>
+          <Button onClick={() => setLocation(getHubUrl())}>
             Back to Hub
           </Button>
         </div>
@@ -403,7 +419,7 @@ export default function WillDetails() {
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4"><em>Will</em> not found</h2>
-          <Button onClick={() => setLocation('/hub')}>
+          <Button onClick={() => setLocation(getHubUrl())}>
             Back to Hub
           </Button>
         </div>
@@ -925,7 +941,7 @@ export default function WillDetails() {
         {/* Back to Hub */}
         <div className="text-center mt-4">
           <button 
-            onClick={() => setLocation(isSoloMode ? '/solo/hub' : '/hub')}
+            onClick={() => setLocation(getHubUrl())}
             className="text-base text-gray-600 hover:text-gray-800 underline font-medium"
           >
             Back to Hub
@@ -940,7 +956,7 @@ export default function WillDetails() {
           setShowFinalSummary(false);
           // Navigate back to dashboard if already acknowledged
           if (will?.hasUserAcknowledged) {
-            setLocation(isSoloMode ? '/solo/hub' : '/hub');
+            setLocation(getHubUrl());
           }
         }}
         onAcknowledge={() => acknowledgeMutation.mutate()}

@@ -31,8 +31,17 @@ export default function EditWill() {
     queryKey: ['/api/circles/mine'],
   });
 
-  // Detect solo mode from will data
+  // Detect solo mode from will data with localStorage fallback
   const isSoloMode = will?.mode === 'solo';
+  
+  // Helper to get the appropriate hub URL even in error states
+  const getHubUrl = () => {
+    if (will?.mode === 'solo') return '/solo/hub';
+    if (will?.mode === 'circle') return '/hub';
+    // Fallback to localStorage for error states
+    const lastMode = localStorage.getItem('lastWillMode');
+    return lastMode === 'solo' ? '/solo/hub' : '/hub';
+  };
 
   useEffect(() => {
     if (will) {
@@ -93,7 +102,7 @@ export default function EditWill() {
         title: "WILL Deleted",
         description: "The will has been successfully deleted",
       });
-      setLocation(isSoloMode ? '/solo/hub' : '/hub');
+      setLocation(getHubUrl());
     },
     onError: (error) => {
       toast({
@@ -165,7 +174,7 @@ export default function EditWill() {
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">WILL not found</h2>
-          <Button onClick={() => setLocation(isSoloMode ? '/solo/hub' : '/hub')}>
+          <Button onClick={() => setLocation(getHubUrl())}>
             Back to Hub
           </Button>
         </div>
