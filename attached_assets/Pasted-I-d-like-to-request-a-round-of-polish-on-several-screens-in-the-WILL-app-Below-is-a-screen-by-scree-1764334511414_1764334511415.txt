@@ -1,0 +1,80 @@
+I’d like to request a round of polish on several screens in the WILL app. Below is a screen-by-screen list of UI and copy updates. Please feel free to adjust exact spacing/styling as long as the intent is preserved and everything stays consistent with the existing design system.
+
+1. Set Your Timeline Screen
+A. “Defaults to next Mon–Sun” note
+* Use an asterisk-style note so it reads like a small disclaimer:
+    * Add a small * to the relevant label(s) (e.g., “Start*” / “End*” or just “Start*”).
+    * Under the Start/End date fields, in a smaller muted font, show: * Defaults to next Mon–Sun
+* This should look subtle and clean, not loud.
+B. Time picker ease-of-use
+* The Start/End time picker feels too manual. Please make time selection smoother and less tedious, e.g.:
+    * Use reasonable increments (15–30 minutes) instead of very granular scrolling, and/or
+    * Otherwise simplify the interaction so selecting a time requires less manual effort.
+* Use your judgment on the exact implementation; the main goal is that choosing a time feels quick and intuitive.
+
+2. “Why Would You Like to Do This?” Screen
+A. “I will …” summary card
+    * Add a subtle border and/or light background tint
+B. “Your Why” grouping
+* Combine the label and privacy note into a single line above the input field, for example: Your Why (Private — only you can see this)
+* Place this directly above the “Because …” field so the section feels like one unit.
+C. Placeholder text alignment
+* The placeholder text in the “Because” field (e.g. “I like how I feel after I talk to her”) is vertically misaligned (too high in the box).
+* Please adjust the input styling so the placeholder is vertically centered:
+    * Balance top/bottom padding
+    * Ensure the line-height works with the input height
+    * Avoid fixed heights that cause the text to hug the top.
+
+3. Schedule Your End Room Screen
+A. Skip button
+* Move the Skip button further into the top-right corner of the End Room card area so it feels anchored.
+* Slightly reduce its size and make sure it clearly looks like a tappable button (e.g., text-button or ghost/pill button), not just floating text.
+B. Copy updates in the info box
+* Increase the font size in the rules/info box slightly for readability.
+* Update the bullets to:
+    * “Virtual meeting link opens automatically at the time you choose.”
+    * “Runs for 30 minutes.”
+    * “Can’t be changed once your Will starts.”
+* (Note the spaces in “once your Will starts.” It is currently reading as “oncewillstarts” with no space as a single word)
+C. Create Will button
+* The Create Will button looks too wide relative to its text. Please tighten the padding so the button feels more proportional to the text.
+D. Video call line with end date/time
+* Update the main instruction line to include the user’s selected end date/time, with distinct formatting. For example: “Choose a time for a video call after your Will ends on Dec 7, 2025 at 12:00 PM.” (The date/time can be italic, bold, or otherwise visually differentiated.)
+E. Vertical compactness
+* As you adjust, please try to preserve the layout as compact as reasonably possible so most of the content fits within one iPhone screen without unnecessary scrolling
+
+4. Step 2: Expand Screen
+A. Spacing / layout
+* The top of this section feels overly padded. Please:
+    * Reduce the vertical space between the Circle Commitments card and the Step 2 (purple) container.
+    * Reduce the gap between the stepper (1–2–3) and the white Step 2 card.
+    * Reduce the top padding inside the white card above “Step 2: Expand” so the title sits a bit higher, similar to the other steps.
+B. Skip button
+* Keep the Skip button in the upper-right of the white card, but:
+    * Ensure it doesn’t collide visually with the title
+    * Style it clearly as a button (text/ghost) with appropriate padding and tap target
+    * Match its vertical alignment with the tightened top padding.
+C. Text field behavior (typing experience)
+* The note input currently feels like a large static box with a lot of empty space.
+* Please make it behave more like a modern messaging input:
+    * Start as a compact 1-line height
+    * Auto-grow vertically as the user types (line by line)
+    * After a reasonable max height (e.g., ~4–5 lines), stop growing and let the content scroll inside
+    * Use modest, balanced vertical padding so the text doesn’t float in a huge box.
+
+5. Step 3: Share Screen
+A. Label copy
+* Update the label text to: “Followed-Through?” (Capital T, with the hyphen and question mark.)
+B. Status pill consistency (“Yes / Mostly / No”)
+* The status pill should always display its text on a single line.
+* Right now “Mostly” can wrap, while “No” and “Yes” do not.
+* Please:
+    * Prevent wrapping (e.g., white-space: nowrap)
+    * Ensure pill width / padding is sufficient so “Mostly” doesn’t break onto two lines
+    * Keep row height consistent regardless of which option is shown.
+C. Row alignment & spacing
+* Ensure the “Followed-Through?” label and its pill are vertically centered within their row.
+* Keep the spacing between the “Followed-Through?” row and the “Notes” row consistent with our standard vertical rhythm (no extra gaps).
+* Confirm that “Notes” and its grey placeholder (“No additional note added.”) feel visually grouped in a clean, readable card/container, as currently designed.
+
+If you see a cleaner way to achieve any of this while staying aligned with the app’s overall style, feel free to propose it. Please share updated JSX/styling and any notes on how you implemented the layout and behavior changes.

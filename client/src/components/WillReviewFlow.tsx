@@ -147,8 +147,8 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-6">
-      {/* Progress Indicator */}
-      <div className="flex items-center justify-center mb-8">
+      {/* Progress Indicator - tighter spacing */}
+      <div className="flex items-center justify-center mb-5">
         <div className="flex items-center gap-2">
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -296,9 +296,9 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
 
           {/* Step 2: Expand */}
           {step === 2 && (
-            <div className="space-y-5" data-testid="step-2-expand">
+            <div className="space-y-4" data-testid="step-2-expand">
               {/* Skip button in top-right corner of card */}
-              <div className="flex justify-end -mt-1 -mr-1 mb-3">
+              <div className="flex justify-end -mt-2 -mr-2 mb-1">
                 <button
                   type="button"
                   onClick={handleSkip}
@@ -309,9 +309,9 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                 </button>
               </div>
               
-              {/* Header - centered title */}
+              {/* Header - centered title with tighter spacing */}
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-1">Step 2: Expand</h2>
                 <p className="text-gray-500 text-sm">
                   You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
                   Add a short note for your circle if you'd like.
@@ -328,7 +328,8 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                         {...field}
                         ref={reflectionRef}
                         rows={1}
-                        className="resize-none overflow-y-auto rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 py-3 px-4 text-base leading-relaxed transition-all"
+                        placeholder="Add a short note..."
+                        className="resize-none overflow-y-auto rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 py-3 px-4 text-base leading-relaxed transition-all min-h-[44px]"
                         style={{ maxHeight: '120px' }}
                         maxLength={200}
                         data-testid="textarea-reflection"
@@ -379,12 +380,12 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
               </div>
 
               {/* Preview Card */}
-              <div className="bg-gray-50 rounded-xl p-5 space-y-4">
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 {/* Follow-through Answer Section */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500 font-medium">Followed-through?</span>
-                    <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                    <span className="text-sm text-gray-500 font-medium">Followed-Through?</span>
+                    <span className={`text-sm font-semibold px-3 py-1 rounded-full whitespace-nowrap ${
                       followThroughValue === "yes" 
                         ? "bg-emerald-100 text-emerald-700"
                         : followThroughValue === "mostly"

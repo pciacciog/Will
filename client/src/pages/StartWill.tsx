@@ -524,12 +524,9 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
           <SectionCard>
             
             <form onSubmit={handleStep1Submit} className="space-y-5 px-4">
-              {/* Helper text inside the card */}
-              <p className="text-xs text-gray-400 text-center">Defaults to next Mon–Sun</p>
-              
               {/* Start Date & Time */}
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start*</label>
                 <div className="grid grid-cols-2 gap-3">
                   <Input 
                     type="date" 
@@ -554,7 +551,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               
               {/* End Date & Time */}
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '100ms' }}>
-                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End*</label>
                 <div className="grid grid-cols-2 gap-3">
                   <Input 
                     type="date" 
@@ -576,6 +573,9 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                   />
                 </div>
               </div>
+              
+              {/* Asterisk note */}
+              <p className="text-xs text-gray-400 text-center">*Defaults to next Mon–Sun</p>
               
               <div className="flex justify-between items-center pt-4 animate-in fade-in duration-500" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center space-x-2">
@@ -648,10 +648,10 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         {/* Step 3: Why */}
         {currentStep === 3 && !showTransition && (
           <SectionCard>
-            {/* Will Statement Preview - Bordered Card */}
+            {/* Will Statement Preview - Bordered Card with subtle tint */}
             {willData.what && (
-              <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                <div className="bg-white rounded-lg border border-gray-200 px-5 py-4">
+              <div className="bg-gradient-to-br from-blue-50/60 to-indigo-50/40 rounded-xl p-4 mb-4 border border-blue-100/60">
+                <div className="bg-white/90 rounded-lg border border-gray-200 px-5 py-4 shadow-sm">
                   <p className="text-center text-gray-800 text-lg font-medium italic leading-relaxed">
                     "I will {willData.what}"
                   </p>
@@ -661,20 +661,20 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
             
             <form onSubmit={handleStep3Submit} className="space-y-3">
               <div>
-                {/* Header with label and privacy note - matches Step 2 styling */}
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
-                  <span className="text-xs text-gray-500 flex items-center tracking-tight">
+                {/* Combined label with privacy note on single line */}
+                <label className="flex items-center text-sm font-medium text-gray-700 tracking-tight mb-3">
+                  Your Why
+                  <span className="text-xs text-gray-400 font-normal ml-2 flex items-center">
                     <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    Private - only you can see this
+                    (Private — only you can see this)
                   </span>
-                </div>
+                </label>
                 {/* Input container - matches Step 2 with "Because" inside like "I will" */}
                 <div className="relative">
-                  <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                    <span className="text-gray-900 font-medium text-base mr-3 mt-0.5 flex-shrink-0">Because</span>
+                  <div className="flex items-center bg-white border border-gray-200 rounded-xl px-4 py-3 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200 min-h-[48px]">
+                    <span className="text-gray-900 font-medium text-base mr-3 flex-shrink-0">Because</span>
                     <Textarea 
                       ref={whyRef}
                       name="why"
@@ -688,8 +688,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                         resizeTextarea(whyRef);
                       }}
                       placeholder="I like how I feel after I talk to her"
-                      className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400 transition-all" 
-                      style={{ maxHeight: '96px' }}
+                      className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400 transition-all flex items-center" 
+                      style={{ maxHeight: '96px', minHeight: '24px' }}
                     />
                   </div>
                 </div>
@@ -720,19 +720,22 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         {/* Step 4: End Room Scheduling */}
         {currentStep === 4 && !showTransition && (
           <SectionCard>
-            <form onSubmit={handleStep4Submit} className="space-y-4">
-              {/* Header with Skip in top-right */}
-              <div className="relative px-4">
+            <form onSubmit={handleStep4Submit} className="space-y-3">
+              {/* Skip button anchored in top-right corner */}
+              <div className="flex justify-end -mt-2 -mr-2 mb-2">
                 <button 
                   type="button" 
                   onClick={() => setShowSkipConfirmation(true)}
                   disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                  className="absolute top-0 right-0 text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded transition-colors duration-200 disabled:opacity-50"
+                  className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
                   data-testid="button-skip-endroom"
                 >
                   Skip
                 </button>
-                
+              </div>
+              
+              {/* Header with Video Icon */}
+              <div className="px-4">
                 {/* Compact Video Icon */}
                 <div className="flex justify-center mb-3">
                   <div className="relative">
@@ -744,7 +747,11 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 </div>
                 
                 <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-                  Choose a time for a video call after your <em>Will</em> ends
+                  Choose a time for a video call after your <em>Will</em> ends on{' '}
+                  <span className="font-semibold text-gray-900">
+                    {endDate ? new Date(`${endDate}T${endTime || '12:00'}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}{' '}
+                    at {endTime ? new Date(`${endDate}T${endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '12:00 PM'}
+                  </span>
                 </label>
                 
                 {/* Input field */}
@@ -762,43 +769,43 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 </div>
               </div>
 
-              {/* Compact Info Box */}
+              {/* Info Box with slightly larger text */}
               <div className="mx-4 bg-blue-50/50 border border-blue-100/50 rounded-lg p-3">
-                <ul className="space-y-1.5 text-xs text-gray-600">
-                  <li className="flex items-center">
-                    <span className="w-1 h-1 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                    Opens automatically at the time you choose
+                <ul className="space-y-1.5 text-sm text-gray-600">
+                  <li className="flex items-start">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                    Virtual meeting link opens automatically at the time you choose.
                   </li>
-                  <li className="flex items-center">
-                    <span className="w-1 h-1 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                    Runs for 30 minutes
+                  <li className="flex items-start">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                    Runs for 30 minutes.
                   </li>
-                  <li className="flex items-center">
-                    <span className="w-1 h-1 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                    Can't be changed once <em>Will</em> starts
+                  <li className="flex items-start">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                    Can't be changed once your Will starts.
                   </li>
                 </ul>
               </div>
 
               {/* Action Buttons - Compact row layout */}
-              <div className="px-4 pt-2">
+              <div className="px-4 pt-1">
                 <div className="flex gap-3">
                   {/* Back button - smaller, left side */}
                   <button 
                     type="button" 
                     onClick={() => setCurrentStep(3)}
-                    className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                    className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
                     data-testid="button-back"
                   >
                     <ArrowLeft className="w-4 h-4 mr-1" />
                     Back
                   </button>
                   
-                  {/* Primary CTA - takes remaining space */}
+                  {/* Primary CTA - tighter padding */}
                   <button
                     type="submit"
                     disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
-                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center transition-all duration-200 ${
+                    className={`px-5 py-2 rounded-xl text-sm font-medium flex items-center justify-center transition-all duration-200 ${
                       !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         : 'bg-brandGreen text-white hover:bg-green-600 shadow-sm'
@@ -808,7 +815,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     {createWillMutation.isPending || addCommitmentMutation.isPending 
                       ? 'Creating...' 
                       : 'Create Will'}
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    <ArrowRight className="w-4 h-4 ml-1" />
                   </button>
                 </div>
               </div>
