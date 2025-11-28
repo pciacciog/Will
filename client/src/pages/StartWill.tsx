@@ -487,6 +487,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
             <div className="flex items-center justify-center space-x-1.5 min-w-0 flex-1">
+              {/* Step 1: When */}
               <div className="flex items-center">
                 <div className={`w-7 h-7 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
                   1
@@ -494,6 +495,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 <span className={`ml-1 text-xs ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(1)}</span>
               </div>
               <div className={`w-4 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              {/* Step 2: What */}
               <div className="flex items-center">
                 <div className={`w-7 h-7 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
                   2
@@ -501,19 +503,25 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 <span className={`ml-1 text-xs ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(2)}</span>
               </div>
               <div className={`w-4 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              {/* Step 3: Why */}
               <div className="flex items-center">
                 <div className={`w-7 h-7 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
                   3
                 </div>
-                <span className={`ml-1 text-xs ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
+                <span className={`ml-1 text-xs ${currentStep >= 3 ? 'bg-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
               </div>
-              <div className={`w-4 h-0.5 ${currentStep >= 4 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-              <div className="flex items-center">
-                <div className={`w-7 h-7 ${currentStep >= 4 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
-                  4
-                </div>
-                <span className={`ml-1 text-xs ${currentStep >= 4 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(4)}</span>
-              </div>
+              {/* Step 4: End Room - only shown for Circle mode, hidden for Solo mode */}
+              {!isSoloMode && (
+                <>
+                  <div className={`w-4 h-0.5 ${currentStep >= 4 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                  <div className="flex items-center">
+                    <div className={`w-7 h-7 ${currentStep >= 4 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                      4
+                    </div>
+                    <span className={`ml-1 text-xs ${currentStep >= 4 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(4)}</span>
+                  </div>
+                </>
+              )}
             </div>
           
           {/* Current Step Title */}
