@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
-import { Hand, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import appLogo from "@assets/apple-devices/AppIcon.appiconset/icon-ios-1024x1024.png";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MobileLayout } from "@/components/ui/design-system";
@@ -221,14 +222,16 @@ export default function Auth() {
       <div className="relative h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4" style={{ overscrollBehavior: 'none' }}>
           
           <div className="max-w-sm mx-auto flex flex-col">
-          {/* Header & Icon with Glowy Effect */}
+          {/* Header & App Logo */}
           <div className="text-center mb-2 md:mb-4">
             <div className="relative inline-block">
-              {/* Glow effect behind icon */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl blur-xl opacity-40 animate-pulse scale-110"></div>
-              <div className="relative bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-2xl w-14 h-14 flex items-center justify-center mx-auto mb-2 md:mb-3 shadow-xl shadow-emerald-500/25">
-                <Hand className="w-7 h-7 text-white" />
-              </div>
+              {/* Glow effect behind logo */}
+              <div className="absolute inset-0 bg-gradient-to-br from-red-300 to-rose-400 rounded-2xl blur-xl opacity-30 animate-pulse scale-110"></div>
+              <img 
+                src={appLogo} 
+                alt="WILL App Logo" 
+                className="relative w-20 h-20 mx-auto mb-2 md:mb-3 rounded-2xl shadow-xl"
+              />
             </div>
             <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-1 md:mb-2">WILL</h1>
             <p className="text-sm text-gray-500 leading-snug text-center mb-4 md:mb-6">Become who you're meant to be.</p>
