@@ -690,14 +690,17 @@ export default function WillDetails() {
               </div>
             ) : (
               <WillReviewFlow 
-                willId={will.id} 
+                willId={will.id}
+                mode={isSoloMode ? 'solo' : 'circle'}
                 onComplete={() => {
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
                   toast({
                     title: "Review Completed",
-                    description: "Thank you for sharing your reflection!",
+                    description: isSoloMode 
+                      ? "Your reflection has been saved." 
+                      : "Thank you for sharing your reflection!",
                   });
                 }}
               />

@@ -23,10 +23,12 @@ type ReviewFormValues = z.infer<typeof reviewFormSchema>;
 
 interface WillReviewFlowProps {
   willId: number;
+  mode?: 'solo' | 'circle';
   onComplete: () => void;
 }
 
-export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
+export function WillReviewFlow({ willId, mode = 'circle', onComplete }: WillReviewFlowProps) {
+  const isSolo = mode === 'solo';
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [skippedExpand, setSkippedExpand] = useState(false);
   const { toast } = useToast();
@@ -68,8 +70,8 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Shared with your circle",
-        description: "Your acknowledgment has been shared.",
+        title: isSolo ? "Review submitted" : "Shared with your circle",
+        description: isSolo ? "Your Will is now complete." : "Your acknowledgment has been shared.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/wills"] });
       queryClient.invalidateQueries({ queryKey: ["/api/wills", willId] });
@@ -311,7 +313,7 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
                 <p className="text-gray-500 text-sm">
                   You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
-                  Add a short note for your circle if you'd like.
+                  {isSolo ? " Add a short note for yourself if you'd like." : " Add a short note for your circle if you'd like."}
                 </p>
               </div>
 
@@ -363,15 +365,21 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
             </div>
           )}
 
-          {/* Step 3: Share */}
+          {/* Step 3: Share/Finalize */}
           {step === 3 && (
             <div className="space-y-6" data-testid="step-3-share">
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 3: Share</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  {isSolo ? "Step 3: Finalize" : "Step 3: Share"}
+                </h2>
                 <p className="text-gray-500 text-sm">
-                  {skippedExpand 
-                    ? "Confirm your response to share with your circle."
-                    : "Review before sharing with your circle."
+                  {isSolo
+                    ? (skippedExpand 
+                        ? "Confirm your response to complete this Will."
+                        : "Review your reflection before completing this Will.")
+                    : (skippedExpand 
+                        ? "Confirm your response to share with your circle."
+                        : "Review before sharing with your circle.")
                   }
                 </p>
               </div>
@@ -429,10 +437,10 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
                   {submitReview.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Sharing...
+                      {isSolo ? "Submitting..." : "Sharing..."}
                     </>
                   ) : (
-                    "Share"
+                    isSolo ? "Submit Review" : "Share"
                   )}
                 </Button>
               </div>

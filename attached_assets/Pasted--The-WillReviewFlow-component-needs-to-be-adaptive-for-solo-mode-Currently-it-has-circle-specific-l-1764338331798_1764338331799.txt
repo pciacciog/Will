@@ -1,0 +1,137 @@
+"The WillReviewFlow component needs to be adaptive for solo mode. Currently it has circle-specific language that doesn't make sense when working alone.
+
+Component to Update:
+File: client/src/components/WillReviewFlow.tsx
+This is the 3-step review modal that appears when a Will ends (status = will_review).
+
+Current Issues (Circle-Only Language):
+Step 2 (Reflect):
+
+Text: "Add a short note for your circle"
+❌ Problem: In solo mode, there's no circle
+
+Step 3 (Share):
+
+Text: "Review before sharing with your circle"
+Button: "Share with Circle"
+❌ Problem: In solo mode, you're not sharing with anyone
+
+
+Required Changes:
+Detect Mode:
+The component receives a will prop. Use will.mode to determine if it's solo or circle:
+typescriptconst isSolo = will.mode === 'solo';
+Step 2 (Reflect) - Update Text:
+Current:
+tsx<p>Add a short note for your circle</p>
+Change to:
+tsx<p>
+  {isSolo 
+    ? "Add a short note for yourself" 
+    : "Add a short note for your circle"
+  }
+</p>
+Step 3 (Share) - Rethink the Concept:
+For Circle Mode (current):
+
+Header: "Review before sharing with your circle"
+Shows: Your acknowledgment + reflection
+Button: "Share with Circle"
+Concept: You're posting to the group
+
+For Solo Mode (new approach):
+The user suggests changing to "review before finalizing" or something similar. Here are some options - please choose what feels best UX-wise:
+Option A: "Finalize Your Review"
+tsx<h3>Finalize Your Review</h3>
+<p>Review your reflection before completing this Will</p>
+<Button>Complete Will</Button>
+Option B: "Confirm & Submit"
+tsx<h3>Confirm Your Reflection</h3>
+<p>Review your progress and reflection</p>
+<Button>Submit Review</Button>
+Option C: "Save Your Reflection"
+tsx<h3>Save Your Reflection</h3>
+<p>Your reflection will be saved to your Will history</p>
+<Button>Save & Complete</Button>
+Your call: Which approach feels most natural for solo accountability? Or suggest something even better.
+
+Suggested Implementation:
+tsx// Step 3 content
+{step === 3 && (
+  <div className="space-y-4">
+    <div>
+      <h3 className="text-lg font-semibold mb-2">
+        {isSolo 
+          ? "Finalize Your Review" 
+          : "Review Before Sharing"
+        }
+      </h3>
+      <p className="text-sm text-muted-foreground">
+        {isSolo
+          ? "Review your reflection before completing this Will"
+          : "Review before sharing with your circle"
+        }
+      </p>
+    </div>
+
+    {/* Show the summary */}
+    <Card className="bg-accent/50">
+      <CardContent className="pt-4">
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Follow Through
+            </p>
+            <p className="font-semibold">
+              {followThrough === 'yes' ? '✓ Completed' : '✗ Not Completed'}
+            </p>
+          </div>
+          
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Your Reflection
+            </p>
+            <p className="text-sm">{reflection}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Buttons */}
+    <div className="flex gap-2">
+      <Button variant="outline" onClick={() => setStep(2)}>
+        Edit
+      </Button>
+      <Button 
+        onClick={handleSubmit}
+        className="flex-1"
+      >
+        {isSolo ? "Submit Review" : "Share with Circle"}
+      </Button>
+    </div>
+  </div>
+)}
+
+Additional Considerations:
+The "shareWithCircle" toggle (if it exists):
+
+For solo mode: This toggle doesn't make sense - remove it or hide it
+For circle mode: Keep it as-is
+
+After submission messaging:
+
+Solo: "Review saved! Your Will is now complete."
+Circle: "Shared with your circle! Waiting for others..."
+
+
+Summary of Changes:
+
+✅ Detect isSolo from will.mode
+✅ Step 2: "Add a short note for yourself" (solo) vs "your circle" (circle)
+✅ Step 3 header: "Finalize Your Review" (solo) vs "Review Before Sharing" (circle)
+✅ Step 3 description: Appropriate context for each mode
+✅ Button text: "Submit Review" (solo) vs "Share with Circle" (circle)
+✅ Hide/remove any circle-specific toggles for solo mode
+✅ Update success messaging appropriately
+
+Please implement these changes and choose the Step 3 wording that feels most natural for solo mode. Feel free to suggest improvements to my suggestions - you have the full context of the component!"
