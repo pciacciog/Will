@@ -149,7 +149,7 @@ class PushNotificationService {
           }
         }
         
-        await this.sendToDevice(tokenRecord.deviceToken, payload, userId);
+        await this.sendToDevice(tokenRecord.deviceToken, payload, userId, tokenRecord.bundleId || undefined);
       }
 
       return true;
@@ -173,7 +173,7 @@ class PushNotificationService {
     console.log(`[PushNotificationService] 🔍 DEBUG: Completed notification send to all ${userIds.length} users`);
   }
 
-  private async sendToDevice(deviceToken: string, payload: PushNotificationPayload, userId?: string): Promise<boolean> {
+  private async sendToDevice(deviceToken: string, payload: PushNotificationPayload, userId?: string, bundleId?: string): Promise<boolean> {
     try {
       const userInfo = userId ? ` (for user ${userId})` : '';
       console.log(`[PushNotificationService] 🔍 DEBUG: sendToDevice called with token ${deviceToken.substring(0, 20)}...${userInfo}`);
@@ -201,7 +201,10 @@ class PushNotificationService {
       };
       notification.badge = payload.badge || 1;
       notification.sound = payload.sound || 'default';
-      notification.topic = process.env.APNS_TOPIC || 'com.porfirio.will'; // Your app's bundle ID
+      // Use token's bundle ID if provided, otherwise fall back to env var or default
+      // Clean up bundle ID (remove trailing dots if present)
+      const cleanBundleId = bundleId?.replace(/\.+$/, '') || process.env.APNS_TOPIC || 'com.porfirio.will';
+      notification.topic = cleanBundleId;
       notification.payload = payload.data || {};
 
       // COMPREHENSIVE APNS REQUEST LOGGING
