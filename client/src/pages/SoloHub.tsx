@@ -61,16 +61,15 @@ export default function SoloHub() {
       <div className="pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
           
-          {/* Header with Back Button - positioned well below iOS status bar */}
-          <div className="flex items-center mb-8">
-            {/* Back Button - accessible 44pt tap target with visually lighter appearance */}
+          {/* Header with Back Button */}
+          <div className="flex items-center justify-between mb-2">
+            {/* Back Button */}
             <button
               onClick={handleBack}
               className="w-11 h-11 -ml-2 flex items-center justify-center"
               data-testid="button-back-home"
               aria-label="Go back"
             >
-              {/* Visual button element - smaller than tap target */}
               <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:border-gray-300 transition-all duration-200 active:scale-95">
                 <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
               </span>
@@ -78,18 +77,19 @@ export default function SoloHub() {
             
             {/* Centered Title */}
             <div className="flex-1 text-center -ml-2">
-              <h1 className="text-xl font-semibold text-gray-900">Solo Mode</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Solo</h1>
             </div>
             
-            {/* Spacer to balance centering - matches button width */}
+            {/* Spacer to balance centering */}
             <div className="w-9" />
           </div>
 
-          {/* Solo Mode Intro */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center mb-3">
+          {/* Solo Icon with Glow + Tagline */}
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center mb-2">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 blur-2xl opacity-40 animate-pulse"></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-purple-400/10 to-indigo-400/10 blur-lg opacity-25"></div>
                 <div className="relative w-14 h-14 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-full border-2 border-purple-100 flex items-center justify-center shadow-lg">
                   <User className="w-7 h-7 text-purple-600" />
                 </div>

@@ -461,7 +461,7 @@ export default function InnerCircleHub() {
         <div className="max-w-sm mx-auto px-5">
           
           {/* Header with Back Button */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             {/* Back Button */}
             <button
               onClick={() => setLocation('/')}
@@ -477,7 +477,6 @@ export default function InnerCircleHub() {
             {/* Title */}
             <div className="flex-1 text-center -ml-2">
               <h1 className="text-xl font-semibold text-gray-900">Circle</h1>
-              <p className="text-sm text-emerald-600 italic">Become more… together</p>
             </div>
             
             {/* User Menu */}
@@ -537,16 +536,20 @@ export default function InnerCircleHub() {
             </DropdownMenu>
           </div>
 
-          {/* Circle Icon with Glow - Compact */}
-          <div className="text-center mb-3">
-            <div className="inline-flex items-center justify-center mb-1">
+          {/* Circle Icon with Glow + Tagline */}
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center mb-2">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-md opacity-25 animate-pulse"></div>
-                <div className="relative w-11 h-11 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-100 flex items-center justify-center shadow-md">
-                  <Users className="w-5 h-5 text-emerald-600" />
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 blur-2xl opacity-40 animate-pulse"></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/10 to-teal-400/10 blur-lg opacity-25"></div>
+                <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-100 flex items-center justify-center shadow-lg">
+                  <Users className="w-7 h-7 text-emerald-600" />
                 </div>
               </div>
             </div>
+            <p className="text-emerald-600 text-sm font-medium italic">
+              "Become more… together"
+            </p>
           </div>
 
           {/* Members Section - Compact */}

@@ -1,0 +1,114 @@
+"I need to update the header layouts for both Circle Hub and Solo Hub to match each other and improve visual hierarchy.
+
+Current Layouts (Inconsistent):
+Circle Hub:
+
+Title: "Circle"
+Subtitle: "Become more together"
+Icon: Users icon (below text) ❌
+
+Solo Hub:
+
+Title: "Solo Mode"
+Icon: User icon
+Tagline: "No one is watching... but you"
+
+
+New Layouts (Consistent):
+Both should follow this pattern:
+Title (centered)
+Icon (centered, with glow)
+Tagline (centered, below icon)
+
+File 1: InnerCircleHub.tsx (Circle Hub)
+Find the header section and restructure it:
+Change from:
+tsx<h1>Circle</h1>
+<p>Become more together</p>
+<Users icon />
+Change to:
+tsx<div className="text-center">
+  <h1 className="text-2xl font-bold mb-4">Circle</h1>
+  
+  {/* Icon with glow */}
+  <div className="flex justify-center mb-4">
+    <div className="relative">
+      {/* Glow effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 blur-2xl opacity-40 animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/10 to-teal-400/10 blur-lg opacity-25" />
+      
+      {/* Icon container */}
+      <div className="relative p-4 bg-emerald-100 rounded-full">
+        <Users className="h-8 w-8 text-emerald-600" />
+      </div>
+    </div>
+  </div>
+  
+  <p className="text-muted-foreground italic text-sm">
+    Become more... together
+  </p>
+</div>
+
+File 2: SoloHub.tsx
+Make two changes:
+Change 1: Title "Solo Mode" → "Solo"
+tsx// Current:
+<h1>Solo Mode</h1>
+
+// Change to:
+<h1 className="text-2xl font-bold">Solo</h1>
+Change 2: Center and tighten spacing
+Update the header structure to be more centered and compact:
+tsx<div className="text-center">
+  <h1 className="text-2xl font-bold mb-3">Solo</h1>
+  
+  {/* Icon with glow - bring closer to title */}
+  <div className="flex justify-center mb-3">
+    <div className="relative">
+      {/* Glow effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 blur-2xl opacity-40 animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-purple-400/10 to-indigo-400/10 blur-lg opacity-25" />
+      
+      {/* Icon container */}
+      <div className="relative p-4 bg-purple-100 rounded-full">
+        <User className="h-8 w-8 text-purple-600" />
+      </div>
+    </div>
+  </div>
+  
+  <p className="text-muted-foreground italic text-sm">
+    No one is watching... but you
+  </p>
+</div>
+```
+
+**Key spacing changes:**
+- `mb-4` → `mb-3` (tighten spacing between title and icon)
+- `mb-4` → `mb-3` (tighten spacing between icon and tagline)
+
+---
+
+## **Summary of Changes:**
+
+### **Circle Hub:**
+✅ Icon moved ABOVE tagline
+✅ Layout now matches Solo Hub
+✅ Proper centering
+
+### **Solo Hub:**
+✅ "Solo Mode" → "Solo"
+✅ Better centered
+✅ Tighter spacing (title closer to icon)
+
+---
+
+## **Visual Result Should Be:**
+
+**Both hubs now follow identical layout pattern:**
+```
+        Title
+       [Icon]
+      Tagline
+Centered, balanced, consistent.
+
+Please implement these changes and show me the updated layouts for both hubs."
