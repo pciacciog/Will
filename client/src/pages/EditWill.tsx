@@ -31,6 +31,9 @@ export default function EditWill() {
     queryKey: ['/api/circles/mine'],
   });
 
+  // Detect solo mode from will data
+  const isSoloMode = will?.mode === 'solo';
+
   useEffect(() => {
     if (will) {
       const startDateTime = splitDateTime(will.startDate);
@@ -78,15 +81,19 @@ export default function EditWill() {
     },
     onSuccess: () => {
       // Invalidate all related queries to ensure UI updates everywhere
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      if (isSoloMode) {
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      }
       
       toast({
         title: "WILL Deleted",
         description: "The will has been successfully deleted",
       });
-      setLocation('/hub');
+      setLocation(isSoloMode ? '/solo/hub' : '/hub');
     },
     onError: (error) => {
       toast({
@@ -158,7 +165,7 @@ export default function EditWill() {
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">WILL not found</h2>
-          <Button onClick={() => setLocation('/hub')}>
+          <Button onClick={() => setLocation(isSoloMode ? '/solo/hub' : '/hub')}>
             Back to Hub
           </Button>
         </div>

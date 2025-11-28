@@ -21,6 +21,9 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
   
   if (!will) return null;
 
+  // Detect solo mode from will data
+  const isSoloMode = will.mode === 'solo';
+
   // Check if current user participated in this will
   const userParticipated = will.commitments?.some((commitment: any) => 
     commitment.userId === currentUserId
@@ -180,7 +183,7 @@ export function FinalWillSummary({ isOpen, onClose, onAcknowledge, will, isAckno
                   console.log('Back to Hub button clicked');
                   onClose();
                   setTimeout(() => {
-                    setLocation('/hub');
+                    setLocation(isSoloMode ? '/solo/hub' : '/hub');
                   }, 100);
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"

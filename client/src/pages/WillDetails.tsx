@@ -238,7 +238,7 @@ export default function WillDetails() {
       if (will?.hasUserAcknowledged) {
         // If already acknowledged, just close modal and navigate
         setShowFinalSummary(false);
-        setLocation('/hub');
+        setLocation(isSoloMode ? '/solo/hub' : '/hub');
         return;
       }
       
@@ -274,7 +274,7 @@ export default function WillDetails() {
       // Handle "already acknowledged" error gracefully
       if (error.message?.includes("already acknowledged")) {
         setShowFinalSummary(false);
-        setLocation('/hub');
+        setLocation(isSoloMode ? '/solo/hub' : '/hub');
         return;
       }
       
@@ -303,7 +303,7 @@ export default function WillDetails() {
         title: "Will Deleted",
         description: "The will has been successfully deleted",
       });
-      setLocation('/hub');
+      setLocation(isSoloMode ? '/solo/hub' : '/hub');
     },
     onError: (error: any) => {
       toast({
@@ -925,7 +925,7 @@ export default function WillDetails() {
         {/* Back to Hub */}
         <div className="text-center mt-4">
           <button 
-            onClick={() => setLocation('/hub')}
+            onClick={() => setLocation(isSoloMode ? '/solo/hub' : '/hub')}
             className="text-base text-gray-600 hover:text-gray-800 underline font-medium"
           >
             Back to Hub
@@ -940,7 +940,7 @@ export default function WillDetails() {
           setShowFinalSummary(false);
           // Navigate back to dashboard if already acknowledged
           if (will?.hasUserAcknowledged) {
-            setLocation('/hub');
+            setLocation(isSoloMode ? '/solo/hub' : '/hub');
           }
         }}
         onAcknowledge={() => acknowledgeMutation.mutate()}
