@@ -202,9 +202,7 @@ class PushNotificationService {
       notification.badge = payload.badge || 1;
       notification.sound = payload.sound || 'default';
       // Use token's bundle ID if provided, otherwise fall back to env var or default
-      // Clean up bundle ID (remove trailing dots if present)
-      const cleanBundleId = bundleId?.replace(/\.+$/, '') || process.env.APNS_TOPIC || 'com.porfirio.will';
-      notification.topic = cleanBundleId;
+      notification.topic = bundleId || process.env.APNS_TOPIC || 'com.porfirio.will';
       notification.payload = payload.data || {};
 
       // COMPREHENSIVE APNS REQUEST LOGGING
