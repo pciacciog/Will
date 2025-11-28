@@ -58,14 +58,14 @@ export default function SoloHub() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
+      <div className="pt-[calc(env(safe-area-inset-top)+2.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
           
-          {/* Header with Back Button */}
+          {/* Header with Back Button - lowered below iOS status bar */}
           <div className="flex items-center justify-between mb-6">
             <button
               onClick={handleBack}
-              className="p-2 -ml-2 text-gray-500 hover:text-gray-700 transition-colors"
+              className="w-11 h-11 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 shadow-sm transition-all duration-200"
               data-testid="button-back-home"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -73,7 +73,7 @@ export default function SoloHub() {
             <div className="flex-1 text-center">
               <h1 className="text-xl font-semibold text-gray-900">Solo Mode</h1>
             </div>
-            <div className="w-9" /> {/* Spacer for centering */}
+            <div className="w-11" /> {/* Spacer for centering - matches button width */}
           </div>
 
           {/* Solo Mode Intro */}
