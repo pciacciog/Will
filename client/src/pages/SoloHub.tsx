@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Plus, User, ArrowLeft, Sparkles } from "lucide-react";
+import { Target, Plus, User, ChevronLeft, Sparkles } from "lucide-react";
 
 type Will = {
   id: number;
@@ -58,22 +58,28 @@ export default function SoloHub() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+2.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
+      <div className="pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
           
-          {/* Header with Back Button - lowered below iOS status bar */}
-          <div className="flex items-center justify-between mb-6">
+          {/* Header with Back Button - positioned well below iOS status bar */}
+          <div className="flex items-center mb-8">
+            {/* Back Button - clear chevron design with proper tap target */}
             <button
               onClick={handleBack}
-              className="w-11 h-11 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 shadow-sm transition-all duration-200"
+              className="w-11 h-11 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 shadow-sm transition-all duration-200 active:scale-95"
               data-testid="button-back-home"
+              aria-label="Go back"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ChevronLeft className="w-6 h-6" strokeWidth={2} />
             </button>
+            
+            {/* Centered Title */}
             <div className="flex-1 text-center">
               <h1 className="text-xl font-semibold text-gray-900">Solo Mode</h1>
             </div>
-            <div className="w-11" /> {/* Spacer for centering - matches button width */}
+            
+            {/* Spacer to balance centering - matches button width */}
+            <div className="w-11" />
           </div>
 
           {/* Solo Mode Intro */}
