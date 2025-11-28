@@ -627,10 +627,10 @@ export default function InnerCircleHub() {
             <div className="text-center py-4">
               <button 
                 onClick={() => setLocation('/start-will')}
-                className="mx-auto mb-3 w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                className="mx-auto mb-3 w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
                 aria-label="Create a Will"
               >
-                <Plus className="w-5 h-5 text-white" />
+                <Plus className="w-8 h-8 text-white stroke-[2.5]" />
               </button>
               <h3 className="text-base font-medium mb-1 tracking-tight text-gray-900">No active <em>Will</em></h3>
               <p className="text-gray-500 mb-4 text-sm tracking-tight">Ready to commit to something meaningful together?</p>
