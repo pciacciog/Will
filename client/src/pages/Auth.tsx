@@ -209,23 +209,34 @@ export default function Auth() {
   // Splash screen is now handled by Home component
 
   return (
-    <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50" style={{ touchAction: 'none' }}>
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-emerald-50/30" style={{ touchAction: 'none' }}>
+      {/* Animated Background Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-20 -right-20 w-72 h-72 bg-gradient-to-br from-emerald-200/40 to-teal-300/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-32 -left-20 w-80 h-80 bg-gradient-to-br from-blue-200/30 to-indigo-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/3 right-1/4 w-40 h-40 bg-gradient-to-br from-teal-100/40 to-emerald-200/30 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+      
       {/* Content Area with Back Button Inside */}
-      <div className="h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4" style={{ overscrollBehavior: 'none' }}>
+      <div className="relative h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4" style={{ overscrollBehavior: 'none' }}>
         {/* Back Button positioned in shaded area */}
         <div className="flex justify-start mb-4">
           <Link href="/">
-            <button className="p-2 rounded-lg bg-white/80 shadow-sm hover:bg-white hover:shadow-md transition-all duration-200 backdrop-blur-sm">
+            <button className="p-2 rounded-xl bg-white/70 shadow-md hover:bg-white hover:shadow-lg transition-all duration-300 backdrop-blur-sm border border-white/50">
               <ArrowLeft className="h-4 w-4 text-gray-600" />
             </button>
           </Link>
         </div>
           
           <div className="max-w-sm mx-auto flex flex-col">
-          {/* Header & Icon */}
+          {/* Header & Icon with Glowy Effect */}
           <div className="text-center mb-2 md:mb-4">
-            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-3 rounded-2xl w-14 h-14 flex items-center justify-center mx-auto mb-2 md:mb-3 shadow-lg">
-              <Hand className="w-7 h-7 text-white" />
+            <div className="relative inline-block">
+              {/* Glow effect behind icon */}
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl blur-xl opacity-40 animate-pulse scale-110"></div>
+              <div className="relative bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-2xl w-14 h-14 flex items-center justify-center mx-auto mb-2 md:mb-3 shadow-xl shadow-emerald-500/25">
+                <Hand className="w-7 h-7 text-white" />
+              </div>
             </div>
             <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-1 md:mb-2">WILL</h1>
             <p className="text-sm text-gray-500 leading-snug text-center mb-4 md:mb-6">Become who you're meant to be. <span className="font-semibold text-gray-700 italic">Together.</span></p>
@@ -234,23 +245,26 @@ export default function Auth() {
           {/* Content Section */}
           <div>
 
-          {/* Tabs - Enhanced Design */}
+          {/* Tabs - Glowy Enhanced Design */}
           <div className="w-full">
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="flex border rounded-2xl overflow-hidden text-center w-full bg-gradient-to-r from-gray-50 to-gray-100 mx-auto mb-4 py-2 shadow-inner">
-                <TabsTrigger 
-                  value="login" 
-                  className="w-1/2 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-lg data-[state=active]:transform data-[state=active]:scale-105 data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 border-r border-gray-200 flex justify-center items-center transition-all duration-200"
-                >
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="register" 
-                  className="w-1/2 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-lg data-[state=active]:transform data-[state=active]:scale-105 data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 flex justify-center items-center transition-all duration-200"
-                >
-                  Sign Up
-                </TabsTrigger>
-              </TabsList>
+            <div className="relative">
+              {/* Subtle glow behind tabs */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-200/30 via-teal-200/20 to-blue-200/30 rounded-3xl blur-lg opacity-60"></div>
+              <Tabs defaultValue="login" className="relative w-full">
+                <TabsList className="flex border border-white/60 rounded-2xl overflow-hidden text-center w-full bg-white/80 backdrop-blur-sm mx-auto mb-4 py-2 shadow-lg">
+                  <TabsTrigger 
+                    value="login" 
+                    className="w-1/2 py-2 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/25 data-[state=active]:transform data-[state=active]:scale-105 data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 border-r border-gray-200/50 flex justify-center items-center transition-all duration-300 rounded-xl mx-1"
+                  >
+                    Sign In
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="register" 
+                    className="w-1/2 py-2 text-sm font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/25 data-[state=active]:transform data-[state=active]:scale-105 data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600 flex justify-center items-center transition-all duration-300 rounded-xl mx-1"
+                  >
+                    Sign Up
+                  </TabsTrigger>
+                </TabsList>
 
               <TabsContent value="login" className="mt-0.5 space-y-3">
                 <form onSubmit={handleLogin} className="space-y-3">
@@ -294,7 +308,7 @@ export default function Auth() {
                   <div className="mt-4">
                     <Button 
                       type="submit" 
-                      className="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-2 rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? "Signing in..." : "Sign In"}
@@ -402,7 +416,7 @@ export default function Auth() {
                   <div className="mt-4">
                     <Button 
                       type="submit" 
-                      className="w-full bg-blue-600 text-white py-1.5 rounded-xl text-xs font-medium hover:bg-blue-700 transition"
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-2 rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]"
                       disabled={registerMutation.isPending}
                     >
                       {registerMutation.isPending ? "Creating account..." : "Create Account"}
@@ -417,7 +431,8 @@ export default function Auth() {
                   </p>
                 </div>
               </TabsContent>
-            </Tabs>
+              </Tabs>
+            </div>
           </div>
           </div>
         </div>

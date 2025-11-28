@@ -128,17 +128,27 @@ export default function InnerCircle() {
 
   return (
     <MobileLayout scrollable={false}>
-      <div className="max-w-screen-sm mx-auto px-4 py-1 overflow-x-hidden h-full overflow-y-hidden">
+      <div className="relative h-full">
+        {/* Animated Background Orbs - scoped within relative container */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-72 h-72 bg-gradient-to-br from-emerald-200/40 to-teal-300/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-32 -left-20 w-80 h-80 bg-gradient-to-br from-blue-200/30 to-indigo-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-gradient-to-br from-teal-100/40 to-emerald-200/30 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        </div>
+        
+        <div className="relative max-w-screen-sm mx-auto px-4 py-1 overflow-x-hidden h-full overflow-y-hidden">
         
         {!circle ? (
           // No Circle State - Fixed non-scrollable layout
           <div className="h-full flex flex-col">
-            {/* Fixed Header */}
+            {/* Fixed Header with Glowy Icon */}
             <div className="flex-shrink-0 text-center pt-[calc(env(safe-area-inset-top)+1rem)] pb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+              <div className="relative inline-block">
+                {/* Glow effect behind icon */}
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl blur-xl opacity-40 animate-pulse scale-125"></div>
+                <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xl shadow-emerald-500/25">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
               </div>
               
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Your Circle</h1>
@@ -148,56 +158,60 @@ export default function InnerCircle() {
             </div>
             
             {/* Content Area */}
-            <div className="flex-1 px-4 flex flex-col justify-center space-y-4">
-              <Card className="border-2 border-transparent hover:border-primary transition-colors">
-                <CardContent className="p-4">
-                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Join a Circle</h3>
-                  <p className="text-gray-600 mb-4 text-center text-sm">Have an invite code? Join your friends' circle.</p>
-                  
-                  <div className="space-y-3">
-                    <Input 
-                      type="text" 
-                      placeholder="Enter invite code (e.g., J3ZQ9P)" 
-                      value={inviteCode}
-                      onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                      className="text-center font-mono tracking-widest uppercase"
-                      maxLength={6}
-                    />
-                    <Button 
-                      onClick={handleJoinCircle} 
-                      disabled={joinCircleMutation.isPending}
-                      className="w-full bg-primary hover:bg-blue-600"
-                    >
-                      {joinCircleMutation.isPending ? "Joining..." : "Join Circle"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex-1 px-4 flex flex-col justify-center space-y-5">
+              {/* Join Circle Card - with persistent subtle glow */}
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl blur-lg opacity-25"></div>
+                <Card className="relative bg-white/95 backdrop-blur-sm border border-blue-100/60 shadow-xl rounded-2xl overflow-hidden">
+                  <CardContent className="p-5">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/25">
+                      <Users className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Join a Circle</h3>
+                    <p className="text-gray-600 mb-4 text-center text-sm">Have an invite code? Join your friends' circle.</p>
+                    
+                    <div className="space-y-3">
+                      <Input 
+                        type="text" 
+                        placeholder="Enter invite code (e.g., J3ZQ9P)" 
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                        className="text-center font-mono tracking-widest uppercase bg-white/80 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
+                        maxLength={6}
+                      />
+                      <Button 
+                        onClick={handleJoinCircle} 
+                        disabled={joinCircleMutation.isPending}
+                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300"
+                      >
+                        {joinCircleMutation.isPending ? "Joining..." : "Join Circle"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
               
-              <Card className="border-2 border-transparent hover:border-secondary transition-colors">
-                <CardContent className="p-4">
-                  <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Create a Circle</h3>
-                  <p className="text-gray-600 mb-4 text-center text-sm">Start fresh with a new circle for your group.</p>
-                  
-                  <Button 
-                    onClick={handleCreateCircle}
-                    disabled={createCircleMutation.isPending}
-                    className="w-full bg-secondary hover:bg-green-600"
-                  >
-                    {createCircleMutation.isPending ? "Creating..." : "Create New Circle"}
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* Create Circle Card - with persistent subtle glow */}
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur-lg opacity-25"></div>
+                <Card className="relative bg-white/95 backdrop-blur-sm border border-emerald-100/60 shadow-xl rounded-2xl overflow-hidden">
+                  <CardContent className="p-5">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/25">
+                      <Plus className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Create a Circle</h3>
+                    <p className="text-gray-600 mb-4 text-center text-sm">Start fresh with a new circle for your group.</p>
+                    
+                    <Button 
+                      onClick={handleCreateCircle}
+                      disabled={createCircleMutation.isPending}
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all duration-300"
+                    >
+                      {createCircleMutation.isPending ? "Creating..." : "Create New Circle"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
             
             {/* Bottom safe area */}
@@ -206,19 +220,22 @@ export default function InnerCircle() {
         ) : (
           // Has Circle State
           <div className="h-full flex flex-col space-y-2">
-            {/* Header Section */}
-            <div className="flex-shrink-0 text-center">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Your Circle</h2>
+            {/* Header Section with Glowy Code */}
+            <div className="flex-shrink-0 text-center pt-4">
+              <h2 className="text-xl font-bold text-gray-900 mb-3">Your Circle</h2>
               <div className="flex items-center justify-center gap-x-2">
                 <span className="text-sm text-gray-500">Invite Code:</span>
-                <div className="bg-gray-100 px-3 py-1 rounded-md font-mono tracking-widest text-sm font-semibold text-gray-800">
-                  {circle.inviteCode}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-lg blur-sm opacity-30"></div>
+                  <div className="relative bg-gradient-to-r from-emerald-50 to-teal-50 px-3 py-1.5 rounded-lg font-mono tracking-widest text-sm font-bold text-emerald-700 border border-emerald-200">
+                    {circle.inviteCode}
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => copyInviteCode(circle.inviteCode)}
-                  className="text-primary hover:text-blue-600 p-1"
+                  className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-1.5 rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -257,22 +274,23 @@ export default function InnerCircle() {
             </div>
             
             {/* Footer Section */}
-            <div className="flex-shrink-0 space-y-3">
-              <div className="px-4 py-3 bg-blue-50 rounded-xl shadow-sm border border-blue-100 text-sm">
-                <div className="flex items-center justify-center gap-x-2 text-blue-700">
-                  <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold text-base">
-                    Circle Status: {circle.members?.length || 0} of 4 members
-                  </span>
+            <div className="flex-shrink-0 space-y-3 pb-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-200 to-teal-200 rounded-xl blur-sm opacity-40"></div>
+                <div className="relative px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl shadow-sm border border-emerald-100 text-sm">
+                  <div className="flex items-center justify-center gap-x-2 text-emerald-700">
+                    <Users className="w-5 h-5 flex-shrink-0" />
+                    <span className="font-semibold text-base">
+                      Circle Status: {circle.members?.length || 0} of 4 members
+                    </span>
+                  </div>
                 </div>
               </div>
               
               <div className="text-center">
                 <Button 
                   onClick={handleEnterCircle}
-                  className="bg-primary hover:bg-blue-600 text-white px-10 py-4 rounded-xl text-lg font-bold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 transform"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-10 py-4 rounded-xl text-lg font-bold transition-all duration-300 shadow-xl shadow-emerald-500/25 hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 transform"
                 >
                   Enter Circle →
                 </Button>
@@ -280,6 +298,7 @@ export default function InnerCircle() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </MobileLayout>
   );
