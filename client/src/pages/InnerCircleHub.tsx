@@ -578,8 +578,17 @@ export default function InnerCircleHub() {
                   </div>
                 </div>
                 
-                {/* Members Grid - 3-across compact layout */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* Members Grid - Dynamic layout based on member count */}
+                <div className={`grid gap-3 ${
+                  (() => {
+                    const count = circle.members?.length || 0;
+                    if (count === 1) return 'grid-cols-1 max-w-[120px] mx-auto';
+                    if (count === 2) return 'grid-cols-2 max-w-[260px] mx-auto';
+                    if (count === 3) return 'grid-cols-3';
+                    if (count === 4) return 'grid-cols-2 max-w-[260px] mx-auto';
+                    return 'grid-cols-3'; // 5 or more members
+                  })()
+                }`}>
                   {circle.members?.map((member: any, index: number) => (
                     <div 
                       key={member.id} 
