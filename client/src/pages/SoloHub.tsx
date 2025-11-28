@@ -58,28 +58,31 @@ export default function SoloHub() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
+      <div className="pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
           
           {/* Header with Back Button - positioned well below iOS status bar */}
           <div className="flex items-center mb-8">
-            {/* Back Button - clear chevron design with proper tap target */}
+            {/* Back Button - accessible 44pt tap target with visually lighter appearance */}
             <button
               onClick={handleBack}
-              className="w-11 h-11 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 shadow-sm transition-all duration-200 active:scale-95"
+              className="w-11 h-11 -ml-2 flex items-center justify-center"
               data-testid="button-back-home"
               aria-label="Go back"
             >
-              <ChevronLeft className="w-6 h-6" strokeWidth={2} />
+              {/* Visual button element - smaller than tap target */}
+              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:border-gray-300 transition-all duration-200 active:scale-95">
+                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+              </span>
             </button>
             
             {/* Centered Title */}
-            <div className="flex-1 text-center">
+            <div className="flex-1 text-center -ml-2">
               <h1 className="text-xl font-semibold text-gray-900">Solo Mode</h1>
             </div>
             
             {/* Spacer to balance centering - matches button width */}
-            <div className="w-11" />
+            <div className="w-9" />
           </div>
 
           {/* Solo Mode Intro */}
