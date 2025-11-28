@@ -510,18 +510,9 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 </div>
                 <span className={`ml-1 text-xs ${currentStep >= 3 ? 'bg-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
               </div>
-              {/* Step 4: End Room - only shown for Circle mode, hidden for Solo mode */}
-              {!isSoloMode && (
-                <>
-                  <div className={`w-4 h-0.5 ${currentStep >= 4 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                  <div className="flex items-center">
-                    <div className={`w-7 h-7 ${currentStep >= 4 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
-                      4
-                    </div>
-                    <span className={`ml-1 text-xs ${currentStep >= 4 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(4)}</span>
-                  </div>
-                </>
-              )}
+              {/* Note: Step 4 (End Room for Circle mode, Confirm for Solo mode) exists in the flow 
+                  but is intentionally hidden from the visual step indicator. 
+                  Users experience the core flow as When → What → Why, then proceed to End Room/Confirm. */}
             </div>
           
           {/* Current Step Title */}
