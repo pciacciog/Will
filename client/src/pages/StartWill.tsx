@@ -806,7 +806,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                       <div>
                         <div className="flex items-center mb-2">
                           <Target className="w-4 h-4 text-green-500 mr-2" />
-                          <p className="text-sm font-medium text-gray-500">Your Commitment</p>
+                          <p className="text-sm font-medium text-gray-500">Your What</p>
                         </div>
                         <div className="pl-6 bg-green-50/50 rounded-lg p-3 border border-green-100">
                           <p className="text-base font-semibold text-gray-900 italic">
@@ -819,8 +819,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                       <div>
                         <div className="flex items-center mb-2">
                           <Heart className="w-4 h-4 text-red-500 mr-2" />
-                          <p className="text-sm font-medium text-gray-500">Your Motivation</p>
-                          <span className="text-xs text-gray-400 ml-2">(Private)</span>
+                          <p className="text-sm font-medium text-gray-500">Your Why</p>
                         </div>
                         <div className="pl-6 bg-red-50/30 rounded-lg p-3 border border-red-100/50">
                           <p className="text-sm text-gray-700 italic">
@@ -839,8 +838,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                       className="flex-1 px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
                       data-testid="button-back-to-edit"
                     >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back to Edit
+                      <ArrowLeft className="w-4 h-4 mr-1.5" />
+                      Edit
                     </button>
                     <button
                       type="button"
@@ -855,7 +854,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     >
                       {createWillMutation.isPending || addCommitmentMutation.isPending 
                         ? 'Creating...' 
-                        : 'Confirm & Create'}
+                        : 'Create'}
                     </button>
                   </div>
                 </div>
