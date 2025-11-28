@@ -13,7 +13,6 @@ import { getApiUrl } from "@/config/api";
 import { App as CapacitorApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/Landing";
 import Auth from "@/pages/Auth";
 import Home from "@/pages/Home";
 import InnerCircle from "@/pages/InnerCircle";
@@ -215,7 +214,7 @@ function Router() {
         
         {!isAuthenticated ? (
           <>
-            <Route path="/" component={Landing} />
+            <Route path="/" component={Auth} />
             <Route path="/auth" component={Auth} />
           </>
         ) : (

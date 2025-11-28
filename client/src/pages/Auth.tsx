@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, useLocation } from "wouter";
-import { ArrowLeft, Hand, Eye, EyeOff } from "lucide-react";
+import { useLocation } from "wouter";
+import { Hand, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MobileLayout } from "@/components/ui/design-system";
@@ -217,16 +217,8 @@ export default function Auth() {
         <div className="absolute top-1/3 right-1/4 w-40 h-40 bg-gradient-to-br from-teal-100/40 to-emerald-200/30 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
       
-      {/* Content Area with Back Button Inside */}
+      {/* Content Area */}
       <div className="relative h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4" style={{ overscrollBehavior: 'none' }}>
-        {/* Back Button positioned in shaded area */}
-        <div className="flex justify-start mb-4">
-          <Link href="/">
-            <button className="p-2 rounded-xl bg-white/70 shadow-md hover:bg-white hover:shadow-lg transition-all duration-300 backdrop-blur-sm border border-white/50">
-              <ArrowLeft className="h-4 w-4 text-gray-600" />
-            </button>
-          </Link>
-        </div>
           
           <div className="max-w-sm mx-auto flex flex-col">
           {/* Header & Icon with Glowy Effect */}
@@ -239,7 +231,7 @@ export default function Auth() {
               </div>
             </div>
             <h1 className="text-xl font-semibold text-gray-900 tracking-tight mb-1 md:mb-2">WILL</h1>
-            <p className="text-sm text-gray-500 leading-snug text-center mb-4 md:mb-6">Become who you're meant to be. <span className="font-semibold text-gray-700 italic">Together.</span></p>
+            <p className="text-sm text-gray-500 leading-snug text-center mb-4 md:mb-6">Become who you're meant to be.</p>
           </div>
 
           {/* Content Section */}
