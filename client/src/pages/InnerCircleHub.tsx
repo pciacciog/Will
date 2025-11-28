@@ -349,31 +349,6 @@ export default function InnerCircleHub() {
     }
   };
 
-  const formatDisplayDateTime = (dateString: string): string => {
-    if (!dateString) return '';
-    
-    const date = new Date(dateString);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
-    
-    const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    
-    if (isToday) {
-      return `Today at ${timeStr}`;
-    } else if (isTomorrow) {
-      return `Tomorrow at ${timeStr}`;
-    } else {
-      return date.toLocaleDateString([], { 
-        weekday: 'long',
-        month: 'short', 
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-    }
-  };
-
   const handleViewWillDetails = () => {
     if (will?.id) {
       setLocation(`/will/${will.id}`);
