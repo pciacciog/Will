@@ -105,7 +105,7 @@ export default function Home() {
           {/* Mode Selection Cards */}
           <div className="space-y-4">
             
-            {/* Inner Circle Mode Card - Enhanced contrast and tappable feel */}
+            {/* Circle Mode Card - Enhanced contrast and tappable feel */}
             <button
               onClick={handleCircleMode}
               className="w-full text-left group"
@@ -126,12 +126,12 @@ export default function Home() {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-gray-900">Inner Circle</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">Circle Mode</h3>
                           <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
                         </div>
                         {/* Tagline - italic with emphasized power word */}
                         <p className="text-emerald-600/90 text-sm font-medium italic mt-0.5 tracking-tight">
-                          "Grow… <span className="text-emerald-700 font-semibold">together</span>."
+                          "Become more… <span className="text-emerald-700 font-semibold">together</span>."
                         </p>
                         {/* Unified description */}
                         <p className="text-gray-500 text-sm mt-2 leading-relaxed">

@@ -414,7 +414,7 @@ export default function InnerCircleHub() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
-            <p className="text-muted-foreground mb-6">Please log in to view your Inner Circle Hub.</p>
+            <p className="text-muted-foreground mb-6">Please log in to view your Circle.</p>
             <Button 
               onClick={() => setLocation('/auth')} 
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
@@ -432,8 +432,8 @@ export default function InnerCircleHub() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">No Inner Circle</h2>
-            <p className="text-muted-foreground mb-6">You need to be part of an Inner Circle first.</p>
+            <h2 className="text-2xl font-bold mb-4">No Circle</h2>
+            <p className="text-muted-foreground mb-6">You need to be part of a Circle first.</p>
             <Button 
               onClick={() => setLocation('/inner-circle')} 
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
@@ -476,8 +476,8 @@ export default function InnerCircleHub() {
             
             {/* Title */}
             <div className="flex-1 text-center -ml-2">
-              <h1 className="text-xl font-semibold text-gray-900">Inner Circle</h1>
-              <p className="text-sm text-emerald-600 italic">Become More — Together</p>
+              <h1 className="text-xl font-semibold text-gray-900">Circle</h1>
+              <p className="text-sm text-emerald-600 italic">Become more… together</p>
             </div>
             
             {/* User Menu */}

@@ -1,0 +1,113 @@
+"We're updating the naming from 'Inner Circle' to 'Circle Mode' for better clarity and parallel naming with Solo Mode. Please make these updates carefully to avoid breaking existing functionality.
+
+Changes to Make:
+1. Home.tsx (Mode Selection Page)
+Find the Circle card and update:
+Title:
+tsx// Current:
+<h3>Inner Circle</h3>
+
+// Change to:
+<h3>Circle Mode</h3>
+Tagline:
+tsx// Current:
+<p className="...italic">"Grow... together"</p>
+
+// Change to:
+<p className="...italic">"Become more... together"</p>
+Keep the description intact (whatever it currently says about being part of a circle).
+
+2. InnerCircleHub.tsx (Hub Page Title)
+Change the page title:
+tsx// Current (probably):
+<h1>Inner Circle Hub</h1>
+
+// Change to:
+<h1>Circle</h1>
+Or if there's a more elaborate header:
+tsx// Current:
+<h1 className="...">
+  <Users className="..." />
+  Inner Circle Hub
+</h1>
+
+// Change to:
+<h1 className="...">
+  <Users className="..." />
+  Circle
+</h1>
+Keep the subtitle/tagline if there is one (like "Become more... together" or similar).
+
+3. Navigation Routes (Optional - Be Careful)
+Current routes:
+
+/hub → Inner Circle Hub
+/start-will → Circle Will creation
+
+Potential new routes (ONLY if it's simple and safe):
+
+/circle or /circle/hub → Circle Hub
+/circle/start-will → Circle Will creation
+
+BUT:
+
+⚠️ Check for ALL references to /hub before changing
+⚠️ Ensure redirects/navigation won't break
+⚠️ Test that existing Wills still load correctly
+
+If route changes would be complex, SKIP THIS and just update the display names. Routes are internal - users don't see them.
+
+4. Search for Other References
+Search the codebase for display text that might need updating:
+bash# Find "Inner Circle" in user-facing text
+rg "Inner Circle" --type tsx --type ts -g '!node_modules'
+
+# Find "Grow... together" 
+rg "Grow.*together" --type tsx --type ts -g '!node_modules'
+Only update user-facing text, NOT:
+
+Variable names
+Function names
+API endpoint names
+Database fields
+File names
+
+
+What NOT to Change:
+❌ File names: InnerCircleHub.tsx (keep as-is)
+❌ Component names: InnerCircleHub (keep as-is)
+❌ Database tables: inner_circles (keep as-is)
+❌ API routes: /api/circles/* (keep as-is)
+❌ Variable names: innerCircle, circleId (keep as-is)
+Only change user-visible text and optionally frontend routes.
+
+Testing Checklist:
+After making changes, verify:
+Mode Selection:
+
+ Card shows "Circle Mode" title ✅
+ Tagline shows "Become more... together" ✅
+ Description unchanged ✅
+ Clicking navigates correctly ✅
+
+Circle Hub:
+
+ Page title shows "Circle" ✅
+ All functionality works ✅
+ Navigation still works ✅
+
+No Breaks:
+
+ Existing circle Wills still load ✅
+ Creating new Wills works ✅
+ All links/navigation functional ✅
+
+
+Implementation Priority:
+
+✅ Easy & Safe: Update display text in Home.tsx and InnerCircleHub.tsx
+⚠️ Optional: Update frontend routes (only if simple)
+❌ Skip: Backend/database changes (not needed)
+
+Please start with #1 (display text updates) and only proceed to #2 (routes) if it won't cause complications. If changing routes looks risky, just update the display names and we're done.
+Show me the updated display text and confirm everything still works!"

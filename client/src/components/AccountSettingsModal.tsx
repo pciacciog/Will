@@ -389,7 +389,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
                   <ul className="text-sm text-red-700 list-disc list-inside space-y-1 ml-2">
                     <li>Your profile and account information</li>
                     <li>All your Will commitments and progress</li>
-                    <li>Your Inner Circle memberships</li>
+                    <li>Your Circle memberships</li>
                     <li>All associated data and history</li>
                   </ul>
                 </div>

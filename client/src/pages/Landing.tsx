@@ -42,7 +42,7 @@ export default function Landing() {
               <Handshake className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Build Your Inner Circle</h3>
+              <h3 className="font-semibold text-gray-900">Build Your Circle</h3>
               <p className="text-gray-600 text-sm">Invite the people who matter most.</p>
             </div>
           </div>

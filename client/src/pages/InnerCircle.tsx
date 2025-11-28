@@ -39,7 +39,7 @@ export default function InnerCircle() {
       queryClient.removeQueries({ queryKey: ['/api/wills/circle'] });
       toast({
         title: "Circle Created!",
-        description: "Your Inner Circle has been created successfully.",
+        description: "Your Circle has been created successfully.",
       });
     },
     onError: (error) => {
@@ -68,7 +68,7 @@ export default function InnerCircle() {
       queryClient.removeQueries({ queryKey: ['/api/wills/circle'] });
       toast({
         title: "Joined Circle!",
-        description: "You've successfully joined the Inner Circle.",
+        description: "You've successfully joined the Circle.",
       });
     },
     onError: (error) => {
@@ -141,7 +141,7 @@ export default function InnerCircle() {
                 </svg>
               </div>
               
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Your Inner Circle</h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Your Circle</h1>
               <p className="text-base text-gray-600 px-4">
                 Start a new circle or join an existing one with your invite code.
               </p>
@@ -208,7 +208,7 @@ export default function InnerCircle() {
           <div className="h-full flex flex-col space-y-2">
             {/* Header Section */}
             <div className="flex-shrink-0 text-center">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Your Inner Circle</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Your Circle</h2>
               <div className="flex items-center justify-center gap-x-2">
                 <span className="text-sm text-gray-500">Invite Code:</span>
                 <div className="bg-gray-100 px-3 py-1 rounded-md font-mono tracking-widest text-sm font-semibold text-gray-800">

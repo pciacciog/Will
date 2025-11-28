@@ -471,7 +471,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">No Circle Found</h2>
-          <p className="text-gray-600 mb-6">You need to be part of an Inner Circle to create a Will.</p>
+          <p className="text-gray-600 mb-6">You need to be part of a Circle to create a Will.</p>
           <Button onClick={() => setLocation('/inner-circle')}>
             Create or Join Circle
           </Button>
