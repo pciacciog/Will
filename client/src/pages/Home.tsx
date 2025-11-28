@@ -37,7 +37,7 @@ export default function Home() {
   });
 
   const handleSoloMode = () => {
-    setLocation('/solo-hub');
+    setLocation('/solo/hub');
   };
 
   const handleCircleMode = () => {
