@@ -81,17 +81,20 @@ export default function Home() {
       <div className="pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen flex flex-col">
         <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col justify-center">
           
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center mb-4">
+          {/* Header - Enhanced with stronger glow and better spacing */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center mb-5">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-xl opacity-30 animate-pulse"></div>
-                <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-100 flex items-center justify-center shadow-lg">
+                {/* Outer glow ring - stronger and more visible */}
+                <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full blur-2xl opacity-40 animate-pulse"></div>
+                {/* Inner glow layer */}
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-lg opacity-25"></div>
+                <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-200 flex items-center justify-center shadow-xl">
                   <Sparkles className="w-8 h-8 text-emerald-600" />
                 </div>
               </div>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-3">
               Start Your Journey
             </h1>
             <p className="text-gray-500 text-sm">
@@ -102,15 +105,15 @@ export default function Home() {
           {/* Mode Selection Cards */}
           <div className="space-y-4">
             
-            {/* Inner Circle Mode Card */}
+            {/* Inner Circle Mode Card - Enhanced contrast and tappable feel */}
             <button
               onClick={handleCircleMode}
               className="w-full text-left group"
               data-testid="button-circle-mode"
             >
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-0 group-hover:opacity-25 transition-opacity duration-300"></div>
-                <Card className="relative bg-white border-2 border-gray-100 group-hover:border-emerald-200 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl">
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+                <Card className="relative bg-white border-2 border-emerald-100/70 shadow-sm group-hover:border-emerald-300 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-0.5">
                   <CardContent className="p-5">
                     <div className="flex items-start space-x-4">
                       {/* Icon */}
@@ -126,14 +129,13 @@ export default function Home() {
                           <h3 className="text-lg font-semibold text-gray-900">Inner Circle</h3>
                           <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
                         </div>
-                        <p className="text-emerald-600 text-sm font-medium italic mt-0.5">
-                          "Grow... together"
+                        {/* Tagline - italic with emphasized power word */}
+                        <p className="text-emerald-600/90 text-sm font-medium italic mt-0.5 tracking-tight">
+                          "Grow… <span className="text-emerald-700 font-semibold">together</span>."
                         </p>
+                        {/* Unified description */}
                         <p className="text-gray-500 text-sm mt-2 leading-relaxed">
-                          {circle 
-                            ? `You're part of a circle with ${(circle.members?.length || 1) - 1} other member${(circle.members?.length || 1) - 1 !== 1 ? 's' : ''}.`
-                            : "Create or join a circle of 2-4 people for shared accountability."
-                          }
+                          Shared accountability with the people you trust.
                         </p>
                       </div>
                     </div>
@@ -142,15 +144,15 @@ export default function Home() {
               </div>
             </button>
 
-            {/* Solo Mode Card */}
+            {/* Solo Mode Card - Enhanced contrast and tappable feel */}
             <button
               onClick={handleSoloMode}
               className="w-full text-left group"
               data-testid="button-solo-mode"
             >
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-2xl blur opacity-0 group-hover:opacity-25 transition-opacity duration-300"></div>
-                <Card className="relative bg-white border-2 border-gray-100 group-hover:border-purple-200 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+                <Card className="relative bg-white border-2 border-purple-100/70 shadow-sm group-hover:border-purple-300 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-0.5">
                   <CardContent className="p-5">
                     <div className="flex items-start space-x-4">
                       {/* Icon */}
@@ -166,9 +168,11 @@ export default function Home() {
                           <h3 className="text-lg font-semibold text-gray-900">Solo Mode</h3>
                           <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
                         </div>
-                        <p className="text-purple-600 text-sm font-medium italic mt-0.5">
-                          "No one is watching... but you"
+                        {/* Tagline - italic with emphasized power word */}
+                        <p className="text-purple-600/90 text-sm font-medium italic mt-0.5 tracking-tight">
+                          "No one is watching… but <span className="text-purple-700 font-semibold">you</span>."
                         </p>
+                        {/* Unified description */}
                         <p className="text-gray-500 text-sm mt-2 leading-relaxed">
                           Personal accountability for your own goals.
                         </p>
