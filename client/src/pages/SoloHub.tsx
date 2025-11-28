@@ -157,9 +157,9 @@ export default function SoloHub() {
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-full border border-purple-100 flex items-center justify-center mx-auto mb-4">
                       <Plus className="w-8 h-8 text-purple-500" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Start Your First Solo Will</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Start Your Solo Will</h3>
                     <p className="text-gray-500 text-sm mb-5">
-                      Create a personal commitment and hold yourself accountable. Your Will starts immediately.
+                      Create a personal commitment and hold yourself accountable.
                     </p>
                     <Button
                       onClick={handleStartWill}
