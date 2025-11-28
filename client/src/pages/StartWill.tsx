@@ -526,7 +526,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
             <form onSubmit={handleStep1Submit} className="space-y-5 px-4">
               {/* Start Date & Time */}
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start*</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start</label>
                 <div className="grid grid-cols-2 gap-3">
                   <Input 
                     type="date" 
@@ -551,7 +551,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               
               {/* End Date & Time */}
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '100ms' }}>
-                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End*</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End</label>
                 <div className="grid grid-cols-2 gap-3">
                   <Input 
                     type="date" 
