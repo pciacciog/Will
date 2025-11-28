@@ -296,22 +296,19 @@ export function WillReviewFlow({ willId, onComplete }: WillReviewFlowProps) {
 
           {/* Step 2: Expand */}
           {step === 2 && (
-            <div className="space-y-4" data-testid="step-2-expand">
-              {/* Skip button in top-right corner of card */}
-              <div className="flex justify-end -mt-2 -mr-2 mb-1">
+            <div className="space-y-6" data-testid="step-2-expand">
+              {/* Header - title centered with Skip absolutely positioned (matches Step 1 & 3 layout) */}
+              <div className="relative text-center">
+                {/* Skip button - absolutely positioned, doesn't affect title vertical position */}
                 <button
                   type="button"
                   onClick={handleSkip}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
+                  className="absolute right-0 top-0.5 text-[11px] text-gray-400 hover:text-gray-600 px-2 py-0.5 transition-colors duration-200"
                   data-testid="button-skip"
                 >
                   Skip
                 </button>
-              </div>
-              
-              {/* Header - centered title with tighter spacing */}
-              <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">Step 2: Expand</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
                 <p className="text-gray-500 text-sm">
                   You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
                   Add a short note for your circle if you'd like.
