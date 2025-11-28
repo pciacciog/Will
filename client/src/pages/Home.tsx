@@ -92,7 +92,7 @@ export default function Home() {
               </div>
             </div>
             <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-              How would you like to grow?
+              Start Your Journey
             </h1>
             <p className="text-gray-500 text-sm">
               Choose your accountability path
@@ -102,43 +102,6 @@ export default function Home() {
           {/* Mode Selection Cards */}
           <div className="space-y-4">
             
-            {/* Solo Mode Card */}
-            <button
-              onClick={handleSoloMode}
-              className="w-full text-left group"
-              data-testid="button-solo-mode"
-            >
-              <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-2xl blur opacity-0 group-hover:opacity-25 transition-opacity duration-300"></div>
-                <Card className="relative bg-white border-2 border-gray-100 group-hover:border-purple-200 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl">
-                  <CardContent className="p-5">
-                    <div className="flex items-start space-x-4">
-                      {/* Icon */}
-                      <div className="relative flex-shrink-0">
-                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                          <User className="w-7 h-7 text-purple-600" strokeWidth={1.5} />
-                        </div>
-                      </div>
-                      
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-gray-900">Solo Mode</h3>
-                          <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
-                        </div>
-                        <p className="text-purple-600 text-sm font-medium italic mt-0.5">
-                          "No one is watching... but you"
-                        </p>
-                        <p className="text-gray-500 text-sm mt-2 leading-relaxed">
-                          Personal accountability for your own goals. Start immediately, complete on your terms.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </button>
-
             {/* Inner Circle Mode Card */}
             <button
               onClick={handleCircleMode}
@@ -179,13 +142,43 @@ export default function Home() {
               </div>
             </button>
 
-          </div>
+            {/* Solo Mode Card */}
+            <button
+              onClick={handleSoloMode}
+              className="w-full text-left group"
+              data-testid="button-solo-mode"
+            >
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-2xl blur opacity-0 group-hover:opacity-25 transition-opacity duration-300"></div>
+                <Card className="relative bg-white border-2 border-gray-100 group-hover:border-purple-200 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl">
+                  <CardContent className="p-5">
+                    <div className="flex items-start space-x-4">
+                      {/* Icon */}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                          <User className="w-7 h-7 text-purple-600" strokeWidth={1.5} />
+                        </div>
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-900">Solo Mode</h3>
+                          <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <p className="text-purple-600 text-sm font-medium italic mt-0.5">
+                          "No one is watching... but you"
+                        </p>
+                        <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+                          Personal accountability for your own goals.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </button>
 
-          {/* Footer hint */}
-          <div className="mt-8 text-center">
-            <p className="text-xs text-gray-400">
-              You can switch between modes anytime
-            </p>
           </div>
 
         </div>

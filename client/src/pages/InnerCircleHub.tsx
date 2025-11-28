@@ -473,6 +473,8 @@ export default function InnerCircleHub() {
         <MobileHeader 
           title="Inner Circle Hub"
           subtitle="Become More — Together"
+          back={true}
+          onBack={() => setLocation('/')}
           actions={
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

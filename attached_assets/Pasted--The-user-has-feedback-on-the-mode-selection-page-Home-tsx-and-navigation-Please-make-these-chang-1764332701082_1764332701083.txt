@@ -1,0 +1,50 @@
+"The user has feedback on the mode selection page (Home.tsx) and navigation. Please make these changes:
+
+Changes to Home.tsx (Mode Selection Page):
+1. Reorder the Cards - Inner Circle First
+Currently: Solo Mode → Inner Circle
+Change to: Inner Circle → Solo Mode
+Inner Circle should be the primary/default option, so it appears first.
+2. Change Header Text
+Current: "How would you like to grow?"
+Change to: "Start Your Journey" (or similar text that matches the original style)
+The goal is to revert closer to the original Home.tsx design that said "Start your journey" before showing the options.
+3. Remove Bottom Text
+Remove: "You can switch between modes anytime" text at the bottom
+This text is unnecessary clutter.
+4. Overall Style
+The page should feel more like the original journey start screen, but with two path options instead of one. Keep the cards nice and clean, but less explanation text overall.
+
+Add Back Button to Inner Circle Hub:
+File: client/src/pages/InnerCircleHub.tsx
+Add a back/home button in the header that navigates back to / (the mode selection page).
+Suggested placement: Top-left corner (where back buttons typically are)
+Icon: Home icon or Back arrow
+Behavior: Clicking it should navigate to / so users can switch between modes
+Example:
+tsximport { Home, ArrowLeft } from "lucide-react";
+
+// In the header section:
+<div className="flex items-center justify-between">
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={() => setLocation('/')}
+  >
+    <ArrowLeft className="h-5 w-5" />
+  </Button>
+  
+  <h1>Inner Circle Hub</h1>
+  
+  <SettingsButton />
+</div>
+
+Summary of Changes:
+
+✅ Inner Circle card appears FIRST (before Solo Mode)
+✅ Header text: "Start Your Journey" (not "How would you like to grow?")
+✅ Remove "You can switch between modes anytime" footer text
+✅ Add back button to InnerCircleHub.tsx header (navigates to /)
+✅ Keep the overall design clean and similar to original style
+
+Please implement these changes and show me the updated Home.tsx and InnerCircleHub.tsx."
