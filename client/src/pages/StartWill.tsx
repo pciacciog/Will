@@ -70,9 +70,46 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
   
-  // Solo mode: 3 steps (When, What, Why) - no End Room
-  // Circle mode: 4 steps (When, What, Why, End Room)
-  const totalSteps = isSoloMode ? 3 : 4;
+  // Both modes now have 4 steps:
+  // Solo mode: When, What, Why, Confirm
+  // Circle mode: When, What, Why, End Room
+  const totalSteps = 4;
+  
+  // Get step label based on mode
+  const getStepLabel = (step: number) => {
+    if (step === 4) {
+      return isSoloMode ? "Confirm" : "End Room";
+    }
+    const labels = ["", "When", "What", "Why"];
+    return labels[step] || "";
+  };
+  
+  // Helper functions for confirmation screen
+  const formatDateForDisplay = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
+  const getDurationText = (startStr: string, endStr: string) => {
+    const startDate = new Date(startStr);
+    const endDate = new Date(endStr);
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (days === 1) return "1 day";
+    if (days < 7) return `${days} days`;
+    if (days === 7) return "1 week";
+    const weeks = Math.floor(days / 7);
+    const remainingDays = days % 7;
+    if (remainingDays === 0) return `${weeks} week${weeks > 1 ? 's' : ''}`;
+    return `${weeks} week${weeks > 1 ? 's' : ''}, ${remainingDays} day${remainingDays > 1 ? 's' : ''}`;
+  };
   
   // Helper to get minimum valid start time (next 15-min block from now)
   const getMinimumStartDateTime = () => {
@@ -334,15 +371,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
     setWillData(updatedWillData);
     
     if (isSoloMode) {
-      // Solo mode: Submit directly after Step 3 (no End Room)
-      createWillMutation.mutate({
-        title: updatedWillData.what || "Solo Goal",
-        description: updatedWillData.why || "Personal commitment",
-        startDate: updatedWillData.startDate,
-        endDate: updatedWillData.endDate,
-        endRoomScheduledAt: null,
-        mode: 'solo',
-      });
+      // Solo mode: Go to confirmation step (Step 4)
+      setCurrentStep(4);
     } else {
       // Circle mode: Show transition animation then go to End Room step
       setShowTransition(true);
@@ -353,6 +383,18 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         setCurrentStep(4);
       }, 3500);
     }
+  };
+  
+  // Handler for Solo mode confirmation step
+  const handleSoloConfirmSubmit = () => {
+    createWillMutation.mutate({
+      title: willData.what || "Solo Goal",
+      description: willData.why || "Personal commitment",
+      startDate: willData.startDate,
+      endDate: willData.endDate,
+      endRoomScheduledAt: null,
+      mode: 'solo',
+    });
   };
 
   const handleStep4Submit = (e: React.FormEvent) => {
@@ -444,26 +486,33 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         {/* Sticky Header with Progress Indicator */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
-            <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
+            <div className="flex items-center justify-center space-x-1.5 min-w-0 flex-1">
               <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                <div className={`w-7 h-7 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
                   1
                 </div>
-                <span className={`ml-1 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
+                <span className={`ml-1 text-xs ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(1)}</span>
               </div>
-              <div className={`w-6 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              <div className={`w-4 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
               <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                <div className={`w-7 h-7 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
                   2
                 </div>
-                <span className={`ml-1 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>What</span>
+                <span className={`ml-1 text-xs ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(2)}</span>
               </div>
-              <div className={`w-6 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              <div className={`w-4 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
               <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
+                <div className={`w-7 h-7 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
                   3
                 </div>
-                <span className={`ml-1 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
+                <span className={`ml-1 text-xs ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
+              </div>
+              <div className={`w-4 h-0.5 ${currentStep >= 4 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              <div className="flex items-center">
+                <div className={`w-7 h-7 ${currentStep >= 4 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                  4
+                </div>
+                <span className={`ml-1 text-xs ${currentStep >= 4 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(4)}</span>
               </div>
             </div>
           
@@ -473,7 +522,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               {currentStep === 1 && "Set Your Timeline"}
               {currentStep === 2 && "What would you like to do?"}
               {currentStep === 3 && "Why would you like to do this?"}
-              {currentStep === 4 && "Schedule Your End Room"}
+              {currentStep === 4 && (isSoloMode ? "Review Your Will" : "Schedule Your End Room")}
             </h1>
             {currentStep === 1 && (
               <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
@@ -498,7 +547,13 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
               </>
             )}
-            {currentStep === 4 && <p className="text-sm text-gray-500 mt-1">An opportunity for your circle to gather, reflect, share, and honor the effort.</p>}
+            {currentStep === 4 && (
+              <p className="text-sm text-gray-500 mt-1">
+                {isSoloMode 
+                  ? "Confirm your commitment before starting" 
+                  : "An opportunity for your circle to gather, reflect, share, and honor the effort."}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -705,101 +760,181 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </button>
-                <PrimaryButton disabled={createWillMutation.isPending || addCommitmentMutation.isPending}>
-                  {isSoloMode ? (
-                    createWillMutation.isPending || addCommitmentMutation.isPending ? 'Creating...' : 'Create Will'
-                  ) : (
-                    <>Next <ArrowRight className="w-4 h-4 ml-2" /></>
-                  )}
+                <PrimaryButton>
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
             </form>
           </SectionCard>
         )}
         
-        {/* Step 4: End Room Scheduling */}
+        {/* Step 4: Confirmation (Solo) or End Room Scheduling (Circle) */}
         {currentStep === 4 && !showTransition && (
-          <SectionCard>
-            <form onSubmit={handleStep4Submit} className="space-y-3">
-              {/* Skip button anchored in top-right corner */}
-              <div className="flex justify-end -mt-2 -mr-2 mb-2">
-                <button 
-                  type="button" 
-                  onClick={() => setShowSkipConfirmation(true)}
-                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
-                  data-testid="button-skip-endroom"
-                >
-                  Skip
-                </button>
-              </div>
-              
-              {/* Header with Video Icon */}
-              <div className="px-4">
-                {/* Compact Video Icon */}
-                <div className="flex justify-center mb-3">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-md opacity-20 animate-pulse"></div>
-                    <div className="relative w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
-                      <Video className="w-5 h-5 text-blue-600" />
-                    </div>
+          <>
+            {isSoloMode ? (
+              /* Solo Mode: Confirmation Screen */
+              <SectionCard>
+                <div className="space-y-5 px-4">
+                  {/* Summary Card */}
+                  <Card className="border border-purple-100 shadow-sm">
+                    <CardContent className="pt-5 space-y-4">
+                      {/* Timeline Section */}
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <Calendar className="w-4 h-4 text-purple-500 mr-2" />
+                          <p className="text-sm font-medium text-gray-500">Timeline</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm pl-6">
+                          <span className="font-medium text-gray-900">{formatDateForDisplay(willData.startDate)}</span>
+                          <ArrowRight className="w-4 h-4 text-gray-400" />
+                          <span className="font-medium text-gray-900">{formatDateForDisplay(willData.endDate)}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 pl-6">
+                          {getDurationText(willData.startDate, willData.endDate)}
+                        </p>
+                      </div>
+
+                      {/* What Section */}
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <Target className="w-4 h-4 text-green-500 mr-2" />
+                          <p className="text-sm font-medium text-gray-500">Your Commitment</p>
+                        </div>
+                        <div className="pl-6 bg-green-50/50 rounded-lg p-3 border border-green-100">
+                          <p className="text-base font-semibold text-gray-900 italic">
+                            "I will {willData.what}"
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Why Section */}
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <Heart className="w-4 h-4 text-red-500 mr-2" />
+                          <p className="text-sm font-medium text-gray-500">Your Motivation</p>
+                          <span className="text-xs text-gray-400 ml-2">(Private)</span>
+                        </div>
+                        <div className="pl-6 bg-red-50/30 rounded-lg p-3 border border-red-100/50">
+                          <p className="text-sm text-gray-700 italic">
+                            Because {willData.why}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setCurrentStep(3)}
+                      className="flex-1 px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
+                      data-testid="button-back-to-edit"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSoloConfirmSubmit}
+                      disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                      className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
+                        createWillMutation.isPending || addCommitmentMutation.isPending
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-sm'
+                      }`}
+                      data-testid="button-confirm-create"
+                    >
+                      {createWillMutation.isPending || addCommitmentMutation.isPending 
+                        ? 'Creating...' 
+                        : 'Confirm & Create'}
+                    </button>
                   </div>
                 </div>
-                
-                <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-                  Choose a time for a video call after your <em>Will</em> ends on{' '}
-                  <span className="font-semibold text-gray-900">
-                    {endDate ? new Date(`${endDate}T${endTime || '12:00'}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}{' '}
-                    at {endTime ? new Date(`${endDate}T${endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '12:00 PM'}
-                  </span>
-                </label>
-                
-                {/* Input field */}
-                <div className="w-full max-w-md mx-auto">
-                  <input
-                    type="datetime-local"
-                    name="endRoomDateTime"
-                    min={willData.endDate}
-                    max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
-                    value={endRoomDateTime}
-                    onChange={(e) => setEndRoomDateTime(e.target.value)}
-                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all duration-200"
-                    data-testid="input-end-room-datetime"
-                  />
-                </div>
-              </div>
+              </SectionCard>
+            ) : (
+              /* Circle Mode: End Room Scheduling */
+              <SectionCard>
+                <form onSubmit={handleStep4Submit} className="space-y-3">
+                  {/* Skip button anchored in top-right corner */}
+                  <div className="flex justify-end -mt-2 -mr-2 mb-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowSkipConfirmation(true)}
+                      disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                      className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
+                      data-testid="button-skip-endroom"
+                    >
+                      Skip
+                    </button>
+                  </div>
+                  
+                  {/* Header with Video Icon */}
+                  <div className="px-4">
+                    {/* Compact Video Icon */}
+                    <div className="flex justify-center mb-3">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-md opacity-20 animate-pulse"></div>
+                        <div className="relative w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
+                          <Video className="w-5 h-5 text-blue-600" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
+                      Choose a time for a video call after your <em>Will</em> ends on{' '}
+                      <span className="font-semibold text-gray-900">
+                        {endDate ? new Date(`${endDate}T${endTime || '12:00'}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}{' '}
+                        at {endTime ? new Date(`${endDate}T${endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '12:00 PM'}
+                      </span>
+                    </label>
+                    
+                    {/* Input field */}
+                    <div className="w-full max-w-md mx-auto">
+                      <input
+                        type="datetime-local"
+                        name="endRoomDateTime"
+                        min={willData.endDate}
+                        max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
+                        value={endRoomDateTime}
+                        onChange={(e) => setEndRoomDateTime(e.target.value)}
+                        className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all duration-200"
+                        data-testid="input-end-room-datetime"
+                      />
+                    </div>
+                  </div>
 
-              {/* Info Box with slightly larger text */}
-              <div className="mx-4 bg-blue-50/50 border border-blue-100/50 rounded-lg p-3">
-                <ul className="space-y-1.5 text-sm text-gray-600">
-                  <li className="flex items-start">
-                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                    Virtual meeting link opens automatically at the time you choose.
-                  </li>
-                  <li className="flex items-start">
-                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                    Runs for 30 minutes.
-                  </li>
-                  <li className="flex items-start">
-                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                    Can't be changed once your Will starts.
-                  </li>
-                </ul>
-              </div>
+                  {/* Info Box with slightly larger text */}
+                  <div className="mx-4 bg-blue-50/50 border border-blue-100/50 rounded-lg p-3">
+                    <ul className="space-y-1.5 text-sm text-gray-600">
+                      <li className="flex items-start">
+                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                        Virtual meeting link opens automatically at the time you choose.
+                      </li>
+                      <li className="flex items-start">
+                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                        Runs for 30 minutes.
+                      </li>
+                      <li className="flex items-start">
+                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                        Can't be changed once your Will starts.
+                      </li>
+                    </ul>
+                  </div>
 
-              {/* Action Buttons - Compact row layout */}
-              <div className="px-4 pt-1">
-                <div className="flex gap-3">
-                  {/* Back button - smaller, left side */}
-                  <button 
-                    type="button" 
-                    onClick={() => setCurrentStep(3)}
-                    className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                    data-testid="button-back"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-1" />
-                    Back
-                  </button>
+                  {/* Action Buttons - Compact row layout */}
+                  <div className="px-4 pt-1">
+                    <div className="flex gap-3">
+                      {/* Back button - smaller, left side */}
+                      <button 
+                        type="button" 
+                        onClick={() => setCurrentStep(3)}
+                        className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                        data-testid="button-back"
+                      >
+                        <ArrowLeft className="w-4 h-4 mr-1" />
+                        Back
+                      </button>
                   
                   {/* Primary CTA - tighter padding */}
                   <button
@@ -812,15 +947,17 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     }`}
                     data-testid="button-schedule-and-create"
                   >
-                    {createWillMutation.isPending || addCommitmentMutation.isPending 
-                      ? 'Creating...' 
-                      : 'Create Will'}
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </button>
-                </div>
-              </div>
-            </form>
-          </SectionCard>
+                      {createWillMutation.isPending || addCommitmentMutation.isPending 
+                        ? 'Creating...' 
+                        : 'Create Will'}
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </button>
+                    </div>
+                  </div>
+                </form>
+              </SectionCard>
+            )}
+          </>
         )}
         
         {/* Skip End Room Confirmation Modal */}

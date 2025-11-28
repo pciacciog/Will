@@ -1,0 +1,222 @@
+Prompt for Replit:
+"For solo mode, I want to add a confirmation/summary screen after Step 3 (Why) and before the Will is created. This gives solo users a chance to review all their inputs before finalizing.
+
+The Goal:
+Solo mode flow currently:
+
+Step 1: When (dates)
+Step 2: What (commitment)
+Step 3: Why (motivation)
+→ Immediately creates Will
+
+New solo mode flow:
+
+Step 1: When (dates)
+Step 2: What (commitment)
+Step 3: Why (motivation)
+Step 4: Confirm Your Will (NEW) ← Review everything
+→ Creates Will after confirmation
+
+Circle mode: Keep as-is (When/What/Why/End Room)
+
+File to Modify:
+client/src/pages/StartWill.tsx
+
+Implementation:
+Step 1: Add Confirmation Step for Solo
+Currently solo mode has 3 steps, circle has 4. Change solo to also have 4, but the 4th step is different:
+typescript// Detect mode
+const isSolo = location.includes('/solo/');
+
+// Define steps based on mode
+const totalSteps = 4; // Both modes have 4 steps now
+
+// Step labels
+const getStepLabel = (step: number) => {
+  if (isSolo) {
+    switch(step) {
+      case 1: return "When";
+      case 2: return "What";
+      case 3: return "Why";
+      case 4: return "Confirm"; // NEW
+      default: return "";
+    }
+  } else {
+    // Circle mode labels (unchanged)
+    switch(step) {
+      case 1: return "When";
+      case 2: return "What";
+      case 3: return "Why";
+      case 4: return "End Room";
+      default: return "";
+    }
+  }
+};
+Step 2: Modify Step 3 Submit Handler
+Currently Step 3 (Why) either creates the Will (solo) or goes to End Room (circle). Change it:
+typescriptconst handleStep3Submit = () => {
+  if (isSolo) {
+    // Solo: Go to confirmation step
+    setCurrentStep(4);
+  } else {
+    // Circle: Go to End Room step (existing behavior)
+    setCurrentStep(4);
+  }
+};
+Step 3: Create Confirmation Screen UI
+Add a new step 4 for solo mode that displays a summary:
+tsx{/* Step 4: Confirmation (Solo) or End Room (Circle) */}
+{currentStep === 4 && (
+  <>
+    {isSolo ? (
+      // NEW: Solo Confirmation Screen
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Review Your Will</h2>
+          <p className="text-muted-foreground">
+            Confirm your commitment before starting
+          </p>
+        </div>
+
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            {/* Timeline */}
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">
+                Timeline
+              </p>
+              <div className="flex items-center gap-2 text-sm">
+                <span>{formatDate(formData.startDate)}</span>
+                <span>→</span>
+                <span>{formatDate(formData.endDate)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {getDurationText(formData.startDate, formData.endDate)}
+              </p>
+            </div>
+
+            {/* What */}
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">
+                Your Commitment
+              </p>
+              <p className="font-semibold">{formData.what}</p>
+            </div>
+
+            {/* Why */}
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">
+                Your Motivation
+              </p>
+              <p className="text-sm text-muted-foreground italic">
+                {formData.why}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={() => setCurrentStep(3)}
+            className="flex-1"
+          >
+            Back to Edit
+          </Button>
+          <Button 
+            onClick={handleFinalSubmit}
+            disabled={createWillMutation.isPending}
+            className="flex-1"
+          >
+            {createWillMutation.isPending ? 'Creating...' : 'Confirm & Create'}
+          </Button>
+        </div>
+      </div>
+    ) : (
+      // Circle: End Room Step (existing UI)
+      <div>
+        {/* Keep existing End Room scheduling UI */}
+      </div>
+    )}
+  </>
+)}
+Step 4: Helper Functions for Display
+Add these helper functions for formatting the confirmation screen:
+typescriptconst formatDate = (date: Date | string) => {
+  return new Date(date).toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+};
+
+const getDurationText = (start: Date | string, end: Date | string) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (days === 1) return "1 day";
+  if (days < 7) return `${days} days`;
+  if (days === 7) return "1 week";
+  const weeks = Math.floor(days / 7);
+  return `${weeks} week${weeks > 1 ? 's' : ''}`;
+};
+
+Design Notes:
+Visual style:
+
+Clean, card-based layout
+Clear section headers ("Timeline", "Your Commitment", "Your Motivation")
+Muted secondary text for context
+Prominent "Confirm & Create" button
+
+User experience:
+
+"Back to Edit" button allows them to go back and change anything
+All information displayed in read-only format
+Clear visual hierarchy (what's most important stands out)
+
+Mobile-friendly:
+
+Vertical layout
+Large touch targets
+Easy to scan
+
+
+Alternative Approach (If You Prefer):
+Instead of a full screen, you could make it a modal/dialog that appears after Step 3:
+tsx<Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Review Your Will</DialogTitle>
+      <DialogDescription>
+        Confirm your commitment before starting
+      </DialogDescription>
+    </DialogHeader>
+    
+    {/* Same content as above */}
+    
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setShowConfirmation(false)}>
+        Edit
+      </Button>
+      <Button onClick={handleFinalSubmit}>
+        Confirm & Create
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+Your call: Full-screen step or modal dialog?
+
+Summary:
+
+✅ Add Step 4 for solo mode (confirmation screen)
+✅ Display: Timeline, What (commitment), Why (motivation)
+✅ Buttons: "Back to Edit" and "Confirm & Create"
+✅ Circle mode unchanged (Step 4 remains End Room)
+✅ Clean, scannable layout with clear hierarchy
+
+Please implement this and let me know if you'd prefer the full-screen approach or modal dialog approach. I think full-screen feels more intentional and gives it proper weight."
