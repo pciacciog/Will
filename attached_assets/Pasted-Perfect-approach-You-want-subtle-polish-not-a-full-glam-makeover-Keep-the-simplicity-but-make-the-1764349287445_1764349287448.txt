@@ -1,0 +1,142 @@
+Perfect approach! You want subtle polish, not a full glam makeover. Keep the simplicity but make the inputs feel professional and crisp like the sign-in page.
+
+Prompt for Replit:
+"The Circle Hub now has the modern glowy design (Group A), but the StartWill flow (When/What/Why) still uses the old simple design (Group B). This creates a jarring transition. I want to subtly upgrade StartWill to feel more consistent WITHOUT making it fully glamorous.
+
+The Problem:
+Specifically the What/Why text inputs look unprofessional and "dummy looking" compared to the crisp inputs on the sign-in page.
+
+The Goal:
+Make StartWill feel professional and crisp while keeping it simple and focused (not distracting like full Group A).
+
+Reference Point: Auth.tsx (Sign In Page)
+Please examine the text input styling on the Auth page (Sign In/Sign Up).
+Find:
+
+What Input/Textarea components are used?
+What className styling makes them look "crisp"?
+What makes them feel professional vs "dummy"?
+
+Show me the actual code for those inputs.
+
+Files to Update:
+1. StartWill.tsx - Step 2 (What) and Step 3 (Why)
+Current problem: The Textarea inputs probably look basic/flat
+Goal: Make them match the Auth page input quality
+Specifically update:
+
+Text input fields (What and Why)
+Make them look crisp and professional
+Match the Auth page aesthetic
+
+
+Subtle Carryovers from Group A (Not Full Glamour):
+Apply these sparingly to StartWill:
+Background (Subtle):
+tsx// Very light gradient, barely noticeable
+<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50/50">
+Not the heavy to-purple-50/30 or to-emerald-50/30 - just a whisper of gradient.
+Card Styling (Refined):
+tsx// Clean shadow, no glow effects
+<Card className="shadow-lg rounded-xl border bg-white">
+Not shadow-xl with border-2 border-purple-100/70 - keep it clean.
+Input Styling (Crisp - THIS IS KEY):
+Copy the exact input styling from Auth.tsx to StartWill.tsx.
+Examples of what makes inputs look crisp:
+
+Proper border styling (border-2 vs border)
+Focus states (focus:ring-2 focus:ring-primary)
+Padding (px-4 py-3 vs minimal padding)
+Typography (text-base with proper leading)
+Background (bg-white vs transparent)
+Transitions (transition-all duration-200)
+
+Typography (Professional):
+tsx// Clean, readable hierarchy
+<h2 className="text-2xl font-semibold mb-2">What will you do?</h2>
+<p className="text-sm text-muted-foreground mb-4">Your commitment</p>
+
+What NOT to Add:
+❌ Blur effects (blur-2xl, blur-lg)
+❌ Animated pulses (animate-pulse)
+❌ Heavy glows on cards
+❌ Gradient backgrounds on cards
+❌ Multiple shadow layers
+❌ Hover animations
+Keep it focused and clean - this is a form, not a showcase.
+
+Specific Instructions:
+Step 1: Find Auth.tsx Input Styling
+Show me the code for text inputs on the Auth page. Example:
+tsx// In Auth.tsx, find inputs like:
+<Input
+  type="email"
+  placeholder="Email"
+  className="..."
+/>
+
+<Input
+  type="password"
+  placeholder="Password"
+  className="..."
+/>
+Step 2: Apply Same Styling to StartWill Textareas
+In StartWill.tsx, update the What and Why textareas:
+tsx// Step 2 (What) - Current (probably basic):
+<Textarea
+  value={formData.what}
+  onChange={...}
+  placeholder="I will..."
+  maxLength={75}
+/>
+
+// Step 2 (What) - Updated with Auth-style crisp inputs:
+<Textarea
+  value={formData.what}
+  onChange={...}
+  placeholder="I will..."
+  maxLength={75}
+  className="[COPY EXACT CLASSES FROM AUTH INPUTS]
+    // Should include things like:
+    // border-2, px-4, py-3, rounded-lg, 
+    // focus:ring-2, transition-all, etc.
+  "
+/>
+Same for Step 3 (Why).
+Step 3: Add Subtle Polish to Container
+tsx// Very light gradient background (barely visible)
+<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50/50">
+  
+  {/* Step container - clean card */}
+  <Card className="shadow-lg rounded-xl border bg-white max-w-2xl mx-auto">
+    <CardContent className="p-8">
+      {/* Steps content */}
+    </CardContent>
+  </Card>
+</div>
+
+Testing Checklist:
+After updating, the StartWill page should feel:
+
+ Professional - Text inputs look crisp, not dummy ✅
+ Consistent - Matches the Auth page input quality ✅
+ Clean - No overwhelming glow/blur effects ✅
+ Focused - Still feels like a form, not a showcase ✅
+ Subtle - Slight background gradient, but barely noticeable ✅
+ Polished - Clean shadows, refined borders ✅
+
+But NOT:
+
+ Glamorous - No heavy glow effects ❌
+ Distracting - No animations or pulses ❌
+ Busy - No multiple gradient layers ❌
+
+
+Summary:
+
+✅ Examine Auth.tsx inputs - Find what makes them crisp
+✅ Copy input styling to StartWill - Especially What/Why textareas
+✅ Add subtle polish - Light gradient, clean shadows
+✅ Keep it simple - This is still a form, not a showcase
+
+The goal: Make StartWill feel professional and consistent with Auth, without making it glamorous like the hubs.

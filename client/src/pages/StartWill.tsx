@@ -481,7 +481,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
   }
 
   return (
-    <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
+    <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden bg-gradient-to-br from-gray-50 via-white to-gray-50/50 min-h-screen">
       <MobileLayout>
         {/* Sticky Header with Progress Indicator */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
@@ -655,12 +655,12 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         {currentStep === 2 && !showTransition && (
           <SectionCard>
             
-            <form onSubmit={handleStep2Submit} className="space-y-3">
+            <form onSubmit={handleStep2Submit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-tight">Your Want</label>
                 <div className="relative">
-                  <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                    <span className="text-gray-900 font-medium text-base mr-3 mt-0.5 flex-shrink-0">I will</span>
+                  <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl px-4 py-3.5 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
+                    <span className="text-gray-800 font-semibold text-base mr-3 mt-0.5 flex-shrink-0">I will</span>
                     <Textarea 
                       ref={whatRef}
                       name="what"
@@ -679,7 +679,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     />
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whatCharCount} / 75</div>
+                <div className="text-xs text-gray-400 mt-2 text-right tracking-tight">{whatCharCount} / 75</div>
               </div>
               
               <div className="flex justify-between items-center">
@@ -713,10 +713,10 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               </div>
             )}
             
-            <form onSubmit={handleStep3Submit} className="space-y-3">
+            <form onSubmit={handleStep3Submit} className="space-y-4">
               <div>
                 {/* Combined label with privacy note on single line - only show privacy note in circle mode */}
-                <label className="flex items-center text-sm font-medium text-gray-700 tracking-tight mb-3">
+                <label className="flex items-center text-sm font-semibold text-gray-700 tracking-tight mb-2">
                   Your Why
                   {!isSoloMode && (
                     <span className="text-xs text-gray-400 font-normal ml-2 flex items-center">
@@ -729,8 +729,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 </label>
                 {/* Input container - matches Step 2 with "Because" inside like "I will" */}
                 <div className="relative">
-                  <div className="flex items-center bg-white border border-gray-200 rounded-xl px-4 py-3 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200 min-h-[48px]">
-                    <span className="text-gray-900 font-medium text-base mr-3 flex-shrink-0">Because</span>
+                  <div className="flex items-center bg-white border-2 border-gray-200 rounded-xl px-4 py-3.5 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200 min-h-[52px]">
+                    <span className="text-gray-800 font-semibold text-base mr-3 flex-shrink-0">Because</span>
                     <Textarea 
                       ref={whyRef}
                       name="why"
@@ -749,7 +749,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     />
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whyCharCount} / 75</div>
+                <div className="text-xs text-gray-400 mt-2 text-right tracking-tight">{whyCharCount} / 75</div>
               </div>
               
               <div className="flex justify-between items-center">
