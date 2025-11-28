@@ -508,7 +508,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 <div className={`w-7 h-7 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
                   3
                 </div>
-                <span className={`ml-1 text-xs ${currentStep >= 3 ? 'bg-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
+                <span className={`ml-1 text-xs ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
               </div>
               {/* Note: Step 4 (End Room for Circle mode, Confirm for Solo mode) exists in the flow 
                   but is intentionally hidden from the visual step indicator. 
