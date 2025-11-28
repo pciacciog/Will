@@ -856,13 +856,13 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               /* Circle Mode: End Room Scheduling */
               <SectionCard>
                 <form onSubmit={handleStep4Submit} className="space-y-3">
-                  {/* Skip button anchored in top-right corner */}
-                  <div className="flex justify-end -mt-2 -mr-2 mb-2">
+                  {/* Skip button anchored in top-right corner - subtle secondary action */}
+                  <div className="flex justify-end -mt-3 -mr-1 mb-0">
                     <button 
                       type="button" 
                       onClick={() => setShowSkipConfirmation(true)}
                       disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                      className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
+                      className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded-md hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
                       data-testid="button-skip-endroom"
                     >
                       Skip
@@ -872,7 +872,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                   {/* Header with Video Icon */}
                   <div className="px-4">
                     {/* Compact Video Icon */}
-                    <div className="flex justify-center mb-3">
+                    <div className="flex justify-center mb-2">
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-md opacity-20 animate-pulse"></div>
                         <div className="relative w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
