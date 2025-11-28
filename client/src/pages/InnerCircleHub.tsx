@@ -457,11 +457,11 @@ export default function InnerCircleHub() {
         />
       )}
 
-      <div className="pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
+      <div className="pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
           
           {/* Header with Back Button */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-3">
             {/* Back Button */}
             <button
               onClick={() => setLocation('/')}
@@ -537,32 +537,32 @@ export default function InnerCircleHub() {
             </DropdownMenu>
           </div>
 
-          {/* Circle Icon with Glow */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center mb-3">
+          {/* Circle Icon with Glow - Compact */}
+          <div className="text-center mb-3">
+            <div className="inline-flex items-center justify-center mb-1">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-lg opacity-30 animate-pulse"></div>
-                <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-100 flex items-center justify-center shadow-lg">
-                  <Users className="w-7 h-7 text-emerald-600" />
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-md opacity-25 animate-pulse"></div>
+                <div className="relative w-11 h-11 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-100 flex items-center justify-center shadow-md">
+                  <Users className="w-5 h-5 text-emerald-600" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Members Section */}
-          <div className="relative mb-6">
+          {/* Members Section - Compact */}
+          <div className="relative mb-4">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
             <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-              <CardContent className="p-5">
-                {/* Section Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-5 h-5 text-emerald-600" />
-                    <h3 className="font-semibold text-gray-900">Circle Members</h3>
+              <CardContent className="p-3">
+                {/* Section Header - Compact */}
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center space-x-1.5">
+                    <Users className="w-4 h-4 text-emerald-600" />
+                    <h3 className="font-semibold text-gray-900 text-sm">Circle Members</h3>
                   </div>
-                  <div className="flex items-center space-x-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-                    <span className="text-xs text-emerald-700">Code:</span>
-                    <span className="font-mono font-bold text-emerald-700 text-sm">{circle.inviteCode}</span>
+                  <div className="flex items-center space-x-1.5 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
+                    <span className="text-[10px] text-emerald-700">Code:</span>
+                    <span className="font-mono font-bold text-emerald-700 text-xs">{circle.inviteCode}</span>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(circle.inviteCode);
@@ -571,37 +571,37 @@ export default function InnerCircleHub() {
                           description: "Invite code copied to clipboard",
                         });
                       }}
-                      className="p-1 hover:bg-emerald-100 rounded transition-colors"
+                      className="p-0.5 hover:bg-emerald-100 rounded transition-colors"
                     >
-                      <Copy className="h-3.5 w-3.5 text-emerald-600" />
+                      <Copy className="h-3 w-3 text-emerald-600" />
                     </button>
                   </div>
                 </div>
                 
-                {/* Members Grid */}
-                <div className={`${circle.members?.length <= 2 ? 'space-y-3' : 'grid grid-cols-2 gap-3'}`}>
+                {/* Members Grid - 3-across compact layout */}
+                <div className="grid grid-cols-3 gap-2">
                   {circle.members?.map((member: any, index: number) => (
                     <div 
                       key={member.id} 
-                      className={`flex items-center space-x-3 p-3 bg-gradient-to-br from-gray-50 to-emerald-50/30 rounded-xl border border-emerald-100/50 ${member.user.id === user?.id ? 'cursor-pointer hover:bg-emerald-50/50 transition-colors' : ''}`}
+                      className={`flex flex-col items-center p-2 bg-gradient-to-br from-gray-50 to-emerald-50/30 rounded-lg border border-emerald-100/50 ${member.user.id === user?.id ? 'cursor-pointer hover:bg-emerald-50/50 transition-colors' : ''}`}
                       onClick={member.user.id === user?.id ? () => setShowAccountSettings(true) : undefined}
                     >
-                      {/* Avatar with glow */}
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-emerald-500/20 blur-md rounded-full"></div>
-                        <div className="relative w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-md">
-                          <span className="text-white font-semibold text-sm">
+                      {/* Avatar with glow - smaller */}
+                      <div className="relative mb-1">
+                        <div className="absolute inset-0 bg-emerald-500/20 blur-sm rounded-full"></div>
+                        <div className="relative w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-sm">
+                          <span className="text-white font-semibold text-xs">
                             {(member.user.firstName || member.user.email)?.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        {/* Online indicator */}
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-white"></div>
+                        {/* Online indicator - smaller */}
+                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-[1.5px] border-white"></div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 truncate text-sm">
-                          {member.user.firstName || member.user.email}
+                      <div className="text-center min-w-0 w-full">
+                        <div className="font-medium text-gray-900 truncate text-xs">
+                          {member.user.firstName || member.user.email?.split('@')[0]}
                         </div>
-                        <div className="text-xs text-emerald-600">
+                        <div className="text-[10px] text-emerald-600">
                           {member.user.id === user?.id ? 'You' : 'Member'}
                         </div>
                       </div>
@@ -612,31 +612,31 @@ export default function InnerCircleHub() {
             </Card>
           </div>
           
-          {/* Will Status Section */}
+          {/* Will Status Section - Compact */}
           <div className="relative">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
             <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-              <CardContent className="p-5">
-                {/* Section Header */}
-                <div className="flex items-center space-x-2 mb-4">
-                  <Target className="w-5 h-5 text-emerald-600" />
-                  <h3 className="font-semibold text-gray-900">Current Will</h3>
+              <CardContent className="p-3">
+                {/* Section Header - Compact */}
+                <div className="flex items-center space-x-1.5 mb-2.5">
+                  <Target className="w-4 h-4 text-emerald-600" />
+                  <h3 className="font-semibold text-gray-900 text-sm">Current Will</h3>
                 </div>
 
           {willStatus === 'no_will' && (
-            <div className="text-center py-6">
+            <div className="text-center py-4">
               <button 
                 onClick={() => setLocation('/start-will')}
-                className="mx-auto mb-4 w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                className="mx-auto mb-3 w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
                 aria-label="Create a Will"
               >
-                <Plus className="w-7 h-7 text-white" />
+                <Plus className="w-5 h-5 text-white" />
               </button>
-              <h3 className="text-lg font-medium mb-2 tracking-tight text-gray-900">No active <em>Will</em></h3>
-              <p className="text-gray-500 mb-6 text-sm tracking-tight">Ready to commit to something meaningful together?</p>
+              <h3 className="text-base font-medium mb-1 tracking-tight text-gray-900">No active <em>Will</em></h3>
+              <p className="text-gray-500 mb-4 text-sm tracking-tight">Ready to commit to something meaningful together?</p>
               <Button 
                 onClick={() => setLocation('/start-will')}
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl shadow-md transition-all duration-200"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2.5 rounded-xl shadow-md transition-all duration-200"
               >
                 <span>Start a <em>Will</em></span>
               </Button>
@@ -644,9 +644,9 @@ export default function InnerCircleHub() {
           )}
 
           {willStatus === 'pending' && (
-            <div className="bg-gradient-to-br from-amber-50/50 to-yellow-50/30 border border-amber-200/60 rounded-xl p-4 space-y-3 text-center">
+            <div className="bg-gradient-to-br from-amber-50/50 to-yellow-50/30 border border-amber-200/60 rounded-lg p-3 space-y-2 text-center">
               {/* Dynamic Will Initiator Message */}
-              <div className="text-sm text-gray-600">
+              <div className="text-xs text-gray-600">
                 {(() => {
                   const creator = circle?.members?.find((member: any) => member.user.id === will?.createdBy);
                   const creatorName = creator?.user?.firstName || creator?.user?.email || 'Someone';
@@ -659,27 +659,26 @@ export default function InnerCircleHub() {
               </div>
 
               {/* Will Pending Status */}
-              <div className="flex justify-center items-center space-x-2 text-amber-600 text-sm font-semibold">
-                <Clock className="w-4 h-4" />
+              <div className="flex justify-center items-center space-x-1.5 text-amber-600 text-xs font-semibold">
+                <Clock className="w-3.5 h-3.5" />
                 <span><em>Will</em> Pending</span>
               </div>
 
               {/* Submission Progress */}
-              <div className="text-sm text-gray-700">
+              <div className="text-xs text-gray-700">
                 {will?.commitments?.length || 0} of {will?.memberCount || 0} members have submitted
               </div>
 
               {/* Compact Info Box */}
-              <div className="bg-amber-100/60 border border-amber-200 rounded-lg p-2 text-xs text-amber-900">
-                This <em>Will</em> will activate automatically at <span className="font-semibold">{formatActivationTime(will?.startDate)}</span>.
-                <br />
+              <div className="bg-amber-100/60 border border-amber-200 rounded-md p-1.5 text-[10px] text-amber-900 leading-tight">
+                This <em>Will</em> will activate at <span className="font-semibold">{formatActivationTime(will?.startDate)}</span>.
                 Anyone who hasn't submitted by then will not be included.
               </div>
 
               {/* Action Button */}
               <Button 
                 onClick={handleViewWillDetails} 
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl shadow-md transition-all duration-200 mt-2"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2 rounded-lg shadow-md transition-all duration-200"
               >
                 View <em>Will</em> Details
               </Button>
@@ -688,29 +687,29 @@ export default function InnerCircleHub() {
 
           {willStatus === 'scheduled' && (
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-blue-500/20 blur-md rounded-xl"></div>
-                    <div className="relative w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl flex items-center justify-center border border-blue-100 shadow-md">
-                      <Clock className="w-5 h-5 text-blue-600" />
+                    <div className="absolute inset-0 bg-blue-500/20 blur-sm rounded-lg"></div>
+                    <div className="relative w-9 h-9 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center border border-blue-100 shadow-sm">
+                      <Clock className="w-4 h-4 text-blue-600" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900"><em>Will</em> Scheduled</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-semibold text-gray-900 text-sm"><em>Will</em> Scheduled</h3>
+                    <p className="text-xs text-gray-500">
                       Starts {formatActivationTime(will?.startDate)}
                     </p>
                   </div>
                 </div>
-                <Badge className="bg-blue-100 text-blue-800 border border-blue-200">
+                <Badge className="bg-blue-100 text-blue-800 border border-blue-200 text-xs py-0.5">
                   Scheduled
                 </Badge>
               </div>
               
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-xl p-4 mb-4 border border-blue-100">
-                <div className="text-sm text-blue-700">
-                  <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-lg p-2.5 mb-3 border border-blue-100">
+                <div className="text-xs text-blue-700">
+                  <svg className="w-3.5 h-3.5 inline mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                   Your <em>Will</em> will begin in <span className="font-semibold">{formatTimeUntilStart(will?.startDate)}</span>
@@ -719,7 +718,7 @@ export default function InnerCircleHub() {
               
               <Button 
                 onClick={handleViewWillDetails} 
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl shadow-md transition-all duration-200"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2 rounded-lg shadow-md transition-all duration-200"
               >
                 View <em>Will</em> Details
               </Button>
@@ -728,27 +727,27 @@ export default function InnerCircleHub() {
 
           {willStatus === 'active' && (
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-green-500/20 blur-md rounded-xl"></div>
-                    <div className="relative w-12 h-12 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center border border-green-100 shadow-md">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div className="absolute inset-0 bg-green-500/20 blur-sm rounded-lg"></div>
+                    <div className="relative w-9 h-9 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg flex items-center justify-center border border-green-100 shadow-sm">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold tracking-tight text-gray-900"><em>Will</em> Active</h3>
-                    <p className="text-sm text-gray-500 tracking-tight">Ends at {formatDisplayDateTime(will?.endDate)}</p>
+                    <h3 className="font-semibold tracking-tight text-gray-900 text-sm"><em>Will</em> Active</h3>
+                    <p className="text-xs text-gray-500 tracking-tight">Ends at {formatDisplayDateTime(will?.endDate)}</p>
                   </div>
                 </div>
-                <Badge className="bg-green-100 text-green-800 border border-green-200">
+                <Badge className="bg-green-100 text-green-800 border border-green-200 text-xs py-0.5">
                   Active
                 </Badge>
               </div>
               
               <Button 
                 onClick={handleViewWillDetails} 
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl shadow-md transition-all duration-200"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2 rounded-lg shadow-md transition-all duration-200"
               >
                 View <em>Will</em> Details
               </Button>
@@ -757,31 +756,31 @@ export default function InnerCircleHub() {
 
           {willStatus === 'will_review' && (
             <div data-testid="section-will-review">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-purple-500/20 blur-md rounded-xl"></div>
-                    <div className="relative w-12 h-12 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl flex items-center justify-center border border-purple-100 shadow-md">
-                      <CheckCircle className="w-5 h-5 text-purple-600" />
+                    <div className="absolute inset-0 bg-purple-500/20 blur-sm rounded-lg"></div>
+                    <div className="relative w-9 h-9 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg flex items-center justify-center border border-purple-100 shadow-sm">
+                      <CheckCircle className="w-4 h-4 text-purple-600" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold tracking-tight text-gray-900" data-testid="text-will-review-heading">
+                    <h3 className="font-semibold tracking-tight text-gray-900 text-sm" data-testid="text-will-review-heading">
                       <em>Will</em> Review
                     </h3>
-                    <p className="text-sm text-gray-500 tracking-tight" data-testid="text-will-review-description">
+                    <p className="text-xs text-gray-500 tracking-tight" data-testid="text-will-review-description">
                       Reflect on your experience
                     </p>
                   </div>
                 </div>
-                <Badge className="bg-purple-100 text-purple-800 border border-purple-200" data-testid="badge-will-review">
+                <Badge className="bg-purple-100 text-purple-800 border border-purple-200 text-xs py-0.5" data-testid="badge-will-review">
                   Review
                 </Badge>
               </div>
               
               <Button 
                 onClick={() => setLocation(`/will/${will.id}`)}
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 rounded-xl shadow-md transition-all duration-200"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-2 rounded-lg shadow-md transition-all duration-200"
                 data-testid="button-submit-will-review"
               >
                 Review
@@ -795,22 +794,22 @@ export default function InnerCircleHub() {
               {will?.endRoomStatus === 'open' ? (
                 // End Room is currently in progress
                 <>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
                       <div className="relative">
-                        <div className="absolute inset-0 bg-green-500/30 blur-md rounded-xl animate-pulse"></div>
-                        <div className="relative w-12 h-12 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center border border-green-100 shadow-md">
-                          <Video className="w-5 h-5 text-green-600" />
+                        <div className="absolute inset-0 bg-green-500/30 blur-sm rounded-lg animate-pulse"></div>
+                        <div className="relative w-9 h-9 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg flex items-center justify-center border border-green-100 shadow-sm">
+                          <Video className="w-4 h-4 text-green-600" />
                         </div>
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold tracking-tight text-gray-900"><em>Will</em> - End Room</h3>
-                          <Badge className="bg-green-100 text-green-800 border border-green-200 animate-pulse">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-semibold tracking-tight text-gray-900 text-sm"><em>Will</em> - End Room</h3>
+                          <Badge className="bg-green-100 text-green-800 border border-green-200 animate-pulse text-xs py-0">
                             Live
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-500 tracking-tight">
+                        <p className="text-xs text-gray-500 tracking-tight">
                           Closes at {will?.endRoomScheduledAt ? (() => {
                             const openTime = new Date(will.endRoomScheduledAt);
                             const closeTime = new Date(openTime.getTime() + 30 * 60 * 1000);
@@ -823,7 +822,7 @@ export default function InnerCircleHub() {
                   
                   <Button 
                     onClick={handleJoinEndRoom}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 rounded-xl shadow-md transition-all duration-200"
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-2 rounded-lg shadow-md transition-all duration-200"
                   >
                     Join End Room
                   </Button>
@@ -831,22 +830,22 @@ export default function InnerCircleHub() {
               ) : (
                 // End Room is scheduled but not yet started
                 <>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
                       <div className="relative">
-                        <div className="absolute inset-0 bg-purple-500/20 blur-md rounded-xl"></div>
-                        <div className="relative w-12 h-12 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl flex items-center justify-center border border-purple-100 shadow-md">
-                          <Video className="w-5 h-5 text-purple-600" />
+                        <div className="absolute inset-0 bg-purple-500/20 blur-sm rounded-lg"></div>
+                        <div className="relative w-9 h-9 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg flex items-center justify-center border border-purple-100 shadow-sm">
+                          <Video className="w-4 h-4 text-purple-600" />
                         </div>
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold tracking-tight text-gray-900"><em>Will</em> - End Room</h3>
-                          <Badge className="bg-purple-100 text-purple-800 border border-purple-200">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-semibold tracking-tight text-gray-900 text-sm"><em>Will</em> - End Room</h3>
+                          <Badge className="bg-purple-100 text-purple-800 border border-purple-200 text-xs py-0">
                             Scheduled
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-500 tracking-tight">
+                        <p className="text-xs text-gray-500 tracking-tight">
                           Opens at {formatEndRoomTime(will.endRoomScheduledAt)}
                         </p>
                       </div>
@@ -855,7 +854,7 @@ export default function InnerCircleHub() {
                   
                   <Button 
                     onClick={handleViewWillDetails}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl shadow-md transition-all duration-200"
+                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2 rounded-lg shadow-md transition-all duration-200"
                   >
                     View End Room Details
                   </Button>
@@ -866,27 +865,27 @@ export default function InnerCircleHub() {
 
           {willStatus === 'completed' && (
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-green-500/20 blur-md rounded-xl"></div>
-                    <div className="relative w-12 h-12 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center border border-green-100 shadow-md">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div className="absolute inset-0 bg-green-500/20 blur-sm rounded-lg"></div>
+                    <div className="relative w-9 h-9 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg flex items-center justify-center border border-green-100 shadow-sm">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold tracking-tight text-gray-900"><em>Will</em> Complete</h3>
-                    <p className="text-sm text-gray-500 tracking-tight">Review final summary to close out</p>
+                    <h3 className="font-semibold tracking-tight text-gray-900 text-sm"><em>Will</em> Complete</h3>
+                    <p className="text-xs text-gray-500 tracking-tight">Review final summary to close out</p>
                   </div>
                 </div>
-                <Badge className="bg-green-100 text-green-800 border border-green-200">
+                <Badge className="bg-green-100 text-green-800 border border-green-200 text-xs py-0.5">
                   Complete
                 </Badge>
               </div>
               
               <Button 
                 onClick={() => setShowFinalSummary(true)}
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl shadow-md transition-all duration-200"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2 rounded-lg shadow-md transition-all duration-200"
               >
                 Review Final Summary
               </Button>
