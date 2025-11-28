@@ -1,0 +1,183 @@
+"I want to update InnerCircleHub.tsx to match the modern 'glowy' design aesthetic from SoloHub.tsx and Home.tsx. This is ONLY a visual/design update - all functionality must remain exactly the same.
+
+Goal:
+Transform InnerCircleHub from the old flat design to the new premium aesthetic while keeping every feature working.
+
+File to Update:
+client/src/pages/InnerCircleHub.tsx
+
+What to CHANGE (Design/Visual Only):
+1. Replace Design System Components
+Current (using old design-system.tsx):
+typescriptimport { MobileLayout, SectionCard, PrimaryButton } from '@/components/design-system';
+Change to (shadcn/ui like SoloHub):
+typescriptimport { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+2. Add Gradient Background
+Copy from SoloHub:
+tsx<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
+3. Add Glow Effects to Header
+Copy the icon glow from SoloHub:
+tsx{/* Animated glow background */}
+<div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 blur-2xl opacity-40 animate-pulse" />
+<div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/10 to-teal-400/10 blur-lg opacity-25" />
+
+{/* Icon */}
+<div className="relative">
+  <Users className="h-8 w-8 text-emerald-600" />
+</div>
+4. Upgrade Card Styling
+Replace SectionCard components with shadcn Card + glow effects:
+Current:
+tsx<SectionCard>
+  <SectionTitle>Active Will</SectionTitle>
+  {/* content */}
+</SectionCard>
+Change to:
+tsx<Card className="shadow-xl rounded-2xl border-2 border-emerald-100/70 bg-white/80 backdrop-blur">
+  <CardHeader>
+    <CardTitle className="flex items-center justify-between">
+      <span>Active Will</span>
+      {/* badges, etc */}
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    {/* same content as before */}
+  </CardContent>
+</Card>
+5. Add Hover Animations
+For clickable cards:
+tsx<Card 
+  className="... transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5 cursor-pointer"
+  onClick={...}
+>
+6. Update Button Styling
+Replace PrimaryButton with shadcn Button + gradient:
+tsx<Button 
+  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+  onClick={...}
+>
+  Start a Will
+</Button>
+7. Update Member Avatars/Badges
+Add subtle glow to member indicators:
+tsx<div className="relative">
+  <div className="absolute inset-0 bg-emerald-500/20 blur-md rounded-full" />
+  <Avatar className="relative">
+    {/* avatar content */}
+  </Avatar>
+</div>
+8. Color Scheme
+Use emerald/teal (matching Inner Circle theme):
+
+Primary: emerald-600, teal-600
+Accents: emerald-500/20, teal-500/20
+Borders: border-emerald-100/70
+
+
+What to KEEP (Functionality - Don't Change):
+✅ All existing features:
+
+Circle member display
+Active Will cards
+Past Wills list
+"Start a Will" button
+Settings button
+Navigation logic
+Data fetching (all useQuery hooks)
+State management
+Click handlers
+Conditional rendering logic
+
+✅ All existing content:
+
+Text labels
+Status badges
+Member names
+Will titles
+Dates and timelines
+
+✅ All existing behavior:
+
+Navigation flows
+Modal/dialog triggers
+API calls
+Loading states
+Error handling
+
+
+Reference Design Patterns from SoloHub:
+Copy these exact patterns:
+1. Page Container:
+tsx<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
+2. Header Section:
+tsx<div className="border-b bg-white/80 backdrop-blur-sm">
+  <div className="container py-4">
+    <div className="flex items-center justify-between">
+      {/* Back button, title, settings */}
+    </div>
+  </div>
+</div>
+3. Card with Glow:
+tsx<Card className="shadow-xl rounded-2xl border-2 border-emerald-100/70 bg-white/80 backdrop-blur-sm">
+  <CardContent className="pt-6">
+    {/* content */}
+  </CardContent>
+</Card>
+4. Empty State:
+tsx<Card className="shadow-xl rounded-2xl">
+  <CardContent className="py-12 text-center">
+    <div className="mb-6">
+      <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 relative">
+        <div className="absolute inset-0 bg-emerald-500/20 blur-lg rounded-full" />
+        <Users className="h-8 w-8 text-emerald-600 relative" />
+      </div>
+      <h3 className="text-lg font-semibold mb-2">Ready to start?</h3>
+      <p className="text-muted-foreground text-sm">Create your first Will</p>
+    </div>
+    <Button className="bg-gradient-to-r from-emerald-600 to-teal-600">
+      Start a Will
+    </Button>
+  </CardContent>
+</Card>
+
+Testing Checklist:
+After updating, verify ALL features still work:
+
+ Circle members display correctly ✅
+ Active Will shows (if exists) ✅
+ "Start a Will" button navigates correctly ✅
+ Past Wills list displays ✅
+ Settings button works ✅
+ Back button works ✅
+ Status badges show correct colors ✅
+ All click handlers fire ✅
+ Loading states appear ✅
+ Error states handled ✅
+ Navigation to Will Details works ✅
+
+But now with:
+
+ Gradient background ✅
+ Glowing card effects ✅
+ Deep shadows ✅
+ Hover animations ✅
+ Premium visual polish ✅
+
+
+Important Notes:
+
+Don't break anything - This is a pure design refresh
+Match the emerald/teal theme - Keep Inner Circle's green identity
+Copy exact class patterns from SoloHub - Don't reinvent, reuse
+Test thoroughly - Every feature must still work
+
+
+Please update InnerCircleHub.tsx with the glowy design and show me:
+
+The updated code (or key sections)
+A screenshot/description of the new look
+Confirmation that all features still work
+
+If any functionality breaks during the redesign, revert that change and flag it for me."
