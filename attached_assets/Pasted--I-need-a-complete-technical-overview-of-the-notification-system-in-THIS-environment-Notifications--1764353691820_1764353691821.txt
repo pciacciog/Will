@@ -1,0 +1,187 @@
+"I need a complete technical overview of the notification system in THIS environment. Notifications are critical for accountability, but we're experiencing issues.
+
+FIRST: Identify This Environment
+Please tell me:
+bash# Check environment variables
+echo "Environment: $ENVIRONMENT"
+echo "Node ENV: $NODE_ENV"
+echo "Database URL: $DATABASE_URL" | head -c 50
+
+# Or check however environment is determined
+Are we currently in:
+
+ Staging environment
+ Production environment
+ Other/Unknown
+
+How can you tell? (env variable, database name, URL, etc.)
+
+Then Document THIS Environment's Notification Setup:
+1. Backend Notification System
+A. Where are notifications triggered?
+bashrg "notification|push|apns|fcm" server/ --type ts -l
+Show me:
+
+What files handle notification logic?
+Where are notifications sent from?
+What triggers notifications?
+
+B. List all notification types:
+For each type:
+
+What triggers it
+What it says to the user
+Which file/line contains the logic
+
+
+2. Push Notification Configuration
+A. What service is used?
+bashrg "apns|fcm|PushNotification" server/ client/ --type ts -A 5
+Show:
+
+APNs? FCM? Other?
+Configuration code
+Where it's initialized
+
+B. Check if credentials exist (DON'T show actual keys):
+bash# Check for notification-related env vars
+env | grep -i "push\|notification\|apns\|fcm\|key\|cert" | sed 's/=.*/=***REDACTED***/'
+Tell me:
+
+ APNs credentials present (YES/NO)
+ FCM credentials present (YES/NO)
+ Configuration looks complete (YES/NO)
+
+C. Are notifications enabled in this environment?
+Look for code like:
+typescriptif (process.env.ENABLE_PUSH_NOTIFICATIONS === 'true') {
+  // Send notification
+}
+Or:
+typescriptif (process.env.NODE_ENV === 'production') {
+  // Send notification
+} else {
+  console.log('Skipping notifications in non-production');
+}
+Show me any environment checks that control notification sending.
+
+3. Device Token Management
+A. Database schema:
+sqlSELECT table_name 
+FROM information_schema.tables 
+WHERE table_name LIKE '%token%' OR table_name LIKE '%device%' OR table_name LIKE '%push%';
+
+-- Then for each table found:
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns 
+WHERE table_name = '[found_table_name]';
+B. Token registration endpoint:
+Find and show the endpoint that receives device tokens:
+
+Endpoint path (e.g., POST /api/push-tokens)
+What it does with tokens
+Does it validate/store them?
+
+C. Check if any tokens are stored:
+sql-- Count tokens in database (don't show actual tokens)
+SELECT COUNT(*) as token_count FROM [token_table_name];
+SELECT COUNT(DISTINCT user_id) as users_with_tokens FROM [token_table_name];
+
+4. Frontend Notification Setup
+A. Capacitor configuration:
+bashcat capacitor.config.json | grep -A 10 -B 10 -i "push\|notification"
+B. iOS app setup:
+bashrg "requestPermissions|PushNotifications.register" client/ --type ts -A 5
+Show:
+
+Where permissions are requested
+Where tokens are collected
+Where tokens are sent to backend
+
+
+5. Scheduler Notification Triggers
+In server/scheduler.ts:
+Find and show every place notifications are sent:
+bashrg "notification|push|sendNotification" server/scheduler.ts -A 3 -B 3
+For each trigger, document:
+
+What event triggers it
+What notification is sent
+Line number
+Any environment checks before sending
+
+
+6. Test the System
+A. Recent logs:
+bashtail -100 /tmp/logs/*.log | grep -i "notification\|push"
+Show:
+
+Recent notification attempts
+Any errors
+Success/failure messages
+
+B. Try a test query:
+sql-- Check if scheduler has recently tried to send notifications
+SELECT * FROM [logs_table] WHERE message LIKE '%notification%' ORDER BY created_at DESC LIMIT 10;
+
+7. Current State Assessment
+Based on what you found, answer these questions:
+Notifications Configured?
+
+ YES - Credentials present, code enabled, should work
+ PARTIAL - Some pieces present, some missing
+ NO - Not set up in this environment
+
+If NO or PARTIAL, what's missing?
+
+ APNs/FCM credentials
+ Environment variables
+ Code is disabled for this environment
+ Database table missing
+ Other: _______
+
+If YES, are there any errors?
+
+Check logs for failed notification sends
+Token registration errors
+API connection issues
+
+
+Summary Report:
+Please provide:
+markdown# Notification System Status - [THIS ENVIRONMENT]
+
+## Environment Info
+- Type: [Staging/Production/Unknown]
+- Determined by: [how you know]
+
+## Configuration Status
+- Push Service: [APNs/FCM/None]
+- Credentials Present: [YES/NO]
+- Code Enabled: [YES/NO]
+- Tokens Being Collected: [YES/NO]
+- Tokens in Database: [count]
+
+## Notification Types
+1. [Type] - Triggered by: [event]
+2. [Type] - Triggered by: [event]
+[etc.]
+
+## Code Locations
+- Notification sending: [file:line]
+- Token registration: [file:line]
+- Scheduler triggers: [file:line]
+
+## Current Issues Found
+- [List any errors in logs]
+- [Missing configuration]
+- [Code problems]
+[etc.]
+
+## System Status
+[Working / Partially Working / Not Configured / Broken]
+
+## What Needs to be Fixed
+[Prioritized list based on findings]
+
+The goal: Understand THIS environment's notification setup completely so we can diagnose and fix issues."

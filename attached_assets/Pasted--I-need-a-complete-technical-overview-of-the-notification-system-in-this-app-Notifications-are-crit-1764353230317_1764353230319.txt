@@ -1,0 +1,183 @@
+"I need a complete technical overview of the notification system in this app. Notifications are critical for accountability, but we're experiencing issues. Before fixing anything, I need to understand the current architecture.
+
+Please Document the Following:
+1. Backend Notification System
+A. Where are notifications triggered?
+bash# Search for notification-related code
+rg "notification|push|apns|fcm" server/ --type ts -l
+Please show me:
+
+What files handle notification logic?
+Where are notifications sent from? (scheduler.ts? routes.ts? separate service?)
+What triggers notifications? (scheduler events? user actions? API calls?)
+
+B. What notification types exist?
+List every type of notification the app sends:
+
+Will started?
+Will ending soon?
+Review reminder?
+End Room starting?
+Member joined?
+Push encouragement?
+Other?
+
+For each type, show:
+
+When it's triggered
+What the notification says
+Which file contains the logic
+
+
+2. Push Notification Infrastructure
+A. What service is used?
+
+APNs (Apple Push Notification service)?
+FCM (Firebase Cloud Messaging)?
+Custom solution?
+Third-party service (OneSignal, Pusher, etc.)?
+
+B. Show me the configuration:
+bash# Find push notification setup
+rg "apns|fcm|pushnotification" server/ client/ --type ts -A 5
+Please show:
+
+Configuration files
+API keys/certificates (redacted, just show structure)
+Environment variables used
+Initialization code
+
+
+3. Device Token Management
+A. Database schema:
+sql-- Show the table that stores device tokens
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'push_tokens' OR table_name LIKE '%token%' OR table_name LIKE '%device%';
+B. Token registration flow:
+
+When/where are device tokens collected?
+What API endpoint receives them?
+How are they stored?
+Are they associated with users correctly?
+Are old/invalid tokens cleaned up?
+
+Show me the code for:
+
+Frontend: Device token collection
+Backend: Token storage endpoint
+Database: Token table structure
+
+
+4. Frontend Notification Handling
+A. iOS/Capacitor setup:
+bash# Find notification plugin usage
+rg "PushNotifications|LocalNotifications" client/ --type ts -A 3
+Please show:
+
+What Capacitor plugins are used?
+Where are they initialized?
+Permission request flow
+Notification listeners
+
+B. Notification permissions:
+
+Where/when are permissions requested?
+Is permission status checked?
+What happens if user denies?
+
+
+5. Scheduler Integration
+A. Does the scheduler send notifications?
+In server/scheduler.ts:
+
+Which scheduled events trigger notifications?
+Show me the notification code in the scheduler
+How often does scheduler check for notification triggers?
+
+B. What are the notification triggers?
+For each Will state transition, what notifications are sent?
+
+pending → active: Notification sent?
+active → will_review: Notification sent?
+End Room opening: Notification sent?
+Daily reminders: Notification sent?
+
+
+6. Current Implementation Code
+Please provide the actual code for:
+A. Notification sending function:
+typescript// Show me the function that sends push notifications
+// Something like sendPushNotification() or similar
+B. Device token registration:
+typescript// Frontend code that registers tokens
+// Backend endpoint that receives tokens
+C. Scheduler notification calls:
+typescript// Where the scheduler triggers notifications
+
+7. Known Issues (If Any)
+Check for:
+
+Error handling in notification code
+Try/catch blocks around notification sends
+Console.log statements about notification failures
+Comments like "TODO: Fix notifications" or "BUG:"
+
+Search for:
+bashrg "TODO|FIXME|BUG|HACK" server/scheduler.ts server/routes.ts -A 2 -B 2
+
+8. Environment & Configuration
+A. Environment variables:
+bash# Show notification-related env vars (redacted)
+cat .env | grep -i "push\|notification\|apns\|fcm"
+B. Staging vs Production:
+
+Are there different notification configs for staging/production?
+Different certificates/keys?
+Different endpoints?
+
+
+9. Testing & Logs
+A. Recent notification logs:
+bash# Show recent logs mentioning notifications
+grep -i "notification\|push" /tmp/logs/*.log | tail -50
+B. Is there a test endpoint?
+
+Can we manually trigger a test notification?
+Is there a /notification-test route?
+
+
+Please Provide a Summary:
+After gathering all the above, create a summary document like this:
+markdown# Notification System Architecture
+
+## Overview
+[High-level description of how notifications work]
+
+## Flow Diagram (in text)
+1. Event triggers (e.g., Will ends)
+2. Scheduler detects → calls notification function
+3. Backend looks up device tokens
+4. Sends to APNs/FCM
+5. User's device receives notification
+
+## Files Involved
+- server/scheduler.ts - [what it does]
+- server/routes.ts - [what it does]
+- client/src/... - [what it does]
+
+## Notification Types
+1. Will Started - "Your Will has begun!"
+2. Will Review - "Time to reflect on your Will"
+[etc.]
+
+## Current Issues (if identified)
+- [List any problems you spot in the code]
+- [Missing error handling]
+- [Invalid tokens not cleaned up]
+[etc.]
+
+## Dependencies
+- Capacitor Push Notifications plugin
+- APNs configuration
+[etc.]
