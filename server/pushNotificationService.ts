@@ -48,8 +48,21 @@ class PushNotificationService {
           privateKey = privateKey.replace(/-----END.*?-----/, '-----END PRIVATE KEY-----');
         }
         
-        // Determine APNs environment based on NODE_ENV
-        const isProduction = process.env.NODE_ENV === 'production';
+        // Determine APNs environment
+        // APNS_PRODUCTION env var overrides NODE_ENV-based detection
+        // Set APNS_PRODUCTION=false for staging deployments with debug builds
+        const apnsProductionEnv = process.env.APNS_PRODUCTION;
+        let isProductionAPNs: boolean;
+        
+        if (apnsProductionEnv !== undefined) {
+          // Explicit override via environment variable
+          isProductionAPNs = apnsProductionEnv === 'true';
+          console.log(`[PushNotificationService] APNs mode explicitly set via APNS_PRODUCTION=${apnsProductionEnv}`);
+        } else {
+          // Default: use NODE_ENV
+          isProductionAPNs = process.env.NODE_ENV === 'production';
+          console.log(`[PushNotificationService] APNs mode derived from NODE_ENV=${process.env.NODE_ENV}`);
+        }
         
         const options = {
           token: {
@@ -57,12 +70,12 @@ class PushNotificationService {
             keyId: process.env.APNS_KEY_ID!,
             teamId: process.env.APNS_TEAM_ID!,
           },
-          production: isProduction, // true for TestFlight/App Store, false for development
+          production: isProductionAPNs, // true for TestFlight/App Store, false for development/staging
         };
         
         this.apnProvider = new apn.Provider(options);
-        const envMode = isProduction ? 'PRODUCTION' : 'SANDBOX';
-        const endpoint = isProduction ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
+        const envMode = isProductionAPNs ? 'PRODUCTION' : 'SANDBOX';
+        const endpoint = isProductionAPNs ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
         console.log(`[PushNotificationService] ✅ APNs ENABLED: Initialized with environment key (${envMode} mode - ${endpoint})`);
       } catch (error: any) {
         console.error('[PushNotificationService] Failed to initialize APNs provider:', error);
