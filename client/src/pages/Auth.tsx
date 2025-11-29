@@ -68,12 +68,49 @@ export default function Auth() {
       
       queryClient.setQueryData(['/api/user'], user);
       
-      // 🔥 NEW: Token ownership already transferred by login endpoint
-      // Clear the pending token since it's now owned by the user
-      const deviceTokenData = localStorage.getItem('pendingDeviceToken');
-      if (deviceTokenData) {
+      // 🔥 FIX: Token may arrive AFTER login (iOS generates token ~2 sec after app launch)
+      // We need to wait for the token to arrive and then associate it
+      const immediateTokenData = localStorage.getItem('pendingDeviceToken');
+      if (immediateTokenData) {
+        // Token was already available - it was sent with login request
         localStorage.removeItem('pendingDeviceToken');
-        console.log('✅ [Login] Cleared pending device token - ownership transferred to user');
+        console.log('✅ [Login] Cleared pending device token - ownership transferred during login');
+      } else {
+        // Token not yet available - wait for it and then associate
+        console.log('⏳ [Login] No token yet - will wait for iOS to generate token...');
+        
+        // Check for token arrival every second for up to 5 seconds
+        const checkForToken = async (attemptsRemaining: number) => {
+          if (attemptsRemaining <= 0) {
+            console.log('⚠️ [Login] Token never arrived after 5 seconds');
+            return;
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const tokenData = localStorage.getItem('pendingDeviceToken');
+          if (tokenData) {
+            console.log('📱 [Login] Token arrived! Associating with authenticated user...');
+            try {
+              // Import and call the notification service to associate the token
+              const { notificationService } = await import('../services/NotificationService');
+              const success = await notificationService.sendPendingTokenToServer(true); // forceAuthenticated = true
+              if (success) {
+                console.log('✅ [Login] Token successfully associated with user after login');
+              } else {
+                console.warn('⚠️ [Login] Token association returned false');
+              }
+            } catch (error) {
+              console.error('❌ [Login] Failed to associate token:', error);
+            }
+          } else {
+            console.log(`⏳ [Login] Token not yet arrived, ${attemptsRemaining - 1} attempts remaining...`);
+            await checkForToken(attemptsRemaining - 1);
+          }
+        };
+        
+        // Start checking for token in background (don't block navigation)
+        checkForToken(5);
       }
       
       // Invalidate queries to ensure fresh data
@@ -145,15 +182,56 @@ export default function Auth() {
       
       queryClient.setQueryData(['/api/user'], user);
       
-      // Send pending device token now that user is authenticated
-      try {
-        const { sendPendingDeviceToken } = await import('../services/NotificationService');
-        const tokenSent = await sendPendingDeviceToken();
-        if (tokenSent) {
-          console.log('📱 Device token successfully linked to new user account');
+      // 🔥 FIX: Token may arrive AFTER registration (iOS generates token ~2 sec after app launch)
+      // We need to wait for the token to arrive and then associate it
+      const immediateTokenData = localStorage.getItem('pendingDeviceToken');
+      if (immediateTokenData) {
+        // Token was already available - it was sent with registration request
+        console.log('📱 [Registration] Token was available - sending to server...');
+        try {
+          const { notificationService } = await import('../services/NotificationService');
+          const success = await notificationService.sendPendingTokenToServer(true);
+          if (success) {
+            console.log('✅ [Registration] Token successfully associated with new user');
+          }
+        } catch (error) {
+          console.error('❌ [Registration] Failed to send token:', error);
         }
-      } catch (error) {
-        console.error('Failed to send pending device token:', error);
+      } else {
+        // Token not yet available - wait for it and then associate
+        console.log('⏳ [Registration] No token yet - will wait for iOS to generate token...');
+        
+        // Check for token arrival every second for up to 5 seconds
+        const checkForToken = async (attemptsRemaining: number) => {
+          if (attemptsRemaining <= 0) {
+            console.log('⚠️ [Registration] Token never arrived after 5 seconds');
+            return;
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const tokenData = localStorage.getItem('pendingDeviceToken');
+          if (tokenData) {
+            console.log('📱 [Registration] Token arrived! Associating with authenticated user...');
+            try {
+              const { notificationService } = await import('../services/NotificationService');
+              const success = await notificationService.sendPendingTokenToServer(true);
+              if (success) {
+                console.log('✅ [Registration] Token successfully associated with user');
+              } else {
+                console.warn('⚠️ [Registration] Token association returned false');
+              }
+            } catch (error) {
+              console.error('❌ [Registration] Failed to associate token:', error);
+            }
+          } else {
+            console.log(`⏳ [Registration] Token not yet arrived, ${attemptsRemaining - 1} attempts remaining...`);
+            await checkForToken(attemptsRemaining - 1);
+          }
+        };
+        
+        // Start checking for token in background (don't block navigation)
+        checkForToken(5);
       }
       
       // Invalidate queries to ensure fresh data
