@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["nano", "unzip", "postgresql"]
+packages = ["nano", "unzip", "postgresql", "at"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -30,6 +30,10 @@ externalPort = 3000
 [[ports]]
 localPort = 36767
 externalPort = 3001
+
+[[ports]]
+localPort = 38065
+externalPort = 8000
 
 [[ports]]
 localPort = 41771
