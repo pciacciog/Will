@@ -254,6 +254,13 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       if (isSoloMode) {
         // Invalidate solo-specific queries
         queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+        
+        // Solo mode: Backend auto-creates commitment, so just show success and navigate
+        toast({
+          title: "Will Created!",
+          description: "Your solo Will is now active. Time to get started!",
+        });
+        setLocation('/solo/hub');
       } else {
         // Invalidate all related queries to ensure UI updates everywhere
         queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
@@ -271,14 +278,14 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
             console.error('Failed to send WILL proposal notification:', error);
           }
         }
+        
+        // Circle mode: Add the creator's commitment separately
+        addCommitmentMutation.mutate({
+          willId: will.id,
+          what: willData.what,
+          why: willData.why,
+        });
       }
-      
-      // Add the creator's commitment
-      addCommitmentMutation.mutate({
-        willId: will.id,
-        what: willData.what,
-        why: willData.why,
-      });
     },
     onError: (error) => {
       toast({
@@ -301,27 +308,16 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       return response.json();
     },
     onSuccess: () => {
-      if (isSoloMode) {
-        // Invalidate solo-specific queries
-        queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
-        
-        toast({
-          title: "Will Created!",
-          description: "Your solo Will is now active. Time to get started!",
-        });
-        setLocation('/solo/hub');
-      } else {
-        // Invalidate all related queries to ensure UI updates everywhere
-        queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-        queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-        
-        toast({
-          title: "Will Created!",
-          description: "Will has been created and is pending review from other members.",
-        });
-        setLocation('/hub');
-      }
+      // This is only used for Circle Mode (Solo Mode handles success in createWillMutation)
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      
+      toast({
+        title: "Will Created!",
+        description: "Will has been created and is pending review from other members.",
+      });
+      setLocation('/hub');
     },
     onError: (error) => {
       toast({
