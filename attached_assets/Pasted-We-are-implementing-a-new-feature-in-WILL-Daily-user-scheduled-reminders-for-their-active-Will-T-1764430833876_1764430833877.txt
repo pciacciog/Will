@@ -1,0 +1,209 @@
+We are implementing a new feature in WILL: Daily, user-scheduled reminders for their active Will.
+
+The purpose of these notifications is NOT marketing or motivation spam. These are core accountability mechanics — designed to gently nudge users once per day at a time that feels natural to them, to reconnect with their active Will and group.
+
+We already have a working push notification infrastructure:
+
+server/scheduler.ts → cron logic (runs every 1 min)
+
+server/pushNotificationService.ts → APNs sending & token management
+
+server/routes.ts → user-triggered events using sendNotificationOnce()
+
+notification_log table for deduplication
+
+Event-driven + scheduler-driven notifications currently implemented for:
+
+Will Proposed
+
+Will Started
+
+End Room 24h
+
+End Room 15m
+
+End Room Live
+
+Team Push
+
+Ready for New Will
+
+Test Notification
+
+We are now designing the next notification layer:
+
+FEATURE GOAL
+
+Enable users to receive one daily reminder about their active Will at their personally preferred time of day, adjusted to their local timezone.
+
+This reminder should:
+
+Trigger only while a Will is active
+
+Fire once per user per local day
+
+Be scheduled based on a user-defined daily time (e.g., 7:30am)
+
+Deep-link into the daily Will check-in / reflection screen
+
+Be respectful — not spammy, not duplicative, not invasive
+
+UX INTENT
+
+We want this experience to feel:
+
+Natural
+
+Elegant
+
+Setup-light (not burdensome)
+
+Integrated into existing Will flow
+
+Initial UX assumption:
+
+Reminder time is set once, the first time a user commits to their first Will.
+
+That becomes their default daily reminder time.
+
+Users can later adjust it from Settings.
+
+For power users, a per-Will override is optional but not required initially.
+
+Users should also have the ability to disable daily reminders entirely.
+
+WHAT I NEED FROM YOU (REPLIT AI)
+
+I do NOT want you to implement anything yet.
+
+I want you to produce a technical + product pitch proposing the best possible implementation plan within our current architecture.
+
+Your pitch should cover:
+
+1. UX Placement Recommendation
+
+Where exactly do you believe this reminder-time setup should live for maximum elegance and minimal friction?
+
+Examples:
+
+On first Will commit
+
+On onboarding
+
+In Settings only
+
+Per-Will modal / card
+
+I want your opinion with justification.
+
+2. Data Model Proposal
+
+Propose exactly what fields or tables are needed:
+
+On users
+
+On will_memberships
+
+Or elsewhere
+
+Include:
+
+Reminder time storage
+
+Timezone handling
+
+Dedup tracking (per day)
+
+Recommend whether to use:
+
+Event flag fields (like our other notifications)
+
+Or re-use the notification_log
+
+Or a hybrid
+
+3. Scheduler Logic Design
+
+Pitch the most elegant way to implement this with our existing scheduler.
+
+You should propose:
+
+Query model (who we target each run)
+
+Time comparison logic (local time vs UTC)
+
+Drift tolerance window strategy
+
+Dedupe design
+
+How to guarantee:
+
+Once-per-day per user
+
+Correct timezone alignment
+
+No repeat sends upon restarts
+
+Do not write full code.
+This is architectural strategy / pseudocode level.
+
+4. Notification Payload
+
+Propose the recommended:
+
+Title
+
+Body copy
+
+Category / grouping (if applicable)
+
+Deep link target
+
+Keep messaging minimal and aligned with WILL’s tone.
+
+5. Edge Case Considerations
+
+Call out how your design handles:
+
+Users who deny or disable notifications
+
+Users with no timezone / missing data
+
+Users in multiple active Wills
+
+Users changing reminder time mid-Will
+
+Repl restarts / scheduler delays
+
+APNs tokens expiring
+
+6. Integration Concerns
+
+Specifically tell me:
+
+Which existing files need touch (scheduler.ts, new helper module, route changes, schema updates)
+
+How to avoid creating cascade complexity or hidden coupling
+
+How your approach aligns with our existing sendNotificationOnce() dedup pattern
+
+7. Product Sanity Check
+
+Assess if:
+
+This reminder risks overlapping too much with our already planned notifications.
+
+We should:
+
+Merge this with Midpoint milestone or End Room reminders?
+
+Limit daily reminders further?
+
+Be honest; if redundancy exists, say so.
+
+8. Final Recommendation Summary
+
+End the pitch with a clear recommendation:
+
+“The cleanest implementation path is X because Y.
+These are the exact steps I would take to build it if approved.”
