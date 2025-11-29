@@ -1,6 +1,6 @@
 import * as cron from 'node-cron';
 import { db } from './db';
-import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders, willReviews } from '@shared/schema';
+import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders, willReviews, users, deviceTokens } from '@shared/schema';
 import { eq, and, or, lt, gte, isNull, isNotNull, ne, notInArray, inArray } from 'drizzle-orm';
 import { dailyService } from './daily';
 import { storage } from './storage';
@@ -76,6 +76,9 @@ export class EndRoomScheduler {
 
     // NEW: Send milestone notifications (midpoint)
     await this.sendMilestoneNotifications(now);
+
+    // NEW: Send daily reminder notifications (user-scheduled)
+    await this.checkDailyReminders(now);
 
     console.log('[EndRoomScheduler] Heavy operations completed');
   }
@@ -657,6 +660,180 @@ export class EndRoomScheduler {
       }
     } catch (error) {
       console.error('[EndRoomScheduler] Error sending milestone notifications:', error);
+    }
+  }
+
+  // NEW: Check and send daily reminder notifications (user-scheduled)
+  private async checkDailyReminders(now: Date) {
+    try {
+      // Find users who:
+      // 1. Have daily reminders enabled
+      // 2. Have a reminder time set
+      // 3. Have a valid timezone
+      // 4. Have at least one active Will (solo or circle)
+      // 5. Have a valid device token
+      
+      // Get all users with reminder settings configured
+      const usersWithReminders = await db
+        .select({
+          id: users.id,
+          dailyReminderTime: users.dailyReminderTime,
+          dailyReminderEnabled: users.dailyReminderEnabled,
+          timezone: users.timezone,
+          lastDailyReminderSentAt: users.lastDailyReminderSentAt,
+        })
+        .from(users)
+        .where(
+          and(
+            eq(users.dailyReminderEnabled, true),
+            isNotNull(users.dailyReminderTime),
+            isNotNull(users.timezone)
+          )
+        )
+        .limit(100);
+
+      if (usersWithReminders.length === 0) {
+        return; // No users with reminders configured
+      }
+
+      let remindersSent = 0;
+
+      for (const user of usersWithReminders) {
+        try {
+          // Check if user has an active Will
+          const activeWills = await db
+            .select({ id: wills.id })
+            .from(wills)
+            .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
+            .where(
+              and(
+                eq(willCommitments.userId, user.id),
+                eq(wills.status, 'active')
+              )
+            )
+            .limit(1);
+
+          if (activeWills.length === 0) {
+            continue; // No active Will, skip
+          }
+
+          // Check if user has a valid device token
+          const hasToken = await db
+            .select({ id: deviceTokens.id })
+            .from(deviceTokens)
+            .where(
+              and(
+                eq(deviceTokens.userId, user.id),
+                eq(deviceTokens.isActive, true)
+              )
+            )
+            .limit(1);
+
+          if (hasToken.length === 0) {
+            continue; // No valid device token, skip
+          }
+
+          // Convert current time to user's local timezone
+          const userLocalTime = this.getTimeInTimezone(now, user.timezone!);
+          const reminderTime = user.dailyReminderTime!; // "HH:MM" format
+
+          // Check if current time is within ±5 minutes of reminder time
+          if (!this.isWithinReminderWindow(userLocalTime, reminderTime)) {
+            continue; // Not within reminder window
+          }
+
+          // Check if we already sent a reminder today (in user's timezone)
+          if (this.alreadySentToday(user.lastDailyReminderSentAt, user.timezone!)) {
+            continue; // Already sent today
+          }
+
+          // Send the daily reminder
+          const willId = activeWills[0].id;
+          const success = await pushNotificationService.sendDailyReminderNotification(user.id, willId);
+
+          if (success) {
+            // Mark reminder as sent
+            await storage.updateUserLastDailyReminderSent(user.id);
+            remindersSent++;
+            console.log(`[SCHEDULER] ✅ Daily reminder sent to user ${user.id} at ${reminderTime} ${user.timezone}`);
+          }
+
+        } catch (error) {
+          console.error(`[SCHEDULER] Failed to send daily reminder to user ${user.id}:`, error);
+        }
+      }
+
+      if (remindersSent > 0) {
+        console.log(`[SCHEDULER] Daily reminders sent: ${remindersSent}`);
+      }
+
+    } catch (error) {
+      console.error('[EndRoomScheduler] Error checking daily reminders:', error);
+    }
+  }
+
+  // Helper: Get current time in a specific timezone
+  private getTimeInTimezone(date: Date, timezone: string): { hours: number; minutes: number } {
+    try {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+      });
+      const parts = formatter.formatToParts(date);
+      const hours = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+      const minutes = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+      return { hours, minutes };
+    } catch {
+      // Fallback to UTC if timezone is invalid
+      return { hours: date.getUTCHours(), minutes: date.getUTCMinutes() };
+    }
+  }
+
+  // Helper: Check if current time is within ±5 minutes of reminder time
+  private isWithinReminderWindow(currentTime: { hours: number; minutes: number }, reminderTime: string): boolean {
+    const [reminderHours, reminderMinutes] = reminderTime.split(':').map(Number);
+    
+    // Convert to total minutes since midnight
+    const currentTotalMinutes = currentTime.hours * 60 + currentTime.minutes;
+    const reminderTotalMinutes = reminderHours * 60 + reminderMinutes;
+    
+    // Calculate absolute difference (handle midnight crossing)
+    let diff = Math.abs(currentTotalMinutes - reminderTotalMinutes);
+    if (diff > 720) {
+      diff = 1440 - diff; // Handle crossing midnight
+    }
+    
+    return diff <= 5; // Within 5 minutes
+  }
+
+  // Helper: Check if reminder was already sent today in user's timezone
+  private alreadySentToday(lastSentAt: Date | null, timezone: string): boolean {
+    if (!lastSentAt) {
+      return false;
+    }
+
+    try {
+      const now = new Date();
+      
+      // Get today's date in user's timezone
+      const todayFormatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const todayString = todayFormatter.format(now);
+      
+      // Get the date when reminder was last sent in user's timezone
+      const lastSentString = todayFormatter.format(lastSentAt);
+      
+      return todayString === lastSentString;
+    } catch {
+      // Fallback to UTC comparison
+      const now = new Date();
+      return lastSentAt.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
     }
   }
 }
