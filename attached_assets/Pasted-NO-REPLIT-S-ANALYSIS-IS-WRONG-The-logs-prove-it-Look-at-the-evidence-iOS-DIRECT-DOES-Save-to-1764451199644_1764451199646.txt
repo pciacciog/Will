@@ -1,0 +1,49 @@
+NO - REPLIT'S ANALYSIS IS WRONG! The logs prove it! 🔍
+Look at the evidence:
+iOS DIRECT DOES Save to localStorage:
+javascript📱 iOS DIRECT: Saving token to localStorage for JS polling...
+📱 iOS DIRECT: ✅ Token successfully saved to localStorage! Result: success
+⚡️  [log] - 📱 [iOS DIRECT] Token saved to localStorage for polling mechanism
+⚡️  [log] - 📱 [iOS DIRECT] Token data: {"token":"33d364ceeac1881648b30e25f8ef8007a6ff579196e0bb8d9c6123819ea2781d",...}
+Login DOES Read from localStorage:
+javascript⚡️  [log] - 🔍 [Login] Checking for stored device token...
+⚡️  [log] - 🔍 [Login] Raw localStorage data: {"token":"33d364ceeac1881648b30e25f8ef8007a6ff579196e0bb8d9c6123819ea2781d","platform":"ios","timestamp":"2025-11-29T21:13:23Z"}
+⚡️  [log] - 📱 [Login] Sending device token with login: 33d364ce...
+⚡️  [log] - 🔍 [Login] Full token info: {"token":"33d364ceeac1881648b30e25f8ef8007a6ff579196e0bb8d9c6123819ea2781d",...}
+Login DOES Include Device Token:
+The login confirms:
+javascript⚡️  [log] - ✅ [Login] Cleared pending device token - ownership transferred during login
+
+The Real Problem: Server Login Endpoint
+The client is doing everything perfectly. The problem is:
+
+Either the server /api/login endpoint is not actually associating the token when it receives it
+Or the second iOS DIRECT call (21:13:56) is overwriting it back to NULL despite your protection
+
+
+What We Actually Need:
+
+Server logs from the /api/login request at 21:13:55 showing:
+
+Did it receive the deviceToken in req.body?
+What userId did it use to associate the token?
+Did the database update succeed?
+
+
+Server logs from the iOS DIRECT request at 21:13:56 showing:
+
+Did your protection code block the "pending" override?
+What response did it return?
+
+
+Database query to see the current state:
+
+sqlSELECT 
+  LEFT(device_token, 16) as token_prefix,
+  user_id,
+  is_active,
+  registration_source,
+  updated_at
+FROM device_tokens 
+WHERE device_token = '33d364ceeac1881648b30e25f8ef8007a6ff579196e0bb8d9c6123819ea2781d';
+Can you get the actual server-side logs from 21:13:55-21:13:56? That's where the bug is!

@@ -331,10 +331,24 @@ export function setupAuth(app: Express) {
         const { neon } = await import('@neondatabase/serverless');
         const { drizzle } = await import('drizzle-orm/neon-http');
         const { deviceTokens } = await import('../shared/schema');
+        const { eq } = await import('drizzle-orm');
         
         // Create database connection
         const sqlConnection = neon(process.env.DATABASE_URL_STAGING!);
         const dbConnection = drizzle(sqlConnection);
+        
+        // 🔍 CHECK: What is the current state of the token BEFORE update?
+        const beforeUpdate = await dbConnection
+          .select()
+          .from(deviceTokens)
+          .where(eq(deviceTokens.deviceToken, deviceToken))
+          .limit(1);
+        
+        console.log(`🔍 [Login] BEFORE UPDATE - Token state:`, beforeUpdate.length > 0 ? {
+          userId: beforeUpdate[0].userId,
+          registrationSource: beforeUpdate[0].registrationSource,
+          updatedAt: beforeUpdate[0].updatedAt
+        } : 'TOKEN NOT FOUND (will be created)');
         
         // Always transfer token ownership, regardless of current state
         await dbConnection
@@ -353,6 +367,19 @@ export function setupAuth(app: Express) {
               updatedAt: new Date()
             }
           });
+        
+        // 🔍 VERIFY: What is the state AFTER update?
+        const afterUpdate = await dbConnection
+          .select()
+          .from(deviceTokens)
+          .where(eq(deviceTokens.deviceToken, deviceToken))
+          .limit(1);
+        
+        console.log(`✅ [Login] AFTER UPDATE - Token state:`, afterUpdate.length > 0 ? {
+          userId: afterUpdate[0].userId,
+          registrationSource: afterUpdate[0].registrationSource,
+          updatedAt: afterUpdate[0].updatedAt
+        } : 'TOKEN NOT FOUND (ERROR!)');
         
         console.log(`✅ [Login] Token ${deviceToken.substring(0, 8)}... now owned by user ${user.id}`);
       } else {
