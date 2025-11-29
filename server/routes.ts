@@ -199,6 +199,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Daily reminder settings route
+  app.patch('/api/user/reminder-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { dailyReminderTime, dailyReminderEnabled } = req.body;
+
+      // Validate time format if provided (HH:MM)
+      if (dailyReminderTime !== undefined && dailyReminderTime !== null) {
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        if (!timeRegex.test(dailyReminderTime)) {
+          return res.status(400).json({ message: "Invalid time format. Use HH:MM (e.g., 07:30)" });
+        }
+      }
+
+      // Validate enabled is boolean if provided
+      if (dailyReminderEnabled !== undefined && typeof dailyReminderEnabled !== 'boolean') {
+        return res.status(400).json({ message: "dailyReminderEnabled must be a boolean" });
+      }
+
+      const updatedUser = await storage.updateUserReminderSettings(userId, {
+        dailyReminderTime,
+        dailyReminderEnabled
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating reminder settings:", error);
+      res.status(500).json({ message: "Failed to update reminder settings" });
+    }
+  });
+
   // Password change route
   app.post('/api/change-password', isAuthenticated, async (req: any, res) => {
     try {
