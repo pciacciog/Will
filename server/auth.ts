@@ -485,23 +485,37 @@ export function setupAuth(app: Express) {
       
       console.log(`🔗 [TokenAssociation] Associating specific token ${deviceToken.substring(0, 8)}... with user ${userId}`);
       
-      // Only associate the SPECIFIC token provided, not all pending tokens
-      await dbConnection
-        .insert(deviceTokens)
-        .values({
-          deviceToken: deviceToken,
-          userId: userId,
-          platform: 'ios',
-          registrationSource: 'post_login_association'
-        })
-        .onConflictDoUpdate({
-          target: deviceTokens.deviceToken,
-          set: {
+      // 🔥 FIX: Use check-then-update pattern instead of broken INSERT...ON CONFLICT
+      const existingToken = await dbConnection
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.deviceToken, deviceToken))
+        .limit(1);
+      
+      if (existingToken.length > 0) {
+        // Token exists - UPDATE it
+        await dbConnection
+          .update(deviceTokens)
+          .set({
             userId: userId,
             registrationSource: 'post_login_association',
             updatedAt: new Date()
-          }
-        });
+          })
+          .where(eq(deviceTokens.deviceToken, deviceToken));
+        console.log(`✅ [TokenAssociation] UPDATED token ${deviceToken.substring(0, 8)}... for user ${userId}`);
+      } else {
+        // Token doesn't exist - INSERT it
+        await dbConnection
+          .insert(deviceTokens)
+          .values({
+            deviceToken: deviceToken,
+            userId: userId,
+            platform: 'ios',
+            registrationSource: 'post_login_association',
+            isActive: true
+          });
+        console.log(`✅ [TokenAssociation] INSERTED new token ${deviceToken.substring(0, 8)}... for user ${userId}`);
+      }
       
       console.log(`✅ [TokenAssociation] Successfully associated token ${deviceToken.substring(0, 8)}... with user ${userId}`);
     } catch (error) {
