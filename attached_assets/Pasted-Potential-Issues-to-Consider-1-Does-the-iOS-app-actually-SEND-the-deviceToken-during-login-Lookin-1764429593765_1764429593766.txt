@@ -1,0 +1,58 @@
+Potential Issues to Consider:
+1. Does the iOS app actually SEND the deviceToken during login?
+Looking at your earlier logs, I see:
+javascript⚡️  [log] - Submitting login: {"email":"bebociaccio@me.com","password":"realmadrid10"}
+```
+
+**I don't see the deviceToken being included in the login request!**
+
+If the token isn't being sent, the association won't happen. Let me verify - ask Replit:
+```
+CRITICAL: Does the iOS app send deviceToken with login requests?
+
+Check the login request from the iOS app:
+1. Does the request body include a "deviceToken" field?
+2. Is there an "x-device-token" header?
+3. If NOT, how does the server know which pending token to associate?
+
+Show me:
+- The iOS login code (where it calls POST /api/login)
+- Recent login request logs showing the actual payload
+```
+
+### 2. **Race Condition: What if registration happens AFTER login?**
+
+**Scenario:**
+- User logs in quickly (token association code runs)
+- But device token registration is still in progress
+- Token arrives 2 seconds later with `userId: "pending"`
+- **Result:** Token stays orphaned (NULL userId)
+
+**Does your backup `associatePendingTokensWithRetry` handle this?**
+
+Ask Replit:
+```
+Show me the associatePendingTokensWithRetry function:
+- When does it run?
+- How does it match pending tokens to users?
+- Does it run periodically or only during login?
+```
+
+### 3. **Multiple Devices / Token Cleanup**
+
+Your database shows:
+```
+│  2 │ 17635487770933j8sh32d2  │ 7060e640... │ deactivated_by_pending_association │
+│  3 │ 17635487770933j8sh32d2  │ d952d74e... │ deactivated_by_pending_association │
+│  4 │ 17635487770933j8sh32d2  │ 2c96b48b... │ secure_token_association           │
+Questions:
+
+Why are tokens 2 and 3 deactivated?
+What triggers deactivated_by_pending_association?
+Is there a mechanism to clean up old tokens when a user reinstalls?
+
+4. The "pending" String is Awkward
+iOS sends userId: "pending" which server converts to NULL. Why not:
+
+Send userId: null from iOS?
+Or omit the userId field entirely if not logged in?
