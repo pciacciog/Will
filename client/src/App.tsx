@@ -150,14 +150,31 @@ function Router() {
           console.log('🔗 [DeepLink] Navigating to:', targetPath);
           setLocation(targetPath);
         } else {
-          console.log('🔗 [DeepLink] No deep link in notification data, defaulting to home');
-          // Default navigation based on notification type
+          console.log('🔗 [DeepLink] No deep link in notification data, using fallback navigation');
+          // Fallback navigation based on notification type and mode
           const type = data?.type;
-          if (type === 'daily_reminder' || type === 'will_midpoint' || type === 'will_started') {
-            setLocation('/solo/hub');
+          const isSoloMode = data?.isSoloMode === 'true';
+          const willId = data?.willId;
+          
+          console.log('🔗 [DeepLink] Fallback info:', { type, isSoloMode, willId });
+          
+          // If we have a willId, navigate to the will details
+          if (willId && isMounted) {
+            setLocation(`/will/${willId}`);
+          } else if (type === 'daily_reminder' || type === 'will_midpoint') {
+            // Solo mode notifications without willId go to solo hub
+            setLocation(isSoloMode ? '/solo/hub' : '/hub');
+          } else if (type === 'will_started') {
+            // Will started - use isSoloMode to determine destination
+            setLocation(isSoloMode ? '/solo/hub' : '/hub');
           } else if (type === 'end_room_now' || type === 'end_room_15_minutes' || type === 'end_room_24_hours') {
+            // End room notifications are circle-only
+            setLocation('/hub');
+          } else if (type === 'will_proposed' || type === 'circle_member_joined') {
+            // Circle-only notifications
             setLocation('/hub');
           } else {
+            // Default fallback
             setLocation('/');
           }
         }
@@ -198,7 +215,7 @@ function Router() {
 
     const clearBadge = async () => {
       try {
-        await PushNotifications.setBadgeCount({ count: 0 });
+        await (PushNotifications as any).setBadgeCount({ count: 0 });
         console.log('🔔 [App] Badge cleared to 0');
       } catch (error) {
         console.log('⚠️ [App] Badge clearing not available (web or permissions not granted):', error);

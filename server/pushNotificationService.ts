@@ -338,7 +338,7 @@ class PushNotificationService {
   }
 
   // Predefined notification templates for the 4 key moments
-  async sendWillProposedNotification(creatorName: string, circleMembers: string[]): Promise<void> {
+  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number): Promise<void> {
     const payload: PushNotificationPayload = {
       title: "New Will proposed! 📝",
       body: `${creatorName} has proposed starting a new will`,
@@ -346,13 +346,16 @@ class PushNotificationService {
       data: {
         type: 'will_proposed',
         creatorName,
+        willId: willId?.toString() || '',
+        isSoloMode: 'false',
+        deepLink: willId ? `/will/${willId}/commit` : '/hub',
       }
     };
 
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  async sendWillStartedNotification(willTitle: string, committedMembers: string[]): Promise<void> {
+  async sendWillStartedNotification(willTitle: string, committedMembers: string[], willId?: number, isSoloMode: boolean = false): Promise<void> {
     const payload: PushNotificationPayload = {
       title: "Your Will has started! 🎯",
       body: `Time to begin your commitment: "${willTitle}"`,
@@ -360,13 +363,16 @@ class PushNotificationService {
       data: {
         type: 'will_started',
         willTitle,
+        willId: willId?.toString() || '',
+        isSoloMode: isSoloMode ? 'true' : 'false',
+        deepLink: willId ? `/will/${willId}` : (isSoloMode ? '/solo/hub' : '/hub'),
       }
     };
 
     await this.sendToMultipleUsers(committedMembers, payload);
   }
 
-  async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string, circleMembers: string[]): Promise<void> {
+  async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string, circleMembers: string[], willId?: number): Promise<void> {
     // TIMEZONE FIX: Show formatted time in user's timezone
     // endRoomTime is now formatted per-user in their timezone (e.g., "5:00 PM")
     const notifications = {
@@ -391,6 +397,9 @@ class PushNotificationService {
       data: {
         type: `end_room_${type}`,
         endRoomTime, // ISO timestamp for mobile app to format in user's timezone
+        willId: willId?.toString() || '',
+        isSoloMode: 'false',
+        deepLink: willId ? `/will/${willId}` : '/hub',
       }
     };
 
@@ -404,13 +413,15 @@ class PushNotificationService {
       category: 'ready_for_new_will',
       data: {
         type: 'ready_for_new_will',
+        isSoloMode: 'false',
+        deepLink: '/hub',
       }
     };
 
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  async sendTeamPushNotification(pusherName: string, willTitle: string, circleMembers: string[]): Promise<void> {
+  async sendTeamPushNotification(pusherName: string, willTitle: string, circleMembers: string[], willId?: number): Promise<void> {
     const payload: PushNotificationPayload = {
       title: `${pusherName} has pushed you! 🚀`,
       body: `Encouragement for your Will: "${willTitle}"`,
@@ -418,7 +429,10 @@ class PushNotificationService {
       data: {
         type: 'team_push',
         pusherName,
-        willTitle
+        willTitle,
+        willId: willId?.toString() || '',
+        isSoloMode: 'false',
+        deepLink: willId ? `/will/${willId}` : '/hub',
       }
     };
 
