@@ -1,13 +1,14 @@
 import { useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, User, ArrowRight, Sparkles, Settings, LogOut } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { getApiPath } from "@/config/api";
 
 type CircleWithMembers = {
   id: number;
@@ -29,29 +30,43 @@ export default function Home() {
     }
   }, []);
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('/api/logout', { method: 'POST' });
-      if (response.status === 204 || !response.headers.get('content-type')?.includes('application/json')) {
-        return null;
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // Clear any pending device token so it doesn't link to next user
+      const pendingToken = localStorage.getItem('pendingDeviceToken');
+      if (pendingToken) {
+        localStorage.removeItem('pendingDeviceToken');
       }
-      return response.json();
-    },
-    onSuccess: () => {
+      
+      // Clear persisted session
+      const { sessionPersistence } = await import('@/services/SessionPersistence');
+      await sessionPersistence.clearSession();
+      
+      // Clear query cache
       queryClient.clear();
-      setLocation('/auth');
-    },
-    onError: () => {
+      
+      // Call logout endpoint
+      await fetch(getApiPath('/api/logout'), { 
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        }
+      });
+      
+      // Full page reload to auth page
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Logout failed:', error);
+      setIsLoggingOut(false);
       toast({
         title: "Error",
         description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  const handleLogout = () => {
-    logoutMutation.mutate();
+    }
   };
   
   const { data: circle } = useQuery<CircleWithMembers>({
@@ -236,13 +251,13 @@ export default function Home() {
               {/* Sign Out Button */}
               <button
                 onClick={handleLogout}
-                disabled={logoutMutation.isPending}
+                disabled={isLoggingOut}
                 className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50"
                 data-testid="button-sign-out"
               >
                 <LogOut className="w-5 h-5" />
                 <span className="text-sm font-medium">
-                  {logoutMutation.isPending ? "Signing out..." : "Sign Out"}
+                  {isLoggingOut ? "Signing out..." : "Sign Out"}
                 </span>
               </button>
             </div>
