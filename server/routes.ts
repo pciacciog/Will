@@ -522,9 +522,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Will data before validation:", willDataWithDefaults, "isSoloMode:", isSoloMode);
 
       if (isSoloMode) {
-        // SOLO MODE: No circle required, starts immediately as active
+        // SOLO MODE: No circle required, respects user's scheduled start date
         
-        // Check if user already has an active solo will
+        // Check if user already has an active/pending solo will
         const existingSoloWill = await storage.getUserActiveSoloWill(userId);
         if (existingSoloWill) {
           return res.status(400).json({ message: "You already have an active solo Will" });
@@ -535,7 +535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const willData = insertWillSchema.parse(willDataWithDefaults);
         
-        // Create will
+        // Create will with 'pending' status (default)
         const will = await storage.createWill(willData);
         
         // Calculate and set midpointAt for milestone notification
@@ -544,21 +544,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const midpointTime = new Date((startTime + endTime) / 2);
         await db.update(wills).set({ midpointAt: midpointTime }).where(eq(wills.id, will.id));
         
-        // Solo wills start immediately as active (no waiting for others)
-        await storage.updateWillStatus(will.id, 'active');
-        
-        // Send Will Started notification for solo mode (scheduler won't catch this since it's already 'active')
+        // Auto-create commitment for Solo user (required for scheduler to find participants)
         try {
-          const willTitle = req.body.what || "Your Will";
-          await pushNotificationService.sendWillStartedNotification(willTitle, [userId], will.id, true);
-          console.log(`[Routes] Will Started notification sent for solo Will ${will.id}`);
-        } catch (notifError) {
-          console.error(`[Routes] Failed to send Will Started notification for solo Will ${will.id}:`, notifError);
+          const commitmentData = {
+            willId: will.id,
+            userId: userId,
+            what: req.body.what || "My personal goal",
+            why: req.body.because || "",
+          };
+          await storage.addWillCommitment(commitmentData);
+          console.log(`[Routes] Auto-created commitment for solo Will ${will.id}`);
+        } catch (commitError) {
+          console.error(`[Routes] Failed to create commitment for solo Will ${will.id}:`, commitError);
         }
         
-        console.log(`Created solo Will ${will.id} for user ${userId}, status: active, midpoint: ${midpointTime.toISOString()}`);
+        // Solo wills stay 'pending' until the scheduler transitions them to 'active' at startDate
+        // The scheduler will also send the will_started notification when transitioning
         
-        res.json({ ...will, status: 'active', midpointAt: midpointTime });
+        console.log(`Created solo Will ${will.id} for user ${userId}, status: pending, starts: ${req.body.startDate}, midpoint: ${midpointTime.toISOString()}`);
+        
+        res.json({ ...will, status: 'pending', midpointAt: midpointTime });
       } else {
         // CIRCLE MODE: Existing logic
         
