@@ -16,6 +16,7 @@ import {
   willCommitments,
   deviceTokens,
   users,
+  wills,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
@@ -380,11 +381,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You're already a member of this circle" });
       }
 
+      // Get existing members BEFORE adding the new user (for notification)
+      const existingMembersBefore = await storage.getCircleMembers(circle.id);
+      const existingMemberIds = existingMembersBefore.map(m => m.userId);
+
       // Add user to circle
       await storage.addCircleMember({
         circleId: circle.id,
         userId,
       });
+
+      // NEW: Send circle_member_joined notification to existing members
+      try {
+        const joiner = await storage.getUser(userId);
+        const joinerName = joiner?.firstName || 'Someone';
+        
+        if (existingMemberIds.length > 0) {
+          await pushNotificationService.sendCircleMemberJoinedNotification(joinerName, circle.id, existingMemberIds);
+          console.log(`[Join Circle] Sent member joined notification to ${existingMemberIds.length} existing members`);
+        }
+      } catch (notificationError) {
+        console.error("[Join Circle] Failed to send member joined notification:", notificationError);
+      }
 
       // ISSUE FIX: Recalculate will status when new member joins
       // When a new member joins, a "scheduled" will (all previous members committed) should revert to "pending"
@@ -489,12 +507,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create will
         const will = await storage.createWill(willData);
         
+        // Calculate and set midpointAt for milestone notification
+        const startTime = new Date(req.body.startDate).getTime();
+        const endTime = new Date(req.body.endDate).getTime();
+        const midpointTime = new Date((startTime + endTime) / 2);
+        await db.update(wills).set({ midpointAt: midpointTime }).where(eq(wills.id, will.id));
+        
         // Solo wills start immediately as active (no waiting for others)
         await storage.updateWillStatus(will.id, 'active');
         
-        console.log(`Created solo Will ${will.id} for user ${userId}, status: active`);
+        console.log(`Created solo Will ${will.id} for user ${userId}, status: active, midpoint: ${midpointTime.toISOString()}`);
         
-        res.json({ ...will, status: 'active' });
+        res.json({ ...will, status: 'active', midpointAt: midpointTime });
       } else {
         // CIRCLE MODE: Existing logic
         
@@ -532,6 +556,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Create will
         const will = await storage.createWill(willData);
+
+        // Calculate and set midpointAt for milestone notification
+        const circleStartTime = new Date(req.body.startDate).getTime();
+        const circleEndTime = new Date(req.body.endDate).getTime();
+        const circleMidpointTime = new Date((circleStartTime + circleEndTime) / 2);
+        await db.update(wills).set({ midpointAt: circleMidpointTime }).where(eq(wills.id, will.id));
+        console.log(`Created circle Will ${will.id}, midpoint: ${circleMidpointTime.toISOString()}`);
 
         // Create End Room if scheduled
         if (req.body.endRoomScheduledAt) {
@@ -909,6 +940,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Add review
       const review = await storage.addWillReview(reviewData);
+
+      // NEW: Send member_review_submitted notification to other members (CIRCLE MODE ONLY)
+      try {
+        const will = await storage.getWillById(willId);
+        
+        // Only send notification for circle mode wills (solo mode has no other members)
+        if (will && will.circleId && will.mode === 'circle') {
+          const reviewer = await storage.getUser(userId);
+          const reviewerName = reviewer?.firstName || 'Someone';
+          const circleMembers = await storage.getCircleMembers(will.circleId);
+          const otherMemberIds = circleMembers
+            .filter(m => m.userId !== userId)
+            .map(m => m.userId);
+          
+          if (otherMemberIds.length > 0) {
+            await pushNotificationService.sendMemberReviewSubmittedNotification(reviewerName, willId, otherMemberIds);
+            console.log(`[REVIEW] Sent review submitted notification to ${otherMemberIds.length} other members`);
+          }
+        }
+      } catch (notificationError) {
+        console.error("[REVIEW] Failed to send review submitted notification:", notificationError);
+      }
 
       // Check if all committed members have reviewed
       const willWithCommitments = await storage.getWillWithCommitments(willId);

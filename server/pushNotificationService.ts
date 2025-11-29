@@ -386,6 +386,104 @@ class PushNotificationService {
 
     await this.sendToMultipleUsers(circleMembers, payload);
   }
+
+  // NEW NOTIFICATION #1: Will Completed - Ready for Review
+  async sendWillCompletedReviewNotification(willId: number, participants: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "Your Will is complete! ✅",
+      body: "Good work. Hop in to review.",
+      category: 'will_completed_review',
+      data: {
+        type: 'will_completed_review',
+        willId: willId.toString(),
+        deepLink: `/will/${willId}/review`
+      }
+    };
+
+    await this.sendToMultipleUsers(participants, payload);
+  }
+
+  // NEW NOTIFICATION #2: Commitment Reminder (6hrs after Will creation)
+  async sendCommitmentReminderNotification(willId: number, uncommittedUsers: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "Your Circle is waiting 🤝",
+      body: "Your Circle is waiting for your commitment.",
+      category: 'commitment_reminder',
+      data: {
+        type: 'commitment_reminder',
+        willId: willId.toString(),
+        deepLink: `/will/${willId}/commit`
+      }
+    };
+
+    await this.sendToMultipleUsers(uncommittedUsers, payload);
+  }
+
+  // NEW NOTIFICATION #3: Acknowledgment Reminder (6hrs after Will completion)
+  async sendAcknowledgmentReminderNotification(willId: number, unacknowledgedUsers: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "Your Circle is waiting 🤝",
+      body: "Your Circle is waiting for your acknowledgment.",
+      category: 'acknowledgment_reminder',
+      data: {
+        type: 'acknowledgment_reminder',
+        willId: willId.toString(),
+        deepLink: `/will/${willId}/review`
+      }
+    };
+
+    await this.sendToMultipleUsers(unacknowledgedUsers, payload);
+  }
+
+  // NEW NOTIFICATION #4: Circle Member Joined
+  async sendCircleMemberJoinedNotification(memberName: string, circleId: number, existingMembers: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "New Circle member! 👋",
+      body: `${memberName} joined your Circle.`,
+      category: 'circle_member_joined',
+      data: {
+        type: 'circle_member_joined',
+        memberName,
+        circleId: circleId.toString(),
+        deepLink: `/circle/${circleId}`
+      }
+    };
+
+    await this.sendToMultipleUsers(existingMembers, payload);
+  }
+
+  // NEW NOTIFICATION #5: Member Review Submitted
+  async sendMemberReviewSubmittedNotification(reviewerName: string, willId: number, otherMembers: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "Review submitted 📝",
+      body: `${reviewerName} completed their Will review.`,
+      category: 'member_review_submitted',
+      data: {
+        type: 'member_review_submitted',
+        reviewerName,
+        willId: willId.toString(),
+        deepLink: `/will/${willId}/review`
+      }
+    };
+
+    await this.sendToMultipleUsers(otherMembers, payload);
+  }
+
+  // NEW NOTIFICATION #6: Will Midpoint Milestone (50% complete)
+  async sendMidpointMilestoneNotification(willId: number, committedMembers: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "Halfway there! 🎯",
+      body: "You're halfway through your Will. Keep it up!",
+      category: 'will_midpoint',
+      data: {
+        type: 'will_midpoint',
+        willId: willId.toString(),
+        deepLink: `/will/${willId}`
+      }
+    };
+
+    await this.sendToMultipleUsers(committedMembers, payload);
+  }
 }
 
 export const pushNotificationService = new PushNotificationService();

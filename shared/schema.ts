@@ -68,6 +68,10 @@ export const wills = pgTable("wills", {
   endRoomStatus: varchar("end_room_status", { length: 20 }).default("pending"), // pending, open, completed
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, will_review, waiting_for_end_room, completed
   createdAt: timestamp("created_at").defaultNow(),
+  // Notification tracking fields
+  midpointAt: timestamp("midpoint_at"), // Precomputed: (startDate + endDate) / 2
+  midpointNotificationSentAt: timestamp("midpoint_notification_sent_at"),
+  completionNotificationSentAt: timestamp("completion_notification_sent_at"),
 }, (table) => [index("IDX_wills_mode").on(table.mode)]);
 
 export const willCommitments = pgTable("will_commitments", {
@@ -77,6 +81,16 @@ export const willCommitments = pgTable("will_commitments", {
   what: text("what").notNull(),
   why: text("why").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  // Notification tracking field for acknowledgment reminder
+  ackReminderSentAt: timestamp("ack_reminder_sent_at"), // For 6hr unacknowledged reminder
+});
+
+// Tracking table for commitment reminders (for users who haven't committed yet)
+export const commitmentReminders = pgTable("commitment_reminders", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  sentAt: timestamp("sent_at").defaultNow(),
 });
 
 export const willAcknowledgments = pgTable("will_acknowledgments", {
@@ -256,6 +270,17 @@ export const willPushesRelations = relations(willPushes, ({ one }) => ({
   }),
 }));
 
+export const commitmentRemindersRelations = relations(commitmentReminders, ({ one }) => ({
+  will: one(wills, {
+    fields: [commitmentReminders.willId],
+    references: [wills.id],
+  }),
+  user: one(users, {
+    fields: [commitmentReminders.userId],
+    references: [users.id],
+  }),
+}));
+
 export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
   author: one(users, {
     fields: [blogPosts.authorId],
@@ -368,3 +393,10 @@ export const insertWillReviewSchema = createInsertSchema(willReviews).omit({
 });
 export type InsertWillReview = z.infer<typeof insertWillReviewSchema>;
 export type WillReview = typeof willReviews.$inferSelect;
+
+export const insertCommitmentReminderSchema = createInsertSchema(commitmentReminders).omit({
+  id: true,
+  sentAt: true,
+});
+export type InsertCommitmentReminder = z.infer<typeof insertCommitmentReminderSchema>;
+export type CommitmentReminder = typeof commitmentReminders.$inferSelect;

@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import { db } from './db';
-import { wills } from '@shared/schema';
-import { eq, and, or, lt, gte, isNull, isNotNull } from 'drizzle-orm';
+import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders } from '@shared/schema';
+import { eq, and, or, lt, gte, isNull, isNotNull, ne, notInArray, inArray } from 'drizzle-orm';
 import { dailyService } from './daily';
 import { storage } from './storage';
 import { pushNotificationService } from './pushNotificationService';
@@ -70,6 +70,12 @@ export class EndRoomScheduler {
 
     // Check for completed wills that need End Rooms scheduled
     await this.scheduleEndRoomsForCompletedWills();
+
+    // NEW: Send reminder notifications (6hr commitment/acknowledgment reminders)
+    await this.sendReminderNotifications(now);
+
+    // NEW: Send milestone notifications (midpoint)
+    await this.sendMilestoneNotifications(now);
 
     console.log('[EndRoomScheduler] Heavy operations completed');
   }
@@ -150,6 +156,24 @@ export class EndRoomScheduler {
       for (const will of willsToReview) {
         console.log(`[SCHEDULER] 📝 Transitioning Will ${will.id} to will_review (ended at ${will.endDate.toISOString()})`);
         await storage.updateWillStatus(will.id, 'will_review');
+        
+        // NEW: Send Will Completed Review notification (only if not already sent)
+        if (!will.completionNotificationSentAt) {
+          try {
+            const willWithCommitments = await storage.getWillWithCommitments(will.id);
+            if (willWithCommitments && willWithCommitments.commitments) {
+              const participants = willWithCommitments.commitments.map(c => c.userId);
+              await pushNotificationService.sendWillCompletedReviewNotification(will.id, participants);
+              // Mark notification as sent
+              await db.update(wills)
+                .set({ completionNotificationSentAt: now })
+                .where(eq(wills.id, will.id));
+              console.log(`[SCHEDULER] ✅ Will Completed Review notification sent for Will ${will.id}`);
+            }
+          } catch (error) {
+            console.error(`[SCHEDULER] Failed to send Will Completed Review notification for Will ${will.id}:`, error);
+          }
+        }
       }
 
       // 3. Check will_review Wills and transition to completed when BOTH conditions are met:
@@ -478,6 +502,159 @@ export class EndRoomScheduler {
       return;
     } catch (error) {
       console.error('[EndRoomScheduler] Error scheduling End Rooms for completed wills:', error);
+    }
+  }
+
+  // NEW: Send 6-hour reminder notifications for commitment and acknowledgment
+  private async sendReminderNotifications(now: Date) {
+    try {
+      const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+
+      // 1. COMMITMENT REMINDER: Wills in pending status created 6+ hours ago
+      // Find circle mode wills that are pending and created 6+ hours ago
+      const pendingWills = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.status, 'pending'),
+            lt(wills.createdAt, sixHoursAgo),
+            isNotNull(wills.circleId) // Only circle mode
+          )
+        )
+        .limit(20);
+
+      for (const will of pendingWills) {
+        try {
+          // Get all circle members
+          const allCircleMembers = await storage.getCircleMembers(will.circleId!);
+          
+          // Get users who have already committed
+          const existingCommitments = await db
+            .select({ userId: willCommitments.userId })
+            .from(willCommitments)
+            .where(eq(willCommitments.willId, will.id));
+          const committedUserIds = existingCommitments.map(c => c.userId);
+
+          // Get users who have already received commitment reminder
+          const existingReminders = await db
+            .select({ userId: commitmentReminders.userId })
+            .from(commitmentReminders)
+            .where(eq(commitmentReminders.willId, will.id));
+          const remindedUserIds = existingReminders.map(r => r.userId);
+
+          // Find uncommitted members who haven't been reminded yet
+          const uncommittedToRemind = allCircleMembers.filter(
+            m => !committedUserIds.includes(m.userId) && !remindedUserIds.includes(m.userId)
+          );
+
+          if (uncommittedToRemind.length > 0) {
+            const userIdsToRemind = uncommittedToRemind.map(m => m.userId);
+            await pushNotificationService.sendCommitmentReminderNotification(will.id, userIdsToRemind);
+            
+            // Record that reminders were sent (idempotency)
+            for (const userId of userIdsToRemind) {
+              await db.insert(commitmentReminders).values({
+                willId: will.id,
+                userId: userId
+              });
+            }
+            console.log(`[SCHEDULER] ✅ Commitment reminder sent to ${userIdsToRemind.length} users for Will ${will.id}`);
+          }
+        } catch (error) {
+          console.error(`[SCHEDULER] Failed to send commitment reminder for Will ${will.id}:`, error);
+        }
+      }
+
+      // 2. ACKNOWLEDGMENT REMINDER: Wills in will_review status where completion notification was sent 6+ hours ago
+      const willsInReview = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.status, 'will_review'),
+            lt(wills.completionNotificationSentAt, sixHoursAgo),
+            isNotNull(wills.circleId) // Only circle mode
+          )
+        )
+        .limit(20);
+
+      for (const will of willsInReview) {
+        try {
+          // Get all committed members
+          const commitments = await db
+            .select()
+            .from(willCommitments)
+            .where(eq(willCommitments.willId, will.id));
+
+          // Get users who have already acknowledged
+          const acknowledgedUsers = await db
+            .select({ userId: willAcknowledgments.userId })
+            .from(willAcknowledgments)
+            .where(eq(willAcknowledgments.willId, will.id));
+          const acknowledgedUserIds = acknowledgedUsers.map(a => a.userId);
+
+          // Find unacknowledged members who haven't been reminded yet
+          const unacknowledgedToRemind = commitments.filter(
+            c => !acknowledgedUserIds.includes(c.userId) && !c.ackReminderSentAt
+          );
+
+          if (unacknowledgedToRemind.length > 0) {
+            const userIdsToRemind = unacknowledgedToRemind.map(c => c.userId);
+            await pushNotificationService.sendAcknowledgmentReminderNotification(will.id, userIdsToRemind);
+            
+            // Mark reminders as sent on each commitment record (idempotency)
+            for (const commitment of unacknowledgedToRemind) {
+              await db.update(willCommitments)
+                .set({ ackReminderSentAt: now })
+                .where(eq(willCommitments.id, commitment.id));
+            }
+            console.log(`[SCHEDULER] ✅ Acknowledgment reminder sent to ${userIdsToRemind.length} users for Will ${will.id}`);
+          }
+        } catch (error) {
+          console.error(`[SCHEDULER] Failed to send acknowledgment reminder for Will ${will.id}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error('[EndRoomScheduler] Error sending reminder notifications:', error);
+    }
+  }
+
+  // NEW: Send midpoint milestone notifications (50% through Will duration)
+  private async sendMilestoneNotifications(now: Date) {
+    try {
+      // Find active wills where midpoint has passed but notification hasn't been sent
+      const willsAtMidpoint = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.status, 'active'),
+            lt(wills.midpointAt, now),
+            isNull(wills.midpointNotificationSentAt)
+          )
+        )
+        .limit(20);
+
+      for (const will of willsAtMidpoint) {
+        try {
+          const willWithCommitments = await storage.getWillWithCommitments(will.id);
+          if (willWithCommitments && willWithCommitments.commitments) {
+            const committedMembers = willWithCommitments.commitments.map(c => c.userId);
+            await pushNotificationService.sendMidpointMilestoneNotification(will.id, committedMembers);
+            
+            // Mark notification as sent
+            await db.update(wills)
+              .set({ midpointNotificationSentAt: now })
+              .where(eq(wills.id, will.id));
+            console.log(`[SCHEDULER] ✅ Midpoint milestone notification sent for Will ${will.id}`);
+          }
+        } catch (error) {
+          console.error(`[SCHEDULER] Failed to send midpoint notification for Will ${will.id}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error('[EndRoomScheduler] Error sending milestone notifications:', error);
     }
   }
 }

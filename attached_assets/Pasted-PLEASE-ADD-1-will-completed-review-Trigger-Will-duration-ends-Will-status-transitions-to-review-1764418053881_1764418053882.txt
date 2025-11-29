@@ -1,0 +1,67 @@
+PLEASE ADD 
+1) will_completed_review
+Trigger: Will duration ends → Will status transitions to review.
+Recipients: All participants in that Will.
+Message: "Your Will is complete. Good work. Hop in to review."
+Deep Link: End Room / Review screen for that Will.
+Technical suggestions:
+* Add fields like completedAt and completionNotificationSentAt on the Will.
+* Scheduler: select Wills where endDate <= now AND status = 'active' AND completionNotificationSentAt IS NULL.
+* After sending, set status = 'review' and store completionNotificationSentAt to avoid double-send.
+
+2) commitment_reminder_incomplete
+Trigger: Will is in pending / proposed state and user has not committed within 6 hours of Will creation.
+Recipients: Only uncommitted users for that Will.
+Message: "Your Circle is waiting for your commitment."
+Deep Link: Will commitment screen for that user.
+Technical suggestions:
+* Store createdAt and track membership status (committed = true/false) per user+Will.
+* Scheduler: for each uncommitted member, check now - will.createdAt >= 6h and commitmentReminderSentAt IS NULL.
+* Save per-user flag like commitmentReminderSentAt on the membership record to ensure idempotency.
+
+3) acknowledgment_reminder_pending
+Trigger: Will is completed and user has not acknowledged within 6 hours of Will completion/review opening.
+Recipients: Only members who have not yet acknowledged.
+Message: "Your Circle is waiting for your acknowledgment."
+Deep Link: Acknowledgment / review screen for that Will.
+Technical suggestions:
+* For each member+Will, track acknowledgedAt and ackReminderSentAt.
+* Scheduler: check Wills with status = 'review' and now - completedAt >= 6h.
+* For each member with acknowledgedAt IS NULL AND ackReminderSentAt IS NULL, send the notification and set ackReminderSentAt.
+
+4) circle_member_joined
+Trigger: New user joins an existing Circle.
+Recipients: All existing members of that Circle, excluding the joiner.
+Message: "[Name] joined your Circle."
+Deep Link: Circle hub for that Circle.
+Technical suggestions:
+* Fire this synchronously on the “join circle” event (backend handler).
+* Ensure you don’t resend if user rejoins repeatedly within a short window (optional: joinedAt + small cooldown).
+* Use a safe display name fallback (e.g., first name or handle).
+
+5) member_review_submitted
+Trigger: A member submits their Will review / reflection.
+Recipients: All other members of that Circle for the same Will.
+Message: "[Name] completed their Will review."
+Deep Link: Will progress / acknowledgments screen for that Will.
+Technical suggestions:
+* Trigger on successful save of the review (reviewSubmittedAt).
+* Exclude the submitting user from recipients.
+* Optionally add a per-Will+member reviewNotificationSentAt if you later allow editing, to avoid re-sending on every update.
+
+6) will_midpoint_milestone
+Trigger: Time reaches 50% of the Will duration (halfway between startDate and endDate).
+Recipients: All committed participants in that Will.
+Message: "You're halfway there. Keep it up."
+Deep Link: Current Will dashboard.
+Technical suggestions:
+* Precompute a midpointAt timestamp when the Will is created or activated: (startDate + endDate) / 2.
+* Add midpointNotificationSentAt on the Will.
+* Scheduler: select Wills where midpointAt <= now AND midpointNotificationSentAt IS NULL AND status = 'active'.
+* After sending, set midpointNotificationSentAt so it’s only sent once.
+
+General Technical Guidelines (for all of the above)
+* Idempotency: Always store a per-event timestamp/boolean (e.g., XNotificationSentAt) on the relevant Will or membership record so retries or delayed jobs don’t double-send.
+* Environment separation: Make sure device tokens are tagged with environment (staging vs production) and you hit the correct APNs endpoint per environment.
+* Rate limiting: Keep a simple per-user check so no more than N notifications of the same type are sent per day, if logic ever repeats or users re-enter states.
+* Deep links: Standardize routes like /will/:id/review, /will/:id/commit, /circle/:id and always include the relevant IDs in the push payload.

@@ -1,0 +1,278 @@
+"I need you to review and improve the notification system based on technical feedback. The current implementation has several critical issues that could cause notifications to fail or spam users. Below is a detailed analysis and recommended fixes.CONTEXT:We have 8 notification types triggered by the scheduler (runs every 1 minute) and user actions:Scheduler-based (automatic):
+
+Will Started - When Will status changes to active
+End Room 24h Warning - 24 hours before End Room
+End Room 15min Warning - 15 minutes before End Room
+End Room Live - When End Room opens
+User action-based:
+5. Will Proposed - When new Will created in circle
+6. Team Push - When user sends encouragement
+7. Ready for New Will - After Will completionCurrent files involved:
+
+server/scheduler.ts - Cron-based checks every minute
+server/pushNotificationService.ts - APNs integration
+server/routes.ts - User-triggered notifications
+🚨 CRITICAL ISSUES FOUND:Issue 1: Timing Window Problem (HIGH SEVERITY)Current implementation:
+typescript// In scheduler - checking if EXACTLY 24 hours away
+if (hoursUntilEndRoom >= 23.99 && hoursUntilEndRoom <= 24.01) {
+  sendNotification();
+}Problems:
+
+❌ If Repl restarts during that exact 1-minute window, notification never sends
+❌ If scheduler lags even slightly, window is missed
+❌ If database query is slow, timing passes
+Real scenario:
+23:59:30 - Check: 24.01 hours (too early)
+[Repl restart - 2 minutes]
+24:01:30 - Check: 23.97 hours (too late)
+Result: User NEVER gets 24h warningIssue 2: No Duplicate Prevention (HIGH SEVERITY)Current problem:
+Nothing prevents sending the same notification multiple times.What happens:
+Minute 1: Scheduler runs → Will starts → notification sent ✅
+Minute 2: Scheduler runs → Will still 'active' → notification sent AGAIN ❌
+Minute 3: Scheduler runs → notification sent AGAIN ❌
+User: Receives "Your Will has begun!" 10+ times → disables notifications foreverIssue 3: No Error Handling in SchedulerCurrent scheduler pattern (probably):
+typescriptsetInterval(async () => {
+  await checkAndSendNotifications(); // If this throws, scheduler crashes
+}, 60000);What can go wrong:
+
+Database timeout → scheduler crashes → no more notifications
+APNs error → scheduler crashes → no more notifications
+Infinite loop → scheduler hangs → Repl becomes unresponsive
+Issue 4: Invalid Token BuildupProblem:
+When users delete the app or disable notifications, tokens become invalid but stay in database.Current behavior (probably):
+
+APNs returns 410 "Unregistered" error
+Code ignores error
+Continues trying to send to dead token every time
+Wastes API calls, notification never reaches user
+🔧 REQUIRED FIXES:Fix 1: Add Notification Tracking SystemCreate new database table:sqlCREATE TABLE notification_log (
+  id SERIAL PRIMARY KEY,
+  will_id INTEGER REFERENCES wills(id),
+  user_id VARCHAR REFERENCES users(id),
+  notification_type VARCHAR(50) NOT NULL,
+  sent_at TIMESTAMP DEFAULT NOW(),
+  status VARCHAR(20) DEFAULT 'sent',
+  
+  -- Prevent duplicate notifications
+  UNIQUE(will_id, user_id, notification_type)
+);
+
+-- Add index for fast lookups
+CREATE INDEX idx_notification_log_lookup ON notification_log(will_id, notification_type);Update schema file:Add to shared/schema.ts:typescriptexport const notificationLog = pgTable('notification_log', {
+  id: serial('id').primaryKey(),
+  willId: integer('will_id').references(() => wills.id),
+  userId: varchar('user_id').references(() => users.id),
+  notificationType: varchar('notification_type', { length: 50 }).notNull(),
+  sentAt: timestamp('sent_at').defaultNow(),
+  status: varchar('status', { length: 20 }).default('sent'),
+}, (table) => ({
+  uniqueNotification: uniqueIndex('unique_notification').on(table.willId, table.userId, table.notificationType),
+}));Fix 2: Create Deduplication Helper FunctionIn server/pushNotificationService.ts or create new server/notificationManager.ts:typescriptimport { db } from './db';
+import { notificationLog } from '../shared/schema';
+import { and, eq } from 'drizzle-orm';
+
+/**
+ * Send notification only once per (will, user, type) combination
+ * Prevents duplicate notifications across scheduler runs and restarts
+ */
+export async function sendNotificationOnce(
+  willId: number,
+  userId: string,
+  notificationType: string,
+  title: string,
+  body: string
+): Promise<boolean> {
+  try {
+    // Check if already sent
+    const existing = await db
+      .select()
+      .from(notificationLog)
+      .where(and(
+        eq(notificationLog.willId, willId),
+        eq(notificationLog.userId, userId),
+        eq(notificationLog.notificationType, notificationType)
+      ))
+      .limit(1);
+    
+    if (existing.length > 0) {
+      console.log(`[NOTIF] Skipping ${notificationType} for will ${willId} - already sent at ${existing[0].sentAt}`);
+      return false;
+    }
+    
+    // Send notification
+    console.log(`[NOTIF] Sending ${notificationType} to user ${userId} for will ${willId}`);
+    await pushNotificationService.sendNotification(userId, title, body);
+    
+    // Record that it was sent
+    await db.insert(notificationLog).values({
+      willId,
+      userId,
+      notificationType,
+      sentAt: new Date(),
+      status: 'sent'
+    });
+    
+    console.log(`[NOTIF] ✅ Successfully sent and logged ${notificationType}`);
+    return true;
+    
+  } catch (error) {
+    console.error(`[NOTIF] ❌ Error sending ${notificationType}:`, error);
+    
+    // Log the failure
+    try {
+      await db.insert(notificationLog).values({
+        willId,
+        userId,
+        notificationType,
+        sentAt: new Date(),
+        status: 'failed'
+      });
+    } catch (logError) {
+      console.error('[NOTIF] Failed to log error:', logError);
+    }
+    
+    return false;
+  }
+}Fix 3: Update Scheduler with Range-Based TimingIn server/scheduler.ts, replace exact timing checks:BEFORE (broken):
+typescript// 24h warning - exact minute only
+if (hoursUntilEndRoom >= 23.99 && hoursUntilEndRoom <= 24.01) {
+  await sendNotification(user.id, 'End Room in 24 hours', body);
+}AFTER (reliable):
+typescript// 24h warning - 2-hour window with deduplication
+if (hoursUntilEndRoom >= 23 && hoursUntilEndRoom <= 25) {
+  await sendNotificationOnce(
+    will.id,
+    user.id,
+    'end_room_24h',
+    'End Room in 24 Hours',
+    `Your End Room starts at ${formatTime(will.endRoomScheduledAt)}`
+  );
+}
+
+// 15min warning - 5-minute window
+if (minutesUntilEndRoom >= 13 && minutesUntilEndRoom <= 17) {
+  await sendNotificationOnce(
+    will.id,
+    user.id,
+    'end_room_15min',
+    'End Room Starting Soon!',
+    'Join your circle in 15 minutes'
+  );
+}Apply same pattern to ALL scheduler notifications:
+
+Will Started: Use range-based check + sendNotificationOnce()
+End Room Live: Use sendNotificationOnce()
+All other scheduler events
+Fix 4: Add Error Handling to SchedulerWrap scheduler in try-catch:typescript// In server/scheduler.ts
+
+async function safeSchedulerRun() {
+  const startTime = Date.now();
+  
+  try {
+    console.log('[SCHEDULER] ❤️ Starting run at', new Date().toISOString());
+    
+    await checkAndSendNotifications();
+    
+    const duration = Date.now() - startTime;
+    console.log(`[SCHEDULER] ✅ Completed in ${duration}ms`);
+    
+    // Warn if taking too long
+    if (duration > 50000) {
+      console.warn(`[SCHEDULER] ⚠️ Run took ${duration}ms - close to 60s timeout!`);
+    }
+    
+  } catch (error) {
+    console.error('[SCHEDULER] ❌ Error during run:', error);
+    console.error('[SCHEDULER] Stack trace:', error.stack);
+    // Don't throw - allow next run to proceed
+  }
+}
+
+// Start scheduler with error handling
+export function startScheduler() {
+  console.log('[SCHEDULER] Starting notification scheduler...');
+  setInterval(safeSchedulerRun, 60000); // Every minute
+  
+  // Run immediately on startup
+  safeSchedulerRun();
+}Fix 5: Handle Invalid APNs TokensIn server/pushNotificationService.ts, update the send function:typescriptasync sendNotification(userId: string, title: string, body: string) {
+  const tokens = await this.getUserTokens(userId);
+  
+  if (tokens.length === 0) {
+    console.log(`[APNs] No tokens found for user ${userId}`);
+    return;
+  }
+  
+  for (const token of tokens) {
+    try {
+      const notification = new apn.Notification({
+        alert: { title, body },
+        sound: 'default',
+        badge: 1,
+      });
+      
+      const result = await this.apnProvider.send(notification, token.deviceToken);
+      
+      // Check for failures
+      if (result.failed && result.failed.length > 0) {
+        for (const failure of result.failed) {
+          console.error(`[APNs] Failed for token ${token.deviceToken.substring(0, 16)}...`);
+          console.error(`[APNs] Status: ${failure.status}, Response: ${failure.response}`);
+          
+          // Handle invalid/unregistered tokens
+          if (failure.status === '410' || failure.status === '400') {
+            console.log(`[APNs] Token is invalid - marking as inactive`);
+            
+            // Mark token as inactive in database
+            await db.update(deviceTokens)
+              .set({ isActive: false, updatedAt: new Date() })
+              .where(eq(deviceTokens.id, token.id));
+          }
+        }
+      }
+      
+      // Log successes
+      if (result.sent && result.sent.length > 0) {
+        console.log(`[APNs] ✅ Sent to ${result.sent.length} device(s)`);
+      }
+      
+    } catch (error) {
+      console.error(`[APNs] Exception sending to token ${token.deviceToken.substring(0, 16)}:`, error);
+      // Continue to next token - don't let one failure break all notifications
+    }
+  }
+}Fix 6: Update All User-Triggered NotificationsIn server/routes.ts, replace direct notification calls with sendNotificationOnce():BEFORE:
+typescript// Will Proposed notification
+app.post('/api/wills', async (req, res) => {
+  // ... create will ...
+  
+  // Send to all circle members
+  for (const member of circleMembers) {
+    await pushNotificationService.sendNotification(
+      member.userId,
+      'New Will Proposed',
+      `${user.name} proposed a new Will`
+    );
+  }
+});AFTER:
+typescriptapp.post('/api/wills', async (req, res) => {
+  // ... create will ...
+  
+  // Send to all circle members (with deduplication)
+  for (const member of circleMembers) {
+    if (member.userId !== req.user.id) { // Don't notify creator
+      await sendNotificationOnce(
+        newWill.id,
+        member.userId,
+        'will_proposed',
+        'New Will Proposed',
+        `${user.name} proposed a new Will for your circle`
+      );
+    }
+  }
+});Apply to:
+
+Will Proposed notifications
+Team Push notifications
+Ready for New Will notifications
+Any other user-triggered notifications
