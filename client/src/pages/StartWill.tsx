@@ -967,31 +967,32 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 </div>
               </SectionCard>
             ) : (
-              /* Circle Mode: End Room Scheduling */
-              <SectionCard>
-                <form onSubmit={handleStep4Submit} className="space-y-4">
-                  {/* Header with Video Icon - positioned higher */}
-                  <div className="px-4">
+              /* Circle Mode: End Room Scheduling - Compact, No Scroll */
+              <div className="flex flex-col animate-in fade-in duration-500">
+                <form onSubmit={handleStep4Submit} className="flex flex-col">
+                  {/* Content Area - Compact */}
+                  <div className="flex flex-col pt-2 pb-4">
                     {/* Compact Video Icon */}
-                    <div className="flex justify-center mb-3">
+                    <div className="flex justify-center mb-2">
                       <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-md opacity-20 animate-pulse"></div>
-                        <div className="relative w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
-                          <Video className="w-6 h-6 text-blue-600" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-md opacity-20"></div>
+                        <div className="relative w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
+                          <Video className="w-5 h-5 text-blue-600" />
                         </div>
                       </div>
                     </div>
                     
-                    <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-                      Choose a time for a video call after your <em>Will</em> ends on{' '}
+                    {/* Description - Tighter */}
+                    <label className="block text-sm font-medium text-gray-700 mb-2 text-center px-2">
+                      Schedule a video call after your <em>Will</em> ends on{' '}
                       <span className="font-semibold text-gray-900">
-                        {endDate ? new Date(`${endDate}T${endTime || '12:00'}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}{' '}
+                        {endDate ? new Date(`${endDate}T${endTime || '12:00'}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}{' '}
                         at {endTime ? new Date(`${endDate}T${endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '12:00 PM'}
                       </span>
                     </label>
                     
-                    {/* Input field */}
-                    <div className="w-full max-w-md mx-auto">
+                    {/* Input field - Compact */}
+                    <div className="w-full max-w-xs mx-auto mb-3">
                       <input
                         type="datetime-local"
                         name="endRoomDateTime"
@@ -999,67 +1000,62 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                         max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
                         value={endRoomDateTime}
                         onChange={(e) => setEndRoomDateTime(e.target.value)}
-                        className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all duration-200"
+                        className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all duration-200"
                         data-testid="input-end-room-datetime"
                       />
                     </div>
+
+                    {/* Notes Section - Compact */}
+                    <div className="mx-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                      <ul className="space-y-1 text-xs text-gray-600">
+                        <li className="flex items-start">
+                          <span className="w-1 h-1 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                          Video link opens automatically at chosen time
+                        </li>
+                        <li className="flex items-start">
+                          <span className="w-1 h-1 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                          Runs for 30 minutes
+                        </li>
+                        <li className="flex items-start">
+                          <span className="w-1 h-1 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                          Can't be changed once Will starts
+                        </li>
+                      </ul>
+                    </div>
                   </div>
 
-                  {/* Notes Section - distinct bordered block */}
-                  <div className="mx-4 bg-blue-50 border-2 border-blue-200 rounded-xl p-4 shadow-sm">
-                    <div className="flex items-center mb-2">
-                      <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Notes</span>
-                    </div>
-                    <ul className="space-y-2 text-sm text-gray-700">
-                      <li className="flex items-start">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                        Virtual meeting link opens automatically at the time you choose.
-                      </li>
-                      <li className="flex items-start">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                        Runs for 30 minutes.
-                      </li>
-                      <li className="flex items-start">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                        Can't be changed once your Will starts.
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="px-4 pt-2">
-                    <div className="flex items-center justify-end gap-3">
-                      {/* Skip button - subtle secondary action */}
-                      <button 
-                        type="button" 
-                        onClick={() => setShowSkipConfirmation(true)}
-                        disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                        className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 disabled:opacity-50"
-                        data-testid="button-skip-endroom"
-                      >
-                        Skip
-                      </button>
-                      
-                      {/* Primary CTA */}
-                      <button
-                        type="submit"
-                        disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
-                        className={`px-5 py-2 rounded-xl text-sm font-medium flex items-center justify-center transition-all duration-200 ${
-                          !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
-                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'bg-brandGreen text-white hover:bg-green-600 shadow-sm'
-                        }`}
-                        data-testid="button-schedule-and-create"
-                      >
-                        {createWillMutation.isPending || addCommitmentMutation.isPending 
-                          ? 'Creating...' 
-                          : 'Create Will'}
-                        <ArrowRight className="w-4 h-4 ml-1" />
-                      </button>
-                    </div>
+                  {/* Navigation - Anchored, matches other steps */}
+                  <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
+                    {/* Skip button - Ghost style with border */}
+                    <button 
+                      type="button" 
+                      onClick={() => setShowSkipConfirmation(true)}
+                      disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                      className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 disabled:opacity-50"
+                      data-testid="button-skip-endroom"
+                    >
+                      Skip
+                    </button>
+                    
+                    {/* Primary CTA - matches Next button style */}
+                    <button
+                      type="submit"
+                      disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
+                      className={`h-11 px-4 inline-flex items-center justify-center font-medium text-base rounded-lg transition-colors ${
+                        !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/90 active:bg-secondary/80'
+                      }`}
+                      data-testid="button-schedule-and-create"
+                    >
+                      {createWillMutation.isPending || addCommitmentMutation.isPending 
+                        ? 'Creating...' 
+                        : 'Create'}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </button>
                   </div>
                 </form>
-              </SectionCard>
+              </div>
             )}
           </>
         )}
