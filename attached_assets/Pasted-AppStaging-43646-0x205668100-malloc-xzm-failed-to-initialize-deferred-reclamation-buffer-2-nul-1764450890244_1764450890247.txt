@@ -1,0 +1,496 @@
+AppStaging(43646,0x205668100) malloc: xzm: failed to initialize deferred reclamation buffer [2] (null)
+CLIENT OF UIKIT REQUIRES UPDATE: This process does not adopt UIScene lifecycle. This will become an assert in a future version.
+🔥 iOS DIRECT: App launched - requesting push notification permissions immediately
+Could not create a sandbox extension for '/var/containers/Bundle/Application/2156D96B-82D0-4A27-A0E3-5CE6B486EA32/AppStaging.app'
+⚡️  Loading app at capacitor://localhost...
+🔔 App became active - clearing badge number
+void * _Nullable NSMapGet(NSMapTable * _Nonnull, const void * _Nullable): map table argument is NULL
+⚡️  WebView loaded
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ SessionPersistence Service Initialized                     ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 🔍 [SessionPersistence] Platform: ios
+⚡️  [log] - 🔍 [SessionPersistence] isNativePlatform: true
+⚡️  [log] - 🔍 [SessionPersistence] Timestamp: 2025-11-29T21:13:20.855Z
+⚡️  [log] - 🔍 [SessionPersistence] User Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - 🔥 NOTIF SERVICE: File loaded at 2025-11-29T21:13:20.855Z
+⚡️  [log] - 🔥 NOTIF SERVICE: Capacitor check: {"isNativePlatform":true,"platform":"ios","isPluginAvailable":true}
+⚡️  [log] - Router debug: {"isAuthenticated":false,"isLoading":true,"location":"/"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: EMPTY
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache empty - checking Capacitor Preferences...
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP LAUNCH - SESSION RESTORATION                           ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - [App] 🚀 App launched at: 2025-11-29T21:13:20.870Z
+⚡️  [log] - [App] 🔄 Starting session restoration...
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ RESTORING SESSION ON APP LAUNCH                           ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 🔄 [SessionPersistence] App launch time: 2025-11-29T21:13:20.870Z
+⚡️  [log] - 🔄 [SessionPersistence] Platform: ios
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: EMPTY
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache empty - checking Capacitor Preferences...
+⚡️  [log] - 🔗 [DeepLink] Setting up push notification tap handlers...
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP LIFECYCLE MONITOR INITIALIZED                          ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 📱 [App] App launch timestamp: 2025-11-29T21:13:20.871Z
+⚡️  [log] - 📱 [App] Setting up app state change listener...
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  To Native ->  Preferences get 1038462
+⚡️  To Native ->  App getInfo 1038463
+⚡️  To Native ->  Preferences get 1038464
+⚡️  To Native ->  PushNotifications addListener 1038465
+⚡️  TO JS {"value":null}
+⚡️  To Native ->  App addListener 1038466
+⚡️  TO JS {"build":"1.2","version":"1.2","id":"com.porfirio.will.staging.","name":"WILL STAGING"}
+⚡️  TO JS {"value":null}
+⚡️  To Native ->  PushNotifications addListener 1038467
+⚡️  [log] - ⚠️ [App] Badge clearing not available (web or permissions not granted): {"code":"UNIMPLEMENTED"}
+⚡️  [log] - ✅ [App] App state change listener registered successfully
+⚡️  [log] - 🔗 [DeepLink] ✅ Deep link handlers registered successfully
+⚡️  To Native ->  Preferences get 1038468
+⚡️  TO JS {"value":null}
+⚡️  [log] - 📱 [API Config] Native app detected: {"bundleId":"com.porfirio.will.staging.","version":"1.2","build":"1.2"}
+⚡️  [log] - ✅ [API Config] STAGING app detected → Using STAGING backend
+⚡️  [log] - 🎯 [API Config] Final API URL: https://will-staging-porfirioaciacci.replit.app
+⚡️  [log] - 🌐 [App] API URL initialized: https://will-staging-porfirioaciacci.replit.app
+⚡️  To Native ->  ⚡️  [log] - [LogBridge] Console bridge initialized - client logs will appear in server console
+Preferences get 1038469
+⚡️  TO JS {"value":null}
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ NO TOKEN IN PREFERENCES                                    ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - ⚠️ [SessionPersistence] Capacitor Preferences returned NULL
+⚡️  [log] - ⚠️ [SessionPersistence] This means either:
+⚡️  [log] - ⚠️   1. User never logged in
+⚡️  [log] - ⚠️   2. Token was cleared (logout)
+⚡️  [log] - ⚠️   3. iOS cleared Preferences storage (CRITICAL BUG)
+⚡️  [log] - ⚠️   4. Storage is not persisting correctly
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - ❌ [SessionPersistence] No token available - user needs to login
+⚡️  To Native ->  CapacitorHttp request 1038470
+⚡️  To Native ->  CapacitorHttp request 1038471
+⚡️  To Native ->  CapacitorHttp request 1038472
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ NO TOKEN IN PREFERENCES                                    ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - ⚠️ [SessionPersistence] Capacitor Preferences returned NULL
+⚡️  [log] - ⚠️ [SessionPersistence] This means either:
+⚡️  [log] - ⚠️   1. User never logged in
+⚡️  [log] - ⚠️   2. Token was cleared (logout)
+⚡️  [log] - ⚠️   3. iOS cleared Preferences storage (CRITICAL BUG)
+⚡️  [log] - ⚠️   4. Storage is not persisting correctly
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - ❌ [SessionPersistence] No token available - user needs to login
+⚡️  [log] - ❌ [SessionPersistence] No token found - session NOT restored
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - [App] 📊 Session restoration completed in 13 ms
+⚡️  [log] - [App] ❌ SESSION NOT RESTORED
+⚡️  [log] - [App] ❌ User will be shown login screen
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - Router debug: {"isAuthenticated":false,"isLoading":true,"location":"/"}
+⚡️  TO JS {"headers":{"date":"Sat, 29 Nov 2025 21:13:21 GMT","x-cloud-trace-context":"2cb1e6aecd829bbede891892a862698e","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","access-control-allow-credentials":"true","strict-tran
+⚡️  TO JS {"headers":{"date":"Sat, 29 Nov 2025 21:13:21 GMT","x-cloud-trace-context":"2334912d9e1a8725de891892a86263a3","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","access-control-allow-credentials":"true","server":"Google Frontend","strict-tran
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","headers":{"date":"Sat, 29 Nov 2025 21:13:21 GMT","x-cloud-trace-context":"abe742189f03f7e8de891892a86261aa","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Go
+⚡️  [log] - Router debug: {"isAuthenticated":false,"isLoading":false,"location":"/"}
+⚡️  To Native ->  CapacitorHttp request 1038473
+🔥 iOS DIRECT: Push notification permissions granted - registering for remote notifications
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","headers":{"date":"Sat, 29 Nov 2025 21:13:21 GMT","x-cloud-trace-context":"653c97325526b41ede891892a8626b15","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Go
+🔔 App became active - clearing badge number
+⚡️  TO JS {"isActive":true}
+🔥 iOS DIRECT: Device Token Generated: 33d364ceeac1881648b3...
+🔥 iOS DIRECT: Starting DIRECT API call to bypass broken JavaScript bridge
+🔥 iOS DIRECT: sendTokenDirectlyToServer() method called
+🔍 iOS DIRECT: Bundle ID detected: 'com.porfirio.will.staging.'
+🔍 iOS DIRECT: Comparing to: 'com.porfirio.will.staging.'
+🟡 iOS DIRECT: STAGING environment detected
+🔥 iOS DIRECT: Server API URL: https://will-staging-porfirioaciacci.replit.app/api/device-token
+🔥 iOS DIRECT: Payload prepared: ["osVersion", "deviceModel", "source", "platform", "provisioningProfile", "appVersion", "buildScheme", "bundleId", "deviceToken", "environment", "userId"]
+🔥 iOS DIRECT: JSON serialization successful
+🔥 iOS DIRECT: Making HTTP request at 2025-11-29 21:13:21 +0000
+🟢 Device Token Successfully Registered: 33d364ceeac1881648b30e25f8ef8007a6ff579196e0bb8d9c6123819ea2781d
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP STATE CHANGED                                          ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 📱 [App] New state: 🟢 ACTIVE (Foreground)
+⚡️  [log] - 📱 [App] Change timestamp: 2025-11-29T21:13:21.877Z
+⚡️  [log] - 📱 [App] Time since last change: 1 seconds
+⚡️  [log] - 📱 [App] Time since app launch: 1 seconds
+⚡️  [log] - 🔄 [App] App RETURNING TO FOREGROUND
+⚡️  [log] - 🔄 [App] This is when storage might have been cleared!
+⚡️  [log] - 🔄 [App] Clearing badge...
+⚡️  To Native ->  Preferences get 1038474
+⚡️  [log] - 🔍 [App] Checking if auth token survived background...
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: EMPTY
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache empty - checking Capacitor Preferences...
+⚡️  TO JS {"value":null}
+⚡️  [log] - ⚠️ [App] Badge clearing not available (web or permissions not granted): {"code":"UNIMPLEMENTED"}
+🔥 iOS DIRECT: HTTP Response Status: 200
+🔥 iOS DIRECT: ✅ SUCCESS - Token registered directly with server!
+🔥 iOS DIRECT: ✅ JavaScript bridge successfully bypassed!
+📱 iOS DIRECT: Saving token to localStorage for JS polling...
+App is being debugged, do not track this hang
+Hang detected: 1.70s (debugger attached, not reporting)
+⚡️  To Native ->  Preferences get 1038475
+⚡️  TO JS {"value":null}
+<0x1022326c0> Gesture: System gesture gate timed out.
+App is being debugged, do not track this hang
+Hang detected: 0.51s (debugger attached, not reporting)
+📱 iOS DIRECT: ✅ Token successfully saved to localStorage! Result: success
+⚡️  [log] - 📱 [iOS DIRECT] Token saved to localStorage for polling mechanism
+⚡️  [log] - 📱 [iOS DIRECT] Token data: {"token":"33d364ceeac1881648b30e25f8ef8007a6ff5791...
+App is being debugged, do not track this hang
+Hang detected: 0.66s (debugger attached, not reporting)
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ NO TOKEN IN PREFERENCES                                    ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - ⚠️ [SessionPersistence] Capacitor Preferences returned NULL
+⚡️  [log] - ⚠️ [SessionPersistence] This means either:
+⚡️  [log] - ⚠️   1. User never logged in
+⚡️  [log] - ⚠️   2. Token was cleared (logout)
+⚡️  To Native ->  CapacitorHttp request 1038476
+⚡️  [log] - ⚠️   3. iOS cleared Preferences storage (CRITICAL BUG)
+⚡️  [log] - ⚠️   4. Storage is not persisting correctly
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - ❌ [SessionPersistence] No token available - user needs to login
+⚡️  [log] - ❌ [App] TOKEN LOST DURING BACKGROUND!
+⚡️  [log] - ❌ [App] This is the BUG - storage was cleared!
+⚡️  [log] - ❌ [App] Background duration: 1 seconds (~0 minutes)
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  TO JS {"headers":{"date":"Sat, 29 Nov 2025 21:13:25 GMT","x-cloud-trace-context":"494732c9d8e3412ba44760e506952155","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","access-control-allow-credentials":"true","strict-tran
+UIKeyboardLayoutStar implements focusItemsInRect: - caching for linear focus movement is limited as long as this view is on screen.
+Unable to simultaneously satisfy constraints.
+	Probably at least one of the constraints in the following list is one you don't want. 
+	Try this: 
+		(1) look at each constraint and try to figure out which you don't expect; 
+		(2) find the code that added the unwanted constraint or constraints and fix it. 
+	(Note: If you're seeing NSAutoresizingMaskLayoutConstraints that you don't understand, refer to the documentation for the UIView property translatesAutoresizingMaskIntoConstraints) 
+(
+    "<NSAutoresizingMaskLayoutConstraint:0x11de8b6b0 h=--& v=--& _UIToolbarContentView:0x10509b480.width == 0   (active)>",
+    "<NSLayoutConstraint:0x105263020 H:|-(0)-[_UIButtonBarStackView:0x1053a6f40]   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x105263070 H:[_UIButtonBarStackView:0x1053a6f40]-(0)-|   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x11de89950 'IB_Leading_Leading' H:|-(0)-[_UIModernBarButton:0x11dd0c600]   (active, names: '|':_UIButtonBarButton:0x11de7ce00 )>",
+    "<NSLayoutConstraint:0x11de8a120 'IB_Leading_Leading' H:|-(>=5)-[_UIModernBarButton:0x11dd0c900]   (active, names: '|':_UIButtonBarButton:0x11de7d200 )>",
+    "<NSLayoutConstraint:0x11de899a0 'IB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0c600]-(>=8)-|   (active, names: '|':_UIButtonBarButton:0x11de7ce00 )>",
+    "<NSLayoutConstraint:0x11de8a170 'IB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0c900]-(>=5)-|   (active, names: '|':_UIButtonBarButton:0x11de7d200 )>",
+    "<NSLayoutConstraint:0x11de8a710 'TB_Leading_Leading' H:|-(8)-[_UIModernBarButton:0x11dd0cc00]   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>",
+    "<NSLayoutConstraint:0x11de8a760 'TB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0cc00]-(0)-|   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>",
+    "<NSLayoutConstraint:0x11de8aad0 'UISV-canvas-connection' UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.leading == _UIButtonBarButton:0x11de7ce00.leading   (active)>",
+    "<NSLayoutConstraint:0x11de8ad50 'UISV-canvas-connection' UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.trailing == _UIButtonBarButton:0x11de7d600.trailing   (active)>",
+    "<NSLayoutConstraint:0x11de8ada0 'UISV-spacing' H:[_UIButtonBarButton:0x11de7ce00]-(0)-[UIView:0x11de78180]   (active)>",
+    "<NSLayoutConstraint:0x11de8adf0 'UISV-spacing' H:[UIView:0x11de78180]-(0)-[_UIButtonBarButton:0x11de7d200]   (active)>",
+    "<NSLayoutConstraint:0x11de8ae40 'UISV-spacing' H:[_UIButtonBarButton:0x11de7d200]-(0)-[UIView:0x11de78300]   (active)>",
+    "<NSLayoutConstraint:0x11de8ae90 'UISV-spacing' H:[UIView:0x11de78300]-(0)-[_UIButtonBarButton:0x11de7d600]   (active)>",
+    "<NSLayoutConstraint:0x105262f30 'UIView-leftMargin-guide-constraint' H:|-(0)-[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'](LTR)   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>",
+    "<NSLayoutConstraint:0x105262fd0 'UIView-rightMargin-guide-constraint' H:[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']-(0)-|(LTR)   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x11de899a0 'IB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0c600]-(>=8)-|   (active, names: '|':_UIButtonBarButton:0x11de7ce00 )>
+
+Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints to catch this in the debugger.
+The methods in the UIConstraintBasedLayoutDebugging category on UIView listed in <UIKitCore/UIView.h> may also be helpful.
+Unable to simultaneously satisfy constraints.
+	Probably at least one of the constraints in the following list is one you don't want. 
+	Try this: 
+		(1) look at each constraint and try to figure out which you don't expect; 
+		(2) find the code that added the unwanted constraint or constraints and fix it. 
+	(Note: If you're seeing NSAutoresizingMaskLayoutConstraints that you don't understand, refer to the documentation for the UIView property translatesAutoresizingMaskIntoConstraints) 
+(
+    "<NSAutoresizingMaskLayoutConstraint:0x11de8b6b0 h=--& v=--& _UIToolbarContentView:0x10509b480.width == 0   (active)>",
+    "<NSLayoutConstraint:0x105263020 H:|-(0)-[_UIButtonBarStackView:0x1053a6f40]   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x105263070 H:[_UIButtonBarStackView:0x1053a6f40]-(0)-|   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x11de8a120 'IB_Leading_Leading' H:|-(>=5)-[_UIModernBarButton:0x11dd0c900]   (active, names: '|':_UIButtonBarButton:0x11de7d200 )>",
+    "<NSLayoutConstraint:0x11de8a170 'IB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0c900]-(>=5)-|   (active, names: '|':_UIButtonBarButton:0x11de7d200 )>",
+    "<NSLayoutConstraint:0x11de8a710 'TB_Leading_Leading' H:|-(8)-[_UIModernBarButton:0x11dd0cc00]   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>",
+    "<NSLayoutConstraint:0x11de8a760 'TB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0cc00]-(0)-|   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>",
+    "<NSLayoutConstraint:0x11de8aad0 'UISV-canvas-connection' UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.leading == _UIButtonBarButton:0x11de7ce00.leading   (active)>",
+    "<NSLayoutConstraint:0x11de8ad50 'UISV-canvas-connection' UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.trailing == _UIButtonBarButton:0x11de7d600.trailing   (active)>",
+    "<NSLayoutConstraint:0x11de8ada0 'UISV-spacing' H:[_UIButtonBarButton:0x11de7ce00]-(0)-[UIView:0x11de78180]   (active)>",
+    "<NSLayoutConstraint:0x11de8adf0 'UISV-spacing' H:[UIView:0x11de78180]-(0)-[_UIButtonBarButton:0x11de7d200]   (active)>",
+    "<NSLayoutConstraint:0x11de8ae40 'UISV-spacing' H:[_UIButtonBarButton:0x11de7d200]-(0)-[UIView:0x11de78300]   (active)>",
+    "<NSLayoutConstraint:0x11de8ae90 'UISV-spacing' H:[UIView:0x11de78300]-(0)-[_UIButtonBarButton:0x11de7d600]   (active)>",
+    "<NSLayoutConstraint:0x105262f30 'UIView-leftMargin-guide-constraint' H:|-(0)-[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'](LTR)   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>",
+    "<NSLayoutConstraint:0x105262fd0 'UIView-rightMargin-guide-constraint' H:[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']-(0)-|(LTR)   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x11de8a170 'IB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0c900]-(>=5)-|   (active, names: '|':_UIButtonBarButton:0x11de7d200 )>
+
+Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints to catch this in the debugger.
+The methods in the UIConstraintBasedLayoutDebugging category on UIView listed in <UIKitCore/UIView.h> may also be helpful.
+Unable to simultaneously satisfy constraints.
+	Probably at least one of the constraints in the following list is one you don't want. 
+	Try this: 
+		(1) look at each constraint and try to figure out which you don't expect; 
+		(2) find the code that added the unwanted constraint or constraints and fix it. 
+	(Note: If you're seeing NSAutoresizingMaskLayoutConstraints that you don't understand, refer to the documentation for the UIView property translatesAutoresizingMaskIntoConstraints) 
+(
+    "<NSAutoresizingMaskLayoutConstraint:0x11de8b6b0 h=--& v=--& _UIToolbarContentView:0x10509b480.width == 0   (active)>",
+    "<NSLayoutConstraint:0x105263020 H:|-(0)-[_UIButtonBarStackView:0x1053a6f40]   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x105263070 H:[_UIButtonBarStackView:0x1053a6f40]-(0)-|   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x11de8a710 'TB_Leading_Leading' H:|-(8)-[_UIModernBarButton:0x11dd0cc00]   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>",
+    "<NSLayoutConstraint:0x11de8a760 'TB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0cc00]-(0)-|   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>",
+    "<NSLayoutConstraint:0x11de8aad0 'UISV-canvas-connection' UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.leading == _UIButtonBarButton:0x11de7ce00.leading   (active)>",
+    "<NSLayoutConstraint:0x11de8ad50 'UISV-canvas-connection' UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.trailing == _UIButtonBarButton:0x11de7d600.trailing   (active)>",
+    "<NSLayoutConstraint:0x11de8ada0 'UISV-spacing' H:[_UIButtonBarButton:0x11de7ce00]-(0)-[UIView:0x11de78180]   (active)>",
+    "<NSLayoutConstraint:0x11de8adf0 'UISV-spacing' H:[UIView:0x11de78180]-(0)-[_UIButtonBarButton:0x11de7d200]   (active)>",
+    "<NSLayoutConstraint:0x11de8ae40 'UISV-spacing' H:[_UIButtonBarButton:0x11de7d200]-(0)-[UIView:0x11de78300]   (active)>",
+    "<NSLayoutConstraint:0x11de8ae90 'UISV-spacing' H:[UIView:0x11de78300]-(0)-[_UIButtonBarButton:0x11de7d600]   (active)>",
+    "<NSLayoutConstraint:0x105262f30 'UIView-leftMargin-guide-constraint' H:|-(0)-[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'](LTR)   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>",
+    "<NSLayoutConstraint:0x105262fd0 'UIView-rightMargin-guide-constraint' H:[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']-(0)-|(LTR)   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x11de8a760 'TB_Trailing_Trailing' H:[_UIModernBarButton:0x11dd0cc00]-(0)-|   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>
+
+Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints to catch this in the debugger.
+The methods in the UIConstraintBasedLayoutDebugging category on UIView listed in <UIKitCore/UIView.h> may also be helpful.
+Unable to simultaneously satisfy constraints.
+	Probably at least one of the constraints in the following list is one you don't want. 
+	Try this: 
+		(1) look at each constraint and try to figure out which you don't expect; 
+		(2) find the code that added the unwanted constraint or constraints and fix it. 
+	(Note: If you're seeing NSAutoresizingMaskLayoutConstraints that you don't understand, refer to the documentation for the UIView property translatesAutoresizingMaskIntoConstraints) 
+(
+    "<NSAutoresizingMaskLayoutConstraint:0x11de8b750 h=--& v=--& _UIToolbarContentView:0x10509b480.height == 0   (active)>",
+    "<NSLayoutConstraint:0x1052630c0 V:|-(0)-[_UIButtonBarStackView:0x1053a6f40]   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x105263110 _UIButtonBarStackView:0x1053a6f40.bottom == _UIToolbarContentView:0x10509b480.bottom   (active)>",
+    "<NSLayoutConstraint:0x11de8bd90 UIImageView:0x11de7d000.centerY == _UIModernBarButton:0x11dd0c600.centerY   (active)>",
+    "<NSLayoutConstraint:0x11de89c20 'IB_Baseline_Baseline' _UIModernBarButton:0x11dd0c600.lastBaseline == UILayoutGuide:0x11dd207e0'UIViewLayoutMarginsGuide'.bottom   (active)>",
+    "<NSLayoutConstraint:0x11de89c70 'IB_Top_Top' V:|-(>=0)-[_UIModernBarButton:0x11dd0c600]   (active, names: '|':_UIButtonBarButton:0x11de7ce00 )>",
+    "<NSLayoutConstraint:0x11de89fe0 'UIButtonBar.maximumAlignmentSize' _UIButtonBarButton:0x11de7ce00.height == UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.height   (active)>",
+    "<NSLayoutConstraint:0x105262f80 'UIView-bottomMargin-guide-constraint' V:[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']-(0)-|   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>",
+    "<NSLayoutConstraint:0x11de89b80 'UIView-bottomMargin-guide-constraint' V:[UILayoutGuide:0x11dd207e0'UIViewLayoutMarginsGuide']-(11)-|   (active, names: '|':_UIButtonBarButton:0x11de7ce00 )>",
+    "<NSLayoutConstraint:0x105262ee0 'UIView-topMargin-guide-constraint' V:|-(0)-[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x11de8bd90 UIImageView:0x11de7d000.centerY == _UIModernBarButton:0x11dd0c600.centerY   (active)>
+
+Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints to catch this in the debugger.
+The methods in the UIConstraintBasedLayoutDebugging category on UIView listed in <UIKitCore/UIView.h> may also be helpful.
+Unable to simultaneously satisfy constraints.
+	Probably at least one of the constraints in the following list is one you don't want. 
+	Try this: 
+		(1) look at each constraint and try to figure out which you don't expect; 
+		(2) find the code that added the unwanted constraint or constraints and fix it. 
+	(Note: If you're seeing NSAutoresizingMaskLayoutConstraints that you don't understand, refer to the documentation for the UIView property translatesAutoresizingMaskIntoConstraints) 
+(
+    "<NSAutoresizingMaskLayoutConstraint:0x11de8b750 h=--& v=--& _UIToolbarContentView:0x10509b480.height == 0   (active)>",
+    "<NSLayoutConstraint:0x1052630c0 V:|-(0)-[_UIButtonBarStackView:0x1053a6f40]   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x105263110 _UIButtonBarStackView:0x1053a6f40.bottom == _UIToolbarContentView:0x10509b480.bottom   (active)>",
+    "<NSLayoutConstraint:0x11dd86350 UIImageView:0x11de7d400.centerY == _UIModernBarButton:0x11dd0c900.centerY   (active)>",
+    "<NSLayoutConstraint:0x11de8a3f0 'IB_Baseline_Baseline' _UIModernBarButton:0x11dd0c900.lastBaseline == UILayoutGuide:0x11dd20b60'UIViewLayoutMarginsGuide'.bottom   (active)>",
+    "<NSLayoutConstraint:0x11de8a440 'IB_Top_Top' V:|-(>=0)-[_UIModernBarButton:0x11dd0c900]   (active, names: '|':_UIButtonBarButton:0x11de7d200 )>",
+    "<NSLayoutConstraint:0x11de8a530 'UIButtonBar.maximumAlignmentSize' _UIButtonBarButton:0x11de7d200.height == UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.height   (active)>",
+    "<NSLayoutConstraint:0x105262f80 'UIView-bottomMargin-guide-constraint' V:[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']-(0)-|   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>",
+    "<NSLayoutConstraint:0x11de8a350 'UIView-bottomMargin-guide-constraint' V:[UILayoutGuide:0x11dd20b60'UIViewLayoutMarginsGuide']-(11)-|   (active, names: '|':_UIButtonBarButton:0x11de7d200 )>",
+    "<NSLayoutConstraint:0x105262ee0 'UIView-topMargin-guide-constraint' V:|-(0)-[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x11dd86350 UIImageView:0x11de7d400.centerY == _UIModernBarButton:0x11dd0c900.centerY   (active)>
+
+Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints to catch this in the debugger.
+The methods in the UIConstraintBasedLayoutDebugging category on UIView listed in <UIKitCore/UIView.h> may also be helpful.
+Unable to simultaneously satisfy constraints.
+	Probably at least one of the constraints in the following list is one you don't want. 
+	Try this: 
+		(1) look at each constraint and try to figure out which you don't expect; 
+		(2) find the code that added the unwanted constraint or constraints and fix it. 
+	(Note: If you're seeing NSAutoresizingMaskLayoutConstraints that you don't understand, refer to the documentation for the UIView property translatesAutoresizingMaskIntoConstraints) 
+(
+    "<NSAutoresizingMaskLayoutConstraint:0x11de8b750 h=--& v=--& _UIToolbarContentView:0x10509b480.height == 0   (active)>",
+    "<NSLayoutConstraint:0x1052630c0 V:|-(0)-[_UIButtonBarStackView:0x1053a6f40]   (active, names: '|':_UIToolbarContentView:0x10509b480 )>",
+    "<NSLayoutConstraint:0x105263110 _UIButtonBarStackView:0x1053a6f40.bottom == _UIToolbarContentView:0x10509b480.bottom   (active)>",
+    "<NSLayoutConstraint:0x10229fbb0 UIButtonLabel:0x11de60700.centerY == _UIModernBarButton:0x11dd0cc00.centerY + 1.5   (active)>",
+    "<NSLayoutConstraint:0x11de8a8f0 'TB_Baseline_Baseline' _UIModernBarButton:0x11dd0cc00.lastBaseline == UILayoutGuide:0x11dd20c40'UIViewLayoutMarginsGuide'.bottom   (active)>",
+    "<NSLayoutConstraint:0x11de8a940 'TB_Top_Top' V:|-(>=0)-[_UIModernBarButton:0x11dd0cc00]   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>",
+    "<NSLayoutConstraint:0x11de8aa80 'UIButtonBar.maximumAlignmentSize' _UIButtonBarButton:0x11de7d600.height == UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide'.height   (active)>",
+    "<NSLayoutConstraint:0x105262f80 'UIView-bottomMargin-guide-constraint' V:[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']-(0)-|   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>",
+    "<NSLayoutConstraint:0x11de8a850 'UIView-bottomMargin-guide-constraint' V:[UILayoutGuide:0x11dd20c40'UIViewLayoutMarginsGuide']-(11)-|   (active, names: '|':_UIButtonBarButton:0x11de7d600 )>",
+    "<NSLayoutConstraint:0x105262ee0 'UIView-topMargin-guide-constraint' V:|-(0)-[UILayoutGuide:0x11dc3aa00'UIViewLayoutMarginsGuide']   (active, names: '|':_UIButtonBarStackView:0x1053a6f40 )>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x10229fbb0 UIButtonLabel:0x11de60700.centerY == _UIModernBarButton:0x11dd0cc00.centerY + 1.5   (active)>
+
+Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints to catch this in the debugger.
+The methods in the UIConstraintBasedLayoutDebugging category on UIView listed in <UIKitCore/UIView.h> may also be helpful.
+-[RTIInputSystemClient remoteTextInputSessionWithID:textSuggestionsChanged:]  Can only set suggestions for an active session. sessionID = 0443A68E-1414-45E6-A0B6-18CFBBFB6910
+App is being debugged, do not track this hang
+Hang detected: 5.95s (debugger attached, not reporting)
+Result accumulator timeout: 0.250000, exceeded.
+App is being debugged, do not track this hang
+Hang detected: 0.64s (debugger attached, not reporting)
+Unable to simultaneously satisfy constraints.
+	Probably at least one of the constraints in the following list is one you don't want. 
+	Try this: 
+		(1) look at each constraint and try to figure out which you don't expect; 
+		(2) find the code that added the unwanted constraint or constraints and fix it. 
+(
+    "<NSLayoutConstraint:0x11de88370 'accessoryView.bottom' _UIRemoteKeyboardPlaceholderView:0x11ddbe840.bottom == _UIKBCompatInputView:0x1053a7800.top   (active)>",
+    "<NSLayoutConstraint:0x11ded9680 'assistantHeight' SystemInputAssistantView.height == 45   (active, names: SystemInputAssistantView:0x105099400 )>",
+    "<NSLayoutConstraint:0x11dd87660 'assistantView.bottom' SystemInputAssistantView.bottom == _UIKBCompatInputView:0x1053a7800.top   (active, names: SystemInputAssistantView:0x105099400 )>",
+    "<NSLayoutConstraint:0x11dd87610 'assistantView.top' V:[_UIRemoteKeyboardPlaceholderView:0x11ddbe840]-(0)-[SystemInputAssistantView]   (active, names: SystemInputAssistantView:0x105099400 )>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x11ded9680 'assistantHeight' SystemInputAssistantView.height == 45   (active, names: SystemInputAssistantView:0x105099400 )>
+
+Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints to catch this in the debugger.
+The methods in the UIConstraintBasedLayoutDebugging category on UIView listed in <UIKitCore/UIView.h> may also be helpful.
+App is being debugged, do not track this hang
+Hang detected: 0.33s (debugger attached, not reporting)
+App is being debugged, do not track this hang
+Hang detected: 0.29s (debugger attached, not reporting)
+Class CKBrowserSwitcherViewController overrides the -traitCollection getter, which is not supported. If you're trying to override traits, you must use the appropriate API.
+-[RTIInputSystemClient remoteTextInputSessionWithID:textSuggestionsChanged:]  Can only set suggestions for an active session. sessionID = 0443A68E-1414-45E6-A0B6-18CFBBFB6910
+Unable to simultaneously satisfy constraints.
+	Probably at least one of the constraints in the following list is one you don't want. 
+	Try this: 
+		(1) look at each constraint and try to figure out which you don't expect; 
+		(2) find the code that added the unwanted constraint or constraints and fix it. 
+(
+    "<NSLayoutConstraint:0x12b0c82d0 'accessoryView.bottom' _UIRemoteKeyboardPlaceholderView:0x12b0c01c0.bottom == _UIKBCompatInputView:0x1053a7800.top   (active)>",
+    "<NSLayoutConstraint:0x12b0c85f0 'assistantHeight' SystemInputAssistantView.height == 45   (active, names: SystemInputAssistantView:0x105099400 )>",
+    "<NSLayoutConstraint:0x11dd87660 'assistantView.bottom' SystemInputAssistantView.bottom == _UIKBCompatInputView:0x1053a7800.top   (active, names: SystemInputAssistantView:0x105099400 )>",
+    "<NSLayoutConstraint:0x12b0c8190 'assistantView.top' V:[_UIRemoteKeyboardPlaceholderView:0x12b0c01c0]-(0)-[SystemInputAssistantView]   (active, names: SystemInputAssistantView:0x105099400 )>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x12b0c85f0 'assistantHeight' SystemInputAssistantView.height == 45   (active, names: SystemInputAssistantView:0x105099400 )>
+
+Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints to catch this in the debugger.
+The methods in the UIConstraintBasedLayoutDebugging category on UIView listed in <UIKitCore/UIView.h> may also be helpful.
+⚡️  To Native ->  Preferences get 1038477
+⚡️  [log] - Submitting login: {"email":"bebociaccio@me.com","password":"realmadrid10"}
+⚡️  [log] - 🔍 [Login] Checking for stored device token...
+⚡️  [log] - 🔍 [Login] Raw localStorage data: {"token":"33d364ceeac1881648b30e25f8ef8007a6ff579196e0bb8d9c6123819ea2781d","platform":"ios","timestamp":"2025-11-29T21:13:23Z"}
+⚡️  [log] - 📱 [Login] Sending device token with login: 33d364ce...
+⚡️  [log] - 🔍 [Login] Full token info: {"token":"33d364ceeac1881648b30e25f8ef8007a6ff579196e0bb8d9c6123819ea2781d","platform":"ios","timestamp":"2025-11-29T21:13:23Z"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: EMPTY
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache empty - checking Capacitor Preferences...
+⚡️  TO JS {"value":null}
+⚡️  To Native ->  Preferences get 1038478
+⚡️  TO JS {"value":null}
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ NO TOKEN IN PREFERENCES                                    ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - ⚠️ [SessionPersistence] Capacitor Preferences returned NULL
+⚡️  [log] - ⚠️ [SessionPersistence] This means either:
+⚡️  [log] - ⚠️   1. User never logged in
+⚡️  [log] - ⚠️   2. Token was cleared (logout)
+⚡️  [log] - ⚠️   3. iOS cleared Preferences storage (CRITICAL BUG)
+⚡️  To Native ->  CapacitorHttp request 1038479
+⚡️  To Native ->  CapacitorHttp request 1038480
+⚡️  [log] - ⚠️   4. Storage is not persisting correctly
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - ❌ [SessionPersistence] No token available - user needs to login
+⚡️  TO JS {"status":200,"headers":{"content-length":"16","x-cloud-trace-context":"02eb92523be9711cdc9f40e874960216","via":"1.1 google","access-control-allow-credentials":"true","access-control-allow-origin":"https:\/\/will-staging-porfirioaciacci.replit.app","etag":
+⚡️  TO JS {"status":200,"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/login","data":{"profileImageUrl":null,"dailyReminderEnabled":true,"id":"17635487770933j8sh32d2","password":"0c06e8d91d8e568c6bf6a698efd13dbb50d1cc7f54826cedab7a2bc96807b35ee317052
+⚡️  [log] - Login success, user: {"profileImageUrl":null,"dailyReminderEnabled":true,"id":"17635487770933j8sh32d2","password":"0c06e8d91d8e568c6bf6a698efd13dbb50d1cc7f54826cedab7a2bc96807b35ee317052513bcc356e25b0e676a4103951351e18b2f3055aa4412df5e6390b876.af66d74f5adb7ef5406612568679359e","lastDailyReminderSentAt":null,"updatedAt":"2025-11-29T20:14:10.391Z","isActive":true,"dailyReminderTime":"15:30","role":"user","timezone":"America/New_York","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjM1NDg3NzcwOTMzajhzaDMyZDIiLCJlbWFpbCI6ImJlYm9jaWFjY2lvQG1lLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzY0NDUwODM0LCJleHAiOjE3NjUwNTU2MzR9.h4jjFn7Kf7UHJK_X9DEQIDSUXOaf6w1htTKma-DC2Ko","firstName":"Bebo","lastName":"Ciaccio","email":"bebociaccio@me.com","createdAt":"2025-11-19T10:39:37.112Z"}
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ SAVING TOKEN                                               ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 🔐 [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...TKma-DC2Ko
+⚡️  [log] - 🔐 [SessionPersistence] Token length: 225 chars
+⚡️  [log] - 🔐 [SessionPersistence] Platform: ios
+⚡️  [log] - 🔐 [SessionPersistence] isNativePlatform: true
+⚡️  To Native ->  Preferences set 1038481
+⚡️  [log] - 🔐 [SessionPersistence] Timestamp: 2025-11-29T21:13:55.052Z
+⚡️  TO JS undefined
+⚡️  To Native ->  Preferences set 1038482
+⚡️  TO JS undefined
+⚡️  To Native ->  Preferences get 1038483
+⚡️  TO JS {"value":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NjM1NDg3NzcwOTMzajhzaDMyZDIiLCJlbWFpbCI6ImJlYm9jaWFjY2lvQG1lLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzY0NDUwODM0LCJleHAiOjE3NjUwNTU2MzR9.h4jjFn7Kf7UHJK_X9DEQIDSUXOaf6w1htTKma-DC2Ko"}
+⚡️  To Native ->  Preferences get 1038484
+⚡️  TO JS {"value":"2025-11-29T21:13:55.052Z"}
+⚡️  [log] - ✅ [SessionPersistence] Token SUCCESSFULLY saved to Capacitor Preferences
+⚡️  [log] - ✅ [SessionPersistence] Saved at: 2025-11-29T21:13:55.052Z
+⚡️  [log] - ✅ [SessionPersistence] Verification: Token read back matches
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - ✅ [Login] JWT token saved to persistent storage
+⚡️  [log] - ✅ [Login] Cleared pending device token - ownership transferred during login
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...TKma-DC2Ko
+⚡️  [log] - Setting showSplashOnHome to true in localStorage
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"17635487770933j8sh32d2","location":"/"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...TKma-DC2Ko
+⚡️  [log] - User authenticated - initializing push notifications
+⚡️  [log] - 🔥 NOTIF SERVICE: initialize() called
+⚡️  [log] - 🔥 NOTIF SERVICE: Current timestamp: 1764450835079
+⚡️  [log] - ✅ User authenticated - server handles token association automatically
+⚡️  To Native ->  CapacitorHttp request 1038485
+⚡️  To Native ->  CapacitorHttp request 1038486
+⚡️  To Native ->  LocalNotifications requestPermissions 1038487
+⚡️  To Native ->  CapacitorHttp request 1038488
+⚡️  TO JS {"display":"granted"}
+⚡️  [log] - Local notification permissions granted
+⚡️  [log] - 🔥 NOTIF SERVICE: ✅ Native platform detected - setting up push notifications
+⚡️  To Native ->  CapacitorHttp request 1038489
+⚡️  [log] - 🔥 NOTIF SERVICE: Listeners added successfully
+⚡️  [log] - 🔥 NOTIF SERVICE: Requesting permissions...
+⚡️  To Native ->  PushNotifications addListener 1038490
+⚡️  To Native ->  PushNotifications addListener 1038491
+⚡️  To Native ->  PushNotifications requestPermissions 1038492
+⚡️  TO JS {"receive":"granted"}
+⚡️  [log] - 🔥 NOTIF SERVICE: Permission result: {
+  "receive": "granted"
+}
+⚡️  [log] - 🔥 NOTIF SERVICE: Receive permission: granted
+⚡️  To Native ->  CapacitorHttp request 1038493
+⚡️  [log] - 🔥 NOTIF SERVICE: ✅ Permissions granted, calling register...
+⚡️  [log] - 🔥 NOTIF SERVICE: NotificationService initialization completed
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","status":200,"data":{"success":true},"headers":{"content-length":"16","x-cloud-trace-context":"a97ba28f89f14e1edc9f40e87496062e","via":"1.1 google","access-control-allow-credentials":"tr
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"17635487770933j8sh32d2","location":"/"}
+⚡️  [log] - User authenticated - initializing push notifications
+⚡️  [log] - ✅ User authenticated - server handles token association automatically
+⚡️  To Native ->  CapacitorHttp request 1038494
+⚡️  To Native ->  CapacitorHttp request 1038495
+⚡️  To Native ->  CapacitorHttp request 1038496
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","status":200,"data":{"success":true},"headers":{"content-length":"16","x-cloud-trace-context":"f286eb1c73428ca8dc9f40e87496005b","via":"1.1 google","access-control-allow-credentials":"tr
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","status":200,"data":{"success":true},"headers":{"content-length":"16","x-cloud-trace-context":"3a641cbb74767741dc9f40e8749607ce","via":"1.1 google","access-control-allow-credentials":"tr
+⚡️  TO JS {"status":200,"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","data":{"success":true},"headers":{"content-length":"16","x-cloud-trace-context":"43a939a20b2b9f25dc9f40e874960e27","via":"1.1 google","access-control-allow-credentials":"tr
+⚡️  TO JS {"status":200,"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","data":{"success":true},"headers":{"content-length":"16","x-cloud-trace-context":"25144cb4c7271372dc9f40e874960bb0","via":"1.1 google","access-control-allow-credentials":"tr
+⚡️  TO JS {"status":200,"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","data":{"success":true},"headers":{"content-length":"16","x-cloud-trace-context":"21c12ec055b29905579b90418aba8aee","via":"1.1 google","access-control-allow-credentials":"tr
+⚡️  TO JS {"status":200,"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","data":{"success":true},"headers":{"content-length":"16","x-cloud-trace-context":"7a86cec4e7b2e7b1579b90418aba85e3","via":"1.1 google","access-control-allow-credentials":"tr
+⚡️  TO JS {"headers":{"content-length":"16","x-cloud-trace-context":"4b516c1d2f1950ea579b90418aba8747","via":"1.1 google","access-control-allow-credentials":"true","access-control-allow-origin":"https:\/\/will-staging-porfirioaciacci.replit.app","etag":"W\/\"10-oV4h
+⚡️  To Native ->  PushNotifications register 1038497
+⚡️  [log] - 🔥 NOTIF SERVICE: Delayed register call starting...
+⚡️  TO JS undefined
+🔥 iOS DIRECT: Device Token Generated: 33d364ceeac1881648b3...
+🔥 iOS DIRECT: Starting DIRECT API call to bypass broken JavaScript bridge
+🔥 iOS DIRECT: sendTokenDirectlyToServer() method called
+🔍 iOS DIRECT: Bundle ID detected: 'com.porfirio.will.staging.'
+🔍 iOS DIRECT: Comparing to: 'com.porfirio.will.staging.'
+🟡 iOS DIRECT: STAGING environment detected
+🔥 iOS DIRECT: Server API URL: https://will-staging-porfirioaciacci.replit.app/api/device-token
+🔥 iOS DIRECT: Payload prepared: ["buildScheme", "osVersion", "platform", "userId", "source", "appVersion", "environment", "provisioningProfile", "deviceModel", "deviceToken", "bundleId"]
+🔥 iOS DIRECT: JSON serialization successful
+🔥 iOS DIRECT: Making HTTP request at 2025-11-29 21:13:56 +0000
+🟢 Device Token Successfully Registered: 33d364ceeac1881648b30e25f8ef8007a6ff579196e0bb8d9c6123819ea2781d
+⚡️  [log] - 🔥 NOTIF SERVICE: Register call completed
+🔥 iOS DIRECT: HTTP Response Status: 200
+🔥 iOS DIRECT: ✅ SUCCESS - Token registered directly with server!
+🔥 iOS DIRECT: ✅ JavaScript bridge successfully bypassed!
+📱 iOS DIRECT: Saving token to localStorage for JS polling...
+📱 iOS DIRECT: ✅ Token successfully saved to localStorage! Result: success
+⚡️  [log] - 📱 [iOS DIRECT] Token saved to localStorage for polling mechanism
+⚡️  [log] - 📱 [iOS DIRECT] Token data: {"token":"33d364ceeac1881648b30e25f8ef8007a6ff5791...
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...TKma-DC2Ko
