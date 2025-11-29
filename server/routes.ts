@@ -21,7 +21,7 @@ import {
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db, pool } from "./db";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, or, isNull, sql } from "drizzle-orm";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
 
@@ -1855,17 +1855,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       if (existingToken.length > 0) {
-        console.log(`[DeviceToken] ✅ Updating existing token with environment: ${environment}`);
-        await db
-          .update(deviceTokens)
-          .set({ 
-            userId: finalUserId,
-            isActive: true,
-            isSandbox: environment === 'SANDBOX', // CRITICAL: Update environment on existing tokens
-            updatedAt: new Date(),
-            registrationSource: finalUserId ? 'api_device_token_update' : 'api_device_token_pending_update'
-          })
-          .where(eq(deviceTokens.deviceToken, deviceToken));
+        const existing = existingToken[0];
+        
+        // 🔒 CRITICAL RACE CONDITION FIX: Use database-level guard to prevent pending from overwriting real user
+        // This protects against iOS DIRECT firing AFTER login has already associated the token
+        if (!finalUserId) {
+          // This is a pending registration - only update if token doesn't have a real user
+          console.log(`[DeviceToken] 🔍 Pending registration - checking if token already has real user...`);
+          console.log(`[DeviceToken] 🔍 Existing userId: ${existing.userId}`);
+          
+          // Use guarded UPDATE: only set userId=NULL if current userId IS NULL
+          const result = await db
+            .update(deviceTokens)
+            .set({ 
+              isActive: true,
+              isSandbox: environment === 'SANDBOX',
+              updatedAt: new Date(),
+              registrationSource: 'api_device_token_pending_update'
+            })
+            .where(
+              and(
+                eq(deviceTokens.deviceToken, deviceToken),
+                or(
+                  sql`${deviceTokens.userId} IS NULL`,
+                  eq(deviceTokens.userId, 'pending')
+                )
+              )
+            )
+            .returning();
+          
+          if (result.length === 0) {
+            // No rows updated - token already has a real user, don't overwrite!
+            console.log(`🛡️ [DeviceToken] RACE PROTECTION: Token already associated with real user, rejecting pending update`);
+            console.log(`🛡️ [DeviceToken] Existing userId: ${existing.userId}, attempted userId: ${finalUserId}`);
+            return res.json({ 
+              success: true, 
+              message: 'Token already associated with a user, pending request ignored',
+              action: 'race_protection_active',
+              alreadyAssociated: true,
+              tokenHash: deviceToken.substring(0, 10) + '...'
+            });
+          }
+          console.log(`[DeviceToken] ✅ Updated pending token with environment: ${environment}`);
+        } else {
+          // This is a real user registration - always update
+          console.log(`[DeviceToken] ✅ Updating token with real userId: ${finalUserId}`);
+          await db
+            .update(deviceTokens)
+            .set({ 
+              userId: finalUserId,
+              isActive: true,
+              isSandbox: environment === 'SANDBOX',
+              updatedAt: new Date(),
+              registrationSource: 'api_device_token_update'
+            })
+            .where(eq(deviceTokens.deviceToken, deviceToken));
+        }
       } else {
         console.log(`[DeviceToken] ✅ Storing new token`);
         await db.insert(deviceTokens).values(tokenData);
