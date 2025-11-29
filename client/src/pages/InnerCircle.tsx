@@ -281,7 +281,7 @@ export default function InnerCircle() {
                   <div className="flex items-center justify-center gap-x-2 text-emerald-700">
                     <Users className="w-5 h-5 flex-shrink-0" />
                     <span className="font-semibold text-base">
-                      Circle Status: {circle.members?.length || 0} of 4 members
+                      Circle Status: {circle.members?.length || 0} of 6 members
                     </span>
                   </div>
                 </div>

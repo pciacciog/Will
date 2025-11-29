@@ -369,9 +369,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "No circle found with that code" });
       }
 
-      // Check if circle is full
+      // Check if circle is full (max 6 members)
       const memberCount = await storage.getCircleMemberCount(circle.id);
-      if (memberCount >= 4) {
+      if (memberCount >= 6) {
         return res.status(400).json({ message: "This Circle is full" });
       }
 

@@ -3,7 +3,7 @@
 ## Overview
 This full-stack web application facilitates goal accountability through two modes:
 1. **Solo Mode**: Personal accountability without circle coordination - immediate-start personal goals with simple review-based completion
-2. **Inner Circle Mode**: Group accountability with 2-4 users defining and tracking "wills" (goal commitments) together
+2. **Inner Circle Mode**: Group accountability with 2-6 users defining and tracking "wills" (goal commitments) together
 
 Both modes support daily progress tracking, Will commitments with reviews, and structured goal lifecycles to foster personal growth via consistent action.
 
@@ -26,7 +26,7 @@ Preferred communication style: Simple, everyday language.
 - **Build Process**: ESBuild-only production builds.
 - **Authentication**: Custom email/password system, Express sessions with PostgreSQL storage.
 - **Will System**: Structured goal commitments with status tracking and individual member commitments.
-- **Circle Management**: Invite codes, strict member limits (2-4), single-circle membership.
+- **Circle Management**: Invite codes, member limits (2-6), single-circle membership.
 - **Real-time Updates**: Continuous polling and robust cache invalidation.
 - **Mobile Integration**: Capacitor for iOS (safe area optimization, APNs push notifications, embedded video).
 - **State Transitions**: Just-In-Time (JIT) state checks in GET endpoints for reliability in addition to a background scheduler.

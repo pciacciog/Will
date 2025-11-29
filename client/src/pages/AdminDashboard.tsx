@@ -435,7 +435,7 @@ export default function AdminDashboard() {
                             {circle.inviteCode}
                           </code>
                         </TableCell>
-                        <TableCell>{circle.memberCount}/4</TableCell>
+                        <TableCell>{circle.memberCount}/6</TableCell>
                         <TableCell>
                           {circle.createdAt ? new Date(circle.createdAt).toLocaleDateString() : 'Unknown'}
                         </TableCell>

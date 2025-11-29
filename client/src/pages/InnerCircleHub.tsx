@@ -581,7 +581,7 @@ export default function InnerCircleHub() {
                   </div>
                 </div>
                 
-                {/* Members Grid - Dynamic layout based on member count */}
+                {/* Members Grid - Dynamic layout based on member count (max 6) */}
                 <div className={`grid gap-3 ${
                   (() => {
                     const count = circle.members?.length || 0;
@@ -589,7 +589,9 @@ export default function InnerCircleHub() {
                     if (count === 2) return 'grid-cols-2 max-w-[260px] mx-auto';
                     if (count === 3) return 'grid-cols-3';
                     if (count === 4) return 'grid-cols-2 max-w-[260px] mx-auto';
-                    return 'grid-cols-3'; // 5 or more members
+                    if (count === 5) return 'grid-cols-3';
+                    if (count === 6) return 'grid-cols-3';
+                    return 'grid-cols-3'; // fallback
                   })()
                 }`}>
                   {circle.members?.map((member: any, index: number) => (
