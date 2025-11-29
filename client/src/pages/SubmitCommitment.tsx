@@ -364,20 +364,26 @@ export default function SubmitCommitment() {
           </SectionCard>
         )}
 
-        {/* Step 2: What */}
+        {/* Step 2: What - Focused Writing Experience (Matches Creator Flow) */}
         {currentStep === 2 && !showTransition && (
-          <SectionCard>
-            <form onSubmit={handleStep2Submit} className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3 tracking-tight">Your Want</label>
-                <div className="relative">
-                  <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                    <span className="text-gray-900 font-medium text-base mr-3 mt-0.5 flex-shrink-0">I will</span>
+          <div className="flex flex-col animate-in fade-in duration-500">
+            <form onSubmit={handleStep2Submit} className="flex flex-col">
+              {/* Main Writing Area - Compact, No Scroll */}
+              <div className="flex flex-col pt-4 pb-6">
+                {/* The Writing Statement */}
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                  {/* "I Will" - Large, Prominent, Strong */}
+                  <p className="text-3xl font-bold text-gray-900 text-center tracking-tight">
+                    I Will
+                  </p>
+                  
+                  {/* Text Input - Clean, Minimal, Focused */}
+                  <div className="relative px-2">
                     <Textarea 
                       ref={whatRef}
                       name="what"
-                      required
-                      rows={1}
+                      required 
+                      rows={2} 
                       maxLength={75}
                       value={what}
                       onChange={(e) => {
@@ -388,23 +394,24 @@ export default function SubmitCommitment() {
                           resizeTextarea(whatRef);
                         }
                       }}
-                      className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400 transition-all"
-                      style={{ maxHeight: '96px' }}
+                      className="w-full text-center text-xl leading-relaxed font-normal text-gray-700 bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 resize-none transition-colors duration-300 placeholder:text-gray-300 placeholder:italic py-3 px-4" 
+                      style={{ minHeight: '72px', maxHeight: '120px' }}
                       placeholder="call my grandmother this week"
                       autoFocus
+                      data-testid="input-what"
                     />
                   </div>
+                  
+                  {/* Character count - Subtle */}
+                  <p className="text-xs text-gray-400 text-center tracking-tight animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
+                    {whatCharCount} / 75
+                  </p>
                 </div>
-                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whatCharCount} / 75</div>
               </div>
               
-              <div className="flex justify-between items-center">
+              {/* Navigation - Anchored */}
+              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center space-x-2">
-                  <InlineBackButton 
-                    onClick={handleBack}
-                    testId="button-back-inline"
-                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                  />
                   {showHelpIcon && (
                     <HelpIcon
                       onClick={() => setShowInstructionModal(true)}
@@ -412,44 +419,50 @@ export default function SubmitCommitment() {
                     />
                   )}
                 </div>
-                <PrimaryButton type="submit" disabled={!what.trim()}>
+                <PrimaryButton type="submit" disabled={!what.trim()} data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
             </form>
-          </SectionCard>
+          </div>
         )}
 
-        {/* Step 3: Why */}
+        {/* Step 3: Why - Focused Writing Experience (Matches Creator Flow) */}
         {currentStep === 3 && !showTransition && (
-          <SectionCard>
-            <div className="space-y-3">
-              {/* Beautified What Preview */}
-              {what && (
-                <div className="text-center italic text-lg px-4 py-3 border rounded-md shadow-sm text-gray-800 bg-white mb-3">
-                  "I will {what}"
-                </div>
-              )}
-              
-              <form onSubmit={handleStep3Submit} className="space-y-3">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700 tracking-tight">Your Why</label>
-                  <span className="text-xs text-gray-500 flex items-center tracking-tight">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    Private - only you can see this
-                  </span>
-                </div>
-                <div className="relative">
-                  <div className="flex items-start bg-white border border-gray-200 rounded-xl p-4 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-200">
-                    <span className="text-gray-900 font-medium text-base mr-3 mt-0.5 flex-shrink-0">Because</span>
+          <div className="flex flex-col animate-in fade-in duration-500">
+            <form onSubmit={handleStep3Submit} className="flex flex-col">
+              {/* Main Writing Area - Compact, No Scroll */}
+              <div className="flex flex-col pt-4 pb-6">
+                {/* Commitment Preview - Prominent reminder */}
+                {what && (
+                  <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <p className="text-lg font-semibold text-gray-800">
+                      "I Will {what}"
+                    </p>
+                    {/* Privacy note */}
+                    <p className="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Private — only you can see this
+                    </p>
+                  </div>
+                )}
+                
+                {/* The Writing Statement */}
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
+                  {/* "Because" - Large, Prominent */}
+                  <p className="text-3xl font-bold text-gray-900 text-center tracking-tight">
+                    Because
+                  </p>
+                  
+                  {/* Text Input - Clean, Minimal, Focused */}
+                  <div className="relative px-2">
                     <Textarea 
                       ref={whyRef}
                       name="why"
-                      required
-                      rows={1}
+                      required 
+                      rows={2} 
                       maxLength={75}
                       value={why}
                       onChange={(e) => {
@@ -460,23 +473,24 @@ export default function SubmitCommitment() {
                           resizeTextarea(whyRef);
                         }
                       }}
+                      className="w-full text-center text-xl leading-relaxed font-normal text-gray-700 bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 resize-none transition-colors duration-300 placeholder:text-gray-300 placeholder:italic py-3 px-4" 
+                      style={{ minHeight: '72px', maxHeight: '120px' }}
                       placeholder="I like how I feel after I talk to her"
-                      className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400 transition-all"
-                      style={{ maxHeight: '96px' }}
                       autoFocus
+                      data-testid="input-why"
                     />
                   </div>
+                  
+                  {/* Character count - Subtle */}
+                  <p className="text-xs text-gray-400 text-center tracking-tight animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
+                    {whyCharCount} / 75
+                  </p>
                 </div>
-                <div className="text-xs text-gray-500 mt-2 text-right tracking-tight">{whyCharCount} / 75</div>
               </div>
               
-              <div className="flex justify-between items-center">
+              {/* Navigation - Anchored */}
+              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center space-x-2">
-                  <InlineBackButton 
-                    onClick={handleBack}
-                    testId="button-back-inline"
-                    className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                  />
                   {showHelpIcon && (
                     <HelpIcon
                       onClick={() => setShowInstructionModal(true)}
@@ -487,13 +501,13 @@ export default function SubmitCommitment() {
                 <PrimaryButton 
                   type="submit" 
                   disabled={!why.trim()}
+                  data-testid="button-next"
                 >
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
             </form>
-            </div>
-          </SectionCard>
+          </div>
         )}
 
         {/* Step 4: End Room Confirmation */}
