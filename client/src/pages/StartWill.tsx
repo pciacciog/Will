@@ -252,13 +252,15 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
     },
     onSuccess: async (will) => {
       if (isSoloMode) {
-        // Invalidate solo-specific queries
-        queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+        // Invalidate solo-specific queries and wait for completion
+        await queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/wills'] });
         
         // Solo mode: Backend auto-creates commitment, so just show success and navigate
         toast({
           title: "Will Created!",
           description: "Your solo Will is now active. Time to get started!",
+          duration: 4000,
         });
         setLocation('/solo/hub');
       } else {

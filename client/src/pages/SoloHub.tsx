@@ -25,6 +25,8 @@ export default function SoloHub() {
   const { data: soloWills, isLoading } = useQuery<Will[]>({
     queryKey: ['/api/wills/solo'],
     enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: 'always',
     retry: (failureCount, error: any) => {
       if (error?.message?.includes('404')) return false;
       return failureCount < 3;
