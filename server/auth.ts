@@ -350,23 +350,33 @@ export function setupAuth(app: Express) {
           updatedAt: beforeUpdate[0].updatedAt
         } : 'TOKEN NOT FOUND (will be created)');
         
-        // Always transfer token ownership, regardless of current state
-        await dbConnection
-          .insert(deviceTokens)
-          .values({
-            deviceToken: deviceToken,
-            userId: user.id,
-            platform: 'ios',
-            registrationSource: 'login_transfer'
-          })
-          .onConflictDoUpdate({
-            target: deviceTokens.deviceToken,
-            set: {
+        // 🔥 FIX: Use simple UPDATE instead of INSERT...ON CONFLICT (which was failing due to missing constraint)
+        if (beforeUpdate.length > 0) {
+          // Token exists - UPDATE it
+          console.log(`🔄 [Login] Token exists, updating ownership...`);
+          await dbConnection
+            .update(deviceTokens)
+            .set({
               userId: user.id,
               registrationSource: 'login_transfer',
               updatedAt: new Date()
-            }
-          });
+            })
+            .where(eq(deviceTokens.deviceToken, deviceToken));
+          console.log(`✅ [Login] UPDATE completed for token ${deviceToken.substring(0, 8)}...`);
+        } else {
+          // Token doesn't exist - INSERT it
+          console.log(`🆕 [Login] Token not found, creating new entry...`);
+          await dbConnection
+            .insert(deviceTokens)
+            .values({
+              deviceToken: deviceToken,
+              userId: user.id,
+              platform: 'ios',
+              registrationSource: 'login_transfer',
+              isActive: true
+            });
+          console.log(`✅ [Login] INSERT completed for token ${deviceToken.substring(0, 8)}...`);
+        }
         
         // 🔍 VERIFY: What is the state AFTER update?
         const afterUpdate = await dbConnection
