@@ -301,7 +301,21 @@ export function setupAuth(app: Express) {
       const safeBody = { ...req.body };
       delete safeBody.password;
       console.log(`🔍 [Login] Request body (safe):`, JSON.stringify(safeBody, null, 2));
-      console.log(`🔍 [Login] Request headers:`, JSON.stringify(req.headers, null, 2));
+      
+      // 🔒 VERIFICATION: Ensure user ID matches the authenticated email
+      console.log(`🔒 [Login] === AUTHENTICATION VERIFICATION ===`);
+      console.log(`🔒 [Login] Request email: ${req.body.email}`);
+      console.log(`🔒 [Login] Authenticated user ID: ${user.id}`);
+      console.log(`🔒 [Login] Authenticated user email: ${user.email}`);
+      console.log(`🔒 [Login] Authenticated user name: ${user.firstName}`);
+      
+      // CRITICAL: Verify the authenticated user matches the login request
+      if (req.body.email && user.email !== req.body.email) {
+        console.error(`🚨 [Login] MISMATCH! Request email ${req.body.email} !== authenticated email ${user.email}`);
+        console.error(`🚨 [Login] This should NEVER happen - possible session bleeding!`);
+      } else {
+        console.log(`✅ [Login] Email verification PASSED - user is correctly authenticated`);
+      }
       
       // 🔥 CRITICAL: Always transfer device token ownership on login
       const deviceToken = req.body.deviceToken || req.headers['x-device-token'];
@@ -310,7 +324,7 @@ export function setupAuth(app: Express) {
       console.log(`🔍 [Login] Header token: ${req.headers['x-device-token'] ? req.headers['x-device-token'].substring(0, 8) + '...' : 'NONE'}`);
       
       if (deviceToken) {
-        console.log(`🔄 [Login] Transferring token ownership to user ${user.id}`);
+        console.log(`🔄 [Login] Transferring token ownership to user ${user.id} (${user.email})`);
         console.log(`📱 Token: ${deviceToken.substring(0, 8)}...`);
         
         // Import database dependencies  

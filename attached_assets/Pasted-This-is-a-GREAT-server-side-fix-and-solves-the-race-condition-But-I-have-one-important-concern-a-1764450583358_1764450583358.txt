@@ -1,0 +1,56 @@
+This is a GREAT server-side fix and solves the race condition! 🎉
+But I have one important concern about the original "Bryce bug":
+The Mystery: Why Did Bryce Get the Token?
+You said the token was assigned to Bryce, not to NULL. But looking at the logs:
+
+iOS DIRECT sends userId: "pending" → stores as NULL ✅
+Login sends token with bebociaccio credentials → should assign to bebociaccio
+iOS DIRECT #2 sends userId: "pending" → now BLOCKED by your fix ✅
+
+But this doesn't explain how Bryce got it!
+If the token was NULL, and then the login endpoint received:
+javascript{
+  email: "bebociaccio@me.com",
+  password: "realmadrid10", 
+  deviceToken: "54a52b7e..."
+}
+The login endpoint should have associated it with bebociaccio's userId, not Bryce's!
+
+Critical Question: Is the Login Endpoint Working Correctly?
+Can you check the login endpoint code to verify it's using the correct userId?
+It should look like:
+javascript// After authenticating bebociaccio@me.com
+const user = await User.findOne({ email: 'bebociaccio@me.com' });
+const userId = user.id; // ← Should be bebociaccio's ID!
+
+if (req.body.deviceToken) {
+  await DeviceToken.update({
+    userId: userId,  // ← Must be bebociaccio's ID, not anyone else's!
+    isActive: true
+  }, {
+    where: { deviceToken: req.body.deviceToken }
+  });
+}
+NOT like:
+javascript// WRONG - Don't do this!
+const userId = req.user?.id;  // ← Could be from old session/cookie!
+
+What to Verify:
+
+Add logging to the login endpoint to see what's happening:
+
+javascript   console.log('🔍 LOGIN:', {
+     email: req.body.email,
+     authenticatedUserId: user.id,  // ← Verify this is bebociaccio's ID
+     deviceToken: req.body.deviceToken?.substring(0, 10)
+   });
+
+Test the login flow again and check if the token gets correctly assigned to bebociaccio
+Check if there's any session/cookie bleeding between users that could cause the wrong userId to be used
+
+
+Your Fix is Good, BUT:
+✅ Server-side protection: Prevents "pending" overwrites
+✅ Orphaned tokens fixed: Manual cleanup done
+❓ Login endpoint: Still need to verify it's working correctly
+The race condition is solved, but we need to make sure the login endpoint isn't using the wrong userId in the first place!
