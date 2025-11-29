@@ -1756,20 +1756,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const existing = existingToken[0];
         console.log(`[DeviceToken] Found existing token with userId: ${existing.userId}`);
         
-        // If token is already associated with a real user, SKIP registration to prevent duplicate reset
+        // If token is already associated with a real user
         if (existing.userId && existing.userId !== 'pending' && existing.userId !== null) {
-          console.log(`🔒 [DeviceToken] Token already associated with user ${existing.userId}, preventing duplicate registration`);
-          return res.json({ 
-            success: true, 
-            message: 'Token already associated with user',
-            action: 'skipped_duplicate',
-            alreadyAssociated: true,
-            tokenHash: deviceToken.substring(0, 10) + '...'
-          });
+          // CRITICAL FIX: If same user is re-registering, just acknowledge (prevents race conditions)
+          if (existing.userId === userId) {
+            console.log(`🔒 [DeviceToken] Token already belongs to requesting user ${userId}, acknowledging`);
+            return res.json({ 
+              success: true, 
+              message: 'Token already associated with your account',
+              action: 'already_yours',
+              alreadyAssociated: true,
+              tokenHash: deviceToken.substring(0, 10) + '...'
+            });
+          }
+          
+          // NEW FIX: If token belongs to a DIFFERENT user, reassign it to the new user
+          // This handles the case where a user switches accounts on the same device
+          console.log(`🔄 [DeviceToken] Token currently belongs to user ${existing.userId}, reassigning to ${userId}`);
+          console.log(`🔄 [DeviceToken] This is likely an account switch on the same device`);
+          // Allow the update to proceed (don't return early)
+        } else {
+          // Token exists but still pending - allow update
+          console.log(`🔄 [DeviceToken] Token exists but pending, allowing update`);
         }
-        
-        // Token exists but still pending - allow update
-        console.log(`🔄 [DeviceToken] Token exists but pending, allowing update`);
       }
       
       // Proceed with registration only for new tokens or truly pending tokens
