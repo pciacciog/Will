@@ -51,8 +51,9 @@ Preferred communication style: Simple, everyday language.
 - **Will Review**: Mandatory asynchronous review for Will completion.
 - **Account Settings**: User profile, password change, leave circle, permanent account deletion.
 - **Push Notifications**: APNs integration with 14 notification types, personalized per-user timezone.
-  - **Time-based (scheduler-driven)**: will_started, will_completed, will_completed_review, end_room_30min_warning, end_room_15min_warning, end_room_now, commitment_reminder, acknowledgment_reminder, midpoint_milestone
+  - **Time-based (scheduler-driven)**: will_started, will_review_required (when Will ends), will_review_reminder (6hrs later), end_room_30min_warning, end_room_15min_warning, end_room_now, commitment_reminder, midpoint_milestone
   - **Event-based**: team_push_encouragement, progress_logged, circle_member_joined, member_review_submitted
+  - **Mode coverage**: Solo mode receives will_started, will_review_required, will_review_reminder, midpoint_milestone; Circle mode receives all notifications
   - **Idempotency**: Database tracking fields (completionNotificationSentAt, midpointAt, midpointNotificationSentAt on wills; ackReminderSentAt on will_commitments; commitmentReminders table) prevent duplicate sends.
 - **Team Encouragement**: "Push" feature to send encouragement (circle mode only).
 

@@ -1,6 +1,6 @@
 import * as cron from 'node-cron';
 import { db } from './db';
-import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders } from '@shared/schema';
+import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders, willReviews } from '@shared/schema';
 import { eq, and, or, lt, gte, isNull, isNotNull, ne, notInArray, inArray } from 'drizzle-orm';
 import { dailyService } from './daily';
 import { storage } from './storage';
@@ -163,7 +163,7 @@ export class EndRoomScheduler {
             const willWithCommitments = await storage.getWillWithCommitments(will.id);
             if (willWithCommitments && willWithCommitments.commitments) {
               const participants = willWithCommitments.commitments.map(c => c.userId);
-              await pushNotificationService.sendWillCompletedReviewNotification(will.id, participants);
+              await pushNotificationService.sendWillReviewRequiredNotification(will.id, participants);
               // Mark notification as sent
               await db.update(wills)
                 .set({ completionNotificationSentAt: now })
@@ -566,15 +566,15 @@ export class EndRoomScheduler {
         }
       }
 
-      // 2. ACKNOWLEDGMENT REMINDER: Wills in will_review status where completion notification was sent 6+ hours ago
+      // 2. WILL REVIEW REMINDER: Wills in will_review status where completion notification was sent 6+ hours ago
+      // Works for BOTH Circle and Solo modes
       const willsInReview = await db
         .select()
         .from(wills)
         .where(
           and(
             eq(wills.status, 'will_review'),
-            lt(wills.completionNotificationSentAt, sixHoursAgo),
-            isNotNull(wills.circleId) // Only circle mode
+            lt(wills.completionNotificationSentAt, sixHoursAgo)
           )
         )
         .limit(20);
@@ -587,32 +587,34 @@ export class EndRoomScheduler {
             .from(willCommitments)
             .where(eq(willCommitments.willId, will.id));
 
-          // Get users who have already acknowledged
-          const acknowledgedUsers = await db
-            .select({ userId: willAcknowledgments.userId })
-            .from(willAcknowledgments)
-            .where(eq(willAcknowledgments.willId, will.id));
-          const acknowledgedUserIds = acknowledgedUsers.map(a => a.userId);
+          // Get users who have already submitted REVIEWS (not acknowledgments)
+          const reviewedUsers = await db
+            .select({ userId: willReviews.userId })
+            .from(willReviews)
+            .where(eq(willReviews.willId, will.id));
+          const reviewedUserIds = reviewedUsers.map(r => r.userId);
 
-          // Find unacknowledged members who haven't been reminded yet
-          const unacknowledgedToRemind = commitments.filter(
-            c => !acknowledgedUserIds.includes(c.userId) && !c.ackReminderSentAt
+          // Find committed members who haven't submitted review AND haven't been reminded yet
+          const unreviewedToRemind = commitments.filter(
+            c => !reviewedUserIds.includes(c.userId) && !c.ackReminderSentAt
           );
 
-          if (unacknowledgedToRemind.length > 0) {
-            const userIdsToRemind = unacknowledgedToRemind.map(c => c.userId);
-            await pushNotificationService.sendAcknowledgmentReminderNotification(will.id, userIdsToRemind);
+          if (unreviewedToRemind.length > 0) {
+            const userIdsToRemind = unreviewedToRemind.map(c => c.userId);
+            const isSoloMode = will.mode === 'solo';
+            await pushNotificationService.sendWillReviewReminderNotification(will.id, userIdsToRemind, isSoloMode);
             
             // Mark reminders as sent on each commitment record (idempotency)
-            for (const commitment of unacknowledgedToRemind) {
+            // Reusing ackReminderSentAt field for review reminders (same purpose)
+            for (const commitment of unreviewedToRemind) {
               await db.update(willCommitments)
                 .set({ ackReminderSentAt: now })
                 .where(eq(willCommitments.id, commitment.id));
             }
-            console.log(`[SCHEDULER] ✅ Acknowledgment reminder sent to ${userIdsToRemind.length} users for Will ${will.id}`);
+            console.log(`[SCHEDULER] ✅ Will review reminder sent to ${userIdsToRemind.length} users for Will ${will.id} (${isSoloMode ? 'Solo' : 'Circle'} mode)`);
           }
         } catch (error) {
-          console.error(`[SCHEDULER] Failed to send acknowledgment reminder for Will ${will.id}:`, error);
+          console.error(`[SCHEDULER] Failed to send will review reminder for Will ${will.id}:`, error);
         }
       }
     } catch (error) {

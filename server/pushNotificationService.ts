@@ -387,14 +387,14 @@ class PushNotificationService {
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  // NEW NOTIFICATION #1: Will Completed - Ready for Review
-  async sendWillCompletedReviewNotification(willId: number, participants: string[]): Promise<void> {
+  // NOTIFICATION: Will Review Required (fires when Will ENDS and status → will_review)
+  async sendWillReviewRequiredNotification(willId: number, participants: string[]): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "Your Will is complete! ✅",
-      body: "Good work. Hop in to review.",
-      category: 'will_completed_review',
+      title: "Your Will has ended 🎯",
+      body: "Time to reflect - submit your review now!",
+      category: 'will_review_required',
       data: {
-        type: 'will_completed_review',
+        type: 'will_review_required',
         willId: willId.toString(),
         deepLink: `/will/${willId}/review`
       }
@@ -419,20 +419,22 @@ class PushNotificationService {
     await this.sendToMultipleUsers(uncommittedUsers, payload);
   }
 
-  // NEW NOTIFICATION #3: Acknowledgment Reminder (6hrs after Will completion)
-  async sendAcknowledgmentReminderNotification(willId: number, unacknowledgedUsers: string[]): Promise<void> {
+  // NOTIFICATION: Will Review Reminder (6hrs after Will ends, for users who haven't submitted review)
+  async sendWillReviewReminderNotification(willId: number, usersWithoutReview: string[], isSoloMode: boolean = false): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "Your Circle is waiting 🤝",
-      body: "Your Circle is waiting for your acknowledgment.",
-      category: 'acknowledgment_reminder',
+      title: "Review reminder ⏰",
+      body: isSoloMode 
+        ? "Don't forget to submit your Will review!" 
+        : "Your Circle is waiting for your review.",
+      category: 'will_review_reminder',
       data: {
-        type: 'acknowledgment_reminder',
+        type: 'will_review_reminder',
         willId: willId.toString(),
         deepLink: `/will/${willId}/review`
       }
     };
 
-    await this.sendToMultipleUsers(unacknowledgedUsers, payload);
+    await this.sendToMultipleUsers(usersWithoutReview, payload);
   }
 
   // NEW NOTIFICATION #4: Circle Member Joined
