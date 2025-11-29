@@ -100,9 +100,9 @@ export function FinalWillSummary({
           <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-gradient-to-br from-teal-100/50 to-emerald-200/40 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
         </div>
 
-        <div className="relative h-full flex flex-col pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4">
-          {/* Header with glowy icon */}
-          <div className="text-center mb-4">
+        <div className="relative h-full flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4">
+          {/* Header with glowy icon - extra top breathing room */}
+          <div className="text-center mb-3">
             <div className="inline-flex items-center justify-center mb-3">
               <div className="relative">
                 <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full blur-xl opacity-40 animate-pulse"></div>
