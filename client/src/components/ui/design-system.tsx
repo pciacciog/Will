@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, ChevronLeft } from 'lucide-react';
 
 // ============================================================================
 // Mobile Layout - Safe area padded outer layout
@@ -357,6 +357,66 @@ export function ActionButton({
       aria-label={ariaLabel}
     >
       {children}
+    </button>
+  );
+}
+
+// ============================================================================
+// Unified Back Button - Elegant page-level back navigation (Hub style)
+// ============================================================================
+interface UnifiedBackButtonProps {
+  onClick: () => void;
+  testId?: string;
+  className?: string;
+}
+
+export function UnifiedBackButton({ 
+  onClick, 
+  testId = "button-back",
+  className
+}: UnifiedBackButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn("w-11 h-11 -ml-2 flex items-center justify-center", className)}
+      data-testid={testId}
+      aria-label="Go back"
+    >
+      <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:border-gray-300 transition-all duration-200 active:scale-95">
+        <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+      </span>
+    </button>
+  );
+}
+
+// ============================================================================
+// Inline Back Button - For step navigation within forms
+// ============================================================================
+interface InlineBackButtonProps {
+  onClick: () => void;
+  label?: string;
+  testId?: string;
+  className?: string;
+}
+
+export function InlineBackButton({ 
+  onClick, 
+  label = "Back",
+  testId = "button-back",
+  className
+}: InlineBackButtonProps) {
+  return (
+    <button 
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "text-gray-500 hover:text-gray-700 px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center",
+        className
+      )}
+      data-testid={testId}
+    >
+      <ChevronLeft className="w-4 h-4 mr-1" strokeWidth={2} />
+      {label}
     </button>
   );
 }
