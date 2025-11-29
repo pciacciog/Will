@@ -643,15 +643,28 @@ export class EndRoomScheduler {
 
       for (const will of willsAtMidpoint) {
         try {
+          // RACE CONDITION FIX: Use atomic update with WHERE clause to prevent duplicates
+          // Only proceed if we successfully claim this notification (no one else has set it)
+          const updateResult = await db.update(wills)
+            .set({ midpointNotificationSentAt: now })
+            .where(
+              and(
+                eq(wills.id, will.id),
+                isNull(wills.midpointNotificationSentAt) // Only update if still null
+              )
+            )
+            .returning({ id: wills.id });
+          
+          // If no rows updated, another scheduler instance already claimed it
+          if (updateResult.length === 0) {
+            console.log(`[SCHEDULER] ⏭️ Midpoint notification already sent for Will ${will.id} (skipping duplicate)`);
+            continue;
+          }
+          
           const willWithCommitments = await storage.getWillWithCommitments(will.id);
           if (willWithCommitments && willWithCommitments.commitments) {
             const committedMembers = willWithCommitments.commitments.map(c => c.userId);
             await pushNotificationService.sendMidpointMilestoneNotification(will.id, committedMembers);
-            
-            // Mark notification as sent
-            await db.update(wills)
-              .set({ midpointNotificationSentAt: now })
-              .where(eq(wills.id, will.id));
             console.log(`[SCHEDULER] ✅ Midpoint milestone notification sent for Will ${will.id}`);
           }
         } catch (error) {

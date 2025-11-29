@@ -547,6 +547,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Solo wills start immediately as active (no waiting for others)
         await storage.updateWillStatus(will.id, 'active');
         
+        // Send Will Started notification for solo mode (scheduler won't catch this since it's already 'active')
+        try {
+          const willTitle = req.body.what || "Your Will";
+          await pushNotificationService.sendWillStartedNotification(willTitle, [userId]);
+          console.log(`[Routes] Will Started notification sent for solo Will ${will.id}`);
+        } catch (notifError) {
+          console.error(`[Routes] Failed to send Will Started notification for solo Will ${will.id}:`, notifError);
+        }
+        
         console.log(`Created solo Will ${will.id} for user ${userId}, status: active, midpoint: ${midpointTime.toISOString()}`);
         
         res.json({ ...will, status: 'active', midpointAt: midpointTime });

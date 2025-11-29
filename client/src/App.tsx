@@ -42,7 +42,7 @@ if (import.meta.env.DEV) {
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [sessionRestored, setSessionRestored] = useState(false);
 
   // Debug logging
@@ -107,6 +107,87 @@ function Router() {
       console.log('✅ User authenticated - server handles token association automatically');
     }
   }, [isAuthenticated, user]);
+
+  // DEEP LINK HANDLER: Handle push notification taps and navigate to the deep link
+  useEffect(() => {
+    let isMounted = true;
+    let actionListenerHandle: any = null;
+    let receivedListenerHandle: any = null;
+
+    const setupDeepLinkHandlers = async () => {
+      console.log('🔗 [DeepLink] Setting up push notification tap handlers...');
+
+      // Handler for when user taps on a notification
+      const actionHandle = await PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+        console.log('🔗 [DeepLink] ══════════════════════════════════════════');
+        console.log('🔗 [DeepLink] PUSH NOTIFICATION TAPPED');
+        console.log('🔗 [DeepLink] ══════════════════════════════════════════');
+        console.log('🔗 [DeepLink] Full notification:', JSON.stringify(notification, null, 2));
+        
+        const data = notification.notification?.data;
+        console.log('🔗 [DeepLink] Notification data:', JSON.stringify(data, null, 2));
+        
+        if (data?.deepLink && isMounted) {
+          console.log('🔗 [DeepLink] Deep link found:', data.deepLink);
+          
+          // Map deep link paths to valid routes
+          let targetPath = data.deepLink;
+          
+          // Handle /will/:id/review -> /will/:id (review is shown on will details page)
+          // The WillDetails component shows the review UI based on Will status
+          if (targetPath.includes('/review')) {
+            targetPath = targetPath.replace('/review', '');
+            console.log('🔗 [DeepLink] Mapped review link to:', targetPath);
+          }
+          
+          // Handle /will/:id/commit -> /will/:id/commit (valid route)
+          // Handle /circle/:id -> /hub (circle view is in hub)
+          if (targetPath.startsWith('/circle/')) {
+            targetPath = '/hub';
+            console.log('🔗 [DeepLink] Mapped circle link to:', targetPath);
+          }
+          
+          console.log('🔗 [DeepLink] Navigating to:', targetPath);
+          setLocation(targetPath);
+        } else {
+          console.log('🔗 [DeepLink] No deep link in notification data, defaulting to home');
+          // Default navigation based on notification type
+          const type = data?.type;
+          if (type === 'daily_reminder' || type === 'will_midpoint' || type === 'will_started') {
+            setLocation('/solo/hub');
+          } else if (type === 'end_room_now' || type === 'end_room_15_minutes' || type === 'end_room_24_hours') {
+            setLocation('/hub');
+          } else {
+            setLocation('/');
+          }
+        }
+      });
+
+      // Handler for when notification is received while app is in foreground
+      const receivedHandle = await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        console.log('🔔 [DeepLink] Push notification received in foreground:', JSON.stringify(notification, null, 2));
+        // Notification received but not tapped - no navigation needed
+      });
+
+      if (isMounted) {
+        actionListenerHandle = actionHandle;
+        receivedListenerHandle = receivedHandle;
+        console.log('🔗 [DeepLink] ✅ Deep link handlers registered successfully');
+      } else {
+        actionHandle.remove();
+        receivedHandle.remove();
+      }
+    };
+
+    setupDeepLinkHandlers();
+
+    return () => {
+      isMounted = false;
+      console.log('🔗 [DeepLink] Cleaning up deep link handlers');
+      if (actionListenerHandle) actionListenerHandle.remove();
+      if (receivedListenerHandle) receivedListenerHandle.remove();
+    };
+  }, [setLocation]);
 
   // APP LIFECYCLE: Monitor app state changes to detect background/foreground transitions
   useEffect(() => {
