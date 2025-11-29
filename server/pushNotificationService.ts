@@ -524,6 +524,22 @@ class PushNotificationService {
 
     await this.sendToMultipleUsers(committedMembers, payload);
   }
+
+  // NEW NOTIFICATION: Daily Reminder (user-scheduled daily check-in)
+  async sendDailyReminderNotification(userId: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: "Time for your Will",
+      body: "Take a moment to check in with your commitment today.",
+      category: 'daily_reminder',
+      data: {
+        type: 'daily_reminder',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub'
+      }
+    };
+
+    return await this.sendToUser(userId, payload);
+  }
 }
 
 export const pushNotificationService = new PushNotificationService();
