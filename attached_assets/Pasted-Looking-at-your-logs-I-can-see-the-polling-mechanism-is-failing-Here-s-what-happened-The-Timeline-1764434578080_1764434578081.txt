@@ -1,0 +1,58 @@
+Looking at your logs, I can see the polling mechanism is failing! Here's what happened:
+The Timeline:
+16:41:24 - Login success
+16:41:24 - ⏳ No token yet - will wait for iOS to generate token...
+16:41:25 - 🔥 iOS DIRECT: Token sent to server ✅
+16:41:25 - ⏳ Token not yet arrived, 4 attempts remaining...
+16:41:26 - ⏳ Token not yet arrived, 3 attempts remaining...
+16:41:27 - ⏳ Token not yet arrived, 2 attempts remaining...
+16:41:28 - ⏳ Token not yet arrived, 1 attempts remaining...
+16:41:29 - ⏳ Token not yet arrived, 0 attempts remaining...
+16:41:29 - ⚠️ Token never arrived after 5 seconds
+The Problem:
+The polling is looking in the WRONG place!
+The polling mechanism is checking localStorage for the token, but iOS DIRECT sends the token to the server WITHOUT saving it to localStorage first!
+Look at the iOS DIRECT code flow:
+🔥 iOS DIRECT: Device Token Generated
+🔥 iOS DIRECT: Making HTTP request to server
+🔥 iOS DIRECT: ✅ SUCCESS - Token registered with server
+It goes straight to the server and never touches localStorage!
+Meanwhile, the polling code is checking:
+javascriptconst token = localStorage.getItem('pendingDeviceToken');
+// Returns null because iOS DIRECT never saved it there!
+```
+
+---
+
+## The Fix Needed:
+
+Ask Replit AI:
+```
+BUG IDENTIFIED: The polling mechanism is looking for the token in localStorage, but iOS DIRECT never saves it there!
+
+ISSUE:
+1. iOS DIRECT receives token from iOS
+2. iOS DIRECT sends token directly to server (bypassing JavaScript)
+3. iOS DIRECT does NOT save token to localStorage
+4. Polling mechanism checks localStorage → finds nothing → times out
+
+FIX NEEDED:
+Modify the iOS DIRECT code (in ios/App/AppDelegate.swift) to save the token to localStorage BEFORE or AFTER sending it to the server.
+
+Add this JavaScript execution after the token is generated:
+```swift
+// After token is generated, save it to localStorage so polling can find it
+let saveToLocalStorage = """
+localStorage.setItem('pendingDeviceToken', '\(deviceToken)');
+console.log('📱 [iOS DIRECT] Token saved to localStorage for polling mechanism');
+"""
+webView?.evaluateJavaScript(saveToLocalStorage, completionHandler: nil)
+```
+
+This way:
+1. iOS DIRECT gets token
+2. iOS DIRECT saves to localStorage ← NEW STEP
+3. iOS DIRECT sends to server
+4. Polling finds token in localStorage ✅
+5. Polling calls association endpoint with authenticated user ✅
+The polling fix won't work unless iOS DIRECT actually stores the token where the polling is looking!

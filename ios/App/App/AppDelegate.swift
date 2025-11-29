@@ -174,10 +174,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                         print("🔥 iOS DIRECT: ✅ SUCCESS - Token registered directly with server!")
                         print("🔥 iOS DIRECT: ✅ JavaScript bridge successfully bypassed!")
                         
-                        // Store success info
+                        // Store success info in UserDefaults
                         UserDefaults.standard.set(token, forKey: "registered_device_token")
                         UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "token_registration_time")
                         UserDefaults.standard.set(true, forKey: "direct_api_success")
+                        
+                        // 🔥 CRITICAL FIX: Also save to localStorage so JS polling can find it
+                        // The polling mechanism checks localStorage, so we need to save it there too
+                        self.saveTokenToLocalStorage(token: token)
                         
                     } else {
                         print("🚨 iOS DIRECT: Server returned error status: \(httpResponse.statusCode)")
@@ -230,6 +234,51 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
     
     // HELPER METHODS for Bundle Data Detection
+    
+    // Save token to localStorage so JS polling mechanism can find it
+    func saveTokenToLocalStorage(token: String) {
+        print("📱 iOS DIRECT: Saving token to localStorage for JS polling...")
+        
+        // Get the WebView from the Capacitor bridge
+        guard let bridgeVC = window?.rootViewController as? CAPBridgeViewController,
+              let webView = bridgeVC.webView else {
+            print("🚨 iOS DIRECT: Could not access WebView to save token to localStorage")
+            return
+        }
+        
+        // Create timestamp in ISO format
+        let dateFormatter = ISO8601DateFormatter()
+        let timestamp = dateFormatter.string(from: Date())
+        
+        // Execute JavaScript to save token to localStorage in the expected JSON format
+        // The sendPendingTokenToServer expects: { token, platform, timestamp }
+        let jsCode = """
+            (function() {
+                try {
+                    var tokenData = {
+                        token: '\(token)',
+                        platform: 'ios',
+                        timestamp: '\(timestamp)'
+                    };
+                    localStorage.setItem('pendingDeviceToken', JSON.stringify(tokenData));
+                    console.log('📱 [iOS DIRECT] Token saved to localStorage for polling mechanism');
+                    console.log('📱 [iOS DIRECT] Token data:', JSON.stringify(tokenData).substring(0, 50) + '...');
+                    return 'success';
+                } catch (e) {
+                    console.error('📱 [iOS DIRECT] Failed to save to localStorage:', e);
+                    return 'error: ' + e.message;
+                }
+            })();
+        """
+        
+        webView.evaluateJavaScript(jsCode) { result, error in
+            if let error = error {
+                print("🚨 iOS DIRECT: JavaScript execution error: \(error.localizedDescription)")
+            } else {
+                print("📱 iOS DIRECT: ✅ Token successfully saved to localStorage! Result: \(result ?? "nil")")
+            }
+        }
+    }
     
     func getBuildScheme() -> String {
         #if DEBUG
