@@ -781,22 +781,15 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         
         {/* Step 2: What Will You Do - Focused Writing Experience */}
         {currentStep === 2 && !showTransition && (
-          <div className="flex flex-col min-h-[60vh] animate-in fade-in duration-500">
-            <form onSubmit={handleStep2Submit} className="flex flex-col flex-1">
-              {/* Main Writing Area - Centered and Focused */}
-              <div className="flex-1 flex flex-col justify-center py-8">
-                {/* Prompt Label */}
-                <div className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <p className="text-sm font-medium text-gray-500 uppercase tracking-widest text-center">
-                    Your Commitment
-                  </p>
-                </div>
-                
+          <div className="flex flex-col animate-in fade-in duration-500">
+            <form onSubmit={handleStep2Submit} className="flex flex-col">
+              {/* Main Writing Area - Compact, No Scroll */}
+              <div className="flex flex-col pt-4 pb-6">
                 {/* The Writing Statement */}
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
-                  {/* "I will" - Large, Prominent */}
-                  <p className="text-2xl font-semibold text-gray-800 text-center tracking-tight">
-                    I will
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                  {/* "I Will" - Large, Prominent, Strong */}
+                  <p className="text-3xl font-bold text-gray-900 text-center tracking-tight">
+                    I Will
                   </p>
                   
                   {/* Text Input - Clean, Minimal, Focused */}
@@ -818,28 +811,17 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                       placeholder="call my grandmother this week"
                       data-testid="input-what"
                     />
-                    {/* Subtle focus indicator line animation */}
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-300 group-focus-within:w-full" />
                   </div>
                   
-                  {/* Character count - Subtle, Right-aligned */}
+                  {/* Character count - Subtle */}
                   <p className="text-xs text-gray-400 text-center tracking-tight animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
                     {whatCharCount} / 75
                   </p>
                 </div>
-                
-                {/* Inspirational hint - Only show when empty */}
-                {willData.what.length === 0 && (
-                  <div className="mt-8 text-center animate-in fade-in duration-700" style={{ animationDelay: '400ms' }}>
-                    <p className="text-sm text-gray-400 italic">
-                      What meaningful action will you take?
-                    </p>
-                  </div>
-                )}
               </div>
               
-              {/* Navigation - Fixed at bottom */}
-              <div className="flex justify-end items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
+              {/* Navigation - Anchored */}
+              <div className="flex justify-end items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
@@ -850,42 +832,32 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         
         {/* Step 3: Why - Focused Writing Experience (Matches Step 2) */}
         {currentStep === 3 && !showTransition && (
-          <div className="flex flex-col min-h-[60vh] animate-in fade-in duration-500">
-            <form onSubmit={handleStep3Submit} className="flex flex-col flex-1">
-              {/* Main Writing Area - Centered and Focused */}
-              <div className="flex-1 flex flex-col justify-center py-6">
-                {/* Commitment Preview - Subtle reminder of what they committed to */}
+          <div className="flex flex-col animate-in fade-in duration-500">
+            <form onSubmit={handleStep3Submit} className="flex flex-col">
+              {/* Main Writing Area - Compact, No Scroll */}
+              <div className="flex flex-col pt-4 pb-6">
+                {/* Commitment Preview - Prominent reminder */}
                 {willData.what && (
-                  <div className="mb-8 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <p className="text-sm text-gray-400 italic">
-                      "I will {willData.what}"
+                  <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <p className="text-lg font-semibold text-gray-800">
+                      "I Will {willData.what}"
                     </p>
+                    {/* Privacy note - only in circle mode */}
+                    {!isSoloMode && (
+                      <p className="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Private — only you can see this
+                      </p>
+                    )}
                   </div>
                 )}
                 
-                {/* Prompt Label with Heart Icon */}
-                <div className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '100ms' }}>
-                  <div className="flex items-center justify-center gap-2">
-                    <Heart className="w-5 h-5 text-red-400 fill-red-400" />
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-widest">
-                      Your Motivation
-                    </p>
-                  </div>
-                  {/* Privacy note - only in circle mode */}
-                  {!isSoloMode && (
-                    <p className="text-xs text-gray-400 text-center mt-2 flex items-center justify-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      Private — only you can see this
-                    </p>
-                  )}
-                </div>
-                
                 {/* The Writing Statement */}
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '150ms' }}>
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
                   {/* "Because" - Large, Prominent */}
-                  <p className="text-2xl font-semibold text-gray-800 text-center tracking-tight">
+                  <p className="text-3xl font-bold text-gray-900 text-center tracking-tight">
                     Because
                   </p>
                   
@@ -910,23 +882,15 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     />
                   </div>
                   
-                  {/* Character count - Subtle, Centered */}
+                  {/* Character count - Subtle */}
                   <p className="text-xs text-gray-400 text-center tracking-tight animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
                     {whyCharCount} / 75
                   </p>
                 </div>
-                
-                {/* Inspirational message - Always visible, subtle */}
-                <div className="mt-8 text-center animate-in fade-in duration-700" style={{ animationDelay: '400ms' }}>
-                  <p className="text-sm text-gray-400 italic flex items-center justify-center gap-2">
-                    <Heart className="w-4 h-4 text-red-300" />
-                    Remember this when it gets tough
-                  </p>
-                </div>
               </div>
               
-              {/* Navigation - Fixed at bottom */}
-              <div className="flex justify-end items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
+              {/* Navigation - Anchored */}
+              <div className="flex justify-end items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
