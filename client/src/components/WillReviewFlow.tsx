@@ -72,6 +72,7 @@ export function WillReviewFlow({ willId, mode = 'circle', onComplete }: WillRevi
       toast({
         title: isSolo ? "Review submitted" : "Shared with your circle",
         description: isSolo ? "Your Will is now complete." : "Your acknowledgment has been shared.",
+        duration: 4000,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/wills"] });
       queryClient.invalidateQueries({ queryKey: ["/api/wills", willId] });
