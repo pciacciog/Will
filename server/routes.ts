@@ -2117,29 +2117,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('  - Environment:', environment);
       console.log('  - isSandbox:', isSandbox);
       
-      // 🔥 ALWAYS update ownership, regardless of current state
-      // This handles ALL scenarios: new tokens, pending tokens, tokens from other users
-      // 🔧 FIXED: Now includes environment detection!
-      await db
-        .insert(deviceTokens)
-        .values({
-          deviceToken: deviceToken,
-          userId: userId,
-          platform: platform,
-          isActive: true,
-          isSandbox: isSandbox, // CRITICAL: Add missing environment detection
-          registrationSource: 'authenticated_ownership_transfer'
-        })
-        .onConflictDoUpdate({
-          target: deviceTokens.deviceToken,
-          set: {
-            userId: userId, // Always transfer ownership to current user
+      // 🔥 FIX: Use check-then-update pattern instead of broken INSERT...ON CONFLICT
+      // (The device_tokens table doesn't have a unique constraint on device_token column)
+      const existingToken = await db
+        .select()
+        .from(deviceTokens)
+        .where(eq(deviceTokens.deviceToken, deviceToken))
+        .limit(1);
+
+      if (existingToken.length > 0) {
+        // Token exists - UPDATE it
+        console.log(`🔄 [TokenRegistration] Token exists, updating ownership...`);
+        await db
+          .update(deviceTokens)
+          .set({
+            userId: userId,
             isActive: true,
-            isSandbox: isSandbox, // CRITICAL: Update environment on existing tokens
+            isSandbox: isSandbox,
             registrationSource: 'authenticated_ownership_transfer',
             updatedAt: new Date()
-          }
-        });
+          })
+          .where(eq(deviceTokens.deviceToken, deviceToken));
+        console.log(`✅ [TokenRegistration] UPDATED token ${deviceToken.substring(0, 8)}...`);
+      } else {
+        // Token doesn't exist - INSERT it
+        console.log(`🆕 [TokenRegistration] Token not found, creating new entry...`);
+        await db
+          .insert(deviceTokens)
+          .values({
+            deviceToken: deviceToken,
+            userId: userId,
+            platform: platform,
+            isActive: true,
+            isSandbox: isSandbox,
+            registrationSource: 'authenticated_ownership_transfer'
+          });
+        console.log(`✅ [TokenRegistration] INSERTED new token ${deviceToken.substring(0, 8)}...`);
+      }
         
       console.log('✅ [DIAGNOSTIC] /api/push-tokens: Token stored with environment:');
       console.log('  - isSandbox:', isSandbox);
