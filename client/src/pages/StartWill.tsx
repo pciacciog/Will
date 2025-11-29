@@ -637,99 +637,129 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
           </div>
         )}
 
-        {/* Step 1: Set Dates */}
+        {/* Step 1: Set Dates - Focused Experience (Matches What/Why) */}
         {currentStep === 1 && !showTransition && (
-          <SectionCard>
-            
-            <form onSubmit={handleStep1Submit} className="space-y-5 px-4">
-              {/* Start Date & Time */}
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">Start</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input 
-                    type="date" 
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    required 
-                    className="w-full text-sm"
-                    data-testid="input-start-date"
-                  />
-                  <Input 
-                    type="time" 
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    step="900"
-                    required 
-                    className="w-full text-sm"
-                    data-testid="input-start-time"
-                  />
+          <div className="flex flex-col min-h-[60vh] animate-in fade-in duration-500">
+            <form onSubmit={handleStep1Submit} className="flex flex-col flex-1">
+              {/* Main Content Area - Centered */}
+              <div className="flex-1 flex flex-col justify-center py-6">
+                {/* Prompt Label */}
+                <div className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex items-center justify-center gap-2">
+                    <Calendar className="w-5 h-5 text-blue-500" />
+                    <p className="text-sm font-medium text-gray-500 uppercase tracking-widest">
+                      Your Timeline
+                    </p>
+                  </div>
                 </div>
-              </div>
-              
-              {/* End Date & Time */}
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '100ms' }}>
-                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">End</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input 
-                    type="date" 
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={startDate}
-                    required 
-                    className="w-full text-sm"
-                    data-testid="input-end-date"
-                  />
-                  <Input 
-                    type="time" 
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    step="900"
-                    required 
-                    className="w-full text-sm"
-                    data-testid="input-end-time"
-                  />
+                
+                {/* Date/Time Inputs - Clean, Grouped Design */}
+                <div className="space-y-6 px-2 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
+                  {/* Start Section */}
+                  <div className="space-y-2">
+                    <p className="text-lg font-semibold text-gray-800 text-center tracking-tight">
+                      Start
+                    </p>
+                    <div className="flex justify-center gap-3">
+                      <Input 
+                        type="date" 
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        required 
+                        className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                        data-testid="input-start-date"
+                      />
+                      <Input 
+                        type="time" 
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        step="900"
+                        required 
+                        className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                        data-testid="input-start-time"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Visual Separator */}
+                  <div className="flex items-center justify-center">
+                    <div className="w-0.5 h-6 bg-gradient-to-b from-gray-200 to-gray-300 rounded-full"></div>
+                  </div>
+                  
+                  {/* End Section */}
+                  <div className="space-y-2">
+                    <p className="text-lg font-semibold text-gray-800 text-center tracking-tight">
+                      End
+                    </p>
+                    <div className="flex justify-center gap-3">
+                      <Input 
+                        type="date" 
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        min={startDate}
+                        required 
+                        className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                        data-testid="input-end-date"
+                      />
+                      <Input 
+                        type="time" 
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        step="900"
+                        required 
+                        className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                        data-testid="input-end-time"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Subtle note */}
+                  <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
+                    Defaults to next Mon–Sun
+                  </p>
                 </div>
-              </div>
-              
-              {/* Asterisk note */}
-              <p className="text-xs text-gray-400 text-center">*Defaults to next Mon–Sun</p>
-              
-              {/* Daily Reminder Time */}
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 pt-2 border-t border-gray-100" style={{ animationDelay: '150ms' }}>
-                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">
-                  Remind me about my Will each day at:
-                </label>
-                <div className="flex items-center gap-3">
-                  <Input 
-                    type="time" 
-                    value={dailyReminderTime}
-                    onChange={(e) => {
-                      setDailyReminderTime(e.target.value);
-                      setHasModifiedReminder(true);
-                    }}
-                    step="900"
-                    disabled={skipDailyReminder === true}
-                    className={`w-32 text-sm ${skipDailyReminder ? 'opacity-50' : ''}`}
-                    data-testid="input-daily-reminder-time"
-                  />
-                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={skipDailyReminder === true}
+                
+                {/* Daily Reminder - Subtle, Secondary */}
+                <div className="mt-8 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '250ms' }}>
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+                      Daily Reminder
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center gap-3">
+                    <Input 
+                      type="time" 
+                      value={dailyReminderTime}
                       onChange={(e) => {
-                        setSkipDailyReminder(e.target.checked);
+                        setDailyReminderTime(e.target.value);
                         setHasModifiedReminder(true);
                       }}
-                      className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      data-testid="checkbox-skip-daily-reminder"
+                      step="900"
+                      disabled={skipDailyReminder === true}
+                      className={`w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none ${skipDailyReminder ? 'opacity-40' : ''}`}
+                      data-testid="input-daily-reminder-time"
                     />
-                    Skip daily reminders
-                  </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={skipDailyReminder === true}
+                        onChange={(e) => {
+                          setSkipDailyReminder(e.target.checked);
+                          setHasModifiedReminder(true);
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
+                        data-testid="checkbox-skip-daily-reminder"
+                      />
+                      Skip daily reminders
+                    </label>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex justify-between items-center pt-4 animate-in fade-in duration-500" style={{ animationDelay: '200ms' }}>
+              {/* Navigation - Fixed at bottom */}
+              <div className="flex justify-between items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center space-x-2">
                   <Button type="button" variant="ghost" onClick={handleCancel} className="text-gray-500" data-testid="button-cancel">
                     Cancel
@@ -746,7 +776,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 </PrimaryButton>
               </div>
             </form>
-          </SectionCard>
+          </div>
         )}
         
         {/* Step 2: What Will You Do - Focused Writing Experience */}
