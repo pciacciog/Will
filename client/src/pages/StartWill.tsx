@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
-import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
@@ -839,11 +839,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               </div>
               
               {/* Navigation - Fixed at bottom */}
-              <div className="flex justify-between items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
-                <InlineBackButton 
-                  onClick={() => setCurrentStep(1)}
-                  testId="button-back"
-                />
+              <div className="flex justify-end items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
@@ -930,11 +926,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               </div>
               
               {/* Navigation - Fixed at bottom */}
-              <div className="flex justify-between items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
-                <InlineBackButton 
-                  onClick={() => setCurrentStep(2)}
-                  testId="button-back"
-                />
+              <div className="flex justify-end items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
@@ -989,19 +981,13 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-2">
-                    <InlineBackButton 
-                      onClick={() => setCurrentStep(3)}
-                      label="Edit"
-                      testId="button-back-to-edit"
-                      className="flex-1 px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
-                    />
+                  {/* Action Button */}
+                  <div className="flex justify-end pt-2">
                     <button
                       type="button"
                       onClick={handleSoloConfirmSubmit}
                       disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                      className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
+                      className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
                         createWillMutation.isPending || addCommitmentMutation.isPending
                           ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                           : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-sm'
@@ -1010,7 +996,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     >
                       {createWillMutation.isPending || addCommitmentMutation.isPending 
                         ? 'Creating...' 
-                        : 'Create'}
+                        : 'Create Will'}
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </button>
                   </div>
                 </div>
@@ -1075,46 +1062,36 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     </ul>
                   </div>
 
-                  {/* Action Buttons - with Skip in bottom-right */}
+                  {/* Action Buttons */}
                   <div className="px-4 pt-2">
-                    <div className="flex items-center justify-between gap-3">
-                      {/* Left side: Back button */}
-                      <InlineBackButton 
-                        onClick={() => setCurrentStep(3)}
-                        testId="button-back"
-                        className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                      />
+                    <div className="flex items-center justify-end gap-3">
+                      {/* Skip button - subtle secondary action */}
+                      <button 
+                        type="button" 
+                        onClick={() => setShowSkipConfirmation(true)}
+                        disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                        className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 disabled:opacity-50"
+                        data-testid="button-skip-endroom"
+                      >
+                        Skip
+                      </button>
                       
-                      {/* Right side: Skip and Create buttons */}
-                      <div className="flex items-center gap-3">
-                        {/* Skip button - subtle secondary action */}
-                        <button 
-                          type="button" 
-                          onClick={() => setShowSkipConfirmation(true)}
-                          disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                          className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 disabled:opacity-50"
-                          data-testid="button-skip-endroom"
-                        >
-                          Skip
-                        </button>
-                        
-                        {/* Primary CTA */}
-                        <button
-                          type="submit"
-                          disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
-                          className={`px-5 py-2 rounded-xl text-sm font-medium flex items-center justify-center transition-all duration-200 ${
-                            !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
-                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                              : 'bg-brandGreen text-white hover:bg-green-600 shadow-sm'
-                          }`}
-                          data-testid="button-schedule-and-create"
-                        >
-                          {createWillMutation.isPending || addCommitmentMutation.isPending 
-                            ? 'Creating...' 
-                            : 'Create Will'}
-                          <ArrowRight className="w-4 h-4 ml-1" />
-                        </button>
-                      </div>
+                      {/* Primary CTA */}
+                      <button
+                        type="submit"
+                        disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
+                        className={`px-5 py-2 rounded-xl text-sm font-medium flex items-center justify-center transition-all duration-200 ${
+                          !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-brandGreen text-white hover:bg-green-600 shadow-sm'
+                        }`}
+                        data-testid="button-schedule-and-create"
+                      >
+                        {createWillMutation.isPending || addCommitmentMutation.isPending 
+                          ? 'Creating...' 
+                          : 'Create Will'}
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </button>
                     </div>
                   </div>
                 </form>
