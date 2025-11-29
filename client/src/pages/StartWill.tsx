@@ -919,53 +919,45 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
             {isSoloMode ? (
               /* Solo Mode: Confirmation Screen */
               <SectionCard>
-                <div className="space-y-5 px-4">
-                  {/* Summary Card */}
-                  <Card className="border border-purple-100 shadow-sm">
-                    <CardContent className="pt-5 space-y-4">
-                      {/* Timeline Section */}
-                      <div>
-                        <div className="flex items-center mb-2">
-                          <Calendar className="w-4 h-4 text-purple-500 mr-2" />
-                          <p className="text-sm font-medium text-gray-500">Timeline</p>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm pl-6">
-                          <span className="font-medium text-gray-900">{formatDateForDisplay(willData.startDate)}</span>
-                          <ArrowRight className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-gray-900">{formatDateForDisplay(willData.endDate)}</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1 pl-6">
-                          {getDurationText(willData.startDate, willData.endDate)}
-                        </p>
-                      </div>
+                <div className="space-y-4 px-4">
+                  {/* Timeline Section - with distinct container */}
+                  <div className="bg-purple-50/60 rounded-xl p-4 border border-purple-100">
+                    <div className="flex items-center mb-2">
+                      <Calendar className="w-4 h-4 text-purple-500 mr-2" />
+                      <p className="text-sm font-semibold text-purple-700">Timeline</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm pl-6">
+                      <span className="font-medium text-gray-900">{formatDateForDisplay(willData.startDate)}</span>
+                      <ArrowRight className="w-4 h-4 text-gray-400" />
+                      <span className="font-medium text-gray-900">{formatDateForDisplay(willData.endDate)}</span>
+                    </div>
+                  </div>
 
-                      {/* What Section */}
-                      <div>
-                        <div className="flex items-center mb-2">
-                          <Target className="w-4 h-4 text-green-500 mr-2" />
-                          <p className="text-sm font-medium text-gray-500">Your What</p>
-                        </div>
-                        <div className="pl-6 bg-green-50/50 rounded-lg p-3 border border-green-100">
-                          <p className="text-base font-semibold text-gray-900 italic">
-                            "I will {willData.what}"
-                          </p>
-                        </div>
-                      </div>
+                  {/* What Section - with distinct container */}
+                  <div className="bg-green-50/60 rounded-xl p-4 border border-green-100">
+                    <div className="flex items-center mb-2">
+                      <Target className="w-4 h-4 text-green-500 mr-2" />
+                      <p className="text-sm font-semibold text-green-700">Your What</p>
+                    </div>
+                    <div className="pl-6">
+                      <p className="text-base font-semibold text-gray-900 italic">
+                        "I will {willData.what}"
+                      </p>
+                    </div>
+                  </div>
 
-                      {/* Why Section */}
-                      <div>
-                        <div className="flex items-center mb-2">
-                          <Heart className="w-4 h-4 text-red-500 mr-2" />
-                          <p className="text-sm font-medium text-gray-500">Your Why</p>
-                        </div>
-                        <div className="pl-6 bg-red-50/30 rounded-lg p-3 border border-red-100/50">
-                          <p className="text-sm text-gray-700 italic">
-                            Because {willData.why}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {/* Why Section - with distinct container */}
+                  <div className="bg-rose-50/60 rounded-xl p-4 border border-rose-100">
+                    <div className="flex items-center mb-2">
+                      <Heart className="w-4 h-4 text-rose-500 mr-2" />
+                      <p className="text-sm font-semibold text-rose-700">Your Why</p>
+                    </div>
+                    <div className="pl-6">
+                      <p className="text-sm text-gray-700 italic">
+                        Because {willData.why}
+                      </p>
+                    </div>
+                  </div>
 
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-2">
