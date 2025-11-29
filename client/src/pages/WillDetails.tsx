@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { EndRoom } from "@/components/EndRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
+import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
 import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
@@ -601,108 +602,138 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Commitments Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-brandGreen mr-2" />
-              <span className="text-base font-semibold text-gray-900 underline">
-                {isSoloMode ? 'Your Commitment' : 'Circle Commitments'}
+        {/* Threaded Commitments + Reviews Section - During will_review status */}
+        {will.status === 'will_review' && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="section-threaded-reviews">
+            <div className="flex items-center mb-4 pb-2 border-b border-gray-100">
+              <CheckCircle className="w-5 h-5 text-purple-600 mr-2" />
+              <span className="text-base font-semibold text-gray-900">
+                {isSoloMode ? 'Your Commitment & Review' : 'Circle Progress'}
               </span>
             </div>
-            {/* Push notification button for active wills - only for circle mode */}
-            {!isSoloMode && will.status === 'active' && (
-              <button
-                onClick={() => pushMutation.mutate()}
-                disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
-                className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
-                  pushStatus?.hasUserPushed
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-                title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Send encouragement to your teammates'}
-              >
-                <Zap className="w-3 h-3 mr-1" />
-                {pushMutation.isPending ? 'Pushing...' : 'Push'}
-              </button>
-            )}
+            <div className="space-y-4">
+              {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
+                const isCurrentUser = commitment.userId === user?.id;
+                const memberReview = reviews?.find((r: any) => r.userId === commitment.userId);
+                
+                return (
+                  <ThreadedMemberReview
+                    key={commitment.id}
+                    commitment={commitment}
+                    review={memberReview}
+                    isCurrentUser={isCurrentUser}
+                    isSoloMode={isSoloMode}
+                  />
+                );
+              })}
+            </div>
           </div>
-          <div className="space-y-4">
-            {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
-              const isCurrentUser = commitment.userId === user?.id;
-              const showWhy = expandedCommitments[commitment.id] || false;
-              const toggleWhy = () => {
-                setExpandedCommitments(prev => ({
-                  ...prev,
-                  [commitment.id]: !prev[commitment.id]
-                }));
-              };
-              
-              return (
-                <div key={commitment.id} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
-                  {/* User name and actions row */}
-                  <div className="flex items-center justify-between mb-2 gap-3">
-                    <div className="flex items-center space-x-2 flex-1 min-w-0">
-                      <span className="text-base font-medium truncate">
-                        {commitment.user.firstName && commitment.user.lastName 
-                          ? `${commitment.user.firstName} ${commitment.user.lastName}`
-                          : commitment.user.email
-                        }
-                        {isCurrentUser && (
-                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                            You
-                          </span>
+        )}
+
+        {/* Original Commitments Section - For non-review statuses */}
+        {will.status !== 'will_review' && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+              <div className="flex items-center">
+                <CheckCircle className="w-5 h-5 text-brandGreen mr-2" />
+                <span className="text-base font-semibold text-gray-900 underline">
+                  {isSoloMode ? 'Your Commitment' : 'Circle Commitments'}
+                </span>
+              </div>
+              {/* Push notification button for active wills - only for circle mode */}
+              {!isSoloMode && will.status === 'active' && (
+                <button
+                  onClick={() => pushMutation.mutate()}
+                  disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
+                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
+                    pushStatus?.hasUserPushed
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                  title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Send encouragement to your teammates'}
+                >
+                  <Zap className="w-3 h-3 mr-1" />
+                  {pushMutation.isPending ? 'Pushing...' : 'Push'}
+                </button>
+              )}
+            </div>
+            <div className="space-y-4">
+              {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
+                const isCurrentUser = commitment.userId === user?.id;
+                const showWhy = expandedCommitments[commitment.id] || false;
+                const toggleWhy = () => {
+                  setExpandedCommitments(prev => ({
+                    ...prev,
+                    [commitment.id]: !prev[commitment.id]
+                  }));
+                };
+                
+                return (
+                  <div key={commitment.id} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
+                    {/* User name and actions row */}
+                    <div className="flex items-center justify-between mb-2 gap-3">
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <span className="text-base font-medium truncate">
+                          {commitment.user.firstName && commitment.user.lastName 
+                            ? `${commitment.user.firstName} ${commitment.user.lastName}`
+                            : commitment.user.email
+                          }
+                          {isCurrentUser && (
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                              You
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
+                          <button 
+                            onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
+                            className="px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                            title="Edit commitment"
+                          >
+                            Edit
+                          </button>
                         )}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
-                        <button 
-                          onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
-                          className="px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                          title="Edit commitment"
-                        >
-                          Edit
-                        </button>
-                      )}
-                      {isCurrentUser && (
-                        <button
-                          onClick={toggleWhy}
-                          className={`text-sm px-3 py-1 rounded border transition-all duration-200 shadow ${
-                            showWhy 
-                              ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600' 
-                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                          }`}
-                          title={showWhy ? "Hide your reason" : "Show your reason"}
-                        >
-                          Why
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Commitment content */}
-                  <div className="space-y-2">
-                    <div>
-                      <div className="text-sm text-gray-500 font-medium italic mb-1">I will</div>
-                      <div className="text-base text-gray-800 leading-relaxed">
-                        {commitment.what}
+                        {isCurrentUser && (
+                          <button
+                            onClick={toggleWhy}
+                            className={`text-sm px-3 py-1 rounded border transition-all duration-200 shadow ${
+                              showWhy 
+                                ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600' 
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
+                            title={showWhy ? "Hide your reason" : "Show your reason"}
+                          >
+                            Why
+                          </button>
+                        )}
                       </div>
                     </div>
                     
-                    {isCurrentUser && showWhy && (
-                      <div className="mt-3 p-4 bg-gray-50 border-l-4 border-gray-300 rounded-lg shadow-sm animate-in fade-in duration-300">
-                        <div className="text-base tracking-wide">
-                          <span className="font-bold text-black">Because</span> {commitment.why}
+                    {/* Commitment content */}
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-sm text-gray-500 font-medium italic mb-1">I will</div>
+                        <div className="text-base text-gray-800 leading-relaxed">
+                          {commitment.what}
                         </div>
                       </div>
-                    )}
+                      
+                      {isCurrentUser && showWhy && (
+                        <div className="mt-3 p-4 bg-gray-50 border-l-4 border-gray-300 rounded-lg shadow-sm animate-in fade-in duration-300">
+                          <div className="text-base tracking-wide">
+                            <span className="font-bold text-black">Because</span> {commitment.why}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
 
 
@@ -735,8 +766,8 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Display Submitted Reviews */}
-        {(will.status === 'will_review' || will.status === 'completed') && (
+        {/* Display Submitted Reviews - Only for completed status (will_review uses threaded layout) */}
+        {will.status === 'completed' && (
           <div className="bg-white border border-gray-200 rounded-lg p-4" data-testid="section-reviews-display">
             <div className="flex items-center mb-4">
               <CheckCircle className="w-5 h-5 text-purple-600 mr-2" />
