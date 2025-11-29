@@ -1,10 +1,13 @@
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, User, ArrowRight, Sparkles } from "lucide-react";
+import { Users, User, ArrowRight, Sparkles, Settings, LogOut } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
+import AccountSettingsModal from "@/components/AccountSettingsModal";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 type CircleWithMembers = {
   id: number;
@@ -15,6 +18,8 @@ type CircleWithMembers = {
 export default function Home() {
   const [, setLocation] = useLocation();
   const [showSplash, setShowSplash] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const shouldShowSplash = localStorage.getItem('showSplashOnHome');
@@ -23,6 +28,31 @@ export default function Home() {
       setShowSplash(true);
     }
   }, []);
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('/api/logout', { method: 'POST' });
+      if (response.status === 204 || !response.headers.get('content-type')?.includes('application/json')) {
+        return null;
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      setLocation('/auth');
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
   
   const { data: circle } = useQuery<CircleWithMembers>({
     queryKey: ['/api/circles/mine'],
@@ -187,8 +217,45 @@ export default function Home() {
 
           </div>
 
+          {/* Account Actions - Settings & Sign Out */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="flex items-center justify-center gap-6">
+              {/* Settings Button */}
+              <button
+                onClick={() => setShowAccountSettings(true)}
+                className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-gray-100"
+                data-testid="button-settings"
+              >
+                <Settings className="w-5 h-5" />
+                <span className="text-sm font-medium">Settings</span>
+              </button>
+              
+              {/* Divider */}
+              <div className="h-5 w-px bg-gray-300"></div>
+              
+              {/* Sign Out Button */}
+              <button
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+                className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                data-testid="button-sign-out"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-sm font-medium">
+                  {logoutMutation.isPending ? "Signing out..." : "Sign Out"}
+                </span>
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      {/* Account Settings Modal */}
+      <AccountSettingsModal
+        isOpen={showAccountSettings}
+        onClose={() => setShowAccountSettings(false)}
+      />
     </div>
   );
 }
