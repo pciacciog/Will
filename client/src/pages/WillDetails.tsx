@@ -477,6 +477,78 @@ export default function WillDetails() {
           )}
         </div>
 
+        {/* Will Review Section - Positioned at top for immediate visibility */}
+        {will.status === 'will_review' && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4" data-testid="section-will-review-details">
+            {reviewStatus?.hasReviewed ? (
+              <div className="text-center" data-testid="review-submitted-message">
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Review Submitted</h3>
+                
+                {isSoloMode ? (
+                  // Solo mode: simple completion message
+                  <p className="text-sm text-gray-600">
+                    Your review is complete! Your Will is finalizing...
+                  </p>
+                ) : (
+                  // Circle mode: Dynamic messaging based on what's blocking completion
+                  <>
+                    {reviewStatus && reviewStatus.reviewCount < reviewStatus.totalMembers ? (
+                      // Reviews still incomplete
+                      <>
+                        <p className="text-sm text-gray-600">
+                          Waiting for other circle members to complete their reviews...
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                          {reviewStatus.reviewCount} of {reviewStatus.totalMembers} members reviewed
+                        </p>
+                      </>
+                    ) : will.endRoomScheduledAt && (will.endRoomStatus === 'pending' || will.endRoomStatus === 'open') ? (
+                      // All reviews complete, but End Room not finished
+                      <>
+                        <p className="text-sm text-gray-600">
+                          All reviews complete! This <em>Will</em> will finish after the End Room session ends.
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
+                        </p>
+                      </>
+                    ) : (
+                      // Both complete - Will should transition soon
+                      <>
+                        <p className="text-sm text-gray-600">
+                          All requirements met! Finalizing...
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
+                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
+                        </p>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              <WillReviewFlow 
+                willId={will.id}
+                mode={isSoloMode ? 'solo' : 'circle'}
+                onComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
+                  toast({
+                    title: "Review Completed",
+                    description: isSoloMode 
+                      ? "Your reflection has been saved." 
+                      : "Thank you for sharing your reflection!",
+                  });
+                }}
+              />
+            )}
+          </div>
+        )}
+
         {/* Timeline Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center mb-3">
@@ -660,78 +732,6 @@ export default function WillDetails() {
                 Submit My Commitment
               </Button>
             </div>
-          </div>
-        )}
-
-        {/* Will Review Section - NEW FEATURE */}
-        {will.status === 'will_review' && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4" data-testid="section-will-review-details">
-            {reviewStatus?.hasReviewed ? (
-              <div className="text-center" data-testid="review-submitted-message">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <CheckCircle className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Review Submitted</h3>
-                
-                {isSoloMode ? (
-                  // Solo mode: simple completion message
-                  <p className="text-sm text-gray-600">
-                    Your review is complete! Your Will is finalizing...
-                  </p>
-                ) : (
-                  // Circle mode: Dynamic messaging based on what's blocking completion
-                  <>
-                    {reviewStatus && reviewStatus.reviewCount < reviewStatus.totalMembers ? (
-                      // Reviews still incomplete
-                      <>
-                        <p className="text-sm text-gray-600">
-                          Waiting for other circle members to complete their reviews...
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                          {reviewStatus.reviewCount} of {reviewStatus.totalMembers} members reviewed
-                        </p>
-                      </>
-                    ) : will.endRoomScheduledAt && (will.endRoomStatus === 'pending' || will.endRoomStatus === 'open') ? (
-                      // All reviews complete, but End Room not finished
-                      <>
-                        <p className="text-sm text-gray-600">
-                          All reviews complete! This <em>Will</em> will finish after the End Room session ends.
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
-                        </p>
-                      </>
-                    ) : (
-                      // Both complete - Will should transition soon
-                      <>
-                        <p className="text-sm text-gray-600">
-                          All requirements met! Finalizing...
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
-                        </p>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            ) : (
-              <WillReviewFlow 
-                willId={will.id}
-                mode={isSoloMode ? 'solo' : 'circle'}
-                onComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
-                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
-                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
-                  toast({
-                    title: "Review Completed",
-                    description: isSoloMode 
-                      ? "Your reflection has been saved." 
-                      : "Thank you for sharing your reflection!",
-                  });
-                }}
-              />
-            )}
           </div>
         )}
 
