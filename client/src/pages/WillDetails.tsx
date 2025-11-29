@@ -1008,6 +1008,7 @@ export default function WillDetails() {
         hasUserAcknowledged={will?.hasUserAcknowledged}
         acknowledgedCount={will?.acknowledgedCount || 0}
         commitmentCount={will?.commitmentCount || 0}
+        reviews={reviews || []}
       />
     </MobileLayout>
   );
