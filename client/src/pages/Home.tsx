@@ -112,13 +112,14 @@ export default function Home() {
               data-testid="button-circle-mode"
             >
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
-                <Card className="relative bg-white border-2 border-emerald-100/70 shadow-sm group-hover:border-emerald-300 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-0.5">
+                {/* Glow effect: visible baseline (opacity-10) → emphasized on hover (opacity-30) */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-10 group-hover:opacity-30 transition-opacity duration-300"></div>
+                <Card className="relative bg-white border-2 border-emerald-200 shadow-sm group-hover:border-emerald-400 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-0.5">
                   <CardContent className="p-5">
                     <div className="flex items-start space-x-4">
                       {/* Icon */}
                       <div className="relative flex-shrink-0">
-                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                           <Users className="w-7 h-7 text-emerald-600" strokeWidth={1.5} />
                         </div>
                       </div>
@@ -151,13 +152,14 @@ export default function Home() {
               data-testid="button-solo-mode"
             >
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
-                <Card className="relative bg-white border-2 border-purple-100/70 shadow-sm group-hover:border-purple-300 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-0.5">
+                {/* Glow effect: visible baseline (opacity-10) → emphasized on hover (opacity-30) */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-2xl blur opacity-10 group-hover:opacity-30 transition-opacity duration-300"></div>
+                <Card className="relative bg-white border-2 border-purple-200 shadow-sm group-hover:border-purple-400 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-0.5">
                   <CardContent className="p-5">
                     <div className="flex items-start space-x-4">
                       {/* Icon */}
                       <div className="relative flex-shrink-0">
-                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                           <User className="w-7 h-7 text-purple-600" strokeWidth={1.5} />
                         </div>
                       </div>
