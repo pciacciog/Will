@@ -809,43 +809,54 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
           </div>
         )}
         
-        {/* Step 3: Why */}
+        {/* Step 3: Why - Focused Writing Experience (Matches Step 2) */}
         {currentStep === 3 && !showTransition && (
-          <SectionCard>
-            {/* Will Statement Preview - Bordered Card with subtle tint */}
-            {willData.what && (
-              <div className="bg-gradient-to-br from-blue-50/60 to-indigo-50/40 rounded-xl p-4 mb-4 border border-blue-100/60">
-                <div className="bg-white/90 rounded-lg border border-gray-200 px-5 py-4 shadow-sm">
-                  <p className="text-center text-gray-800 text-lg font-medium italic leading-relaxed">
-                    "I will {willData.what}"
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            <form onSubmit={handleStep3Submit} className="space-y-4">
-              <div>
-                {/* Combined label with privacy note on single line - only show privacy note in circle mode */}
-                <label className="flex items-center text-sm font-semibold text-gray-700 tracking-tight mb-2">
-                  Your Why
+          <div className="flex flex-col min-h-[60vh] animate-in fade-in duration-500">
+            <form onSubmit={handleStep3Submit} className="flex flex-col flex-1">
+              {/* Main Writing Area - Centered and Focused */}
+              <div className="flex-1 flex flex-col justify-center py-6">
+                {/* Commitment Preview - Subtle reminder of what they committed to */}
+                {willData.what && (
+                  <div className="mb-8 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <p className="text-sm text-gray-400 italic">
+                      "I will {willData.what}"
+                    </p>
+                  </div>
+                )}
+                
+                {/* Prompt Label with Heart Icon */}
+                <div className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '100ms' }}>
+                  <div className="flex items-center justify-center gap-2">
+                    <Heart className="w-5 h-5 text-red-400 fill-red-400" />
+                    <p className="text-sm font-medium text-gray-500 uppercase tracking-widest">
+                      Your Motivation
+                    </p>
+                  </div>
+                  {/* Privacy note - only in circle mode */}
                   {!isSoloMode && (
-                    <span className="text-xs text-gray-400 font-normal ml-2 flex items-center">
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <p className="text-xs text-gray-400 text-center mt-2 flex items-center justify-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
-                      (Private — only you can see this)
-                    </span>
+                      Private — only you can see this
+                    </p>
                   )}
-                </label>
-                {/* Input container - matches Step 2 with "Because" inside like "I will" */}
-                <div className="relative">
-                  <div className="flex items-center bg-white border-2 border-gray-200 rounded-xl px-4 py-3.5 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200 min-h-[52px]">
-                    <span className="text-gray-800 font-semibold text-base mr-3 flex-shrink-0">Because</span>
+                </div>
+                
+                {/* The Writing Statement */}
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '150ms' }}>
+                  {/* "Because" - Large, Prominent */}
+                  <p className="text-2xl font-semibold text-gray-800 text-center tracking-tight">
+                    Because
+                  </p>
+                  
+                  {/* Text Input - Clean, Minimal, Focused */}
+                  <div className="relative px-2">
                     <Textarea 
                       ref={whyRef}
                       name="why"
                       required 
-                      rows={1} 
+                      rows={2} 
                       maxLength={75}
                       value={willData.why}
                       onChange={(e) => {
@@ -853,30 +864,45 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                         setWhyCharCount(e.target.value.length);
                         resizeTextarea(whyRef);
                       }}
+                      className="w-full text-center text-xl leading-relaxed font-normal text-gray-700 bg-transparent border-0 border-b-2 border-gray-200 focus:border-red-300 focus:ring-0 resize-none transition-colors duration-300 placeholder:text-gray-300 placeholder:italic py-3 px-4" 
+                      style={{ minHeight: '72px', maxHeight: '120px' }}
                       placeholder="I like how I feel after I talk to her"
-                      className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400 transition-all flex items-center" 
-                      style={{ maxHeight: '96px', minHeight: '24px' }}
+                      data-testid="input-why"
                     />
                   </div>
+                  
+                  {/* Character count - Subtle, Centered */}
+                  <p className="text-xs text-gray-400 text-center tracking-tight animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
+                    {whyCharCount} / 75
+                  </p>
                 </div>
-                <div className="text-xs text-gray-400 mt-2 text-right tracking-tight">{whyCharCount} / 75</div>
+                
+                {/* Inspirational message - Always visible, subtle */}
+                <div className="mt-8 text-center animate-in fade-in duration-700" style={{ animationDelay: '400ms' }}>
+                  <p className="text-sm text-gray-400 italic flex items-center justify-center gap-2">
+                    <Heart className="w-4 h-4 text-red-300" />
+                    Remember this when it gets tough
+                  </p>
+                </div>
               </div>
               
-              <div className="flex justify-between items-center">
+              {/* Navigation - Fixed at bottom */}
+              <div className="flex justify-between items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <button 
                   type="button" 
                   onClick={() => setCurrentStep(2)}
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  className="text-gray-500 hover:text-gray-700 px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center"
+                  data-testid="button-back"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </button>
-                <PrimaryButton>
+                <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
             </form>
-          </SectionCard>
+          </div>
         )}
         
         {/* Step 4: Confirmation (Solo) or End Room Scheduling (Circle) */}
