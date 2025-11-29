@@ -197,7 +197,7 @@ export function WillReviewFlow({ willId, mode = 'circle', onComplete }: WillRevi
               <div className="text-center">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 1: Acknowledge</h2>
                 <p className="text-gray-500 text-sm">
-                  Did you follow through this week?
+                  Did you follow through on your commitment?
                 </p>
               </div>
 
@@ -298,18 +298,21 @@ export function WillReviewFlow({ willId, mode = 'circle', onComplete }: WillRevi
 
           {/* Step 2: Expand */}
           {step === 2 && (
-            <div className="space-y-6" data-testid="step-2-expand">
-              {/* Header - title centered with Skip absolutely positioned (matches Step 1 & 3 layout) */}
-              <div className="relative text-center">
-                {/* Skip button - absolutely positioned, doesn't affect title vertical position */}
+            <div className="space-y-4" data-testid="step-2-expand">
+              {/* Skip button row - separate from title for clear visual separation */}
+              <div className="flex justify-end -mt-2 -mr-2">
                 <button
                   type="button"
                   onClick={handleSkip}
-                  className="absolute right-0 top-0.5 text-[11px] text-gray-400 hover:text-gray-600 px-2 py-0.5 transition-colors duration-200"
+                  className="text-xs text-gray-400 hover:text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                   data-testid="button-skip"
                 >
                   Skip
                 </button>
+              </div>
+              
+              {/* Header - centered title */}
+              <div className="text-center -mt-2">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
                 <p className="text-gray-500 text-sm">
                   You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
