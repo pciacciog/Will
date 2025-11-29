@@ -50,11 +50,13 @@ Preferred communication style: Simple, everyday language.
 - **End Room**: Scheduled video calls (Daily.co) for reflection and closure (circle mode only, optional).
 - **Will Review**: Mandatory asynchronous review for Will completion.
 - **Account Settings**: User profile, password change, leave circle, permanent account deletion.
-- **Push Notifications**: APNs integration with 14 notification types, personalized per-user timezone.
+- **Push Notifications**: APNs integration with 13 notification types, personalized per-user timezone.
   - **Time-based (scheduler-driven)**: will_started, will_review_required (when Will ends), will_review_reminder (6hrs later), end_room_30min_warning, end_room_15min_warning, end_room_now, commitment_reminder, midpoint_milestone
-  - **Event-based**: team_push_encouragement, progress_logged, circle_member_joined, member_review_submitted
+  - **Event-based**: team_push_encouragement, progress_logged, circle_member_joined, member_review_submitted, will_proposed
   - **Mode coverage**: Solo mode receives will_started, will_review_required, will_review_reminder, midpoint_milestone; Circle mode receives all notifications
   - **Idempotency**: Database tracking fields (completionNotificationSentAt, midpointAt, midpointNotificationSentAt on wills; ackReminderSentAt on will_commitments; commitmentReminders table) prevent duplicate sends.
+  - **Token Cleanup**: Invalid APNs tokens (410/400/403 errors) automatically marked inactive to prevent wasted API calls.
+  - **Performance**: 14 database indexes optimize scheduler queries for scale (wills, will_commitments, commitment_reminders, device_tokens tables).
 - **Team Encouragement**: "Push" feature to send encouragement (circle mode only).
 
 ### System Design Choices
