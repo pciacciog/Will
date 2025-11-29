@@ -457,7 +457,7 @@ export default function InnerCircleHub() {
         />
       )}
 
-      <div className="pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
+      <div className="pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
           
           {/* Header with Back Button - Title aligned closer to avatar */}
