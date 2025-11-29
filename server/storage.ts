@@ -48,6 +48,8 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
   updateUserProfile(userId: string, profileData: { firstName: string; lastName: string; email: string }): Promise<User>;
+  updateUserReminderSettings(userId: string, settings: { dailyReminderTime?: string | null; dailyReminderEnabled?: boolean }): Promise<User>;
+  updateUserLastDailyReminderSent(userId: string): Promise<void>;
   deleteUser(userId: string): Promise<void>;
   
   // Circle operations
@@ -202,6 +204,39 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedUser;
+  }
+
+  async updateUserReminderSettings(userId: string, settings: { dailyReminderTime?: string | null; dailyReminderEnabled?: boolean }): Promise<User> {
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+    
+    if (settings.dailyReminderTime !== undefined) {
+      updateData.dailyReminderTime = settings.dailyReminderTime;
+    }
+    if (settings.dailyReminderEnabled !== undefined) {
+      updateData.dailyReminderEnabled = settings.dailyReminderEnabled;
+    }
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error('User not found');
+    }
+    
+    return updatedUser;
+  }
+
+  async updateUserLastDailyReminderSent(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        lastDailyReminderSentAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
   }
 
   async deleteUser(userId: string): Promise<void> {
