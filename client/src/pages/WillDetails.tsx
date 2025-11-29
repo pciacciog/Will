@@ -11,8 +11,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { EndRoom } from "@/components/EndRoom";
 import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
-import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge } from "@/components/ui/design-system";
-import { ArrowLeft, Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap } from "lucide-react";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
+import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
@@ -434,9 +434,20 @@ export default function WillDetails() {
   return (
     <MobileLayout>
       <div className="space-y-3">
-        {/* Compact Header */}
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between mb-2">
+          <UnifiedBackButton 
+            onClick={() => setLocation(getHubUrl())} 
+            testId="button-back-hub"
+          />
+          <div className="flex-1 text-center -ml-2">
+            <h1 className="text-xl font-semibold"><em>Will</em></h1>
+          </div>
+          <div className="w-11"></div>
+        </div>
+        
+        {/* Status Badge */}
         <div className="text-center">
-          <h1 className="text-xl font-semibold mb-2"><em>Will</em></h1>
           <div className="flex items-center justify-center space-x-2 mb-1">
             <Badge 
               className={`text-xs tracking-tight ${

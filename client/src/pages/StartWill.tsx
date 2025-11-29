@@ -11,11 +11,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
-import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowLeft, ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video } from "lucide-react";
 
 // Helper function to get next Monday's date in YYYY-MM-DD format (local timezone)
 // Returns the upcoming Monday:
@@ -532,6 +532,24 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         {/* Sticky Header with Progress Indicator */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
+            {/* Back Button Row */}
+            <div className="flex items-center mb-2">
+              <UnifiedBackButton 
+                onClick={() => {
+                  if (currentStep === 1) {
+                    setLocation(isSoloMode ? '/solo/hub' : '/hub');
+                  } else {
+                    setCurrentStep(currentStep - 1);
+                  }
+                }} 
+                testId="button-back"
+              />
+              <div className="flex-1 text-center -ml-2">
+                <span className="text-sm font-medium text-gray-500">Create Will</span>
+              </div>
+              <div className="w-11"></div>
+            </div>
+            
             <div className="flex items-center justify-center space-x-1.5 min-w-0 flex-1">
               {/* Step 1: When */}
               <div className="flex items-center">
@@ -792,15 +810,10 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               
               {/* Navigation - Fixed at bottom */}
               <div className="flex justify-between items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
-                <button 
-                  type="button" 
+                <InlineBackButton 
                   onClick={() => setCurrentStep(1)}
-                  className="text-gray-500 hover:text-gray-700 px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center"
-                  data-testid="button-back"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </button>
+                  testId="button-back"
+                />
                 <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
@@ -888,15 +901,10 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               
               {/* Navigation - Fixed at bottom */}
               <div className="flex justify-between items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
-                <button 
-                  type="button" 
+                <InlineBackButton 
                   onClick={() => setCurrentStep(2)}
-                  className="text-gray-500 hover:text-gray-700 px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center"
-                  data-testid="button-back"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </button>
+                  testId="button-back"
+                />
                 <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
@@ -961,15 +969,12 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
 
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-2">
-                    <button 
-                      type="button" 
+                    <InlineBackButton 
                       onClick={() => setCurrentStep(3)}
+                      label="Edit"
+                      testId="button-back-to-edit"
                       className="flex-1 px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
-                      data-testid="button-back-to-edit"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-1.5" />
-                      Edit
-                    </button>
+                    />
                     <button
                       type="button"
                       onClick={handleSoloConfirmSubmit}
@@ -1062,15 +1067,11 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                   <div className="px-4 pt-1">
                     <div className="flex gap-3">
                       {/* Back button - smaller, left side */}
-                      <button 
-                        type="button" 
+                      <InlineBackButton 
                         onClick={() => setCurrentStep(3)}
+                        testId="button-back"
                         className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                        data-testid="button-back"
-                      >
-                        <ArrowLeft className="w-4 h-4 mr-1" />
-                        Back
-                      </button>
+                      />
                   
                   {/* Primary CTA - tighter padding */}
                   <button

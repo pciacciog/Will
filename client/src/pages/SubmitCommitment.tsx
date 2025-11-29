@@ -8,10 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
-import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { notificationService } from "@/services/NotificationService";
-import { HelpCircle, ArrowLeft, ArrowRight, CheckCircle, Heart, Calendar, Handshake } from "lucide-react";
+import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Handshake } from "lucide-react";
 
 export default function SubmitCommitment() {
   const { id } = useParams();
@@ -185,6 +185,24 @@ export default function SubmitCommitment() {
         {/* Sticky Header with Progress Indicator */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
+            {/* Back Button Row */}
+            <div className="flex items-center mb-2">
+              <UnifiedBackButton 
+                onClick={() => {
+                  if (currentStep === 1) {
+                    setLocation(`/will/${id}`);
+                  } else {
+                    setCurrentStep(currentStep - 1);
+                  }
+                }} 
+                testId="button-back"
+              />
+              <div className="flex-1 text-center -ml-2">
+                <span className="text-sm font-medium text-gray-500">Join Will</span>
+              </div>
+              <div className="w-11"></div>
+            </div>
+            
             <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
               <div className="flex items-center">
                 <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
@@ -333,14 +351,11 @@ export default function SubmitCommitment() {
               </div>
 
               <div className="flex justify-between items-center">
-                <button 
-                  type="button"
+                <InlineBackButton 
                   onClick={handleBack}
+                  testId="button-back-inline"
                   className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </button>
+                />
                 <PrimaryButton type="submit">
                   Join Will <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
@@ -385,14 +400,11 @@ export default function SubmitCommitment() {
               
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <button 
-                    type="button"
+                  <InlineBackButton 
                     onClick={handleBack}
+                    testId="button-back-inline"
                     className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </button>
+                  />
                   {showHelpIcon && (
                     <HelpIcon
                       onClick={() => setShowInstructionModal(true)}
@@ -460,14 +472,11 @@ export default function SubmitCommitment() {
               
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <button 
-                    type="button"
+                  <InlineBackButton 
                     onClick={handleBack}
+                    testId="button-back-inline"
                     className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </button>
+                  />
                   {showHelpIcon && (
                     <HelpIcon
                       onClick={() => setShowInstructionModal(true)}
@@ -529,14 +538,11 @@ export default function SubmitCommitment() {
               </div>
 
               <div className="flex justify-between items-center">
-                <button 
-                  type="button"
+                <InlineBackButton 
                   onClick={handleBack}
+                  testId="button-back-inline"
                   className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </button>
+                />
                 <PrimaryButton 
                   type="submit" 
                   disabled={commitmentMutation.isPending}

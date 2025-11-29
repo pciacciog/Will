@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton } from "@/components/ui/design-system";
-import { ArrowLeft, ArrowRight, Save, CheckCircle, Heart } from "lucide-react";
+import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
+import { ArrowRight, Save, CheckCircle, Heart } from "lucide-react";
 
 export default function EditCommitment() {
   const { id: willId, commitmentId } = useParams();
@@ -187,10 +187,21 @@ export default function EditCommitment() {
         {/* Sticky Header with Progress */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
+            {/* Back Button Row */}
+            <div className="flex items-center mb-2">
+              <UnifiedBackButton 
+                onClick={() => setLocation(`/will/${willId}`)} 
+                testId="button-back"
+              />
+              <div className="flex-1 text-center -ml-2">
+                <span className="text-sm font-medium text-gray-500">Edit Commitment</span>
+              </div>
+              <div className="w-11"></div>
+            </div>
+            
             <div className="flex items-center justify-between px-2">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
-                <SectionTitle>Edit Your Commitment</SectionTitle>
               </div>
             </div>
 
@@ -250,14 +261,11 @@ export default function EditCommitment() {
             </div>
             
             <div className="flex justify-between items-center">
-              <button 
-                type="button"
+              <InlineBackButton 
                 onClick={handleBack}
+                testId="button-back-inline"
                 className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </button>
+              />
               <PrimaryButton type="submit" disabled={!what.trim()}>
                 Next <ArrowRight className="w-4 h-4 ml-2" />
               </PrimaryButton>
@@ -277,10 +285,21 @@ export default function EditCommitment() {
       {/* Sticky Header with Progress */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <div className="pt-4 space-y-3">
+          {/* Back Button Row */}
+          <div className="flex items-center mb-2">
+            <UnifiedBackButton 
+              onClick={() => setLocation(`/will/${willId}`)} 
+              testId="button-back"
+            />
+            <div className="flex-1 text-center -ml-2">
+              <span className="text-sm font-medium text-gray-500">Edit Commitment</span>
+            </div>
+            <div className="w-11"></div>
+          </div>
+          
           <div className="flex items-center justify-between px-2">
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-400 mb-1">Step {step} of 2</p>
-              <SectionTitle>Edit Your Commitment</SectionTitle>
             </div>
           </div>
 
@@ -355,14 +374,11 @@ export default function EditCommitment() {
           </div>
           
           <div className="flex justify-between items-center">
-            <button 
-              type="button"
+            <InlineBackButton 
               onClick={handleBack}
+              testId="button-back-inline"
               className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </button>
+            />
             <PrimaryButton 
               type="submit" 
               disabled={!what.trim() || !why.trim() || updateMutation.isPending}
