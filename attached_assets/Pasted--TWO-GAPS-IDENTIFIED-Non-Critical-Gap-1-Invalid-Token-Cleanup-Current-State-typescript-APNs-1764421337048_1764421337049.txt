@@ -1,0 +1,90 @@
+⚠️ TWO GAPS IDENTIFIED (Non-Critical):
+Gap 1: Invalid Token Cleanup
+Current State:
+typescript// APNs 410 errors are LOGGED but tokens stay active
+console.error(`[APNs] Failed: ${failure.status}`);
+// ❌ Token not marked inactive in database
+Impact:
+
+Wasted API calls to dead tokens
+Slightly slower performance over time
+Not critical but inefficient
+
+Fix (30 minutes):
+Prompt for Replit:
+"Add automatic cleanup for invalid APNs tokens. When APNs returns 410 (Unregistered) or 400 (BadDeviceToken), mark the token as inactive.
+In server/pushNotificationService.ts, update the error handling:
+typescript// After APNs send, check for invalid tokens
+if (result.failed && result.failed.length > 0) {
+  for (const failure of result.failed) {
+    console.error(`[APNs] Failed for token ${token.deviceToken.substring(0, 16)}...`);
+    console.error(`[APNs] Status: ${failure.status}`);
+    
+    // NEW: Mark invalid tokens as inactive
+    if (failure.status === '410' || failure.status === '400') {
+      console.log(`[APNs] Token invalid - marking as inactive in database`);
+      
+      await db.update(deviceTokens)
+        .set({ 
+          isActive: false,
+          updatedAt: new Date()
+        })
+        .where(eq(deviceTokens.deviceToken, token.deviceToken));
+      
+      console.log(`[APNs] ✅ Token marked inactive`);
+    }
+  }
+}
+Also update the token query to filter out inactive tokens:
+typescriptasync getUserTokens(userId: string) {
+  return await db
+    .select()
+    .from(deviceTokens)
+    .where(and(
+      eq(deviceTokens.userId, userId),
+      eq(deviceTokens.isActive, true)  // Only active tokens
+    ));
+}
+Test:
+
+Send notification to invalid token (manually corrupt one in database)
+Check APNs returns 410
+Verify token marked is_active = false in database
+Verify next notification attempt skips that token"
+
+
+Gap 2: Performance Indexes
+Current State:
+
+Basic indexes exist
+Could be optimized for scheduler queries at scale
+
+Impact:
+
+Not critical for 10-100 Wills
+Matters at 1,000+ Wills
+Future optimization
+
+Fix (Optional - Can Wait):
+Prompt for Replit:
+"Add performance indexes for scheduler queries. These will improve performance when we have 1,000+ Wills.
+sql-- Index for will_review_required check (finding Wills that just ended)
+CREATE INDEX idx_wills_review_required 
+ON wills(status, end_date, completion_notification_sent_at)
+WHERE status IN ('active', 'will_review');
+
+-- Index for midpoint_milestone check
+CREATE INDEX idx_wills_midpoint 
+ON wills(status, midpoint_date, midpoint_notification_sent_at)
+WHERE status = 'active';
+
+-- Index for commitment_reminder lookup
+CREATE INDEX idx_commitment_reminders_pending
+ON commitment_reminders(will_id, sent_at)
+WHERE sent_at IS NULL;
+
+-- Index for finding active tokens quickly
+CREATE INDEX idx_device_tokens_active_user
+ON device_tokens(user_id, is_active)
+WHERE is_active = true;
+Run npm run db:push to apply."

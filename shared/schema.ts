@@ -72,7 +72,14 @@ export const wills = pgTable("wills", {
   midpointAt: timestamp("midpoint_at"), // Precomputed: (startDate + endDate) / 2
   midpointNotificationSentAt: timestamp("midpoint_notification_sent_at"),
   completionNotificationSentAt: timestamp("completion_notification_sent_at"),
-}, (table) => [index("IDX_wills_mode").on(table.mode)]);
+}, (table) => [
+  index("IDX_wills_mode").on(table.mode),
+  index("IDX_wills_status").on(table.status),
+  index("IDX_wills_status_start_date").on(table.status, table.startDate),
+  index("IDX_wills_status_end_date").on(table.status, table.endDate),
+  index("IDX_wills_end_room_status").on(table.endRoomStatus),
+  index("IDX_wills_midpoint_check").on(table.status, table.midpointAt, table.midpointNotificationSentAt),
+]);
 
 export const willCommitments = pgTable("will_commitments", {
   id: serial("id").primaryKey(),
@@ -83,7 +90,10 @@ export const willCommitments = pgTable("will_commitments", {
   createdAt: timestamp("created_at").defaultNow(),
   // Notification tracking field for acknowledgment reminder
   ackReminderSentAt: timestamp("ack_reminder_sent_at"), // For 6hr unacknowledged reminder
-});
+}, (table) => [
+  index("IDX_will_commitments_will_id").on(table.willId),
+  index("IDX_will_commitments_user_id").on(table.userId),
+]);
 
 // Tracking table for commitment reminders (for users who haven't committed yet)
 export const commitmentReminders = pgTable("commitment_reminders", {
@@ -91,7 +101,9 @@ export const commitmentReminders = pgTable("commitment_reminders", {
   willId: integer("will_id").notNull().references(() => wills.id),
   userId: varchar("user_id").notNull().references(() => users.id),
   sentAt: timestamp("sent_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_commitment_reminders_will_id").on(table.willId),
+]);
 
 export const willAcknowledgments = pgTable("will_acknowledgments", {
   id: serial("id").primaryKey(),
@@ -165,7 +177,9 @@ export const deviceTokens = pgTable("device_tokens", {
   registrationSource: varchar("registration_source", { length: 100 }), // Where token was registered
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("IDX_device_tokens_user_active").on(table.userId, table.isActive),
+]);
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({

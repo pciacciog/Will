@@ -2,7 +2,7 @@ import apn from 'node-apn';
 import fs from 'fs';
 import { db } from './db';
 import { deviceTokens } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 interface PushNotificationPayload {
   title: string;
@@ -80,15 +80,36 @@ class PushNotificationService {
     }
   }
 
+  private async markTokenInactive(token: string, reason: string): Promise<void> {
+    try {
+      console.log(`[PushNotificationService] 🗑️ Marking token as inactive: ${token.substring(0, 16)}...`);
+      console.log(`  🔍 Reason: ${reason}`);
+      
+      await db.update(deviceTokens)
+        .set({ 
+          isActive: false,
+          updatedAt: new Date()
+        })
+        .where(eq(deviceTokens.deviceToken, token));
+      
+      console.log(`[PushNotificationService] ✅ Token marked inactive successfully`);
+    } catch (error) {
+      console.error(`[PushNotificationService] ❌ Failed to mark token inactive:`, error);
+    }
+  }
+
   async sendToUser(userId: string, payload: PushNotificationPayload): Promise<boolean> {
     try {
       console.log(`[PushNotificationService] 🔍 DEBUG: Processing notification for user ${userId}`);
       
-      // Get user's device tokens
+      // Get user's ACTIVE device tokens only (inactive tokens are skipped)
       const userTokens = await db
         .select()
         .from(deviceTokens)
-        .where(eq(deviceTokens.userId, userId));
+        .where(and(
+          eq(deviceTokens.userId, userId),
+          eq(deviceTokens.isActive, true)
+        ));
 
       console.log(`[PushNotificationService] 🔍 DEBUG: Found ${userTokens.length} device token(s) for user ${userId}`);
       
@@ -239,7 +260,7 @@ class PushNotificationService {
       
       if (result.failed.length > 0) {
         console.error(`[PushNotificationService] ❌ FAILED DELIVERIES:`);
-        result.failed.forEach((failure) => {
+        for (const failure of result.failed) {
           console.error(`  🔍 Request ID: ${apnsId}`);
           console.error(`  🔍 Device: ${tokenHash}...${userInfo}`);
           console.error(`  🔍 HTTP Status: ${failure.status}`);
@@ -247,7 +268,6 @@ class PushNotificationService {
           console.error(`  🔍 Response Headers: ${JSON.stringify(failure.response || {}, null, 2)}`);
           console.error(`  🔍 Timestamp: ${new Date().toISOString()}`)
           
-          // Enhanced error analysis
           const status = String(failure.status);
           const reason = failure.response?.reason;
           
@@ -257,6 +277,7 @@ class PushNotificationService {
               console.error(`    ❌ Auth Issue: JWT token invalid (check Key ID, Team ID, private key)`);
             } else if (reason === 'BadDeviceToken') {
               console.error(`    ❌ Token Issue: Device token invalid or expired`);
+              await this.markTokenInactive(deviceToken, 'BadDeviceToken (403)');
             } else if (reason === 'TopicDisallowed') {
               console.error(`    ❌ Topic Issue: Bundle ID mismatch or unauthorized topic`);
             } else {
@@ -267,8 +288,12 @@ class PushNotificationService {
             }
           } else if (status === '400') {
             console.error(`  🔍 400 BAD REQUEST: ${reason || 'Malformed request'}`);
+            if (reason === 'BadDeviceToken') {
+              await this.markTokenInactive(deviceToken, 'BadDeviceToken (400)');
+            }
           } else if (status === '410') {
             console.error(`  🔍 410 GONE: Device token no longer valid (app uninstalled)`);
+            await this.markTokenInactive(deviceToken, 'Unregistered (410)');
           } else if (status === '413') {
             console.error(`  🔍 413 PAYLOAD TOO LARGE: Notification payload exceeds 4KB limit`);
           } else if (status === '429') {
@@ -278,7 +303,7 @@ class PushNotificationService {
           }
           
           console.error(`  🔍 Full Response:`, JSON.stringify(failure.response, null, 2));
-        });
+        }
         return false;
       }
 
