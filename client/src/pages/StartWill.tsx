@@ -996,28 +996,15 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
             ) : (
               /* Circle Mode: End Room Scheduling */
               <SectionCard>
-                <form onSubmit={handleStep4Submit} className="space-y-3">
-                  {/* Skip button anchored in top-right corner - subtle secondary action */}
-                  <div className="flex justify-end -mt-3 -mr-1 mb-0">
-                    <button 
-                      type="button" 
-                      onClick={() => setShowSkipConfirmation(true)}
-                      disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded-md hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
-                      data-testid="button-skip-endroom"
-                    >
-                      Skip
-                    </button>
-                  </div>
-                  
-                  {/* Header with Video Icon */}
+                <form onSubmit={handleStep4Submit} className="space-y-4">
+                  {/* Header with Video Icon - positioned higher */}
                   <div className="px-4">
                     {/* Compact Video Icon */}
-                    <div className="flex justify-center mb-2">
+                    <div className="flex justify-center mb-3">
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-md opacity-20 animate-pulse"></div>
-                        <div className="relative w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
-                          <Video className="w-5 h-5 text-blue-600" />
+                        <div className="relative w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
+                          <Video className="w-6 h-6 text-blue-600" />
                         </div>
                       </div>
                     </div>
@@ -1045,50 +1032,67 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                     </div>
                   </div>
 
-                  {/* Info Box with slightly larger text */}
-                  <div className="mx-4 bg-blue-50/50 border border-blue-100/50 rounded-lg p-3">
-                    <ul className="space-y-1.5 text-sm text-gray-600">
+                  {/* Notes Section - distinct bordered block */}
+                  <div className="mx-4 bg-blue-50 border-2 border-blue-200 rounded-xl p-4 shadow-sm">
+                    <div className="flex items-center mb-2">
+                      <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Notes</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-gray-700">
                       <li className="flex items-start">
-                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
                         Virtual meeting link opens automatically at the time you choose.
                       </li>
                       <li className="flex items-start">
-                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
                         Runs for 30 minutes.
                       </li>
                       <li className="flex items-start">
-                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
                         Can't be changed once your Will starts.
                       </li>
                     </ul>
                   </div>
 
-                  {/* Action Buttons - Compact row layout */}
-                  <div className="px-4 pt-1">
-                    <div className="flex gap-3">
-                      {/* Back button - smaller, left side */}
+                  {/* Action Buttons - with Skip in bottom-right */}
+                  <div className="px-4 pt-2">
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Left side: Back button */}
                       <InlineBackButton 
                         onClick={() => setCurrentStep(3)}
                         testId="button-back"
                         className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
                       />
-                  
-                  {/* Primary CTA - tighter padding */}
-                  <button
-                    type="submit"
-                    disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
-                    className={`px-5 py-2 rounded-xl text-sm font-medium flex items-center justify-center transition-all duration-200 ${
-                      !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-brandGreen text-white hover:bg-green-600 shadow-sm'
-                    }`}
-                    data-testid="button-schedule-and-create"
-                  >
-                      {createWillMutation.isPending || addCommitmentMutation.isPending 
-                        ? 'Creating...' 
-                        : 'Create Will'}
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </button>
+                      
+                      {/* Right side: Skip and Create buttons */}
+                      <div className="flex items-center gap-3">
+                        {/* Skip button - subtle secondary action */}
+                        <button 
+                          type="button" 
+                          onClick={() => setShowSkipConfirmation(true)}
+                          disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                          className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 disabled:opacity-50"
+                          data-testid="button-skip-endroom"
+                        >
+                          Skip
+                        </button>
+                        
+                        {/* Primary CTA */}
+                        <button
+                          type="submit"
+                          disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
+                          className={`px-5 py-2 rounded-xl text-sm font-medium flex items-center justify-center transition-all duration-200 ${
+                            !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
+                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                              : 'bg-brandGreen text-white hover:bg-green-600 shadow-sm'
+                          }`}
+                          data-testid="button-schedule-and-create"
+                        >
+                          {createWillMutation.isPending || addCommitmentMutation.isPending 
+                            ? 'Creating...' 
+                            : 'Create Will'}
+                          <ArrowRight className="w-4 h-4 ml-1" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </form>
