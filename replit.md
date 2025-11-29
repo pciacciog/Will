@@ -50,9 +50,9 @@ Preferred communication style: Simple, everyday language.
 - **End Room**: Scheduled video calls (Daily.co) for reflection and closure (circle mode only, optional).
 - **Will Review**: Mandatory asynchronous review for Will completion.
 - **Account Settings**: User profile, password change, leave circle, permanent account deletion.
-- **Push Notifications**: APNs integration with 13 notification types, personalized per-user timezone.
-  - **Time-based (scheduler-driven)**: will_started, will_review_required (when Will ends), will_review_reminder (6hrs later), end_room_30min_warning, end_room_15min_warning, end_room_now, commitment_reminder, midpoint_milestone
-  - **Event-based**: team_push_encouragement, progress_logged, circle_member_joined, member_review_submitted, will_proposed
+- **Push Notifications**: APNs integration with 12 notification types, personalized per-user timezone.
+  - **Time-based (scheduler-driven)**: will_started (Will starts), will_review_required (Will ends), will_review_reminder (6hrs after Will ends), midpoint_milestone (50% through), commitment_reminder (6hrs after Will created), end_room_30min_warning (24hrs before), end_room_15min_warning (15min before), end_room_now (End Room opens)
+  - **Event-based**: will_proposed (Will created), circle_member_joined (member joins), team_push_encouragement (Push tapped), member_review_submitted (review submitted)
   - **Mode coverage**: Solo mode receives will_started, will_review_required, will_review_reminder, midpoint_milestone; Circle mode receives all notifications
   - **Idempotency**: Database tracking fields (completionNotificationSentAt, midpointAt, midpointNotificationSentAt on wills; ackReminderSentAt on will_commitments; commitmentReminders table) prevent duplicate sends.
   - **Token Cleanup**: Invalid APNs tokens (410/400/403 errors) automatically marked inactive to prevent wasted API calls.

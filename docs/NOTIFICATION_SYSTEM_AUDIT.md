@@ -2,28 +2,42 @@
 
 ## Overview
 
-The notification system has **13 notification types** covering the Will lifecycle:
+The notification system has **12 notification types** covering the Will lifecycle:
 
-### Time-based (Scheduler-driven) - 8 Types
-| # | Type | Trigger | Solo | Circle |
-|---|------|---------|------|--------|
-| 1 | `will_started` | Will status → active | ✅ | ✅ |
-| 2 | `midpoint_milestone` | 50% through duration | ✅ | ✅ |
-| 3 | `will_review_required` | Will status → will_review | ✅ | ✅ |
-| 4 | `will_review_reminder` | 6h after Will ends, no review | ✅ | ✅ |
-| 5 | `commitment_reminder` | 6h after Will created, no commit | ❌ | ✅ |
-| 6 | `end_room_24h` | 24h before End Room | ❌ | ✅ |
-| 7 | `end_room_15min` | 15min before End Room | ❌ | ✅ |
-| 8 | `end_room_live` | End Room opens | ❌ | ✅ |
+## Notification Reference Table
 
-### Event-based (User Actions) - 5 Types
-| # | Type | Trigger | Solo | Circle |
-|---|------|---------|------|--------|
-| 9 | `will_proposed` | Will created | ❌ | ✅ |
-| 10 | `circle_member_joined` | Member joins circle | ❌ | ✅ |
-| 11 | `member_review_submitted` | Review submitted | ❌ | ✅ |
-| 12 | `progress_logged` | Progress logged | ❌ | ✅ |
-| 13 | `team_push_encouragement` | Push sent | ❌ | ✅ |
+| # | Type | Title | Body | Mode | Trigger |
+|---|------|-------|------|------|---------|
+| 1 | `will_started` | Your Will has started! 🎯 | Time to begin your commitment: "{willTitle}" | Both | Scheduler: Will start date/time has passed (status changes to active) |
+| 2 | `will_review_required` | Your Will has ended 🎯 | Time to reflect - submit your review now! | Both | Scheduler: Will end date/time has passed (status changes to will_review) |
+| 3 | `will_review_reminder` | Review reminder ⏰ | Solo: "Don't forget to submit your Will review!" / Circle: "Your Circle is waiting for your review." | Both | Scheduler: 6 hours after Will ended AND user hasn't submitted review |
+| 4 | `midpoint_milestone` | Halfway there! 🎯 | You're halfway through your Will. Keep it up! | Both | Scheduler: Midpoint timestamp passed (precomputed at Will creation) |
+| 5 | `commitment_reminder` | Your Circle is waiting 🤝 | Your Circle is waiting for your commitment. | Circle | Scheduler: 6 hours after Will created AND user hasn't submitted commitment |
+| 6 | `end_room_30min_warning` | End Room tomorrow 📅 | Your End Room ceremony is scheduled for tomorrow at {time} | Circle | Scheduler: End Room scheduled time is ~24 hours away (1-minute window) |
+| 7 | `end_room_15min_warning` | End Room starting soon ⏰ | Your End Room ceremony starts in 15 minutes | Circle | Scheduler: End Room scheduled time is 15 minutes away (1-minute window) |
+| 8 | `end_room_now` | End Room is live! 🎭 | Join now for your circle's reflection ceremony | Circle | Scheduler: End Room status changes to 'open' |
+| 9 | `will_proposed` | New Will proposed! 📝 | {creatorName} has proposed starting a new will | Circle | Event: POST /api/wills (Circle mode Will created) |
+| 10 | `circle_member_joined` | New Circle member! 👋 | {memberName} joined your Circle. | Circle | Event: POST /api/circles/join (User joins circle with invite code) |
+| 11 | `team_push_encouragement` | {pusherName} has pushed you! 🚀 | Encouragement for your Will: "{willTitle}" | Circle | Event: POST /api/wills/:id/push (User taps Push button) |
+| 12 | `member_review_submitted` | Review submitted 📝 | {reviewerName} completed their Will review. | Circle | Event: POST /api/wills/:id/reviews (User submits Will review) |
+
+### Quick Reference: Triggers by Category
+
+**Scheduler-Driven (Time-based):**
+- `will_started` - Will start time passed
+- `will_review_required` - Will end time passed  
+- `will_review_reminder` - 6h after Will ended, no review submitted
+- `midpoint_milestone` - Halfway through Will duration
+- `commitment_reminder` - 6h after Will created, no commitment submitted
+- `end_room_30min_warning` - 24h before End Room
+- `end_room_15min_warning` - 15min before End Room
+- `end_room_now` - End Room opens
+
+**Event-Driven (User Actions):**
+- `will_proposed` - Circle Will created (POST /api/wills)
+- `circle_member_joined` - User joins circle (POST /api/circles/join)
+- `team_push_encouragement` - Push button tapped (POST /api/wills/:id/push)
+- `member_review_submitted` - Review submitted (POST /api/wills/:id/reviews)
 
 ---
 
