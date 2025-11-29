@@ -457,11 +457,11 @@ export default function InnerCircleHub() {
         />
       )}
 
-      <div className="pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
+      <div className="pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
           
-          {/* Header with Back Button */}
-          <div className="flex items-center justify-between mb-2">
+          {/* Header with Back Button - Title aligned closer to avatar */}
+          <div className="flex items-center justify-between mb-1">
             {/* Back Button */}
             <button
               onClick={() => setLocation('/')}
@@ -474,9 +474,9 @@ export default function InnerCircleHub() {
               </span>
             </button>
             
-            {/* Title */}
-            <div className="flex-1 text-center -ml-2">
-              <h1 className="text-xl font-semibold text-gray-900">Circle</h1>
+            {/* Title - positioned to align with user avatar */}
+            <div className="flex-1 text-center">
+              <h1 className="text-lg font-semibold text-gray-900">Circle</h1>
             </div>
             
             {/* User Menu */}
@@ -528,32 +528,32 @@ export default function InnerCircleHub() {
             </DropdownMenu>
           </div>
 
-          {/* Circle Icon with Glow + Tagline - tighter spacing */}
-          <div className="text-center mb-3">
-            <div className="inline-flex items-center justify-center mb-1">
+          {/* Circle Icon with Glow + Tagline */}
+          <div className="text-center mb-4 mt-2">
+            <div className="inline-flex items-center justify-center mb-1.5">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 blur-2xl opacity-40 animate-pulse"></div>
                 <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/10 to-teal-400/10 blur-lg opacity-25"></div>
-                <div className="relative w-12 h-12 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-100 flex items-center justify-center shadow-lg">
-                  <Users className="w-6 h-6 text-emerald-600" />
+                <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-100 flex items-center justify-center shadow-lg">
+                  <Users className="w-7 h-7 text-emerald-600" />
                 </div>
               </div>
             </div>
-            <p className="text-emerald-600 text-xs font-medium italic">
+            <p className="text-emerald-600 text-sm font-medium italic">
               "Become more… together"
             </p>
           </div>
 
-          {/* Members Section - Ultra Compact */}
-          <div className="relative mb-3">
+          {/* Members Section - More Breathing Room */}
+          <div className="relative mb-4">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
             <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-              <CardContent className="p-2.5">
-                {/* Section Header - Compact */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-1.5">
-                    <Users className="w-3.5 h-3.5 text-emerald-600" />
-                    <h3 className="font-semibold text-gray-900 text-xs">Circle Members</h3>
+              <CardContent className="p-4">
+                {/* Section Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-emerald-600" />
+                    <h3 className="font-semibold text-gray-900 text-sm">Circle Members</h3>
                   </div>
                   <div className="flex items-center space-x-1.5 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
                     <span className="text-[10px] text-emerald-700">Code:</span>
@@ -574,11 +574,11 @@ export default function InnerCircleHub() {
                 </div>
                 
                 {/* Members Grid - Dynamic layout based on member count (max 6) */}
-                <div className={`grid gap-2 ${
+                <div className={`grid gap-3 ${
                   (() => {
                     const count = circle.members?.length || 0;
-                    if (count === 1) return 'grid-cols-1 max-w-[100px] mx-auto';
-                    if (count === 2) return 'grid-cols-2 max-w-[220px] mx-auto';
+                    if (count === 1) return 'grid-cols-1 max-w-[120px] mx-auto';
+                    if (count === 2) return 'grid-cols-2 max-w-[260px] mx-auto';
                     if (count === 3) return 'grid-cols-3';
                     if (count === 4) return 'grid-cols-4';
                     if (count === 5) return 'grid-cols-5';
@@ -589,22 +589,22 @@ export default function InnerCircleHub() {
                   {circle.members?.map((member: any, index: number) => (
                     <div 
                       key={member.id} 
-                      className={`flex flex-col items-center p-1.5 bg-gradient-to-br from-gray-50 to-emerald-50/30 rounded-lg border border-emerald-100/50 ${member.user.id === user?.id ? 'cursor-pointer hover:bg-emerald-50/50 transition-colors' : ''}`}
+                      className={`flex flex-col items-center p-2 bg-gradient-to-br from-gray-50 to-emerald-50/30 rounded-xl border border-emerald-100/50 ${member.user.id === user?.id ? 'cursor-pointer hover:bg-emerald-50/50 transition-colors' : ''}`}
                       onClick={member.user.id === user?.id ? () => setShowAccountSettings(true) : undefined}
                     >
-                      {/* Avatar with glow - smaller */}
-                      <div className="relative mb-0.5">
+                      {/* Avatar with glow */}
+                      <div className="relative mb-1">
                         <div className="absolute inset-0 bg-emerald-500/20 blur-sm rounded-full"></div>
-                        <div className="relative w-7 h-7 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-sm">
-                          <span className="text-white font-semibold text-[10px]">
+                        <div className="relative w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-sm">
+                          <span className="text-white font-semibold text-xs">
                             {(member.user.firstName || member.user.email)?.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        {/* Online indicator - smaller */}
-                        <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full border border-white"></div>
+                        {/* Online indicator */}
+                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></div>
                       </div>
                       <div className="text-center min-w-0 w-full">
-                        <div className="font-medium text-gray-900 truncate text-[10px] leading-tight">
+                        <div className="font-medium text-gray-900 truncate text-xs leading-tight">
                           {member.user.firstName || member.user.email?.split('@')[0]}
                         </div>
                       </div>
@@ -627,19 +627,19 @@ export default function InnerCircleHub() {
                 </div>
 
           {willStatus === 'no_will' && (
-            <div className="text-center py-3">
+            <div className="text-center py-4">
               <button 
                 onClick={() => setLocation('/start-will')}
-                className="mx-auto mb-2 w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                className="mx-auto mb-3 w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                 aria-label="Create a Will"
               >
-                <Plus className="w-6 h-6 text-white stroke-[2.5]" />
+                <Plus className="w-8 h-8 text-white stroke-[2.5]" />
               </button>
-              <h3 className="text-sm font-medium mb-0.5 tracking-tight text-gray-900">No active <em>Will</em></h3>
-              <p className="text-gray-500 mb-3 text-xs tracking-tight">Ready to commit together?</p>
+              <h3 className="text-base font-medium mb-1 tracking-tight text-gray-900">No active <em>Will</em></h3>
+              <p className="text-gray-500 mb-4 text-sm tracking-tight">Ready to commit together?</p>
               <Button 
                 onClick={() => setLocation('/start-will')}
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2 rounded-xl shadow-md transition-all duration-200 text-sm"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2.5 rounded-xl shadow-md transition-all duration-200"
               >
                 <span>Start a <em>Will</em></span>
               </Button>
