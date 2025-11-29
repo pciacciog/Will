@@ -1,0 +1,295 @@
+"I need a complete technical audit of the notification system to ensure it's production-ready and robust. Please document the current implementation across all 13 notification types.
+
+OVERVIEW:
+We have 13 notification types covering the Will lifecycle:
+Time-based (Scheduler):
+
+will_started - When Will becomes active (Solo + Circle)
+midpoint_milestone - At 50% duration (Solo + Circle)
+will_review_required - When Will ends (Solo + Circle)
+will_review_reminder - 6h after Will ends if no review (Solo + Circle)
+commitment_reminder - 6h after Will created if no commit (Circle only)
+end_room_30min - 30min before End Room (Circle only)
+end_room_15min - 15min before End Room (Circle only)
+end_room_now - When End Room opens (Circle only)
+
+Event-based (User Actions):
+9. will_proposed - When Will created (Circle only)
+10. circle_member_joined - When member joins (Circle only)
+11. member_review_submitted - When review submitted (Circle only)
+12. progress_logged - When progress logged (Circle only)
+13. team_push_encouragement - When user sends push (Circle only)
+
+REQUIRED DOCUMENTATION:
+1. Deduplication/Idempotency Implementation
+Show me how you prevent duplicate notifications.
+A. Database Schema:
+bash# Show the tracking mechanism
+# Do you have a notification_log table? Or fields on wills table?
+# Run this and show output:
+\d notification_log
+# OR
+\d wills | grep notification
+B. Code Implementation:
+Show the actual code that checks "already sent":
+typescript// Example - show your actual implementation:
+
+// How do you check if notification already sent?
+// Where is this code located?
+// Does it use database queries? Boolean flags? Timestamps?
+
+async function sendNotificationOnce(...) {
+  // Your actual implementation here
+}
+C. Verification Query:
+sql-- For a specific Will, show what prevents duplicate notifications
+-- Example query to demonstrate:
+SELECT * FROM [your_tracking_table] 
+WHERE will_id = [test_will_id]
+ORDER BY sent_at DESC;
+
+2. Timing Window Implementation
+For ALL time-based notifications, show how you calculate timing.
+A. 30-Minute Warning:
+typescript// Show the actual code from scheduler.ts
+// How do you check if it's "30 minutes before End Room"?
+
+if (???) { // What's the condition?
+  await sendNotification('end_room_30min');
+}
+Questions:
+
+Is it exact time (minutesUntil === 30) or range (minutesUntil >= 28 && <= 32)?
+How do you handle timezone differences?
+What happens if scheduler doesn't run for 5 minutes due to restart?
+
+B. Midpoint Calculation:
+typescript// Show the code that calculates midpoint
+// Where is midpoint stored? How is it calculated?
+
+const midpoint = ???;
+Questions:
+
+Is midpoint pre-calculated and stored in database?
+Or calculated on-the-fly in scheduler?
+How do you determine if midpoint notification already sent?
+
+C. 6-Hour Reminder Windows:
+typescript// commitment_reminder - 6h after Will created
+// will_review_reminder - 6h after Will ended
+
+// Show the actual conditions
+Questions:
+
+Are these exact 6 hours or a range?
+How do you prevent sending at 6h, 6h1min, 6h2min, etc.?
+
+
+3. Scheduler Error Handling
+Show me the scheduler wrapper code:
+typescript// From server/scheduler.ts
+// Show the actual setInterval implementation
+
+export function startScheduler() {
+  // Your actual code here
+}
+Questions:
+
+Is scheduler wrapped in try-catch?
+What happens if database times out?
+What happens if APNs fails?
+How do you know scheduler is still running?
+Are there heartbeat logs?
+
+
+4. APNs Error Handling
+Show how you handle invalid tokens:
+typescript// From server/pushNotificationService.ts
+// Show the code that sends notifications
+
+async sendNotification(userId, title, body) {
+  // Your actual implementation
+  
+  // What happens if APNs returns 410 (token invalid)?
+  // What happens if APNs returns 400 (bad request)?
+  // Do you mark tokens as inactive?
+}
+
+5. Solo vs Circle Mode Logic
+For each notification, show how you determine Solo vs Circle:
+Example for will_started:
+typescript// Show actual code
+// How do you know if it's Solo or Circle?
+// Where does this check happen?
+
+if (will.mode === 'solo') {
+  // Send to solo user
+} else {
+  // Send to all circle members
+}
+For Circle-only notifications (member_review_submitted):
+typescript// Show the code that prevents sending in Solo mode
+// Is there a guard clause?
+if (will.mode === 'circle') {
+  // Only then send
+}
+
+6. Critical Notification Code Review
+Show the ACTUAL code for these 3 most critical notifications:
+A. will_review_required (MOST CRITICAL):
+typescript// In scheduler.ts or wherever this triggers
+// Show EXACT code from trigger to send
+
+// When does this fire?
+// How does it know Will ended?
+// How does it find all committed members?
+// How does it prevent duplicates?
+B. will_started (Solo + Circle):
+typescript// Show EXACT code
+// Where does it check if Will should transition to active?
+// How does it handle Solo vs Circle?
+C. will_review_reminder (6h follow-up):
+typescript// Show EXACT code
+// How do you calculate "6 hours after Will ended"?
+// How do you check if review already submitted?
+// How do you prevent sending multiple times?
+
+7. Database Queries and Performance
+Show the queries used in scheduler:
+typescript// What queries run every minute in the scheduler?
+
+// Example:
+const activeWills = await db.select()...
+
+// Show ALL queries that run every scheduler iteration
+Questions:
+
+Are there indexes on queried columns?
+How many Wills are you querying per minute?
+What's the query performance with 1000 Wills?
+
+
+8. Testing Evidence
+Provide proof that deduplication works:
+bash# Create a test scenario:
+# 1. Create Will that ends in 2 minutes
+# 2. Wait for will_review_required to fire
+# 3. Restart Repl
+# 4. Check if notification fires AGAIN (it shouldn't)
+
+# Show:
+# - Database state (notification_log or tracking fields)
+# - Console logs showing "already sent" message
+
+9. Configuration and Environment
+Show notification-related config:
+typescript// From code - show any constants/config:
+
+const COMMITMENT_REMINDER_HOURS = ???;
+const REVIEW_REMINDER_HOURS = ???;
+const MIDPOINT_CALCULATION_METHOD = ???;
+
+// Are these hardcoded or configurable?
+
+10. Monitoring and Logging
+Show what gets logged for each notification:
+bash# Example of good logging:
+[NOTIF] Checking will_review_required for Will 123
+[NOTIF] Will 123 ended at 2024-01-15 17:00:00
+[NOTIF] 3 members need notification
+[NOTIF] Sending to user ABC... ✅ Success
+[NOTIF] Sending to user DEF... ✅ Success
+[NOTIF] Sending to user GHI... ❌ Token invalid (marked inactive)
+[NOTIF] Logged notification_type=will_review_required for Will 123
+
+# Show your actual log format
+```
+
+---
+
+## **DELIVERABLES:**
+
+Please provide:
+
+### **A. Code Snippets:**
+1. Deduplication function (complete code)
+2. Scheduler wrapper with error handling (complete code)
+3. All 3 critical notification implementations (complete code)
+4. Solo vs Circle mode check (complete code)
+
+### **B. Database Evidence:**
+5. Schema for notification tracking (table structure or fields)
+6. Sample query results showing deduplication working
+7. Indexes on notification-related columns
+
+### **C. Configuration:**
+8. All timing constants (6h, 30min, 15min windows)
+9. Any feature flags or environment variables
+
+### **D. Testing Proof:**
+10. Console logs showing:
+    - Scheduler running every minute
+    - Notifications being sent
+    - Deduplication working ("already sent" messages)
+    - Errors being caught and handled
+
+### **E. Technical Documentation:**
+11. Flow diagram (text format) for `will_review_required`:
+```
+    Will ends → Status changes to 'will_review'
+    → Scheduler detects change
+    → Checks if notification already sent
+    → If not sent: sends to all committed members
+    → Logs notification in tracking system
+    → Next run: sees already sent, skips
+
+SPECIFIC VERIFICATION QUESTIONS:
+For each question, answer YES/NO and show supporting code:
+Deduplication:
+
+ Does system prevent duplicate notifications? (show code)
+ Survives Repl restarts? (show database tracking)
+ Handles concurrent scheduler runs? (show locking/uniqueness)
+
+Timing:
+
+ Uses range-based windows (not exact times)? (show conditions)
+ Handles scheduler delays/gaps? (show range size)
+ Timezone-aware? (show timezone handling)
+
+Error Handling:
+
+ Scheduler wrapped in try-catch? (show code)
+ APNs errors caught and logged? (show code)
+ Invalid tokens marked inactive? (show code)
+
+Solo/Circle:
+
+ Circle-only notifications blocked for Solo? (show guards)
+ Solo gets all essential notifications? (show list)
+ Messages mode-aware? (show different text)
+
+Performance:
+
+ Queries optimized with indexes? (show index definitions)
+ Batch processing for large user counts? (show approach)
+ Scheduler completes within 60 seconds? (show timing logs)
+
+
+CRITICAL SUCCESS CRITERIA:
+Before production launch, I need to see:
+✅ No duplicate notifications - Database/logs prove this
+✅ Survives restarts - Test shows notification not re-sent
+✅ Handles errors gracefully - Logs show errors caught, scheduler continues
+✅ Solo gets essentials - will_started, will_review_required working
+✅ Timing windows robust - Range-based, not exact minute
+✅ Performance acceptable - Queries fast, scheduler completes quickly
+
+Please provide the complete technical documentation above. Focus especially on:
+
+Actual code for deduplication
+Actual code for the 3 critical notifications
+Database schema for tracking
+Testing proof (logs/queries)
+
+This will help us verify the system is production-ready and won't spam users or miss critical notifications."
