@@ -438,6 +438,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       endDate: willData.endDate,
       endRoomScheduledAt: null,
       mode: 'solo',
+      what: willData.what,
+      because: willData.why,
     });
   };
 
