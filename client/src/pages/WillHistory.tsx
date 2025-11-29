@@ -31,7 +31,18 @@ export default function WillHistory({ mode }: WillHistoryProps) {
   const isSolo = mode === 'solo';
 
   const { data: history, isLoading, error } = useQuery<WillHistoryItem[]>({
-    queryKey: [`/api/wills/history?mode=${mode}`],
+    queryKey: ['/api/wills/history', mode],
+    queryFn: async () => {
+      const response = await fetch(`/api/wills/history?mode=${mode}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch history');
+      }
+      return response.json();
+    },
+    retry: 1,
+    staleTime: 30000,
   });
 
   const handleBack = () => {
@@ -153,8 +164,17 @@ export default function WillHistory({ mode }: WillHistoryProps) {
 
           {/* History List */}
           {error ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Failed to load history. Please try again.</p>
+            <div className="text-center py-12">
+              <div className={`w-16 h-16 mx-auto mb-4 bg-gradient-to-br ${themeColors.iconBg} rounded-full border-2 ${themeColors.iconBorder} flex items-center justify-center`}>
+                <Clock className={`w-8 h-8 ${themeColors.iconColor} opacity-50`} />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No History Available</h3>
+              <p className="text-gray-500 text-sm">
+                {isSolo 
+                  ? "Complete your first solo Will to see it here."
+                  : "Complete your first circle Will to see it here."
+                }
+              </p>
             </div>
           ) : history && history.length > 0 ? (
             <div className="space-y-4">
