@@ -163,6 +163,11 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
   const [endRoomDateTime, setEndRoomDateTime] = useState('');
   const [showEndRoomForm, setShowEndRoomForm] = useState(false);
   const [showSkipConfirmation, setShowSkipConfirmation] = useState(false);
+  
+  // Daily reminder settings
+  const [dailyReminderTime, setDailyReminderTime] = useState('07:30');
+  const [skipDailyReminder, setSkipDailyReminder] = useState(false);
+  
   const { toast } = useToast();
   
   // Auto-resize refs for textareas
@@ -203,6 +208,33 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
     // Always show help icon once the component is loaded
     setShowHelpIcon(true);
   }, []);
+  
+  // Initialize daily reminder time from user's existing settings
+  useEffect(() => {
+    if (user?.dailyReminderTime) {
+      setDailyReminderTime(user.dailyReminderTime);
+    }
+    if (user?.dailyReminderEnabled === false) {
+      setSkipDailyReminder(true);
+    }
+  }, [user]);
+  
+  // Mutation to update reminder settings
+  const updateReminderSettingsMutation = useMutation({
+    mutationFn: async (settings: { dailyReminderTime?: string | null; dailyReminderEnabled?: boolean }) => {
+      const response = await apiRequest('/api/user/reminder-settings', {
+        method: 'PATCH',
+        body: JSON.stringify(settings)
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    },
+    onError: (error) => {
+      console.error('Failed to update reminder settings:', error);
+    }
+  });
 
   const createWillMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -323,6 +355,12 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       });
       return;
     }
+
+    // Save daily reminder settings
+    updateReminderSettingsMutation.mutate({
+      dailyReminderTime: skipDailyReminder ? null : dailyReminderTime,
+      dailyReminderEnabled: !skipDailyReminder
+    });
 
     setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });
     setCurrentStep(2);
@@ -630,6 +668,34 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               
               {/* Asterisk note */}
               <p className="text-xs text-gray-400 text-center">*Defaults to next Mon–Sun</p>
+              
+              {/* Daily Reminder Time */}
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 pt-2 border-t border-gray-100" style={{ animationDelay: '150ms' }}>
+                <label className="block text-sm font-medium text-gray-700 mb-2 tracking-tight">
+                  Remind me about my Will each day at:
+                </label>
+                <div className="flex items-center gap-3">
+                  <Input 
+                    type="time" 
+                    value={dailyReminderTime}
+                    onChange={(e) => setDailyReminderTime(e.target.value)}
+                    step="900"
+                    disabled={skipDailyReminder}
+                    className={`w-32 text-sm ${skipDailyReminder ? 'opacity-50' : ''}`}
+                    data-testid="input-daily-reminder-time"
+                  />
+                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={skipDailyReminder}
+                      onChange={(e) => setSkipDailyReminder(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      data-testid="checkbox-skip-daily-reminder"
+                    />
+                    Skip daily reminders
+                  </label>
+                </div>
+              </div>
               
               <div className="flex justify-between items-center pt-4 animate-in fade-in duration-500" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center space-x-2">
