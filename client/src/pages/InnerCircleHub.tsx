@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { Copy, Settings, UserMinus, ChevronDown, Shield, Users, Target, Plus, Video, Clock, CheckCircle, ChevronLeft } from "lucide-react";
+import { Copy, Settings, UserMinus, ChevronDown, Shield, Users, Target, Plus, Video, Clock, CheckCircle, ChevronLeft, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -900,6 +900,19 @@ export default function InnerCircleHub() {
               </CardContent>
             </Card>
           </div>
+
+          {/* History Link */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => setLocation('/circle/history')}
+              className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 text-sm font-medium transition-colors"
+              data-testid="button-view-circle-history"
+            >
+              <History className="w-4 h-4" />
+              View History
+            </button>
+          </div>
+
         </div>
       </div>
 

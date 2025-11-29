@@ -1,0 +1,57 @@
+OVERVIEW:
+I'd like to add a Will History feature where users can view their completed/past Wills with the relevant info. The history should be separated by mode (Solo vs Circle) and accessible from each mode's hub page.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GOALS & REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT I WANT USERS TO SEE:
+
+For each past Will, show:
+- The commitment text of each member
+- When it ran (start and end dates)
+- Whether they completed it or not (Status - Yes /. No / Mostly along with their supporting text)
+- For Circle Wills: which circle it was with
+
+Keep it simple - just a clean list of past Wills with relevant info. It can basically be like almost copy pasting the final review summary if you think that this could work.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKEND SUGGESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You'll probably need:
+- A new endpoint to fetch past Wills (filtered by user and mode)
+- Logic to determine if a Will was "completed" vs "failed" vs "abandoned"
+  - Consider: did the user complete most of their days? Did they finish the duration?
+- Join with reflections/check-ins to show completion stats
+- Only return Wills that have ended (not currently active ones)
+
+Feel free to structure the response data however makes most sense given our existing schema. Just make sure it includes the info users need to see (commitment, dates, status, completion stats).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FRONTEND SUGGESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NAVIGATION:
+Add a way to get to history from both Solo Hub and Circle Hub. Could be a button, a card, a tab - whatever fits best with the current design.
+
+Routes might look like:
+- `/solo/history` for Solo mode
+- `/circle/history` for Circle mode (or whatever makes sense)
+
+HISTORY PAGE:
+Show a list of past Wills, most recent first. 
+
+DESIGN:
+- Keep it clean and not overwhelming
+- Use our existing design system
+- Make it mobile-friendly
+- Follow patterns you've already established in Solo/Circle hubs
+
+Feel free to create whatever components, hooks, or utilities make sense for the architecture. I trust you to organize this in a way that fits with the existing codebase.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is Phase 1 - just getting the basic list view working. We can add more detailed views, analytics, and features later.

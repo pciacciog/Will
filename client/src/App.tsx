@@ -18,6 +18,7 @@ import Home from "@/pages/Home";
 import InnerCircle from "@/pages/InnerCircle";
 import InnerCircleHub from "@/pages/InnerCircleHub";
 import SoloHub from "@/pages/SoloHub";
+import WillHistory from "@/pages/WillHistory";
 import StartWill from "@/pages/StartWill";
 import WillDetails from "@/pages/WillDetails";
 import SubmitCommitment from "@/pages/SubmitCommitment";
@@ -321,6 +322,8 @@ function Router() {
             <Route path="/inner-circle" component={InnerCircle} />
             <Route path="/hub" component={InnerCircleHub} />
             <Route path="/solo/hub" component={SoloHub} />
+            <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
+            <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>
             <Route path="/start-will">{() => <StartWill />}</Route>
             <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/will/:id" component={WillDetails} />

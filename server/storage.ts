@@ -37,7 +37,7 @@ import {
   type InsertPageContent,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -96,6 +96,25 @@ export interface IStorage {
   getWillReview(willId: number, userId: string): Promise<(WillReview & { user: User }) | undefined>;
   getWillReviews(willId: number): Promise<(WillReview & { user: User })[]>;
   getWillReviewCount(willId: number): Promise<number>;
+  
+  // Will history operations
+  getUserWillHistory(userId: string, mode: 'solo' | 'circle', limit?: number): Promise<{
+    id: number;
+    mode: string;
+    startDate: Date;
+    endDate: Date;
+    status: string;
+    circle?: { id: number; inviteCode: string } | null;
+    participants: {
+      userId: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      commitment: string;
+      followThrough: string | null;
+      reflectionText: string | null;
+    }[];
+  }[]>;
   
   // Daily progress operations
   markDailyProgress(progress: InsertDailyProgress): Promise<DailyProgress>;
@@ -585,6 +604,127 @@ export class DatabaseStorage implements IStorage {
       .from(willReviews)
       .where(eq(willReviews.willId, willId));
     return result.count;
+  }
+
+  // Will history operations
+  async getUserWillHistory(userId: string, mode: 'solo' | 'circle', limit: number = 20): Promise<{
+    id: number;
+    mode: string;
+    startDate: Date;
+    endDate: Date;
+    status: string;
+    circle?: { id: number; inviteCode: string } | null;
+    participants: {
+      userId: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      commitment: string;
+      followThrough: string | null;
+      reflectionText: string | null;
+    }[];
+  }[]> {
+    // Get completed wills where user participated (has a commitment)
+    let completedWills;
+    
+    if (mode === 'solo') {
+      // Solo mode: get wills created by the user
+      completedWills = await db
+        .select()
+        .from(wills)
+        .where(and(
+          eq(wills.createdBy, userId),
+          eq(wills.mode, 'solo'),
+          eq(wills.status, 'completed')
+        ))
+        .orderBy(desc(wills.endDate))
+        .limit(limit);
+    } else {
+      // Circle mode: get wills where user has a commitment
+      const userCommitments = await db
+        .select({ willId: willCommitments.willId })
+        .from(willCommitments)
+        .where(eq(willCommitments.userId, userId));
+      
+      const willIds = userCommitments.map(c => c.willId);
+      
+      if (willIds.length === 0) {
+        return [];
+      }
+      
+      completedWills = await db
+        .select()
+        .from(wills)
+        .where(and(
+          inArray(wills.id, willIds),
+          eq(wills.mode, 'circle'),
+          eq(wills.status, 'completed')
+        ))
+        .orderBy(desc(wills.endDate))
+        .limit(limit);
+    }
+    
+    // Build the result with participants, reviews, and circle info
+    const result = await Promise.all(
+      completedWills.map(async (will) => {
+        // Get commitments with user info
+        const commitmentsList = await db
+          .select({
+            commitment: willCommitments,
+            user: users,
+          })
+          .from(willCommitments)
+          .innerJoin(users, eq(willCommitments.userId, users.id))
+          .where(eq(willCommitments.willId, will.id));
+        
+        // Get reviews for this will
+        const reviewsList = await db
+          .select()
+          .from(willReviews)
+          .where(eq(willReviews.willId, will.id));
+        
+        // Map reviews by userId for easy lookup
+        const reviewsByUser = new Map(
+          reviewsList.map(r => [r.userId, r])
+        );
+        
+        // Get circle info if circle mode
+        let circle = null;
+        if (mode === 'circle' && will.circleId) {
+          const [circleData] = await db
+            .select({ id: circles.id, inviteCode: circles.inviteCode })
+            .from(circles)
+            .where(eq(circles.id, will.circleId));
+          circle = circleData || null;
+        }
+        
+        // Build participants array with commitment + review data
+        const participants = commitmentsList.map(({ commitment, user }) => {
+          const review = reviewsByUser.get(user.id);
+          return {
+            userId: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            commitment: commitment.what,
+            followThrough: review?.followThrough || null,
+            reflectionText: review?.reflectionText || null,
+          };
+        });
+        
+        return {
+          id: will.id,
+          mode: will.mode,
+          startDate: will.startDate,
+          endDate: will.endDate,
+          status: will.status,
+          circle,
+          participants,
+        };
+      })
+    );
+    
+    return result;
   }
 
   // Daily progress operations

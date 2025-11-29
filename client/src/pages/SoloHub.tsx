@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Plus, User, ChevronLeft, Sparkles } from "lucide-react";
+import { Target, Plus, User, ChevronLeft, Sparkles, History } from "lucide-react";
 
 type Will = {
   id: number;
@@ -175,37 +175,17 @@ export default function SoloHub() {
             </div>
           )}
 
-          {/* Past Wills Section (if any completed) */}
-          {soloWills && soloWills.filter(w => w.status === 'completed').length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
-                Completed Wills
-              </h3>
-              <div className="space-y-2">
-                {soloWills
-                  .filter(w => w.status === 'completed')
-                  .slice(0, 3)
-                  .map(will => (
-                    <button
-                      key={will.id}
-                      onClick={() => handleViewWill(will.id)}
-                      className="w-full text-left p-3 bg-white rounded-xl border border-gray-100 hover:border-purple-200 hover:shadow-sm transition-all"
-                      data-testid={`button-past-will-${will.id}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">
-                          {will.commitments?.[0]?.what?.substring(0, 40)}...
-                        </span>
-                        <Badge className="bg-gray-100 text-gray-600 text-xs">
-                          Completed
-                        </Badge>
-                      </div>
-                    </button>
-                  ))
-                }
-              </div>
-            </div>
-          )}
+          {/* History Link */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => setLocation('/solo/history')}
+              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors"
+              data-testid="button-view-solo-history"
+            >
+              <History className="w-4 h-4" />
+              View History
+            </button>
+          </div>
 
         </div>
       </div>

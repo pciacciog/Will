@@ -742,6 +742,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Will History endpoint - get completed wills for a user filtered by mode
+  app.get('/api/wills/history', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const mode = req.query.mode as 'solo' | 'circle';
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      
+      if (!mode || (mode !== 'solo' && mode !== 'circle')) {
+        return res.status(400).json({ message: "Invalid mode. Must be 'solo' or 'circle'." });
+      }
+      
+      const history = await storage.getUserWillHistory(userId, mode, limit);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching will history:", error);
+      res.status(500).json({ message: "Failed to fetch will history" });
+    }
+  });
+
   app.get('/api/wills/circle/:circleId', isAuthenticated, async (req: any, res) => {
     try {
       const circleId = parseInt(req.params.circleId);
