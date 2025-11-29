@@ -1003,17 +1003,17 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
 
                     {/* Notes Section - Compact */}
                     <div className="mx-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
-                      <ul className="space-y-1 text-xs text-gray-600">
+                      <ul className="space-y-1.5 text-sm text-gray-600 leading-relaxed">
                         <li className="flex items-start">
-                          <span className="w-1 h-1 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
                           Video link opens automatically at chosen time
                         </li>
                         <li className="flex items-start">
-                          <span className="w-1 h-1 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
                           Runs for 30 minutes
                         </li>
                         <li className="flex items-start">
-                          <span className="w-1 h-1 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
                           Can't be changed once Will starts
                         </li>
                       </ul>
@@ -1021,16 +1021,16 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                   </div>
 
                   {/* Navigation - Anchored, matches other steps */}
-                  <div className="flex items-center justify-end gap-3 pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
-                    {/* Skip button - Ghost style with border */}
+                  <div className="flex items-center justify-between pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
+                    {/* Skip button - Lower-left, ghost style */}
                     <button 
                       type="button" 
                       onClick={() => setShowSkipConfirmation(true)}
                       disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                      className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 disabled:opacity-50"
+                      className="h-11 px-4 text-sm font-medium text-gray-500 bg-transparent border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 disabled:opacity-50"
                       data-testid="button-skip-endroom"
                     >
-                      Skip
+                      Skip this step
                     </button>
                     
                     {/* Primary CTA - matches Next button style */}
