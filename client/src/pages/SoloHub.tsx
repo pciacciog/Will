@@ -33,9 +33,9 @@ export default function SoloHub() {
     },
   });
 
-  // Get active or most recent solo will
+  // Get active or most recent solo will (including pending for scheduled future wills)
   const activeWill = soloWills?.find(w => 
-    w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled'
+    w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending'
   );
 
   const handleStartWill = () => {
@@ -124,6 +124,7 @@ export default function SoloHub() {
                           }`}>
                             {activeWill.status === 'active' ? 'Active' : 
                              activeWill.status === 'will_review' ? 'Review' : 
+                             activeWill.status === 'pending' ? 'Scheduled' :
                              'Scheduled'}
                           </Badge>
                         </div>
