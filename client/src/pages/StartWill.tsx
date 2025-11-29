@@ -731,21 +731,33 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
           </SectionCard>
         )}
         
-        {/* Step 2: What Will You Do */}
+        {/* Step 2: What Will You Do - Focused Writing Experience */}
         {currentStep === 2 && !showTransition && (
-          <SectionCard>
-            
-            <form onSubmit={handleStep2Submit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-tight">Your Want</label>
-                <div className="relative">
-                  <div className="flex items-start bg-white border-2 border-gray-200 rounded-xl px-4 py-3.5 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all duration-200">
-                    <span className="text-gray-800 font-semibold text-base mr-3 mt-0.5 flex-shrink-0">I will</span>
+          <div className="flex flex-col min-h-[60vh] animate-in fade-in duration-500">
+            <form onSubmit={handleStep2Submit} className="flex flex-col flex-1">
+              {/* Main Writing Area - Centered and Focused */}
+              <div className="flex-1 flex flex-col justify-center py-8">
+                {/* Prompt Label */}
+                <div className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <p className="text-sm font-medium text-gray-500 uppercase tracking-widest text-center">
+                    Your Commitment
+                  </p>
+                </div>
+                
+                {/* The Writing Statement */}
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
+                  {/* "I will" - Large, Prominent */}
+                  <p className="text-2xl font-semibold text-gray-800 text-center tracking-tight">
+                    I will
+                  </p>
+                  
+                  {/* Text Input - Clean, Minimal, Focused */}
+                  <div className="relative px-2">
                     <Textarea 
                       ref={whatRef}
                       name="what"
                       required 
-                      rows={1} 
+                      rows={2} 
                       maxLength={75}
                       value={willData.what}
                       onChange={(e) => {
@@ -753,30 +765,48 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                         setWhatCharCount(e.target.value.length);
                         resizeTextarea(whatRef);
                       }}
-                      className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed font-normal p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400 transition-all" 
-                      style={{ maxHeight: '96px' }}
+                      className="w-full text-center text-xl leading-relaxed font-normal text-gray-700 bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 resize-none transition-colors duration-300 placeholder:text-gray-300 placeholder:italic py-3 px-4" 
+                      style={{ minHeight: '72px', maxHeight: '120px' }}
                       placeholder="call my grandmother this week"
+                      data-testid="input-what"
                     />
+                    {/* Subtle focus indicator line animation */}
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-300 group-focus-within:w-full" />
                   </div>
+                  
+                  {/* Character count - Subtle, Right-aligned */}
+                  <p className="text-xs text-gray-400 text-center tracking-tight animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
+                    {whatCharCount} / 75
+                  </p>
                 </div>
-                <div className="text-xs text-gray-400 mt-2 text-right tracking-tight">{whatCharCount} / 75</div>
+                
+                {/* Inspirational hint - Only show when empty */}
+                {willData.what.length === 0 && (
+                  <div className="mt-8 text-center animate-in fade-in duration-700" style={{ animationDelay: '400ms' }}>
+                    <p className="text-sm text-gray-400 italic">
+                      What meaningful action will you take?
+                    </p>
+                  </div>
+                )}
               </div>
               
-              <div className="flex justify-between items-center">
+              {/* Navigation - Fixed at bottom */}
+              <div className="flex justify-between items-center pt-6 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <button 
                   type="button" 
                   onClick={() => setCurrentStep(1)}
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  className="text-gray-500 hover:text-gray-700 px-4 py-2 text-sm font-medium transition-colors duration-200 flex items-center"
+                  data-testid="button-back"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </button>
-                <PrimaryButton>
+                <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
             </form>
-          </SectionCard>
+          </div>
         )}
         
         {/* Step 3: Why */}
