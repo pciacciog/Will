@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, User, Shield, Settings, Trash2 } from "lucide-react";
+import { Eye, EyeOff, User, Shield, Settings, Trash2, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +33,22 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
+  
+  // Daily reminder settings state - respect server state
+  // user.dailyReminderEnabled: true = enabled, false = disabled, null/undefined = not yet set (default to enabled for new users)
+  const [dailyReminderTime, setDailyReminderTime] = useState(user?.dailyReminderTime || '07:30');
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(user?.dailyReminderEnabled !== false);
+  
+  // Re-sync state when modal opens or user data changes
+  useEffect(() => {
+    if (isOpen && user) {
+      setDailyReminderTime(user.dailyReminderTime || '07:30');
+      setDailyReminderEnabled(user.dailyReminderEnabled !== false);
+      setFirstName(user.firstName || '');
+      setLastName(user.lastName || '');
+      setEmail(user.email || '');
+    }
+  }, [isOpen, user]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: { firstName: string; lastName: string; email: string }) => {
@@ -62,6 +78,37 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
       });
     },
   });
+
+  const updateReminderSettingsMutation = useMutation({
+    mutationFn: async (settings: { dailyReminderTime?: string | null; dailyReminderEnabled?: boolean }) => {
+      const res = await apiRequest('/api/user/reminder-settings', {
+        method: 'PATCH',
+        body: JSON.stringify(settings)
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Notification Settings Updated",
+        description: "Your reminder preferences have been saved",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update reminder settings",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveReminderSettings = () => {
+    updateReminderSettingsMutation.mutate({
+      dailyReminderTime: dailyReminderEnabled ? dailyReminderTime : null,
+      dailyReminderEnabled
+    });
+  };
 
   const changePasswordMutation = useMutation({
     mutationFn: async (passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
@@ -202,12 +249,16 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile" className="flex items-center space-x-1 text-xs sm:text-sm">
               <User className="h-4 w-4" />
-              <span>Profile Info</span>
+              <span>Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center space-x-2">
+            <TabsTrigger value="notifications" className="flex items-center space-x-1 text-xs sm:text-sm">
+              <Bell className="h-4 w-4" />
+              <span>Reminders</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center space-x-1 text-xs sm:text-sm">
               <Shield className="h-4 w-4" />
               <span>Security</span>
             </TabsTrigger>
@@ -265,6 +316,63 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
                     {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-4 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center space-x-2">
+                  <Bell className="h-5 w-5" />
+                  <span>Daily Reminders</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dailyReminderEnabled" className="text-base">Enable daily reminders</Label>
+                    <p className="text-sm text-gray-500">
+                      Receive a daily push notification about your active Will
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    id="dailyReminderEnabled"
+                    checked={dailyReminderEnabled}
+                    onChange={(e) => setDailyReminderEnabled(e.target.checked)}
+                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    data-testid="checkbox-daily-reminder-enabled"
+                  />
+                </div>
+                
+                <div className={`space-y-2 ${!dailyReminderEnabled ? 'opacity-50' : ''}`}>
+                  <Label htmlFor="dailyReminderTime">Reminder time</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      id="dailyReminderTime"
+                      type="time"
+                      value={dailyReminderTime}
+                      onChange={(e) => setDailyReminderTime(e.target.value)}
+                      disabled={!dailyReminderEnabled}
+                      step="900"
+                      className="w-32"
+                      data-testid="input-daily-reminder-time-settings"
+                    />
+                    <span className="text-sm text-gray-500">
+                      (in your local time)
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleSaveReminderSettings}
+                  disabled={updateReminderSettingsMutation.isPending}
+                  className="w-full mt-4"
+                  data-testid="button-save-reminder-settings"
+                >
+                  {updateReminderSettingsMutation.isPending ? "Saving..." : "Save Reminder Settings"}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>

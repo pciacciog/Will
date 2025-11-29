@@ -164,9 +164,10 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
   const [showEndRoomForm, setShowEndRoomForm] = useState(false);
   const [showSkipConfirmation, setShowSkipConfirmation] = useState(false);
   
-  // Daily reminder settings
-  const [dailyReminderTime, setDailyReminderTime] = useState('07:30');
-  const [skipDailyReminder, setSkipDailyReminder] = useState(false);
+  // Daily reminder settings - track if user has made changes
+  const [dailyReminderTime, setDailyReminderTime] = useState<string>('');
+  const [skipDailyReminder, setSkipDailyReminder] = useState<boolean | null>(null);
+  const [hasModifiedReminder, setHasModifiedReminder] = useState(false);
   
   const { toast } = useToast();
   
@@ -211,11 +212,12 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
   
   // Initialize daily reminder time from user's existing settings
   useEffect(() => {
-    if (user?.dailyReminderTime) {
-      setDailyReminderTime(user.dailyReminderTime);
-    }
-    if (user?.dailyReminderEnabled === false) {
-      setSkipDailyReminder(true);
+    if (user) {
+      // Respect server state: if user has a reminder time set, use it; otherwise use default 07:30
+      setDailyReminderTime(user.dailyReminderTime || '07:30');
+      // Respect server state: if explicitly disabled (false) or never set (null), default to showing enabled
+      // This makes the toggle default to ON for new users but respects their choice if they disabled it
+      setSkipDailyReminder(user.dailyReminderEnabled === false);
     }
   }, [user]);
   
@@ -231,8 +233,12 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     },
-    onError: (error) => {
-      console.error('Failed to update reminder settings:', error);
+    onError: (error: any) => {
+      toast({
+        title: "Reminder Settings",
+        description: error.message || "Failed to save reminder settings, but your Will was created",
+        variant: "destructive",
+      });
     }
   });
 
@@ -356,11 +362,13 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       return;
     }
 
-    // Save daily reminder settings
-    updateReminderSettingsMutation.mutate({
-      dailyReminderTime: skipDailyReminder ? null : dailyReminderTime,
-      dailyReminderEnabled: !skipDailyReminder
-    });
+    // Only save daily reminder settings if user has made changes
+    if (hasModifiedReminder) {
+      updateReminderSettingsMutation.mutate({
+        dailyReminderTime: skipDailyReminder ? null : dailyReminderTime,
+        dailyReminderEnabled: !skipDailyReminder
+      });
+    }
 
     setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });
     setCurrentStep(2);
@@ -678,17 +686,23 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                   <Input 
                     type="time" 
                     value={dailyReminderTime}
-                    onChange={(e) => setDailyReminderTime(e.target.value)}
+                    onChange={(e) => {
+                      setDailyReminderTime(e.target.value);
+                      setHasModifiedReminder(true);
+                    }}
                     step="900"
-                    disabled={skipDailyReminder}
+                    disabled={skipDailyReminder === true}
                     className={`w-32 text-sm ${skipDailyReminder ? 'opacity-50' : ''}`}
                     data-testid="input-daily-reminder-time"
                   />
                   <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={skipDailyReminder}
-                      onChange={(e) => setSkipDailyReminder(e.target.checked)}
+                      checked={skipDailyReminder === true}
+                      onChange={(e) => {
+                        setSkipDailyReminder(e.target.checked);
+                        setHasModifiedReminder(true);
+                      }}
                       className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                       data-testid="checkbox-skip-daily-reminder"
                     />
