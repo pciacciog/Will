@@ -39,6 +39,10 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // Daily reminder preferences
+  dailyReminderTime: varchar("daily_reminder_time", { length: 5 }), // "HH:MM" format, e.g., "07:30"
+  dailyReminderEnabled: boolean("daily_reminder_enabled").default(true),
+  lastDailyReminderSentAt: timestamp("last_daily_reminder_sent_at"),
 });
 
 export const circles = pgTable("circles", {
