@@ -1770,7 +1770,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
-          // NEW FIX: If token belongs to a DIFFERENT user, reassign it to the new user
+          // 🔥 CRITICAL FIX: Prevent "pending" from overwriting a real user association!
+          // This happens when iOS DIRECT fires AFTER login and sends userId: "pending"
+          if (userId === 'pending') {
+            console.log(`🛡️ [DeviceToken] PROTECTION: Rejecting "pending" overwrite of real user ${existing.userId}`);
+            console.log(`🛡️ [DeviceToken] This is likely iOS DIRECT firing after login - ignoring`);
+            return res.json({ 
+              success: true, 
+              message: 'Token already associated with a user, ignoring pending request',
+              action: 'protected_existing_association',
+              alreadyAssociated: true,
+              tokenHash: deviceToken.substring(0, 10) + '...',
+              existingUserId: existing.userId.substring(0, 10) + '...'
+            });
+          }
+          
+          // If token belongs to a DIFFERENT real user (not pending), reassign it to the new user
           // This handles the case where a user switches accounts on the same device
           console.log(`🔄 [DeviceToken] Token currently belongs to user ${existing.userId}, reassigning to ${userId}`);
           console.log(`🔄 [DeviceToken] This is likely an account switch on the same device`);

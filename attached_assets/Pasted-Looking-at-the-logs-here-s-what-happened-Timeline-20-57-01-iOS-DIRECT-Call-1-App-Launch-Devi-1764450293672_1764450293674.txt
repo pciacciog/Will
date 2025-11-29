@@ -1,0 +1,73 @@
+Looking at the logs, here's what happened:
+Timeline:
+20:57:01 - iOS DIRECT Call #1 (App Launch)
+Device Token: 54a52b7e...c6c
+userId: "pending"
+→ Database: userId = NULL
+20:57:30 - Login
+Email: bebociaccio@me.com
+Device Token: 54a52b7e... (sent in request body)
+User ID: 17635487770933j8sh32d2
+Frontend logs: "✅ ownership transferred during login"
+→ Database SHOULD BE: userId = 17635487770933j8sh32d2
+20:57:32 - iOS DIRECT Call #2 (After PushNotifications.register())
+Device Token: 54a52b7e...c6c (SAME TOKEN)
+userId: "pending" (still!)
+→ Database OVERWRITTEN BACK TO: userId = NULL ❌
+
+The Bug: iOS DIRECT Undoing the Login Association
+The second iOS DIRECT call is the problem! Here's what's happening:
+
+✅ Login correctly sends token to backend
+❌ Backend might update it to bebociaccio's ID
+❌ But then iOS DIRECT fires AGAIN 2 seconds later
+❌ It sends userId: "pending" which overwrites back to NULL!
+
+
+Current Database State:
+deviceToken: 54a52b7e4217b76125b4ee0de5463d48cbff0d8e75dd7911ea83342f31c12c6c
+userId: NULL  ← Not associated with ANYONE
+isActive: true
+This token is orphaned - not assigned to bebociaccio OR Bryce.
+
+The Root Cause:
+iOS DIRECT doesn't know the user logged in!
+When PushNotifications.register() is called after login, it triggers iOS to call didRegisterForRemoteNotificationsWithDeviceToken again, which fires iOS DIRECT again, which sends userId: "pending" because it doesn't check if the user is logged in.
+
+The Fix (in AppDelegate.swift):
+swiftfunc application(_ application: UIApplication, 
+                 didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    
+    // DON'T always send "pending"!
+    // Check if user is logged in:
+    
+    var userId = "pending"
+    
+    // Check Capacitor Preferences for auth token
+    if let prefs = UserDefaults.standard,
+       let authToken = prefs.string(forKey: "authToken"),
+       !authToken.isEmpty {
+        // User is logged in - extract userId from JWT
+        userId = extractUserIdFromJWT(authToken)  // You'll need to decode the JWT
+    }
+    
+    // Now send with CORRECT userId
+    sendTokenToServer(token: tokenString, userId: userId)
+}
+Or even simpler: Don't send anything if user is already logged in - let the login endpoint handle it!
+swiftfunc application(_ application: UIApplication, 
+                 didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    
+    // Check if user is logged in
+    if let authToken = UserDefaults.standard.string(forKey: "authToken"),
+       !authToken.isEmpty {
+        print("🔥 iOS DIRECT: User is logged in - SKIPPING direct registration")
+        print("🔥 iOS DIRECT: Token will be associated via login/session restoration")
+        saveTokenToLocalStorage(token: tokenString)
+        return  // ← EXIT EARLY!
+    }
+    
+    // Only send to server if user is NOT logged in
+    sendTokenToServer(token: tokenString, userId: "pending")
+}
+This way iOS DIRECT only fires when the user is NOT logged in, and lets the login endpoint handle the association!
