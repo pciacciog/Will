@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import connectPg from "connect-pg-simple";
 import jwt from "jsonwebtoken";
+import { getDatabaseUrl } from "./config/environment";
 
 declare global {
   namespace Express {
@@ -167,7 +168,7 @@ export function verifyAuthToken(token: string): { id: string; email: string; rol
 export function setupAuth(app: Express) {
   const PostgresSessionStore = connectPg(session);
   const sessionStore = new PostgresSessionStore({
-    conString: process.env.DATABASE_URL_STAGING,
+    conString: getDatabaseUrl(),
     createTableIfMissing: false,
     tableName: 'sessions',
   });
@@ -334,7 +335,7 @@ export function setupAuth(app: Express) {
         const { eq } = await import('drizzle-orm');
         
         // Create database connection
-        const sqlConnection = neon(process.env.DATABASE_URL_STAGING!);
+        const sqlConnection = neon(getDatabaseUrl());
         const dbConnection = drizzle(sqlConnection);
         
         // 🔍 CHECK: What is the current state of the token BEFORE update?
@@ -480,7 +481,7 @@ export function setupAuth(app: Express) {
       const { eq } = await import('drizzle-orm');
       
       // Create database connection
-      const sqlConnection = neon(process.env.DATABASE_URL_STAGING!);
+      const sqlConnection = neon(getDatabaseUrl());
       const dbConnection = drizzle(sqlConnection);
       
       console.log(`🔗 [TokenAssociation] Associating specific token ${deviceToken.substring(0, 8)}... with user ${userId}`);
@@ -537,7 +538,7 @@ export function setupAuth(app: Express) {
       const { deviceTokens } = await import('../shared/schema');
       const { eq, isNull, or, and } = await import('drizzle-orm');
       
-      const sqlConnection = neon(process.env.DATABASE_URL_STAGING!);
+      const sqlConnection = neon(getDatabaseUrl());
       const dbConnection = drizzle(sqlConnection);
       
       let pendingTokens;
@@ -608,7 +609,7 @@ export function setupAuth(app: Express) {
       const { eq, isNull, or, and } = await import('drizzle-orm');
       
       // Create database connection
-      const sqlConnection = neon(process.env.DATABASE_URL_STAGING!);
+      const sqlConnection = neon(getDatabaseUrl());
       const dbConnection = drizzle(sqlConnection);
       
       // ISSUE #2 FIX: Only find the SPECIFIC device token if provided

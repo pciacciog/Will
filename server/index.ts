@@ -2,8 +2,13 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { endRoomScheduler } from "./scheduler";
+import { getAllowedOrigins, getDefaultOrigin, getEnvironment } from "./config/environment";
 
 const app = express();
+
+// Get environment-specific values
+const allowedOrigins = getAllowedOrigins();
+const defaultOrigin = getDefaultOrigin();
 
 // FIRST: Inject Origin/Referer headers for iOS/Capacitor apps to bypass Replit Shield
 // Replit Shield checks for these headers BEFORE our middleware runs
@@ -12,10 +17,10 @@ app.use((req, res, next) => {
   // add them so Replit Shield doesn't block the request
   if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
     if (!req.headers['origin']) {
-      req.headers['origin'] = 'https://will-staging-porfirioaciacci.replit.app';
+      req.headers['origin'] = defaultOrigin;
     }
     if (!req.headers['referer']) {
-      req.headers['referer'] = 'https://will-staging-porfirioaciacci.replit.app';
+      req.headers['referer'] = defaultOrigin;
     }
   }
   next();
@@ -25,16 +30,6 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   res.header('X-Replit-Public', 'true');
   
-  // Allow specific origins for mobile app with credentials
-  const allowedOrigins = [
-    'https://will-1-porfirioaciacci.replit.app',      // Production backend
-    'https://will-staging-porfirioaciacci.replit.app', // Staging backend
-    'capacitor://localhost',
-    'http://localhost',
-    'ionic://localhost',
-    'https://localhost'
-  ];
-  
   const origin = req.get('Origin');
   const userAgent = req.get('User-Agent') || '';
   const isCapacitorApp = userAgent.includes('Capacitor') || !origin;
@@ -43,13 +38,13 @@ app.use((req, res, next) => {
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
   } 
-  // If no Origin header or Capacitor app, allow staging URL (this is staging environment)
+  // If no Origin header or Capacitor app, use default origin for this environment
   else if (isCapacitorApp || !origin) {
-    res.header('Access-Control-Allow-Origin', 'https://will-staging-porfirioaciacci.replit.app');
+    res.header('Access-Control-Allow-Origin', defaultOrigin);
   }
-  // Default fallback to staging URL for this environment
+  // Default fallback to environment-specific URL
   else {
-    res.header('Access-Control-Allow-Origin', 'https://will-staging-porfirioaciacci.replit.app');
+    res.header('Access-Control-Allow-Origin', defaultOrigin);
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
