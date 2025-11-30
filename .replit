@@ -1,10 +1,10 @@
 modules = ["bash", "nodejs-20", "python-3.11", "web", "postgresql-16"]
-run = "npm run dev"
+run = "npm run start"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["nano", "unzip", "postgresql", "at"]
+packages = ["nano", "unzip", "postgresql", "at", "uwhoisd"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -73,7 +73,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npm run start"
 waitForPort = 5000
 
 [agent]
@@ -82,5 +82,4 @@ expertMode = true
 [userenv]
 
 [userenv.shared]
-APNS_TOPIC = "com.porfirio.will.staging."
 APNS_PRODUCTION = "true"
