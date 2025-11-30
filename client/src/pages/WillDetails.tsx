@@ -543,6 +543,7 @@ export default function WillDetails() {
                     description: isSoloMode 
                       ? "Your reflection has been saved." 
                       : "Thank you for sharing your reflection!",
+                    duration: 4000,
                   });
                 }}
               />

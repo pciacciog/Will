@@ -629,13 +629,14 @@ export class DatabaseStorage implements IStorage {
     
     if (mode === 'solo') {
       // Solo mode: get wills created by the user
+      // Include both 'completed' and 'archived' statuses since wills are archived after acknowledgment
       completedWills = await db
         .select()
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
           eq(wills.mode, 'solo'),
-          eq(wills.status, 'completed')
+          inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
         .limit(limit);
@@ -652,13 +653,14 @@ export class DatabaseStorage implements IStorage {
         return [];
       }
       
+      // Include both 'completed' and 'archived' statuses since wills are archived after acknowledgment
       completedWills = await db
         .select()
         .from(wills)
         .where(and(
           inArray(wills.id, willIds),
           eq(wills.mode, 'circle'),
-          eq(wills.status, 'completed')
+          inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
         .limit(limit);

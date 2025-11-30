@@ -1,0 +1,62 @@
+Account Settings:
+
+- Please Delete the daily remindersssections. This only needs to be in the will creation
+* Profile tab – “Profile Information” card with first name, last name, email, Update Profile button.
+* Security tab – “Change Password” card with three password fields, Cancel + Update Password buttons, and a Delete Account card below.
+* I want you to keep the current structure and functionality, but make the UI feel more refined, calm, and consistent with the rest of the WILL app. Please treat this as a small design/pass-on-layout-and-styling only.
+* Global Account Settings Modal
+* Slightly reduce the top padding between the iOS status bar and the “Account Settings” header so the content is more vertically balanced and not too low, but keep clear separation from the status bar.
+* Keep the header typography the same, but:
+    * Add a very subtle bottom divider (low opacity line) under the header to separate it from the content.
+    * Ensure the close (X) icon has a comfortable hit area (circular tap target with subtle highlight on press).
+* Tabs (Profile / Reminders / Security):
+    * Add a bit more horizontal spacing between each tab and slightly increase vertical padding to make them feel less cramped.
+    * Make the selected tab more visually distinct:
+        * Maintain the existing pill-like background, but increase contrast slightly OR add a subtle shadow.
+        * Use a slightly heavier font-weight for the selected tab.
+    * Ensure tabs are keyboard- and screen-reader-friendly.
+* Profile Tab – Profile Information Card
+* Increase internal padding of the main “Profile Information” card (top and bottom).
+* Increase spacing between:
+    * “Profile Information” title and the first row of fields.
+    * The name fields row and the email field.
+* Style for “Profile Information”:
+    * Slightly smaller font size than “Account Settings”, with subtle letter spacing or semi-bold.
+    * Optionally add a light divider under the title inside the card.
+* Input fields (First Name, Last Name, Email):
+    * Increase input height slightly for a more breathable feel.
+    * Lighten border color; use a softer gray and a slightly tinted background instead of a heavy solid border.
+    * On focus, change the border to the WILL accent color (same green/blue used elsewhere) and maybe slightly increase border thickness for a clean focus state.
+* Update Profile button:
+    * Reduce height slightly and increase horizontal padding so it feels less chunky and more elegant.
+    * Use slightly more rounded corners (to match other rounded elements in the app).
+    * Add a subtle pressed state (slight scale down + shadow change).
+* Security Tab – Change Password & Delete Account
+* Apply the same card layout improvements used in the Profile tab to the “Change Password” card:
+    * More internal padding.
+    * Clear spacing between title and first field, and between each input.
+* For labels (“Current Password”, “New Password”, “Confirm New Password”):
+    * Use the same label style as the Profile fields (consistent font size, weight, and color).
+* For password inputs:
+    * Match the updated input styling from the Profile tab (height, border, focus state, background).
+    * Ensure the “eye” visibility icons are vertically centered and have consistent spacing from the right edge.
+    * Make the tap target for the visibility icon comfortably large.
+* Buttons row (Cancel / Update Password):
+    * Keep them side by side, but:
+        * Ensure they are vertically centered and evenly spaced.
+        * Make the Cancel button visually secondary (outlined or light background) and the Update Password button primary (solid).
+        * Slightly reduce button height and increase border radius to match the new button style from the Profile tab.
+    * Add consistent pressed/hover states.
+* Delete Account card:
+    * Match card padding and corner radius with the other cards.
+    * Keep the red tone but:
+        * Use a lighter red background tint with red text/icon rather than a heavy solid red block.
+        * Ensure the delete icon and “Delete Account” label are aligned with proper spacing. It is currently cut out from the screen.
+    * Add clear separation (margin) between the Change Password card and Delete Account card so they don’t feel stuck together.
+* General
+* Please keep colors aligned with the existing design tokens / theme for WILL. Do not change branding—only refine spacing, borders, radii, and states.
+* Make sure all changes work on different device sizes and do not break any existing logic for updating profile info or passwords.
+* After changes, ensure the Profile and Security tabs feel visually consistent with each other and with the rest of the app.
+* When you’re done, briefly summarize which components/styles you updated and where in the code you made changes (files and key components).
+
+
