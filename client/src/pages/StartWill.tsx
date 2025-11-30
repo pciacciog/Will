@@ -665,7 +665,10 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                         type="date" 
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
+                        min={(() => {
+                          const today = new Date();
+                          return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                        })()}
                         required 
                         className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
                         data-testid="input-start-date"
