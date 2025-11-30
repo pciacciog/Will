@@ -86,8 +86,4 @@ expertMode = true
 [userenv]
 
 [userenv.shared]
-APNS_TOPIC = "com.porfirio.will"
 APNS_PRODUCTION = "true"
-APP_ENV = "production"
-NODE_ENV = "production"
-APNS_BUNDLE_ID = "com.porfirio.will"
