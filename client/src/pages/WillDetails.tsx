@@ -540,13 +540,6 @@ export default function WillDetails() {
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
-                  toast({
-                    title: "Review Completed",
-                    description: isSoloMode 
-                      ? "Your reflection has been saved." 
-                      : "Thank you for sharing your reflection!",
-                    duration: 4000,
-                  });
                 }}
               />
             )}
