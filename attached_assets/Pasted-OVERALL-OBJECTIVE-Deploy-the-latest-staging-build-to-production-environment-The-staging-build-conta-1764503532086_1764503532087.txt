@@ -1,0 +1,205 @@
+OVERALL OBJECTIVE
+Deploy the latest staging build to production environment. The staging build contains critical bug fixes for iOS push notification device token registration that have been tested and verified. Production currently has the same bugs that were fixed in staging.
+
+CURRENT SITUATION
+Two Separate Replit Applications:
+
+Staging Replit
+
+Contains latest code with device token fixes
+Code committed to GitHub main branch
+Uses hardcoded staging-specific configuration
+
+
+Production Replit
+
+Running old code without device token fixes
+Has diverged from GitHub (34 local commits vs 7 new commits in GitHub)
+Uses environment detection logic for multi-environment support
+
+
+
+The Problem:
+Both environments have different approaches to configuration:
+Staging approach: Hardcoded values
+typescript// server/db.ts in staging
+const dbUrl = process.env.DATABASE_URL_STAGING; // Hardcoded to staging
+Production approach: Environment detection
+typescript// server/db.ts in production  
+const dbUrl = detectEnvironment() === 'production' 
+  ? process.env.DATABASE_URL 
+  : process.env.DATABASE_URL_STAGING;
+This makes it impossible to simply git pull staging code into production - it would break production's configuration.
+
+RECOMMENDED SOLUTION
+Standardize Both Environments on Environment Variables
+Philosophy: Both staging and production should run identical code. The only difference should be the environment variable values set in each Replit's Secrets.
+How It Works:
+Same Code (Both Environments):
+typescript// server/db.ts - IDENTICAL everywhere
+const connectionString = process.env.DATABASE_URL;
+Different Configuration (Replit Secrets):
+VariableStaging ValueProduction ValueDATABASE_URL<staging-db-url><production-db-url>NODE_ENVdevelopmentproductionAPNS_BUNDLE_IDcom.bebociaccio.will.stagingcom.bebociaccio.will
+
+STEP-BY-STEP DEPLOYMENT PLAN
+Phase 1: Backup Current Production State
+bash# In production Replit
+git branch backup-production-$(date +%Y%m%d)
+Purpose: Safety net in case rollback is needed.
+
+Phase 2: Align Production Code with Staging
+bash# In production Replit
+git fetch origin
+git reset --hard origin/main
+What this does:
+
+Discards all 34 local commits in production
+Overwrites production code with staging code (including device token fixes)
+Production now has identical code to staging
+
+Result: Production has the device token fixes but currently points to staging database.
+
+Phase 3: Make Code Environment-Agnostic
+Edit server/db.ts:
+typescript// FIND THIS LINE (currently in staging code):
+return process.env.DATABASE_URL_STAGING;
+
+// REPLACE WITH:
+return process.env.DATABASE_URL;
+Edit client/src/config/api.ts:
+typescript// FIND THIS LINE:
+const STAGING_API = 'https://will-staging-porfirioaciacci.replit.app';
+
+// REPLACE WITH (use environment variable if available):
+const API_BASE = import.meta.env.VITE_API_URL || 
+                 (Capacitor.isNativePlatform() 
+                   ? 'https://will-1-porfirioaciacci.replit.app'  // Production default
+                   : '');  // Use relative URLs in browser
+Commit these changes:
+bashgit add .
+git commit -m "Make configuration environment-agnostic for production"
+git push origin main
+Purpose: Code now works in any environment based on environment variables.
+
+Phase 4: Configure Production Environment Variables
+In Production Replit → Secrets tab, set:
+bash# Database
+DATABASE_URL=<production-database-url>  # NOT staging!
+
+# Environment  
+NODE_ENV=production
+
+# APNs (Apple Push Notifications)
+APNS_BUNDLE_ID=com.bebociaccio.will  # Production bundle ID (no .staging)
+APNS_KEY_ID=<your-apns-key-id>
+APNS_TEAM_ID=<your-team-id>
+APNS_KEY_PATH=/path/to/production/apns/key.p8
+
+# Security
+JWT_SECRET=<strong-random-production-secret>
+SESSION_SECRET=<strong-random-production-secret>
+
+# Optional: For native app API detection
+VITE_API_URL=https://will-1-porfirioaciacci.replit.app
+CRITICAL: Verify DATABASE_URL points to production database, not staging!
+Remove these if present:
+bashDATABASE_URL_STAGING=<delete-this>  # Not needed in production
+
+Phase 5: Rebuild Production
+bash# In production Replit
+npm install
+npm run build
+Purpose: Compile latest code with production configuration.
+
+Phase 6: Apply Database Schema Fix
+Connect to PRODUCTION database and run:
+sql-- VERIFY you're in production database first
+SELECT current_database();
+
+-- Add unique constraint (critical bug fix)
+ALTER TABLE device_tokens 
+ADD CONSTRAINT device_tokens_device_token_unique 
+UNIQUE (device_token);
+
+-- Verify constraint was added
+\d device_tokens
+```
+
+**Expected output:**
+```
+Indexes:
+    "device_tokens_pkey" PRIMARY KEY, btree (id)
+    "device_tokens_device_token_unique" UNIQUE CONSTRAINT, btree (device_token) ✅
+Purpose: This database constraint is required for the device token fix to work properly.
+
+Phase 7: Restart Production Server
+bash# Restart the Replit server to load new code
+Purpose: Ensure new compiled code is loaded into memory.
+
+Phase 8: Verification
+Test Production Backend:
+bash# Check server is running
+curl https://will-1-porfirioaciacci.replit.app/api/health
+
+# Should return 200 OK
+Test Database Connection:
+
+Production server should log which database it's connected to on startup
+Verify it shows production database, not staging
+
+Test iOS App (if available):
+
+Login should work
+Device token should register without errors
+Check server logs for: ✅ Token ownership transferred
+
+
+RISK ASSESSMENT
+RiskLikelihoodMitigationWrong database in productionMediumDouble-check DATABASE_URL env var before restartEnvironment variable typoMediumVerify all env vars match expected formatBreaking existing usersLow<10 users, can provide direct support if neededDatabase constraint conflictsLowCurrent data unlikely to have duplicate tokensCode deployment failureLowCan rollback to backup branch
+
+ROLLBACK PLAN
+If something goes wrong:
+bash# Option 1: Rollback code only
+git reset --hard backup-production-YYYYMMDD
+npm install
+npm run build
+
+# Option 2: Remove database constraint if it causes issues
+ALTER TABLE device_tokens DROP CONSTRAINT device_tokens_device_token_unique;
+
+EXPECTED OUTCOMES
+After successful deployment:
+✅ Production running latest code with device token fixes
+✅ Production connected to production database
+✅ Environment variables properly configured
+✅ Database constraint preventing duplicate tokens
+✅ Code is environment-agnostic (same code in staging and production)
+✅ Future deployments simplified (just git pull and restart)
+
+FUTURE STATE
+Simplified Deployment Process:
+Staging → Production becomes:
+bash# In production Replit (future deployments)
+git pull origin main
+npm install
+npm run build
+# Restart server
+No more manual config differences! Environment variables handle everything.
+
+CONSULTANT APPROVAL CHECKLIST
+Please review and approve:
+
+ Standardizing on environment variables (same code, different configs)
+ Using git reset --hard to overwrite production with staging code
+ Database constraint addition approach
+ Environment variable configuration strategy
+ Rollback plan adequacy
+ Risk mitigation strategy
+
+
+QUESTIONS FOR CONSULTANT
+
+Do you agree with standardizing both environments on environment variables?
+Any concerns about using git reset --hard to sync production with staging?
+Should we add any additional verification steps?
+Any alternative approaches you'd recommend?
