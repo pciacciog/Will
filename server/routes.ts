@@ -759,14 +759,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mode = req.query.mode as 'solo' | 'circle';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       
+      console.log(`[HISTORY] Fetching ${mode} history for user ${userId}`);
+      
       if (!mode || (mode !== 'solo' && mode !== 'circle')) {
         return res.status(400).json({ message: "Invalid mode. Must be 'solo' or 'circle'." });
       }
       
       const history = await storage.getUserWillHistory(userId, mode, limit);
+      console.log(`[HISTORY] Found ${history.length} completed ${mode} wills for user ${userId}`);
+      
       res.json(history);
     } catch (error) {
-      console.error("Error fetching will history:", error);
+      console.error("[HISTORY] Error fetching will history:", error);
       res.status(500).json({ message: "Failed to fetch will history" });
     }
   });
