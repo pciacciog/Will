@@ -285,6 +285,7 @@ export default function InnerCircleHub() {
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'circle'] });
       
       toast({
         title: "Will Acknowledged",

@@ -271,9 +271,11 @@ export default function WillDetails() {
       // Invalidate queries efficiently - start with most critical
       if (isSoloMode) {
         queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'solo'] });
       } else {
         queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
         queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'circle'] });
       }
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       
