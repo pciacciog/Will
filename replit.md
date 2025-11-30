@@ -68,6 +68,29 @@ Preferred communication style: Simple, everyday language.
 - **Timezone Handling**: Consistent UTC storage with per-user local time display.
 - **Privacy**: "Because" statements are private, member names are first names only.
 
+### Environment Configuration (server/config/environment.ts)
+The application automatically detects and configures for staging vs production based on environment variables:
+
+**Environment Detection:**
+- `APP_ENV=production` or `NODE_ENV=production` → Production mode
+- Otherwise → Staging mode (default)
+
+**Database URLs:**
+- Production: Uses `DATABASE_URL` or `DATABASE_URL_PRODUCTION`
+- Staging: Uses `DATABASE_URL_STAGING` (or falls back to `DATABASE_URL`)
+
+**CORS Origins:**
+- Production: Reads from `PRODUCTION_DOMAIN` or `REPLIT_DEV_DOMAIN`
+- Staging: Uses `will-staging-porfirioaciacci.replit.app`
+
+**Production Deployment Checklist:**
+1. Set `APP_ENV=production` in environment variables
+2. Set `NODE_ENV=production`
+3. Set `APNS_PRODUCTION=true` for production APNs
+4. Configure `DATABASE_URL` (production database)
+5. Set unique `JWT_SECRET` and `SESSION_SECRET`
+6. Optionally set `PRODUCTION_DOMAIN` for CORS
+
 ## External Dependencies
 - **@neondatabase/serverless**: PostgreSQL database connection.
 - **drizzle-orm**: Database ORM and query builder.
