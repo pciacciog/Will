@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, User, Shield, Settings, Trash2, Bell } from "lucide-react";
+import { Eye, EyeOff, User, Shield, Settings, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,27 +21,19 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   
-  // Profile editing state
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
   
-  // Daily reminder settings state - respect server state
-  // user.dailyReminderEnabled: true = enabled, false = disabled, null/undefined = not yet set (default to enabled for new users)
-  const [dailyReminderTime, setDailyReminderTime] = useState(user?.dailyReminderTime || '07:30');
-  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(user?.dailyReminderEnabled !== false);
-  
-  // Re-sync state when modal opens or user data changes
   useEffect(() => {
     if (isOpen && user) {
-      setDailyReminderTime(user.dailyReminderTime || '07:30');
-      setDailyReminderEnabled(user.dailyReminderEnabled !== false);
       setFirstName(user.firstName || '');
       setLastName(user.lastName || '');
       setEmail(user.email || '');
@@ -62,12 +52,11 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
       toast({
         title: "Profile Updated",
         description: "Your profile has been successfully updated",
+        duration: 4000,
       });
-      // Update local state with the response
       setFirstName(updatedUser.firstName);
       setLastName(updatedUser.lastName);
       setEmail(updatedUser.email);
-      // Invalidate user query to refresh user data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     },
     onError: (error: any) => {
@@ -75,40 +64,10 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: error.message || "Failed to update profile",
         variant: "destructive",
+        duration: 4000,
       });
     },
   });
-
-  const updateReminderSettingsMutation = useMutation({
-    mutationFn: async (settings: { dailyReminderTime?: string | null; dailyReminderEnabled?: boolean }) => {
-      const res = await apiRequest('/api/user/reminder-settings', {
-        method: 'PATCH',
-        body: JSON.stringify(settings)
-      });
-      return await res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Notification Settings Updated",
-        description: "Your reminder preferences have been saved",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update reminder settings",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSaveReminderSettings = () => {
-    updateReminderSettingsMutation.mutate({
-      dailyReminderTime: dailyReminderEnabled ? dailyReminderTime : null,
-      dailyReminderEnabled
-    });
-  };
 
   const changePasswordMutation = useMutation({
     mutationFn: async (passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
@@ -122,8 +81,8 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
       toast({
         title: "Password Updated",
         description: "Your password has been successfully changed",
+        duration: 4000,
       });
-      // Reset form
       const form = document.getElementById('change-password-form') as HTMLFormElement;
       if (form) form.reset();
     },
@@ -132,6 +91,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: error.message || "Failed to change password",
         variant: "destructive",
+        duration: 4000,
       });
     },
   });
@@ -144,6 +104,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: "Please fill in all profile fields",
         variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -153,6 +114,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: "Please enter a valid email address",
         variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -172,6 +134,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: "Please fill in all password fields",
         variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -181,6 +144,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: "New passwords do not match",
         variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -190,6 +154,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: "New password must be at least 6 characters long",
         variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -209,10 +174,10 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
       toast({
         title: "Account Deleted",
         description: "Your account has been permanently deleted",
+        duration: 4000,
       });
       setShowDeleteDialog(false);
       onClose();
-      // Redirect to auth page
       setTimeout(() => {
         setLocation('/auth');
       }, 1000);
@@ -222,6 +187,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: error.message || "Failed to delete account",
         variant: "destructive",
+        duration: 4000,
       });
     },
   });
@@ -232,6 +198,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         title: "Error",
         description: "Please enter your password to confirm account deletion",
         variant: "destructive",
+        duration: 4000,
       });
       return;
     }
@@ -240,314 +207,295 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Settings className="h-5 w-5" />
-            <span>Account Settings</span>
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[480px] max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-2xl">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-white px-5 pt-4 pb-3 border-b border-gray-100/80">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                <Settings className="h-4 w-4 text-gray-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Account Settings</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 active:scale-95"
+              aria-label="Close"
+              data-testid="button-close-settings"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
 
-        <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile" className="flex items-center space-x-1 text-xs sm:text-sm">
+        {/* Tabs */}
+        <div className="px-5 pt-4">
+          <div className="flex gap-2 p-1 bg-gray-100/70 rounded-xl">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm transition-all duration-200 ${
+                activeTab === 'profile'
+                  ? 'bg-white text-gray-900 font-semibold shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 font-medium'
+              }`}
+              data-testid="tab-profile"
+            >
               <User className="h-4 w-4" />
               <span>Profile</span>
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center space-x-1 text-xs sm:text-sm">
-              <Bell className="h-4 w-4" />
-              <span>Reminders</span>
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center space-x-1 text-xs sm:text-sm">
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm transition-all duration-200 ${
+                activeTab === 'security'
+                  ? 'bg-white text-gray-900 font-semibold shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 font-medium'
+              }`}
+              data-testid="tab-security"
+            >
               <Shield className="h-4 w-4" />
               <span>Security</span>
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
+        </div>
 
-          <TabsContent value="profile" className="space-y-4 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Profile Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
+        {/* Content */}
+        <div className="px-5 py-5 space-y-5">
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700 tracking-wide uppercase">Profile Information</h3>
+              </div>
+              <div className="p-5">
+                <form onSubmit={handleUpdateProfile} className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName" className="text-sm font-medium text-gray-600">First Name</Label>
                       <Input
                         id="firstName"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="Enter your first name"
+                        placeholder="First name"
                         required
+                        className="h-11 rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
                         data-testid="input-profile-firstname"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName" className="text-sm font-medium text-gray-600">Last Name</Label>
                       <Input
                         id="lastName"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Enter your last name"
+                        placeholder="Last name"
                         required
+                        className="h-11 rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
                         data-testid="input-profile-lastname"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-600">Email Address</Label>
                     <Input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
+                      placeholder="your@email.com"
                       required
+                      className="h-11 rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
                       data-testid="input-profile-email"
                     />
                   </div>
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full h-10 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium shadow-sm hover:shadow transition-all active:scale-[0.98]"
                     disabled={updateProfileMutation.isPending}
                     data-testid="button-update-profile"
                   >
                     {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
+          )}
 
-          <TabsContent value="notifications" className="space-y-4 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center space-x-2">
-                  <Bell className="h-5 w-5" />
-                  <span>Daily Reminders</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="dailyReminderEnabled" className="text-base">Enable daily reminders</Label>
-                    <p className="text-sm text-gray-500">
-                      Receive a daily push notification about your active Will
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    id="dailyReminderEnabled"
-                    checked={dailyReminderEnabled}
-                    onChange={(e) => setDailyReminderEnabled(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    data-testid="checkbox-daily-reminder-enabled"
-                  />
+          {/* Security Tab */}
+          {activeTab === 'security' && (
+            <div className="space-y-5">
+              {/* Change Password Card */}
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide uppercase">Change Password</h3>
                 </div>
-                
-                <div className={`space-y-2 ${!dailyReminderEnabled ? 'opacity-50' : ''}`}>
-                  <Label htmlFor="dailyReminderTime">Reminder time</Label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      id="dailyReminderTime"
-                      type="time"
-                      value={dailyReminderTime}
-                      onChange={(e) => setDailyReminderTime(e.target.value)}
-                      disabled={!dailyReminderEnabled}
-                      step="900"
-                      className="w-32"
-                      data-testid="input-daily-reminder-time-settings"
-                    />
-                    <span className="text-sm text-gray-500">
-                      (in your local time)
-                    </span>
-                  </div>
+                <div className="p-5">
+                  <form id="change-password-form" onSubmit={handleChangePassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentPassword" className="text-sm font-medium text-gray-600">Current Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="currentPassword"
+                          name="currentPassword"
+                          type={showCurrentPassword ? "text" : "password"}
+                          placeholder="Enter current password"
+                          required
+                          className="h-11 pr-11 rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-0 top-0 h-full w-11 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword" className="text-sm font-medium text-gray-600">New Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="newPassword"
+                          name="newPassword"
+                          type={showNewPassword ? "text" : "password"}
+                          placeholder="Enter new password"
+                          required
+                          className="h-11 pr-11 rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-0 top-0 h-full w-11 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          aria-label={showNewPassword ? "Hide password" : "Show password"}
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-600">Confirm New Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm new password"
+                          required
+                          className="h-11 pr-11 rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-0 top-0 h-full w-11 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onClose}
+                        className="flex-1 h-10 rounded-lg border-gray-200 text-gray-600 hover:bg-gray-50 font-medium transition-all active:scale-[0.98]"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={changePasswordMutation.isPending}
+                        className="flex-1 h-10 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium shadow-sm hover:shadow transition-all active:scale-[0.98]"
+                      >
+                        {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
+                      </Button>
+                    </div>
+                  </form>
                 </div>
+              </div>
 
-                <Button
-                  onClick={handleSaveReminderSettings}
-                  disabled={updateReminderSettingsMutation.isPending}
-                  className="w-full mt-4"
-                  data-testid="button-save-reminder-settings"
-                >
-                  {updateReminderSettingsMutation.isPending ? "Saving..." : "Save Reminder Settings"}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="security" className="space-y-4 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Change Password</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form id="change-password-form" onSubmit={handleChangePassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="currentPassword"
-                        name="currentPassword"
-                        type={showCurrentPassword ? "text" : "password"}
-                        placeholder="Enter your current password"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      >
-                        {showCurrentPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
+              {/* Delete Account Card */}
+              <div className="bg-red-50/50 rounded-xl border border-red-200/60 overflow-hidden">
+                <div className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-red-700 mb-1">Delete Account</h3>
+                      <p className="text-sm text-red-600/80 leading-relaxed">
+                        Permanently delete your account and all associated data. This action cannot be undone.
+                      </p>
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="newPassword"
-                        name="newPassword"
-                        type={showNewPassword ? "text" : "password"}
-                        placeholder="Enter your new password"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                      >
-                        {showNewPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your new password"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end space-x-2 pt-4">
+                  <div className="mt-4 flex justify-end">
                     <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onClose}
+                      variant="destructive"
+                      onClick={() => setShowDeleteDialog(true)}
+                      data-testid="button-delete-account"
+                      className="h-9 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium shadow-sm transition-all active:scale-[0.98]"
                     >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={changePasswordMutation.isPending}
-                    >
-                      {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
+                      Delete Account
                     </Button>
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card className="border-red-200">
-              <CardHeader>
-                <CardTitle className="text-lg text-red-600 flex items-center space-x-2">
-                  <Trash2 className="h-5 w-5" />
-                  <span>Delete Account</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
-                  <p className="text-sm font-semibold text-red-800">Warning: This action is permanent and cannot be undone!</p>
-                  <p className="text-sm text-red-700">
-                    Deleting your account will permanently remove:
-                  </p>
-                  <ul className="text-sm text-red-700 list-disc list-inside space-y-1 ml-2">
-                    <li>Your profile and account information</li>
-                    <li>All your Will commitments and progress</li>
-                    <li>Your Circle memberships</li>
-                    <li>All associated data and history</li>
-                  </ul>
                 </div>
-                <div className="flex justify-end pt-2">
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowDeleteDialog(true)}
-                    data-testid="button-delete-account"
-                    className="flex items-center space-x-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span>Delete My Account</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </div>
+            </div>
+          )}
+        </div>
       </DialogContent>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-red-600">Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4">
-              <p>
-                This will permanently delete your account and remove all your data from our servers. 
-                This action cannot be undone.
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="deletePassword" className="text-sm font-medium">
-                  Enter your password to confirm
-                </Label>
-                <Input
-                  id="deletePassword"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  data-testid="input-delete-password"
-                />
+            <AlertDialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              Delete Account
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p className="text-gray-600">
+                  This will permanently delete your account, all your Will commitments, progress, and Circle memberships. This action cannot be undone.
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="deletePassword" className="text-sm font-medium text-gray-700">
+                    Enter your password to confirm
+                  </Label>
+                  <Input
+                    id="deletePassword"
+                    type="password"
+                    placeholder="Your password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    className="h-11 rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white focus:border-red-500 focus:ring-red-500/20 transition-all"
+                    data-testid="input-delete-password"
+                  />
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-3 sm:gap-3">
             <AlertDialogCancel 
               onClick={() => {
                 setDeletePassword("");
                 setShowDeleteDialog(false);
               }}
+              className="h-10 rounded-lg border-gray-200 text-gray-600 hover:bg-gray-50 font-medium"
               data-testid="button-cancel-delete"
             >
               Cancel
@@ -555,7 +503,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
             <AlertDialogAction
               onClick={handleDeleteAccount}
               disabled={deleteAccountMutation.isPending || !deletePassword}
-              className="bg-red-600 hover:bg-red-700"
+              className="h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium"
               data-testid="button-confirm-delete"
             >
               {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
