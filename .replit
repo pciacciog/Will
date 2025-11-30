@@ -40,10 +40,6 @@ localPort = 41771
 externalPort = 5000
 
 [[ports]]
-localPort = 41881
-externalPort = 8008
-
-[[ports]]
 localPort = 42841
 externalPort = 6800
 
@@ -86,4 +82,5 @@ expertMode = true
 [userenv]
 
 [userenv.shared]
+APNS_TOPIC = "com.porfirio.will.staging."
 APNS_PRODUCTION = "true"
