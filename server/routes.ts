@@ -24,6 +24,7 @@ import { db, pool } from "./db";
 import { eq, and, or, isNull, sql } from "drizzle-orm";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
+import { getEnvironment, getDatabaseUrl, getBackendHost, isProduction } from "./config/environment";
 
 function generateInviteCode(): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -112,11 +113,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Enhanced diagnostic health endpoint for environment verification
   app.get('/api/health/env', async (req, res) => {
-    const appEnv = process.env.APP_ENV || process.env.NODE_ENV || 'development';
+    const environment = getEnvironment();
     const nodeEnv = process.env.NODE_ENV;
+    const backendHost = getBackendHost();
     
-    // This staging Repl uses only DATABASE_URL_STAGING
-    const activeDbUrl = process.env.DATABASE_URL_STAGING || '';
+    // Get database URL for current environment
+    let activeDbUrl = '';
+    try {
+      activeDbUrl = getDatabaseUrl();
+    } catch (e) {
+      // Database URL not configured
+    }
     
     try {
       // Extract database host from connection string
@@ -143,23 +150,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const usersCount = usersResult && usersResult[0] ? usersResult[0].count : 0;
       
       res.json({
-        appEnv,
+        environment,
+        isProduction: isProduction(),
         nodeEnv: nodeEnv || '(not set)',
-        backendUrlHost: 'will-staging-porfirioaciacci.replit.app',
+        backendUrlHost: backendHost,
         usingDbUrlHost: dbHost,
         usingDbName: dbName,
         usersCount,
-        databaseUrlStagingConfigured: !!process.env.DATABASE_URL_STAGING,
+        databaseConfigured: !!activeDbUrl,
+        apnsMode: process.env.APNS_PRODUCTION === 'true' ? 'production' : 'sandbox',
         timestamp: new Date().toISOString()
       });
     } catch (error: any) {
       res.status(500).json({
         error: 'Failed to query database',
         message: error.message,
-        appEnv,
+        environment,
+        isProduction: isProduction(),
         nodeEnv: nodeEnv || '(not set)',
-        backendUrlHost: 'will-staging-porfirioaciacci.replit.app',
-        databaseUrlStagingConfigured: !!process.env.DATABASE_URL_STAGING,
+        backendUrlHost: backendHost,
+        databaseConfigured: !!activeDbUrl,
         timestamp: new Date().toISOString()
       });
     }
