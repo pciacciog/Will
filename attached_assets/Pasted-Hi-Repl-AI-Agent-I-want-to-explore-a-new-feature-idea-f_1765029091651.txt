@@ -1,0 +1,71 @@
+Hi Repl AI Agent,
+
+I want to explore a new feature idea for the Will app and get your architectural perspective on how it would fit into our current system.
+
+CONCEPT: "Cumulative Will" (Team Commitment Mode)
+
+Currently, our Circle mode works like this:
+- One person creates a Will with shared timeline (start/end dates)
+- They invite Inner Circle members
+- Each member defines THEIR OWN individual commitment ("what")
+- Everyone works on different goals but within the same timeframe
+- Example: Sarah meditates, John exercises, Teo avoids social media - all during the same week
+
+NEW IDEA: Add a "Cumulative" variant where:
+- One person creates a Will with shared timeline (same as now)
+- BUT they also define a SINGLE commitment that EVERYONE does together
+- Members receive invite with the commitment already defined
+- Members can only Accept/Decline (not customize the "what")
+- Example: "We all commit to: No phones after 8pm on Saturday"
+
+REAL-WORLD USE CASES:
+- Group digital detox challenges
+- Team fitness challenges (everyone does same workout)
+- Collective fasting or dietary commitments
+- Study groups committing to same study schedule
+
+MY QUESTIONS FOR YOU:
+
+1. **Architecture & Data Model:**
+   - How would you recommend structuring this in our existing schema?
+   - Do you see this as a new `mode` (solo/circle/cumulative) or a flag on circle mode?
+   - What changes to the `wills` and `will_commitments` tables make sense?
+   - Should we store the shared commitment at the Will level or commitment level?
+
+2. **Flow Path Analysis:**
+   - Walk me through what changes in the current flow
+   - What can stay EXACTLY the same vs what needs modification?
+   - How does Will creation change?
+   - How does the invitation/acceptance flow change?
+   - How does Will Details display change?
+
+3. **User Experience:**
+   - Should invited members be able to add their personal "why" even though "what" is fixed?
+   - What happens if the creator wants to edit the commitment after sending invites?
+   - How do we visually distinguish cumulative vs classic Wills?
+   - Are midpoint check-ins and End Room different for cumulative?
+
+4. **Edge Cases & Considerations:**
+   - What if someone wants to decline a cumulative Will?
+   - Can members see who accepted/declined before committing?
+   - Should notifications be different for cumulative ("Team is 80% complete!")?
+   - Any potential issues with existing code that assumes individual commitments?
+
+5. **Implementation Complexity:**
+   - What's your assessment of how complex this would be to implement?
+   - What are the biggest architectural challenges?
+   - What's the minimum viable version vs full-featured version?
+   - Any potential breaking changes to existing functionality?
+
+WHAT I'M LOOKING FOR:
+Please provide a detailed proposal that includes:
+- Your recommended data model changes
+- Flow diagrams or descriptions of what changes where
+- What stays the same vs what needs refactoring
+- Potential gotchas or challenges you foresee
+- Phased implementation approach (if applicable)
+- Your creative ideas on how to make this feature shine
+
+Don't implement anything yet - I want to understand the full scope and your architectural thinking first before we proceed.
+
+Take your time and be thorough! I value your perspective on how this fits into our existing system.
