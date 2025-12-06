@@ -156,6 +156,12 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
     circleId: null as number | null,
     endRoomScheduledAt: '' as string | null,
   });
+  
+  // Will type for Circle mode: 'classic' (individual commitments) or 'cumulative' (shared commitment)
+  const [willType, setWillType] = useState<'classic' | 'cumulative' | null>(null);
+  
+  // For Circle mode, we show type selection before step 1
+  const showTypeSelection = !isSoloMode && willType === null;
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [whyCharCount, setWhyCharCount] = useState(0);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
@@ -493,6 +499,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       endDate: finalWillData.endDate,
       endRoomScheduledAt: finalWillData.endRoomScheduledAt,
       circleId: finalWillData.circleId,
+      willType: willType || 'classic',
+      sharedWhat: willType === 'cumulative' ? finalWillData.what : undefined,
     });
 
     setWillData(finalWillData);
@@ -536,7 +544,13 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
             <div className="flex items-center mb-2">
               <UnifiedBackButton 
                 onClick={() => {
-                  if (currentStep === 1) {
+                  if (showTypeSelection) {
+                    // On type selection, go back to hub
+                    setLocation('/hub');
+                  } else if (currentStep === 1 && !isSoloMode && willType !== null) {
+                    // On step 1 in circle mode, go back to type selection
+                    setWillType(null);
+                  } else if (currentStep === 1) {
                     setLocation(isSoloMode ? '/solo/hub' : '/hub');
                   } else {
                     setCurrentStep(currentStep - 1);
@@ -550,47 +564,52 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               <div className="w-11"></div>
             </div>
             
-            <div className="flex items-center justify-center space-x-1.5 min-w-0 flex-1">
-              {/* Step 1: When */}
-              <div className="flex items-center">
-                <div className={`w-7 h-7 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
-                  1
+            {/* Hide step indicators during type selection */}
+            {!showTypeSelection && (
+              <div className="flex items-center justify-center space-x-1.5 min-w-0 flex-1">
+                {/* Step 1: When */}
+                <div className="flex items-center">
+                  <div className={`w-7 h-7 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                    1
+                  </div>
+                  <span className={`ml-1 text-xs ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(1)}</span>
                 </div>
-                <span className={`ml-1 text-xs ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(1)}</span>
-              </div>
-              <div className={`w-4 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-              {/* Step 2: What */}
-              <div className="flex items-center">
-                <div className={`w-7 h-7 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
-                  2
+                <div className={`w-4 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                {/* Step 2: What */}
+                <div className="flex items-center">
+                  <div className={`w-7 h-7 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                    2
+                  </div>
+                  <span className={`ml-1 text-xs ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(2)}</span>
                 </div>
-                <span className={`ml-1 text-xs ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(2)}</span>
-              </div>
-              <div className={`w-4 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-              {/* Step 3: Why */}
-              <div className="flex items-center">
-                <div className={`w-7 h-7 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
-                  3
+                <div className={`w-4 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                {/* Step 3: Why */}
+                <div className="flex items-center">
+                  <div className={`w-7 h-7 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                    3
+                  </div>
+                  <span className={`ml-1 text-xs ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
                 </div>
-                <span className={`ml-1 text-xs ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
               </div>
-              {/* Note: Step 4 (End Room for Circle mode, Confirm for Solo mode) exists in the flow 
-                  but is intentionally hidden from the visual step indicator. 
-                  Users experience the core flow as When → What → Why, then proceed to End Room/Confirm. */}
-            </div>
+            )}
+          </div>
           
           {/* Current Step Title */}
           <div className="text-center mt-16">
             <h1 className="text-xl font-semibold text-gray-900">
-              {currentStep === 1 && "Set Your Timeline"}
-              {currentStep === 2 && "What would you like to do?"}
-              {currentStep === 3 && "Why would you like to do this?"}
-              {currentStep === 4 && (isSoloMode ? "Review Your Will" : "Schedule Your End Room")}
+              {showTypeSelection && "What type of Will?"}
+              {!showTypeSelection && currentStep === 1 && "Set Your Timeline"}
+              {!showTypeSelection && currentStep === 2 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
+              {!showTypeSelection && currentStep === 3 && "Why would you like to do this?"}
+              {!showTypeSelection && currentStep === 4 && (isSoloMode ? "Review Your Will" : "Schedule Your End Room")}
             </h1>
-            {currentStep === 1 && (
+            {showTypeSelection && (
+              <p className="text-sm text-gray-500 mt-1">Choose how your circle will commit</p>
+            )}
+            {!showTypeSelection && currentStep === 1 && (
               <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
             )}
-            {currentStep === 2 && (
+            {!showTypeSelection && currentStep === 2 && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
@@ -600,7 +619,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>
               </>
             )}
-            {currentStep === 3 && (
+            {!showTypeSelection && currentStep === 3 && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
@@ -610,7 +629,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
               </>
             )}
-            {currentStep === 4 && (
+            {!showTypeSelection && currentStep === 4 && (
               <p className="text-sm text-gray-500 mt-1">
                 {isSoloMode 
                   ? "Confirm your commitment before starting" 
@@ -622,6 +641,47 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       </div>
 
       <div className="flex-1 space-y-6">
+        
+        {/* Type Selection Screen (Circle mode only) */}
+        {showTypeSelection && (
+          <div className="flex flex-col animate-in fade-in duration-500 px-2">
+            <div className="space-y-4 py-4">
+              {/* Classic Option */}
+              <button
+                onClick={() => setWillType('classic')}
+                className="w-full p-4 bg-white border-2 border-gray-200 rounded-xl text-left hover:border-brandBlue hover:bg-blue-50/30 transition-all duration-200 group"
+                data-testid="button-type-classic"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors">
+                    <Target className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">Classic</h3>
+                    <p className="text-sm text-gray-500">Each member defines their own commitment</p>
+                  </div>
+                </div>
+              </button>
+              
+              {/* Cumulative Option */}
+              <button
+                onClick={() => setWillType('cumulative')}
+                className="w-full p-4 bg-white border-2 border-gray-200 rounded-xl text-left hover:border-brandBlue hover:bg-blue-50/30 transition-all duration-200 group"
+                data-testid="button-type-cumulative"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-purple-200 transition-colors">
+                    <Target className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">Cumulative</h3>
+                    <p className="text-sm text-gray-500">Everyone commits to the same thing</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
         
         {/* Transition Animation Screen */}
         {showTransition && (
@@ -790,9 +850,9 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
               <div className="flex flex-col pt-4 pb-6">
                 {/* The Writing Statement */}
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
-                  {/* "I Will" - Large, Prominent, Strong */}
+                  {/* "I Will" or "We Will" - Large, Prominent, Strong */}
                   <p className="text-3xl font-bold text-gray-900 text-center tracking-tight">
-                    I Will
+                    {willType === 'cumulative' ? 'We Will' : 'I Will'}
                   </p>
                   
                   {/* Text Input - Clean, Minimal, Focused */}
@@ -811,7 +871,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                       }}
                       className="w-full text-center text-xl leading-relaxed font-normal text-gray-700 bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 resize-none transition-colors duration-300 placeholder:text-gray-300 placeholder:italic py-3 px-4" 
                       style={{ minHeight: '72px', maxHeight: '120px' }}
-                      placeholder="call my grandmother this week"
+                      placeholder={willType === 'cumulative' ? "go phone-free after 8pm" : "call my grandmother this week"}
                       data-testid="input-what"
                     />
                   </div>
@@ -843,10 +903,10 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 {willData.what && (
                   <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <p className="text-lg font-semibold text-gray-800">
-                      "I Will {willData.what}"
+                      "{willType === 'cumulative' ? 'We Will' : 'I Will'} {willData.what}"
                     </p>
-                    {/* Privacy note - only in circle mode */}
-                    {!isSoloMode && (
+                    {/* Privacy note - only in circle mode for non-cumulative */}
+                    {!isSoloMode && willType !== 'cumulative' && (
                       <p className="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -1105,6 +1165,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                       endDate: finalWillData.endDate,
                       endRoomScheduledAt: null,
                       circleId: finalWillData.circleId,
+                      willType: willType || 'classic',
+                      sharedWhat: willType === 'cumulative' ? finalWillData.what : undefined,
                     });
                   }}
                   disabled={createWillMutation.isPending || addCommitmentMutation.isPending}

@@ -56,6 +56,15 @@ export default function SubmitCommitment() {
     queryKey: ['/api/circles/mine'],
   });
 
+  // Check if this is a cumulative will (shared commitment)
+  const isCumulative = (will as any)?.willType === 'cumulative';
+  const sharedWhat = (will as any)?.sharedWhat;
+  
+  // For cumulative wills, step 1 goes directly to step 2 (Why), skipping the What step
+  // Classic flow: 1-When, 2-What, 3-Why, 4-Confirm (4 steps)
+  // Cumulative flow: 1-When, 2-Why, 3-Confirm (3 steps - skip What)
+  const totalSteps = isCumulative ? 3 : 4;
+
   // Check if user should see instruction modal for first-time submission
   useEffect(() => {
     const hasSeenInstruction = localStorage.getItem('willInstructionSeen');
@@ -104,7 +113,13 @@ export default function SubmitCommitment() {
 
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentStep(2);
+    if (isCumulative) {
+      // For cumulative wills, skip the What step (use sharedWhat automatically)
+      setWhat(sharedWhat || '');
+      setCurrentStep(2); // Goes to Why step
+    } else {
+      setCurrentStep(2); // Goes to What step
+    }
   };
 
   const handleStep2Submit = (e: React.FormEvent) => {
@@ -143,19 +158,30 @@ export default function SubmitCommitment() {
 
     setWhy(whyInput.trim());
     
-    // Show transition animation
-    setShowTransition(true);
-    
-    // After 3.5 seconds, move to End Room acceptance step
-    setTimeout(() => {
-      setShowTransition(false);
-      setCurrentStep(4);
-    }, 3500);
+    if (isCumulative) {
+      // For cumulative wills, skip the transition and go directly to confirmation step
+      setShowTransition(true);
+      setTimeout(() => {
+        setShowTransition(false);
+        setCurrentStep(3); // Goes to Confirm step for cumulative
+      }, 3500);
+    } else {
+      // Show transition animation for classic wills
+      setShowTransition(true);
+      
+      // After 3.5 seconds, move to End Room acceptance step
+      setTimeout(() => {
+        setShowTransition(false);
+        setCurrentStep(4);
+      }, 3500);
+    }
   };
 
   const handleStep4Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    commitmentMutation.mutate({ what: what.trim(), why: why.trim() });
+    // For cumulative wills, use the sharedWhat from the will
+    const whatToSubmit = isCumulative ? (sharedWhat || what) : what.trim();
+    commitmentMutation.mutate({ what: whatToSubmit, why: why.trim() });
   };
 
   const handleBack = () => {
@@ -204,6 +230,7 @@ export default function SubmitCommitment() {
             </div>
             
             <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
+              {/* Step 1: When (always shown) */}
               <div className="flex items-center">
                 <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
                   1
@@ -211,18 +238,26 @@ export default function SubmitCommitment() {
                 <span className={`ml-1 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
               </div>
               <div className={`w-6 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              
+              {/* Step 2: What (classic) or Why (cumulative) */}
               <div className="flex items-center">
                 <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
                   2
                 </div>
-                <span className={`ml-1 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>What</span>
+                <span className={`ml-1 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>
+                  {isCumulative ? 'Why' : 'What'}
+                </span>
               </div>
               <div className={`w-6 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+              
+              {/* Step 3: Why (classic) or Confirm (cumulative) */}
               <div className="flex items-center">
                 <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
                   3
                 </div>
-                <span className={`ml-1 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>Why</span>
+                <span className={`ml-1 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>
+                  {isCumulative ? 'Join' : 'Why'}
+                </span>
               </div>
             </div>
           
@@ -230,11 +265,21 @@ export default function SubmitCommitment() {
           <div className="text-center mt-16">
             <h1 className="text-xl font-semibold text-gray-900">
               {currentStep === 1 && "Proposed Will Timeline"}
-              {currentStep === 2 && "What would you like to do?"}
-              {currentStep === 3 && "Why would you like to do this?"}
+              {currentStep === 2 && !isCumulative && "What would you like to do?"}
+              {currentStep === 2 && isCumulative && "Why would you like to do this?"}
+              {currentStep === 3 && !isCumulative && "Why would you like to do this?"}
+              {currentStep === 3 && isCumulative && "Confirm Your Commitment"}
               {currentStep === 4 && "End Room Confirmation"}
             </h1>
-            {currentStep === 2 && (
+            {/* Cumulative: Show shared commitment on step 1 */}
+            {currentStep === 1 && isCumulative && sharedWhat && (
+              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-xl">
+                <p className="text-xs text-purple-600 font-medium mb-1">Team Commitment</p>
+                <p className="text-sm text-purple-900 font-semibold">We Will {sharedWhat}</p>
+              </div>
+            )}
+            {/* Classic: What step icon */}
+            {currentStep === 2 && !isCumulative && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
@@ -244,7 +289,8 @@ export default function SubmitCommitment() {
                 <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>
               </>
             )}
-            {currentStep === 3 && (
+            {/* Classic: Why step icon OR Cumulative: Why step icon on step 2 */}
+            {((currentStep === 3 && !isCumulative) || (currentStep === 2 && isCumulative)) && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
@@ -364,8 +410,8 @@ export default function SubmitCommitment() {
           </SectionCard>
         )}
 
-        {/* Step 2: What - Focused Writing Experience (Matches Creator Flow) */}
-        {currentStep === 2 && !showTransition && (
+        {/* Step 2: What - Focused Writing Experience (Classic wills only, Cumulative skips this) */}
+        {currentStep === 2 && !showTransition && !isCumulative && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep2Submit} className="flex flex-col">
               {/* Main Writing Area - Compact, No Scroll */}
@@ -427,25 +473,27 @@ export default function SubmitCommitment() {
           </div>
         )}
 
-        {/* Step 3: Why - Focused Writing Experience (Matches Creator Flow) */}
-        {currentStep === 3 && !showTransition && (
+        {/* Step 2 (Cumulative) or Step 3 (Classic): Why - Focused Writing Experience */}
+        {((currentStep === 2 && isCumulative) || (currentStep === 3 && !isCumulative)) && !showTransition && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep3Submit} className="flex flex-col">
               {/* Main Writing Area - Compact, No Scroll */}
               <div className="flex flex-col pt-4 pb-6">
                 {/* Commitment Preview - Prominent reminder */}
-                {what && (
+                {(what || (isCumulative && sharedWhat)) && (
                   <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <p className="text-lg font-semibold text-gray-800">
-                      "I Will {what}"
+                      "{isCumulative ? 'We Will' : 'I Will'} {isCumulative ? sharedWhat : what}"
                     </p>
-                    {/* Privacy note */}
-                    <p className="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      Private — only you can see this
-                    </p>
+                    {/* Privacy note - only for classic wills */}
+                    {!isCumulative && (
+                      <p className="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Private — only you can see this
+                      </p>
+                    )}
                   </div>
                 )}
                 
@@ -510,8 +558,64 @@ export default function SubmitCommitment() {
           </div>
         )}
 
-        {/* Step 4: End Room Confirmation */}
-        {currentStep === 4 && !showTransition && (
+        {/* Step 3: Confirmation (Cumulative wills only) */}
+        {currentStep === 3 && isCumulative && !showTransition && (
+          <SectionCard>
+            <form onSubmit={handleStep4Submit} className="space-y-6">
+              <div className="space-y-6 mt-8">
+                {/* Cumulative Commitment Summary */}
+                <div className="text-center">
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 border border-purple-200 shadow-sm mx-auto max-w-sm">
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                        <Handshake className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Commitment</h3>
+                    <div className="text-base text-gray-800 leading-relaxed">
+                      <div className="font-medium mb-3">
+                        <span className="text-purple-600">We Will</span> {sharedWhat}
+                      </div>
+                      <div className="font-medium mb-3">
+                        <span className="text-red-500">Because</span> {why}
+                      </div>
+                      <div className="bg-white/60 rounded-lg p-3 border border-purple-100 mt-4">
+                        <p className="text-xs text-purple-700 leading-relaxed">
+                          You're joining your circle in this shared commitment
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <InlineBackButton 
+                  onClick={handleBack}
+                  testId="button-back-inline"
+                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                />
+                <PrimaryButton 
+                  type="submit" 
+                  disabled={commitmentMutation.isPending}
+                  className="flex items-center"
+                >
+                  {commitmentMutation.isPending ? (
+                    "Submitting..."
+                  ) : (
+                    <>
+                      <Handshake className="w-4 h-4 mr-2" />
+                      Let's do it
+                    </>
+                  )}
+                </PrimaryButton>
+              </div>
+            </form>
+          </SectionCard>
+        )}
+
+        {/* Step 4: End Room Confirmation (Classic wills only) */}
+        {currentStep === 4 && !isCumulative && !showTransition && (
           <SectionCard>
             <form onSubmit={handleStep4Submit} className="space-y-6">
               <div className="space-y-6 mt-8">

@@ -605,6 +605,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
+        // Handle circle will type (classic or cumulative)
+        const willType = req.body.willType || 'classic';
+        willDataWithDefaults.willType = willType;
+        
+        // For cumulative wills, store the shared commitment
+        if (willType === 'cumulative') {
+          if (!req.body.sharedWhat) {
+            return res.status(400).json({ message: "Cumulative wills require a shared commitment (sharedWhat)" });
+          }
+          willDataWithDefaults.sharedWhat = req.body.sharedWhat;
+        }
+
         // Set circle ID and validate
         willDataWithDefaults.circleId = circle.id;
         const willData = insertWillSchema.parse(willDataWithDefaults);
@@ -691,8 +703,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const willId = parseInt(req.params.id);
+      
+      // Get the will to check if it's cumulative
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      // For cumulative wills, use the shared commitment from the will
+      let whatValue = req.body.what;
+      if (will.willType === 'cumulative' && will.sharedWhat) {
+        whatValue = will.sharedWhat;
+      }
+      
       const commitmentData = insertWillCommitmentSchema.parse({
         ...req.body,
+        what: whatValue,
         willId,
         userId,
       });
@@ -705,12 +731,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Add commitment
       const commitment = await storage.addWillCommitment(commitmentData);
-
-      // Check if all members have committed
-      const will = await storage.getWillById(willId);
-      if (!will) {
-        return res.status(404).json({ message: "Will not found" });
-      }
 
       // For solo wills, status is already active - no need to check circle
       if (will.mode === 'solo') {

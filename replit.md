@@ -43,8 +43,12 @@ Preferred communication style: Simple, everyday language.
   - Route: `/solo/hub`, `/solo/start-will`
 - **Inner Circle Mode**:
   - Circle Management: Create/join circles, display member list
-  - 4-step Will flow: When → What → Why → End Room (optional)
+  - **Will Types** (Circle sub-types):
+    - **Classic**: Each member defines their own personal commitment ("I Will")
+    - **Cumulative**: Creator defines a shared commitment for the entire circle ("We Will") - all members commit to the same goal
+  - 4-step Will flow: Type Selection → When → What → Why → End Room (optional)
   - Team coordination with mutual accountability
+  - Database fields: `willType` ('classic' or 'cumulative'), `sharedWhat` (stores team commitment for cumulative wills)
 - **Will Creation & Management**: Multi-step guided creation, commitment editing, role-based permissions.
 - **Progress Tracking**: Daily logging, progress acknowledgment, timeline visualization.
 - **End Room**: Scheduled video calls (Daily.co) for reflection and closure (circle mode only, optional).

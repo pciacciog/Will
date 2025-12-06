@@ -64,6 +64,8 @@ export const wills = pgTable("wills", {
   circleId: integer("circle_id").references(() => circles.id), // Nullable for solo mode
   createdBy: varchar("created_by").notNull().references(() => users.id),
   mode: varchar("mode", { length: 10 }).notNull().default("circle"), // 'solo' or 'circle'
+  willType: varchar("will_type", { length: 20 }).default("classic"), // 'classic' or 'cumulative' (only for circle mode)
+  sharedWhat: text("shared_what"), // For cumulative wills: the shared commitment everyone does
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   endRoomScheduledAt: timestamp("end_room_scheduled_at"),
