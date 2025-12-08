@@ -638,9 +638,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
             )}
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-6">
         
         {/* Type Selection Screen (Circle mode only) */}
         {showTypeSelection && (
