@@ -57,6 +57,7 @@ Preferred communication style: Simple, everyday language.
 - **Push Notifications**: APNs integration with 12 notification types, personalized per-user timezone.
   - **Time-based (scheduler-driven)**: will_started (Will starts), will_review_required (Will ends), will_review_reminder (6hrs after Will ends), midpoint_milestone (50% through), commitment_reminder (6hrs after Will created), end_room_30min_warning (24hrs before), end_room_15min_warning (15min before), end_room_now (End Room opens)
   - **Event-based**: will_proposed (Will created), circle_member_joined (member joins), team_push_encouragement (Push tapped), member_review_submitted (review submitted)
+  - **Daily Reminder Enhancement**: Daily check-in notifications display the user's personal "why" statement instead of generic text, leveraging intrinsic motivation for stronger psychological impact. Shows the raw motivation statement with a heart emoji title. Falls back to generic message if no "why" is set. Long statements are truncated to 110 characters for iOS lock screen.
   - **Mode coverage**: Solo mode receives will_started, will_review_required, will_review_reminder, midpoint_milestone; Circle mode receives all notifications
   - **Idempotency**: Database tracking fields (completionNotificationSentAt, midpointAt, midpointNotificationSentAt on wills; ackReminderSentAt on will_commitments; commitmentReminders table) prevent duplicate sends.
   - **Token Cleanup**: Invalid APNs tokens (410/400/403 errors) automatically marked inactive to prevent wasted API calls.

@@ -715,9 +715,12 @@ export class EndRoomScheduler {
 
       for (const user of usersWithReminders) {
         try {
-          // Check if user has an active Will
-          const activeWills = await db
-            .select({ id: wills.id })
+          // Check if user has an active Will and get their commitment "why"
+          const activeWillsWithCommitment = await db
+            .select({ 
+              id: wills.id,
+              userWhy: willCommitments.why 
+            })
             .from(wills)
             .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
             .where(
@@ -728,7 +731,7 @@ export class EndRoomScheduler {
             )
             .limit(1);
 
-          if (activeWills.length === 0) {
+          if (activeWillsWithCommitment.length === 0) {
             continue; // No active Will, skip
           }
 
@@ -762,9 +765,10 @@ export class EndRoomScheduler {
             continue; // Already sent today
           }
 
-          // Send the daily reminder
-          const willId = activeWills[0].id;
-          const success = await pushNotificationService.sendDailyReminderNotification(user.id, willId);
+          // Send the daily reminder with user's "why" statement
+          const willId = activeWillsWithCommitment[0].id;
+          const userWhy = activeWillsWithCommitment[0].userWhy;
+          const success = await pushNotificationService.sendDailyReminderNotification(user.id, willId, userWhy);
 
           if (success) {
             // Mark reminder as sent
