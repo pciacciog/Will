@@ -24,6 +24,11 @@ export function getEnvironment(): Environment {
     return 'staging';
   }
   
+  // In Replit development environment, use 'development' to use the main DATABASE_URL
+  if (nodeEnv === 'development') {
+    return 'development';
+  }
+  
   return 'staging'; // Default to staging for safety
 }
 
@@ -45,21 +50,22 @@ export function isStaging(): boolean {
  * Get the database URL for the current environment
  * 
  * Production: Uses DATABASE_URL (or DATABASE_URL_PRODUCTION)
+ * Development: Uses DATABASE_URL (Replit's built-in database)
  * Staging: Uses DATABASE_URL_STAGING
  */
 export function getDatabaseUrl(): string {
   const env = getEnvironment();
   
-  if (env === 'production') {
-    // Production: prefer DATABASE_URL, then DATABASE_URL_PRODUCTION
-    const productionUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_PRODUCTION;
-    if (!productionUrl) {
+  if (env === 'production' || env === 'development') {
+    // Production and Development both use DATABASE_URL
+    const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_PRODUCTION;
+    if (!dbUrl) {
       throw new Error(
-        "🚨 PRODUCTION ERROR: DATABASE_URL environment variable is required.\n" +
-        "Set DATABASE_URL or DATABASE_URL_PRODUCTION for production deployment."
+        `🚨 ${env.toUpperCase()} ERROR: DATABASE_URL environment variable is required.\n` +
+        "Set DATABASE_URL for this environment."
       );
     }
-    return productionUrl;
+    return dbUrl;
   }
   
   // Staging: use DATABASE_URL_STAGING or fallback to DATABASE_URL
