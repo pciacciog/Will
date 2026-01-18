@@ -46,3 +46,4 @@ expertMode = true
 
 [userenv.shared]
 APNS_PRODUCTION = "true"
+APP_ENV = "production"
