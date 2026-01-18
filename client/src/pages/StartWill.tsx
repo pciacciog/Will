@@ -63,9 +63,10 @@ function getFollowingSundayDate(mondayDateStr: string): string {
 
 interface StartWillProps {
   isSoloMode?: boolean;
+  circleId?: number;
 }
 
-export default function StartWill({ isSoloMode = false }: StartWillProps) {
+export default function StartWill({ isSoloMode = false, circleId }: StartWillProps) {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
@@ -199,8 +200,11 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
+  // For circle mode, fetch the specific circle by ID
+  // circleId is required for circle mode - if not provided, user will see "No Circle Found" message
   const { data: circle } = useQuery<any>({
-    queryKey: ['/api/circles/mine'],
+    queryKey: ['/api/circles', circleId],
+    enabled: !isSoloMode && !!circleId, // Only fetch for circle mode when circleId is provided
   });
 
   // Check if user should see instruction modal
@@ -319,13 +323,15 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
       // This is only used for Circle Mode (Solo Mode handles success in createWillMutation)
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles', circle?.id] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       
       toast({
         title: "Will Created!",
         description: "Will has been created and is pending review from other members.",
       });
-      setLocation('/hub');
+      // Navigate to the specific circle hub
+      setLocation(circle?.id ? `/circles/${circle.id}` : '/circles');
     },
     onError: (error) => {
       toast({
@@ -507,7 +513,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
   };
 
   const handleCancel = () => {
-    setLocation(isSoloMode ? '/solo/hub' : '/hub');
+    setLocation(isSoloMode ? '/solo/hub' : (circle?.id ? `/circles/${circle.id}` : '/circles'));
   };
 
   const handleModalStart = () => {
@@ -526,8 +532,8 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">No Circle Found</h2>
           <p className="text-gray-600 mb-6">You need to be part of a Circle to create a Will.</p>
-          <Button onClick={() => setLocation('/inner-circle')}>
-            Create or Join Circle
+          <Button onClick={() => setLocation('/circles')}>
+            Go to My Circles
           </Button>
         </div>
       </div>
@@ -544,14 +550,15 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
             <div className="flex items-center mb-2">
               <UnifiedBackButton 
                 onClick={() => {
+                  const circleHubPath = circle?.id ? `/circles/${circle.id}` : '/circles';
                   if (showTypeSelection) {
-                    // On type selection, go back to hub
-                    setLocation('/hub');
+                    // On type selection, go back to circle hub
+                    setLocation(circleHubPath);
                   } else if (currentStep === 1 && !isSoloMode && willType !== null) {
                     // On step 1 in circle mode, go back to type selection
                     setWillType(null);
                   } else if (currentStep === 1) {
-                    setLocation(isSoloMode ? '/solo/hub' : '/hub');
+                    setLocation(isSoloMode ? '/solo/hub' : circleHubPath);
                   } else {
                     setCurrentStep(currentStep - 1);
                   }

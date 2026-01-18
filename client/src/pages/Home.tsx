@@ -10,12 +10,6 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { getApiPath } from "@/config/api";
 
-type CircleWithMembers = {
-  id: number;
-  inviteCode: string;
-  members?: { id: number; userId: string }[];
-};
-
 export default function Home() {
   const [, setLocation] = useLocation();
   const [showSplash, setShowSplash] = useState(false);
@@ -69,14 +63,6 @@ export default function Home() {
     }
   };
   
-  const { data: circle } = useQuery<CircleWithMembers>({
-    queryKey: ['/api/circles/mine'],
-    retry: (failureCount, error: any) => {
-      if (error?.message?.includes('404')) return false;
-      return failureCount < 3;
-    },
-  });
-
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/user'],
   });
@@ -86,11 +72,8 @@ export default function Home() {
   };
 
   const handleCircleMode = () => {
-    if (circle) {
-      setLocation('/hub');
-    } else {
-      setLocation('/inner-circle');
-    }
+    // Always go to My Circles lobby - users can have multiple circles now
+    setLocation('/circles');
   };
 
   if (showSplash) {

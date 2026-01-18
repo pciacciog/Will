@@ -57,6 +57,9 @@ export interface IStorage {
   getCircleByInviteCode(inviteCode: string): Promise<Circle | undefined>;
   getCircleById(id: number): Promise<Circle | undefined>;
   getUserCircle(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined>;
+  getUserCircles(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[]; activeWillCount: number })[]>;
+  getUserCircleCount(userId: string): Promise<number>;
+  getCircleWithMembers(circleId: number): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined>;
   
   // Circle member operations
   addCircleMember(member: InsertCircleMember): Promise<CircleMember>;
@@ -361,6 +364,70 @@ export class DatabaseStorage implements IStorage {
     return {
       ...circle,
       members: allMembers,
+    };
+  }
+
+  async getUserCircles(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[]; activeWillCount: number })[]> {
+    // Get all circles where user is a member
+    const userCircleIds = await db
+      .select({ circleId: circleMembers.circleId })
+      .from(circleMembers)
+      .where(eq(circleMembers.userId, userId));
+
+    if (userCircleIds.length === 0) return [];
+
+    const circleIds = userCircleIds.map(c => c.circleId);
+    
+    // Get all circles
+    const circlesList = await db
+      .select()
+      .from(circles)
+      .where(inArray(circles.id, circleIds));
+
+    // Build result with members and active will count
+    const result = await Promise.all(circlesList.map(async (circle) => {
+      const members = await this.getCircleMembers(circle.id);
+      
+      // Count active wills (status not 'archived' or 'completed')
+      const [activeWillResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(wills)
+        .where(and(
+          eq(wills.circleId, circle.id),
+          sql`status NOT IN ('archived', 'completed')`
+        ));
+      
+      return {
+        ...circle,
+        members,
+        activeWillCount: activeWillResult?.count || 0,
+      };
+    }));
+
+    // Sort by circles with active wills first, then by most recent activity
+    return result.sort((a, b) => {
+      if (a.activeWillCount > 0 && b.activeWillCount === 0) return -1;
+      if (a.activeWillCount === 0 && b.activeWillCount > 0) return 1;
+      return (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0);
+    });
+  }
+
+  async getUserCircleCount(userId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(circleMembers)
+      .where(eq(circleMembers.userId, userId));
+    return result?.count || 0;
+  }
+
+  async getCircleWithMembers(circleId: number): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined> {
+    const circle = await this.getCircleById(circleId);
+    if (!circle) return undefined;
+    
+    const members = await this.getCircleMembers(circleId);
+    return {
+      ...circle,
+      members,
     };
   }
 

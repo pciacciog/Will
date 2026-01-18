@@ -3,7 +3,7 @@
 ## Overview
 This full-stack web application facilitates goal accountability through two modes:
 1. **Solo Mode**: Personal accountability without circle coordination - immediate-start personal goals with simple review-based completion
-2. **Inner Circle Mode**: Group accountability with 2-6 users defining and tracking "wills" (goal commitments) together
+2. **Inner Circle Mode**: Group accountability with 2-4 users per circle defining and tracking "wills" (goal commitments) together. Users can join up to 3 circles simultaneously.
 
 Both modes support daily progress tracking, Will commitments with reviews, and structured goal lifecycles to foster personal growth via consistent action.
 
@@ -26,7 +26,7 @@ Preferred communication style: Simple, everyday language.
 - **Build Process**: ESBuild-only production builds.
 - **Authentication**: Custom email/password system, Express sessions with PostgreSQL storage.
 - **Will System**: Structured goal commitments with status tracking and individual member commitments.
-- **Circle Management**: Invite codes, member limits (2-6), single-circle membership.
+- **Multi-Circle System**: Users can join up to 3 circles simultaneously (max 4 members per circle). "My Circles" lobby at `/circles` lists all circles, circle hub at `/circles/:circleId` shows specific circle.
 - **Real-time Updates**: Continuous polling and robust cache invalidation.
 - **Mobile Integration**: Capacitor for iOS (safe area optimization, APNs push notifications, embedded video).
 - **State Transitions**: Just-In-Time (JIT) state checks in GET endpoints for reliability in addition to a background scheduler.
@@ -42,13 +42,17 @@ Preferred communication style: Simple, everyday language.
   - Single-user review for completion
   - Route: `/solo/hub`, `/solo/start-will`
 - **Inner Circle Mode**:
-  - Circle Management: Create/join circles, display member list
+  - **Multi-Circle**: Users can belong to up to 3 circles simultaneously (max 4 members each)
+  - **My Circles Lobby**: `/circles` route shows all circles user belongs to with cards and create/join options
+  - **Circle Hub**: `/circles/:circleId` route shows specific circle's Will status and members
+  - Circle Management: Create/join circles with invite codes, display member list, leave circle
   - **Will Types** (Circle sub-types):
-    - **Classic**: Each member defines their own personal commitment ("I Will")
-    - **Cumulative**: Creator defines a shared commitment for the entire circle ("We Will") - all members commit to the same goal
+    - **Normal**: Each member defines their own personal commitment ("I Will")
+    - **Shared**: Creator defines a shared commitment for the entire circle ("We Will") - all members commit to the same goal
   - 4-step Will flow: Type Selection → When → What → Why → End Room (optional)
   - Team coordination with mutual accountability
   - Database fields: `willType` ('classic' or 'cumulative'), `sharedWhat` (stores team commitment for cumulative wills)
+  - Routes: `/circles` (lobby), `/circles/:circleId` (hub), `/start-will` (will creation)
 - **Will Creation & Management**: Multi-step guided creation, commitment editing, role-based permissions.
 - **Progress Tracking**: Daily logging, progress acknowledgment, timeline visualization.
 - **End Room**: Scheduled video calls (Daily.co) for reflection and closure (circle mode only, optional).

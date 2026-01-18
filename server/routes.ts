@@ -354,10 +354,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       
-      // Check if user is already in a circle
-      const existingCircle = await storage.getUserCircle(userId);
-      if (existingCircle) {
-        return res.status(400).json({ message: "You're already a member of a circle" });
+      // Check if user has reached maximum circles (3)
+      const circleCount = await storage.getUserCircleCount(userId);
+      if (circleCount >= 3) {
+        return res.status(400).json({ message: "You've reached the maximum of 3 circles. Leave a circle to create another." });
       }
 
       // Generate unique invite code
@@ -381,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
 
-      const circleWithMembers = await storage.getUserCircle(userId);
+      const circleWithMembers = await storage.getCircleWithMembers(circle.id);
       res.json(circleWithMembers);
     } catch (error) {
       console.error("Error creating circle:", error);
@@ -398,10 +398,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invite code is required" });
       }
 
-      // Check if user is already in a circle
-      const existingUserCircle = await storage.getUserCircle(userId);
-      if (existingUserCircle) {
-        return res.status(400).json({ message: "You're already a member of a circle" });
+      // Check if user has reached maximum circles (3)
+      const userCircleCount = await storage.getUserCircleCount(userId);
+      if (userCircleCount >= 3) {
+        return res.status(400).json({ message: "You've reached the maximum of 3 circles. Leave a circle to join another." });
       }
 
       // Find circle by invite code
@@ -410,10 +410,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "No circle found with that code" });
       }
 
-      // Check if circle is full (max 6 members)
+      // Check if circle is full (max 4 members per circle)
       const memberCount = await storage.getCircleMemberCount(circle.id);
-      if (memberCount >= 6) {
-        return res.status(400).json({ message: "This Circle is full" });
+      if (memberCount >= 4) {
+        return res.status(400).json({ message: "This Circle is full (maximum 4 members)" });
       }
 
       // Check if user is already in this circle
@@ -467,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const circleWithMembers = await storage.getUserCircle(userId);
+      const circleWithMembers = await storage.getCircleWithMembers(circle.id);
       res.json(circleWithMembers);
     } catch (error) {
       console.error("Error joining circle:", error);
@@ -475,35 +475,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all circles user is a member of (for My Circles lobby)
   app.get('/api/circles/mine', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const circle = await storage.getUserCircle(userId);
+      const circles = await storage.getUserCircles(userId);
+      res.json(circles);
+    } catch (error) {
+      console.error("Error fetching user circles:", error);
+      res.status(500).json({ message: "Failed to fetch circles" });
+    }
+  });
+
+  // Get specific circle by ID (for Circle Hub)
+  app.get('/api/circles/:circleId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const circleId = parseInt(req.params.circleId);
+      
+      if (isNaN(circleId)) {
+        return res.status(400).json({ message: "Invalid circle ID" });
+      }
+      
+      // Verify user is a member of this circle
+      const isMember = await storage.isUserInCircle(userId, circleId);
+      if (!isMember) {
+        return res.status(403).json({ message: "You're not a member of this circle" });
+      }
+      
+      const circle = await storage.getCircleWithMembers(circleId);
+      if (!circle) {
+        return res.status(404).json({ message: "Circle not found" });
+      }
+      
       res.json(circle);
     } catch (error) {
-      console.error("Error fetching user circle:", error);
+      console.error("Error fetching circle:", error);
       res.status(500).json({ message: "Failed to fetch circle" });
     }
   });
 
-  app.post('/api/circles/leave', isAuthenticated, async (req: any, res) => {
+  app.post('/api/circles/:circleId/leave', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const circleId = parseInt(req.params.circleId);
       
-      // Get user's current circle
-      const circle = await storage.getUserCircle(userId);
-      if (!circle) {
-        return res.status(404).json({ message: "You are not a member of any circle" });
+      if (isNaN(circleId)) {
+        return res.status(400).json({ message: "Invalid circle ID" });
+      }
+      
+      // Verify user is a member of this circle
+      const isMember = await storage.isUserInCircle(userId, circleId);
+      if (!isMember) {
+        return res.status(404).json({ message: "You are not a member of this circle" });
       }
 
-      // Check if there are active wills
-      const activeWill = await storage.getCircleActiveWill(circle.id);
+      // Check if there are active wills in this circle
+      const activeWill = await storage.getCircleActiveWill(circleId);
       if (activeWill && (activeWill.status === 'active' || activeWill.status === 'scheduled')) {
         return res.status(400).json({ message: "Cannot leave circle while there is an active or scheduled will" });
       }
 
-      // Remove user from circle (this will be handled by deleting the circle member record)
-      await storage.removeCircleMember(userId, circle.id);
+      // Remove user from circle
+      await storage.removeCircleMember(userId, circleId);
 
       res.json({ message: "Successfully left the circle" });
     } catch (error) {

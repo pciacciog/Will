@@ -100,7 +100,11 @@ function formatEndRoomTime(dateString: string): string {
   }
 }
 
-export default function InnerCircleHub() {
+interface InnerCircleHubProps {
+  circleId?: number;
+}
+
+export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -114,8 +118,23 @@ export default function InnerCircleHub() {
   // Automatically refresh data when app comes back to foreground (mobile & web)
   useAppRefresh();
 
+  // If circleId is provided (from /circles/:circleId route), fetch that specific circle
+  // Otherwise, fall back to legacy behavior (fetch first circle from /api/circles/mine)
   const { data: circle } = useQuery<any>({
-    queryKey: ['/api/circles/mine'],
+    queryKey: circleId ? ['/api/circles', circleId] : ['/api/circles/mine'],
+    queryFn: async () => {
+      if (circleId) {
+        const response = await fetch(`/api/circles/${circleId}`, { credentials: 'include' });
+        if (!response.ok) throw new Error('Failed to fetch circle');
+        return response.json();
+      } else {
+        // Legacy fallback: get first circle from list
+        const response = await fetch('/api/circles/mine', { credentials: 'include' });
+        if (!response.ok) throw new Error('Failed to fetch circles');
+        const circles = await response.json();
+        return circles?.[0] || null;
+      }
+    },
     enabled: !!user,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
@@ -241,7 +260,8 @@ export default function InnerCircleHub() {
 
   const leaveCircleMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest(`/api/circles/leave`, { method: 'POST' });
+      if (!circle?.id) throw new Error("No circle to leave");
+      const res = await apiRequest(`/api/circles/${circle.id}/leave`, { method: 'POST' });
       return await res.json();
     },
     onSuccess: () => {
@@ -251,14 +271,17 @@ export default function InnerCircleHub() {
       });
       // Comprehensive cache invalidation to prevent stale data
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles', circle?.id] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       // Clear all cache to ensure fresh state
       queryClient.removeQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.removeQueries({ queryKey: ['/api/circles', circle?.id] });
       queryClient.removeQueries({ queryKey: ['/api/wills/circle'] });
       queryClient.removeQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-      setLocation('/');
+      // Go back to My Circles lobby
+      setLocation('/circles');
     },
     onError: (error: any) => {
       toast({
@@ -436,10 +459,10 @@ export default function InnerCircleHub() {
             <h2 className="text-2xl font-bold mb-4">No Circle</h2>
             <p className="text-muted-foreground mb-6">You need to be part of a Circle first.</p>
             <Button 
-              onClick={() => setLocation('/inner-circle')} 
+              onClick={() => setLocation('/circles')} 
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
             >
-              Create or Join Circle
+              Go to My Circles
             </Button>
           </div>
         </div>
@@ -463,12 +486,12 @@ export default function InnerCircleHub() {
           
           {/* Header with Back Button - Title aligned closer to avatar */}
           <div className="flex items-center justify-between mb-1">
-            {/* Back Button */}
+            {/* Back Button - goes to My Circles lobby if accessed from /circles/:circleId, otherwise home */}
             <button
-              onClick={() => setLocation('/')}
+              onClick={() => setLocation(circleId ? '/circles' : '/')}
               className="w-11 h-11 -ml-2 flex items-center justify-center"
               data-testid="button-back-home"
-              aria-label="Go back"
+              aria-label="Go back to My Circles"
             >
               <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:border-gray-300 transition-all duration-200 active:scale-95">
                 <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
@@ -630,7 +653,7 @@ export default function InnerCircleHub() {
           {willStatus === 'no_will' && (
             <div className="text-center py-4">
               <button 
-                onClick={() => setLocation('/start-will')}
+                onClick={() => setLocation(circle?.id ? `/circles/${circle.id}/start-will` : '/start-will')}
                 className="mx-auto mb-3 w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                 aria-label="Create a Will"
               >
@@ -639,7 +662,7 @@ export default function InnerCircleHub() {
               <h3 className="text-base font-medium mb-1 tracking-tight text-gray-900">No active <em>Will</em></h3>
               <p className="text-gray-500 mb-4 text-sm tracking-tight">Ready to commit together?</p>
               <Button 
-                onClick={() => setLocation('/start-will')}
+                onClick={() => setLocation(circle?.id ? `/circles/${circle.id}/start-will` : '/start-will')}
                 className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-2.5 rounded-xl shadow-md transition-all duration-200"
               >
                 <span>Start a <em>Will</em></span>

@@ -28,6 +28,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
 import NotificationTest from "@/pages/NotificationTest";
 import IconGenerator from "@/pages/IconGenerator";
+import CircleLobby from "@/pages/CircleLobby";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -39,6 +40,14 @@ if (import.meta.env.DEV) {
   setInterval(() => {
     console.log('🔍 PERIODIC DEBUG:', notificationService.getDebugInfo());
   }, 10000);
+}
+
+function LegacyHubRedirect() {
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    setLocation('/circles');
+  }, [setLocation]);
+  return null;
 }
 
 function Router() {
@@ -320,10 +329,13 @@ function Router() {
           <>
             <Route path="/" component={Home} />
             <Route path="/inner-circle" component={InnerCircle} />
-            <Route path="/hub" component={InnerCircleHub} />
+            <Route path="/circles" component={CircleLobby} />
+            <Route path="/circles/:circleId">{(params) => <InnerCircleHub circleId={parseInt(params.circleId)} />}</Route>
+            <Route path="/hub" component={LegacyHubRedirect} />
             <Route path="/solo/hub" component={SoloHub} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>
+            <Route path="/circles/:circleId/start-will">{(params) => <StartWill circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/start-will">{() => <StartWill />}</Route>
             <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/will/:id" component={WillDetails} />
