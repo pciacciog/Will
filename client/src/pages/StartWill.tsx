@@ -15,7 +15,7 @@ import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, U
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users } from "lucide-react";
 
 // Helper function to get next Monday's date in YYYY-MM-DD format (local timezone)
 // Returns the upcoming Monday:
@@ -597,15 +597,12 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
           {/* Current Step Title */}
           <div className="text-center mt-16">
             <h1 className="text-xl font-semibold text-gray-900">
-              {showTypeSelection && "What type of Will?"}
+              {showTypeSelection && "Choose your Will Type:"}
               {!showTypeSelection && currentStep === 1 && "Set Your Timeline"}
               {!showTypeSelection && currentStep === 2 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
               {!showTypeSelection && currentStep === 3 && "Why would you like to do this?"}
               {!showTypeSelection && currentStep === 4 && (isSoloMode ? "Review Your Will" : "Schedule Your End Room")}
             </h1>
-            {showTypeSelection && (
-              <p className="text-sm text-gray-500 mt-1">Choose how your circle will commit</p>
-            )}
             {!showTypeSelection && currentStep === 1 && (
               <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
             )}
@@ -643,38 +640,38 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
         
         {/* Type Selection Screen (Circle mode only) */}
         {showTypeSelection && (
-          <div className="flex flex-col animate-in fade-in duration-500 px-2">
-            <div className="space-y-4 py-4">
-              {/* Classic Option */}
+          <div className="flex flex-col animate-in fade-in duration-500 px-4">
+            <div className="space-y-5 py-8">
+              {/* Normal Option */}
               <button
                 onClick={() => setWillType('classic')}
-                className="w-full p-4 bg-white border-2 border-gray-200 rounded-xl text-left hover:border-brandBlue hover:bg-blue-50/30 transition-all duration-200 group"
+                className="w-full p-6 bg-white border border-gray-200 rounded-2xl text-left hover:border-brandBlue hover:shadow-lg transition-all duration-300 group shadow-sm"
                 data-testid="button-type-classic"
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors">
-                    <Target className="w-5 h-5 text-blue-600" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-blue-100 group-hover:to-blue-200 transition-all duration-300">
+                    <Target className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">Classic</h3>
-                    <p className="text-sm text-gray-500">Each member defines their own commitment</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-0.5">Normal</h3>
+                    <p className="text-sm text-gray-500">Each circle member defines their own Will</p>
                   </div>
                 </div>
               </button>
               
-              {/* Cumulative Option */}
+              {/* Shared Option */}
               <button
                 onClick={() => setWillType('cumulative')}
-                className="w-full p-4 bg-white border-2 border-gray-200 rounded-xl text-left hover:border-brandBlue hover:bg-blue-50/30 transition-all duration-200 group"
+                className="w-full p-6 bg-white border border-gray-200 rounded-2xl text-left hover:border-purple-400 hover:shadow-lg transition-all duration-300 group shadow-sm"
                 data-testid="button-type-cumulative"
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-purple-200 transition-colors">
-                    <Target className="w-5 h-5 text-purple-600" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-purple-100 group-hover:to-purple-200 transition-all duration-300">
+                    <Users className="w-6 h-6 text-purple-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">Cumulative</h3>
-                    <p className="text-sm text-gray-500">Everyone commits to the same thing</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-0.5">Shared</h3>
+                    <p className="text-sm text-gray-500">All circle members commit to the same Will</p>
                   </div>
                 </div>
               </button>
