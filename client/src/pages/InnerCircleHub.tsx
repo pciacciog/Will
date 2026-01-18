@@ -120,7 +120,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
 
   // Fetch the specific circle by ID (required prop from /circles/:circleId route)
   const { data: circle, isLoading: circleLoading, isError: circleError } = useQuery<any>({
-    queryKey: ['/api/circles', circleId],
+    queryKey: [`/api/circles/${circleId}`],
     enabled: !!user && !!circleId,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates

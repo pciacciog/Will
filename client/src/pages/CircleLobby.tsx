@@ -53,7 +53,7 @@ export default function CircleLobby() {
     onSuccess: (newCircle: Circle) => {
       // Invalidate all circle-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles', newCircle.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/circles/${newCircle.id}`] });
       toast({
         title: "Circle Created!",
         description: "Your new circle has been created.",
@@ -81,7 +81,7 @@ export default function CircleLobby() {
     onSuccess: (joinedCircle: Circle) => {
       // Invalidate all circle-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles', joinedCircle.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/circles/${joinedCircle.id}`] });
       setInviteCode("");
       setShowJoinInput(false);
       toast({

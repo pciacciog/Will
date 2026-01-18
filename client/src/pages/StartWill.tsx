@@ -203,7 +203,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   // For circle mode, fetch the specific circle by ID
   // circleId is required for circle mode - if not provided, user will see "No Circle Found" message
   const { data: circle } = useQuery<any>({
-    queryKey: ['/api/circles', circleId],
+    queryKey: [`/api/circles/${circleId}`],
     enabled: !isSoloMode && !!circleId, // Only fetch for circle mode when circleId is provided
   });
 
