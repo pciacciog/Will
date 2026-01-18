@@ -731,7 +731,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         )}
 
         {/* Step 1: Set Dates - Focused Experience (Matches What/Why) */}
-        {currentStep === 1 && !showTransition && (
+        {currentStep === 1 && !showTransition && !showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep1Submit} className="flex flex-col flex-1">
               {/* Main Content Area - Compact */}
