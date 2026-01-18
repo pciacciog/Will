@@ -1,0 +1,135 @@
+CLARIFICATION NEEDED: "My Circles" Flow & Navigation
+
+Hey! I have some important questions about how the "My Circles" lobby flow should work. Need to make sure we're aligned before you implement.
+
+CURRENT BEHAVIOR (Before Multi-Circle):
+- User taps "Circle Mode"
+- IF user has NO circle → Shows "Create Circle" or "Join Circle" options
+- IF user HAS a circle → Goes DIRECTLY to that circle's Hub
+
+DESIRED NEW BEHAVIOR (With Multi-Circle):
+User should ALWAYS land in "My Circles" lobby first, regardless of how many circles they're in (0, 1, 2, or 3).
+
+MAXIMUM CIRCLES: 3 per user (UPDATE: Change from 10 to 3 in your implementation plan)
+
+SCREEN NAMING - CONFIRMED:
+- Screen title/header: "My Circles"
+- Back navigation text: "← My Circles" (when navigating back from a Circle Hub)
+- Use "My Circles" consistently throughout the app
+
+SCENARIO 1: User has ZERO circles
+- Tap "Circle Mode" → "My Circles" screen shows:
+  - Empty state message ("You're not in any circles yet")
+  - [+ Create New Circle] button
+  - [Join Circle with Code] button
+
+SCENARIO 2: User has ONE circle
+- Tap "Circle Mode" → "My Circles" screen shows:
+  - Their one circle card (clickable to enter)
+  - [+ Create New Circle] button
+  - [Join Circle with Code] button
+  - Maybe show "1/3 circles" indicator?
+
+SCENARIO 3: User has TWO circles
+- Tap "Circle Mode" → "My Circles" screen shows:
+  - Both circle cards (clickable to enter each)
+  - [+ Create New Circle] button
+  - [Join Circle with Code] button
+  - Maybe show "2/3 circles" indicator?
+
+SCENARIO 4: User has THREE circles (MAXIMUM REACHED)
+- Tap "Circle Mode" → "My Circles" screen shows:
+  - All three circle cards (clickable to enter each)
+  - NO "Create New Circle" button (hidden/removed)
+  - NO "Join Circle with Code" button (hidden/removed)
+  - Message: "You're in 3/3 circles (maximum)" or similar
+
+CRITICAL POINTS: 
+1. The flow should ALWAYS go through "My Circles" first. Never bypass it and go directly to a hub, even if user only has one circle.
+2. Create/Join buttons should DISAPPEAR when user reaches 3 circles.
+3. Maximum is 3 circles per user (UPDATE from your original plan of 10).
+
+QUESTIONS FOR YOU:
+
+1. CURRENT FLOW CHECK:
+   - Does your plan already account for this "always show My Circles first" behavior?
+   - Or were you planning to bypass the lobby and go direct to hub if user has only one circle?
+   - Please confirm the exact navigation flow for all scenarios above
+
+2. THREE CIRCLE LIMIT:
+   - Your plan mentioned 10 circles max - please UPDATE this to 3
+   - Confirm the create/join buttons will be HIDDEN (not just disabled) at 3/3 circles
+   - What message should show when user is at maximum? "You're in 3 circles (maximum)" or something else?
+
+3. BACK NAVIGATION:
+   - When user is inside a specific Circle Hub, is there a back button to return to "My Circles"?
+   - Where is this back button located? (Header? Top-left?)
+   - Confirm it says "← My Circles"
+
+4. NAVIGATION HIERARCHY:
+   Please confirm the complete navigation structure:
+Start Your Journey
+↓ tap "Circle Mode"
+My Circles (ALWAYS lands here first)
+↓ tap specific circle OR create/join (if under 3)
+Specific Circle Hub
+↓ tap "← My Circles"
+My Circles (returns here)
+
+5. EMPTY STATE (0 circles):
+   - What should "My Circles" show when user has zero circles?
+   - Just the create/join buttons with a message?
+   - What should the empty state message say?
+   - Any welcome text or explanation?
+
+6. CIRCLE CARDS IN "MY CIRCLES":
+   - What information should each circle card display?
+   - Circle name (or member names if unnamed)
+   - Member count? 
+   - Active Will count? 
+   - Last activity timestamp?
+   - Any visual indicator for circles needing attention (pending Wills, active Wills, upcoming End Rooms)?
+
+7. CIRCLE COUNTER:
+   - Should we show "X/3 circles" somewhere in "My Circles" screen?
+   - Where should this appear? (Top? Bottom? On each scenario?)
+   - Or only show when at maximum: "3/3 circles (maximum)"?
+
+8. CIRCLE HUB HEADER:
+   - When user enters a specific Circle Hub, what does the header show?
+   - Just the circle name?
+   - Circle name + "← My Circles" back button?
+   - Please describe the header layout
+
+9. BOTTOM NAVIGATION:
+   - When user is in "My Circles", which bottom nav item is highlighted?
+   - When user is in a specific Circle Hub, which is highlighted?
+   - Or does Circle Hub have its own navigation without bottom nav?
+
+10. ATTEMPT TO JOIN 4TH CIRCLE:
+    - What happens if user tries to join via invite code when they already have 3 circles?
+    - Error message? 
+    - Suggested text: "You've reached the maximum of 3 circles. Leave a circle to join another."
+
+11. LEAVING A CIRCLE:
+    - How does a user leave a circle they're in?
+    - Is there a "Leave Circle" option in the Circle Hub?
+    - What happens to active Wills when they leave?
+    - Confirmation dialog before leaving?
+
+12. CIRCLE SORTING:
+    - How should circles be ordered in "My Circles"?
+    - Most recent activity first?
+    - Alphabetical by name?
+    - Creation date?
+
+PLEASE PROVIDE:
+- Confirmation that flow ALWAYS goes through "My Circles" first (never bypasses)
+- Confirmation that 3 circle maximum is implemented (UPDATE from 10)
+- Confirmation that create/join buttons DISAPPEAR (not just disable) at 3/3 circles
+- Explanation of back navigation from Circle Hub to "My Circles"
+- Wireframe or description of empty state (0 circles)
+- Description of circle card design and information displayed
+- Any concerns with this "always show My Circles" approach
+
+Want to make sure we're 100% aligned on the navigation flow and 3-circle limit before you build it!
