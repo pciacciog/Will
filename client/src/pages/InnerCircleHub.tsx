@@ -118,24 +118,10 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
   // Automatically refresh data when app comes back to foreground (mobile & web)
   useAppRefresh();
 
-  // If circleId is provided (from /circles/:circleId route), fetch that specific circle
-  // Otherwise, fall back to legacy behavior (fetch first circle from /api/circles/mine)
-  const { data: circle } = useQuery<any>({
-    queryKey: circleId ? ['/api/circles', circleId] : ['/api/circles/mine'],
-    queryFn: async () => {
-      if (circleId) {
-        const response = await fetch(`/api/circles/${circleId}`, { credentials: 'include' });
-        if (!response.ok) throw new Error('Failed to fetch circle');
-        return response.json();
-      } else {
-        // Legacy fallback: get first circle from list
-        const response = await fetch('/api/circles/mine', { credentials: 'include' });
-        if (!response.ok) throw new Error('Failed to fetch circles');
-        const circles = await response.json();
-        return circles?.[0] || null;
-      }
-    },
-    enabled: !!user,
+  // Fetch the specific circle by ID (required prop from /circles/:circleId route)
+  const { data: circle, isLoading: circleLoading, isError: circleError } = useQuery<any>({
+    queryKey: ['/api/circles', circleId],
+    enabled: !!user && !!circleId,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
   });
@@ -451,13 +437,25 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
     );
   }
 
-  if (!circle) {
+  // Show loading state while fetching circle
+  if (circleLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if circleId is missing or fetch failed
+  if (!circleId || !circle || circleError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">No Circle</h2>
-            <p className="text-muted-foreground mb-6">You need to be part of a Circle first.</p>
+            <h2 className="text-2xl font-bold mb-4">Circle Not Found</h2>
+            <p className="text-muted-foreground mb-6">This circle doesn't exist or you're not a member.</p>
             <Button 
               onClick={() => setLocation('/circles')} 
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
