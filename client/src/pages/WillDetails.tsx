@@ -472,6 +472,19 @@ export default function WillDetails() {
                will.status === 'completed' ? 'Completed' :
                will.status.charAt(0).toUpperCase() + will.status.slice(1)}
             </Badge>
+            {/* Will Type Badge - only for circle wills */}
+            {will.mode === 'circle' && (
+              <Badge 
+                className={`text-xs tracking-tight ${
+                  will.willType === 'cumulative' 
+                    ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                    : 'bg-blue-100 text-blue-700 border border-blue-200'
+                }`}
+                data-testid="badge-will-type"
+              >
+                {will.willType === 'cumulative' ? 'Shared' : 'Normal'}
+              </Badge>
+            )}
           </div>
           {will.status === 'pending' && (
             <p className="text-gray-500 text-xs tracking-tight">
