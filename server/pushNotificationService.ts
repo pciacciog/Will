@@ -338,16 +338,19 @@ class PushNotificationService {
   }
 
   // Predefined notification templates for the 4 key moments
-  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number): Promise<void> {
+  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isSharedWill: boolean = false): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "New Will proposed! 📝",
-      body: `${creatorName} has proposed starting a new will`,
+      title: isSharedWill ? "New Shared Will proposed! 📝" : "New Will proposed! 📝",
+      body: isSharedWill 
+        ? `${creatorName} proposed a new Shared Will for your circle`
+        : `${creatorName} has proposed starting a new Will`,
       category: 'will_proposed',
       data: {
         type: 'will_proposed',
         creatorName,
         willId: willId?.toString() || '',
         isSoloMode: 'false',
+        isSharedWill: isSharedWill ? 'true' : 'false',
         deepLink: willId ? `/will/${willId}/commit` : '/hub',
       }
     };

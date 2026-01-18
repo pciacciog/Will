@@ -271,13 +271,7 @@ export default function SubmitCommitment() {
               {currentStep === 3 && isCumulative && "Confirm Your Commitment"}
               {currentStep === 4 && "End Room Confirmation"}
             </h1>
-            {/* Cumulative: Show shared commitment on step 1 */}
-            {currentStep === 1 && isCumulative && sharedWhat && (
-              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-xl">
-                <p className="text-xs text-purple-600 font-medium mb-1">Team Commitment</p>
-                <p className="text-sm text-purple-900 font-semibold">We Will {sharedWhat}</p>
-              </div>
-            )}
+{/* Team Commitment box moved inside Will Schedule card for Shared Wills */}
             {/* Classic: What step icon */}
             {currentStep === 2 && !isCumulative && (
               <>
@@ -335,24 +329,7 @@ export default function SubmitCommitment() {
                       </svg>
                     </div>
                     <span className="text-sm font-medium text-blue-800">
-                      {(() => {
-                        console.log('SubmitCommitment Creator Debug:', { 
-                          willCreatedBy: will?.createdBy, 
-                          circleMembers: circle?.members,
-                          willLoaded: !!will,
-                          circleLoaded: !!circle
-                        });
-                        
-                        // Wait for both will and circle data to load
-                        if (!will || !circle || !circle.members) {
-                          return 'Loading...';
-                        }
-                        
-                        const creator = circle.members.find(member => member.user.id === will.createdBy);
-                        console.log('Found creator:', creator);
-                        
-                        return creator?.user.firstName || 'Someone';
-                      })()} has proposed the following:
+                      {will?.creatorFirstName ? `${will.creatorFirstName} ${will.creatorLastName || ''}`.trim() : 'Loading...'} {isCumulative ? 'has proposed a shared commitment:' : 'has proposed the following:'}
                     </span>
                   </div>
                 </div>
@@ -386,11 +363,13 @@ export default function SubmitCommitment() {
                           'Loading...'
                         )}
                       </div>
-                      <div className="bg-white/60 rounded-lg p-3 border border-blue-100">
-                        <p className="text-xs text-blue-700 leading-relaxed">
-                          Join your circle for this commitment period and work together toward your goals
-                        </p>
-                      </div>
+                      {/* Team Commitment box - only for Shared Wills */}
+                      {isCumulative && sharedWhat && (
+                        <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-xl">
+                          <p className="text-xs text-purple-600 font-medium mb-1">Team Commitment</p>
+                          <p className="text-sm text-purple-900 font-semibold">{sharedWhat}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -482,18 +461,21 @@ export default function SubmitCommitment() {
                 {/* Commitment Preview - Prominent reminder */}
                 {(what || (isCumulative && sharedWhat)) && (
                   <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <p className="text-lg font-semibold text-gray-800">
-                      "{isCumulative ? 'We Will' : 'I Will'} {isCumulative ? sharedWhat : what}"
-                    </p>
-                    {/* Privacy note - only for classic wills */}
-                    {!isCumulative && (
-                      <p className="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Private — only you can see this
-                      </p>
+                    {isCumulative ? (
+                      <>
+                        <p className="text-xs text-purple-600 font-medium mb-1">Team Commitment</p>
+                        <p className="text-lg font-semibold text-gray-800">"{sharedWhat}"</p>
+                      </>
+                    ) : (
+                      <p className="text-lg font-semibold text-gray-800">"I Will {what}"</p>
                     )}
+                    {/* Privacy note - shown for both classic and shared wills (because field is private) */}
+                    <p className="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Private — only you can see this
+                    </p>
                   </div>
                 )}
                 

@@ -735,8 +735,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log("Creator found:", creator?.firstName, creator?.lastName);
             
             const creatorName = creator ? creator.firstName : 'Someone';
-            await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers, will.id);
-            console.log(`Sent Will proposed notifications to ${otherMembers.length} members`);
+            const isSharedWill = willType === 'cumulative';
+            await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers, will.id, isSharedWill);
+            console.log(`Sent Will proposed notifications to ${otherMembers.length} members (isSharedWill: ${isSharedWill})`);
           } else {
             console.log("No other members to notify");
           }
@@ -936,12 +937,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       );
 
+      // Get creator name for display
+      const creator = await storage.getUser(willWithCommitments.createdBy);
+      const creatorFirstName = creator?.firstName || 'Someone';
+      const creatorLastName = creator?.lastName || '';
+
       res.json({
         ...willWithCommitments,
         status,
         memberCount,
         acknowledgedCount,
         commitments: commitmentsWithProgress,
+        creatorFirstName,
+        creatorLastName,
       });
     } catch (error) {
       console.error("Error fetching will details:", error);

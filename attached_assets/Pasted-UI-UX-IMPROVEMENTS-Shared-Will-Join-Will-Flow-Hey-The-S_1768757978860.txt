@@ -1,0 +1,71 @@
+UI/UX IMPROVEMENTS: Shared Will "Join Will" Flow
+
+Hey! The Shared Will joining experience needs several updates to make it clearer that this is a SHARED commitment (not individual commitments). See attached screenshot for reference.
+
+CONTEXT:
+When a user creates a Shared Will, other circle members need to join it. The current UI is confusing because it's using language/formatting designed for Normal Wills (where everyone has their own commitment).
+
+REQUIRED CHANGES:
+
+1. NOTIFICATION TEXT (Push Notification):
+   Current: "New Will proposed" (generic)
+   New: "[Name] proposed a new Shared Will" 
+   - Make it clear it's a SHARED will
+   - Include proposer's name
+
+2. DETAILS PAGE - PROPOSER INFO SECTION:
+   Current format (see screenshot):
+   - Shows "First Name" "Last Name" 
+   - "I will" 
+   - "fast for 24 hours this week"
+   - This format works for Normal Wills but is confusing for Shared Wills
+   
+   New format for Shared Wills:
+   - "[Full Name] has proposed a shared commitment:"
+   - "[commitment text]" (no "I will" or "We will" prefix)
+   - Example: "Jack Delgues has proposed a shared commitment: Fast for 24 hours this week"
+   - Make it crystal clear ONE person is proposing ONE commitment for EVERYONE
+
+3. "TEAM COMMITMENT" SECTION (Purple box at top):
+   Current:
+   - Title: "Team Commitment"
+   - Subtitle: "We Will Fast for 24 hours this week"
+   
+   Changes:
+   - Title: Keep "Team Commitment" (or consider "Shared Commitment"?)
+   - Subtitle: Remove "We Will" prefix → Just show "Fast for 24 hours this week"
+   - Only show the commitment text itself
+
+4. "LOADING... HAS PROPOSED" BUG:
+   Current: "Loading... has proposed the following:"
+   Fix: Show actual person's name who proposed the Will
+   - This appears to be a loading state that's not resolving properly
+   - Should show: "[Full Name] has proposed the following:"
+
+5. MOVE "TEAM COMMITMENT" SECTION:
+   Current: "Team Commitment" purple box is at the TOP of the screen
+   New: Move this section to be INSIDE the "Will Schedule" card below
+   - The Team Commitment should be part of the Will Details, not separate at top
+   - Makes the information flow more logical
+
+6. DELETE UNNECESSARY TEXT:
+   Remove: "Join your circle for this commitment period and work together toward your goals"
+   - This text is redundant and clutters the screen
+   - The page is already clearly about joining a Will
+
+7. "BECAUSE" SECTION (Why page - not shown in screenshot):
+   Same rule: Remove "We Will" prefix
+   - Just show the commitment text
+   - Example: "Fast for 24 hours this week" not "We Will Fast for 24 hours this week"
+
+OVERALL GOAL:
+Make Shared Wills feel distinct from Normal Wills:
+- Normal Will: "Each person defines their own commitment"
+- Shared Will: "ONE person proposes ONE commitment for EVERYONE"
+
+The UI should clearly communicate:
+1. WHO proposed it (full name, not "Loading...")
+2. WHAT they're proposing (commitment text only, no "We Will")
+3. That it's a SHARED commitment everyone will do together
+
+Please implement these changes and ensure the Shared Will joining flow is clear and intuitive!
