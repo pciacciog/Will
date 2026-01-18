@@ -613,12 +613,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Get circle ID from request body
         const circleId = req.body.circleId;
+        console.log('=== WILL CREATION DEBUG ===');
+        console.log('User ID:', userId);
+        console.log('Circle ID from request body:', circleId);
+        console.log('Full request body:', JSON.stringify(req.body, null, 2));
+        
         if (!circleId) {
+          console.log('ERROR: No circleId provided in request');
           return res.status(400).json({ message: "Circle ID is required for circle mode Wills" });
         }
         
         // Verify user is a member of this specific circle
         const isMember = await storage.isUserInCircle(userId, circleId);
+        console.log('Is user member of circle', circleId, '?', isMember);
         if (!isMember) {
           return res.status(403).json({ message: "You must be a member of this circle to create a Will" });
         }
@@ -630,7 +637,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Check if THIS SPECIFIC circle already has an active will
+        console.log('Checking for active Will in circleId:', circleId);
         const existingWill = await storage.getCircleActiveWill(circleId);
+        console.log('Existing Will found:', existingWill ? `ID=${existingWill.id}, status=${existingWill.status}, circleId=${existingWill.circleId}` : 'NONE');
         if (existingWill) {
           // If will is completed, check if all committed members have acknowledged
           if (existingWill.status === 'completed') {
