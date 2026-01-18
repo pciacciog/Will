@@ -1,0 +1,142 @@
+MAJOR FEATURE REQUEST: Multiple Inner Circles per User
+
+Hey! I need to implement a significant architectural change to allow users to be in MULTIPLE Inner Circles simultaneously. Currently, users can only be in one circle at a time, but this doesn't reflect real life - people have different groups (close friends, family, work colleagues, summer friends, etc.).
+
+BEFORE YOU IMPLEMENT ANYTHING: Please read this entire request, analyze what needs to change, and present me with your complete implementation plan for review.
+
+CURRENT STATE:
+- Users can only be in ONE Inner Circle at a time
+- When user taps "Circle Mode" from "Start Your Journey" screen, they go directly to their single Circle Hub
+- Database/logic enforces this one-circle limitation
+
+DESIRED NEW BEHAVIOR:
+
+1. MULTIPLE CIRCLE MEMBERSHIP:
+   - Users can be in MULTIPLE Inner Circles simultaneously (no limit, or maybe cap at 5-10?)
+   - Each circle operates independently with its own:
+     * Members (2-4 people each)
+     * Active Wills
+     * Circle Hub
+     * History/archived Wills
+
+2. NEW UI FLOW - "CIRCLE LOBBY":
+   - When user taps "Circle Mode" from "Start Your Journey" screen
+   - Instead of going directly to a Circle Hub
+   - They see a "Circle Lobby" screen showing all their circles
+   - User selects which circle they want to enter
+   - Then they enter that specific Circle's Hub
+
+3. CIRCLE LOBBY SCREEN SHOULD SHOW:
+   - List of all circles the user is in
+   - For each circle:
+     * Circle name (or member names if no custom name)
+     * Number of active Wills in that circle
+     * Maybe preview of most recent activity?
+   - Button to "Create New Circle" (generates new invite code)
+   - Button to "Join Circle" (enter invite code)
+
+4. WITHIN EACH CIRCLE HUB:
+   - Everything works exactly as it does now
+   - User can create Wills, see active Wills, participate, etc.
+   - But it's isolated to THAT specific circle
+   - Navigation should show which circle they're currently in
+   - Easy way to go back to Circle Lobby
+
+CRITICAL ARCHITECTURAL CHANGES NEEDED:
+
+1. DATABASE SCHEMA:
+   - Remove "one circle per user" constraint
+   - User-to-Circle relationship must be one-to-many (one user, many circles)
+   - Ensure Wills are properly scoped to specific circles
+   - Consider: Do we need a circles table with metadata?
+
+2. INVITE CODE LOGIC:
+   - When user creates a circle, they generate an invite code
+   - When another user joins via that code, they're added to THAT circle
+   - User can be in multiple circles via different invite codes
+   - Each circle maintains its own 2-4 member limit
+
+3. NOTIFICATIONS:
+   - Push notifications need to specify WHICH circle the activity is in
+   - Example: "New Will proposed in [Circle Name/Members]"
+   - User needs context about which circle requires their attention
+
+4. NAVIGATION:
+   - Add "Circle Lobby" as new screen in the flow
+   - Add breadcrumb or header showing current circle name
+   - Easy navigation back to Circle Lobby from any Circle Hub
+
+5. ACTIVE WILLS ACROSS CIRCLES:
+   - Users can have multiple active Wills simultaneously (one per circle)
+   - Each Will is scoped to its specific circle
+   - Timeline/notifications work independently per circle
+
+6. SOLO MODE:
+   - Solo Mode remains separate and unaffected by circle changes
+   - User can have Solo Wills + multiple Circle Wills all active
+
+QUESTIONS YOU SHOULD ANSWER IN YOUR PLAN:
+
+1. DATABASE CHANGES:
+   - What tables need to be created/modified?
+   - What's the new schema for user-circle relationships?
+   - How do we migrate existing single-circle users?
+   - Do circles need IDs, names, or other metadata?
+
+2. UI/UX FLOW:
+   - Describe the complete navigation flow from "Circle Mode" button → Circle Lobby → Specific Circle Hub
+   - How should the Circle Lobby look/function?
+   - How do we display which circle the user is currently in?
+   - How do users navigate between circles?
+
+3. INVITE CODE SYSTEM:
+   - Does current invite code logic need changes?
+   - How do we ensure invite codes are unique per circle?
+   - What happens if user tries to join a circle they're already in?
+
+4. NOTIFICATIONS:
+   - How do we scope notifications to specific circles?
+   - What text/context do we add to identify which circle?
+   - Any changes needed to notification triggers?
+
+5. ACTIVE WILLS MANAGEMENT:
+   - How do we track multiple active Wills across different circles?
+   - Any conflicts or edge cases with multiple simultaneous Wills?
+   - How does End Room scheduling work across circles?
+
+6. MIGRATION STRATEGY:
+   - How do we handle existing users who are in one circle?
+   - Do they automatically keep their current circle?
+   - Any data migration scripts needed?
+
+7. EDGE CASES:
+   - What if user leaves a circle? How does that work?
+   - Can circles have custom names or just show member names?
+   - Maximum number of circles per user?
+   - What if a circle drops below 2 members?
+   - Can users delete/archive circles?
+
+8. COMPLEXITY ASSESSMENT:
+   - How complex is this change (small/medium/large)?
+   - What's your estimated effort/time?
+   - Are there any technical risks or challenges?
+   - Any parts that are particularly tricky?
+
+9. ALTERNATIVE APPROACHES:
+   - Is there a simpler way to implement this?
+   - Any phased approach you'd recommend?
+   - Any concerns or recommendations?
+
+DELIVERABLE:
+Please provide a comprehensive implementation plan covering:
+- Complete database schema changes (before/after)
+- Step-by-step UI flow with new screens
+- Technical architecture changes needed
+- Migration strategy for existing users
+- Edge case handling
+- Complexity/effort assessment
+- Your recommendations or concerns
+
+DO NOT IMPLEMENT YET - I want to review and approve the plan first before any code changes.
+
+Looking forward to your detailed plan!
