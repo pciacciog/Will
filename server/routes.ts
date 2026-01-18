@@ -609,16 +609,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         res.json({ ...will, status: 'pending', midpointAt: midpointTime });
       } else {
-        // CIRCLE MODE: Existing logic
+        // CIRCLE MODE: Multi-circle support - use circleId from request
         
-        // Get user's circle
-        const circle = await storage.getUserCircle(userId);
+        // Get circle ID from request body
+        const circleId = req.body.circleId;
+        if (!circleId) {
+          return res.status(400).json({ message: "Circle ID is required for circle mode Wills" });
+        }
+        
+        // Verify user is a member of this specific circle
+        const isMember = await storage.isUserInCircle(userId, circleId);
+        if (!isMember) {
+          return res.status(403).json({ message: "You must be a member of this circle to create a Will" });
+        }
+        
+        // Get circle details
+        const circle = await storage.getCircleWithMembers(circleId);
         if (!circle) {
-          return res.status(400).json({ message: "You must be in a circle to create a Will" });
+          return res.status(404).json({ message: "Circle not found" });
         }
 
-        // Check if circle already has an active will
-        const existingWill = await storage.getCircleActiveWill(circle.id);
+        // Check if THIS SPECIFIC circle already has an active will
+        const existingWill = await storage.getCircleActiveWill(circleId);
         if (existingWill) {
           // If will is completed, check if all committed members have acknowledged
           if (existingWill.status === 'completed') {
