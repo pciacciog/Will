@@ -648,37 +648,67 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         {/* Type Selection Screen (Circle mode only) */}
         {showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500 px-4">
-            <div className="space-y-5 py-8">
-              {/* Normal Option */}
+            <div className="space-y-4 py-6">
+              {/* Normal Option - Enhanced design matching Home screen */}
               <button
                 onClick={() => setWillType('classic')}
-                className="w-full p-6 bg-white border border-gray-200 rounded-2xl text-left hover:border-brandBlue hover:shadow-lg transition-all duration-300 group shadow-sm"
+                className="w-full text-left group"
                 data-testid="button-type-classic"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-blue-100 group-hover:to-blue-200 transition-all duration-300">
-                    <Target className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-0.5">Normal</h3>
-                    <p className="text-sm text-gray-500">Each circle member defines their own Will</p>
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl blur opacity-10 group-hover:opacity-30 transition-opacity duration-300"></div>
+                  <div className="relative bg-white border-2 border-blue-200 shadow-sm group-hover:border-blue-400 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-0.5 p-5">
+                    <div className="flex items-start space-x-4">
+                      <div className="relative flex-shrink-0">
+                        <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                          <Target className="w-7 h-7 text-blue-600" strokeWidth={1.5} />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-900">Normal</h3>
+                          <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <p className="text-blue-600/90 text-sm font-medium italic mt-0.5 tracking-tight">
+                          "I Will…"
+                        </p>
+                        <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+                          Each circle member defines their own Will
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </button>
               
-              {/* Shared Option */}
+              {/* Shared Option - Enhanced design matching Home screen */}
               <button
                 onClick={() => setWillType('cumulative')}
-                className="w-full p-6 bg-white border border-gray-200 rounded-2xl text-left hover:border-purple-400 hover:shadow-lg transition-all duration-300 group shadow-sm"
+                className="w-full text-left group"
                 data-testid="button-type-cumulative"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-purple-100 group-hover:to-purple-200 transition-all duration-300">
-                    <Users className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-0.5">Shared</h3>
-                    <p className="text-sm text-gray-500">All circle members commit to the same Will</p>
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-pink-500 rounded-2xl blur opacity-10 group-hover:opacity-30 transition-opacity duration-300"></div>
+                  <div className="relative bg-white border-2 border-purple-200 shadow-sm group-hover:border-purple-400 rounded-2xl overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-0.5 p-5">
+                    <div className="flex items-start space-x-4">
+                      <div className="relative flex-shrink-0">
+                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                          <Users className="w-7 h-7 text-purple-600" strokeWidth={1.5} />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-900">Shared</h3>
+                          <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <p className="text-purple-600/90 text-sm font-medium italic mt-0.5 tracking-tight">
+                          "We Will…"
+                        </p>
+                        <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+                          All circle members commit to the same Will
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </button>
@@ -874,7 +904,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                       }}
                       className="w-full text-center text-xl leading-relaxed font-normal text-gray-700 bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 resize-none transition-colors duration-300 placeholder:text-gray-300 placeholder:italic py-3 px-4" 
                       style={{ minHeight: '72px', maxHeight: '120px' }}
-                      placeholder={willType === 'cumulative' ? "phone-free for 24 hours" : "call my grandmother this week"}
+                      placeholder={willType === 'cumulative' ? "go phone free for 24 hours" : "call my grandmother this week"}
                       data-testid="input-what"
                     />
                   </div>

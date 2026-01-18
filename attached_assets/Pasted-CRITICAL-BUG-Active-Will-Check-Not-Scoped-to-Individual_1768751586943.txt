@@ -1,0 +1,61 @@
+CRITICAL BUG: Active Will Check Not Scoped to Individual Circles
+
+Hey! I found a major bug with the multi-circle implementation. The active Will enforcement is not working correctly.
+
+CURRENT BROKEN BEHAVIOR:
+- I have 2 circles
+- Circle A has an active Will (scheduled to start Jan 19)
+- I go to Circle B (different circle, no active Will)
+- I try to create a Will in Circle B
+- I get 400 error: "Your circle already has an active will"
+- This is WRONG - Circle B does NOT have an active Will
+
+EXPECTED CORRECT BEHAVIOR:
+- Each circle should be independent
+- Rule: ONE active Will per circle maximum
+- But you CAN have multiple active Wills as long as they're in DIFFERENT circles
+- Circle A having an active Will should NOT prevent Circle B from having its own active Will
+
+THE BUG:
+The system is checking if the USER has any active Will (old single-circle logic), when it should be checking if THIS SPECIFIC CIRCLE has an active Will (new multi-circle logic).
+
+DIAGNOSIS NEEDED:
+
+1. WHERE IS THIS CHECK HAPPENING?
+   - What API endpoint returns this error?
+   - POST /api/wills/create ?
+   - What file/function contains this validation?
+
+2. CURRENT CODE (WRONG):
+// Old single-circle logic - WRONG for multi-circle
+const userActiveWill = await storage.getUserActiveWill(userId);
+if (userActiveWill) {
+return res.status(400).json({ message: "Your circle already has an active will" });
+}
+
+3. CORRECT CODE SHOULD BE:
+// New multi-circle logic - check THIS circle only
+const circleActiveWill = await storage.getCircleActiveWill(circleId);
+if (circleActiveWill) {
+return res.status(400).json({ message: "This circle already has an active will" });
+}
+
+QUESTIONS:
+
+1. Can you locate the exact code that's checking for active Wills before creation?
+2. Is it checking by userId (WRONG) or by circleId (CORRECT)?
+3. Does the storage layer have a `getCircleActiveWill(circleId)` method?
+4. If not, we need to create it
+
+FIX REQUIRED:
+
+1. Change the active Will check from user-scoped to circle-scoped
+2. Each circle should independently allow one active Will
+3. User should be able to have up to 3 active Wills simultaneously (one per circle, max 3 circles)
+
+Please show me:
+- The current validation code that's causing this error
+- The proposed fix to scope it to circleId instead of userId
+- Any other places where similar user-scoped checks need to be changed to circle-scoped
+
+This is blocking me from using multiple circles properly - it's the whole point of the feature!
