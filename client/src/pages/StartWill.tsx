@@ -867,7 +867,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                       }}
                       className="w-full text-center text-xl leading-relaxed font-normal text-gray-700 bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 resize-none transition-colors duration-300 placeholder:text-gray-300 placeholder:italic py-3 px-4" 
                       style={{ minHeight: '72px', maxHeight: '120px' }}
-                      placeholder={willType === 'cumulative' ? "go phone-free after 8pm" : "call my grandmother this week"}
+                      placeholder={willType === 'cumulative' ? "phone-free for 24 hours" : "call my grandmother this week"}
                       data-testid="input-what"
                     />
                   </div>
@@ -899,7 +899,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                 {willData.what && (
                   <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <p className="text-lg font-semibold text-gray-800">
-                      "{willType === 'cumulative' ? 'We Will' : 'I Will'} {willData.what}"
+                      {willType === 'cumulative' ? `"${willData.what}"` : `"I Will ${willData.what}"`}
                     </p>
                     {/* Privacy note - only in circle mode for non-cumulative */}
                     {!isSoloMode && willType !== 'cumulative' && (
@@ -936,7 +936,7 @@ export default function StartWill({ isSoloMode = false }: StartWillProps) {
                       }}
                       className="w-full text-center text-xl leading-relaxed font-normal text-gray-700 bg-transparent border-0 border-b-2 border-gray-200 focus:border-red-300 focus:ring-0 resize-none transition-colors duration-300 placeholder:text-gray-300 placeholder:italic py-3 px-4" 
                       style={{ minHeight: '72px', maxHeight: '120px' }}
-                      placeholder="I like how I feel after I talk to her"
+                      placeholder={willType === 'cumulative' ? "this will make me be more present" : "I like how I feel after I talk to her"}
                       data-testid="input-why"
                     />
                   </div>
