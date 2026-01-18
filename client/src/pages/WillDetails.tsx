@@ -723,7 +723,7 @@ export default function WillDetails() {
                     {/* Commitment content */}
                     <div className="space-y-2">
                       <div>
-                        <div className="text-sm text-gray-500 font-medium italic mb-1">I will</div>
+                        <div className="text-sm text-gray-500 font-medium italic mb-1">will</div>
                         <div className="text-base text-gray-800 leading-relaxed">
                           {commitment.what}
                         </div>
