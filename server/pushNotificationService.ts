@@ -545,9 +545,9 @@ class PushNotificationService {
   // NEW NOTIFICATION: Daily Reminder (user-scheduled daily check-in)
   // Shows the user's personal "why" statement to remind them of their motivation
   async sendDailyReminderNotification(userId: string, willId?: number, userWhy?: string | null): Promise<boolean> {
-    // Use the user's "why" statement as the notification body
+    // Use the user's "why" statement as the notification body, prefixed with "Because"
     // Truncate to 110 characters for iOS lock screen display if needed
-    let notificationBody = userWhy || "Take a moment to check in with your commitment today.";
+    let notificationBody = userWhy ? `Because ${userWhy}` : "Take a moment to check in with your commitment today.";
     if (notificationBody.length > 110) {
       notificationBody = notificationBody.substring(0, 107) + "...";
     }
