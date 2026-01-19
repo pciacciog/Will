@@ -643,11 +643,17 @@ export default function WillDetails() {
         {will.status !== 'will_review' && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 text-brandGreen mr-2" />
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-brandGreen" />
                 <span className="text-base font-semibold text-gray-900 underline">
                   {isSoloMode ? 'Your Commitment' : 'Circle Commitments'}
                 </span>
+                {/* Shared Will badge - prominent display for cumulative wills */}
+                {!isSoloMode && will.willType === 'cumulative' && (
+                  <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
+                    Shared Will
+                  </span>
+                )}
               </div>
               {/* Push notification button for active wills - only for circle mode */}
               {!isSoloMode && will.status === 'active' && (

@@ -11,7 +11,7 @@ import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { notificationService } from "@/services/NotificationService";
-import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Handshake } from "lucide-react";
+import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Handshake, Clock } from "lucide-react";
 
 export default function SubmitCommitment() {
   const { id } = useParams();
@@ -26,6 +26,11 @@ export default function SubmitCommitment() {
   const [whyCharCount, setWhyCharCount] = useState(0);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [showHelpIcon, setShowHelpIcon] = useState(false);
+  
+  // Daily reminder settings for joining members
+  const [dailyReminderTime, setDailyReminderTime] = useState<string>('07:30');
+  const [skipDailyReminder, setSkipDailyReminder] = useState<boolean>(false);
+  const [hasModifiedReminder, setHasModifiedReminder] = useState(false);
   
   // Auto-resize refs for textareas
   const whatRef = useRef<HTMLTextAreaElement>(null);
@@ -54,6 +59,33 @@ export default function SubmitCommitment() {
 
   const { data: circle } = useQuery({
     queryKey: ['/api/circles/mine'],
+  });
+
+  // Fetch user data for reminder settings
+  const { data: user } = useQuery({
+    queryKey: ['/api/user'],
+  });
+  
+  // Initialize reminder settings from user data
+  useEffect(() => {
+    if (user) {
+      setDailyReminderTime((user as any).dailyReminderTime || '07:30');
+      setSkipDailyReminder((user as any).dailyReminderEnabled === false);
+    }
+  }, [user]);
+  
+  // Mutation to update reminder settings
+  const updateReminderSettingsMutation = useMutation({
+    mutationFn: async (settings: { dailyReminderTime?: string | null; dailyReminderEnabled?: boolean }) => {
+      const response = await apiRequest('/api/user/reminder-settings', {
+        method: 'PATCH',
+        body: JSON.stringify(settings)
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    },
   });
 
   // Check if this is a cumulative will (shared commitment)
@@ -179,6 +211,15 @@ export default function SubmitCommitment() {
 
   const handleStep4Submit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Save daily reminder settings if user modified them
+    if (hasModifiedReminder) {
+      updateReminderSettingsMutation.mutate({
+        dailyReminderTime: skipDailyReminder ? null : dailyReminderTime,
+        dailyReminderEnabled: !skipDailyReminder
+      });
+    }
+    
     // For cumulative wills, use the sharedWhat from the will
     const whatToSubmit = isCumulative ? (sharedWhat || what) : what.trim();
     commitmentMutation.mutate({ what: whatToSubmit, why: why.trim() });
@@ -566,7 +607,51 @@ export default function SubmitCommitment() {
                           You're joining your circle in this shared commitment
                         </p>
                       </div>
+                      {/* Privacy note for the Because field */}
+                      <p className="text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Your "Because" is private — only you can see it
+                      </p>
                     </div>
+                  </div>
+                </div>
+                
+                {/* Daily Reminder Settings */}
+                <div className="mt-5 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+                      Daily Reminder
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <Input 
+                      type="time" 
+                      value={dailyReminderTime}
+                      onChange={(e) => {
+                        setDailyReminderTime(e.target.value);
+                        setHasModifiedReminder(true);
+                      }}
+                      step="900"
+                      disabled={skipDailyReminder === true}
+                      className={`w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none ${skipDailyReminder ? 'opacity-40' : ''}`}
+                      data-testid="input-daily-reminder-time"
+                    />
+                    <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={skipDailyReminder === true}
+                        onChange={(e) => {
+                          setSkipDailyReminder(e.target.checked);
+                          setHasModifiedReminder(true);
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
+                        data-testid="checkbox-skip-daily-reminder"
+                      />
+                      Skip daily reminders
+                    </label>
                   </div>
                 </div>
               </div>
@@ -601,38 +686,97 @@ export default function SubmitCommitment() {
           <SectionCard>
             <form onSubmit={handleStep4Submit} className="space-y-6">
               <div className="space-y-6 mt-8">
+                {/* Commitment Summary Card */}
+                <div className="text-center">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200 shadow-sm mx-auto max-w-sm">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Commitment</h3>
+                    <div className="text-base text-gray-800 leading-relaxed">
+                      <div className="font-medium mb-2">
+                        <span className="text-blue-600">I Will</span> {what}
+                      </div>
+                      <div className="font-medium mb-2">
+                        <span className="text-red-500">Because</span> {why}
+                      </div>
+                    </div>
+                    {/* Privacy note for the Because field */}
+                    <p className="text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Your "Because" is private — only you can see it
+                    </p>
+                  </div>
+                </div>
+                
                 {/* Enhanced End Room Card */}
                 <div className="text-center">
-                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 border border-purple-200 shadow-sm mx-auto max-w-sm">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200 shadow-sm mx-auto max-w-sm">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">End Room</h3>
-                    <div className="text-base text-gray-800 leading-relaxed">
-                      <div className="font-medium mb-2">
+                    <h3 className="text-base font-semibold text-gray-900 mb-3">End Room</h3>
+                    <div className="text-sm text-gray-800 leading-relaxed">
+                      <div className="font-medium mb-1">
                         {will?.endRoomScheduledAt ? (
                           new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
                         ) : (
                           'Loading...'
                         )}
                       </div>
-                      <div className="text-sm text-gray-600 mb-3">
+                      <div className="text-sm text-gray-600 mb-2">
                         {will?.endRoomScheduledAt ? (
                           new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
                         ) : (
                           ''
                         )}
                       </div>
-                      <div className="bg-white/60 rounded-lg p-3 border border-purple-100">
+                      <div className="bg-white/60 rounded-lg p-2 border border-purple-100">
                         <p className="text-xs text-purple-700 leading-relaxed">
-                          Your circle will gather here to reflect, share, and honor your collective efforts
+                          Your circle will gather here to reflect and share
                         </p>
                       </div>
                     </div>
+                  </div>
+                </div>
+                
+                {/* Daily Reminder Settings */}
+                <div className="mt-5 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+                      Daily Reminder
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <Input 
+                      type="time" 
+                      value={dailyReminderTime}
+                      onChange={(e) => {
+                        setDailyReminderTime(e.target.value);
+                        setHasModifiedReminder(true);
+                      }}
+                      step="900"
+                      disabled={skipDailyReminder === true}
+                      className={`w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none ${skipDailyReminder ? 'opacity-40' : ''}`}
+                      data-testid="input-daily-reminder-time-classic"
+                    />
+                    <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={skipDailyReminder === true}
+                        onChange={(e) => {
+                          setSkipDailyReminder(e.target.checked);
+                          setHasModifiedReminder(true);
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
+                        data-testid="checkbox-skip-daily-reminder-classic"
+                      />
+                      Skip daily reminders
+                    </label>
                   </div>
                 </div>
               </div>

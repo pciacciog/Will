@@ -28,6 +28,7 @@ interface Circle {
   createdAt: string;
   members: CircleMember[];
   activeWillCount: number;
+  currentWillStatus: string | null;
 }
 
 export default function CircleLobby() {
@@ -262,10 +263,10 @@ export default function CircleLobby() {
                             </h3>
                             <div className="flex items-center gap-3 text-sm text-gray-500">
                               <span>{circle.members.length} member{circle.members.length !== 1 ? 's' : ''}</span>
-                              {circle.activeWillCount > 0 && (
+                              {circle.activeWillCount > 0 && circle.currentWillStatus && (
                                 <span className="flex items-center gap-1 text-emerald-600">
                                   <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                                  {circle.activeWillCount} active
+                                  {circle.activeWillCount} {circle.currentWillStatus === 'will_review' ? 'review' : circle.currentWillStatus} will{circle.activeWillCount !== 1 ? 's' : ''}
                                 </span>
                               )}
                             </div>

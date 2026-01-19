@@ -1,0 +1,42 @@
+Hey! I have more feedback on the Shared Will experience based on testing. Four important issues to address:
+
+1. "SHARED" STATUS NEEDS TO BE MORE PROMINENT
+
+Current Issue:
+- In the Will details section, Users need to clearly KNOW this is a Shared Will throughout the experience
+- We need to make the current purple shared button visible on the circle commitments section 
+- Right not it is just labelled at the top beside the will status. I needs to be more present than this. Perhaps worth by simply repeating it in the rice commitments section next to the wil info. For example: “John (name of member” will” “insert commitment” and then somewhere Label: "Shared Will" as a prominent secondary title
+
+  
+
+2. "CONFIRM COMMITMENT" PAGE - ADD PRIVACY NOTE
+
+Current Issue:
+- On the "Confirm Commitment" page where users write their "Why"
+- There's no reminder that the "Why" is private
+- Users might hesitate to be honest if they think others will see it
+
+Required Change:
+- Add a note in/near the "Because" section (where their why is displayed)
+- Text suggestion: make it consistent with previous page
+
+
+3. DAILY REMINDER SETTINGS FOR JOINING MEMBERS (CRITICAL MISSING FEATURE)
+
+Current Issue:
+- When creating a Shared Will, the creator can set daily reminder preferences
+- But members JOINING the Will have NO option to set their daily reminder preferences
+- They can't choose if/when they want daily reminders for this Will
+- This is a critical missing feature
+
+Required Implementation:
+- Members joining a Shared Will need ability to configure their daily reminder settings
+- Suggested location: On the "Confirm Commitment" page (final step before joining)
+- Add a section after the "Because" input
+
+Questions: 1. Should daily reminders default to ON or OFF for joining members? 2. Should we suggest a default time (like creator's time, or noon)? 3. Can members change their reminder settings after joining? Where?
+
+Please implement all  improvements: 1. Make "SHARED" status highly visible throughout 2. Add privacy note on "Confirm Commitment" page 3. Add daily reminder settings for joining members (on Confirm Commitment page) 
+
+
+One more quick improvement for the "My Circles" page: CURRENT ISSUE: - Circle cards show "1 active" as the status - This is incomplete and unclear REQUIRED CHANGE: - Add the word "will" → "1 active will" - Make it dynamic based on the actual Will status EXAMPLES OF CORRECT DISPLAY: - "1 active will" (when Will is in active state) - "1 pending will" (when Will is in pending state) -DYNAMIC BEHAVIOR: - Should reflect whatever state the Will is currently in - Not just always say "active" - Pull from the actual Will status in that circle SINGULAR VS PLURAL: - "1 active will" (singular) - "2 active wills" (plural) - if somehow there are multiple (though shouldn't be possible) - Or just always use "1 [status] will" since max is one per circle Please update the circle card status text to include "will" and make it dynamic based on actual Will state!

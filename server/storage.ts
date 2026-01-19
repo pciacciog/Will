@@ -57,7 +57,7 @@ export interface IStorage {
   getCircleByInviteCode(inviteCode: string): Promise<Circle | undefined>;
   getCircleById(id: number): Promise<Circle | undefined>;
   getUserCircle(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined>;
-  getUserCircles(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[]; activeWillCount: number })[]>;
+  getUserCircles(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[]; activeWillCount: number; currentWillStatus: string | null })[]>;
   getUserCircleCount(userId: string): Promise<number>;
   getCircleWithMembers(circleId: number): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined>;
   
@@ -367,7 +367,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserCircles(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[]; activeWillCount: number })[]> {
+  async getUserCircles(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[]; activeWillCount: number; currentWillStatus: string | null })[]> {
     // Get all circles where user is a member
     const userCircleIds = await db
       .select({ circleId: circleMembers.circleId })
@@ -384,7 +384,7 @@ export class DatabaseStorage implements IStorage {
       .from(circles)
       .where(inArray(circles.id, circleIds));
 
-    // Build result with members and active will count
+    // Build result with members, active will count, and current will status
     const result = await Promise.all(circlesList.map(async (circle) => {
       const members = await this.getCircleMembers(circle.id);
       
@@ -397,10 +397,22 @@ export class DatabaseStorage implements IStorage {
           sql`status NOT IN ('archived', 'completed')`
         ));
       
+      // Get the current will's status (most recent non-archived will)
+      const [currentWill] = await db
+        .select({ status: wills.status })
+        .from(wills)
+        .where(and(
+          eq(wills.circleId, circle.id),
+          sql`status NOT IN ('archived', 'completed')`
+        ))
+        .orderBy(sql`created_at DESC`)
+        .limit(1);
+      
       return {
         ...circle,
         members,
         activeWillCount: activeWillResult?.count || 0,
+        currentWillStatus: currentWill?.status || null,
       };
     }));
 
