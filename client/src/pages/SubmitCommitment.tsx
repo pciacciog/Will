@@ -510,22 +510,18 @@ export default function SubmitCommitment() {
                     ) : (
                       <p className="text-lg font-semibold text-gray-800">"I Will {what}"</p>
                     )}
-                    {/* Privacy note - shown for both classic and shared wills (because field is private) */}
-                    <p className="text-xs text-gray-400 mt-2 flex items-center justify-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      Private — only you can see this
-                    </p>
                   </div>
                 )}
                 
                 {/* The Writing Statement */}
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
-                  {/* "Because" - Large, Prominent */}
-                  <p className="text-3xl font-bold text-gray-900 text-center tracking-tight">
-                    Because
-                  </p>
+                  {/* "Because" - Large, Prominent with privacy note */}
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-gray-900 tracking-tight">
+                      Because
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">(Private — only you can see this)</p>
+                  </div>
                   
                   {/* Text Input - Clean, Minimal, Focused */}
                   <div className="relative px-2">
@@ -599,21 +595,17 @@ export default function SubmitCommitment() {
                       <div className="font-medium mb-3">
                         <span className="text-purple-600">We Will</span> {sharedWhat}
                       </div>
+                      <div className="font-medium mb-1">
+                        <span className="text-red-500">Because</span> <span className="text-xs text-gray-400">(Private)</span>
+                      </div>
                       <div className="font-medium mb-3">
-                        <span className="text-red-500">Because</span> {why}
+                        {why}
                       </div>
                       <div className="bg-white/60 rounded-lg p-3 border border-purple-100 mt-4">
                         <p className="text-xs text-purple-700 leading-relaxed">
                           You're joining your circle in this shared commitment
                         </p>
                       </div>
-                      {/* Privacy note for the Because field */}
-                      <p className="text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Your "Because" is private — only you can see it
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -694,17 +686,13 @@ export default function SubmitCommitment() {
                       <div className="font-medium mb-2">
                         <span className="text-blue-600">I Will</span> {what}
                       </div>
+                      <div className="font-medium mb-1">
+                        <span className="text-red-500">Because</span> <span className="text-xs text-gray-400">(Private)</span>
+                      </div>
                       <div className="font-medium mb-2">
-                        <span className="text-red-500">Because</span> {why}
+                        {why}
                       </div>
                     </div>
-                    {/* Privacy note for the Because field */}
-                    <p className="text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      Your "Because" is private — only you can see it
-                    </p>
                   </div>
                 </div>
                 

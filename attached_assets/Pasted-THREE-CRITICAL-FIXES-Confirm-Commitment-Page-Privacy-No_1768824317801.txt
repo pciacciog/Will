@@ -1,0 +1,66 @@
+THREE CRITICAL FIXES: Confirm Commitment Page & Privacy Note Placement
+
+Hey! I found three issues with the privacy notes and daily reminder settings:
+
+1. MISSING PRIVACY NOTE IN SHARED WILL "CONFIRM COMMITMENT" PAGE
+
+Issue:
+- When joining a Shared Will, on the "Confirm Commitment" page
+- There's NO privacy note about the "Because/Why" being private
+- This was supposed to be added but it's missing
+
+Required Fix:
+- Add a subtle note in parentheses after the "Because" label
+- Text: "Because (Private - only you can see this)"
+- Or: "Because (your why is private)"
+- Make it subtle, in smaller/lighter text, in parentheses
+- Should appear right after the word "Because" on that page
+
+2. WHERE IS DAILY REMINDER IN SHARED WILL SEQUENCE?
+
+Question:
+- I requested adding daily reminder settings to the Shared Will joining flow
+- I don't see it anywhere in the "Confirm Commitment" page
+- Was this implemented? 
+- If not, please add it to the "Confirm Commitment" page as described in my previous message
+- If yes, where is it located?
+
+Please confirm whether daily reminder settings were added for joining members, and if so, show me where.
+
+3. PRIVACY NOTE PLACEMENT IS WRONG (BOTH NORMAL & SHARED SEQUENCES)
+
+Current Issue:
+- The privacy note "Private - only you can see this" appears BELOW the "I will" statement
+- This is MISLEADING because it makes it look like the Will statement is private
+- But the Will statement is NOT private - everyone can see it!
+- What's PRIVATE is the "Because/Why" statement
+
+Current (WRONG) placement:
+What would you like to do?
+I will
+[text input]
+Private - only you can see this  ← WRONG LOCATION
+Because
+[text input]
+
+Required (CORRECT) placement:
+What would you like to do?
+I will
+[text input]
+Because (Private - only you can see this)  ← CORRECT LOCATION
+[text input]
+
+Or alternative format:
+What would you like to do?
+I will
+[text input]
+Because
+Private - only you can see this  ← Also acceptable, but must be clearly tied to Because
+[text input]
+
+CRITICAL POINT:
+- The privacy note must be CLEARLY associated with the "Because/Why" section
+- NOT with the "I will" section
+- The "I will" commitment is PUBLIC (everyone in the circle sees it)
+- The "Because/Why" is PRIVATE (only you see it)
+- Current placement creates confusion
