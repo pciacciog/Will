@@ -577,48 +577,40 @@ export default function SubmitCommitment() {
           </div>
         )}
 
-        {/* Step 3: Confirmation (Cumulative wills only) */}
+        {/* Step 3: Confirmation (Cumulative wills only) - Compact single-screen layout */}
         {currentStep === 3 && isCumulative && !showTransition && (
           <SectionCard>
-            <form onSubmit={handleStep4Submit} className="space-y-6">
-              <div className="space-y-6 mt-8">
-                {/* Cumulative Commitment Summary */}
+            <form onSubmit={handleStep4Submit} className="space-y-3">
+              <div className="space-y-3 mt-2">
+                {/* Cumulative Commitment Summary - Compact */}
                 <div className="text-center">
-                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 border border-purple-200 shadow-sm mx-auto max-w-sm">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                        <Handshake className="w-6 h-6 text-white" />
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200 shadow-sm mx-auto max-w-sm">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                        <Handshake className="w-5 h-5 text-white" />
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Commitment</h3>
-                    <div className="text-base text-gray-800 leading-relaxed">
-                      <div className="font-medium mb-3">
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">Your Commitment</h3>
+                    <div className="text-sm text-gray-800 leading-relaxed">
+                      <div className="font-medium mb-2">
                         <span className="text-purple-600">We Will</span> {sharedWhat}
                       </div>
-                      <div className="font-medium mb-1">
-                        <span className="text-red-500">Because</span> <span className="text-xs text-gray-400">(Private)</span>
-                      </div>
-                      <div className="font-medium mb-3">
-                        {why}
-                      </div>
-                      <div className="bg-white/60 rounded-lg p-3 border border-purple-100 mt-4">
-                        <p className="text-xs text-purple-700 leading-relaxed">
-                          You're joining your circle in this shared commitment
-                        </p>
+                      <div className="font-medium">
+                        <span className="text-red-500">Because</span> <span className="text-xs text-gray-400">(Private)</span> {why}
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                {/* Daily Reminder Settings */}
-                <div className="mt-5 pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <Clock className="w-4 h-4 text-gray-400" />
+                {/* Daily Reminder Settings - Compact */}
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Clock className="w-3 h-3 text-gray-400" />
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
                       Daily Reminder
                     </p>
                   </div>
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-1">
                     <Input 
                       type="time" 
                       value={dailyReminderTime}
@@ -631,7 +623,7 @@ export default function SubmitCommitment() {
                       className={`w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none ${skipDailyReminder ? 'opacity-40' : ''}`}
                       data-testid="input-daily-reminder-time"
                     />
-                    <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={skipDailyReminder === true}
@@ -639,7 +631,7 @@ export default function SubmitCommitment() {
                           setSkipDailyReminder(e.target.checked);
                           setHasModifiedReminder(true);
                         }}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
+                        className="w-3 h-3 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
                         data-testid="checkbox-skip-daily-reminder"
                       />
                       Skip daily reminders
@@ -648,11 +640,11 @@ export default function SubmitCommitment() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center pt-2">
                 <InlineBackButton 
                   onClick={handleBack}
                   testId="button-back-inline"
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
                 />
                 <PrimaryButton 
                   type="submit" 
