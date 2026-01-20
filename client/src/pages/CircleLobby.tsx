@@ -263,10 +263,18 @@ export default function CircleLobby() {
                             </h3>
                             <div className="flex items-center gap-3 text-sm text-gray-500">
                               <span>{circle.members.length} member{circle.members.length !== 1 ? 's' : ''}</span>
-                              {circle.activeWillCount > 0 && circle.currentWillStatus && (
+                              {circle.activeWillCount > 0 && circle.currentWillStatus ? (
                                 <span className="flex items-center gap-1 text-emerald-600">
-                                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                                  {circle.activeWillCount} {circle.currentWillStatus === 'will_review' ? 'review' : circle.currentWillStatus} will{circle.activeWillCount !== 1 ? 's' : ''}
+                                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                  {circle.currentWillStatus === 'pending' ? 'Pending' : 
+                                   circle.currentWillStatus === 'active' ? 'Active' : 
+                                   circle.currentWillStatus === 'will_review' ? 'In Review' : 
+                                   circle.currentWillStatus}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-gray-400">
+                                  <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
+                                  No active will
                                 </span>
                               )}
                             </div>
