@@ -650,7 +650,7 @@ export default function WillDetails() {
                 </span>
                 {/* Shared Will badge - prominent display for cumulative wills */}
                 {!isSoloMode && will.willType === 'cumulative' && (
-                  <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
+                  <span className="inline-flex items-center justify-center bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">
                     Shared Will
                   </span>
                 )}
