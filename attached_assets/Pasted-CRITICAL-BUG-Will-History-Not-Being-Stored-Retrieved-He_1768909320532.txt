@@ -1,0 +1,96 @@
+CRITICAL BUG: Will History Not Being Stored/Retrieved
+
+Hey! I found a major issue with Will history. Completed Wills are not showing up in history - users just see "No history available" even though they've completed Wills.
+
+THE PROBLEM:
+
+- Users complete Wills (go through the entire cycle)
+- They click "View History" 
+- Expected: See list of past completed Wills
+- Actual: "No history available"
+- The Wills are disappearing instead of being archived
+
+EXAMPLES:
+- Circle ERHCVX (Bebo and Jack) just completed a Will
+- When they click "View History", it shows no history
+- But they JUST finished a Will - it should be there
+
+DIAGNOSTIC QUESTIONS:
+
+1. DATABASE CHECK:
+   - Query the database for circle ERHCVX
+   - Show me ALL Wills in this circle (any status)
+   - Are there any Wills with status "completed" or "archived"?
+   - What statuses exist in the Wills table for this circle?
+
+2. WHAT HAPPENS AFTER COMPLETION:
+   - When a Will reaches "completed" state, what's supposed to happen?
+   - Does the status change to "archived"?
+   - Or does it stay as "completed"?
+   - Or is the Will being deleted?
+
+3. HISTORY QUERY:
+   - What query is being run when user clicks "View History"?
+   - What statuses is it looking for? ("archived"? "completed"?)
+   - Is it filtering by the correct circleId?
+   - Show me the exact code/query
+
+4. ACKNOWLEDGMENT IMPACT:
+   - Does acknowledgment affect archival?
+   - Are Wills supposed to be archived after all members acknowledge?
+   - Or should they be visible even before acknowledgment?
+
+5. STATUS LIFECYCLE:
+   - What's the complete status progression for a Will?
+   - pending → scheduled → active → waiting_for_end_room → completed → ???
+   - What's the final state?
+   - When does it become visible in history?
+
+6. DATA RETENTION:
+   - Are completed Wills being deleted?
+   - Is there any cleanup/garbage collection running?
+   - Any automatic deletion of old Wills?
+
+POSSIBLE ROOT CAUSES:
+
+A. Wills are staying in "completed" status, but history only looks for "archived"
+B. Wills are being deleted instead of archived
+C. History query is filtering by wrong status
+D. History query is missing circleId filter (pulling from all circles)
+E. Acknowledgment requirement blocking archival
+F. Database constraint preventing status change to archived
+G. Frontend showing wrong message when Wills exist but query fails
+
+WHAT I NEED FROM YOU:
+
+1. Show me raw database data:
+   - All Wills in circle ERHCVX (any status)
+   - Especially the Will that just completed
+   - Its current status
+   - Its timestamps
+
+2. Show me the history query code:
+   - What endpoint is called?
+   - What SQL/query is executed?
+   - What statuses does it filter for?
+   - How does it filter by circle?
+
+3. Show me the completion logic:
+   - What happens when a Will ends?
+   - What happens after End Room closes?
+   - What happens after acknowledgment?
+   - When/how does status change to archived?
+
+4. Check for deletion logic:
+   - Is there any code that deletes completed Wills?
+   - Any scheduled cleanup jobs?
+   - Any constraints that cascade delete?
+
+5. Test manually:
+   - Can you manually query for completed Wills in circle ERHCVX?
+   - If they exist, why isn't the history showing them?
+   - If they don't exist, where did they go?
+
+This is critical - users need to see their past Wills for reflection and continuity! Without history, the app loses significant value.
+
+Please investigate immediately and show me what you find!
