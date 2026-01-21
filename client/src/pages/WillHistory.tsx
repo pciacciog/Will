@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Calendar, User, Users, Clock } from "lucide-react";
+import { getApiPath } from "@/config/api";
 
 type WillHistoryItem = {
   id: number;
@@ -33,7 +34,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
   const { data: history, isLoading, error } = useQuery<WillHistoryItem[]>({
     queryKey: ['/api/wills/history', mode],
     queryFn: async () => {
-      const response = await fetch(`/api/wills/history?mode=${mode}`, {
+      const response = await fetch(getApiPath(`/api/wills/history?mode=${mode}`), {
         credentials: 'include',
       });
       if (!response.ok) {
