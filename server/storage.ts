@@ -93,6 +93,7 @@ export interface IStorage {
   addWillAcknowledgment(acknowledgment: InsertWillAcknowledgment): Promise<WillAcknowledgment>;
   getWillAcknowledgmentCount(willId: number): Promise<number>;
   hasUserAcknowledged(willId: number, userId: string): Promise<boolean>;
+  getWillAcknowledgments(willId: number): Promise<(WillAcknowledgment & { user: User })[]>;
   
   // Will review operations
   addWillReview(review: InsertWillReview): Promise<WillReview>;
@@ -639,6 +640,19 @@ export class DatabaseStorage implements IStorage {
       .from(willAcknowledgments)
       .where(and(eq(willAcknowledgments.willId, willId), eq(willAcknowledgments.userId, userId)));
     return !!result;
+  }
+
+  async getWillAcknowledgments(willId: number): Promise<(WillAcknowledgment & { user: User })[]> {
+    const results = await db
+      .select({
+        acknowledgment: willAcknowledgments,
+        user: users,
+      })
+      .from(willAcknowledgments)
+      .innerJoin(users, eq(willAcknowledgments.userId, users.id))
+      .where(eq(willAcknowledgments.willId, willId));
+
+    return results.map(r => ({ ...r.acknowledgment, user: r.user }));
   }
 
   // Will review operations

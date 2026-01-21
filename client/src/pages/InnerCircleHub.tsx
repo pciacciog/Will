@@ -957,6 +957,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
           currentUserId={user?.id}
           acknowledgedCount={will.acknowledgedCount || 0}
           commitmentCount={will.commitmentCount || 0}
+          acknowledgments={will.acknowledgments || []}
         />
       )}
     </div>

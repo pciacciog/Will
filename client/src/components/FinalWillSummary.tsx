@@ -4,6 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, Users, Sparkles } from 'lucide-react';
 import { useLocation } from 'wouter';
 
+interface Acknowledgment {
+  userId: string;
+  acknowledgedAt: string;
+  user?: { id: string; firstName: string | null; email: string };
+}
+
 interface FinalWillSummaryProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,6 +21,7 @@ interface FinalWillSummaryProps {
   acknowledgedCount?: number;
   commitmentCount?: number;
   reviews?: any[];
+  acknowledgments?: Acknowledgment[];
 }
 
 export function FinalWillSummary({ 
@@ -27,7 +34,8 @@ export function FinalWillSummary({
   hasUserAcknowledged = false, 
   acknowledgedCount = 0, 
   commitmentCount = 0,
-  reviews = []
+  reviews = [],
+  acknowledgments = []
 }: FinalWillSummaryProps) {
   const [, setLocation] = useLocation();
   
@@ -59,6 +67,26 @@ export function FinalWillSummary({
 
   const getReviewForUser = (userId: number) => {
     return reviews?.find((r: any) => r.userId === userId);
+  };
+
+  const hasUserAcknowledgedWill = (userId: string) => {
+    return acknowledgments?.some((a: Acknowledgment) => a.userId === userId);
+  };
+
+  const getAcknowledgmentBadge = (userId: string) => {
+    const hasAcked = hasUserAcknowledgedWill(userId);
+    if (hasAcked) {
+      return (
+        <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] px-1.5 py-0">
+          Acknowledged
+        </Badge>
+      );
+    }
+    return (
+      <Badge className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] px-1.5 py-0">
+        Pending
+      </Badge>
+    );
   };
 
   const getFollowThroughBadge = (value: string) => {
@@ -168,6 +196,8 @@ export function FinalWillSummary({
                             You
                           </Badge>
                         )}
+                        {/* Acknowledgment Status Badge */}
+                        {!isSoloMode && getAcknowledgmentBadge(commitment.userId)}
                       </div>
                       
                       {/* Commitment Text with Status Badge inline */}

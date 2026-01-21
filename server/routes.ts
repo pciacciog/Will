@@ -885,6 +885,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add user acknowledgment status
       const hasUserAcknowledged = await storage.hasUserAcknowledged(will.id, req.user.id);
       
+      // Get per-member acknowledgment data for UI badges
+      const acknowledgments = await storage.getWillAcknowledgments(will.id);
+      
       res.json({
         ...willWithCommitments,
         status,
@@ -892,6 +895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         commitmentCount,
         acknowledgedCount,
         hasUserAcknowledged,
+        acknowledgments,
       });
     } catch (error) {
       console.error("Error fetching circle will:", error);

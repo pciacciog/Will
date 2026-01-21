@@ -1,0 +1,61 @@
+BUG: Acknowledgment Status Badge Not Updating in Circle Results
+
+Hey! I found a bug with the acknowledgment status display after a Will completes.
+
+THE SITUATION:
+
+Circle: 48KHGR
+Members: Jack and Bebo
+Will: Shared Will "will test will" (Jan 21, 2026 6:43 AM - 6:44 AM)
+Status: Completed
+
+WHAT HAPPENED:
+
+1. Will completed ✅
+2. Bebo clicked "Acknowledge" ✅
+3. Modal correctly shows "Ready for new Will once all members acknowledge: 1/2" ✅
+4. BUT: Status badge next to Bebo's name in circle results STILL shows "pending" ❌
+
+EXPECTED BEHAVIOR:
+
+After Bebo acknowledges:
+- His status badge should update from "pending" to "acknowledged" (or checkmark, or different visual state)
+- Should show in real-time that he has acknowledged
+- Jack's badge should still show "pending" (since he hasn't acknowledged yet)
+
+CURRENT BROKEN BEHAVIOR:
+
+- Bebo's acknowledgment is recorded in database (modal shows 1/2)
+- But UI doesn't update to reflect his acknowledged status
+- Badge stays showing "pending" even though he acknowledged
+
+THE BUG:
+
+The acknowledgment action is working (data is saved), but the UI component showing circle results/member status is not refreshing/updating after acknowledgment.
+
+DIAGNOSTIC QUESTIONS:
+
+1. **Where is this badge displayed?**
+   - What component shows the member status badges?
+   - What file/component is this in?
+   - Is it in the Circle Results view? Final Summary modal?
+
+2. **How is status determined?**
+   - Show me the code that decides what badge/status to show
+   - What data does it check?
+   - Is it checking acknowledgment status from database?
+
+3. **Is there a cache/state issue?**
+   - After acknowledging, does the component re-fetch data?
+   - Or is it using cached/stale state?
+   - Does the page need a refresh to show correct status?
+
+4. **What triggers the UI update?**
+   - After clicking "Acknowledge", what happens?
+   - Does it trigger a refetch of Will data?
+   - Does it update local state?
+   - Should it invalidate a query cache?
+
+5. **Database check:**
+   Query the database to confirm acknowledgment was recorded:
+```sql
