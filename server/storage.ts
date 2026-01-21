@@ -493,14 +493,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCircleActiveWill(circleId: number): Promise<Will | undefined> {
-    // Only return wills that are truly "in progress" - not completed or archived
-    // Valid active statuses: pending, scheduled, active, will_review
+    // Return wills that are "in progress" OR completed (awaiting acknowledgments)
+    // Valid statuses: pending, scheduled, active, will_review, completed
+    // Archived wills are excluded - they are fully closed
+    // CRITICAL: 'completed' must be included so acknowledgment checks work!
     const [will] = await db
       .select()
       .from(wills)
       .where(and(
         eq(wills.circleId, circleId),
-        sql`status IN ('pending', 'scheduled', 'active', 'will_review')`
+        sql`status IN ('pending', 'scheduled', 'active', 'will_review', 'completed')`
       ))
       .orderBy(desc(wills.createdAt))
       .limit(1);
