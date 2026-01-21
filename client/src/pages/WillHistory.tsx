@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Calendar, User, Users, Clock } from "lucide-react";
 import { getApiPath } from "@/config/api";
+import { sessionPersistence } from "@/services/SessionPersistence";
 
 type WillHistoryItem = {
   id: number;
@@ -34,8 +35,17 @@ export default function WillHistory({ mode }: WillHistoryProps) {
   const { data: history, isLoading, error } = useQuery<WillHistoryItem[]>({
     queryKey: ['/api/wills/history', mode],
     queryFn: async () => {
+      const token = await sessionPersistence.getToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(getApiPath(`/api/wills/history?mode=${mode}`), {
         credentials: 'include',
+        headers,
       });
       if (!response.ok) {
         throw new Error('Failed to fetch history');
