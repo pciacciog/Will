@@ -1,0 +1,59 @@
+UNDERSTANDING MY SETUP: Staging vs Production Replit Apps
+
+Hey! I want to make sure you understand my current setup so you can help me deploy properly.
+
+MY CONFIGURATION:
+
+I have TWO completely separate Replit apps (see attached screenshot):
+
+**App 1: "Will (STAGING)"**
+- Last updated: 5 minutes ago (actively working here)
+- Bundle ID: `com.porfirio.will.staging`
+- URL: https://will-staging-porfirioaciacci.replit.app
+- Database: Staging database (separate from production)
+- Purpose: Testing and development
+
+**App 2: "Will (PRODUCTION)"**
+- Last updated: 1 month ago (haven't touched it recently)
+- Bundle ID: `com.porfirio.will`
+- URL: https://will-1-porfirioaciacci.replit.app
+- Database: Production database (separate from staging)
+- Purpose: Live app for real users
+
+WHAT I'VE BEEN DOING:
+
+For the past month, I've been actively developing in the STAGING app:
+- Fixed the history feature
+- Added authentication improvements
+- Fixed iOS-specific bugs
+- Made many other updates
+
+All of this work has been committed to our shared GitHub repository.
+
+THE PRODUCTION APP:
+- Has been untouched for 1 month
+- Is running old code from a month ago
+- Needs to be updated with all the recent staging work
+- Has its own production database (which is correct - I want to keep staging and production databases separate)
+
+MY QUESTION:
+
+Given this setup, can you help me understand what I need to do NOW in the Production Replit app to carry over all the work I've been doing in Staging?
+
+I'm guessing I need to:
+1. Pull the latest code from GitHub?
+2. Update environment variables?
+3. Run database migrations?
+4. Something else?
+
+But I want to make sure I do this correctly and don't miss anything. Can you walk me through the specific steps I should take in the Production app to get it up to date with all my recent Staging work?
+
+IMPORTANT CLARIFICATIONS:
+
+- Both apps use the SAME GitHub repository for code
+- They have DIFFERENT databases (this is intentional)
+- They have DIFFERENT URLs (this is handled by bundle ID detection in the code)
+- The code changes from staging are already in GitHub
+- I just need to update the Production Replit app to use the latest code
+
+What do I need to do in the Production app now? Please guide me through this step by step. 🙏
