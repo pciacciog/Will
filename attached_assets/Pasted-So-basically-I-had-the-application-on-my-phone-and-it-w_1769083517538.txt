@@ -1,0 +1,99 @@
+So basically I had the application on my phone and it was working (previous build). Recently, I made updates to the build and have-downloaded th application into my phone. Now it is not working. When I re-built the app, I noticed that I stayed logged in as my same user (pcguzman2000@hotmail.com). 
+
+Was a new device token registered? What seems to be issue?
+
+Here are
+
+Logs from X Code:
+
+
+o Native ->  CapacitorHttp request 122048764
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  TO JS {"url":"https:\/\/will-1-porfirioaciacci.replit.app\/api\/wills","headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:36 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/solo/hub"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/solo/hub"}
+⚡️  To Native ->  CapacitorHttp request 122048765
+⚡️  To Native ->  CapacitorHttp request 122048766
+⚡️  TO JS {"url":"https:\/\/will-1-porfirioaciacci.replit.app\/api\/logs","headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:36 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-s
+⚡️  TO JS {"url":"https:\/\/will-1-porfirioaciacci.replit.app\/api\/logs","headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:36 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-s
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/"}
+⚡️  To Native ->  CapacitorHttp request 122048767
+⚡️  To Native ->  CapacitorHttp request 122048768
+⚡️  TO JS {"url":"https:\/\/will-1-porfirioaciacci.replit.app\/api\/logs","headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:39 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-s
+⚡️  TO JS {"url":"https:\/\/will-1-porfirioaciacci.replit.app\/api\/logs","headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:39 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-s
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/circles"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  To Native ->  CapacitorHttp request 122048769
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  TO JS {"headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:40 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","stric
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/circles/34"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  To Native ->  CapacitorHttp request 122048770
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  To Native ->  CapacitorHttp request 122048771
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/circles/34"}
+⚡️  TO JS {"headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:44 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","stric
+⚡️  TO JS {"headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:44 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","stric
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/circles"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  To Native ->  CapacitorHttp request 122048772
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  TO JS {"data":{"success":true},"url":"https:\/\/will-1-porfirioaciacci.replit.app\/api\/logs","status":200,"headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:55:46 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIO
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/"}
+⚡️  To Native ->  CapacitorHttp request 122048773
+⚡️  To Native ->  CapacitorHttp request 122048774
+⚡️  TO JS {"headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:57:06 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","stric
+⚡️  TO JS {"headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:57:06 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","stric
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/solo/hub"}
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...Uwp4DxoeK4
+⚡️  [log] - Router debug: {"isAuthenticated":true,"isLoading":false,"user":"1764599558133gt92y6j07","location":"/solo/hub"}
+⚡️  To Native ->  CapacitorHttp request 122048775
+⚡️  To Native ->  CapacitorHttp request 122048776
+⚡️  TO JS {"headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:57:07 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","stric
+⚡️  TO JS {"headers":{"via":"1.1 google","date":"Thu, 22 Jan 2026 11:57:07 GMT","x-replit-public":"true","access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","server":"Google Frontend","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000","stric
