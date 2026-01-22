@@ -28,11 +28,12 @@ function getPlatformHeaders(): Record<string, string> {
     };
   }
   
-  // Web platform - add explicit CORS headers
+  // Web platform - use current origin dynamically
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   return {
     "X-Requested-With": "XMLHttpRequest",
-    "Origin": "https://will-staging-porfirioaciacci.replit.app",
-    "Referer": "https://will-staging-porfirioaciacci.replit.app",
+    "Origin": currentOrigin,
+    "Referer": currentOrigin,
   };
 }
 
