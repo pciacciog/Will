@@ -14,6 +14,8 @@ console.log('🔥 NOTIF SERVICE: Capacitor check:', {
 export class NotificationService {
   private static instance: NotificationService;
   private initialized = false;
+  private listenersSetup = false;
+  private pendingToken: string | null = null;
 
   private constructor() {}
 
@@ -22,6 +24,69 @@ export class NotificationService {
       NotificationService.instance = new NotificationService();
     }
     return NotificationService.instance;
+  }
+
+  /**
+   * Force re-registration with APNs. Call this on every app launch
+   * to ensure push notifications work after app updates.
+   */
+  async ensureApnsRegistration() {
+    console.log('🔥 NOTIF SERVICE: ensureApnsRegistration() called');
+    console.log('🔥 NOTIF SERVICE: listenersSetup:', this.listenersSetup);
+    
+    if (!Capacitor.isNativePlatform()) {
+      console.log('🔥 NOTIF SERVICE: Not native platform, skipping APNs registration');
+      return;
+    }
+
+    // Setup listeners only once
+    if (!this.listenersSetup) {
+      console.log('🔥 NOTIF SERVICE: Setting up APNs listeners for first time');
+      await this.setupPushListeners();
+      this.listenersSetup = true;
+    }
+
+    // Always request permissions and register - this is the key fix!
+    // Even if we registered before, we need to do this after app updates
+    console.log('🔥 NOTIF SERVICE: Requesting push permissions (always runs on app launch)');
+    const pushPermission = await PushNotifications.requestPermissions();
+    console.log('🔥 NOTIF SERVICE: Push permission result:', pushPermission.receive);
+    
+    if (pushPermission.receive === 'granted') {
+      console.log('🔥 NOTIF SERVICE: Calling PushNotifications.register() to establish APNs connection');
+      await PushNotifications.register();
+      console.log('🔥 NOTIF SERVICE: register() called - waiting for token callback');
+    } else {
+      console.log('🔥 NOTIF SERVICE: Push permissions not granted');
+    }
+  }
+
+  private async setupPushListeners() {
+    // CRITICAL: Add token registration listener
+    PushNotifications.addListener('registration', (token) => {
+      console.log('🔥 BRIDGE SUCCESS: Token received from iOS!');
+      console.log('🔥 BRIDGE SUCCESS: Token value:', token.value);
+      console.log('🔥 BRIDGE SUCCESS: Received at:', new Date().toISOString());
+      
+      // Store in localStorage for debugging
+      localStorage.setItem('debug_bridge_token', token.value);
+      localStorage.setItem('debug_bridge_timestamp', new Date().toISOString());
+      
+      // Store token - will be sent to server when user is authenticated
+      this.pendingToken = token.value;
+      
+      // Try to register immediately if we have authentication
+      this.registerDeviceToken(token.value);
+    });
+
+    // Add registration error listener
+    PushNotifications.addListener('registrationError', (error) => {
+      console.error('🚨 BRIDGE ERROR: Registration failed');
+      console.error('🚨 BRIDGE ERROR:', JSON.stringify(error));
+      localStorage.setItem('debug_bridge_error', JSON.stringify(error));
+    });
+
+    console.log('🔥 NOTIF SERVICE: Push listeners setup complete');
   }
 
   async initialize() {

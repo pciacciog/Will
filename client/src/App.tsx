@@ -102,6 +102,13 @@ function Router() {
       console.log('════════════════════════════════════════════════════════════');
     };
     restoreSession();
+    
+    // BUG FIX: Always register with APNs on every app launch
+    // This ensures push notifications work after app updates, even if user stays logged in
+    console.log('[App] 🔔 Ensuring APNs registration on app launch...');
+    notificationService.ensureApnsRegistration().catch((err) => {
+      console.error('[App] ❌ APNs registration error:', err);
+    });
   }, []);
 
   // JWT tokens are now saved directly in login/register handlers
