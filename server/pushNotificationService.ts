@@ -15,6 +15,7 @@ interface PushNotificationPayload {
 
 class PushNotificationService {
   private apnProvider: apn.Provider | null = null;
+  private isProductionMode: boolean = false; // Track APNs environment
 
   constructor() {
     this.initializeAPNProvider();
@@ -74,6 +75,7 @@ class PushNotificationService {
         };
         
         this.apnProvider = new apn.Provider(options);
+        this.isProductionMode = isProductionAPNs; // Store for token filtering
         const envMode = isProductionAPNs ? 'PRODUCTION' : 'SANDBOX';
         const endpoint = isProductionAPNs ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
         console.log(`[PushNotificationService] ✅ APNs ENABLED: Initialized with environment key (${envMode} mode - ${endpoint})`);
@@ -132,10 +134,12 @@ class PushNotificationService {
       }
 
       // ENVIRONMENT GUARDRAILS: Filter tokens by environment compatibility (Issue 1 fix)
-      const serverIsSandbox = true; // We're always in sandbox mode during development
+      const serverIsSandbox = !this.isProductionMode; // Use actual APNs configuration
       const compatibleTokens = userTokens.filter(token => {
         if (token.platform !== 'ios') return true; // Non-iOS tokens are always compatible
         
+        // For production mode, we want production tokens (isSandbox = false)
+        // For sandbox mode, we want sandbox tokens (isSandbox = true)
         const tokenIsSandbox = token.isSandbox ?? true; // Default to sandbox if null
         const compatible = serverIsSandbox === tokenIsSandbox;
         
@@ -172,12 +176,16 @@ class PushNotificationService {
         // ENVIRONMENT GUARDRAIL CHECK (Issue 1 fix)
         if (tokenRecord.platform === 'ios') {
           const tokenEnv = tokenRecord.isSandbox ? 'SANDBOX' : 'PRODUCTION';
-          const serverEnv = 'SANDBOX'; // We're always sandbox in development
+          const serverEnv = this.isProductionMode ? 'PRODUCTION' : 'SANDBOX';
           
-          if (tokenRecord.isSandbox === false) {
-            console.log(`[PushNotificationService] ⚠️ GUARDRAIL TRIGGERED: Skipping production token on sandbox server`);
-            console.log(`  🔍 Token: ${tokenRecord.deviceToken.substring(0, 8)}... is PRODUCTION`);
-            console.log(`  🔍 Server: SANDBOX`);
+          // Skip if there's an environment mismatch
+          const tokenIsProduction = tokenRecord.isSandbox === false;
+          const serverIsProduction = this.isProductionMode;
+          
+          if (tokenIsProduction !== serverIsProduction) {
+            console.log(`[PushNotificationService] ⚠️ GUARDRAIL TRIGGERED: Skipping ${tokenEnv} token on ${serverEnv} server`);
+            console.log(`  🔍 Token: ${tokenRecord.deviceToken.substring(0, 8)}... is ${tokenEnv}`);
+            console.log(`  🔍 Server: ${serverEnv}`);
             console.log(`  🔍 Action: Skipped to prevent 403 error`);
             continue; // Skip this token to prevent 403 errors
           }

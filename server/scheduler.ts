@@ -211,6 +211,24 @@ export class EndRoomScheduler {
           const willWithCommitments = await storage.getWillWithCommitments(will.id);
           if (!willWithCommitments) continue;
 
+          // RETRY LOGIC: Send missed will_review_required notification if not already sent
+          // This catches cases where the server was down during the status transition
+          if (!will.completionNotificationSentAt) {
+            try {
+              console.log(`[SCHEDULER] 🔄 Retrying missed notification for Will ${will.id} (already in will_review)`);
+              const participants = willWithCommitments.commitments?.map(c => c.userId) || [];
+              if (participants.length > 0) {
+                await pushNotificationService.sendWillReviewRequiredNotification(will.id, participants);
+                await db.update(wills)
+                  .set({ completionNotificationSentAt: now })
+                  .where(eq(wills.id, will.id));
+                console.log(`[SCHEDULER] ✅ Retry successful - Will Completed Review notification sent for Will ${will.id}`);
+              }
+            } catch (error) {
+              console.error(`[SCHEDULER] Failed to retry notification for Will ${will.id}:`, error);
+            }
+          }
+
           const commitmentCount = willWithCommitments.commitments?.length || 0;
           const reviewCount = await storage.getWillReviewCount(will.id);
 
