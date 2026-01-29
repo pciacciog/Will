@@ -500,9 +500,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/circles/join', isAuthenticated, async (req: any, res) => {
+    console.log(`\n🚨🚨🚨 [JOIN CIRCLE API] REQUEST RECEIVED 🚨🚨🚨`);
+    console.log(`[JOIN CIRCLE API] Timestamp: ${new Date().toISOString()}`);
+    console.log(`[JOIN CIRCLE API] Request body:`, req.body);
     try {
       const userId = req.user.id;
       const { inviteCode } = req.body;
+      console.log(`[JOIN CIRCLE API] User ${userId} attempting to join with code: ${inviteCode}`);
 
       if (!inviteCode) {
         return res.status(400).json({ message: "Invite code is required" });
