@@ -535,24 +535,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get existing members BEFORE adding the new user (for notification)
       const existingMembersBefore = await storage.getCircleMembers(circle.id);
       const existingMemberIds = existingMembersBefore.map(m => m.userId);
+      console.log(`[Join Circle] 📋 Circle ${circle.id} has ${existingMemberIds.length} existing members: ${existingMemberIds.join(', ')}`);
 
       // Add user to circle
       await storage.addCircleMember({
         circleId: circle.id,
         userId,
       });
+      console.log(`[Join Circle] ✅ User ${userId} added to circle ${circle.id}`);
 
       // NEW: Send circle_member_joined notification to existing members
       try {
         const joiner = await storage.getUser(userId);
         const joinerName = joiner?.firstName || 'Someone';
+        console.log(`[Join Circle] 📣 Attempting to notify existing members that ${joinerName} joined`);
         
         if (existingMemberIds.length > 0) {
+          console.log(`[Join Circle] 🔔 Sending notification to ${existingMemberIds.length} members...`);
           await pushNotificationService.sendCircleMemberJoinedNotification(joinerName, circle.id, existingMemberIds);
-          console.log(`[Join Circle] Sent member joined notification to ${existingMemberIds.length} existing members`);
+          console.log(`[Join Circle] ✅ Sent member joined notification to ${existingMemberIds.length} existing members`);
+        } else {
+          console.log(`[Join Circle] ⚠️ No existing members to notify (first member in circle)`);
         }
       } catch (notificationError) {
-        console.error("[Join Circle] Failed to send member joined notification:", notificationError);
+        console.error("[Join Circle] ❌ Failed to send member joined notification:", notificationError);
       }
 
       // ISSUE FIX: Recalculate will status when new member joins
