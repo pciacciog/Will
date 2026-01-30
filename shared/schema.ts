@@ -420,3 +420,18 @@ export const insertCommitmentReminderSchema = createInsertSchema(commitmentRemin
 });
 export type InsertCommitmentReminder = z.infer<typeof insertCommitmentReminderSchema>;
 export type CommitmentReminder = typeof commitmentReminders.$inferSelect;
+
+// Password reset tokens table
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_password_reset_tokens_token").on(table.token),
+  index("IDX_password_reset_tokens_user_id").on(table.userId),
+]);
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Eye, EyeOff } from "lucide-react";
 import appLogo from "@assets/apple-devices/AppIcon.appiconset/icon-ios-1024x1024.png";
 import { useToast } from "@/hooks/use-toast";
@@ -386,6 +386,13 @@ export default function Auth() {
                     >
                       {loginMutation.isPending ? "Signing in..." : "Sign In"}
                     </Button>
+                  </div>
+                  
+                  {/* Forgot Password Link */}
+                  <div className="text-center mt-3">
+                    <Link href="/forgot-password" className="text-sm text-emerald-600 hover:text-emerald-700 hover:underline" data-testid="link-forgot-password">
+                      Forgot your password?
+                    </Link>
                   </div>
                 </form>
                 

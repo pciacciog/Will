@@ -12,6 +12,7 @@ import {
   pageContents,
   deviceTokens,
   sessions,
+  passwordResetTokens,
   type User,
   type InsertUser,
   type UpsertUser,
@@ -159,6 +160,12 @@ export interface IStorage {
   deletePageContent(id: number): Promise<void>;
   getAllPageContents(): Promise<PageContent[]>;
   getPageContentByKey(pageKey: string): Promise<PageContent | undefined>;
+  
+  // Password reset operations
+  createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  getPasswordResetToken(token: string): Promise<{ userId: string; expiresAt: Date; usedAt: Date | null } | undefined>;
+  markPasswordResetTokenUsed(token: string): Promise<void>;
+  deleteExpiredPasswordResetTokens(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1075,6 +1082,40 @@ export class DatabaseStorage implements IStorage {
       ...push,
       user: user!,
     }));
+  }
+
+  // Password reset operations
+  async createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    await db.insert(passwordResetTokens).values({
+      userId,
+      token,
+      expiresAt,
+    });
+  }
+
+  async getPasswordResetToken(token: string): Promise<{ userId: string; expiresAt: Date; usedAt: Date | null } | undefined> {
+    const [result] = await db
+      .select({
+        userId: passwordResetTokens.userId,
+        expiresAt: passwordResetTokens.expiresAt,
+        usedAt: passwordResetTokens.usedAt,
+      })
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
+    return result;
+  }
+
+  async markPasswordResetTokenUsed(token: string): Promise<void> {
+    await db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokens.token, token));
+  }
+
+  async deleteExpiredPasswordResetTokens(): Promise<void> {
+    await db
+      .delete(passwordResetTokens)
+      .where(sql`${passwordResetTokens.expiresAt} < NOW()`);
   }
 }
 

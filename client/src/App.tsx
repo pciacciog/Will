@@ -29,6 +29,8 @@ import Admin from "@/pages/Admin";
 import NotificationTest from "@/pages/NotificationTest";
 import IconGenerator from "@/pages/IconGenerator";
 import CircleLobby from "@/pages/CircleLobby";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -326,6 +328,10 @@ function Router() {
         {/* Routes available without authentication */}
         <Route path="/notification-test" component={NotificationTest} />
         <Route path="/icon-generator" component={IconGenerator} />
+        
+        {/* Password reset routes - always accessible */}
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
         
         {!isAuthenticated ? (
           <>
