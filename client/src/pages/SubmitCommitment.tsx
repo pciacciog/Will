@@ -230,16 +230,21 @@ export default function SubmitCommitment() {
     
     // For cumulative wills, use the sharedWhat from the will
     const whatToSubmit = isCumulative ? (sharedWhat || what) : what.trim();
-    // Include checkInType for classic wills (cumulative inherits from will)
+    // For cumulative wills, inherit checkInType from the will (proposer's choice)
+    // For classic wills, use the member's own checkInType selection
+    const willCheckInType = (will as any)?.checkInType;
     commitmentMutation.mutate({ 
       what: whatToSubmit, 
       why: why.trim(),
-      checkInType: isCumulative ? undefined : checkInType
+      checkInType: isCumulative ? willCheckInType : checkInType
     });
   };
 
   const handleBack = () => {
-    if (currentStep === 2) {
+    if (currentStep === 1) {
+      // From step 1, go back to will details
+      setLocation(`/will/${id}`);
+    } else if (currentStep === 2) {
       setCurrentStep(1);
     } else if (currentStep === 3) {
       setCurrentStep(2);
@@ -270,13 +275,7 @@ export default function SubmitCommitment() {
             {/* Back Button Row */}
             <div className="flex items-center mb-2">
               <UnifiedBackButton 
-                onClick={() => {
-                  if (currentStep === 1) {
-                    setLocation(`/will/${id}`);
-                  } else {
-                    setCurrentStep(currentStep - 1);
-                  }
-                }} 
+                onClick={handleBack}
                 testId="button-back"
               />
               <div className="flex-1 text-center -ml-2">

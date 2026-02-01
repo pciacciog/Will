@@ -294,11 +294,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           }
         }
         
-        // Circle mode: Add the creator's commitment separately
+        // Circle mode: Add the creator's commitment separately (include checkInType for cumulative wills)
         addCommitmentMutation.mutate({
           willId: will.id,
           what: willData.what,
           why: willData.why,
+          checkInType: willType === 'cumulative' ? checkInType : undefined, // Proposer's checkInType for cumulative
         });
       }
     },
@@ -318,6 +319,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         body: JSON.stringify({
           what: data.what,
           why: data.why,
+          checkInType: data.checkInType, // Pass tracking type for cumulative wills
         })
       });
       return response.json();
