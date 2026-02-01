@@ -38,9 +38,17 @@ Preferred communication style: Simple, everyday language.
 - **Solo Mode**: 
   - Personal Will creation without circle coordination
   - Immediate start (no waiting for others)
-  - 3-step flow: When → What → Why (no End Room)
+  - 5-step flow: When → What → Why → Tracking Type → Confirm
+  - **Tracking Type Options**:
+    - **Daily**: Daily check-ins with yes/no/partial status, calendar view, success rate tracking
+    - **One-time**: Simple review at the end (default)
   - Single-user review for completion
   - Route: `/solo/hub`, `/solo/start-will`
+- **Progress Tracking** (for daily check-in wills):
+  - DailyCheckInModal: Select date, choose status (yes/no/partial), add optional notes
+  - ProgressView: Calendar with color-coded days, success rate display, streak tracking
+  - Check-in data stored in `will_check_ins` table
+  - Success rate calculated as (yes + 0.5×partial) / total_days
 - **Inner Circle Mode**:
   - **Multi-Circle**: Users can belong to up to 3 circles simultaneously (max 4 members each)
   - **My Circles Lobby**: `/circles` route shows all circles user belongs to with cards and create/join options

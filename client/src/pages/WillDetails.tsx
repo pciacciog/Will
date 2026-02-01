@@ -215,8 +215,21 @@ export default function WillDetails() {
     staleTime: 0,
   });
 
-  // Fetch check-ins for daily tracking wills
-  const hasDailyCheckIns = will?.checkInType === 'daily';
+  // Determine if current user has daily check-ins
+  // For solo wills: check will.checkInType
+  // For circle wills: check user's commitment checkInType
+  const getUserCheckInType = () => {
+    if (!will || !user) return 'one-time';
+    if (will.mode === 'solo') {
+      return will.checkInType || 'one-time';
+    }
+    // Circle mode: find user's commitment
+    const userCommitment = will.commitments?.find((c: any) => c.userId === user.id);
+    return userCommitment?.checkInType || 'one-time';
+  };
+  const userCheckInType = getUserCheckInType();
+  const hasDailyCheckIns = userCheckInType === 'daily';
+  
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
     queryKey: ['/api/wills', id, 'check-ins'],
     enabled: !!id && !!user && hasDailyCheckIns,
@@ -629,7 +642,7 @@ export default function WillDetails() {
               willId={Number(id)}
               startDate={will.startDate}
               endDate={will.endDate}
-              checkInType={will.checkInType || 'one-time'}
+              checkInType={userCheckInType}
             />
             {will.status === 'active' && (
               <Button
