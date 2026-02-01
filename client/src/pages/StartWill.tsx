@@ -71,17 +71,17 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
   
-  // Both modes now have 4 steps:
-  // Solo mode: When, What, Why, Confirm
-  // Circle mode: When, What, Why, End Room
-  const totalSteps = 4;
+  // Both modes now have 5 steps:
+  // Solo mode: When, What, Why, Tracking, Confirm
+  // Circle mode: When, What, Why, Tracking, End Room
+  const totalSteps = 5;
   
   // Get step label based on mode
   const getStepLabel = (step: number) => {
-    if (step === 4) {
+    if (step === 5) {
       return isSoloMode ? "Confirm" : "End Room";
     }
-    const labels = ["", "When", "What", "Why"];
+    const labels = ["", "When", "What", "Why", "Tracking"];
     return labels[step] || "";
   };
   
@@ -160,6 +160,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   
   // Will type for Circle mode: 'classic' (individual commitments) or 'cumulative' (shared commitment)
   const [willType, setWillType] = useState<'classic' | 'cumulative' | null>(null);
+  
+  // Check-in type: 'daily' for daily tracking or 'one-time' for end-only check-in
+  const [checkInType, setCheckInType] = useState<'daily' | 'one-time'>('one-time');
   
   // For Circle mode, we show type selection before step 1
   const showTypeSelection = !isSoloMode && willType === null;
@@ -452,6 +455,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       mode: 'solo',
       what: willData.what,
       because: willData.why,
+      checkInType: checkInType,
     });
   };
 
@@ -507,6 +511,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       circleId: finalWillData.circleId,
       willType: willType || 'classic',
       sharedWhat: willType === 'cumulative' ? finalWillData.what : undefined,
+      checkInType: checkInType,
     });
 
     setWillData(finalWillData);
@@ -608,7 +613,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               {!showTypeSelection && currentStep === 1 && "Set Your Timeline"}
               {!showTypeSelection && currentStep === 2 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
               {!showTypeSelection && currentStep === 3 && "Why would you like to do this?"}
-              {!showTypeSelection && currentStep === 4 && (isSoloMode ? "Review Your Will" : "Schedule Your End Room")}
+              {!showTypeSelection && currentStep === 4 && "How Will You Track?"}
+              {!showTypeSelection && currentStep === 5 && (isSoloMode ? "Review Your Will" : "Schedule Your End Room")}
             </h1>
             {!showTypeSelection && currentStep === 1 && (
               <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
@@ -634,6 +640,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               </>
             )}
             {!showTypeSelection && currentStep === 4 && (
+              <p className="text-sm text-gray-500 mt-1">
+                Choose how you'll track your progress
+              </p>
+            )}
+            {!showTypeSelection && currentStep === 5 && (
               <p className="text-sm text-gray-500 mt-1">
                 {isSoloMode 
                   ? "Confirm your commitment before starting" 
@@ -991,8 +1002,79 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
         
-        {/* Step 4: Confirmation (Solo) or End Room Scheduling (Circle) */}
+        {/* Step 4: Tracking Type Selection */}
         {currentStep === 4 && !showTransition && (
+          <SectionCard>
+            <div className="space-y-6 px-4 py-2">
+              <p className="text-sm text-gray-600 text-center">
+                Different goals need different tracking. Choose what works best for you.
+              </p>
+              
+              {/* Daily Check-ins Option */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckInType('daily');
+                  setCurrentStep(5);
+                }}
+                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                  checkInType === 'daily' 
+                    ? 'border-purple-500 bg-purple-50' 
+                    : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
+                }`}
+                data-testid="button-tracking-daily"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-1">Daily Check-ins</h3>
+                    <p className="text-sm text-gray-600">
+                      Track your progress every day. Great for habits and daily goals.
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      Example: "Don't hit snooze" - check in each morning
+                    </p>
+                  </div>
+                </div>
+              </button>
+              
+              {/* One-time Check-in Option */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckInType('one-time');
+                  setCurrentStep(5);
+                }}
+                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                  checkInType === 'one-time' 
+                    ? 'border-green-500 bg-green-50' 
+                    : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
+                }`}
+                data-testid="button-tracking-onetime"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-1">One-time Check-in</h3>
+                    <p className="text-sm text-gray-600">
+                      Just confirm at the end. Best for one-time tasks or qualitative goals.
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      Example: "Call my grandmother" - check once when done
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </SectionCard>
+        )}
+        
+        {/* Step 5: Confirmation (Solo) or End Room Scheduling (Circle) */}
+        {currentStep === 5 && !showTransition && (
           <>
             {isSoloMode ? (
               /* Solo Mode: Confirmation Screen */
@@ -1033,6 +1115,23 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     <div className="pl-6">
                       <p className="text-sm text-gray-700 italic">
                         Because {willData.why}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tracking Type Section */}
+                  <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100">
+                    <div className="flex items-center mb-2">
+                      {checkInType === 'daily' ? (
+                        <Calendar className="w-4 h-4 text-blue-500 mr-2" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 text-blue-500 mr-2" />
+                      )}
+                      <p className="text-sm font-semibold text-blue-700">Tracking</p>
+                    </div>
+                    <div className="pl-6">
+                      <p className="text-sm text-gray-700">
+                        {checkInType === 'daily' ? 'Daily check-ins' : 'One-time check-in at the end'}
                       </p>
                     </div>
                   </div>
