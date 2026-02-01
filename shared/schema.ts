@@ -66,6 +66,7 @@ export const wills = pgTable("wills", {
   mode: varchar("mode", { length: 10 }).notNull().default("circle"), // 'solo' or 'circle'
   willType: varchar("will_type", { length: 20 }).default("classic"), // 'classic' or 'cumulative' (only for circle mode)
   sharedWhat: text("shared_what"), // For cumulative wills: the shared commitment everyone does
+  checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time' (for solo mode)
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   endRoomScheduledAt: timestamp("end_room_scheduled_at"),
@@ -93,6 +94,7 @@ export const willCommitments = pgTable("will_commitments", {
   userId: varchar("user_id").notNull().references(() => users.id),
   what: text("what").notNull(),
   why: text("why").notNull(),
+  checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time' (for circle mode - per member)
   createdAt: timestamp("created_at").defaultNow(),
   // Notification tracking field for acknowledgment reminder
   ackReminderSentAt: timestamp("ack_reminder_sent_at"), // For 6hr unacknowledged reminder
@@ -135,6 +137,34 @@ export const dailyProgress = pgTable("daily_progress", {
   completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const willCheckIns = pgTable("will_check_ins", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD - the day being tracked
+  status: varchar("status", { length: 20 }).notNull(), // 'yes', 'no', 'partial'
+  reflectionText: text("reflection_text"), // Optional reflection
+  checkedInAt: timestamp("checked_in_at").defaultNow(), // When they actually logged it
+  isRetroactive: boolean("is_retroactive").default(false), // Was this filled in late?
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_will_check_ins_will_id").on(table.willId),
+  index("IDX_will_check_ins_user_id").on(table.userId),
+  index("IDX_will_check_ins_date").on(table.willId, table.userId, table.date),
+]);
+
+export const willFinalReflections = pgTable("will_final_reflections", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  feeling: varchar("feeling", { length: 20 }).notNull(), // 'great', 'okay', 'could_improve'
+  finalThoughts: text("final_thoughts"), // Optional
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_will_final_reflections_will_id").on(table.willId),
+  index("IDX_will_final_reflections_user_id").on(table.userId),
+]);
 
 export const willPushes = pgTable("will_pushes", {
   id: serial("id").primaryKey(),
@@ -279,6 +309,28 @@ export const dailyProgressRelations = relations(dailyProgress, ({ one }) => ({
   }),
 }));
 
+export const willCheckInsRelations = relations(willCheckIns, ({ one }) => ({
+  will: one(wills, {
+    fields: [willCheckIns.willId],
+    references: [wills.id],
+  }),
+  user: one(users, {
+    fields: [willCheckIns.userId],
+    references: [users.id],
+  }),
+}));
+
+export const willFinalReflectionsRelations = relations(willFinalReflections, ({ one }) => ({
+  will: one(wills, {
+    fields: [willFinalReflections.willId],
+    references: [wills.id],
+  }),
+  user: one(users, {
+    fields: [willFinalReflections.userId],
+    references: [users.id],
+  }),
+}));
+
 export const willPushesRelations = relations(willPushes, ({ one }) => ({
   will: one(wills, {
     fields: [willPushes.willId],
@@ -375,6 +427,21 @@ export const insertDailyProgressSchema = createInsertSchema(dailyProgress).omit(
 });
 export type InsertDailyProgress = z.infer<typeof insertDailyProgressSchema>;
 export type DailyProgress = typeof dailyProgress.$inferSelect;
+
+export const insertWillCheckInSchema = createInsertSchema(willCheckIns).omit({
+  id: true,
+  createdAt: true,
+  checkedInAt: true,
+});
+export type InsertWillCheckIn = z.infer<typeof insertWillCheckInSchema>;
+export type WillCheckIn = typeof willCheckIns.$inferSelect;
+
+export const insertWillFinalReflectionSchema = createInsertSchema(willFinalReflections).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertWillFinalReflection = z.infer<typeof insertWillFinalReflectionSchema>;
+export type WillFinalReflection = typeof willFinalReflections.$inferSelect;
 
 export const insertWillPushSchema = createInsertSchema(willPushes).omit({
   id: true,
