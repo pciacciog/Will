@@ -8,6 +8,8 @@ import {
   willReviews,
   dailyProgress,
   willPushes,
+  willCheckIns,
+  willFinalReflections,
   blogPosts,
   pageContents,
   deviceTokens,
@@ -32,6 +34,10 @@ import {
   type InsertDailyProgress,
   type WillPush,
   type InsertWillPush,
+  type WillCheckIn,
+  type InsertWillCheckIn,
+  type WillFinalReflection,
+  type InsertWillFinalReflection,
   type BlogPost,
   type InsertBlogPost,
   type PageContent,
@@ -166,6 +172,17 @@ export interface IStorage {
   getPasswordResetToken(token: string): Promise<{ userId: string; expiresAt: Date; usedAt: Date | null } | undefined>;
   markPasswordResetTokenUsed(token: string): Promise<void>;
   deleteExpiredPasswordResetTokens(): Promise<void>;
+  
+  // Will check-in operations (for daily tracking)
+  createWillCheckIn(checkIn: InsertWillCheckIn): Promise<WillCheckIn>;
+  updateWillCheckIn(checkInId: number, updates: Partial<InsertWillCheckIn>): Promise<WillCheckIn>;
+  getWillCheckIn(willId: number, userId: string, date: string): Promise<WillCheckIn | undefined>;
+  getWillCheckIns(willId: number, userId: string): Promise<WillCheckIn[]>;
+  getWillCheckInProgress(willId: number, userId: string): Promise<{ total: number; completed: number; successRate: number }>;
+  
+  // Will final reflection operations
+  createWillFinalReflection(reflection: InsertWillFinalReflection): Promise<WillFinalReflection>;
+  getWillFinalReflection(willId: number, userId: string): Promise<WillFinalReflection | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1116,6 +1133,84 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(passwordResetTokens)
       .where(sql`${passwordResetTokens.expiresAt} < NOW()`);
+  }
+
+  // Will check-in operations (for daily tracking)
+  async createWillCheckIn(checkIn: InsertWillCheckIn): Promise<WillCheckIn> {
+    const [result] = await db.insert(willCheckIns).values(checkIn).returning();
+    return result;
+  }
+
+  async updateWillCheckIn(checkInId: number, updates: Partial<InsertWillCheckIn>): Promise<WillCheckIn> {
+    const [result] = await db
+      .update(willCheckIns)
+      .set(updates)
+      .where(eq(willCheckIns.id, checkInId))
+      .returning();
+    return result;
+  }
+
+  async getWillCheckIn(willId: number, userId: string, date: string): Promise<WillCheckIn | undefined> {
+    const [result] = await db
+      .select()
+      .from(willCheckIns)
+      .where(
+        and(
+          eq(willCheckIns.willId, willId),
+          eq(willCheckIns.userId, userId),
+          eq(willCheckIns.date, date)
+        )
+      );
+    return result;
+  }
+
+  async getWillCheckIns(willId: number, userId: string): Promise<WillCheckIn[]> {
+    return db
+      .select()
+      .from(willCheckIns)
+      .where(
+        and(
+          eq(willCheckIns.willId, willId),
+          eq(willCheckIns.userId, userId)
+        )
+      )
+      .orderBy(willCheckIns.date);
+  }
+
+  async getWillCheckInProgress(willId: number, userId: string): Promise<{ total: number; completed: number; successRate: number }> {
+    const checkIns = await this.getWillCheckIns(willId, userId);
+    const total = checkIns.length;
+    
+    let completed = 0;
+    for (const checkIn of checkIns) {
+      if (checkIn.status === 'yes') {
+        completed += 1;
+      } else if (checkIn.status === 'partial') {
+        completed += 0.5;
+      }
+    }
+    
+    const successRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, successRate };
+  }
+
+  // Will final reflection operations
+  async createWillFinalReflection(reflection: InsertWillFinalReflection): Promise<WillFinalReflection> {
+    const [result] = await db.insert(willFinalReflections).values(reflection).returning();
+    return result;
+  }
+
+  async getWillFinalReflection(willId: number, userId: string): Promise<WillFinalReflection | undefined> {
+    const [result] = await db
+      .select()
+      .from(willFinalReflections)
+      .where(
+        and(
+          eq(willFinalReflections.willId, willId),
+          eq(willFinalReflections.userId, userId)
+        )
+      );
+    return result;
   }
 }
 
