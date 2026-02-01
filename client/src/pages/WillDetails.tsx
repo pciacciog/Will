@@ -18,6 +18,9 @@ import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
+import DailyCheckInModal from "@/components/DailyCheckInModal";
+import ProgressView from "@/components/ProgressView";
+import type { WillCheckIn } from "@shared/schema";
 
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -96,6 +99,7 @@ export default function WillDetails() {
   const queryClient = useQueryClient();
   const [expandedCommitments, setExpandedCommitments] = useState<Record<string, boolean>>({});
   const [showFinalSummary, setShowFinalSummary] = useState(false);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
 
 
   const { data: will, isLoading, error } = useQuery<any>({
@@ -209,6 +213,13 @@ export default function WillDetails() {
     enabled: shouldEnableReviewQueries,
     refetchInterval: shouldEnableReviewQueries ? 5000 : false, // Poll for new reviews
     staleTime: 0,
+  });
+
+  // Fetch check-ins for daily tracking wills
+  const hasDailyCheckIns = will?.checkInType === 'daily';
+  const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
+    queryKey: ['/api/wills', id, 'check-ins'],
+    enabled: !!id && !!user && hasDailyCheckIns,
   });
   
   // Debug logging for query states
@@ -608,6 +619,28 @@ export default function WillDetails() {
                 <span className="font-medium">Duration:</span> 30 minutes
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Progress Tracking Section - For daily check-in wills */}
+        {hasDailyCheckIns && (will.status === 'active' || will.status === 'will_review' || will.status === 'completed') && (
+          <div className="space-y-4">
+            <ProgressView
+              willId={Number(id)}
+              startDate={will.startDate}
+              endDate={will.endDate}
+              checkInType={will.checkInType || 'one-time'}
+            />
+            {will.status === 'active' && (
+              <Button
+                onClick={() => setShowCheckInModal(true)}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+                data-testid="button-daily-check-in"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Daily Check-in
+              </Button>
+            )}
           </div>
         )}
 
@@ -1025,6 +1058,18 @@ export default function WillDetails() {
         commitmentCount={will?.commitmentCount || 0}
         reviews={reviews || []}
       />
+
+      {/* Daily Check-in Modal */}
+      {hasDailyCheckIns && (
+        <DailyCheckInModal
+          isOpen={showCheckInModal}
+          onClose={() => setShowCheckInModal(false)}
+          willId={Number(id)}
+          startDate={will?.startDate || ''}
+          endDate={will?.endDate || ''}
+          existingCheckIns={checkIns}
+        />
+      )}
     </MobileLayout>
   );
 }
