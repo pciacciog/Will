@@ -430,16 +430,20 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     setWillData(updatedWillData);
     
     if (isSoloMode) {
-      // Solo mode: Go to confirmation step (Step 4)
+      // Solo mode: Go to tracking type step (Step 4)
+      setCurrentStep(4);
+    } else if (willType === 'cumulative') {
+      // Cumulative (shared) wills: Go to tracking type step (Step 4) - proposer chooses for everyone
       setCurrentStep(4);
     } else {
-      // Circle mode: Show transition animation then go to End Room step
+      // Classic wills: Show transition animation then go to End Room step
+      // (Each member will choose their own tracking type in SubmitCommitment)
       setShowTransition(true);
       
       // After 3.5 seconds, move to End Room scheduling step
       setTimeout(() => {
         setShowTransition(false);
-        setCurrentStep(4);
+        setCurrentStep(5);
       }, 3500);
     }
   };
