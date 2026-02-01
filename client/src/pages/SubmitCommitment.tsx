@@ -32,6 +32,9 @@ export default function SubmitCommitment() {
   const [skipDailyReminder, setSkipDailyReminder] = useState<boolean>(false);
   const [hasModifiedReminder, setHasModifiedReminder] = useState(false);
   
+  // Tracking type for progress check-ins (each member chooses their own for classic wills)
+  const [checkInType, setCheckInType] = useState<'daily' | 'one-time'>('one-time');
+  
   // Auto-resize refs for textareas
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
@@ -93,9 +96,9 @@ export default function SubmitCommitment() {
   const sharedWhat = (will as any)?.sharedWhat;
   
   // For cumulative wills, step 1 goes directly to step 2 (Why), skipping the What step
-  // Classic flow: 1-When, 2-What, 3-Why, 4-Confirm (4 steps)
-  // Cumulative flow: 1-When, 2-Why, 3-Confirm (3 steps - skip What)
-  const totalSteps = isCumulative ? 3 : 4;
+  // Classic flow: 1-When, 2-What, 3-Why, 4-Track, 5-Confirm (5 steps)
+  // Cumulative flow: 1-When, 2-Why, 3-Confirm (3 steps - skip What & Track since proposer chose)
+  const totalSteps = isCumulative ? 3 : 5;
 
   // Check if user should see instruction modal for first-time submission
   useEffect(() => {
@@ -111,7 +114,7 @@ export default function SubmitCommitment() {
   }, []);
 
   const commitmentMutation = useMutation({
-    mutationFn: async (data: { what: string; why: string }) => {
+    mutationFn: async (data: { what: string; why: string; checkInType?: string }) => {
       const response = await apiRequest(`/api/wills/${id}/commitments`, {
         method: 'POST',
         body: JSON.stringify(data)
@@ -191,25 +194,30 @@ export default function SubmitCommitment() {
     setWhy(whyInput.trim());
     
     if (isCumulative) {
-      // For cumulative wills, skip the transition and go directly to confirmation step
+      // For cumulative wills, skip tracking type (proposer chose) and go to confirmation step
       setShowTransition(true);
       setTimeout(() => {
         setShowTransition(false);
         setCurrentStep(3); // Goes to Confirm step for cumulative
       }, 3500);
     } else {
-      // Show transition animation for classic wills
-      setShowTransition(true);
-      
-      // After 3.5 seconds, move to End Room acceptance step
-      setTimeout(() => {
-        setShowTransition(false);
-        setCurrentStep(4);
-      }, 3500);
+      // Classic wills: go to tracking type step (step 4)
+      setCurrentStep(4);
     }
   };
+  
+  // Handler for tracking type selection (classic wills only)
+  const handleTrackingTypeSelect = (type: 'daily' | 'one-time') => {
+    setCheckInType(type);
+    // Show transition animation then go to confirmation step
+    setShowTransition(true);
+    setTimeout(() => {
+      setShowTransition(false);
+      setCurrentStep(5);
+    }, 2000);
+  };
 
-  const handleStep4Submit = (e: React.FormEvent) => {
+  const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Save daily reminder settings if user modified them
@@ -222,7 +230,12 @@ export default function SubmitCommitment() {
     
     // For cumulative wills, use the sharedWhat from the will
     const whatToSubmit = isCumulative ? (sharedWhat || what) : what.trim();
-    commitmentMutation.mutate({ what: whatToSubmit, why: why.trim() });
+    // Include checkInType for classic wills (cumulative inherits from will)
+    commitmentMutation.mutate({ 
+      what: whatToSubmit, 
+      why: why.trim(),
+      checkInType: isCumulative ? undefined : checkInType
+    });
   };
 
   const handleBack = () => {
@@ -232,6 +245,8 @@ export default function SubmitCommitment() {
       setCurrentStep(2);
     } else if (currentStep === 4) {
       setCurrentStep(3);
+    } else if (currentStep === 5) {
+      setCurrentStep(4);
     } else {
       setLocation(`/will/${id}`);
     }
@@ -300,6 +315,24 @@ export default function SubmitCommitment() {
                   {isCumulative ? 'Join' : 'Why'}
                 </span>
               </div>
+              
+              {/* Steps 4 & 5 for Classic wills only */}
+              {!isCumulative && (
+                <>
+                  <div className={`w-4 h-0.5 ${currentStep >= 4 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                  <div className="flex items-center">
+                    <div className={`w-6 h-6 ${currentStep >= 4 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                      4
+                    </div>
+                  </div>
+                  <div className={`w-4 h-0.5 ${currentStep >= 5 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                  <div className="flex items-center">
+                    <div className={`w-6 h-6 ${currentStep >= 5 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                      5
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           
           {/* Current Step Title */}
@@ -310,7 +343,8 @@ export default function SubmitCommitment() {
               {currentStep === 2 && isCumulative && "Why would you like to do this?"}
               {currentStep === 3 && !isCumulative && "Why would you like to do this?"}
               {currentStep === 3 && isCumulative && "Confirm Your Commitment"}
-              {currentStep === 4 && "End Room Confirmation"}
+              {currentStep === 4 && !isCumulative && "How Will You Track?"}
+              {currentStep === 5 && !isCumulative && "Confirm Your Commitment"}
             </h1>
 {/* Team Commitment box moved inside Will Schedule card for Shared Wills */}
             {/* Classic: What step icon */}
@@ -580,7 +614,7 @@ export default function SubmitCommitment() {
         {/* Step 3: Confirmation (Cumulative wills only) - Compact single-screen layout */}
         {currentStep === 3 && isCumulative && !showTransition && (
           <SectionCard>
-            <form onSubmit={handleStep4Submit} className="space-y-3">
+            <form onSubmit={handleFinalSubmit} className="space-y-3">
               <div className="space-y-3 mt-2">
                 {/* Cumulative Commitment Summary - Compact */}
                 <div className="text-center">
@@ -665,14 +699,75 @@ export default function SubmitCommitment() {
           </SectionCard>
         )}
 
-        {/* Step 4: End Room Confirmation (Classic wills only) */}
+        {/* Step 4: Tracking Type Selection (Classic wills only) */}
         {currentStep === 4 && !isCumulative && !showTransition && (
           <SectionCard>
-            <form onSubmit={handleStep4Submit} className="space-y-6">
-              <div className="space-y-6 mt-8">
+            <div className="space-y-6 px-4 py-2">
+              <p className="text-sm text-gray-600 text-center">
+                How would you like to track your progress on this commitment?
+              </p>
+              
+              {/* Daily Check-ins Option */}
+              <button
+                type="button"
+                onClick={() => handleTrackingTypeSelect('daily')}
+                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                  checkInType === 'daily' 
+                    ? 'border-purple-500 bg-purple-50' 
+                    : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
+                }`}
+                data-testid="button-tracking-daily"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Daily Check-ins</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Track your progress every day with a simple yes/no/partial check-in
+                    </p>
+                    <p className="text-xs text-purple-600 mt-2">Best for habits and recurring actions</p>
+                  </div>
+                </div>
+              </button>
+              
+              {/* One-time Option */}
+              <button
+                type="button"
+                onClick={() => handleTrackingTypeSelect('one-time')}
+                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                  checkInType === 'one-time' 
+                    ? 'border-green-500 bg-green-50' 
+                    : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
+                }`}
+                data-testid="button-tracking-onetime"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">One-time Check-in</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Reflect on your progress at the end of the Will period
+                    </p>
+                    <p className="text-xs text-green-600 mt-2">Best for single goals or projects</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </SectionCard>
+        )}
+
+        {/* Step 5: Confirmation (Classic wills only) */}
+        {currentStep === 5 && !isCumulative && !showTransition && (
+          <SectionCard>
+            <form onSubmit={handleFinalSubmit} className="space-y-6">
+              <div className="space-y-6 mt-4">
                 {/* Commitment Summary Card */}
                 <div className="text-center">
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200 shadow-sm mx-auto max-w-sm">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-200 shadow-sm mx-auto max-w-sm">
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Commitment</h3>
                     <div className="text-base text-gray-800 leading-relaxed">
                       <div className="font-medium mb-2">
@@ -685,53 +780,55 @@ export default function SubmitCommitment() {
                         {why}
                       </div>
                     </div>
+                    {/* Tracking Type Display */}
+                    <div className="mt-3 pt-3 border-t border-blue-100">
+                      <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                        {checkInType === 'daily' ? (
+                          <>
+                            <Calendar className="w-4 h-4 text-purple-500" />
+                            <span>Daily check-ins</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span>One-time check-in</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                {/* Enhanced End Room Card */}
-                <div className="text-center">
-                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200 shadow-sm mx-auto max-w-sm">
-                    <div className="flex items-center justify-center mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
+                {/* End Room Card (if scheduled) */}
+                {(will as any)?.endRoomScheduledAt && (
+                  <div className="text-center">
+                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-5 border border-purple-200 shadow-sm mx-auto max-w-sm">
+                      <div className="flex items-center justify-center mb-2">
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-3">End Room</h3>
-                    <div className="text-sm text-gray-800 leading-relaxed">
-                      <div className="font-medium mb-1">
-                        {will?.endRoomScheduledAt ? (
-                          new Date(will.endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-                        ) : (
-                          'Loading...'
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 mb-2">
-                        {will?.endRoomScheduledAt ? (
-                          new Date(will.endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                        ) : (
-                          ''
-                        )}
-                      </div>
-                      <div className="bg-white/60 rounded-lg p-2 border border-purple-100">
-                        <p className="text-xs text-purple-700 leading-relaxed">
-                          Your circle will gather here to reflect and share
-                        </p>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-2">End Room</h3>
+                      <div className="text-sm text-gray-800">
+                        {new Date((will as any).endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                        {' at '}
+                        {new Date((will as any).endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
                 
                 {/* Daily Reminder Settings */}
-                <div className="mt-5 pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <Clock className="w-4 h-4 text-gray-400" />
+                <div className="pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Clock className="w-3 h-3 text-gray-400" />
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
                       Daily Reminder
                     </p>
                   </div>
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-1">
                     <Input 
                       type="time" 
                       value={dailyReminderTime}
@@ -744,7 +841,7 @@ export default function SubmitCommitment() {
                       className={`w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none ${skipDailyReminder ? 'opacity-40' : ''}`}
                       data-testid="input-daily-reminder-time-classic"
                     />
-                    <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={skipDailyReminder === true}
@@ -752,7 +849,7 @@ export default function SubmitCommitment() {
                           setSkipDailyReminder(e.target.checked);
                           setHasModifiedReminder(true);
                         }}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
+                        className="w-3 h-3 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
                         data-testid="checkbox-skip-daily-reminder-classic"
                       />
                       Skip daily reminders
@@ -761,11 +858,11 @@ export default function SubmitCommitment() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center pt-2">
                 <InlineBackButton 
                   onClick={handleBack}
                   testId="button-back-inline"
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                  className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
                 />
                 <PrimaryButton 
                   type="submit" 

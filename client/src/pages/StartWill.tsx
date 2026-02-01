@@ -618,7 +618,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               {!showTypeSelection && currentStep === 2 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
               {!showTypeSelection && currentStep === 3 && "Why would you like to do this?"}
               {!showTypeSelection && currentStep === 4 && "How Will You Track?"}
-              {!showTypeSelection && currentStep === 5 && (isSoloMode ? "Review Your Will" : "Schedule Your End Room")}
+              {!showTypeSelection && currentStep === 5 && (isSoloMode ? "Review Your Will" : (willType === 'cumulative' ? "Review & Schedule End Room" : "Schedule Your End Room"))}
             </h1>
             {!showTypeSelection && currentStep === 1 && (
               <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
