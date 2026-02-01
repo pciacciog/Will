@@ -1354,6 +1354,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Daily check-in routes (for daily tracking feature)
+  app.post('/api/wills/:id/check-ins', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const { date, status, reflectionText, isRetroactive } = req.body;
+
+      if (!date || !status) {
+        return res.status(400).json({ message: "Date and status are required" });
+      }
+
+      if (!['yes', 'no', 'partial'].includes(status)) {
+        return res.status(400).json({ message: "Status must be 'yes', 'no', or 'partial'" });
+      }
+
+      // Check if check-in already exists for this date
+      const existingCheckIn = await storage.getWillCheckIn(willId, userId, date);
+      if (existingCheckIn) {
+        // Update existing check-in
+        const updated = await storage.updateWillCheckIn(existingCheckIn.id, {
+          status,
+          reflectionText: reflectionText || null,
+          isRetroactive: isRetroactive || false,
+        });
+        return res.json(updated);
+      }
+
+      // Create new check-in
+      const checkIn = await storage.createWillCheckIn({
+        willId,
+        userId,
+        date,
+        status,
+        reflectionText: reflectionText || null,
+        isRetroactive: isRetroactive || false,
+      });
+
+      res.json(checkIn);
+    } catch (error) {
+      console.error("Error creating check-in:", error);
+      res.status(500).json({ message: "Failed to create check-in" });
+    }
+  });
+
+  app.get('/api/wills/:id/check-ins', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+
+      const checkIns = await storage.getWillCheckIns(willId, userId);
+      res.json(checkIns);
+    } catch (error) {
+      console.error("Error fetching check-ins:", error);
+      res.status(500).json({ message: "Failed to fetch check-ins" });
+    }
+  });
+
+  app.get('/api/wills/:id/check-in-progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+
+      const progress = await storage.getWillCheckInProgress(willId, userId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching check-in progress:", error);
+      res.status(500).json({ message: "Failed to fetch check-in progress" });
+    }
+  });
+
+  // Final reflection routes
+  app.post('/api/wills/:id/final-reflection', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const { feeling, finalThoughts } = req.body;
+
+      if (!feeling) {
+        return res.status(400).json({ message: "Feeling is required" });
+      }
+
+      if (!['great', 'okay', 'could_improve'].includes(feeling)) {
+        return res.status(400).json({ message: "Feeling must be 'great', 'okay', or 'could_improve'" });
+      }
+
+      // Check if reflection already exists
+      const existing = await storage.getWillFinalReflection(willId, userId);
+      if (existing) {
+        return res.status(409).json({ message: "Final reflection already exists" });
+      }
+
+      const reflection = await storage.createWillFinalReflection({
+        willId,
+        userId,
+        feeling,
+        finalThoughts: finalThoughts || null,
+      });
+
+      res.json(reflection);
+    } catch (error) {
+      console.error("Error creating final reflection:", error);
+      res.status(500).json({ message: "Failed to create final reflection" });
+    }
+  });
+
+  app.get('/api/wills/:id/final-reflection', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+
+      const reflection = await storage.getWillFinalReflection(willId, userId);
+      if (!reflection) {
+        return res.status(404).json({ message: "Final reflection not found" });
+      }
+
+      res.json(reflection);
+    } catch (error) {
+      console.error("Error fetching final reflection:", error);
+      res.status(500).json({ message: "Failed to fetch final reflection" });
+    }
+  });
+
   // Push notification routes
   app.post('/api/wills/:id/push', isAuthenticated, async (req: any, res) => {
     try {
