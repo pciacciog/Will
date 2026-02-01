@@ -1,0 +1,236 @@
+TRACKING FEATURE
+
+
+PROGRESS TRACKING FEATURE: Daily vs One-Time Check-Ins
+
+Hey! I want to add progress tracking to Solo and Circle Wills. Users have been asking for data to see if the app is working - they want to track their success rates and progress over time.
+
+THE CORE IDEA:
+
+Not all Wills are the same - some are daily habits that should be tracked every day, others are one-time commitments that only need confirmation at the end.
+
+Examples:
+- **Daily habit:** "Don't hit snooze" (7 days) → Track every single day
+- **One-time task:** "Call my grandmother" (1 day) → Just confirm at the end
+- **Qualitative goal:** "Be more present this week" (7 days) → Just reflect at the end
+
+Solution: Let users choose their tracking type during Will creation, then the app behaves differently based on that choice.
+
+IMPLEMENTATION:
+
+**Step 1: Add Tracking Type Selection to Will Creation**
+
+Current flow is:
+1. When (duration)
+2. What (commitment)
+3. Why (motivation)
+
+Add new step AFTER "Why":
+
+4. **How to Track (NEW)**
+
+
+**Step 2: Store the Tracking Type**
+
+Add field to `wills` table:
+```sql
+wills (
+  ...existing fields...,
+  check_in_type VARCHAR -- 'daily' or 'one-time'
+)
+```
+
+**Step 3: Different Behavior Based on Type**
+
+### **DAILY CHECK-INS:**
+
+**During the Will:**
+- Send daily push notification: "Did you [commitment]?"
+- Show check-in modal every day
+- Modal has three options: Yes / No / Partially
+- Optional reflection text
+- Store each check-in
+
+**At the End:**
+- Show "Final Review" screen with all days listed
+- Display success rate (e.g., "85% - 6/7 days")
+- Allow editing any day (retroactive check-ins)
+- “Did you Follow Through on your commitment?”
+
+- Continue to End Room
+
+### **ONE-TIME CHECK-IN:** 9(AS IT CURRENTLY IS RIGHT NOW)
+
+**During the Will:**
+- NO daily check-ins
+- NO daily notifications about the Will
+- Just let it run 
+
+**At the End:**
+- Show single check-in modal (AS IT CURRENTLY IS): "Did you [commitment]?"
+- Three options: Yes / No / Partially (change “mostly” to “partially”
+- Optional reflection text
+- Continue to End Room
+
+DETAILED FLOWS:
+
+**DAILY CHECK-IN FLOW:**
+
+**During Will (Every Day):**
+Push notification at scheduled time ↓ Check-in modal appears: "Did you skip the snooze button today?" [Yes] [No] [More or Less] Optional text: "How did it go?" ↓ Store in database ↓ Update progress display
+
+
+**View Progress Anytime:**
+┌─────────────────────────────────────┐ │ Don't hit snooze │ │ Day 5 of 7 │ ├─────────────────────────────────────┤ │ │ │ Your Progress: │ │ M T W T F S S │ │ ✓ ✓ ✗ ✓ ✓ ? ? │ │ │ │ Success Rate: 75% (3/4 days) │ │ │ │ ⚠️ 1 missing check-in │ │ [Fill In Missing Day] │ │ │ │ [Check In Today] │ │ │ └─────────────────────────────────────┘
+
+
+**At End of Will (Before End Room):**
+
+Step 1 - Final Review:
+┌─────────────────────────────────────┐ │ Final Review │ │ Don't hit snooze • Jan 20-27 │ ├─────────────────────────────────────┤ │ │ │ Your Progress: │ │ M T W T F S S │ │ ✓ ✓ ✗ ✓ ✓ ✓ ? │ │ │ │ Success Rate: 83% (5/6 days) │ │ Missing: 1 day │ │ │ │ [Fill In Missing Days] │ │ [Looks Good, Continue] │ │ │ └─────────────────────────────────────┘
+
+
+Step 2 - Final Reflection:
+┌─────────────────────────────────────┐ │ How did it go? │ ├─────────────────────────────────────┤ │ │ │ Success Rate: 85% (6/7 days) 🔥 │ │ │ │ How do you feel about your │ │ progress this week? │ │ │ │ [😊 Great] [😐 Okay] [😔 Could │ │ improve] │ │ │ │ Final thoughts? (optional) │ │ [ ]│ │ │ │ [Continue to End Room] │ │ │ └─────────────────────────────────────┘
+
+
+**ONE-TIME CHECK-IN FLOW:**
+
+**During Will:**
+- Nothing happens
+- Will just sits there until end date
+
+**At End of Will:**
+
+Single check-in modal:
+┌─────────────────────────────────────┐ │ Call my grandmother │ │ Your Will just ended! │ ├─────────────────────────────────────┤ │ │ │ Did you call your grandmother? │ │ │ │ [✓ Yes] [✗ No] [≈ Partially]│ │ │ │ How did it go? (optional) │ │ [ ]│ │ │ │ [Continue to End Room] │ │ │ └─────────────────────────────────────┘
+
+
+DATABASE SCHEMA:
+
+**New table for check-ins:**
+```sql
+will_check_ins (
+  id SERIAL PRIMARY KEY,
+  will_id INTEGER REFERENCES wills(id),
+  user_id INTEGER REFERENCES users(id),
+  date DATE, -- The day being tracked (e.g., Jan 22)
+  status VARCHAR, -- 'yes', 'no', or 'more_or_less'
+  reflection_text TEXT, -- Optional
+  checked_in_at TIMESTAMP, -- When they actually logged it
+  is_retroactive BOOLEAN DEFAULT false, -- Was this filled in late?
+  created_at TIMESTAMP DEFAULT NOW()
+)
+```
+
+**Update wills table:**
+```sql
+ALTER TABLE wills ADD COLUMN check_in_type VARCHAR DEFAULT 'one-time';
+-- 'daily' or 'one-time'
+```
+
+**Optional: Store final reflection for daily Wills:**
+```sql
+will_reflections (
+  id SERIAL PRIMARY KEY,
+  will_id INTEGER REFERENCES wills(id),
+  user_id INTEGER REFERENCES users(id),
+  feeling VARCHAR, -- 'great', 'okay', or 'could_improve'
+  final_thoughts TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+)
+```
+
+RETROACTIVE CHECK-INS (FILL IN MISSING DAYS):
+
+**Key Feature:** Users can go back and fill in days they forgot to check in.
+
+**During the Will:**
+- If user missed checking in on Tuesday, they can go back on Thursday and fill it in
+- Show "Fill In Missing Days" button when there are gaps
+- Let them select which day to fill
+- Same check-in modal appears
+
+**At the End:**
+- Show all days with their status
+- Allow editing ANY day (missing or already completed)
+- User confirms data is accurate before continuing
+
+**Implementation:**
+- Check-ins store the `date` being tracked + `checked_in_at` timestamp
+- Can have Tuesday's check-in logged on Thursday (retroactive)
+- `is_retroactive` flag for analytics (optional)
+
+SUCCESS RATE CALCULATION:
+
+For daily check-ins:
+Success Rate = (Days marked "Yes") / (Total check-ins completed)
+Example: 7 days total
+* 5 days: Yes
+* 1 day: No
+* 1 day: More or Less
+Success Rate = 5/7 = 71%
+Or include "More or Less" as partial success: Success Rate = (5 + 0.5) / 7 = 78%
+
+
+Your choice on how to count "More or Less"!
+
+PROGRESS DISPLAY:
+
+**Calendar View:**
+M T W T F S S ✓ ✓ ✗ ✓ ✓ ? ?
+Legend: ✓ = Yes (success) ✗ = No (didn't do it) ? = Not checked in yet
+* = Future day
+
+
+**Success Percentage:**
+Success Rate: 75% (3/4 days)
+
+
+CIRCLE WILLS:
+
+**Important:** Each circle member has their own check-ins for their own "what" (since Circle Wills have individual commitments).
+
+- Jack tracks HIS commitment (don't hit snooze)
+- Bebo tracks HIS commitment (exercise daily)
+- Both choose their own check-in type
+- Both have separate check-in data
+- In End Room, they can see each other's stats
+
+IN END ROOM / HISTORY:
+
+**Daily Tracked Will - Shows:**
+Don't hit snooze Jan 20-27, 2026
+M T W T F S S ✓ ✓ ✗ ✓ ✓ ✓ ✓ Success Rate: 85% (6/7 days)
+
+
+**One-Time Will - Shows:**
+Call my grandmother Jan 27, 2026
+Status: ✓ Yes
+
+
+MY QUESTIONS FOR YOU:
+
+1. **Database schema** - Does this structure make sense?
+2. **Reusing existing modals** - Can we reuse the current check-in modal UI?
+3. **Notification scheduling** - How to trigger daily vs one-time notifications?
+4. **Success rate calculation** - Should "More or Less" count as 0.5 or excluded?
+5. **Default setting** - Should daily Wills default to "daily check-ins"? Or always ask?
+6. **Retroactive limits** - Can users fill in ANY past day, or only within the Will duration?
+7. **Circle Wills** - Each member picks their own check-in type, correct?
+
+Or based on commitment text:
+- Contains "daily" or "every day" → Suggest "Daily"
+- Otherwise → Let user choose
+
+WHAT I NEED FROM YOU:
+
+1. **Feasibility assessment** - Is this doable with current architecture?
+2. **Implementation plan** - Step-by-step approach
+3. **Complexity estimate** - How long would this take?
+4. **Recommendations** - Any better ways to structure this?
+5. **Technical challenges** - What issues do you foresee?
+
+This feature would make Will much more useful - users get concrete data on their progress, which helps them see if the app is working and motivates them to keep going.
+
+What do you think? Where should we start?
