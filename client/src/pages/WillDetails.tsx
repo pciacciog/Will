@@ -217,13 +217,19 @@ export default function WillDetails() {
 
   // Determine if current user has daily check-ins
   // For solo wills: check will.checkInType
-  // For circle wills: check user's commitment checkInType
+  // For shared/cumulative circle wills: check will.checkInType (proposer chose for everyone)
+  // For classic circle wills: check user's commitment checkInType
   const getUserCheckInType = () => {
     if (!will || !user) return 'one-time';
     if (will.mode === 'solo') {
       return will.checkInType || 'one-time';
     }
-    // Circle mode: find user's commitment
+    // Circle mode: check if shared/cumulative (uses will-level checkInType) or classic (uses commitment-level)
+    if (will.willType === 'cumulative') {
+      // Shared wills: all members use the same tracking type from the will
+      return will.checkInType || 'one-time';
+    }
+    // Classic wills: each member has their own tracking type
     const userCommitment = will.commitments?.find((c: any) => c.userId === user.id);
     return userCommitment?.checkInType || 'one-time';
   };
@@ -231,7 +237,7 @@ export default function WillDetails() {
   const hasDailyCheckIns = userCheckInType === 'daily';
   
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
-    queryKey: ['/api/wills', id, 'check-ins'],
+    queryKey: [`/api/wills/${id}/check-ins`],
     enabled: !!id && !!user && hasDailyCheckIns,
   });
   
@@ -573,11 +579,15 @@ export default function WillDetails() {
               <WillReviewFlow 
                 willId={will.id}
                 mode={isSoloMode ? 'solo' : 'circle'}
+                checkInType={userCheckInType}
+                startDate={will.startDate}
+                endDate={will.endDate}
                 onComplete={() => {
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
                   queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
                 }}
+                onEditCheckIns={() => setShowCheckInModal(true)}
               />
             )}
           </div>
