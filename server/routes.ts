@@ -263,11 +263,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Send email
         const { emailService } = await import('./emailService');
-        // Use APP_URL if set, otherwise derive from request origin or Replit domain
-        const baseUrl = process.env.APP_URL 
-          || req.headers.origin 
-          || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null)
-          || 'https://will-staging-porfirioaciacci.replit.app';
+        const { getDefaultOrigin } = await import('./config/environment');
+        // Use APP_URL if explicitly set, otherwise use environment-aware default origin
+        const baseUrl = process.env.APP_URL || getDefaultOrigin();
         
         console.log(`[PasswordReset] Using base URL: ${baseUrl}`);
         await emailService.sendPasswordResetEmail(user.email, token, baseUrl);
