@@ -1,0 +1,83 @@
+CLARIFY: TWO GOAL TYPES - YOUR IMPLEMENTATION
+
+Hey! I want to make sure I understand exactly how you've implemented the two different tracking types. Can you explain your understanding and what you built?
+
+MY UNDERSTANDING OF THE TWO TYPES:
+
+**ONE-TIME TRACKING:**
+- For goals like "Call my grandmother this week"
+- Qualitative, single-event commitments
+- NO tracking during the Will
+- NO daily check-ins
+- NO progress to measure
+- Only asks at the END: "Did you do it?"
+- Answer: Yes/No/More or Less
+- History shows: Final status only
+
+**DAILY TRACKING:**
+- For goals like "Don't hit snooze this week"
+- Quantitative, repeated habits
+- Daily check-ins throughout the Will
+- Each day: "Did you do it today?"
+- Measures progress: 6/7 days = 85%
+- History shows: Calendar + success rate
+
+WHAT I NEED FROM YOU:
+
+1. **Explain your understanding:**
+   - How do YOU understand the difference between these two types?
+   - What makes them fundamentally different in the app?
+
+2. **Show me what you coded:**
+   - How did you implement one-time tracking?
+   - How did you implement daily tracking?
+   - What happens differently for each type?
+
+3. **Walk me through the flows:**
+   
+   **For One-Time:**
+   - During creation: What does user see?
+   - During the Will (Day 1-6): What happens?
+   - At the end (Day 7): What happens?
+   - In History: What's displayed?
+   
+   **For Daily Tracking:**
+   - During creation: What does user see?
+   - During the Will (each day): What happens?
+   - At the end: What happens?
+   - In History: What's displayed?
+
+4. **Concrete examples:**
+   
+   Show me exactly what the app does for:
+   - "Call my grandmother this week" (7 days, one-time)
+   - "Don't hit snooze this week" (7 days, daily)
+   
+   Day by day, what should I expect?
+
+5. **Data structure:**
+   - How is one-time tracking stored in the database?
+   - How is daily tracking stored?
+   - What's in the `will_check_ins` table for each?
+
+6. **History display:**
+   - What does a one-time Will show in History?
+   - What does a daily tracked Will show in History?
+   - What data is available in each case?
+
+7. **Any differences from my understanding:**
+   - Did you implement it differently than I described?
+   - Are there any edge cases I should know about?
+   - Anything that doesn't work as expected yet?
+
+WHY I'M ASKING:
+
+I want to test this thoroughly and understand exactly what you built so I can:
+- Know what to test
+- Know what to expect
+- Explain it to my testers
+- Make sure it matches the original vision
+
+Can you walk me through your implementation?
+
+Thanks!
