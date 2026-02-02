@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +35,6 @@ export default function DailyCheckInModal({
   const [step, setStep] = useState<'select-date' | 'select-status'>('select-date');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [status, setStatus] = useState<CheckInStatus | null>(null);
-  const [note, setNote] = useState("");
   
   const willStart = new Date(startDate);
   const willEnd = new Date(endDate);
@@ -48,7 +46,6 @@ export default function DailyCheckInModal({
       setStep('select-date');
       setSelectedDate(undefined);
       setStatus(null);
-      setNote("");
     }
   }, [isOpen]);
 
@@ -107,8 +104,9 @@ export default function DailyCheckInModal({
             : "Thanks for being honest. Tomorrow is a new day!",
         duration: 4000,
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills', willId, 'check-ins'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills', willId, 'check-in-progress'] });
+      // Invalidate with correct query key format to update calendar colors immediately
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/check-ins`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/check-in-progress`] });
       onClose();
     },
     onError: (error: any) => {
@@ -127,8 +125,6 @@ export default function DailyCheckInModal({
       const existingStatus = getDateStatus(date);
       if (existingStatus) {
         setStatus(existingStatus);
-        const existingCheckIn = existingCheckIns.find(c => c.date === formatDateKey(date));
-        setNote(existingCheckIn?.reflectionText || "");
       }
       setStep('select-status');
     }
@@ -139,8 +135,7 @@ export default function DailyCheckInModal({
     
     submitCheckInMutation.mutate({
       date: formatDateKey(selectedDate),
-      status,
-      reflectionText: note.trim() || undefined
+      status
     });
   };
 
@@ -250,21 +245,6 @@ export default function DailyCheckInModal({
                   );
                 })}
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="note" className="text-base font-medium">
-                Add a note (optional)
-              </Label>
-              <Textarea
-                id="note"
-                placeholder="How did it go? Any reflections?"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className="resize-none"
-                rows={3}
-                data-testid="input-check-in-note"
-              />
             </div>
 
             <Button

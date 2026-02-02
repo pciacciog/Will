@@ -1,0 +1,80 @@
+Daily Tracker Improvements - 3 Changes
+Context
+We have two types of Wills:
+1. One-time commitments - User commits once, does it, then acknowledges success
+2. Daily tracker - User checks in every day during the Will period
+Changes to Implement
+
+🐛 CHANGE 1: Fix Calendar Color Update Bug
+Current Bug:
+* User submits check-in with "Yes, I did it!"
+* Calendar date stays yellow instead of changing to green
+* Colors don't update until page refresh
+Expected Behavior:
+* Calendar should immediately update color after check-in submission:
+    * 🟢 Green = "Yes, I did it!"
+    * 🟡 Yellow = "Partial success"
+    * 🔴 Red = "No, I didn't"
+    * ⚪ Gray/default = No check-in yet
+Implementation:
+* After successful check-in API call, refresh/update the calendar component state
+* Ensure the date's color changes immediately without requiring page reload
+
+✂️ CHANGE 2: Remove Note Section from Tracker Page
+What to Remove:
+* Delete the "note" input field from the daily check-in page
+* We're keeping it simple: just Yes / Partial / No buttons
+Rationale:
+* The note field is redundant for quick daily tracking
+* Users just need to log their status, not write explanations
+
+🎯 CHANGE 3: Modify Final Modal for Daily Tracker Wills
+Current Flow (OUTDATED):
+
+
+Will ends → Step 1: "Did you follow through?" modal → Show results
+New Flow for Daily Tracker Wills:
+When Will ends:
+1. Show summary screen with all check-ins:
+
+
+Challenge Results
+
+[Calendar showing all check-ins based on however amount of days the will was selected for]
+✅ ✅ ❌ ✅ ✅ ✅ ❌
+
+Success Rate: 5/7 days (71%)
+
+[Button: "Looks good! Finalize Results"]
+[Link: "Make adjustments" - allows editing check-ins]
+1. User clicks "Looks good! Finalize Results"
+2. Show final results page:
+
+
+Challenge Complete! ✅
+
+You completed 5 out of 7 days (71%)
+
+[Show to circle / Share results]
+Implementation Notes:
+* Skip the Step 1 acknowledgment modal entirely for daily tracker Wills
+* User has already been tracking daily - no need to ask "did you do it?"
+* Allow user to review/edit final tally before finalizing
+* After confirmation, display final results to user and circle members
+Keep Step 1 Modal for One-Time Commitments:
+* One-time Wills still need the "Did you follow through?" acknowledgment
+* This change only applies to daily tracker type Wills
+
+Logic Summary:
+Will Type	Has Step 1 Modal?	Rationale
+One-time commitment	✅ Yes	User needs to report: "Did I do it?"
+Daily tracker	❌ No	Already tracked daily - just confirm final results
+Testing Checklist:
+After implementation, verify:
+* Calendar colors update immediately after check-in
+* Green = Yes, Yellow = Partial, Red = No, Gray = Not checked in
+* Note field removed from tracker page
+* Daily tracker Wills skip Step 1 modal when ending
+* Summary screen shows all check-ins with edit option
+* User can finalize results after review
+* One-time commitment Wills still show Step 1 modal (unchanged)
