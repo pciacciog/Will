@@ -26,12 +26,12 @@ interface CheckInProgress {
 
 export default function ProgressView({ willId, startDate, endDate, checkInType }: ProgressViewProps) {
   const { data: checkIns = [], isLoading: checkInsLoading } = useQuery<WillCheckIn[]>({
-    queryKey: ['/api/wills', willId, 'check-ins'],
+    queryKey: [`/api/wills/${willId}/check-ins`],
     enabled: checkInType === 'daily',
   });
 
   const { data: progress, isLoading: progressLoading } = useQuery<CheckInProgress>({
-    queryKey: ['/api/wills', willId, 'check-in-progress'],
+    queryKey: [`/api/wills/${willId}/check-in-progress`],
     enabled: checkInType === 'daily',
   });
 
