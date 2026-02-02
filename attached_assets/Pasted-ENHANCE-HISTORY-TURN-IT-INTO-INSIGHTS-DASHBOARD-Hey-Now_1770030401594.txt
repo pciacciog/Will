@@ -1,0 +1,128 @@
+ENHANCE HISTORY: TURN IT INTO INSIGHTS DASHBOARD
+
+Hey! Now that progress tracking is working, I want to enhance the History section to show users their data and insights over time.
+
+CURRENT STATE:
+
+Right now History just lists past Wills. It's basic.
+
+WHAT I WANT:
+
+Transform it into an insights dashboard that shows:
+1. Overall statistics at the top
+2. Past Wills list with their success data
+3. Detailed view for each past Will
+
+STRUCTURE:
+
+**TOP SECTION - Overall Stats:**
+
+Your Stats:
+* Total Wills: 12
+* Overall Success Rate: 83%
+
+
+That's it for now - keep it simple.
+
+**PAST WILLS LIST:**
+
+Show each past Will with relevant data:
+
+For Daily Tracked Will:
+🔔 Don't hit snooze Jan 20-27, 2026 • Daily Tracking Success: 85% (6/7 days) ✅ [View Details]
+
+
+For One-Time Will:
+📞 Call my grandmother Jan 12, 2026 • One-time Status: ✓ Yes ✅ [View Details]
+
+
+**DETAIL VIEW (When user taps "View Details"):**
+
+For Daily Tracked Will:
+- Show calendar with all days
+- Each day's status (Yes/No/More or Less)
+- Each day's reflection text (if they wrote one)
+- Overall success rate for that Will
+- Example:
+Don't hit snooze Jan 20-27, 2026
+Mon 1/20 ✓ Yes "Woke up energized!"
+Tue 1/21 ✓ Yes "Getting easier"
+Wed 1/22 ✗ No "Rough night, hit it 3x"
+Thu 1/23 ✓ Yes
+...
+Success Rate: 85% (6/7 days)
+
+
+For One-Time Will:
+- Final status
+- Reflection text (if they wrote one)
+- Example:
+Call my grandmother Jan 12, 2026
+Status: ✓ Yes
+Reflection: "Had a great 30-min conversation. She was so happy to hear from me."
+
+
+DATA CALCULATIONS:
+
+**Total Wills:**
+Count all completed Wills for the user (both Solo and Circle)
+
+**Overall Success Rate:**
+For Daily Tracked Wills:
+- Count total days marked "Yes" across ALL daily Wills
+- Divide by total days checked in
+- Example: 48 "Yes" days out of 56 total = 85%
+
+For One-Time Wills:
+- Count how many were "Yes"
+- Divide by total one-time Wills  
+- Example: 3 "Yes" out of 4 = 75%
+
+Combined Overall Success Rate:
+- You decide the formula! Maybe:
+  - Weight daily and one-time equally? OR
+  - Just show daily Will success rate? OR
+  - Separate stats for each type?
+
+IMPLEMENTATION QUESTIONS:
+
+1. We already have `will_check_ins` table with all the data, right?
+2. Can we reuse the calendar visualization from active Wills?
+3. Should we show incomplete/active Wills or only completed?
+4. For Circle Wills - show just the user's own check-ins, right?
+5. How should we combine daily and one-time success rates?
+
+WHAT I NEED:
+
+1. Update History page to show overall stats at top
+2. Update Wills list to show success data for each
+3. Create detail view that shows full breakdown
+4. Calculate overall success rate across all Wills
+
+SCOPE:
+
+**Include:**
+✅ Overall stats (Total Wills, Success Rate)
+✅ Past Wills list with data summaries
+✅ Detailed view for each Will
+✅ Works for both Solo and Circle Wills
+
+**Exclude (for now):**
+⏸️ Filters (by mode, by date, etc.)
+⏸️ Trends over time
+⏸️ "Best month" or "streaks"
+⏸️ Graphs/charts
+
+Keep it simple and focused on essential data!
+
+Can you implement this enhancement to the History section?
+
+Thanks! 🙏
+This prompt:
+1. ✅ Clear current state vs desired state
+2. ✅ Shows exact structure with examples
+3. ✅ Simplified - no streak/best month
+4. ✅ Explains data calculations needed
+5. ✅ Asks about implementation approach
+6. ✅ Leverages existing progress tracking
+7. ✅ Focused on essentials only

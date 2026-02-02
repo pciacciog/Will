@@ -294,12 +294,14 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           }
         }
         
-        // Circle mode: Add the creator's commitment separately (include checkInType for cumulative wills)
+        // Circle mode: Add the creator's commitment separately (include checkInType for all wills)
+        // For cumulative wills: stored on will table (all members use same tracking type)
+        // For classic wills: stored on commitment table (each member has their own tracking type)
         addCommitmentMutation.mutate({
           willId: will.id,
           what: willData.what,
           why: willData.why,
-          checkInType: willType === 'cumulative' ? checkInType : undefined, // Proposer's checkInType for cumulative
+          checkInType: checkInType, // Proposer's checkInType for both classic and cumulative wills
         });
       }
     },
@@ -319,7 +321,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         body: JSON.stringify({
           what: data.what,
           why: data.why,
-          checkInType: data.checkInType, // Pass tracking type for cumulative wills
+          checkInType: data.checkInType, // Pass tracking type for all wills
         })
       });
       return response.json();
@@ -438,15 +440,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       // Cumulative (shared) wills: Go to tracking type step (Step 4) - proposer chooses for everyone
       setCurrentStep(4);
     } else {
-      // Classic wills: Show transition animation then go to End Room step
-      // (Each member will choose their own tracking type in SubmitCommitment)
-      setShowTransition(true);
-      
-      // After 3.5 seconds, move to End Room scheduling step
-      setTimeout(() => {
-        setShowTransition(false);
-        setCurrentStep(5);
-      }, 3500);
+      // Classic wills: Go to tracking type step (Step 4) - proposer chooses their own tracking type
+      // Other members will choose their own tracking type when joining via SubmitCommitment
+      setCurrentStep(4);
     }
   };
   
