@@ -920,17 +920,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User stats endpoint - get overall will statistics for a user
+  app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const stats = await storage.getUserWillStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("[USER-STATS] Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user statistics" });
+    }
+  });
+
   // Will History endpoint - get completed wills for a user filtered by mode
   app.get('/api/wills/history', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const mode = req.query.mode as 'solo' | 'circle';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      const enhanced = req.query.enhanced === 'true';
       
-      console.log(`[HISTORY] Fetching ${mode} history for user ${userId}`);
+      console.log(`[HISTORY] Fetching ${mode} history for user ${userId} (enhanced: ${enhanced})`);
       
       if (!mode || (mode !== 'solo' && mode !== 'circle')) {
         return res.status(400).json({ message: "Invalid mode. Must be 'solo' or 'circle'." });
+      }
+      
+      // Use enhanced version with check-in data if requested
+      if (enhanced) {
+        const history = await storage.getUserWillHistoryWithCheckIns(userId, mode, limit);
+        console.log(`[HISTORY] Found ${history.length} completed ${mode} wills for user ${userId}`);
+        return res.json(history);
       }
       
       const history = await storage.getUserWillHistory(userId, mode, limit);

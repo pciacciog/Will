@@ -183,6 +183,51 @@ export interface IStorage {
   // Will final reflection operations
   createWillFinalReflection(reflection: InsertWillFinalReflection): Promise<WillFinalReflection>;
   getWillFinalReflection(willId: number, userId: string): Promise<WillFinalReflection | undefined>;
+  
+  // User stats operations
+  getUserWillStats(userId: string): Promise<{
+    totalWills: number;
+    overallSuccessRate: number;
+    dailyStats: { totalDays: number; successfulDays: number; successRate: number };
+    oneTimeStats: { total: number; successful: number; successRate: number };
+  }>;
+  
+  // Enhanced history with check-in data
+  getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle', limit?: number): Promise<{
+    id: number;
+    mode: string;
+    startDate: Date;
+    endDate: Date;
+    status: string;
+    checkInType: string | null;
+    willType: string | null;
+    sharedWhat: string | null;
+    circle?: { id: number; inviteCode: string } | null;
+    currentUserId: string;
+    currentUserParticipant: {
+      commitment: string;
+      followThrough: string | null;
+      reflectionText: string | null;
+      checkInType: string | null;
+    } | null;
+    participants: {
+      userId: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      commitment: string;
+      followThrough: string | null;
+      reflectionText: string | null;
+      checkInType: string | null;
+    }[];
+    userCheckInStats?: {
+      total: number;
+      completed: number;
+      partial: number;
+      missed: number;
+      successRate: number;
+    };
+  }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -933,7 +978,7 @@ export class DatabaseStorage implements IStorage {
 
     const willsWithMemberCount = await Promise.all(
       willsData.map(async (item) => {
-        const memberCount = await this.getCircleMemberCount(item.will.circleId);
+        const memberCount = item.will.circleId ? await this.getCircleMemberCount(item.will.circleId) : 0;
         return {
           ...item.will,
           circle: item.circle,
@@ -1211,6 +1256,290 @@ export class DatabaseStorage implements IStorage {
         )
       );
     return result;
+  }
+
+  async getUserWillStats(userId: string): Promise<{
+    totalWills: number;
+    overallSuccessRate: number;
+    dailyStats: { totalDays: number; successfulDays: number; successRate: number };
+    oneTimeStats: { total: number; successful: number; successRate: number };
+  }> {
+    // Get all user commitments with their reviews
+    const userCommitmentsList = await db
+      .select({ 
+        willId: willCommitments.willId, 
+        checkInType: willCommitments.checkInType 
+      })
+      .from(willCommitments)
+      .where(eq(willCommitments.userId, userId));
+    
+    // Get all user's will reviews (for followThrough data)
+    const userReviews = await db
+      .select()
+      .from(willReviews)
+      .where(eq(willReviews.userId, userId));
+    
+    const willIds = userCommitmentsList.map(c => c.willId);
+    
+    // Get solo wills
+    const soloWillsList = await db
+      .select()
+      .from(wills)
+      .where(and(
+        eq(wills.createdBy, userId),
+        eq(wills.mode, 'solo'),
+        inArray(wills.status, ['completed', 'archived'])
+      ));
+    
+    // Get circle wills the user was part of
+    let circleWillsList: typeof soloWillsList = [];
+    if (willIds.length > 0) {
+      circleWillsList = await db
+        .select()
+        .from(wills)
+        .where(and(
+          inArray(wills.id, willIds),
+          eq(wills.mode, 'circle'),
+          inArray(wills.status, ['completed', 'archived'])
+        ));
+    }
+    
+    const allWills = [...soloWillsList, ...circleWillsList];
+    const totalWills = allWills.length;
+    
+    // Get all check-ins for user
+    const allCheckIns = await db
+      .select()
+      .from(willCheckIns)
+      .where(eq(willCheckIns.userId, userId));
+    
+    // Calculate daily stats
+    let totalDays = 0;
+    let successfulDays = 0;
+    for (const checkIn of allCheckIns) {
+      totalDays++;
+      if (checkIn.status === 'yes') {
+        successfulDays += 1;
+      } else if (checkIn.status === 'partial') {
+        successfulDays += 0.5;
+      }
+    }
+    const dailySuccessRate = totalDays > 0 ? Math.round((successfulDays / totalDays) * 100) : 0;
+    
+    // Calculate one-time stats based on followThrough from reviews
+    let oneTimeTotal = 0;
+    let oneTimeSuccessful = 0;
+    
+    // For solo wills with one-time check-in type
+    for (const w of soloWillsList) {
+      if (w.checkInType === 'one-time' || !w.checkInType) {
+        const review = userReviews.find(r => r.willId === w.id);
+        if (review) {
+          oneTimeTotal++;
+          if (review.followThrough === 'yes') {
+            oneTimeSuccessful++;
+          } else if (review.followThrough === 'mostly') {
+            oneTimeSuccessful += 0.75;
+          }
+        }
+      }
+    }
+    
+    // For circle wills where user had one-time check-in
+    for (const commitment of userCommitmentsList) {
+      const w = circleWillsList.find(cw => cw.id === commitment.willId);
+      if (w && (commitment.checkInType === 'one-time' || !commitment.checkInType)) {
+        const review = userReviews.find(r => r.willId === w.id);
+        if (review) {
+          oneTimeTotal++;
+          if (review.followThrough === 'yes') {
+            oneTimeSuccessful++;
+          } else if (review.followThrough === 'mostly') {
+            oneTimeSuccessful += 0.75;
+          }
+        }
+      }
+    }
+    
+    const oneTimeSuccessRate = oneTimeTotal > 0 ? Math.round((oneTimeSuccessful / oneTimeTotal) * 100) : 0;
+    
+    // Combined success rate: weight both equally if both exist
+    let overallSuccessRate = 0;
+    if (totalDays > 0 && oneTimeTotal > 0) {
+      overallSuccessRate = Math.round((dailySuccessRate + oneTimeSuccessRate) / 2);
+    } else if (totalDays > 0) {
+      overallSuccessRate = dailySuccessRate;
+    } else if (oneTimeTotal > 0) {
+      overallSuccessRate = oneTimeSuccessRate;
+    }
+    
+    return {
+      totalWills,
+      overallSuccessRate,
+      dailyStats: { totalDays, successfulDays, successRate: dailySuccessRate },
+      oneTimeStats: { total: oneTimeTotal, successful: oneTimeSuccessful, successRate: oneTimeSuccessRate },
+    };
+  }
+
+  async getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle', limit: number = 20): Promise<{
+    id: number;
+    mode: string;
+    startDate: Date;
+    endDate: Date;
+    status: string;
+    checkInType: string | null;
+    willType: string | null;
+    sharedWhat: string | null;
+    circle?: { id: number; inviteCode: string } | null;
+    participants: {
+      userId: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      commitment: string;
+      followThrough: string | null;
+      reflectionText: string | null;
+      checkInType: string | null;
+    }[];
+    userCheckInStats?: {
+      total: number;
+      completed: number;
+      partial: number;
+      missed: number;
+      successRate: number;
+    };
+  }[]> {
+    // Get completed wills using existing history method logic
+    let completedWills;
+    
+    if (mode === 'solo') {
+      completedWills = await db
+        .select()
+        .from(wills)
+        .where(and(
+          eq(wills.createdBy, userId),
+          eq(wills.mode, 'solo'),
+          inArray(wills.status, ['completed', 'archived'])
+        ))
+        .orderBy(desc(wills.endDate))
+        .limit(limit);
+    } else {
+      const userCommitmentsList = await db
+        .select({ willId: willCommitments.willId })
+        .from(willCommitments)
+        .where(eq(willCommitments.userId, userId));
+      
+      const willIds = userCommitmentsList.map(c => c.willId);
+      
+      if (willIds.length === 0) {
+        return [];
+      }
+      
+      completedWills = await db
+        .select()
+        .from(wills)
+        .where(and(
+          inArray(wills.id, willIds),
+          eq(wills.mode, 'circle'),
+          inArray(wills.status, ['completed', 'archived'])
+        ))
+        .orderBy(desc(wills.endDate))
+        .limit(limit);
+    }
+
+    const results = [];
+    
+    for (const will of completedWills) {
+      // Get circle info if applicable
+      let circleInfo = null;
+      if (will.circleId) {
+        const [circle] = await db.select().from(circles).where(eq(circles.id, will.circleId));
+        if (circle) {
+          circleInfo = { id: circle.id, inviteCode: circle.inviteCode };
+        }
+      }
+      
+      // Get all commitments for this will with user info
+      const commitmentsList = await db
+        .select()
+        .from(willCommitments)
+        .leftJoin(users, eq(willCommitments.userId, users.id))
+        .where(eq(willCommitments.willId, will.id));
+      
+      // Get all reviews for this will
+      const reviewsList = await db
+        .select()
+        .from(willReviews)
+        .where(eq(willReviews.willId, will.id));
+      
+      const participants = commitmentsList.map(row => {
+        const userReview = reviewsList.find(r => r.userId === row.will_commitments.userId);
+        return {
+          userId: row.will_commitments.userId,
+          firstName: row.users?.firstName || null,
+          lastName: row.users?.lastName || null,
+          email: row.users?.email || '',
+          commitment: row.will_commitments.what || '',
+          followThrough: userReview?.followThrough || null,
+          reflectionText: userReview?.reflectionText || null,
+          checkInType: row.will_commitments.checkInType,
+        };
+      });
+      
+      // Get user's check-in stats for this will
+      let userCheckInStats = undefined;
+      
+      // Determine user's check-in type
+      const userCommitment = participants.find(p => p.userId === userId);
+      const userCheckInType = mode === 'solo' 
+        ? will.checkInType 
+        : (will.willType === 'cumulative' ? will.checkInType : userCommitment?.checkInType);
+      
+      if (userCheckInType === 'daily') {
+        const checkIns = await this.getWillCheckIns(will.id, userId);
+        let completed = 0;
+        let partial = 0;
+        let missed = 0;
+        
+        for (const checkIn of checkIns) {
+          if (checkIn.status === 'yes') completed++;
+          else if (checkIn.status === 'partial') partial++;
+          else if (checkIn.status === 'no') missed++;
+        }
+        
+        const total = checkIns.length;
+        const successValue = completed + (partial * 0.5);
+        const successRate = total > 0 ? Math.round((successValue / total) * 100) : 0;
+        
+        userCheckInStats = { total, completed, partial, missed, successRate };
+      }
+      
+      // Get current user's participant data
+      const currentUserParticipant = userCommitment ? {
+        commitment: userCommitment.commitment,
+        followThrough: userCommitment.followThrough,
+        reflectionText: userCommitment.reflectionText,
+        checkInType: userCommitment.checkInType,
+      } : null;
+
+      results.push({
+        id: will.id,
+        mode: will.mode,
+        startDate: will.startDate,
+        endDate: will.endDate,
+        status: will.status,
+        checkInType: will.checkInType,
+        willType: will.willType,
+        sharedWhat: will.sharedWhat,
+        circle: circleInfo,
+        currentUserId: userId,
+        currentUserParticipant,
+        participants,
+        userCheckInStats,
+      });
+    }
+    
+    return results;
   }
 }
 
