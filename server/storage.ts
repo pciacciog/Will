@@ -178,7 +178,15 @@ export interface IStorage {
   updateWillCheckIn(checkInId: number, updates: Partial<InsertWillCheckIn>): Promise<WillCheckIn>;
   getWillCheckIn(willId: number, userId: string, date: string): Promise<WillCheckIn | undefined>;
   getWillCheckIns(willId: number, userId: string): Promise<WillCheckIn[]>;
-  getWillCheckInProgress(willId: number, userId: string): Promise<{ total: number; completed: number; successRate: number }>;
+  getWillCheckInProgress(willId: number, userId: string): Promise<{
+    totalDays: number;
+    checkedInDays: number;
+    successRate: number;
+    yesCount: number;
+    partialCount: number;
+    noCount: number;
+    streak: number;
+  }>;
   
   // Will final reflection operations
   createWillFinalReflection(reflection: InsertWillFinalReflection): Promise<WillFinalReflection>;
@@ -1222,21 +1230,52 @@ export class DatabaseStorage implements IStorage {
       .orderBy(willCheckIns.date);
   }
 
-  async getWillCheckInProgress(willId: number, userId: string): Promise<{ total: number; completed: number; successRate: number }> {
+  async getWillCheckInProgress(willId: number, userId: string): Promise<{
+    totalDays: number;
+    checkedInDays: number;
+    successRate: number;
+    yesCount: number;
+    partialCount: number;
+    noCount: number;
+    streak: number;
+  }> {
     const checkIns = await this.getWillCheckIns(willId, userId);
-    const total = checkIns.length;
     
-    let completed = 0;
+    let yesCount = 0;
+    let partialCount = 0;
+    let noCount = 0;
+    
     for (const checkIn of checkIns) {
       if (checkIn.status === 'yes') {
-        completed += 1;
+        yesCount++;
       } else if (checkIn.status === 'partial') {
-        completed += 0.5;
+        partialCount++;
+      } else if (checkIn.status === 'no') {
+        noCount++;
       }
     }
     
-    const successRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, successRate };
+    const totalDays = checkIns.length;
+    const checkedInDays = yesCount + partialCount; // Days where user checked in (yes or partial)
+    
+    // Success rate: yes = 1.0, partial = 0.5, no = 0
+    const successPoints = yesCount + (partialCount * 0.5);
+    const successRate = totalDays > 0 ? Math.round((successPoints / totalDays) * 100) : 0;
+    
+    // Calculate current streak (consecutive yes/partial days from most recent)
+    let streak = 0;
+    const sortedCheckIns = [...checkIns].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    for (const checkIn of sortedCheckIns) {
+      if (checkIn.status === 'yes' || checkIn.status === 'partial') {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return { totalDays, checkedInDays, successRate, yesCount, partialCount, noCount, streak };
   }
 
   // Will final reflection operations
