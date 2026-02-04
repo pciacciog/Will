@@ -17,6 +17,7 @@ interface DailyCheckInModalProps {
   startDate: string;
   endDate: string;
   existingCheckIns?: WillCheckIn[];
+  initialDate?: string | null;
 }
 
 type CheckInStatus = 'yes' | 'no' | 'partial';
@@ -27,7 +28,8 @@ export default function DailyCheckInModal({
   willId, 
   startDate, 
   endDate,
-  existingCheckIns = []
+  existingCheckIns = [],
+  initialDate = null
 }: DailyCheckInModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,11 +45,18 @@ export default function DailyCheckInModal({
 
   useEffect(() => {
     if (isOpen) {
-      setStep('select-date');
-      setSelectedDate(undefined);
       setStatus(null);
+      
+      if (initialDate) {
+        const date = new Date(initialDate + 'T12:00:00');
+        setSelectedDate(date);
+        setStep('select-status');
+      } else {
+        setStep('select-date');
+        setSelectedDate(undefined);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialDate]);
 
   const formatDateKey = (date: Date) => {
     const year = date.getFullYear();

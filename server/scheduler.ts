@@ -681,14 +681,81 @@ export class EndRoomScheduler {
   // NEW: Check and send daily reminder notifications (user-scheduled)
   private async checkDailyReminders(now: Date) {
     try {
-      // Find users who:
-      // 1. Have daily reminders enabled
-      // 2. Have a reminder time set
-      // 3. Have a valid timezone
-      // 4. Have at least one active Will (solo or circle)
-      // 5. Have a valid device token
-      
-      // Get all users with reminder settings configured
+      let remindersSent = 0;
+
+      // APPROACH 1: Will-specific reminders (new feature)
+      // Check for active daily wills that have their own reminderTime set
+      const willsWithReminders = await db
+        .select({
+          willId: wills.id,
+          reminderTime: wills.reminderTime,
+          userId: willCommitments.userId,
+          userWhy: willCommitments.why,
+          userTimezone: users.timezone,
+          lastDailyReminderSentAt: users.lastDailyReminderSentAt,
+        })
+        .from(wills)
+        .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
+        .innerJoin(users, eq(willCommitments.userId, users.id))
+        .where(
+          and(
+            eq(wills.status, 'active'),
+            eq(wills.checkInType, 'daily'),
+            isNotNull(wills.reminderTime)
+          )
+        )
+        .limit(100);
+
+      for (const willData of willsWithReminders) {
+        try {
+          if (!willData.userTimezone) continue;
+
+          // Check if user has a valid device token
+          const hasToken = await db
+            .select({ id: deviceTokens.id })
+            .from(deviceTokens)
+            .where(
+              and(
+                eq(deviceTokens.userId, willData.userId),
+                eq(deviceTokens.isActive, true)
+              )
+            )
+            .limit(1);
+
+          if (hasToken.length === 0) continue;
+
+          // Convert current time to user's local timezone
+          const userLocalTime = this.getTimeInTimezone(now, willData.userTimezone);
+
+          // Check if current time is within ±5 minutes of Will's reminder time
+          if (!this.isWithinReminderWindow(userLocalTime, willData.reminderTime!)) {
+            continue;
+          }
+
+          // Check if we already sent a reminder today (in user's timezone)
+          if (this.alreadySentToday(willData.lastDailyReminderSentAt, willData.userTimezone)) {
+            continue;
+          }
+
+          // Send the daily reminder with user's "why" statement
+          const success = await pushNotificationService.sendDailyReminderNotification(
+            willData.userId, 
+            willData.willId, 
+            willData.userWhy
+          );
+
+          if (success) {
+            await storage.updateUserLastDailyReminderSent(willData.userId);
+            remindersSent++;
+            console.log(`[SCHEDULER] ✅ Will-specific reminder sent to user ${willData.userId} for Will ${willData.willId} at ${willData.reminderTime} ${willData.userTimezone}`);
+          }
+        } catch (error) {
+          console.error(`[SCHEDULER] Failed to send Will-specific reminder:`, error);
+        }
+      }
+
+      // APPROACH 2: User-level reminders (legacy/fallback)
+      // For wills without specific reminderTime, use user's global dailyReminderTime
       const usersWithReminders = await db
         .select({
           id: users.id,
@@ -707,32 +774,29 @@ export class EndRoomScheduler {
         )
         .limit(100);
 
-      if (usersWithReminders.length === 0) {
-        return; // No users with reminders configured
-      }
-
-      let remindersSent = 0;
-
       for (const user of usersWithReminders) {
         try {
-          // Check if user has an active Will and get their commitment "why"
+          // Check if user has an active daily Will WITHOUT its own reminderTime
           const activeWillsWithCommitment = await db
             .select({ 
               id: wills.id,
-              userWhy: willCommitments.why 
+              userWhy: willCommitments.why,
+              reminderTime: wills.reminderTime,
             })
             .from(wills)
             .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
             .where(
               and(
                 eq(willCommitments.userId, user.id),
-                eq(wills.status, 'active')
+                eq(wills.status, 'active'),
+                eq(wills.checkInType, 'daily'),
+                isNull(wills.reminderTime) // Only for wills without specific reminder
               )
             )
             .limit(1);
 
           if (activeWillsWithCommitment.length === 0) {
-            continue; // No active Will, skip
+            continue; // No active Will without specific reminder, skip
           }
 
           // Check if user has a valid device token
@@ -747,22 +811,20 @@ export class EndRoomScheduler {
             )
             .limit(1);
 
-          if (hasToken.length === 0) {
-            continue; // No valid device token, skip
-          }
+          if (hasToken.length === 0) continue;
 
           // Convert current time to user's local timezone
           const userLocalTime = this.getTimeInTimezone(now, user.timezone!);
-          const reminderTime = user.dailyReminderTime!; // "HH:MM" format
+          const reminderTime = user.dailyReminderTime!;
 
           // Check if current time is within ±5 minutes of reminder time
           if (!this.isWithinReminderWindow(userLocalTime, reminderTime)) {
-            continue; // Not within reminder window
+            continue;
           }
 
-          // Check if we already sent a reminder today (in user's timezone)
+          // Check if we already sent a reminder today
           if (this.alreadySentToday(user.lastDailyReminderSentAt, user.timezone!)) {
-            continue; // Already sent today
+            continue;
           }
 
           // Send the daily reminder with user's "why" statement
@@ -771,14 +833,13 @@ export class EndRoomScheduler {
           const success = await pushNotificationService.sendDailyReminderNotification(user.id, willId, userWhy);
 
           if (success) {
-            // Mark reminder as sent
             await storage.updateUserLastDailyReminderSent(user.id);
             remindersSent++;
-            console.log(`[SCHEDULER] ✅ Daily reminder sent to user ${user.id} at ${reminderTime} ${user.timezone}`);
+            console.log(`[SCHEDULER] ✅ User-level reminder sent to user ${user.id} at ${reminderTime} ${user.timezone}`);
           }
 
         } catch (error) {
-          console.error(`[SCHEDULER] Failed to send daily reminder to user ${user.id}:`, error);
+          console.error(`[SCHEDULER] Failed to send user-level reminder to user ${user.id}:`, error);
         }
       }
 

@@ -100,6 +100,12 @@ export default function WillDetails() {
   const [expandedCommitments, setExpandedCommitments] = useState<Record<string, boolean>>({});
   const [showFinalSummary, setShowFinalSummary] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [selectedCheckInDate, setSelectedCheckInDate] = useState<string | null>(null);
+  
+  const handleDayClick = (date: string) => {
+    setSelectedCheckInDate(date);
+    setShowCheckInModal(true);
+  };
 
 
   const { data: will, isLoading, error } = useQuery<any>({
@@ -653,6 +659,7 @@ export default function WillDetails() {
               startDate={will.startDate}
               endDate={will.endDate}
               checkInType={userCheckInType}
+              onDayClick={will.status === 'active' ? handleDayClick : undefined}
             />
             {will.status === 'active' && (
               <Button
@@ -1086,11 +1093,15 @@ export default function WillDetails() {
       {hasDailyCheckIns && (
         <DailyCheckInModal
           isOpen={showCheckInModal}
-          onClose={() => setShowCheckInModal(false)}
+          onClose={() => {
+            setShowCheckInModal(false);
+            setSelectedCheckInDate(null);
+          }}
           willId={Number(id)}
           startDate={will?.startDate || ''}
           endDate={will?.endDate || ''}
           existingCheckIns={checkIns}
+          initialDate={selectedCheckInDate}
         />
       )}
     </MobileLayout>

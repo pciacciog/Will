@@ -651,6 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mode: isSoloMode ? 'solo' : 'circle',
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
         checkInType: req.body.checkInType || 'one-time',
+        reminderTime: req.body.reminderTime || null, // HH:MM format for daily reminders
       };
       
       console.log("Will data before validation:", willDataWithDefaults, "isSoloMode:", isSoloMode);

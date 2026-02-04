@@ -67,6 +67,7 @@ export const wills = pgTable("wills", {
   willType: varchar("will_type", { length: 20 }).default("classic"), // 'classic' or 'cumulative' (only for circle mode)
   sharedWhat: text("shared_what"), // For cumulative wills: the shared commitment everyone does
   checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time' (for solo mode)
+  reminderTime: varchar("reminder_time", { length: 5 }), // HH:MM format for daily check-in reminders (user's local time)
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   endRoomScheduledAt: timestamp("end_room_scheduled_at"),

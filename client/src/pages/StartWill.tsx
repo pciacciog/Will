@@ -164,6 +164,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   // Check-in type: 'daily' for daily tracking or 'one-time' for end-only check-in
   const [checkInType, setCheckInType] = useState<'daily' | 'one-time'>('one-time');
   
+  // Will-specific reminder time for daily check-ins (HH:MM format)
+  const [willReminderTime, setWillReminderTime] = useState<string>('20:00');
+  
   // For Circle mode, we show type selection before step 1
   const showTypeSelection = !isSoloMode && willType === null;
   const [whatCharCount, setWhatCharCount] = useState(0);
@@ -458,6 +461,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       what: willData.what,
       because: willData.why,
       checkInType: checkInType,
+      reminderTime: checkInType === 'daily' ? willReminderTime : null,
     });
   };
 
@@ -1136,6 +1140,25 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                         {checkInType === 'daily' ? 'Daily check-ins' : 'One-time check-in at the end'}
                       </p>
                     </div>
+                    
+                    {/* Reminder Time Picker for Daily Check-ins */}
+                    {checkInType === 'daily' && (
+                      <div className="mt-3 pt-3 border-t border-blue-100">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-600">Remind me at:</p>
+                          <input
+                            type="time"
+                            value={willReminderTime}
+                            onChange={(e) => setWillReminderTime(e.target.value)}
+                            className="text-sm bg-white border border-blue-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                            data-testid="input-reminder-time"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1.5">
+                          You'll get a daily notification to check in
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Action Button */}
