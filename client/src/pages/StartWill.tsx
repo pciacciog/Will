@@ -167,6 +167,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   // Will-specific reminder time for daily check-ins (HH:MM format)
   const [willReminderTime, setWillReminderTime] = useState<string>('20:00');
   
+  // Visibility: 'private' (default) or 'public' (discoverable in Explore)
+  const [visibility, setVisibility] = useState<'private' | 'public'>('private');
+  
   // For Circle mode, we show type selection before step 1
   const showTypeSelection = !isSoloMode && willType === null;
   const [whatCharCount, setWhatCharCount] = useState(0);
@@ -449,15 +452,16 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     }
   };
   
-  // Handler for Solo mode confirmation step
-  const handleSoloConfirmSubmit = () => {
+  // Handler for personal Will confirmation step
+  const handlePersonalConfirmSubmit = () => {
     createWillMutation.mutate({
-      title: willData.what || "Solo Goal",
+      title: willData.what || "Personal Goal",
       description: willData.why || "Personal commitment",
       startDate: willData.startDate,
       endDate: willData.endDate,
       endRoomScheduledAt: null,
-      mode: 'solo',
+      mode: 'personal',
+      visibility: visibility,
       what: willData.what,
       because: willData.why,
       checkInType: checkInType,
@@ -1161,11 +1165,48 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     )}
                   </div>
 
+                  {/* Visibility Section */}
+                  <div className="bg-purple-50/60 rounded-xl p-4 border border-purple-100">
+                    <p className="text-sm font-semibold text-purple-700 mb-3">Who can see this?</p>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="private"
+                          checked={visibility === 'private'}
+                          onChange={() => setVisibility('private')}
+                          className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                          data-testid="radio-visibility-private"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">Just me</span>
+                          <p className="text-xs text-gray-500">Private commitment</p>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="public"
+                          checked={visibility === 'public'}
+                          onChange={() => setVisibility('public')}
+                          className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                          data-testid="radio-visibility-public"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">Everyone</span>
+                          <p className="text-xs text-gray-500">Discoverable in Explore</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
                   {/* Action Button */}
                   <div className="flex justify-end pt-2">
                     <button
                       type="button"
-                      onClick={handleSoloConfirmSubmit}
+                      onClick={handlePersonalConfirmSubmit}
                       disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
                       className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
                         createWillMutation.isPending || addCommitmentMutation.isPending

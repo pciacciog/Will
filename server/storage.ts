@@ -81,6 +81,8 @@ export interface IStorage {
   getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserActiveSoloWill(userId: string): Promise<Will | undefined>;
+  getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
+  getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
   updateWillStatus(willId: number, status: string): Promise<void>;
   updateWill(willId: number, updates: Partial<InsertWill>): Promise<void>;
@@ -635,10 +637,80 @@ export class DatabaseStorage implements IStorage {
       .from(wills)
       .where(and(
         eq(wills.createdBy, userId),
-        eq(wills.mode, 'solo'),
+        or(eq(wills.mode, 'solo'), eq(wills.mode, 'personal')),
         sql`status NOT IN ('completed', 'archived')`
       ))
       .orderBy(desc(wills.createdAt))
+      .limit(1);
+    return will;
+  }
+
+  async getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
+    const publicWillsList = await db
+      .select({
+        id: wills.id,
+        checkInType: wills.checkInType,
+        startDate: wills.startDate,
+        endDate: wills.endDate,
+        createdBy: wills.createdBy,
+        status: wills.status,
+      })
+      .from(wills)
+      .where(and(
+        eq(wills.visibility, 'public'),
+        sql`${wills.parentWillId} IS NULL`,
+        sql`${wills.status} IN ('pending', 'scheduled', 'active')`
+      ))
+      .orderBy(desc(wills.createdAt))
+      .limit(50);
+    
+    const results = await Promise.all(
+      publicWillsList.map(async (will) => {
+        const [commitment] = await db
+          .select({ what: willCommitments.what })
+          .from(willCommitments)
+          .where(eq(willCommitments.willId, will.id))
+          .limit(1);
+        
+        const [creator] = await db
+          .select({ firstName: users.firstName })
+          .from(users)
+          .where(eq(users.id, will.createdBy));
+        
+        const [memberCountResult] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(wills)
+          .where(eq(wills.parentWillId, will.id));
+        
+        return {
+          id: will.id,
+          what: commitment?.what || 'Untitled commitment',
+          checkInType: will.checkInType,
+          startDate: will.startDate,
+          endDate: will.endDate,
+          createdBy: will.createdBy,
+          creatorName: creator?.firstName || 'Anonymous',
+          memberCount: Number(memberCountResult?.count || 0) + 1,
+          status: will.status,
+        };
+      })
+    );
+    
+    if (search) {
+      return results.filter(w => w.what.toLowerCase().includes(search.toLowerCase()));
+    }
+    
+    return results;
+  }
+
+  async getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined> {
+    const [will] = await db
+      .select()
+      .from(wills)
+      .where(and(
+        eq(wills.createdBy, userId),
+        eq(wills.parentWillId, parentWillId)
+      ))
       .limit(1);
     return will;
   }

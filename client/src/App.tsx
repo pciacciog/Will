@@ -18,6 +18,7 @@ import Home from "@/pages/Home";
 import InnerCircle from "@/pages/InnerCircle";
 import InnerCircleHub from "@/pages/InnerCircleHub";
 import SoloHub from "@/pages/SoloHub";
+import Explore from "@/pages/Explore";
 import WillHistory from "@/pages/WillHistory";
 import StartWill from "@/pages/StartWill";
 import WillDetails from "@/pages/WillDetails";
@@ -345,8 +346,11 @@ function Router() {
             <Route path="/circles" component={CircleLobby} />
             <Route path="/circles/:circleId">{(params) => <InnerCircleHub circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/hub" component={LegacyHubRedirect} />
+            <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
+            <Route path="/explore" component={Explore} />
             <Route path="/solo/hub" component={SoloHub} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
+            <Route path="/personal/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>
             <Route path="/circles/:circleId/start-will">{(params) => <StartWill circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/start-will">{() => <StartWill />}</Route>

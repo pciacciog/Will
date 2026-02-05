@@ -639,7 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const isSoloMode = req.body.mode === 'solo';
+      const isPersonalMode = req.body.mode === 'solo' || req.body.mode === 'personal';
       
       // Prepare will data with proper types
       const willDataWithDefaults: any = {
@@ -648,16 +648,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: new Date(req.body.startDate),
         endDate: new Date(req.body.endDate),
         createdBy: userId,
-        mode: isSoloMode ? 'solo' : 'circle',
+        mode: isPersonalMode ? 'personal' : 'circle',
+        visibility: req.body.visibility || 'private',
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
         checkInType: req.body.checkInType || 'one-time',
         reminderTime: req.body.reminderTime || null, // HH:MM format for daily reminders
       };
       
-      console.log("Will data before validation:", willDataWithDefaults, "isSoloMode:", isSoloMode);
+      console.log("Will data before validation:", willDataWithDefaults, "isPersonalMode:", isPersonalMode);
 
-      if (isSoloMode) {
-        // SOLO MODE: No circle required, respects user's scheduled start date
+      if (isPersonalMode) {
+        // PERSONAL MODE: No circle required, respects user's scheduled start date
         
         // Check if user already has an active/pending solo will
         const existingSoloWill = await storage.getUserActiveSoloWill(userId);
@@ -928,6 +929,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching solo wills:", error);
       res.status(500).json({ message: "Failed to fetch solo wills" });
+    }
+  });
+
+  // Public wills endpoint - fetch all discoverable public wills for Explore page
+  app.get('/api/wills/public', isAuthenticated, async (req: any, res) => {
+    try {
+      const search = req.query.search as string | undefined;
+      const publicWills = await storage.getPublicWills(search);
+      res.json(publicWills);
+    } catch (error) {
+      console.error("Error fetching public wills:", error);
+      res.status(500).json({ message: "Failed to fetch public wills" });
+    }
+  });
+
+  // Join a public will - creates a new will instance for the user
+  app.post('/api/wills/:id/join', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const parentWillId = parseInt(req.params.id);
+      
+      // Get the parent will
+      const parentWill = await storage.getWillById(parentWillId);
+      if (!parentWill) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      if (parentWill.visibility !== 'public') {
+        return res.status(403).json({ message: "This Will is not public" });
+      }
+      
+      // Check if user already joined this will
+      const existingJoin = await storage.getUserJoinedWill(userId, parentWillId);
+      if (existingJoin) {
+        return res.status(400).json({ message: "You've already joined this Will" });
+      }
+      
+      // Get the parent's commitment details
+      const parentCommitments = await db
+        .select()
+        .from(willCommitments)
+        .where(eq(willCommitments.willId, parentWillId))
+        .limit(1);
+      
+      const parentCommitment = parentCommitments[0];
+      if (!parentCommitment) {
+        return res.status(400).json({ message: "Parent Will has no commitment" });
+      }
+      
+      // Create a new will instance for this user
+      const newWill = await storage.createWill({
+        createdBy: userId,
+        mode: 'personal',
+        visibility: 'private', // Joined instances are always private
+        parentWillId: parentWillId,
+        startDate: parentWill.startDate,
+        endDate: parentWill.endDate,
+        checkInType: parentWill.checkInType || 'one-time',
+      });
+      
+      // Update status to match parent if it's active
+      if (parentWill.status === 'active') {
+        await storage.updateWillStatus(newWill.id, 'active');
+      }
+      
+      // Copy the commitment
+      await storage.addWillCommitment({
+        willId: newWill.id,
+        userId: userId,
+        what: parentCommitment.what,
+        why: parentCommitment.why,
+        checkInType: parentWill.checkInType || 'one-time',
+      });
+      
+      res.json({ willId: newWill.id, message: "Successfully joined" });
+    } catch (error) {
+      console.error("Error joining will:", error);
+      res.status(500).json({ message: "Failed to join Will" });
     }
   });
 
