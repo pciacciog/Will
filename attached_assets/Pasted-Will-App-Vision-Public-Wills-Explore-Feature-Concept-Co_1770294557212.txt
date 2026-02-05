@@ -1,0 +1,200 @@
+Will App Vision: Public Wills & Explore Feature - Concept & Collaboration
+
+THE BIG PICTURE
+We're evolving how users create and discover commitments in the Will app. Right now, users have two isolated paths:
+1. Solo Mode - Private accountability just for themselves
+2. Circle Mode - Shared accountability with close friends
+NEW VISION: What if users could make their commitments public and discoverable? Imagine someone struggling with hitting snooze finding 500 other people fighting the same battle. Or someone trying to build a daily BJJ habit connecting with others who understand that specific resistance.
+The core insight: People are united by their struggles, not just their friend groups. So, Let's allow Wills themselves to become the organizing principle, not just circles.
+
+CONCEPT: FROM CIRCLE-BOUNDED TO WILL-BOUNDED
+Current Model:
+
+
+User → Creates Circle → Invites Friends → Each person creates their own Wills
+New Model (Additive, not replacing):
+
+
+User → Creates Will → Chooses visibility (Private/Public) → Public Wills discoverable by anyone
+This creates a new user journey where someone can:
+* Open app
+* Browse "Explore" to see what others are committing to
+* Join a "No Snooze Challenge" that 200 people are already doing
+* Start tracking immediately (no need to recruit friends first)
+Meanwhile, Circle Mode continues to exist for the intimate accountability of close friends.
+
+KEY ARCHITECTURAL CHANGES
+1. Eliminate "Solo Mode" as a Separate Feature
+Solo Mode feels like a separate silo. What if instead, every Will just has a visibility setting?
+* Private Will = Old Solo Mode (just me)
+* Public Will = Discoverable in Explore (anyone can join)
+Question for you: Does it make sense in the current codebase to:
+* Remove Solo Mode entirely and replace with a visibility flag on Wills?
+* Or keep Solo Mode but add this as another option?
+* What's cleanest given how things are structured?
+
+2. Make Will Creation the Primary Action
+Right now, when users open the app, what's the first thing they see? It is just to either select Circle Mode Or solo Mode. What if creating a Will was the most prominent, primary call-to-action on the home screen? Let’s do tat. 
+The psychology: We want users to immediately think "What am I committing to today?" rather than navigating to find the create button.
+Question for you:
+* What's the best way to make "Create Will" the hero element?
+* Should it be a big button at top, a floating action button, or something else?
+* We should consider the secondary actions or paths like the explore and the circle flows
+
+3. Add Visibility Choice to Will Creation Flow
+Somewhere in the Will creation flow (you know it better than I do), we'd add a step where users choose:
+"Who can see this Will?"
+* ○ Just me (Private)
+* ○ Everyone (Public - appears in Explore)
+* Please note however that this should not be an option on wills that are created inside the circle mode
+Considerations:
+* Where in the flow does this choice make most sense?
+* Should it be early (before they describe the Will) or late (after all details)?
+* What should the default be? (I'm thinking Private, but open to your thoughts)
+
+4. Create an "Explore" Experience
+A new space where users can:
+* Browse all public Wills
+* Search for specific commitments
+* See basic info: Will name, creator, how many members, duration, type
+* Join any Will with a simple action
+Design Questions:
+* Should this be a new tab/page in the main navigation?
+* How should public Wills be displayed? (Cards? List? Something else?)
+* What information is most important to show on each Will?
+Technical Questions:
+* How should we query public Wills? (All at once? Paginated? Filtered?)
+* What makes sense for search implementation given current architecture?
+
+5. "Joining" a Public Will
+When someone joins a public Will, they're essentially creating their own instance of that commitment. They track their own progress separately, but there's a connection to the "original" Will for potential future community features.
+Conceptual Model:
+
+
+Original Public Will (created by User A)
+  ├─ Instance 1 (User B joins)
+  ├─ Instance 2 (User C joins)
+  └─ Instance 3 (User D joins)
+Each person tracks independently, but they're all tackling the same commitment.
+Questions for you:
+* What's the best way to model this relationship in the current data structure?
+* Should joined Wills reference the original? Or should they be independent with metadata?
+* How do we count "members" on a public Will efficiently?
+
+WHAT STAYS THE SAME
+Circle Mode - Untouched
+Circle Mode serves a different purpose (intimate accountability with people you know), so it should remain completely separate for now. This is additive, not a replacement.
+No changes needed to:
+* How Circles work
+* Circle Will creation
+* Circle member interactions
+* Any Circle-specific features
+Core Will Functionality
+All the tracking, check-ins, calendars, completion flows, notifications - none of that changes. A Will works the same whether it's private, public, or in a circle.
+
+TECHNICAL CONSIDERATIONS (Open for Your Input)
+Data Modeling Questions:
+For Public Wills:
+* How do we track which Will is the "original" vs. an "instance"?
+* How do we efficiently count members on a public Will?
+* Should we store a relationship, or just metadata?
+For Visibility:
+* Simple flag on Will model? (visibility: 'private' | 'public')
+* Or more complex permissions system?
+* What fits best with current architecture?
+Query Patterns:
+New queries we'll need:
+* Get all public Wills (for Explore page)
+* Search public Wills by keyword
+* Get member count for a public Will
+* Create instance when user joins
+Your expertise: What's the most performant way to handle these given current database setup?
+UI State Management:
+Considerations:
+* When user joins a Will, it should appear in their Active Wills immediately
+* Explore page may need refresh/update after someone joins
+* Member counts should stay reasonably current
+Question: Given current state management approach, what's best way to handle these updates?
+
+MVP SCOPE - YOUR THOUGHTS?
+I'm thinking we keep the first version simple:
+Include:
+* Visibility setting on Will creation
+* Explore page showing public Wills
+* Basic join functionality
+* Simple search
+Exclude for now:
+* Community features (chat, comments, shared feeds)
+* Advanced discovery (trending, featured, categories)
+* Deduplication/clustering of similar Wills
+* Member lists or leaderboards
+Does this scope make sense to you? What would you add or remove?
+
+IMPLEMENTATION APPROACH - SEEKING YOUR INPUT
+Given that you understand the codebase structure, what's the best way to phase this?
+Possible approaches:
+Option A: Backend First
+1. Add visibility field and public Will queries
+2. Build join functionality
+3. Then tackle frontend
+Option B: Feature-by-Feature
+1. Ship visibility setting first
+2. Then Explore page
+3. Then join functionality
+Option C: All at Once Build everything together as one cohesive feature
+What makes most sense given current architecture and development workflow?
+
+OPEN QUESTIONS FOR DISCUSSION
+1. Default visibility: Should new Wills default to 
+* Joining mechanics: When someone joins a public Will, should they be able to "unjoin" later? Or is it a commitment?
+* Member visibility: Should users see WHO else has joined a public Will, or just the count?
+* Search scope: Should search be simple text matching, or should we think about tags/categories eventually?
+* Solo Mode removal: Should we deprecate it immediately, or migrate users gradually?
+* Home screen redesign: What's the current layout, and how can we make Will creation more prominent without disrupting existing user patterns?
+* 
+* THE USER EXPERIENCE WE'RE AIMING FOR
+* Scenario 1: Creating a Public Will
+* User opens app
+* Sees prominent "Create Will" action
+* Goes through flow
+* At some point, may choose "Make this public" “or make private”
+* Will gets created and appears in their Active Wills AND in Explore (if public only)
+
+* Scenario 2: Discovering & Joining
+* User opens Explore
+* Browses or searches for "no snooze"
+* Finds "No Snooze Challenge" with 47 members
+* Taps "Join"
+* Gets confirmation/preview of commitment
+* Confirms → Will instance created in their Active Wills
+* They can now track independently
+
+* Scenario 3: Still Using Private
+* User creates Will
+* Chooses "Just me" (private)
+* Works exactly like old Solo Mode
+* Never appears in Explore
+* 
+* COLLABORATION REQUEST
+* Since you know the codebase intimately, I'm looking for your thoughts on:
+* Architecture:
+* Best way to model the original Will → instances relationship?
+* Where does visibility fit most naturally?
+* Any conflicts with existing features?
+* Implementation:
+* What's the cleanest path to build this?
+* Any technical challenges you foresee?
+* Suggested phasing/rollout approach?
+* UX:
+* Given current navigation, where should Explore live?
+* How can we make Create Will more prominent without breaking existing flows?
+* Any better ideas for the visibility choice UX?
+* 
+* NEXT STEPS
+* Please review this concept and let me know:
+* Does this make sense architecturally given current codebase structure?
+* What approach would you recommend for implementing this?
+* Any concerns or edge cases I haven't considered?
+* Suggested modifications to make this work better with existing code?
+* Time estimate for building this out?
+* I'm excited to collaborate on this and trust your judgment on the technical details. Let me know what you think! 
