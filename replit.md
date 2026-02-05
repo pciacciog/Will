@@ -62,6 +62,12 @@ Preferred communication style: Simple, everyday language.
   - Database fields: `willType` ('classic' or 'cumulative'), `sharedWhat` (stores team commitment for cumulative wills)
   - Routes: `/circles` (lobby), `/circles/:circleId` (hub), `/start-will` (will creation)
 - **Will Creation & Management**: Multi-step guided creation, commitment editing, role-based permissions.
+- **Indefinite Duration Wills**: Users can create ongoing wills without end dates (isIndefinite=true, endDate=null). UI shows "Ongoing" instead of end date.
+- **Will Lifecycle Management**: 
+  - **Pause**: Temporarily stop tracking an active will (sets pausedAt, status='paused')
+  - **Resume**: Continue a paused will (clears pausedAt, status='active')
+  - **Terminate**: Permanently end a will (status='terminated'), preserves progress history
+  - API endpoints: `/api/wills/:id/pause`, `/api/wills/:id/resume`, `/api/wills/:id/terminate`
 - **Progress Tracking**: Daily logging, progress acknowledgment, timeline visualization.
 - **End Room**: Scheduled video calls (Daily.co) for reflection and closure (circle mode only, optional).
 - **Will Review**: Mandatory asynchronous review for Will completion.

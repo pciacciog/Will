@@ -405,6 +405,8 @@ export default function WillDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
       toast({ title: "Will Terminated", description: "Your Will has been ended" });
       setLocation(getHubUrl());
     },
@@ -659,12 +661,12 @@ export default function WillDetails() {
               })}
             </div>
             <div className="text-base">
-              <span className="font-medium">End:</span> {new Date(will.endDate).toLocaleDateString('en-US', { 
+              <span className="font-medium">End:</span> {will.endDate ? new Date(will.endDate).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit'
-              })}
+              }) : 'Ongoing'}
             </div>
           </div>
         </div>
