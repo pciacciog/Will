@@ -23,8 +23,11 @@ import ProgressView from "@/components/ProgressView";
 import type { WillCheckIn } from "@shared/schema";
 
 
-function formatDateRange(startDate: string, endDate: string): string {
+function formatDateRange(startDate: string, endDate: string | null): string {
   const start = new Date(startDate);
+  if (!endDate) {
+    return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - Ongoing`;
+  }
   const end = new Date(endDate);
   return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
 }
@@ -366,6 +369,47 @@ export default function WillDetails() {
         description: error.message,
         variant: "destructive",
       });
+    },
+  });
+
+  const pauseMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest(`/api/wills/${id}/pause`, { method: 'POST' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      toast({ title: "Will Paused", description: "Your Will has been paused" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const resumeMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest(`/api/wills/${id}/resume`, { method: 'POST' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      toast({ title: "Will Resumed", description: "Your Will is now active again" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const terminateMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest(`/api/wills/${id}/terminate`, { method: 'POST' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
+      toast({ title: "Will Terminated", description: "Your Will has been ended" });
+      setLocation(getHubUrl());
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
@@ -1018,38 +1062,62 @@ export default function WillDetails() {
         )}
 
         {/* Active Will Creator Actions */}
-        {will.createdBy === user?.id && will.status === 'active' && (
-          <div className="bg-red-50 border border-red-100 rounded-2xl shadow-md py-4 px-6">
-            <div className="flex justify-between items-center gap-4">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                <span className="text-base font-medium text-red-700">Creator Options</span>
-              </div>
+        {will.createdBy === user?.id && (will.status === 'active' || will.status === 'paused') && (
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl shadow-md py-4 px-6 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="text-base font-medium text-gray-700">Manage Will</span>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {/* Pause/Resume Button */}
+              {will.status === 'active' ? (
+                <Button 
+                  onClick={() => pauseMutation.mutate()}
+                  disabled={pauseMutation.isPending}
+                  className="border border-amber-500 text-amber-600 bg-white hover:bg-amber-50 rounded-lg px-4 py-2 text-sm font-medium"
+                  size="sm"
+                >
+                  {pauseMutation.isPending ? "Pausing..." : "Pause"}
+                </Button>
+              ) : will.status === 'paused' ? (
+                <Button 
+                  onClick={() => resumeMutation.mutate()}
+                  disabled={resumeMutation.isPending}
+                  className="border border-green-500 text-green-600 bg-white hover:bg-green-50 rounded-lg px-4 py-2 text-sm font-medium"
+                  size="sm"
+                >
+                  {resumeMutation.isPending ? "Resuming..." : "Resume"}
+                </Button>
+              ) : null}
+
+              {/* Terminate Button */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
-                    className="border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-lg px-4 py-2 text-base font-medium"
-                    size="default"
+                    className="border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-lg px-4 py-2 text-sm font-medium"
+                    size="sm"
                   >
-                    Delete <em>Will</em>
+                    End Will
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Active{" "}<em>Will</em></AlertDialogTitle>
+                    <AlertDialogTitle>End this Will?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete this active will? This action cannot be undone and will remove all commitments and progress.
+                      This will permanently end this Will. Your progress will be saved but you won't be able to continue tracking.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction 
-                      onClick={() => deleteMutation.mutate()}
+                      onClick={() => terminateMutation.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                      {terminateMutation.isPending ? "Ending..." : "End Will"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

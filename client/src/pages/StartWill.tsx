@@ -130,6 +130,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [startTime, setStartTime] = useState('00:00');
   const [endDate, setEndDate] = useState(() => getFollowingSundayDate(getNextMondayDate()));
   const [endTime, setEndTime] = useState('12:00');
+  const [isIndefinite, setIsIndefinite] = useState(false);
   
   // Enforce End date/time must be after Start - auto-bump End when Start changes
   useEffect(() => {
@@ -360,12 +361,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
 
     // Combine date and time using utility function
     const startDateTime = createDateTimeFromInputs(startDate, startTime);
-    const endDateTime = createDateTimeFromInputs(endDate, endTime);
+    const endDateTime = isIndefinite ? '' : createDateTimeFromInputs(endDate, endTime);
 
     // Validation
     const now = new Date();
     const start = new Date(startDateTime);
-    const end = new Date(endDateTime);
 
     if (start <= now) {
       toast({
@@ -376,13 +376,16 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       return;
     }
 
-    if (end <= start) {
-      toast({
-        title: "Invalid End Date",
-        description: "End date must be after start date",
-        variant: "destructive",
-      });
-      return;
+    if (!isIndefinite) {
+      const end = new Date(endDateTime);
+      if (end <= start) {
+        toast({
+          title: "Invalid End Date",
+          description: "End date must be after start date",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Only save daily reminder settings if user has made changes
@@ -458,7 +461,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       title: willData.what || "Personal Goal",
       description: willData.why || "Personal commitment",
       startDate: willData.startDate,
-      endDate: willData.endDate,
+      endDate: isIndefinite ? null : willData.endDate,
       endRoomScheduledAt: null,
       mode: 'personal',
       visibility: visibility,
@@ -466,6 +469,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       because: willData.why,
       checkInType: checkInType,
       reminderTime: checkInType === 'daily' ? willReminderTime : null,
+      isIndefinite: isIndefinite,
     });
   };
 
@@ -516,12 +520,13 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       title: finalWillData.what || "Group Goal",
       description: finalWillData.why || "Group commitment",
       startDate: finalWillData.startDate,
-      endDate: finalWillData.endDate,
-      endRoomScheduledAt: finalWillData.endRoomScheduledAt,
+      endDate: isIndefinite ? null : finalWillData.endDate,
+      endRoomScheduledAt: isIndefinite ? null : finalWillData.endRoomScheduledAt,
       circleId: finalWillData.circleId,
       willType: willType || 'classic',
       sharedWhat: willType === 'cumulative' ? finalWillData.what : undefined,
       checkInType: checkInType,
+      isIndefinite: isIndefinite,
     });
 
     setWillData(finalWillData);
@@ -767,6 +772,34 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </div>
                 </div>
                 
+                {/* Duration Type Toggle */}
+                <div className="flex justify-center gap-2 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '50ms' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsIndefinite(false)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      !isIndefinite 
+                        ? 'bg-blue-500 text-white shadow-md' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    data-testid="button-duration-defined"
+                  >
+                    Set dates
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsIndefinite(true)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      isIndefinite 
+                        ? 'bg-blue-500 text-white shadow-md' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    data-testid="button-duration-indefinite"
+                  >
+                    Ongoing
+                  </button>
+                </div>
+
                 {/* Date/Time Inputs - Clean, Grouped Design */}
                 <div className="space-y-4 px-2 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
                   {/* Start Section */}
@@ -799,41 +832,45 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </div>
                   </div>
                   
-                  {/* Visual Separator */}
-                  <div className="flex items-center justify-center">
-                    <div className="w-0.5 h-4 bg-gradient-to-b from-gray-200 to-gray-300 rounded-full"></div>
-                  </div>
-                  
-                  {/* End Section */}
-                  <div className="space-y-1.5">
-                    <p className="text-base font-semibold text-gray-800 text-center tracking-tight">
-                      End
-                    </p>
-                    <div className="flex justify-center gap-3">
-                      <Input 
-                        type="date" 
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        min={startDate}
-                        required 
-                        className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
-                        data-testid="input-end-date"
-                      />
-                      <Input 
-                        type="time" 
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        step="900"
-                        required 
-                        className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
-                        data-testid="input-end-time"
-                      />
-                    </div>
-                  </div>
+                  {!isIndefinite && (
+                    <>
+                      {/* Visual Separator */}
+                      <div className="flex items-center justify-center">
+                        <div className="w-0.5 h-4 bg-gradient-to-b from-gray-200 to-gray-300 rounded-full"></div>
+                      </div>
+                      
+                      {/* End Section */}
+                      <div className="space-y-1.5">
+                        <p className="text-base font-semibold text-gray-800 text-center tracking-tight">
+                          End
+                        </p>
+                        <div className="flex justify-center gap-3">
+                          <Input 
+                            type="date" 
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            min={startDate}
+                            required 
+                            className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                            data-testid="input-end-date"
+                          />
+                          <Input 
+                            type="time" 
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                            step="900"
+                            required 
+                            className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                            data-testid="input-end-time"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                   
                   {/* Subtle note */}
                   <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300 pt-1" style={{ animationDelay: '200ms' }}>
-                    Defaults to next Mon–Sun
+                    {isIndefinite ? 'You can pause or end this anytime' : 'Defaults to next Mon–Sun'}
                   </p>
                 </div>
                 
@@ -1099,7 +1136,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     <div className="flex items-center gap-2 text-sm pl-6">
                       <span className="font-medium text-gray-900">{formatDateForDisplay(willData.startDate)}</span>
                       <ArrowRight className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-900">{formatDateForDisplay(willData.endDate)}</span>
+                      <span className="font-medium text-gray-900">{isIndefinite ? 'Ongoing' : formatDateForDisplay(willData.endDate)}</span>
                     </div>
                   </div>
 

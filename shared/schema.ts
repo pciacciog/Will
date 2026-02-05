@@ -70,8 +70,10 @@ export const wills = pgTable("wills", {
   sharedWhat: text("shared_what"), // For cumulative wills: the shared commitment everyone does
   checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time'
   reminderTime: varchar("reminder_time", { length: 5 }), // HH:MM format for daily check-in reminders (user's local time)
+  isIndefinite: boolean("is_indefinite").default(false), // true for ongoing wills with no end date
+  pausedAt: timestamp("paused_at"), // When the will was paused (null if not paused)
   startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
+  endDate: timestamp("end_date"), // Nullable for indefinite wills
   endRoomScheduledAt: timestamp("end_room_scheduled_at"),
   endRoomOpenedAt: timestamp("end_room_opened_at"),
   endRoomUrl: varchar("end_room_url", { length: 500 }),

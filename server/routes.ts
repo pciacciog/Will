@@ -642,17 +642,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPersonalMode = req.body.mode === 'solo' || req.body.mode === 'personal';
       
       // Prepare will data with proper types
+      const isIndefinite = req.body.isIndefinite === true;
       const willDataWithDefaults: any = {
         title: req.body.title,
         description: req.body.description,
         startDate: new Date(req.body.startDate),
-        endDate: new Date(req.body.endDate),
+        endDate: isIndefinite ? null : (req.body.endDate ? new Date(req.body.endDate) : null),
         createdBy: userId,
         mode: isPersonalMode ? 'personal' : 'circle',
         visibility: req.body.visibility || 'private',
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
         checkInType: req.body.checkInType || 'one-time',
         reminderTime: req.body.reminderTime || null, // HH:MM format for daily reminders
+        isIndefinite: isIndefinite,
       };
       
       console.log("Will data before validation:", willDataWithDefaults, "isPersonalMode:", isPersonalMode);
@@ -674,11 +676,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create will with 'pending' status (default)
         const will = await storage.createWill(willData);
         
-        // Calculate and set midpointAt for milestone notification
-        const startTime = new Date(req.body.startDate).getTime();
-        const endTime = new Date(req.body.endDate).getTime();
-        const midpointTime = new Date((startTime + endTime) / 2);
-        await db.update(wills).set({ midpointAt: midpointTime }).where(eq(wills.id, will.id));
+        // Calculate and set midpointAt for milestone notification (skip for indefinite wills)
+        let midpointTime = null;
+        if (!isIndefinite && req.body.endDate) {
+          const startTime = new Date(req.body.startDate).getTime();
+          const endTime = new Date(req.body.endDate).getTime();
+          midpointTime = new Date((startTime + endTime) / 2);
+          await db.update(wills).set({ midpointAt: midpointTime }).where(eq(wills.id, will.id));
+        }
         
         // Auto-create commitment for Solo user (required for scheduler to find participants)
         try {
@@ -1952,6 +1957,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating will:", error);
       res.status(500).json({ message: "Failed to update will" });
+    }
+  });
+
+  // Pause a will (only allowed for active indefinite wills)
+  app.post('/api/wills/:id/pause', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      // Only creator can pause the will
+      if (will.createdBy !== userId) {
+        return res.status(403).json({ message: "Only the creator can pause this Will" });
+      }
+      
+      // Can only pause active wills
+      if (will.status !== 'active') {
+        return res.status(400).json({ message: "Can only pause active Wills" });
+      }
+      
+      // Set pausedAt timestamp and update status
+      await db.update(wills)
+        .set({ pausedAt: new Date(), status: 'paused' })
+        .where(eq(wills.id, willId));
+      
+      res.json({ message: "Will paused successfully" });
+    } catch (error) {
+      console.error("Error pausing will:", error);
+      res.status(500).json({ message: "Failed to pause Will" });
+    }
+  });
+
+  // Resume a paused will
+  app.post('/api/wills/:id/resume', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      // Only creator can resume the will
+      if (will.createdBy !== userId) {
+        return res.status(403).json({ message: "Only the creator can resume this Will" });
+      }
+      
+      // Can only resume paused wills
+      if (will.status !== 'paused') {
+        return res.status(400).json({ message: "Can only resume paused Wills" });
+      }
+      
+      // Clear pausedAt and set status back to active
+      await db.update(wills)
+        .set({ pausedAt: null, status: 'active' })
+        .where(eq(wills.id, willId));
+      
+      res.json({ message: "Will resumed successfully" });
+    } catch (error) {
+      console.error("Error resuming will:", error);
+      res.status(500).json({ message: "Failed to resume Will" });
+    }
+  });
+
+  // Terminate a will completely
+  app.post('/api/wills/:id/terminate', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+      
+      // Only creator can terminate the will
+      if (will.createdBy !== userId) {
+        return res.status(403).json({ message: "Only the creator can terminate this Will" });
+      }
+      
+      // Can terminate active, paused, or pending wills
+      if (will.status === 'completed' || will.status === 'terminated') {
+        return res.status(400).json({ message: "Will is already completed or terminated" });
+      }
+      
+      // Set status to terminated
+      await db.update(wills)
+        .set({ status: 'terminated' })
+        .where(eq(wills.id, willId));
+      
+      res.json({ message: "Will terminated successfully" });
+    } catch (error) {
+      console.error("Error terminating will:", error);
+      res.status(500).json({ message: "Failed to terminate Will" });
     }
   });
 
