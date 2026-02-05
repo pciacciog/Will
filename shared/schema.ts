@@ -61,12 +61,14 @@ export const circleMembers = pgTable("circle_members", {
 
 export const wills = pgTable("wills", {
   id: serial("id").primaryKey(),
-  circleId: integer("circle_id").references(() => circles.id), // Nullable for solo mode
+  circleId: integer("circle_id").references(() => circles.id), // Nullable for non-circle wills
   createdBy: varchar("created_by").notNull().references(() => users.id),
-  mode: varchar("mode", { length: 10 }).notNull().default("circle"), // 'solo' or 'circle'
+  mode: varchar("mode", { length: 10 }).notNull().default("personal"), // 'personal' or 'circle'
+  visibility: varchar("visibility", { length: 10 }).notNull().default("private"), // 'private' or 'public'
+  parentWillId: integer("parent_will_id"), // For joined instances: references the original public will
   willType: varchar("will_type", { length: 20 }).default("classic"), // 'classic' or 'cumulative' (only for circle mode)
   sharedWhat: text("shared_what"), // For cumulative wills: the shared commitment everyone does
-  checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time' (for solo mode)
+  checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time'
   reminderTime: varchar("reminder_time", { length: 5 }), // HH:MM format for daily check-in reminders (user's local time)
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
@@ -87,6 +89,9 @@ export const wills = pgTable("wills", {
   index("IDX_wills_status_end_date").on(table.status, table.endDate),
   index("IDX_wills_end_room_status").on(table.endRoomStatus),
   index("IDX_wills_midpoint_check").on(table.status, table.midpointAt, table.midpointNotificationSentAt),
+  index("IDX_wills_visibility").on(table.visibility),
+  index("IDX_wills_parent_will_id").on(table.parentWillId),
+  index("IDX_wills_public_discover").on(table.visibility, table.parentWillId, table.status),
 ]);
 
 export const willCommitments = pgTable("will_commitments", {

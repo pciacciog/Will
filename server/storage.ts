@@ -44,7 +44,7 @@ import {
   type InsertPageContent,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -78,6 +78,7 @@ export interface IStorage {
   // Will operations
   createWill(will: InsertWill): Promise<Will>;
   getCircleActiveWill(circleId: number): Promise<Will | undefined>;
+  getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserActiveSoloWill(userId: string): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
@@ -587,20 +588,23 @@ export class DatabaseStorage implements IStorage {
     return will;
   }
 
-  async getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]> {
-    // Get all solo wills created by this user
-    const soloWillsList = await db
+  async getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]> {
+    // Get all personal wills (solo or personal mode, not circle) created by this user
+    const personalWillsList = await db
       .select()
       .from(wills)
       .where(and(
         eq(wills.createdBy, userId),
-        eq(wills.mode, 'solo')
+        or(
+          eq(wills.mode, 'personal'),
+          eq(wills.mode, 'solo') // backward compatibility
+        )
       ))
       .orderBy(desc(wills.createdAt));
     
     // For each will, get commitments with user info
     const willsWithCommitments = await Promise.all(
-      soloWillsList.map(async (will) => {
+      personalWillsList.map(async (will) => {
         const commitmentsList = await db
           .select()
           .from(willCommitments)
@@ -618,6 +622,11 @@ export class DatabaseStorage implements IStorage {
     );
     
     return willsWithCommitments;
+  }
+
+  async getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]> {
+    // Legacy method - redirects to getUserPersonalWills
+    return this.getUserPersonalWills(userId);
   }
 
   async getUserActiveSoloWill(userId: string): Promise<Will | undefined> {

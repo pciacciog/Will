@@ -907,12 +907,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Solo wills endpoint - fetch all solo wills for current user
+  // Personal wills endpoint - fetch all personal (non-circle) wills for current user
+  app.get('/api/wills/personal', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const personalWills = await storage.getUserPersonalWills(userId);
+      res.json(personalWills);
+    } catch (error) {
+      console.error("Error fetching personal wills:", error);
+      res.status(500).json({ message: "Failed to fetch personal wills" });
+    }
+  });
+
+  // Legacy solo wills endpoint (redirects to personal)
   app.get('/api/wills/solo', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const soloWills = await storage.getUserSoloWills(userId);
-      res.json(soloWills);
+      const personalWills = await storage.getUserPersonalWills(userId);
+      res.json(personalWills);
     } catch (error) {
       console.error("Error fetching solo wills:", error);
       res.status(500).json({ message: "Failed to fetch solo wills" });
