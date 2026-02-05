@@ -17,7 +17,6 @@ import Auth from "@/pages/Auth";
 import Home from "@/pages/Home";
 import InnerCircle from "@/pages/InnerCircle";
 import InnerCircleHub from "@/pages/InnerCircleHub";
-import SoloHub from "@/pages/SoloHub";
 import Explore from "@/pages/Explore";
 import WillHistory from "@/pages/WillHistory";
 import StartWill from "@/pages/StartWill";
@@ -348,7 +347,6 @@ function Router() {
             <Route path="/hub" component={LegacyHubRedirect} />
             <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/explore" component={Explore} />
-            <Route path="/solo/hub" component={SoloHub} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/personal/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>
