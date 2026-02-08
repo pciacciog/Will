@@ -257,7 +257,6 @@ export default function EditWill() {
                       <TimeChipPicker
                         value={startTime}
                         onChange={setStartTime}
-                        presets={["00:00", "06:00", "08:00", "12:00", "18:00"]}
                         testId="edit-start-time"
                       />
                     </div>
@@ -282,7 +281,6 @@ export default function EditWill() {
                       <TimeChipPicker
                         value={endTime}
                         onChange={setEndTime}
-                        presets={["12:00", "17:00", "18:00", "21:00", "23:59"]}
                         testId="edit-end-time"
                       />
                     </div>

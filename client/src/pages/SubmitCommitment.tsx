@@ -651,7 +651,6 @@ export default function SubmitCommitment() {
                         setDailyReminderTime(time);
                         setHasModifiedReminder(true);
                       }}
-                      presets={["07:00", "08:00", "12:00", "18:00", "19:00", "20:00", "21:00", "22:00"]}
                       disabled={skipDailyReminder === true}
                       testId="input-daily-reminder-time"
                     />
@@ -833,7 +832,6 @@ export default function SubmitCommitment() {
                         setDailyReminderTime(time);
                         setHasModifiedReminder(true);
                       }}
-                      presets={["07:00", "08:00", "12:00", "18:00", "19:00", "20:00", "21:00", "22:00"]}
                       disabled={skipDailyReminder === true}
                       testId="input-daily-reminder-time-classic"
                     />

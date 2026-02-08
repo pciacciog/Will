@@ -74,16 +74,16 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
   
-  // 3 steps: What, Why, When (with settings + Create)
-  // 4 steps with End Room enabled: What, Why, When, End Room
-  const totalSteps = ENABLE_END_ROOM ? 4 : 3;
+  // 4 steps: What, Why, When, Check-In
+  // 5 steps with End Room enabled: What, Why, When, Check-In, End Room
+  const totalSteps = ENABLE_END_ROOM ? 5 : 4;
   
   // Get step label based on mode
   const getStepLabel = (step: number) => {
-    if (ENABLE_END_ROOM && step === 4) {
+    if (ENABLE_END_ROOM && step === 5) {
       return isSoloMode ? "Confirm" : "End Room";
     }
-    const labels = ["", "What", "Why", "When"];
+    const labels = ["", "What", "Why", "When", "Check-In"];
     return labels[step] || "";
   };
   
@@ -370,11 +370,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Combine date and time using utility function
     const startDateTime = createDateTimeFromInputs(startDate, startTime);
     const endDateTime = isIndefinite ? '' : createDateTimeFromInputs(endDate, endTime);
 
-    // Validation
     const now = new Date();
     const start = new Date(startDateTime);
 
@@ -399,7 +397,24 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       }
     }
 
-    // Only save daily reminder settings if user has made changes
+    const updatedWillData = { ...willData, startDate: startDateTime, endDate: endDateTime };
+    setWillData(updatedWillData);
+    setCurrentStep(4);
+  };
+
+  const handleStep4Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!willData.startDate) {
+      toast({
+        title: "Missing Timeline",
+        description: "Please go back and set your start date first",
+        variant: "destructive",
+      });
+      setCurrentStep(3);
+      return;
+    }
+
     if (hasModifiedReminder) {
       updateReminderSettingsMutation.mutate({
         dailyReminderTime: skipDailyReminder ? null : dailyReminderTime,
@@ -407,23 +422,19 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       });
     }
 
-    const updatedWillData = { ...willData, startDate: startDateTime, endDate: endDateTime };
-    setWillData(updatedWillData);
-    
-    // When is the final step — create the Will directly (or advance to End Room if enabled)
     if (ENABLE_END_ROOM && !isSoloMode) {
-      setCurrentStep(4);
+      setCurrentStep(5);
     } else if (isSoloMode) {
       createWillMutation.mutate({
-        title: updatedWillData.what || "Personal Goal",
-        description: updatedWillData.why || "Personal commitment",
-        startDate: updatedWillData.startDate,
-        endDate: isIndefinite ? null : updatedWillData.endDate,
+        title: willData.what || "Personal Goal",
+        description: willData.why || "Personal commitment",
+        startDate: willData.startDate,
+        endDate: isIndefinite ? null : willData.endDate,
         endRoomScheduledAt: null,
         circleId: null,
         mode: 'personal',
-        what: updatedWillData.what,
-        because: updatedWillData.why,
+        what: willData.what,
+        because: willData.why,
         checkInType: checkInType,
         isIndefinite: isIndefinite,
         visibility: visibility,
@@ -434,15 +445,15 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       });
     } else {
       createWillMutation.mutate({
-        title: updatedWillData.what || "Group Goal",
-        description: updatedWillData.why || "Group commitment",
-        startDate: updatedWillData.startDate,
-        endDate: isIndefinite ? null : updatedWillData.endDate,
+        title: willData.what || "Group Goal",
+        description: willData.why || "Group commitment",
+        startDate: willData.startDate,
+        endDate: isIndefinite ? null : willData.endDate,
         endRoomScheduledAt: null,
         circleId: circle?.id,
         mode: 'circle',
         willType: willType || 'classic',
-        sharedWhat: willType === 'cumulative' ? updatedWillData.what : undefined,
+        sharedWhat: willType === 'cumulative' ? willData.what : undefined,
         checkInType: checkInType,
         isIndefinite: isIndefinite,
         checkInTime: checkInTime,
@@ -641,28 +652,36 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             {/* Hide step indicators during type selection */}
             {!showTypeSelection && (
               <div className="flex items-center justify-center space-x-1.5 min-w-0 flex-1">
-                {/* Step 1: When */}
+                {/* Step 1: What */}
                 <div className="flex items-center">
-                  <div className={`w-7 h-7 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                  <div className={`w-6 h-6 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-[10px] font-semibold`}>
                     1
                   </div>
-                  <span className={`ml-1 text-xs ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(1)}</span>
+                  <span className={`ml-1 text-[10px] ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(1)}</span>
                 </div>
-                <div className={`w-4 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                {/* Step 2: What */}
+                <div className={`w-3 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                {/* Step 2: Why */}
                 <div className="flex items-center">
-                  <div className={`w-7 h-7 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                  <div className={`w-6 h-6 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-[10px] font-semibold`}>
                     2
                   </div>
-                  <span className={`ml-1 text-xs ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(2)}</span>
+                  <span className={`ml-1 text-[10px] ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(2)}</span>
                 </div>
                 <div className={`w-4 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                {/* Step 3: Why */}
+                {/* Step 3: When */}
                 <div className="flex items-center">
-                  <div className={`w-7 h-7 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                  <div className={`w-6 h-6 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-[10px] font-semibold`}>
                     3
                   </div>
-                  <span className={`ml-1 text-xs ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
+                  <span className={`ml-1 text-[10px] ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
+                </div>
+                <div className={`w-3 h-0.5 ${currentStep >= 4 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                {/* Step 4: Check-In */}
+                <div className="flex items-center">
+                  <div className={`w-6 h-6 ${currentStep >= 4 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-[10px] font-semibold`}>
+                    4
+                  </div>
+                  <span className={`ml-1 text-[10px] ${currentStep >= 4 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(4)}</span>
                 </div>
               </div>
             )}
@@ -675,7 +694,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               {!showTypeSelection && currentStep === 1 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
               {!showTypeSelection && currentStep === 2 && "Why would you like to do this?"}
               {!showTypeSelection && currentStep === 3 && "Set Your Timeline"}
-              {!showTypeSelection && currentStep === 4 && "How Will You Track?"}
+              {!showTypeSelection && currentStep === 4 && "How Will You Check In?"}
             </h1>
             {!showTypeSelection && currentStep === 1 && (
               <>
@@ -702,7 +721,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             )}
             {!showTypeSelection && currentStep === 4 && (
               <p className="text-sm text-gray-500 mt-1">
-                Choose how you'll track your progress
+                {isIndefinite ? "Set your daily check-in preferences" : "When should we check in with you?"}
               </p>
             )}
           </div>
@@ -795,24 +814,14 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
 
-        {/* Step 3: Set Dates - Focused Experience */}
+        {/* Step 3: Timeline - Clean Date/Time Layout */}
         {currentStep === 3 && !showTransition && !showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep1Submit} className="flex flex-col flex-1">
-              {/* Main Content Area - Compact */}
               <div className="flex-1 flex flex-col justify-center py-2">
-                {/* Prompt Label */}
-                <div className="mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-center justify-center gap-2">
-                    <Calendar className="w-5 h-5 text-blue-500" />
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-widest">
-                      Your Timeline
-                    </p>
-                  </div>
-                </div>
                 
                 {/* Duration Type Toggle */}
-                <div className="flex justify-center gap-2 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '50ms' }}>
+                <div className="flex justify-center gap-2 mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '50ms' }}>
                   <button
                     type="button"
                     onClick={() => setIsIndefinite(false)}
@@ -839,14 +848,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </button>
                 </div>
 
-                {/* Date/Time Inputs - Clean, Grouped Design */}
-                <div className="space-y-4 px-2 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
-                  {/* Start Section */}
-                  <div className="space-y-1.5">
-                    <p className="text-base font-semibold text-gray-800 text-center tracking-tight">
-                      Start
-                    </p>
-                    <div className="flex justify-center">
+                {/* Date/Time Rows - Inline Layout */}
+                <div className="space-y-5 px-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
+                  {/* Start Row */}
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-2">Start</p>
+                    <div className="flex items-center gap-3">
                       <Input 
                         type="date" 
                         value={startDate}
@@ -856,47 +863,43 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                           return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                         })()}
                         required 
-                        className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                        className="flex-1 text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                         data-testid="input-start-date"
                       />
+                      <TimeChipPicker
+                        value={startTime}
+                        onChange={setStartTime}
+                        testId="input-start-time"
+                      />
                     </div>
-                    <TimeChipPicker
-                      value={startTime}
-                      onChange={setStartTime}
-                      presets={["00:00", "06:00", "08:00", "12:00", "18:00"]}
-                      testId="input-start-time"
-                    />
                   </div>
                   
                   {!isIndefinite && (
                     <>
-                      {/* Visual Separator */}
-                      <div className="flex items-center justify-center">
-                        <div className="w-0.5 h-4 bg-gradient-to-b from-gray-200 to-gray-300 rounded-full"></div>
+                      {/* Connector */}
+                      <div className="flex justify-center">
+                        <div className="w-px h-3 bg-gray-200"></div>
                       </div>
                       
-                      {/* End Section */}
-                      <div className="space-y-1.5">
-                        <p className="text-base font-semibold text-gray-800 text-center tracking-tight">
-                          End
-                        </p>
-                        <div className="flex justify-center">
+                      {/* End Row */}
+                      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '50ms' }}>
+                        <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-2">End</p>
+                        <div className="flex items-center gap-3">
                           <Input 
                             type="date" 
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                             min={startDate}
                             required 
-                            className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                            className="flex-1 text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                             data-testid="input-end-date"
                           />
+                          <TimeChipPicker
+                            value={endTime}
+                            onChange={setEndTime}
+                            testId="input-end-time"
+                          />
                         </div>
-                        <TimeChipPicker
-                          value={endTime}
-                          onChange={setEndTime}
-                          presets={["12:00", "17:00", "18:00", "21:00", "23:59"]}
-                          testId="input-end-time"
-                        />
                       </div>
                     </>
                   )}
@@ -907,17 +910,81 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </p>
                   )}
                 </div>
+
+              </div>
+              
+              {/* Navigation */}
+              <div className="flex justify-end items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '250ms' }}>
+                <PrimaryButton data-testid="button-next-timeline">
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                </PrimaryButton>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Step 4: Check-In Preferences */}
+        {currentStep === 4 && !showTransition && !showTypeSelection && (
+          <div className="flex flex-col animate-in fade-in duration-500">
+            <form onSubmit={handleStep4Submit} className="flex flex-col flex-1">
+              <div className="flex-1 flex flex-col justify-center py-4">
                 
+                {/* Auto-determined tracking type info */}
+                <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+                    isIndefinite 
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>
+                    {isIndefinite ? (
+                      <>
+                        <Calendar className="w-4 h-4" />
+                        Daily check-ins
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Final review when complete
+                      </>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {isIndefinite 
+                      ? "Track progress daily with yes/no/partial check-ins" 
+                      : "You'll reflect on your commitment when the Will ends"}
+                  </p>
+                </div>
+
+                {/* Check-In Time */}
+                <div className="px-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+                      {isIndefinite ? 'Daily Check-In Time' : 'Reminder Time'}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-400 text-center mb-3">
+                    {isIndefinite ? "When should we remind you to check in?" : "When should we nudge you?"}
+                  </p>
+                  <div className="flex justify-center">
+                    <TimeChipPicker
+                      value={checkInTime}
+                      onChange={setCheckInTime}
+                      testId="input-check-in-time"
+                    />
+                  </div>
+                </div>
+
                 {/* Active Days - Ongoing Wills Only */}
                 {isIndefinite && (
-                  <div className="mt-5 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '200ms' }}>
+                  <div className="mt-6 pt-5 border-t border-gray-100 px-4 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '200ms' }}>
                     <div className="flex items-center justify-center gap-2 mb-3">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
                         Active Days
                       </p>
                     </div>
-                    <p className="text-xs text-gray-500 text-center mb-3">Which days does this apply to?</p>
+                    <p className="text-xs text-gray-400 text-center mb-3">Which days does this apply to?</p>
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex gap-2">
                         <button
@@ -966,26 +1033,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </div>
                 )}
 
-                {/* Check-In Time */}
-                <div className={`${isIndefinite ? 'mt-3' : 'mt-3'} pt-3 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500`} style={{ animationDelay: '250ms' }}>
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                      Check-In Time
-                    </p>
-                  </div>
-                  <TimeChipPicker
-                    value={checkInTime}
-                    onChange={setCheckInTime}
-                    presets={["07:00", "08:00", "12:00", "18:00", "19:00", "20:00", "21:00", "22:00"]}
-                    testId="input-check-in-time"
-                  />
-                </div>
-
               </div>
               
-              {/* Navigation - Fixed at bottom */}
-              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '350ms' }}>
+              {/* Navigation - Create Will */}
+              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center space-x-2">
                   <Button type="button" variant="ghost" onClick={handleCancel} className="text-gray-500" data-testid="button-cancel">
                     Cancel
@@ -1003,7 +1054,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
                     createWillMutation.isPending || addCommitmentMutation.isPending
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-sm'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm'
                   }`}
                   data-testid="button-create-will"
                 >
@@ -1170,7 +1221,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         )}
         
         {/* Step 4: End Room Scheduling (Circle mode only, behind ENABLE_END_ROOM flag) */}
-        {ENABLE_END_ROOM && currentStep === 4 && !showTransition && !isSoloMode && (
+        {ENABLE_END_ROOM && currentStep === 5 && !showTransition && !isSoloMode && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleEndRoomSubmit} className="flex flex-col">
               <div className="flex flex-col pt-2 pb-4">

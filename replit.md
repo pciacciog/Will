@@ -17,7 +17,7 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Gradients (emerald/teal, blue/indigo, purple), consistent brand colors (brandGreen, brandBlue, brandGray).
 - **Layout**: Mobile-first, optimized for single-viewport display (iPhone screens).
 - **Interaction**: Smooth micro-interactions, hover animations, transition effects.
-- **Information Flow**: 3-step Will creation flow (What → Why → When with settings) with progress indicators. End Room behind feature flag.
+- **Information Flow**: 4-step Will creation flow (What → Why → When → Check-In) with progress indicators. End Room behind feature flag (step 5 when enabled). TimeChipPicker uses native `<input type="time">` for iOS compatibility.
 - **Branding**: "WILL" as core branding with a hand icon.
 
 ### Technical Implementations
