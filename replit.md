@@ -17,7 +17,7 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Gradients (emerald/teal, blue/indigo, purple), consistent brand colors (brandGreen, brandBlue, brandGray).
 - **Layout**: Mobile-first, optimized for single-viewport display (iPhone screens).
 - **Interaction**: Smooth micro-interactions, hover animations, transition effects.
-- **Information Flow**: Structured commitment and End Room flows (When → What → Why → End Room) with progress indicators and instructional modals.
+- **Information Flow**: 3-step Will creation flow (What → Why → When with settings) with progress indicators. End Room behind feature flag.
 - **Branding**: "WILL" as core branding with a hand icon.
 
 ### Technical Implementations
