@@ -977,7 +977,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                       Check-In Time
                     </p>
                   </div>
-                  <p className="text-xs text-gray-500 text-center mb-2">When should we ask if you did it?</p>
                   <div className="flex flex-col items-center gap-2">
                     <Input 
                       type="time" 
