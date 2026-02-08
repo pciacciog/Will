@@ -1002,38 +1002,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </div>
                 </div>
 
-                {/* Visibility Section - Solo mode only */}
-                {isSoloMode && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '300ms' }}>
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest text-center mb-3">Who can see this?</p>
-                    <div className="flex justify-center gap-3">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="visibility"
-                          value="private"
-                          checked={visibility === 'private'}
-                          onChange={() => setVisibility('private')}
-                          className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                          data-testid="radio-visibility-private"
-                        />
-                        <span className="text-sm text-gray-700">Just me</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="visibility"
-                          value="public"
-                          checked={visibility === 'public'}
-                          onChange={() => setVisibility('public')}
-                          className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                          data-testid="radio-visibility-public"
-                        />
-                        <span className="text-sm text-gray-700">Everyone</span>
-                      </label>
-                    </div>
-                  </div>
-                )}
               </div>
               
               {/* Navigation - Fixed at bottom */}
@@ -1108,10 +1076,46 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     {whatCharCount} / 75
                   </p>
                 </div>
+
+                {isSoloMode && (
+                  <div className="mt-6 pt-4 border-t border-gray-100/80 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '300ms' }}>
+                    <p className="text-[11px] font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Who can see this?</p>
+                    <div className="flex flex-col gap-2 max-w-[260px] mx-auto">
+                      <label className="flex items-start gap-2.5 cursor-pointer group" data-testid="radio-visibility-private">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="private"
+                          checked={visibility === 'private'}
+                          onChange={() => setVisibility('private')}
+                          className="w-3.5 h-3.5 mt-0.5 text-gray-400 border-gray-300 focus:ring-gray-300"
+                        />
+                        <div>
+                          <span className="text-sm text-gray-600">Just me</span>
+                          <p className="text-[11px] text-gray-400 leading-tight">Keep this commitment to yourself</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-2.5 cursor-pointer group" data-testid="radio-visibility-public">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="public"
+                          checked={visibility === 'public'}
+                          onChange={() => setVisibility('public')}
+                          className="w-3.5 h-3.5 mt-0.5 text-gray-400 border-gray-300 focus:ring-gray-300"
+                        />
+                        <div>
+                          <span className="text-sm text-gray-600">Everyone</span>
+                          <p className="text-[11px] text-gray-400 leading-tight">Others can discover and join this Will</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Navigation - Anchored */}
-              <div className="flex justify-end items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
+              <div className="flex justify-end items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '400ms' }}>
                 <PrimaryButton data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
