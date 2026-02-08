@@ -652,8 +652,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mode: isPersonalMode ? 'personal' : 'circle',
         visibility: req.body.visibility || 'private',
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
-        checkInType: req.body.checkInType || 'one-time',
-        reminderTime: req.body.reminderTime || null, // HH:MM format for daily reminders
+        checkInType: req.body.checkInType || (isIndefinite ? 'daily' : 'one-time'),
+        reminderTime: req.body.reminderTime || null,
+        checkInTime: req.body.checkInTime || null,
+        activeDays: req.body.activeDays || 'every_day',
+        customDays: req.body.customDays || null,
         isIndefinite: isIndefinite,
       };
       
@@ -987,11 +990,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newWill = await storage.createWill({
         createdBy: userId,
         mode: 'personal',
-        visibility: 'private', // Joined instances are always private
+        visibility: 'private',
         parentWillId: parentWillId,
         startDate: parentWill.startDate,
         endDate: parentWill.endDate,
         checkInType: parentWill.checkInType || 'one-time',
+        checkInTime: parentWill.checkInTime || null,
+        activeDays: parentWill.activeDays || 'every_day',
+        customDays: parentWill.customDays || null,
       });
       
       // Update status to match parent if it's active
@@ -1479,6 +1485,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!date || !status) {
         return res.status(400).json({ message: "Date and status are required" });
+      }
+
+      const will = await storage.getWill(willId);
+      if (will && !will.isIndefinite) {
+        return res.json({ id: 0, willId, userId, date, status, reflectionText: reflectionText || null, isRetroactive: isRetroactive || false, acknowledged: true });
       }
 
       if (!['yes', 'no', 'partial'].includes(status)) {
