@@ -904,10 +904,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </>
                   )}
                   
-                  {/* Subtle note */}
-                  <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300 pt-1" style={{ animationDelay: '200ms' }}>
-                    {isIndefinite ? 'You can pause or end this anytime' : 'Defaults to next Mon–Sun'}
-                  </p>
+                  {isIndefinite && (
+                    <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300 pt-1" style={{ animationDelay: '200ms' }}>
+                      You can pause or end this anytime
+                    </p>
+                  )}
                 </div>
                 
                 {/* Active Days - Ongoing Wills Only */}
@@ -979,7 +980,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 )}
 
                 {/* Check-In Time */}
-                <div className={`${isIndefinite ? 'mt-4' : 'mt-5'} pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500`} style={{ animationDelay: '250ms' }}>
+                <div className={`${isIndefinite ? 'mt-3' : 'mt-3'} pt-3 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500`} style={{ animationDelay: '250ms' }}>
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Clock className="w-4 h-4 text-gray-400" />
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
@@ -996,9 +997,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                       className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
                       data-testid="input-check-in-time"
                     />
-                    {!isIndefinite && (
-                      <p className="text-xs text-gray-400 italic">Pick a time after you've completed your Will</p>
-                    )}
                   </div>
                 </div>
 
