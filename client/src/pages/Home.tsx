@@ -130,7 +130,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen flex flex-col">
+      <div className="pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen flex flex-col">
         <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col">
           
           {/* Header */}
@@ -227,20 +227,20 @@ export default function Home() {
           )}
 
           {/* Secondary Actions: Explore & Circles */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-4 mb-6">
             {/* Explore Card */}
             <button
               onClick={handleExplore}
               className="text-left group"
               data-testid="button-explore"
             >
-              <Card className="h-full bg-white border-2 border-blue-100 shadow-sm group-hover:border-blue-300 group-hover:shadow-md transition-all duration-200">
-                <CardContent className="p-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-3">
-                    <Compass className="w-5 h-5 text-blue-600" />
+              <Card className="h-full bg-white border-2 border-blue-100 shadow-sm group-hover:border-blue-300 group-hover:shadow-md transition-all duration-200 rounded-2xl">
+                <CardContent className="p-5">
+                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
+                    <Compass className="w-6 h-6 text-blue-600" />
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">Explore</h3>
-                  <p className="text-xs text-gray-500">Discover public commitments</p>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">Explore</h3>
+                  <p className="text-sm text-gray-500">Discover public commitments</p>
                 </CardContent>
               </Card>
             </button>
@@ -251,13 +251,13 @@ export default function Home() {
               className="text-left group"
               data-testid="button-circles"
             >
-              <Card className="h-full bg-white border-2 border-purple-100 shadow-sm group-hover:border-purple-300 group-hover:shadow-md transition-all duration-200">
-                <CardContent className="p-4">
-                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mb-3">
-                    <Users className="w-5 h-5 text-purple-600" />
+              <Card className="h-full bg-white border-2 border-purple-100 shadow-sm group-hover:border-purple-300 group-hover:shadow-md transition-all duration-200 rounded-2xl">
+                <CardContent className="p-5">
+                  <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-3">
+                    <Users className="w-6 h-6 text-purple-600" />
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">Circles</h3>
-                  <p className="text-xs text-gray-500">Group accountability</p>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">Circles</h3>
+                  <p className="text-sm text-gray-500">Group accountability</p>
                 </CardContent>
               </Card>
             </button>
