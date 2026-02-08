@@ -73,16 +73,16 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
   
-  // 4 steps without End Room: What, Why, When, Tracking
-  // 5 steps with End Room: What, Why, When, Tracking, End Room/Confirm
-  const totalSteps = ENABLE_END_ROOM ? 5 : 4;
+  // 3 steps: What, Why, When (with settings + Create)
+  // 4 steps with End Room enabled: What, Why, When, End Room
+  const totalSteps = ENABLE_END_ROOM ? 4 : 3;
   
   // Get step label based on mode
   const getStepLabel = (step: number) => {
-    if (ENABLE_END_ROOM && step === 5) {
+    if (ENABLE_END_ROOM && step === 4) {
       return isSoloMode ? "Confirm" : "End Room";
     }
-    const labels = ["", "What", "Why", "When", "Tracking"];
+    const labels = ["", "What", "Why", "When"];
     return labels[step] || "";
   };
   
@@ -163,11 +163,18 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   // Will type for Circle mode: 'classic' (individual commitments) or 'cumulative' (shared commitment)
   const [willType, setWillType] = useState<'classic' | 'cumulative' | null>(null);
   
-  // Check-in type: 'daily' for daily tracking or 'one-time' for end-only check-in
-  const [checkInType, setCheckInType] = useState<'daily' | 'one-time'>('one-time');
+  // Check-in type is auto-determined: Ongoing = 'daily' (data-driven), Set Dates = 'one-time' (reflection-based)
+  const checkInType = isIndefinite ? 'daily' : 'one-time';
   
   // Will-specific reminder time for daily check-ins (HH:MM format)
   const [willReminderTime, setWillReminderTime] = useState<string>('20:00');
+  
+  // Check-in time: when to prompt the user (HH:MM format)
+  const [checkInTime, setCheckInTime] = useState<string>('20:00');
+  
+  // Active days: which days the will applies to (Ongoing wills only)
+  const [activeDays, setActiveDays] = useState<'every_day' | 'weekdays' | 'custom'>('every_day');
+  const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri default
   
   // Visibility: 'private' (default) or 'public' (discoverable in Explore)
   const [visibility, setVisibility] = useState<'private' | 'public'>('private');
@@ -397,13 +404,46 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       });
     }
 
-    setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });
-    // When is now step 3 → show transition animation then go to step 4 (Tracking)
-    setShowTransition(true);
-    setTimeout(() => {
-      setShowTransition(false);
+    const updatedWillData = { ...willData, startDate: startDateTime, endDate: endDateTime };
+    setWillData(updatedWillData);
+    
+    // When is the final step — create the Will directly (or advance to End Room if enabled)
+    if (ENABLE_END_ROOM && !isSoloMode) {
       setCurrentStep(4);
-    }, 1800);
+    } else if (isSoloMode) {
+      createWillMutation.mutate({
+        title: updatedWillData.what || "Personal Goal",
+        description: updatedWillData.why || "Personal commitment",
+        startDate: updatedWillData.startDate,
+        endDate: isIndefinite ? null : updatedWillData.endDate,
+        endRoomScheduledAt: null,
+        circleId: null,
+        checkInType: checkInType,
+        isIndefinite: isIndefinite,
+        visibility: visibility,
+        checkInTime: checkInTime,
+        activeDays: isIndefinite ? activeDays : undefined,
+        customDays: isIndefinite && activeDays === 'custom' ? JSON.stringify(customDays) : undefined,
+        reminderTime: willReminderTime,
+      });
+    } else {
+      createWillMutation.mutate({
+        title: updatedWillData.what || "Group Goal",
+        description: updatedWillData.why || "Group commitment",
+        startDate: updatedWillData.startDate,
+        endDate: isIndefinite ? null : updatedWillData.endDate,
+        endRoomScheduledAt: null,
+        circleId: circle?.id,
+        willType: willType || 'classic',
+        sharedWhat: willType === 'cumulative' ? updatedWillData.what : undefined,
+        checkInType: checkInType,
+        isIndefinite: isIndefinite,
+        checkInTime: checkInTime,
+        activeDays: isIndefinite ? activeDays : undefined,
+        customDays: isIndefinite && activeDays === 'custom' ? JSON.stringify(customDays) : undefined,
+        reminderTime: willReminderTime,
+      });
+    }
   };
 
   const handleStep2Submit = (e: React.FormEvent) => {
@@ -866,46 +906,134 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </p>
                 </div>
                 
-                {/* Daily Reminder - Subtle, Secondary */}
-                <div className="mt-5 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '250ms' }}>
+                {/* Active Days - Ongoing Wills Only */}
+                {isIndefinite && (
+                  <div className="mt-5 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '200ms' }}>
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+                        Active Days
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 text-center mb-3">Which days does this apply to?</p>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setActiveDays('every_day')}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            activeDays === 'every_day' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                          data-testid="button-active-days-every"
+                        >
+                          Every day
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveDays('weekdays')}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            activeDays === 'weekdays' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                          data-testid="button-active-days-weekdays"
+                        >
+                          Weekdays
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveDays('custom')}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            activeDays === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                          data-testid="button-active-days-custom"
+                        >
+                          Custom
+                        </button>
+                      </div>
+                      {activeDays === 'custom' && (
+                        <div className="flex gap-1.5 mt-2 animate-in fade-in duration-200">
+                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => {
+                                setCustomDays(prev => 
+                                  prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
+                                );
+                              }}
+                              className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
+                                customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              }`}
+                              data-testid={`button-day-${i}`}
+                            >
+                              {day}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Check-In Time */}
+                <div className={`${isIndefinite ? 'mt-4' : 'mt-5'} pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500`} style={{ animationDelay: '250ms' }}>
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Clock className="w-4 h-4 text-gray-400" />
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                      Daily Reminder
+                      Check-In Time
                     </p>
                   </div>
+                  <p className="text-xs text-gray-500 text-center mb-2">When should we ask if you did it?</p>
                   <div className="flex flex-col items-center gap-2">
                     <Input 
                       type="time" 
-                      value={dailyReminderTime}
-                      onChange={(e) => {
-                        setDailyReminderTime(e.target.value);
-                        setHasModifiedReminder(true);
-                      }}
+                      value={checkInTime}
+                      onChange={(e) => setCheckInTime(e.target.value)}
                       step="900"
-                      disabled={skipDailyReminder === true}
-                      className={`w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none ${skipDailyReminder ? 'opacity-40' : ''}`}
-                      data-testid="input-daily-reminder-time"
+                      className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
+                      data-testid="input-check-in-time"
                     />
-                    <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={skipDailyReminder === true}
-                        onChange={(e) => {
-                          setSkipDailyReminder(e.target.checked);
-                          setHasModifiedReminder(true);
-                        }}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
-                        data-testid="checkbox-skip-daily-reminder"
-                      />
-                      Skip daily reminders
-                    </label>
+                    {!isIndefinite && (
+                      <p className="text-xs text-gray-400 italic">Pick a time after you've completed your Will</p>
+                    )}
                   </div>
                 </div>
+
+                {/* Visibility Section - Solo mode only */}
+                {isSoloMode && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '300ms' }}>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest text-center mb-3">Who can see this?</p>
+                    <div className="flex justify-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="private"
+                          checked={visibility === 'private'}
+                          onChange={() => setVisibility('private')}
+                          className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                          data-testid="radio-visibility-private"
+                        />
+                        <span className="text-sm text-gray-700">Just me</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="public"
+                          checked={visibility === 'public'}
+                          onChange={() => setVisibility('public')}
+                          className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                          data-testid="radio-visibility-public"
+                        />
+                        <span className="text-sm text-gray-700">Everyone</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Navigation - Fixed at bottom */}
-              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
+              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '350ms' }}>
                 <div className="flex items-center space-x-2">
                   <Button type="button" variant="ghost" onClick={handleCancel} className="text-gray-500" data-testid="button-cancel">
                     Cancel
@@ -917,9 +1045,21 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     />
                   )}
                 </div>
-                <PrimaryButton data-testid="button-next">
-                  Next <ArrowRight className="w-4 h-4 ml-2" />
-                </PrimaryButton>
+                <button
+                  type="submit"
+                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                  className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
+                    createWillMutation.isPending || addCommitmentMutation.isPending
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-sm'
+                  }`}
+                  data-testid="button-create-will"
+                >
+                  {createWillMutation.isPending || addCommitmentMutation.isPending 
+                    ? 'Creating...' 
+                    : (ENABLE_END_ROOM && !isSoloMode ? 'Next' : 'Create Will')}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </button>
               </div>
             </form>
           </div>
@@ -1041,159 +1181,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
         
-        {/* Step 4: Tracking Type Selection - Final Step */}
-        {currentStep === 4 && !showTransition && (
-          <SectionCard>
-            <div className="space-y-6 px-4 py-2">
-              <p className="text-sm text-gray-600 text-center">
-                Different goals need different tracking. Choose what works best for you.
-              </p>
-              
-              {/* Daily Check-ins Option */}
-              <button
-                type="button"
-                onClick={() => setCheckInType('daily')}
-                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                  checkInType === 'daily' 
-                    ? 'border-purple-500 bg-purple-50' 
-                    : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
-                }`}
-                data-testid="button-tracking-daily"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">Daily Check-ins</h3>
-                    <p className="text-sm text-gray-600">
-                      Track your progress every day. Great for habits and daily goals.
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2 italic">
-                      Example: "Don't hit snooze" - check in each morning
-                    </p>
-                  </div>
-                </div>
-              </button>
-              
-              {/* One-time Check-in Option */}
-              <button
-                type="button"
-                onClick={() => setCheckInType('one-time')}
-                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                  checkInType === 'one-time' 
-                    ? 'border-green-500 bg-green-50' 
-                    : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
-                }`}
-                data-testid="button-tracking-onetime"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">One-time Check-in</h3>
-                    <p className="text-sm text-gray-600">
-                      Just confirm at the end. Best for one-time tasks or qualitative goals.
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2 italic">
-                      Example: "Call my grandmother" - check once when done
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              {/* Reminder Time for Daily Check-ins */}
-              {checkInType === 'daily' && (
-                <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100 animate-in fade-in duration-300">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-600">Remind me at:</p>
-                    <input
-                      type="time"
-                      value={willReminderTime}
-                      onChange={(e) => setWillReminderTime(e.target.value)}
-                      className="text-sm bg-white border border-blue-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
-                      data-testid="input-reminder-time"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1.5">
-                    You'll get a daily notification to check in
-                  </p>
-                </div>
-              )}
-
-              {/* Visibility Section - Solo mode only */}
-              {isSoloMode && (
-                <div className="bg-purple-50/60 rounded-xl p-4 border border-purple-100">
-                  <p className="text-sm font-semibold text-purple-700 mb-3">Who can see this?</p>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="visibility"
-                        value="private"
-                        checked={visibility === 'private'}
-                        onChange={() => setVisibility('private')}
-                        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                        data-testid="radio-visibility-private"
-                      />
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Just me</span>
-                        <p className="text-xs text-gray-500">Private commitment</p>
-                      </div>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="visibility"
-                        value="public"
-                        checked={visibility === 'public'}
-                        onChange={() => setVisibility('public')}
-                        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                        data-testid="radio-visibility-public"
-                      />
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Everyone</span>
-                        <p className="text-xs text-gray-500">Discoverable in Explore</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* Create Will Button (or Next to End Room when enabled) */}
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (ENABLE_END_ROOM && !isSoloMode) {
-                      setCurrentStep(5);
-                    } else if (isSoloMode) {
-                      handlePersonalConfirmSubmit();
-                    } else {
-                      handleCircleCreateSubmit();
-                    }
-                  }}
-                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                  className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
-                    createWillMutation.isPending || addCommitmentMutation.isPending
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-sm'
-                  }`}
-                  data-testid="button-confirm-create"
-                >
-                  {createWillMutation.isPending || addCommitmentMutation.isPending 
-                    ? 'Creating...' 
-                    : (ENABLE_END_ROOM && !isSoloMode ? 'Next' : 'Create Will')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </button>
-              </div>
-            </div>
-          </SectionCard>
-        )}
-
-        {/* Step 5: End Room Scheduling (Circle mode only, behind ENABLE_END_ROOM flag) */}
-        {ENABLE_END_ROOM && currentStep === 5 && !showTransition && !isSoloMode && (
+        {/* Step 4: End Room Scheduling (Circle mode only, behind ENABLE_END_ROOM flag) */}
+        {ENABLE_END_ROOM && currentStep === 4 && !showTransition && !isSoloMode && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleEndRoomSubmit} className="flex flex-col">
               <div className="flex flex-col pt-2 pb-4">

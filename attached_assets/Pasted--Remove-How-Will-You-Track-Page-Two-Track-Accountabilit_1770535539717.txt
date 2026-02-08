@@ -1,0 +1,96 @@
+
+Remove "How Will You Track?" Page + Two-Track Accountability System
+
+REMOVE THIS PAGE ENTIRELY
+Delete the "How Will You Track?" page that asks users to choose between:
+* Daily Check-ins
+* One-time Check-in
+Why remove it: The tracking method is now automatically determined by timeline choice (Ongoing vs Set Dates). Users don't need to make this decision.
+
+TWO-TRACK ACCOUNTABILITY SYSTEM
+Replace the removed page with automatic logic based on timeline:
+ONGOING WILLS = Data-Driven 📊 (same flow as daily checks in have)
+* Daily check-ins stored in database
+* Show calendar view (same as how the daily check in wills currently have)
+* User sees progress during Will
+* Final review: auto-calculated from data + optional reflection
+Why: Long-term habits need visible progress
+
+SET DATES WILLS = Reflection-Based 🎯
+* Daily check-ins acknowledged but NOT stored
+* No calendar, no percentages, no tracking
+* Final review modal only,: 
+Why: Time-boxed challenges just need daily reminders, not data
+
+UPDATED WILL CREATION FLOW
+
+OLD FLOW:
+
+What → Why → When (Timeline) → How Will You Track? → Create
+
+NEW FLOW:
+
+What → Why → When (Timeline with settings) → Create
+The timeline page now includes check-in settings directly.
+
+CHANGE 1: Ongoing Timeline Setup
+Current: Only shows start date/time
+Add these sections:
+
+📅 START
+[Date picker] [Time picker]
+
+📆 ACTIVE DAYS
+Which days does this apply to?
+○ Every day (7 days/week)
+○ Weekdays only (Mon-Fri)
+○ Custom schedule
+  [If custom: show day checkboxes]
+
+⏰ CHECK-IN TIME
+When should we ask if you did it?
+[Time picker: 8:00 PM]
+Store: activeDays, customDays, checkInTime
+
+CHANGE 2: Set Dates Timeline Setup
+Current: Shows start/end date/time
+Add this section:
+
+⏰ CHECK-IN TIME
+When should we ask if you did it?
+[Time picker: 8:00 PM]
+💡 Pick a time after you've completed your Will
+Store: checkInTime
+
+BACKEND LOGIC
+For Ongoing Wills:
+* Store every check-in in database
+* Build calendar, calculate success rate
+* Final review shows auto-calculated results
+For Set Dates Wills:
+* Acknowledge check-in with simple confirmation
+* Do NOT store in database
+* No progress metrics
+* Final review requires manual selection
+Notifications:
+* Send at user's check-in time
+* Ongoing: Only on active days
+* Set Dates: Every day until end date
+
+WHAT TO BUILD
+Remove:
+* 		 Delete "How Will You Track?" page entirely
+* 		 Remove tracking type selection UI
+* 		 Remove one-time check-in flow
+Add to Ongoing Setup:
+* 		 Active Days section (Every day/Weekdays/Custom)
+* 		 Check-In Time section
+* 		 Store new fields in database
+Add to Set Dates Setup:
+* 		 Check-In Time section
+Backend:
+* 		 Only store check-ins for Ongoing Wills
+* 		 Set Dates: acknowledge only, don't store
+* 		 Auto-determine tracking from timeline type
+
+Summary: No more "How Will You Track?" page. Timeline choice (Ongoing vs Set Dates) automatically determines if we track data or just prompt. Both timelines now capture check-in time directly in their setup.**
