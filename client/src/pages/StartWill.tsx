@@ -418,6 +418,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         endDate: isIndefinite ? null : updatedWillData.endDate,
         endRoomScheduledAt: null,
         circleId: null,
+        mode: 'personal',
+        what: updatedWillData.what,
+        because: updatedWillData.why,
         checkInType: checkInType,
         isIndefinite: isIndefinite,
         visibility: visibility,
@@ -434,6 +437,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         endDate: isIndefinite ? null : updatedWillData.endDate,
         endRoomScheduledAt: null,
         circleId: circle?.id,
+        mode: 'circle',
         willType: willType || 'classic',
         sharedWhat: willType === 'cumulative' ? updatedWillData.what : undefined,
         checkInType: checkInType,
@@ -1066,7 +1070,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         )}
         
         {/* Step 1: What Will You Do - Focused Writing Experience */}
-        {currentStep === 1 && !showTransition && (
+        {currentStep === 1 && !showTransition && !showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep2Submit} className="flex flex-col">
               {/* Main Writing Area - Compact, No Scroll */}

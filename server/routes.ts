@@ -38,7 +38,6 @@ function generateInviteCode(): string {
 function getWillStatus(will: any, memberCount: number): string {
   const now = new Date();
   const startDate = new Date(will.startDate);
-  const endDate = new Date(will.endDate);
 
   // Respect terminal states - these should never be recalculated
   if (will.status === 'completed' || will.status === 'archived') {
@@ -50,11 +49,22 @@ function getWillStatus(will: any, memberCount: number): string {
     return 'will_review';
   }
 
-  // FIXED: Always use date-based calculation for non-terminal statuses
-  // This ensures 'waiting_for_end_room' (legacy) gets properly transitioned
-  // to 'will_review' when the Will has ended
+  // Indefinite wills never auto-transition to will_review (they have no end date)
+  if (will.isIndefinite || !will.endDate) {
+    if (now >= startDate) {
+      return 'active';
+    }
+    const commitmentCount = will.commitments?.length || 0;
+    if (commitmentCount < memberCount) {
+      return 'pending';
+    }
+    return 'scheduled';
+  }
+
+  const endDate = new Date(will.endDate);
+
+  // Date-based calculation for non-terminal statuses with end dates
   if (now >= endDate) {
-    // Will has ended - transition to will_review for mandatory reflection
     return 'will_review';
   } else if (now >= startDate) {
     // Will is currently active
