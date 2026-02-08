@@ -13,8 +13,11 @@ import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
+import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Users } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users } from "lucide-react";
+
+const ENABLE_END_ROOM = false;
 
 // Helper function to get next Monday's date in YYYY-MM-DD format (local timezone)
 // Returns the upcoming Monday:
@@ -70,11 +73,15 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
   
-  // All modes now have 4 steps: What, Why, When, Tracking
-  const totalSteps = 4;
+  // 4 steps without End Room: What, Why, When, Tracking
+  // 5 steps with End Room: What, Why, When, Tracking, End Room/Confirm
+  const totalSteps = ENABLE_END_ROOM ? 5 : 4;
   
   // Get step label based on mode
   const getStepLabel = (step: number) => {
+    if (ENABLE_END_ROOM && step === 5) {
+      return isSoloMode ? "Confirm" : "End Room";
+    }
     const labels = ["", "What", "Why", "When", "Tracking"];
     return labels[step] || "";
   };
@@ -150,6 +157,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     what: '',
     why: '',
     circleId: null as number | null,
+    endRoomScheduledAt: '' as string | null,
   });
   
   // Will type for Circle mode: 'classic' (individual commitments) or 'cumulative' (shared commitment)
@@ -170,6 +178,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [whyCharCount, setWhyCharCount] = useState(0);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [showHelpIcon, setShowHelpIcon] = useState(false);
+  const [endRoomDateTime, setEndRoomDateTime] = useState('');
+  const [showEndRoomForm, setShowEndRoomForm] = useState(false);
+  const [showSkipConfirmation, setShowSkipConfirmation] = useState(false);
   
   // Daily reminder settings - track if user has made changes
   const [dailyReminderTime, setDailyReminderTime] = useState<string>('');
@@ -441,7 +452,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     setCurrentStep(3);
   };
   
-  // Handler for circle Will creation (replaces End Room step)
+  // Handler for circle Will creation (used when End Room is disabled)
   const handleCircleCreateSubmit = () => {
     createWillMutation.mutate({
       title: willData.what || "Group Goal",
@@ -449,6 +460,54 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       startDate: willData.startDate,
       endDate: isIndefinite ? null : willData.endDate,
       endRoomScheduledAt: null,
+      circleId: circle?.id,
+      willType: willType || 'classic',
+      sharedWhat: willType === 'cumulative' ? willData.what : undefined,
+      checkInType: checkInType,
+      isIndefinite: isIndefinite,
+    });
+  };
+
+  // Handler for End Room scheduling (Step 5 in circle mode, only when ENABLE_END_ROOM is true)
+  const handleEndRoomSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const endRoomDateTimeValue = formData.get('endRoomDateTime') as string;
+
+    let endRoomTimeUTC = null;
+    if (endRoomDateTimeValue) {
+      const endRoomTime = new Date(endRoomDateTimeValue);
+      const willEndTime = new Date(willData.endDate);
+      const maxEndRoomTime = new Date(willEndTime.getTime() + 48 * 60 * 60 * 1000);
+
+      if (endRoomTime <= willEndTime) {
+        toast({
+          title: "Invalid End Room Time",
+          description: "End Room must be scheduled after the Will ends",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (endRoomTime > maxEndRoomTime) {
+        toast({
+          title: "Invalid End Room Time",
+          description: "End Room must be scheduled within 48 hours after the Will ends",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      endRoomTimeUTC = new Date(endRoomDateTimeValue).toISOString();
+    }
+    
+    createWillMutation.mutate({
+      title: willData.what || "Group Goal",
+      description: willData.why || "Group commitment",
+      startDate: willData.startDate,
+      endDate: isIndefinite ? null : willData.endDate,
+      endRoomScheduledAt: isIndefinite ? null : endRoomTimeUTC,
       circleId: circle?.id,
       willType: willType || 'classic',
       sharedWhat: willType === 'cumulative' ? willData.what : undefined,
@@ -1102,12 +1161,14 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 </div>
               )}
 
-              {/* Create Will Button */}
+              {/* Create Will Button (or Next to End Room when enabled) */}
               <div className="flex justify-end pt-2">
                 <button
                   type="button"
                   onClick={() => {
-                    if (isSoloMode) {
+                    if (ENABLE_END_ROOM && !isSoloMode) {
+                      setCurrentStep(5);
+                    } else if (isSoloMode) {
                       handlePersonalConfirmSubmit();
                     } else {
                       handleCircleCreateSubmit();
@@ -1123,14 +1184,150 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 >
                   {createWillMutation.isPending || addCommitmentMutation.isPending 
                     ? 'Creating...' 
-                    : 'Create Will'}
+                    : (ENABLE_END_ROOM && !isSoloMode ? 'Next' : 'Create Will')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </button>
               </div>
             </div>
           </SectionCard>
         )}
+
+        {/* Step 5: End Room Scheduling (Circle mode only, behind ENABLE_END_ROOM flag) */}
+        {ENABLE_END_ROOM && currentStep === 5 && !showTransition && !isSoloMode && (
+          <div className="flex flex-col animate-in fade-in duration-500">
+            <form onSubmit={handleEndRoomSubmit} className="flex flex-col">
+              <div className="flex flex-col pt-2 pb-4">
+                <div className="flex justify-center mb-2">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-md opacity-20"></div>
+                    <div className="relative w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
+                      <Video className="w-5 h-5 text-blue-600" />
+                    </div>
+                  </div>
+                </div>
+                
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-center px-2">
+                  Schedule a video call after your <em>Will</em> ends on{' '}
+                  <span className="font-semibold text-gray-900">
+                    {endDate ? new Date(`${endDate}T${endTime || '12:00'}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}{' '}
+                    at {endTime ? new Date(`${endDate}T${endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '12:00 PM'}
+                  </span>
+                </label>
+                
+                <div className="w-full max-w-xs mx-auto mb-3">
+                  <input
+                    type="datetime-local"
+                    name="endRoomDateTime"
+                    min={willData.endDate}
+                    max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
+                    value={endRoomDateTime}
+                    onChange={(e) => setEndRoomDateTime(e.target.value)}
+                    className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all duration-200"
+                    data-testid="input-end-room-datetime"
+                  />
+                </div>
+
+                <div className="mx-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                  <ul className="space-y-1.5 text-sm text-gray-600 leading-relaxed">
+                    <li className="flex items-start">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                      Video link opens automatically at chosen time
+                    </li>
+                    <li className="flex items-start">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                      Runs for 30 minutes
+                    </li>
+                    <li className="flex items-start">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                      Can't be changed once Will starts
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowSkipConfirmation(true)}
+                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                  className="h-11 px-4 text-sm font-medium text-gray-500 bg-transparent border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 disabled:opacity-50"
+                  data-testid="button-skip-endroom"
+                >
+                  Skip this step
+                </button>
+                
+                <button
+                  type="submit"
+                  disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
+                  className={`h-11 px-4 inline-flex items-center justify-center font-medium text-base rounded-lg transition-colors ${
+                    !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/90 active:bg-secondary/80'
+                  }`}
+                  data-testid="button-schedule-and-create"
+                >
+                  {createWillMutation.isPending || addCommitmentMutation.isPending 
+                    ? 'Creating...' 
+                    : 'Create'}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
         
+        {/* Skip End Room Confirmation Modal (behind ENABLE_END_ROOM flag) */}
+        {ENABLE_END_ROOM && showSkipConfirmation && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-5 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">
+                Are you sure you want to skip the End Room?
+              </h3>
+              
+              <p className="text-sm text-gray-600 mb-6 text-center leading-relaxed">
+                This is your circle's opportunity to gather and reflect at the end of your <em>Will</em>.
+                <br /><br />
+                You can still continue without setting one.
+              </p>
+              
+              <div className="flex flex-col space-y-3">
+                <button
+                  onClick={() => setShowSkipConfirmation(false)}
+                  className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200"
+                  data-testid="modal-button-cancel"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSkipConfirmation(false);
+                    setEndRoomDateTime('');
+                    createWillMutation.mutate({
+                      title: willData.what || "Group Goal",
+                      description: willData.why || "Group commitment",
+                      startDate: willData.startDate,
+                      endDate: isIndefinite ? null : willData.endDate,
+                      endRoomScheduledAt: null,
+                      circleId: circle?.id,
+                      willType: willType || 'classic',
+                      sharedWhat: willType === 'cumulative' ? willData.what : undefined,
+                      checkInType: checkInType,
+                      isIndefinite: isIndefinite,
+                    });
+                  }}
+                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-xl text-sm font-medium hover:bg-gray-900 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-testid="modal-button-skip"
+                >
+                  {createWillMutation.isPending || addCommitmentMutation.isPending 
+                    ? 'Creating...' 
+                    : 'Skip End Room'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Instruction Modal */}
         <WillInstructionModal
           isOpen={showInstructionModal}
