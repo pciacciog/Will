@@ -935,16 +935,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                         </button>
                         <button
                           type="button"
-                          onClick={() => setActiveDays('weekdays')}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                            activeDays === 'weekdays' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          data-testid="button-active-days-weekdays"
-                        >
-                          Weekdays
-                        </button>
-                        <button
-                          type="button"
                           onClick={() => setActiveDays('custom')}
                           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                             activeDays === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -965,7 +955,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                                   prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
                                 );
                               }}
-                              className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
+                              className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
                                 customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                               }`}
                               data-testid={`button-day-${i}`}
