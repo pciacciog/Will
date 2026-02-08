@@ -165,7 +165,7 @@ export default function Home() {
                     <Plus className="w-6 h-6 mr-3 flex-shrink-0" strokeWidth={2.5} />
                     <div>
                       <h2 className="text-lg font-semibold leading-tight">Create a Will</h2>
-                      <p className="text-emerald-100 text-sm mt-0.5">Make a commitment</p>
+                      <p className="text-emerald-100 text-sm mt-0.5">Stay Accountable</p>
                     </div>
                   </div>
                 </div>
@@ -254,6 +254,7 @@ export default function Home() {
                       <span className="text-2xl">🔍</span>
                     </div>
                     <h3 className="text-base font-semibold text-gray-900">Explore</h3>
+                    <p className="text-xs text-gray-500 mt-1">Browse public Wills</p>
                   </div>
                 </div>
               </button>
@@ -269,6 +270,7 @@ export default function Home() {
                       <span className="text-2xl">👥</span>
                     </div>
                     <h3 className="text-base font-semibold text-gray-900">Circles</h3>
+                    <p className="text-xs text-gray-500 mt-1">Shared Accountability</p>
                   </div>
                 </div>
               </button>
