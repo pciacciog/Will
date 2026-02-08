@@ -715,7 +715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Solo wills stay 'pending' until the scheduler transitions them to 'active' at startDate
         // The scheduler will also send the will_started notification when transitioning
         
-        console.log(`Created solo Will ${will.id} for user ${userId}, status: pending, starts: ${req.body.startDate}, midpoint: ${midpointTime.toISOString()}`);
+        console.log(`Created solo Will ${will.id} for user ${userId}, status: pending, starts: ${req.body.startDate}, midpoint: ${midpointTime ? midpointTime.toISOString() : 'none (indefinite)'}`);
         
         res.json({ ...will, status: 'pending', midpointAt: midpointTime });
       } else {
