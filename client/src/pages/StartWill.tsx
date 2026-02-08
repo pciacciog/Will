@@ -13,9 +13,8 @@ import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
-import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Users } from "lucide-react";
 
 // Helper function to get next Monday's date in YYYY-MM-DD format (local timezone)
 // Returns the upcoming Monday:
@@ -71,17 +70,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
   
-  // Both modes now have 5 steps:
-  // Solo mode: When, What, Why, Tracking, Confirm
-  // Circle mode: When, What, Why, Tracking, End Room
-  const totalSteps = 5;
+  // All modes now have 4 steps: What, Why, When, Tracking
+  const totalSteps = 4;
   
   // Get step label based on mode
   const getStepLabel = (step: number) => {
-    if (step === 5) {
-      return isSoloMode ? "Confirm" : "End Room";
-    }
-    const labels = ["", "When", "What", "Why", "Tracking"];
+    const labels = ["", "What", "Why", "When", "Tracking"];
     return labels[step] || "";
   };
   
@@ -156,7 +150,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     what: '',
     why: '',
     circleId: null as number | null,
-    endRoomScheduledAt: '' as string | null,
   });
   
   // Will type for Circle mode: 'classic' (individual commitments) or 'cumulative' (shared commitment)
@@ -177,9 +170,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [whyCharCount, setWhyCharCount] = useState(0);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [showHelpIcon, setShowHelpIcon] = useState(false);
-  const [endRoomDateTime, setEndRoomDateTime] = useState('');
-  const [showEndRoomForm, setShowEndRoomForm] = useState(false);
-  const [showSkipConfirmation, setShowSkipConfirmation] = useState(false);
   
   // Daily reminder settings - track if user has made changes
   const [dailyReminderTime, setDailyReminderTime] = useState<string>('');
@@ -397,7 +387,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     }
 
     setWillData({ ...willData, startDate: startDateTime, endDate: endDateTime });
-    setCurrentStep(2);
+    // When is now step 3 → show transition animation then go to step 4 (Tracking)
+    setShowTransition(true);
+    setTimeout(() => {
+      setShowTransition(false);
+      setCurrentStep(4);
+    }, 1800);
   };
 
   const handleStep2Submit = (e: React.FormEvent) => {
@@ -416,7 +411,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     }
 
     setWillData({ ...willData, what: what.trim() });
-    setCurrentStep(3);
+    // What is now step 1 → go to step 2 (Why)
+    setCurrentStep(2);
   };
 
   const handleStep3Submit = (e: React.FormEvent) => {
@@ -441,21 +437,27 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     };
     
     setWillData(updatedWillData);
-    
-    if (isSoloMode) {
-      // Solo mode: Go to tracking type step (Step 4)
-      setCurrentStep(4);
-    } else if (willType === 'cumulative') {
-      // Cumulative (shared) wills: Go to tracking type step (Step 4) - proposer chooses for everyone
-      setCurrentStep(4);
-    } else {
-      // Classic wills: Go to tracking type step (Step 4) - proposer chooses their own tracking type
-      // Other members will choose their own tracking type when joining via SubmitCommitment
-      setCurrentStep(4);
-    }
+    // Why is now step 2 → go to step 3 (When)
+    setCurrentStep(3);
   };
   
-  // Handler for personal Will confirmation step
+  // Handler for circle Will creation (replaces End Room step)
+  const handleCircleCreateSubmit = () => {
+    createWillMutation.mutate({
+      title: willData.what || "Group Goal",
+      description: willData.why || "Group commitment",
+      startDate: willData.startDate,
+      endDate: isIndefinite ? null : willData.endDate,
+      endRoomScheduledAt: null,
+      circleId: circle?.id,
+      willType: willType || 'classic',
+      sharedWhat: willType === 'cumulative' ? willData.what : undefined,
+      checkInType: checkInType,
+      isIndefinite: isIndefinite,
+    });
+  };
+
+  // Handler for personal Will creation
   const handlePersonalConfirmSubmit = () => {
     createWillMutation.mutate({
       title: willData.what || "Personal Goal",
@@ -473,67 +475,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     });
   };
 
-  const handleStep4Submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const endRoomDateTime = formData.get('endRoomDateTime') as string;
-
-    // End Room is now OPTIONAL - only validate if user provides a time
-    let endRoomTimeUTC = null;
-    if (endRoomDateTime) {
-      // Validate End Room scheduling rules
-      const endRoomTime = new Date(endRoomDateTime);
-      const willEndTime = new Date(willData.endDate);
-      const maxEndRoomTime = new Date(willEndTime.getTime() + 48 * 60 * 60 * 1000);
-
-      if (endRoomTime <= willEndTime) {
-        toast({
-          title: "Invalid End Room Time",
-          description: "End Room must be scheduled after the Will ends",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (endRoomTime > maxEndRoomTime) {
-        toast({
-          title: "Invalid End Room Time",
-          description: "End Room must be scheduled within 48 hours after the Will ends",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Convert local datetime to UTC for storage
-      endRoomTimeUTC = new Date(endRoomDateTime).toISOString();
-    }
-    
-    const finalWillData = {
-      ...willData,
-      endRoomScheduledAt: endRoomTimeUTC,
-      circleId: circle?.id,
-    };
-
-    // Create the will with optional End Room time
-    createWillMutation.mutate({
-      title: finalWillData.what || "Group Goal",
-      description: finalWillData.why || "Group commitment",
-      startDate: finalWillData.startDate,
-      endDate: isIndefinite ? null : finalWillData.endDate,
-      endRoomScheduledAt: isIndefinite ? null : finalWillData.endRoomScheduledAt,
-      circleId: finalWillData.circleId,
-      willType: willType || 'classic',
-      sharedWhat: willType === 'cumulative' ? finalWillData.what : undefined,
-      checkInType: checkInType,
-      isIndefinite: isIndefinite,
-    });
-
-    setWillData(finalWillData);
-  };
-
   const handleCancel = () => {
-    setLocation(isSoloMode ? '/solo/hub' : (circle?.id ? `/circles/${circle.id}` : '/circles'));
+    setLocation(isSoloMode ? '/' : (circle?.id ? `/circles/${circle.id}` : '/circles'));
   };
 
   const handleModalStart = () => {
@@ -572,13 +515,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 onClick={() => {
                   const circleHubPath = circle?.id ? `/circles/${circle.id}` : '/circles';
                   if (showTypeSelection) {
-                    // On type selection, go back to circle hub
                     setLocation(circleHubPath);
                   } else if (currentStep === 1 && !isSoloMode && willType !== null) {
-                    // On step 1 in circle mode, go back to type selection
                     setWillType(null);
                   } else if (currentStep === 1) {
-                    setLocation(isSoloMode ? '/solo/hub' : circleHubPath);
+                    setLocation(isSoloMode ? '/' : circleHubPath);
                   } else {
                     setCurrentStep(currentStep - 1);
                   }
@@ -625,16 +566,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           <div className="text-center mt-16">
             <h1 className="text-xl font-semibold text-gray-900">
               {showTypeSelection && "Choose your Will Type:"}
-              {!showTypeSelection && currentStep === 1 && "Set Your Timeline"}
-              {!showTypeSelection && currentStep === 2 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
-              {!showTypeSelection && currentStep === 3 && "Why would you like to do this?"}
+              {!showTypeSelection && currentStep === 1 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
+              {!showTypeSelection && currentStep === 2 && "Why would you like to do this?"}
+              {!showTypeSelection && currentStep === 3 && "Set Your Timeline"}
               {!showTypeSelection && currentStep === 4 && "How Will You Track?"}
-              {!showTypeSelection && currentStep === 5 && (isSoloMode ? "Review Your Will" : (willType === 'cumulative' ? "Review & Schedule End Room" : "Schedule Your End Room"))}
             </h1>
             {!showTypeSelection && currentStep === 1 && (
-              <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
-            )}
-            {!showTypeSelection && currentStep === 2 && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
@@ -644,7 +581,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>
               </>
             )}
-            {!showTypeSelection && currentStep === 3 && (
+            {!showTypeSelection && currentStep === 2 && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
@@ -654,16 +591,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
               </>
             )}
+            {!showTypeSelection && currentStep === 3 && (
+              <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
+            )}
             {!showTypeSelection && currentStep === 4 && (
               <p className="text-sm text-gray-500 mt-1">
                 Choose how you'll track your progress
-              </p>
-            )}
-            {!showTypeSelection && currentStep === 5 && (
-              <p className="text-sm text-gray-500 mt-1">
-                {isSoloMode 
-                  ? "Confirm your commitment before starting" 
-                  : "An opportunity for your circle to gather, reflect, share, and honor the effort."}
               </p>
             )}
           </div>
@@ -756,8 +689,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
 
-        {/* Step 1: Set Dates - Focused Experience (Matches What/Why) */}
-        {currentStep === 1 && !showTransition && !showTypeSelection && (
+        {/* Step 3: Set Dates - Focused Experience */}
+        {currentStep === 3 && !showTransition && !showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep1Submit} className="flex flex-col flex-1">
               {/* Main Content Area - Compact */}
@@ -933,8 +866,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
         
-        {/* Step 2: What Will You Do - Focused Writing Experience */}
-        {currentStep === 2 && !showTransition && (
+        {/* Step 1: What Will You Do - Focused Writing Experience */}
+        {currentStep === 1 && !showTransition && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep2Submit} className="flex flex-col">
               {/* Main Writing Area - Compact, No Scroll */}
@@ -984,8 +917,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
         
-        {/* Step 3: Why - Focused Writing Experience (Matches Step 2) */}
-        {currentStep === 3 && !showTransition && (
+        {/* Step 2: Why - Focused Writing Experience */}
+        {currentStep === 2 && !showTransition && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep3Submit} className="flex flex-col">
               {/* Main Writing Area - Compact, No Scroll */}
@@ -1049,7 +982,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
         
-        {/* Step 4: Tracking Type Selection */}
+        {/* Step 4: Tracking Type Selection - Final Step */}
         {currentStep === 4 && !showTransition && (
           <SectionCard>
             <div className="space-y-6 px-4 py-2">
@@ -1060,10 +993,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               {/* Daily Check-ins Option */}
               <button
                 type="button"
-                onClick={() => {
-                  setCheckInType('daily');
-                  setCurrentStep(5);
-                }}
+                onClick={() => setCheckInType('daily')}
                 className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                   checkInType === 'daily' 
                     ? 'border-purple-500 bg-purple-50' 
@@ -1090,10 +1020,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               {/* One-time Check-in Option */}
               <button
                 type="button"
-                onClick={() => {
-                  setCheckInType('one-time');
-                  setCurrentStep(5);
-                }}
+                onClick={() => setCheckInType('one-time')}
                 className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                   checkInType === 'one-time' 
                     ? 'border-green-500 bg-green-50' 
@@ -1116,303 +1043,94 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </div>
                 </div>
               </button>
+
+              {/* Reminder Time for Daily Check-ins */}
+              {checkInType === 'daily' && (
+                <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-600">Remind me at:</p>
+                    <input
+                      type="time"
+                      value={willReminderTime}
+                      onChange={(e) => setWillReminderTime(e.target.value)}
+                      className="text-sm bg-white border border-blue-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                      data-testid="input-reminder-time"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1.5">
+                    You'll get a daily notification to check in
+                  </p>
+                </div>
+              )}
+
+              {/* Visibility Section - Solo mode only */}
+              {isSoloMode && (
+                <div className="bg-purple-50/60 rounded-xl p-4 border border-purple-100">
+                  <p className="text-sm font-semibold text-purple-700 mb-3">Who can see this?</p>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="private"
+                        checked={visibility === 'private'}
+                        onChange={() => setVisibility('private')}
+                        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                        data-testid="radio-visibility-private"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">Just me</span>
+                        <p className="text-xs text-gray-500">Private commitment</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="public"
+                        checked={visibility === 'public'}
+                        onChange={() => setVisibility('public')}
+                        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                        data-testid="radio-visibility-public"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">Everyone</span>
+                        <p className="text-xs text-gray-500">Discoverable in Explore</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Create Will Button */}
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isSoloMode) {
+                      handlePersonalConfirmSubmit();
+                    } else {
+                      handleCircleCreateSubmit();
+                    }
+                  }}
+                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                  className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
+                    createWillMutation.isPending || addCommitmentMutation.isPending
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-sm'
+                  }`}
+                  data-testid="button-confirm-create"
+                >
+                  {createWillMutation.isPending || addCommitmentMutation.isPending 
+                    ? 'Creating...' 
+                    : 'Create Will'}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </button>
+              </div>
             </div>
           </SectionCard>
         )}
         
-        {/* Step 5: Confirmation (Solo) or End Room Scheduling (Circle) */}
-        {currentStep === 5 && !showTransition && (
-          <>
-            {isSoloMode ? (
-              /* Solo Mode: Confirmation Screen */
-              <SectionCard>
-                <div className="space-y-4 px-4">
-                  {/* Timeline Section - with distinct container */}
-                  <div className="bg-purple-50/60 rounded-xl p-4 border border-purple-100">
-                    <div className="flex items-center mb-2">
-                      <Calendar className="w-4 h-4 text-purple-500 mr-2" />
-                      <p className="text-sm font-semibold text-purple-700">Timeline</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm pl-6">
-                      <span className="font-medium text-gray-900">{formatDateForDisplay(willData.startDate)}</span>
-                      <ArrowRight className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-900">{isIndefinite ? 'Ongoing' : formatDateForDisplay(willData.endDate)}</span>
-                    </div>
-                  </div>
-
-                  {/* What Section - with distinct container */}
-                  <div className="bg-green-50/60 rounded-xl p-4 border border-green-100">
-                    <div className="flex items-center mb-2">
-                      <Target className="w-4 h-4 text-green-500 mr-2" />
-                      <p className="text-sm font-semibold text-green-700">Your What</p>
-                    </div>
-                    <div className="pl-6">
-                      <p className="text-base font-semibold text-gray-900 italic">
-                        "I will {willData.what}"
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Why Section - with distinct container */}
-                  <div className="bg-rose-50/60 rounded-xl p-4 border border-rose-100">
-                    <div className="flex items-center mb-2">
-                      <Heart className="w-4 h-4 text-rose-500 mr-2" />
-                      <p className="text-sm font-semibold text-rose-700">Your Why</p>
-                    </div>
-                    <div className="pl-6">
-                      <p className="text-sm text-gray-700 italic">
-                        Because {willData.why}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Tracking Type Section */}
-                  <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100">
-                    <div className="flex items-center mb-2">
-                      {checkInType === 'daily' ? (
-                        <Calendar className="w-4 h-4 text-blue-500 mr-2" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 text-blue-500 mr-2" />
-                      )}
-                      <p className="text-sm font-semibold text-blue-700">Tracking</p>
-                    </div>
-                    <div className="pl-6">
-                      <p className="text-sm text-gray-700">
-                        {checkInType === 'daily' ? 'Daily check-ins' : 'One-time check-in at the end'}
-                      </p>
-                    </div>
-                    
-                    {/* Reminder Time Picker for Daily Check-ins */}
-                    {checkInType === 'daily' && (
-                      <div className="mt-3 pt-3 border-t border-blue-100">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-600">Remind me at:</p>
-                          <input
-                            type="time"
-                            value={willReminderTime}
-                            onChange={(e) => setWillReminderTime(e.target.value)}
-                            className="text-sm bg-white border border-blue-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
-                            data-testid="input-reminder-time"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1.5">
-                          You'll get a daily notification to check in
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Visibility Section */}
-                  <div className="bg-purple-50/60 rounded-xl p-4 border border-purple-100">
-                    <p className="text-sm font-semibold text-purple-700 mb-3">Who can see this?</p>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="visibility"
-                          value="private"
-                          checked={visibility === 'private'}
-                          onChange={() => setVisibility('private')}
-                          className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                          data-testid="radio-visibility-private"
-                        />
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">Just me</span>
-                          <p className="text-xs text-gray-500">Private commitment</p>
-                        </div>
-                      </label>
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="visibility"
-                          value="public"
-                          checked={visibility === 'public'}
-                          onChange={() => setVisibility('public')}
-                          className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                          data-testid="radio-visibility-public"
-                        />
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">Everyone</span>
-                          <p className="text-xs text-gray-500">Discoverable in Explore</p>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <div className="flex justify-end pt-2">
-                    <button
-                      type="button"
-                      onClick={handlePersonalConfirmSubmit}
-                      disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                      className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
-                        createWillMutation.isPending || addCommitmentMutation.isPending
-                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-sm'
-                      }`}
-                      data-testid="button-confirm-create"
-                    >
-                      {createWillMutation.isPending || addCommitmentMutation.isPending 
-                        ? 'Creating...' 
-                        : 'Create Will'}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </button>
-                  </div>
-                </div>
-              </SectionCard>
-            ) : (
-              /* Circle Mode: End Room Scheduling - Compact, No Scroll */
-              <div className="flex flex-col animate-in fade-in duration-500">
-                <form onSubmit={handleStep4Submit} className="flex flex-col">
-                  {/* Content Area - Compact */}
-                  <div className="flex flex-col pt-2 pb-4">
-                    {/* Compact Video Icon */}
-                    <div className="flex justify-center mb-2">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-md opacity-20"></div>
-                        <div className="relative w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full border border-blue-100 flex items-center justify-center">
-                          <Video className="w-5 h-5 text-blue-600" />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Description - Tighter */}
-                    <label className="block text-sm font-medium text-gray-700 mb-2 text-center px-2">
-                      Schedule a video call after your <em>Will</em> ends on{' '}
-                      <span className="font-semibold text-gray-900">
-                        {endDate ? new Date(`${endDate}T${endTime || '12:00'}`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}{' '}
-                        at {endTime ? new Date(`${endDate}T${endTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '12:00 PM'}
-                      </span>
-                    </label>
-                    
-                    {/* Input field - Compact */}
-                    <div className="w-full max-w-xs mx-auto mb-3">
-                      <input
-                        type="datetime-local"
-                        name="endRoomDateTime"
-                        min={willData.endDate}
-                        max={willData.endDate ? new Date(new Date(willData.endDate).getTime() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16) : undefined}
-                        value={endRoomDateTime}
-                        onChange={(e) => setEndRoomDateTime(e.target.value)}
-                        className="w-full text-sm text-gray-900 bg-white border border-gray-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all duration-200"
-                        data-testid="input-end-room-datetime"
-                      />
-                    </div>
-
-                    {/* Notes Section - Compact */}
-                    <div className="mx-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
-                      <ul className="space-y-1.5 text-sm text-gray-600 leading-relaxed">
-                        <li className="flex items-start">
-                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                          Video link opens automatically at chosen time
-                        </li>
-                        <li className="flex items-start">
-                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                          Runs for 30 minutes
-                        </li>
-                        <li className="flex items-start">
-                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
-                          Can't be changed once Will starts
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Navigation - Anchored, matches other steps */}
-                  <div className="flex items-center justify-between pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
-                    {/* Skip button - Lower-left, ghost style */}
-                    <button 
-                      type="button" 
-                      onClick={() => setShowSkipConfirmation(true)}
-                      disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                      className="h-11 px-4 text-sm font-medium text-gray-500 bg-transparent border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 disabled:opacity-50"
-                      data-testid="button-skip-endroom"
-                    >
-                      Skip this step
-                    </button>
-                    
-                    {/* Primary CTA - matches Next button style */}
-                    <button
-                      type="submit"
-                      disabled={!endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending}
-                      className={`h-11 px-4 inline-flex items-center justify-center font-medium text-base rounded-lg transition-colors ${
-                        !endRoomDateTime || createWillMutation.isPending || addCommitmentMutation.isPending
-                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/90 active:bg-secondary/80'
-                      }`}
-                      data-testid="button-schedule-and-create"
-                    >
-                      {createWillMutation.isPending || addCommitmentMutation.isPending 
-                        ? 'Creating...' 
-                        : 'Create'}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </>
-        )}
-        
-        {/* Skip End Room Confirmation Modal */}
-        {showSkipConfirmation && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-5 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-              {/* Modal Header */}
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">
-                Are you sure you want to skip the End Room?
-              </h3>
-              
-              {/* Modal Body */}
-              <p className="text-sm text-gray-600 mb-6 text-center leading-relaxed">
-                This is your circle's opportunity to gather and reflect at the end of your <em>Will</em>.
-                <br /><br />
-                You can still continue without setting one.
-              </p>
-              
-              {/* Modal Actions */}
-              <div className="flex flex-col space-y-3">
-                <button
-                  onClick={() => setShowSkipConfirmation(false)}
-                  className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors duration-200"
-                  data-testid="modal-button-cancel"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowSkipConfirmation(false);
-                    setEndRoomDateTime('');
-                    // Submit without End Room
-                    const finalWillData = {
-                      ...willData,
-                      endRoomScheduledAt: null,
-                      circleId: circle?.id,
-                    };
-                    createWillMutation.mutate({
-                      title: finalWillData.what || "Group Goal",
-                      description: finalWillData.why || "Group commitment",
-                      startDate: finalWillData.startDate,
-                      endDate: finalWillData.endDate,
-                      endRoomScheduledAt: null,
-                      circleId: finalWillData.circleId,
-                      willType: willType || 'classic',
-                      sharedWhat: willType === 'cumulative' ? finalWillData.what : undefined,
-                    });
-                  }}
-                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-xl text-sm font-medium hover:bg-gray-900 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-testid="modal-button-skip"
-                >
-                  {createWillMutation.isPending || addCommitmentMutation.isPending 
-                    ? 'Creating...' 
-                    : 'Skip End Room'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Instruction Modal */}
         <WillInstructionModal
           isOpen={showInstructionModal}
