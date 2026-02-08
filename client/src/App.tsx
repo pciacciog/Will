@@ -345,6 +345,7 @@ function Router() {
             <Route path="/circles" component={CircleLobby} />
             <Route path="/circles/:circleId">{(params) => <InnerCircleHub circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/hub" component={LegacyHubRedirect} />
+            <Route path="/solo/hub" component={Home} />
             <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/explore" component={Explore} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
