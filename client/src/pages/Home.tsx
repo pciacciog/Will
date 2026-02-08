@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Compass, ArrowRight, Sparkles, Settings, LogOut, Plus, Target, ChevronRight } from "lucide-react";
+import { Users, Compass, ArrowRight, Sparkles, Settings, LogOut, Target, ChevronRight } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { queryClient } from "@/lib/queryClient";
@@ -27,6 +27,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [showSplash, setShowSplash] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [activeCard, setActiveCard] = useState<'explore' | 'circles' | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -148,9 +149,10 @@ export default function Home() {
             </div>
 
             {/* Greeting */}
-            <h1 className="text-2xl font-semibold text-gray-900 mb-8" data-testid="text-welcome">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-1" data-testid="text-welcome">
               Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
             </h1>
+            <p className="text-sm text-gray-400 mb-8">What will you commit to today?</p>
 
             {/* Create Will Button */}
             <button
@@ -159,14 +161,14 @@ export default function Home() {
               data-testid="button-create-will"
             >
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-300"></div>
-                <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl px-6 py-5 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-0.5">
-                  <div className="flex items-center justify-center text-white text-center">
-                    <Plus className="w-6 h-6 mr-3 flex-shrink-0" strokeWidth={2.5} />
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-20 group-hover:opacity-35 transition-opacity duration-300"></div>
+                <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl px-6 py-4 shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-0.5">
+                  <div className="flex items-center justify-between text-white">
                     <div>
-                      <h2 className="text-lg font-semibold leading-tight">Create a Will</h2>
-                      <p className="text-emerald-100 text-sm mt-0.5">Stay Accountable</p>
+                      <h2 className="text-base font-semibold tracking-wide">I Will</h2>
+                      <p className="text-emerald-100/80 text-xs mt-0.5">Make a commitment. Stay accountable.</p>
                     </div>
+                    <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-80 group-hover:translate-x-0.5 transition-all duration-200" />
                   </div>
                 </div>
               </div>
@@ -244,33 +246,51 @@ export default function Home() {
             {/* Explore & Circles Cards */}
             <div className="grid grid-cols-2 gap-4 w-full mb-8">
               <button
-                onClick={handleExplore}
+                onClick={() => { setActiveCard('explore'); handleExplore(); }}
+                onPointerDown={() => setActiveCard('explore')}
                 className="group"
                 data-testid="button-explore"
               >
-                <div className="h-full bg-white border border-gray-200 shadow-sm rounded-2xl group-hover:shadow-lg group-hover:border-blue-300 group-hover:-translate-y-0.5 transition-all duration-200">
-                  <div className="p-6 flex flex-col items-center justify-center text-center">
-                    <div className="w-14 h-14 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-3">
-                      <span className="text-2xl">🔍</span>
+                <div className={`h-full rounded-2xl transition-all duration-200 group-hover:-translate-y-0.5 ${
+                  activeCard === 'explore'
+                    ? 'bg-white border-2 border-blue-300 shadow-md shadow-blue-100/50'
+                    : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-blue-200'
+                }`}>
+                  <div className="p-5 flex flex-col items-center justify-center text-center">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-2.5 transition-colors duration-200 ${
+                      activeCard === 'explore' ? 'bg-blue-100' : 'bg-blue-50'
+                    }`}>
+                      <Compass className={`w-5 h-5 transition-colors duration-200 ${
+                        activeCard === 'explore' ? 'text-blue-600' : 'text-blue-400'
+                      }`} />
                     </div>
-                    <h3 className="text-base font-semibold text-gray-900">Explore</h3>
-                    <p className="text-xs text-gray-500 mt-1">Browse public Wills</p>
+                    <h3 className="text-sm font-semibold text-gray-900">Explore</h3>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Browse public Wills</p>
                   </div>
                 </div>
               </button>
 
               <button
-                onClick={handleCircles}
+                onClick={() => { setActiveCard('circles'); handleCircles(); }}
+                onPointerDown={() => setActiveCard('circles')}
                 className="group"
                 data-testid="button-circles"
               >
-                <div className="h-full bg-white border border-gray-200 shadow-sm rounded-2xl group-hover:shadow-lg group-hover:border-purple-300 group-hover:-translate-y-0.5 transition-all duration-200">
-                  <div className="p-6 flex flex-col items-center justify-center text-center">
-                    <div className="w-14 h-14 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center mb-3">
-                      <span className="text-2xl">👥</span>
+                <div className={`h-full rounded-2xl transition-all duration-200 group-hover:-translate-y-0.5 ${
+                  activeCard === 'circles'
+                    ? 'bg-white border-2 border-purple-300 shadow-md shadow-purple-100/50'
+                    : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-purple-200'
+                }`}>
+                  <div className="p-5 flex flex-col items-center justify-center text-center">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-2.5 transition-colors duration-200 ${
+                      activeCard === 'circles' ? 'bg-purple-100' : 'bg-purple-50'
+                    }`}>
+                      <Users className={`w-5 h-5 transition-colors duration-200 ${
+                        activeCard === 'circles' ? 'text-purple-600' : 'text-purple-400'
+                      }`} />
                     </div>
-                    <h3 className="text-base font-semibold text-gray-900">Circles</h3>
-                    <p className="text-xs text-gray-500 mt-1">Shared Accountability</p>
+                    <h3 className="text-sm font-semibold text-gray-900">Circles</h3>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Shared Accountability</p>
                   </div>
                 </div>
               </button>
