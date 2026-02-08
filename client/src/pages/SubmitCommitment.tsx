@@ -12,6 +12,7 @@ import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, U
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { notificationService } from "@/services/NotificationService";
 import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Handshake, Clock } from "lucide-react";
+import TimeChipPicker from "@/components/TimeChipPicker";
 
 export default function SubmitCommitment() {
   const { id } = useParams();
@@ -643,18 +644,16 @@ export default function SubmitCommitment() {
                       Daily Reminder
                     </p>
                   </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <Input 
-                      type="time" 
+                  <div className="flex flex-col items-center gap-2">
+                    <TimeChipPicker
                       value={dailyReminderTime}
-                      onChange={(e) => {
-                        setDailyReminderTime(e.target.value);
+                      onChange={(time) => {
+                        setDailyReminderTime(time);
                         setHasModifiedReminder(true);
                       }}
-                      step="900"
+                      presets={["07:00", "08:00", "12:00", "18:00", "19:00", "20:00", "21:00", "22:00"]}
                       disabled={skipDailyReminder === true}
-                      className={`w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none ${skipDailyReminder ? 'opacity-40' : ''}`}
-                      data-testid="input-daily-reminder-time"
+                      testId="input-daily-reminder-time"
                     />
                     <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
                       <input
@@ -827,18 +826,16 @@ export default function SubmitCommitment() {
                       Daily Reminder
                     </p>
                   </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <Input 
-                      type="time" 
+                  <div className="flex flex-col items-center gap-2">
+                    <TimeChipPicker
                       value={dailyReminderTime}
-                      onChange={(e) => {
-                        setDailyReminderTime(e.target.value);
+                      onChange={(time) => {
+                        setDailyReminderTime(time);
                         setHasModifiedReminder(true);
                       }}
-                      step="900"
+                      presets={["07:00", "08:00", "12:00", "18:00", "19:00", "20:00", "21:00", "22:00"]}
                       disabled={skipDailyReminder === true}
-                      className={`w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none ${skipDailyReminder ? 'opacity-40' : ''}`}
-                      data-testid="input-daily-reminder-time-classic"
+                      testId="input-daily-reminder-time-classic"
                     />
                     <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
                       <input

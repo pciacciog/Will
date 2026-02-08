@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { splitDateTime, createDateTimeFromInputs } from "@/lib/dateUtils";
+import TimeChipPicker from "@/components/TimeChipPicker";
 
 export default function EditWill() {
   const { id } = useParams();
@@ -253,11 +254,11 @@ export default function EditWill() {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
-                      <Input
-                        type="time"
+                      <TimeChipPicker
                         value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full"
+                        onChange={setStartTime}
+                        presets={["00:00", "06:00", "08:00", "12:00", "18:00"]}
+                        testId="edit-start-time"
                       />
                     </div>
                   </div>
@@ -278,11 +279,11 @@ export default function EditWill() {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Time</label>
-                      <Input
-                        type="time"
+                      <TimeChipPicker
                         value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        className="w-full"
+                        onChange={setEndTime}
+                        presets={["12:00", "17:00", "18:00", "21:00", "23:59"]}
+                        testId="edit-end-time"
                       />
                     </div>
                   </div>

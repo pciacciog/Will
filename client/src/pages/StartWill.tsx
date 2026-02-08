@@ -16,6 +16,7 @@ import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
 import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users } from "lucide-react";
+import TimeChipPicker from "@/components/TimeChipPicker";
 
 const ENABLE_END_ROOM = false;
 
@@ -843,7 +844,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     <p className="text-base font-semibold text-gray-800 text-center tracking-tight">
                       Start
                     </p>
-                    <div className="flex justify-center gap-3">
+                    <div className="flex justify-center">
                       <Input 
                         type="date" 
                         value={startDate}
@@ -856,16 +857,13 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                         className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
                         data-testid="input-start-date"
                       />
-                      <Input 
-                        type="time" 
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        step="900"
-                        required 
-                        className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
-                        data-testid="input-start-time"
-                      />
                     </div>
+                    <TimeChipPicker
+                      value={startTime}
+                      onChange={setStartTime}
+                      presets={["00:00", "06:00", "08:00", "12:00", "18:00"]}
+                      testId="input-start-time"
+                    />
                   </div>
                   
                   {!isIndefinite && (
@@ -880,7 +878,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                         <p className="text-base font-semibold text-gray-800 text-center tracking-tight">
                           End
                         </p>
-                        <div className="flex justify-center gap-3">
+                        <div className="flex justify-center">
                           <Input 
                             type="date" 
                             value={endDate}
@@ -890,16 +888,13 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                             className="w-36 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
                             data-testid="input-end-date"
                           />
-                          <Input 
-                            type="time" 
-                            value={endTime}
-                            onChange={(e) => setEndTime(e.target.value)}
-                            step="900"
-                            required 
-                            className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
-                            data-testid="input-end-time"
-                          />
                         </div>
+                        <TimeChipPicker
+                          value={endTime}
+                          onChange={setEndTime}
+                          presets={["12:00", "17:00", "18:00", "21:00", "23:59"]}
+                          testId="input-end-time"
+                        />
                       </div>
                     </>
                   )}
@@ -977,16 +972,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                       Check-In Time
                     </p>
                   </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <Input 
-                      type="time" 
-                      value={checkInTime}
-                      onChange={(e) => setCheckInTime(e.target.value)}
-                      step="900"
-                      className="w-28 text-center text-sm bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-400 focus:ring-0 rounded-none"
-                      data-testid="input-check-in-time"
-                    />
-                  </div>
+                  <TimeChipPicker
+                    value={checkInTime}
+                    onChange={setCheckInTime}
+                    presets={["07:00", "08:00", "12:00", "18:00", "19:00", "20:00", "21:00", "22:00"]}
+                    testId="input-check-in-time"
+                  />
                 </div>
 
               </div>
