@@ -1,0 +1,82 @@
+Text input → powerful but not simple
+
+Wheels → slow, frustrating, outdated (your current pain)
+
+One sentence UX rule for WILL
+
+If the user knows the time, let them tap it once.
+
+If you want, I can:
+
+Propose exact times based on your app use cases (BJJ, wake-up, journaling)
+
+Help you remove the modal entirely and keep it one screen
+
+Give you a SwiftUI layout snippet (very clean)
+
+This change alone will make the app feel faster and more confident.
+
+help me delvep a rpmotp re plit plz so che can improve all thes instacnes where we have time pickers
+
+Perfect — this is exactly the right moment to use Replit well 👍
+Below is a copy-paste–ready prompt you can drop straight into Replit to guide a global, consistent refactor of all time pickers.
+
+Replit Prompt (Use This As-Is)
+
+Goal: Improve all time-selection interactions across the iOS app to be faster, simpler, and more modern by removing scroll-based time pickers wherever possible.
+
+Context:
+The current implementation relies heavily on default iOS wheel-style time pickers, which feel slow and friction-heavy. Users must scroll to select hours and minutes, which is frustrating for common, habitual actions.
+
+Design Direction (Very Important):
+Prioritize simplicity, speed, and decisiveness over flexibility.
+
+New Standard Pattern:
+
+Replace wheel-style time pickers with tap-based time chips wherever the time does not require minute-level precision.
+
+Time chips should be presented as a grid of common times (e.g. 6:00 AM, 7:00 AM, 8:00 AM, 12:00 PM, 6:00 PM, 8:00 PM).
+
+Selecting a time should require one tap only.
+
+Include a single “Custom” option that opens the native time picker only if a non-standard time is required.
+
+Behavior Rules:
+
+Default to the last-used time when possible.
+
+If no history exists, default to a sensible, context-based time.
+
+Use 30-minute increments max (no 5–10 minute granularity unless strictly necessary).
+
+Avoid modal interruptions when possible; prefer inline selection.
+
+Scope of Changes:
+
+Audit the entire codebase for time pickers (DatePicker with .hourAndMinute, wheel pickers, modal time selectors).
+
+Refactor each instance to use the new Time Chip Selection Component unless the screen explicitly requires precise scheduling.
+
+Ensure visual and behavioral consistency across all screens.
+
+Implementation Notes (SwiftUI):
+
+Create a reusable TimeChipPicker component.
+
+Accept parameters for:
+
+Available time options
+
+Selected time binding
+
+Optional fallback to native picker
+
+Keep the UI clean, minimal, and fast.
+
+Success Criteria:
+
+Users can select a time in one tap for the majority of flows.
+
+Scrolling is eliminated in common cases.
+
+The app feels faster, more intentional, and less “form-like.”
