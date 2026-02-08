@@ -130,137 +130,127 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen flex flex-col">
-        <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col">
+      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen flex flex-col">
+        <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col justify-center">
           
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center">
+            {/* Star Icon */}
+            <div className="mb-5">
               <div className="relative">
-                <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full blur-2xl opacity-40 animate-pulse"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-lg opacity-25"></div>
-                <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-200 flex items-center justify-center shadow-xl">
-                  <Sparkles className="w-7 h-7 text-emerald-600" />
+                <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full blur-2xl opacity-30"></div>
+                <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-200 flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-8 h-8 text-emerald-600" />
                 </div>
               </div>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+
+            {/* Greeting */}
+            <h1 className="text-2xl font-semibold text-gray-900 mb-8" data-testid="text-welcome">
               Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
             </h1>
-            <p className="text-gray-500 text-sm">
-              What will you commit to?
-            </p>
-          </div>
 
-          {/* Hero: Create Will Button */}
-          <button
-            onClick={handleCreateWill}
-            className="w-full mb-6 group"
-            data-testid="button-create-will"
-          >
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
-              <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-5 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-0.5">
-                <div className="flex items-center justify-center gap-3 text-white">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <Plus className="w-7 h-7" strokeWidth={2.5} />
+            {/* Create Will Button */}
+            <button
+              onClick={handleCreateWill}
+              className="w-full mb-8 group"
+              data-testid="button-create-will"
+            >
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-300"></div>
+                <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl px-6 py-5 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-0.5">
+                  <div className="flex items-center text-white">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <Plus className="w-6 h-6" strokeWidth={2.5} />
+                        <h2 className="text-lg font-semibold">Create a Will</h2>
+                      </div>
+                      <p className="text-emerald-100 text-sm mt-1 ml-9">Make a commitment</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <div className="text-left">
-                    <h2 className="text-lg font-semibold">Create a Will</h2>
-                    <p className="text-emerald-100 text-sm">Make a commitment today</p>
-                  </div>
-                  <ArrowRight className="w-6 h-6 ml-auto group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-            </div>
-          </button>
+            </button>
 
-          {/* Active Personal Wills */}
-          {activePersonalWills.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Your Active Wills</h3>
-              <div className="space-y-3">
-                {activePersonalWills.map((will) => {
-                  const commitment = will.commitments?.[0];
-                  const statusColors: Record<string, string> = {
-                    active: 'bg-emerald-100 text-emerald-700',
-                    will_review: 'bg-amber-100 text-amber-700',
-                    scheduled: 'bg-blue-100 text-blue-700',
-                    pending: 'bg-gray-100 text-gray-700',
-                  };
-                  
-                  return (
-                    <button
-                      key={will.id}
-                      onClick={() => handleViewWill(will.id)}
-                      className="w-full text-left group"
-                      data-testid={`card-will-${will.id}`}
-                    >
-                      <Card className="bg-white border border-gray-200 shadow-sm group-hover:border-emerald-300 group-hover:shadow-md transition-all duration-200">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Target className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {commitment?.what || 'Untitled commitment'}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge className={`text-xs ${statusColors[will.status] || 'bg-gray-100 text-gray-700'}`}>
-                                  {will.status === 'will_review' ? 'Review' : will.status}
-                                </Badge>
-                                {will.visibility === 'public' && (
-                                  <Badge className="text-xs bg-blue-100 text-blue-700">Public</Badge>
-                                )}
+            {/* Active Personal Wills */}
+            {activePersonalWills.length > 0 && (
+              <div className="w-full mb-8">
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Your Active Wills</h3>
+                <div className="space-y-3">
+                  {activePersonalWills.map((will) => {
+                    const commitment = will.commitments?.[0];
+                    const statusColors: Record<string, string> = {
+                      active: 'bg-emerald-100 text-emerald-700',
+                      will_review: 'bg-amber-100 text-amber-700',
+                      scheduled: 'bg-blue-100 text-blue-700',
+                      pending: 'bg-gray-100 text-gray-700',
+                    };
+                    
+                    return (
+                      <button
+                        key={will.id}
+                        onClick={() => handleViewWill(will.id)}
+                        className="w-full text-left group"
+                        data-testid={`card-will-${will.id}`}
+                      >
+                        <Card className="bg-white border border-gray-200 shadow-sm group-hover:border-emerald-300 group-hover:shadow-md transition-all duration-200">
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Target className="w-5 h-5 text-emerald-600" />
                               </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {commitment?.what || 'Untitled commitment'}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge className={`text-xs ${statusColors[will.status] || 'bg-gray-100 text-gray-700'}`}>
+                                    {will.status === 'will_review' ? 'Review' : will.status}
+                                  </Badge>
+                                  {will.visibility === 'public' && (
+                                    <Badge className="text-xs bg-blue-100 text-blue-700">Public</Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 flex-shrink-0" />
                             </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 flex-shrink-0" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </button>
-                  );
-                })}
+                          </CardContent>
+                        </Card>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+            )}
+
+            {/* Explore & Circles Cards */}
+            <div className="grid grid-cols-2 gap-4 w-full mb-8">
+              <button
+                onClick={handleExplore}
+                className="group"
+                data-testid="button-explore"
+              >
+                <Card className="h-full bg-white border-2 border-gray-100 shadow-sm group-hover:border-blue-200 group-hover:shadow-md transition-all duration-200 rounded-2xl">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                    <span className="text-4xl mb-4">🔍</span>
+                    <h3 className="text-lg font-semibold text-gray-900">Explore</h3>
+                  </CardContent>
+                </Card>
+              </button>
+
+              <button
+                onClick={handleCircles}
+                className="group"
+                data-testid="button-circles"
+              >
+                <Card className="h-full bg-white border-2 border-gray-100 shadow-sm group-hover:border-purple-200 group-hover:shadow-md transition-all duration-200 rounded-2xl">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                    <span className="text-4xl mb-4">👥</span>
+                    <h3 className="text-lg font-semibold text-gray-900">Circles</h3>
+                  </CardContent>
+                </Card>
+              </button>
             </div>
-          )}
-
-          {/* Secondary Actions: Explore & Circles */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {/* Explore Card */}
-            <button
-              onClick={handleExplore}
-              className="text-left group"
-              data-testid="button-explore"
-            >
-              <Card className="h-full bg-white border-2 border-blue-100 shadow-sm group-hover:border-blue-300 group-hover:shadow-md transition-all duration-200 rounded-2xl">
-                <CardContent className="p-5">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
-                    <Compass className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">Explore</h3>
-                  <p className="text-sm text-gray-500">Discover public commitments</p>
-                </CardContent>
-              </Card>
-            </button>
-
-            {/* Circles Card */}
-            <button
-              onClick={handleCircles}
-              className="text-left group"
-              data-testid="button-circles"
-            >
-              <Card className="h-full bg-white border-2 border-purple-100 shadow-sm group-hover:border-purple-300 group-hover:shadow-md transition-all duration-200 rounded-2xl">
-                <CardContent className="p-5">
-                  <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-3">
-                    <Users className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">Circles</h3>
-                  <p className="text-sm text-gray-500">Group accountability</p>
-                </CardContent>
-              </Card>
-            </button>
           </div>
 
           {/* Spacer */}
