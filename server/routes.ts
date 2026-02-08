@@ -40,8 +40,13 @@ function getWillStatus(will: any, memberCount: number): string {
   const startDate = new Date(will.startDate);
 
   // Respect terminal states - these should never be recalculated
-  if (will.status === 'completed' || will.status === 'archived') {
+  if (will.status === 'completed' || will.status === 'archived' || will.status === 'terminated') {
     return will.status;
+  }
+
+  // Respect paused state - user explicitly paused, don't override
+  if (will.status === 'paused') {
+    return 'paused';
   }
 
   // Respect will_review state - mandatory reflection phase should persist

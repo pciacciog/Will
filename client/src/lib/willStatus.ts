@@ -17,8 +17,11 @@ export function getWillStatus(will: any, userId?: string): string {
   // ALWAYS trust backend status - this is the single source of truth
   // Backend scheduler handles ALL state transitions every minute
   
-  // If will is archived, treat as no will
-  if (will.status === 'archived') return 'no_will';
+  // If will is archived or terminated, treat as no will
+  if (will.status === 'archived' || will.status === 'terminated') return 'no_will';
+  
+  // Trust backend for paused status (user explicitly paused)
+  if (will.status === 'paused') return 'paused';
   
   // NEW FEATURE: Trust backend for will_review (will ended, waiting for member reviews)
   if (will.status === 'will_review') {

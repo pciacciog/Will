@@ -380,46 +380,54 @@ export default function WillDetails() {
     },
   });
 
+  const invalidateAllWillQueries = () => {
+    queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+    queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+  };
+
   const pauseMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/wills/${id}/pause`, { method: 'POST' });
+      const res = await apiRequest(`/api/wills/${id}/pause`, { method: 'POST' });
+      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      invalidateAllWillQueries();
       toast({ title: "Will Paused", description: "Your Will has been paused" });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to pause Will", variant: "destructive" });
     },
   });
 
   const resumeMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/wills/${id}/resume`, { method: 'POST' });
+      const res = await apiRequest(`/api/wills/${id}/resume`, { method: 'POST' });
+      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      invalidateAllWillQueries();
       toast({ title: "Will Resumed", description: "Your Will is now active again" });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to resume Will", variant: "destructive" });
     },
   });
 
   const terminateMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/wills/${id}/terminate`, { method: 'POST' });
+      const res = await apiRequest(`/api/wills/${id}/terminate`, { method: 'POST' });
+      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      toast({ title: "Will Terminated", description: "Your Will has been ended" });
+      invalidateAllWillQueries();
+      toast({ title: "Will Ended", description: "Your Will has been ended" });
       setLocation(getHubUrl());
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to end Will", variant: "destructive" });
     },
   });
 
