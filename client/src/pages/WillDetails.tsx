@@ -180,13 +180,20 @@ export default function WillDetails() {
     }
   }, [will?.mode]);
   
-  // Helper to get the appropriate hub URL even in error states
   const getHubUrl = () => {
-    if (will?.mode === 'solo') return '/solo/hub';
-    if (will?.mode === 'circle') return '/hub';
-    // Fallback to localStorage for error states
+    const backUrl = sessionStorage.getItem('willBackUrl');
+    if (backUrl) {
+      sessionStorage.removeItem('willBackUrl');
+      return backUrl;
+    }
+    if (will?.mode === 'personal' || will?.mode === 'solo') return '/';
+    if (will?.mode === 'circle') {
+      if (will?.circleId) return `/circles/${will.circleId}`;
+      return '/circles';
+    }
     const lastMode = localStorage.getItem('lastWillMode');
-    return lastMode === 'solo' ? '/solo/hub' : '/hub';
+    if (lastMode === 'solo' || lastMode === 'personal') return '/';
+    return '/circles';
   };
 
   // Only fetch circle data for circle mode wills
@@ -308,6 +315,7 @@ export default function WillDetails() {
       setShowFinalSummary(false);
       
       // Invalidate queries efficiently - start with most critical
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
       if (isSoloMode) {
         queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
         queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'solo'] });

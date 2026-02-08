@@ -361,6 +361,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
 
   const handleViewWillDetails = () => {
     if (will?.id) {
+      sessionStorage.setItem('willBackUrl', `/circles/${circleId}`);
       setLocation(`/will/${will.id}`);
     }
   };
@@ -804,7 +805,10 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
               </div>
               
               <Button 
-                onClick={() => setLocation(`/will/${will.id}`)}
+                onClick={() => {
+                  sessionStorage.setItem('willBackUrl', `/circles/${circleId}`);
+                  setLocation(`/will/${will.id}`);
+                }}
                 className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-2 rounded-lg shadow-md transition-all duration-200"
                 data-testid="button-submit-will-review"
               >

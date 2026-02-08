@@ -47,6 +47,7 @@ export default function Explore() {
       queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/public'] });
       if (data?.willId) {
+        sessionStorage.setItem('willBackUrl', '/explore');
         setLocation(`/will/${data.willId}`);
       }
     },

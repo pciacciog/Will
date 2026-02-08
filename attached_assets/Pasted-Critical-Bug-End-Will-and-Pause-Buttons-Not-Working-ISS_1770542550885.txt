@@ -1,0 +1,111 @@
+Critical Bug: End Will and Pause Buttons Not Working
+
+ISSUE: Buttons Show Success But Don't Actually Update Will Status
+Affected User: porfirioaciaccio@gmail.com
+Will Type: Ongoing Will created via personal mode 
+
+Bug 1: End Will Button
+Steps to Reproduce:
+1. User has active ongoing Will
+2. User clicks "End Will" button
+3. Success message appears: "Will terminated" or "Your will has been ended"
+4. BUG: Will still shows as Active
+Expected Behavior:
+* Will status changes from "active" to "completed" or "ended"
+* Will moves out of Active Wills s
+* Will appears in history/completed section
+Actual Behavior:
+* Success message displays
+* Will remains in Active Wills
+* No actual status change occurs
+
+Bug 2: Pause Button
+Steps to Reproduce:
+1. User has active ongoing Will
+2. User clicks "Pause" button
+3. BUG: Nothing happens or shows success but Will stays active
+Expected Behavior:
+* Will status changes to "paused"
+* Check-in notifications stop
+* UI shows paused state
+Actual Behavior:
+* Will remains fully active
+* No status change
+
+Root Cause Investigation Needed:
+Possible issues:
+1. Backend call failing silently - UI shows success message before confirming backend success
+2. Status not updating in database - Backend receives request but doesn't update Will status
+3. UI state not refreshing - Backend updates successfully but UI doesn't re-fetch/update
+4. Response handling error - Backend returns error but frontend interprets as success
+
+What to Check:
+Backend:
+* Is the end/pause endpoint receiving the request?
+* Is it actually updating the Will status in database?
+* What response is it returning?
+* Check server logs for errors
+Frontend:
+* Is success message shown before backend confirmation?
+* Is UI state refreshed after button click?
+* Are there any console errors?
+* Does page need manual refresh to see changes?
+
+Testing Steps:
+1. Check database directly - what is the Will's status field after clicking "End Will"?
+2. Check if a page refresh shows the updated status
+3. Test with a new test Will to reproduce
+4. Check both End Will and Pause buttons
+
+Priority: HIGH
+This breaks core functionality - users cannot end or pause their Wills. They're stuck with active Wills they want to stop. By the way, please end the one for Porfirio right now.
+
+
+CRITICAL REQUIREMENT: Ongoing Wills MUST Have Full Tracking
+For ALL Ongoing active Wills, users must be able to:
+1. Check in daily - Log Yes/Partial/No for each day
+2. View calendar - See their full history of check-ins (green/yellow/red days)
+3. See progress metrics:
+    * Success rate percentage (e.g., 45/60 days = 75%)
+    * Total days tracked
+4. Access this anytime - From the active Will view, user can:
+    * Tap to see calendar
+    * Check in for today
+    * Check in for past days (retroactive)
+    * See their progress
+
+This is NON-NEGOTIABLE for Ongoing Wills
+Why:
+* Ongoing Wills are long-term habits
+* Users NEED to see progress to stay motivated
+* Calendar view validates their effort
+* Data tracking is the core value of ongoing commitments
+
+Contrast with Set Dates Wills:
+Ongoing Wills:
+* ✅ Store all check-ins
+* ✅ Show calendar view
+* ✅ Calculate success rate
+* ✅ Full data-driven accountability
+Set Dates Wills:
+* ❌ Don't store check-ins (just daily prompts)
+* ❌ No calendar view during Will
+* ❌ No real-time progress tracking
+* ✅ Final review at end only
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -81,6 +81,7 @@ export interface IStorage {
   getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserActiveSoloWill(userId: string): Promise<Will | undefined>;
+  getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string })[]>;
   getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
   getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
@@ -643,6 +644,58 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(wills.createdAt))
       .limit(1);
     return will;
+  }
+
+  async getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string })[]> {
+    const personalWillsList = await db
+      .select()
+      .from(wills)
+      .where(and(
+        eq(wills.createdBy, userId),
+        or(eq(wills.mode, 'personal'), eq(wills.mode, 'solo')),
+        sql`status NOT IN ('completed', 'archived', 'terminated')`
+      ))
+      .orderBy(desc(wills.createdAt));
+
+    const circleWillsList = await db
+      .select({
+        will: wills,
+        circleName: circles.name,
+      })
+      .from(willCommitments)
+      .innerJoin(wills, eq(willCommitments.willId, wills.id))
+      .leftJoin(circles, eq(wills.circleId, circles.id))
+      .where(and(
+        eq(willCommitments.userId, userId),
+        eq(wills.mode, 'circle'),
+        sql`wills.status NOT IN ('completed', 'archived', 'terminated')`
+      ))
+      .orderBy(desc(wills.createdAt));
+
+    const allWills = [
+      ...personalWillsList.map(w => ({ ...w, circleName: undefined as string | undefined })),
+      ...circleWillsList.map(r => ({ ...r.will, circleName: r.circleName || undefined })),
+    ];
+
+    const willsWithCommitments = await Promise.all(
+      allWills.map(async (will) => {
+        const commitmentsList = await db
+          .select()
+          .from(willCommitments)
+          .innerJoin(users, eq(willCommitments.userId, users.id))
+          .where(eq(willCommitments.willId, will.id));
+
+        return {
+          ...will,
+          commitments: commitmentsList.map(c => ({
+            ...c.will_commitments,
+            user: c.users,
+          })),
+        };
+      })
+    );
+
+    return willsWithCommitments;
   }
 
   async getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {

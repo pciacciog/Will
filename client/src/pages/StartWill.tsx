@@ -283,6 +283,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       if (isSoloMode) {
         // Invalidate solo-specific queries and wait for completion
         await queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
         await queryClient.invalidateQueries({ queryKey: ['/api/wills'] });
         
         // Solo mode: Backend auto-creates commitment, so just show success and navigate
@@ -295,6 +296,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       } else {
         // Invalidate all related queries to ensure UI updates everywhere
         queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
         queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
         queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
         

@@ -18,6 +18,8 @@ type Will = {
   status: string;
   startDate: string;
   endDate: string;
+  circleId?: number;
+  circleName?: string;
   commitments?: { id: number; userId: string; what: string; why: string }[];
 };
 
@@ -73,14 +75,14 @@ export default function Home() {
     queryKey: ['/api/user'],
   });
 
-  const { data: personalWills } = useQuery<Will[]>({
-    queryKey: ['/api/wills/personal'],
+  const { data: allActiveWills } = useQuery<Will[]>({
+    queryKey: ['/api/wills/all-active'],
     enabled: !!user,
     staleTime: 0,
     refetchOnMount: 'always',
   });
 
-  const activePersonalWills = personalWills?.filter(w => 
+  const activeWills = allActiveWills?.filter(w => 
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending'
   ) || [];
 
@@ -96,8 +98,9 @@ export default function Home() {
     setLocation('/circles');
   };
 
-  const handleViewWill = (willId: number) => {
-    setLocation(`/will/${willId}`);
+  const handleViewWill = (will: Will) => {
+    sessionStorage.setItem('willBackUrl', '/');
+    setLocation(`/will/${will.id}`);
   };
 
   if (showSplash) {
@@ -172,13 +175,14 @@ export default function Home() {
               </div>
             </button>
 
-            {/* Active Personal Wills */}
-            {activePersonalWills.length > 0 && (
+            {/* Active Wills (Personal + Circle) */}
+            {activeWills.length > 0 && (
               <div className="w-full mb-8">
                 <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Your Active Wills</h3>
                 <div className="space-y-3">
-                  {activePersonalWills.map((will) => {
+                  {activeWills.map((will) => {
                     const commitment = will.commitments?.[0];
+                    const isCircle = will.mode === 'circle';
                     const statusColors: Record<string, string> = {
                       active: 'bg-emerald-100 text-emerald-700',
                       will_review: 'bg-amber-100 text-amber-700',
@@ -189,30 +193,47 @@ export default function Home() {
                     return (
                       <button
                         key={will.id}
-                        onClick={() => handleViewWill(will.id)}
+                        onClick={() => handleViewWill(will)}
                         className="w-full text-left group"
                         data-testid={`card-will-${will.id}`}
                       >
-                        <Card className="bg-white border border-gray-200 shadow-sm group-hover:border-emerald-300 group-hover:shadow-md transition-all duration-200">
+                        <Card className={`bg-white border shadow-sm group-hover:shadow-md transition-all duration-200 ${
+                          isCircle 
+                            ? 'border-purple-200 group-hover:border-purple-300' 
+                            : 'border-gray-200 group-hover:border-emerald-300'
+                        }`}>
                           <CardContent className="p-4">
                             <div className="flex items-start gap-3">
-                              <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Target className="w-5 h-5 text-emerald-600" />
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                isCircle ? 'bg-purple-50' : 'bg-emerald-50'
+                              }`}>
+                                {isCircle 
+                                  ? <Users className="w-5 h-5 text-purple-600" /> 
+                                  : <Target className="w-5 h-5 text-emerald-600" />
+                                }
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 truncate">
                                   {commitment?.what || 'Untitled commitment'}
                                 </p>
-                                <div className="flex items-center gap-2 mt-1">
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                  <Badge className={`text-xs ${
+                                    isCircle 
+                                      ? 'bg-purple-100 text-purple-700' 
+                                      : 'bg-emerald-100 text-emerald-700'
+                                  }`}>
+                                    {isCircle ? (will.circleName || 'Circle') : 'Personal'}
+                                  </Badge>
                                   <Badge className={`text-xs ${statusColors[will.status] || 'bg-gray-100 text-gray-700'}`}>
                                     {will.status === 'will_review' ? 'Review' : will.status}
                                   </Badge>
-                                  {will.visibility === 'public' && (
-                                    <Badge className="text-xs bg-blue-100 text-blue-700">Public</Badge>
-                                  )}
                                 </div>
                               </div>
-                              <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 flex-shrink-0" />
+                              <ChevronRight className={`w-5 h-5 flex-shrink-0 ${
+                                isCircle 
+                                  ? 'text-gray-400 group-hover:text-purple-500' 
+                                  : 'text-gray-400 group-hover:text-emerald-500'
+                              }`} />
                             </div>
                           </CardContent>
                         </Card>

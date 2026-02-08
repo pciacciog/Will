@@ -926,6 +926,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/wills/all-active', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const allWills = await storage.getUserAllActiveWills(userId);
+      res.json(allWills);
+    } catch (error) {
+      console.error("Error fetching all active wills:", error);
+      res.status(500).json({ message: "Failed to fetch wills" });
+    }
+  });
+
   // Personal wills endpoint - fetch all personal (non-circle) wills for current user
   app.get('/api/wills/personal', isAuthenticated, async (req: any, res) => {
     try {
