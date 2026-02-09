@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,14 +75,28 @@ export default function Home() {
   
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const { data: allActiveWills } = useQuery<Will[]>({
+  const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError } = useQuery<Will[] | null>({
     queryKey: ['/api/wills/all-active'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user,
     staleTime: 0,
     refetchOnMount: 'always',
+    retry: 2,
+    retryDelay: 1000,
+    refetchInterval: 30000,
   });
+
+  useEffect(() => {
+    if (isActiveWillsError) {
+      console.error('[Home] Active wills query error:', activeWillsError);
+    }
+    if (allActiveWills) {
+      console.log('[Home] Active wills loaded:', allActiveWills.length, 'wills');
+    }
+  }, [allActiveWills, isActiveWillsError, activeWillsError]);
 
   const activeWills = allActiveWills?.filter(w => 
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending'

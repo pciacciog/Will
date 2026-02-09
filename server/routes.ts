@@ -934,10 +934,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/wills/all-active', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log(`[ALL-ACTIVE] Fetching active wills for user ${userId}`);
       const allWills = await storage.getUserAllActiveWills(userId);
+      console.log(`[ALL-ACTIVE] Found ${allWills.length} active wills for user ${userId}`);
       res.json(allWills);
     } catch (error) {
-      console.error("Error fetching all active wills:", error);
+      console.error("[ALL-ACTIVE] Error fetching all active wills:", error);
       res.status(500).json({ message: "Failed to fetch wills" });
     }
   });
