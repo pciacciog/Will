@@ -135,7 +135,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
       <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen flex flex-col">
-        <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col justify-center" style={{ paddingTop: '15vh' }}>
+        <div className={`max-w-sm mx-auto px-5 flex-1 flex flex-col ${activeWills.length > 0 ? 'justify-start pt-8' : 'justify-center'}`} style={activeWills.length > 0 ? undefined : { paddingTop: '15vh' }}>
           
           <div className="flex flex-col items-center">
             {/* Star Icon */}
