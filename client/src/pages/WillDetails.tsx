@@ -13,15 +13,92 @@ import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
-import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap } from "lucide-react";
+import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import ProgressView from "@/components/ProgressView";
+import DayStrip from "@/components/DayStrip";
 import type { WillCheckIn } from "@shared/schema";
 
+
+function DailyProgressSection({ willId, startDate, endDate, checkInType, onDayClick }: { 
+  willId: number; startDate: string; endDate: string; checkInType: 'daily' | 'one-time'; 
+  onDayClick?: (date: string) => void;
+}) {
+  const { data: progress } = useQuery<{
+    totalDays: number; checkedInDays: number; successRate: number;
+    yesCount: number; partialCount: number; noCount: number; streak: number;
+  }>({
+    queryKey: [`/api/wills/${willId}/check-in-progress`],
+    enabled: checkInType === 'daily',
+  });
+
+  const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
+    queryKey: [`/api/wills/${willId}/check-ins`],
+    enabled: checkInType === 'daily',
+  });
+
+  const hasData = (progress?.totalDays ?? 0) > 0;
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="section-daily-progress">
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart3 className="w-5 h-5 text-blue-500" />
+        <span className="text-base font-semibold">Daily Progress</span>
+      </div>
+      
+      {!hasData ? (
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-500">No check-ins yet</p>
+          <p className="text-xs text-gray-400 mt-1">Start tracking your progress!</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-2.5 bg-emerald-50 rounded-lg">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+              </div>
+              <div className="text-xl font-bold text-emerald-700">{progress?.yesCount ?? 0}</div>
+              <div className="text-xs text-emerald-600">Completed</div>
+            </div>
+            <div className="text-center p-2.5 bg-amber-50 rounded-lg">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <MinusCircle className="h-3.5 w-3.5 text-amber-600" />
+              </div>
+              <div className="text-xl font-bold text-amber-700">{progress?.partialCount ?? 0}</div>
+              <div className="text-xs text-amber-600">Partial</div>
+            </div>
+            <div className="text-center p-2.5 bg-red-50 rounded-lg">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <XCircle className="h-3.5 w-3.5 text-red-500" />
+              </div>
+              <div className="text-xl font-bold text-red-600">{progress?.noCount ?? 0}</div>
+              <div className="text-xs text-red-500">Missed</div>
+            </div>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Success Rate: <span className="font-semibold text-gray-900">{(progress?.successRate ?? 0).toFixed(0)}%</span>
+            <span className="text-gray-400 ml-1">({progress?.yesCount ?? 0}/{progress?.totalDays ?? 0} days)</span>
+          </div>
+
+          <div className="border rounded-lg p-3">
+            <DayStrip
+              startDate={startDate}
+              endDate={endDate}
+              checkIns={checkIns}
+              onDayClick={onDayClick}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function formatDateRange(startDate: string, endDate: string | null): string {
   const start = new Date(startDate);
@@ -104,6 +181,7 @@ export default function WillDetails() {
   const [showFinalSummary, setShowFinalSummary] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [selectedCheckInDate, setSelectedCheckInDate] = useState<string | null>(null);
+  const [showManageModal, setShowManageModal] = useState(false);
   
   const handleDayClick = (date: string) => {
     setSelectedCheckInDate(date);
@@ -570,19 +648,6 @@ export default function WillDetails() {
                will.status === 'completed' ? 'Completed' :
                will.status.charAt(0).toUpperCase() + will.status.slice(1)}
             </Badge>
-            {/* Will Type Badge - only for circle wills */}
-            {will.mode === 'circle' && (
-              <Badge 
-                className={`text-xs tracking-tight ${
-                  will.willType === 'cumulative' 
-                    ? 'bg-purple-100 text-purple-700 border border-purple-200' 
-                    : 'bg-blue-100 text-blue-700 border border-blue-200'
-                }`}
-                data-testid="badge-will-type"
-              >
-                {will.willType === 'cumulative' ? 'Shared' : 'Normal'}
-              </Badge>
-            )}
           </div>
           {will.status === 'pending' && (
             <p className="text-gray-500 text-xs tracking-tight">
@@ -602,15 +667,12 @@ export default function WillDetails() {
                 <h3 className="text-base font-semibold text-gray-900 mb-2">Review Submitted</h3>
                 
                 {isSoloMode ? (
-                  // Solo mode: simple completion message
                   <p className="text-sm text-gray-600">
                     Your review is complete! Your Will is finalizing...
                   </p>
                 ) : (
-                  // Circle mode: Dynamic messaging based on what's blocking completion
                   <>
                     {reviewStatus && reviewStatus.reviewCount < reviewStatus.totalMembers ? (
-                      // Reviews still incomplete
                       <>
                         <p className="text-sm text-gray-600">
                           Waiting for other circle members to complete their reviews...
@@ -620,23 +682,21 @@ export default function WillDetails() {
                         </p>
                       </>
                     ) : will.endRoomScheduledAt && (will.endRoomStatus === 'pending' || will.endRoomStatus === 'open') ? (
-                      // All reviews complete, but End Room not finished
                       <>
                         <p className="text-sm text-gray-600">
                           All reviews complete! This <em>Will</em> will finish after the End Room session ends.
                         </p>
                         <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
+                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed
                         </p>
                       </>
                     ) : (
-                      // Both complete - Will should transition soon
                       <>
                         <p className="text-sm text-gray-600">
                           All requirements met! Finalizing...
                         </p>
                         <p className="text-xs text-gray-500 mt-2" data-testid="text-review-progress">
-                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed ✓
+                          {reviewStatus?.reviewCount} of {reviewStatus?.totalMembers} members reviewed
                         </p>
                       </>
                     )}
@@ -687,6 +747,37 @@ export default function WillDetails() {
           </div>
         </div>
 
+        {/* Circle Members Section - Right after Timeline for circle wills */}
+        {!isSoloMode && will.commitments && will.commitments.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="section-circle-members">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Users className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-500 flex-shrink-0">Circle:</span>
+                <span className="text-sm text-gray-800 truncate">
+                  {will.commitments.map((c: any) => c.user?.firstName || 'Member').join(', ')}
+                </span>
+              </div>
+              {will.status === 'active' && (
+                <button
+                  onClick={() => pushMutation.mutate()}
+                  disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
+                  className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex-shrink-0 ml-3 ${
+                    pushStatus?.hasUserPushed
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                  title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Send encouragement to your teammates'}
+                  data-testid="button-push"
+                >
+                  <Zap className="w-3 h-3 mr-1" />
+                  {pushMutation.isPending ? '...' : 'Push'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* End Room Section - Only for circle mode */}
         {!isSoloMode && will.endRoomScheduledAt && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -713,27 +804,123 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Progress Tracking Section - For daily check-in wills */}
-        {hasDailyCheckIns && (will.status === 'active' || will.status === 'will_review' || will.status === 'completed') && (
-          <div className="space-y-4">
-            <ProgressView
-              willId={Number(id)}
-              startDate={will.startDate}
-              endDate={will.endDate}
-              checkInType={userCheckInType}
-              onDayClick={will.status === 'active' ? handleDayClick : undefined}
-            />
-            {will.status === 'active' && (
-              <Button
-                onClick={() => setShowCheckInModal(true)}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
-                data-testid="button-daily-check-in"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Daily Check-in
-              </Button>
-            )}
+        {/* Commitment Details (What/Why) */}
+        {will.status !== 'will_review' && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-brandGreen" />
+                <span className="text-base font-semibold text-gray-900">
+                  {isSoloMode ? 'Your Commitment' : 'Commitments'}
+                </span>
+              </div>
+              {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
+                <Button 
+                  onClick={() => setLocation(`/will/${id}/edit`)}
+                  className="border border-blue-500 text-blue-600 bg-white hover:bg-blue-50 rounded-lg px-3 py-1 text-sm font-medium"
+                  size="sm"
+                  data-testid="button-edit-will"
+                >
+                  Edit
+                </Button>
+              )}
+            </div>
+            <div className="space-y-4">
+              {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
+                const isCurrentUser = commitment.userId === user?.id;
+                const showWhy = expandedCommitments[commitment.id] || false;
+                const toggleWhy = () => {
+                  setExpandedCommitments(prev => ({
+                    ...prev,
+                    [commitment.id]: !prev[commitment.id]
+                  }));
+                };
+                
+                return (
+                  <div key={commitment.id} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
+                    <div className="flex items-center justify-between mb-2 gap-3">
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <span className="text-base font-medium truncate">
+                          {!isSoloMode && (commitment.user.firstName || commitment.user.email)}
+                          {!isSoloMode && isCurrentUser && (
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                              You
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
+                          <button 
+                            onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
+                            className="px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                            title="Edit commitment"
+                            data-testid="button-edit-commitment"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {isCurrentUser && (
+                          <button
+                            onClick={toggleWhy}
+                            className={`text-sm px-3 py-1 rounded border transition-all duration-200 shadow ${
+                              showWhy 
+                                ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600' 
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
+                            title={showWhy ? "Hide your reason" : "Show your reason"}
+                            data-testid="button-toggle-why"
+                          >
+                            Why
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-sm text-gray-500 font-medium italic mb-1">will</div>
+                        <div className="text-base text-gray-800 leading-relaxed">
+                          {commitment.what}
+                        </div>
+                      </div>
+                      
+                      {isCurrentUser && showWhy && (
+                        <div className="mt-3 p-4 bg-gray-50 border-l-4 border-gray-300 rounded-lg shadow-sm animate-in fade-in duration-300">
+                          <div className="text-base tracking-wide">
+                            <span className="font-bold text-black">Because</span> {commitment.why}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+        )}
+
+        {/* Daily Check-in Button - Primary action for active daily wills */}
+        {hasDailyCheckIns && will.status === 'active' && (
+          <Button
+            onClick={() => setShowCheckInModal(true)}
+            className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-6 text-base"
+            data-testid="button-daily-check-in"
+          >
+            <CheckCircle className="w-5 h-5 mr-2" />
+            Daily Check-in
+          </Button>
+        )}
+
+        {/* Daily Progress Section - Simplified conditional display */}
+        {hasDailyCheckIns && (will.status === 'active' || will.status === 'will_review' || will.status === 'completed') && (
+          <DailyProgressSection 
+            willId={Number(id)} 
+            startDate={will.startDate} 
+            endDate={will.endDate}
+            checkInType={userCheckInType}
+            onDayClick={will.status === 'active' ? handleDayClick : undefined}
+          />
         )}
 
         {/* Threaded Commitments + Reviews Section - During will_review status */}
@@ -764,122 +951,7 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Original Commitments Section - For non-review statuses */}
-        {will.status !== 'will_review' && (
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-brandGreen" />
-                <span className="text-base font-semibold text-gray-900 underline">
-                  {isSoloMode ? 'Your Commitment' : 'Circle Commitments'}
-                </span>
-                {/* Shared Will badge - prominent display for cumulative wills */}
-                {!isSoloMode && will.willType === 'cumulative' && (
-                  <span className="inline-flex items-center justify-center bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">
-                    Shared Will
-                  </span>
-                )}
-              </div>
-              {/* Push notification button for active wills - only for circle mode */}
-              {!isSoloMode && will.status === 'active' && (
-                <button
-                  onClick={() => pushMutation.mutate()}
-                  disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
-                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
-                    pushStatus?.hasUserPushed
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-green-600 text-white hover:bg-green-700'
-                  }`}
-                  title={pushStatus?.hasUserPushed ? 'Already pushed' : 'Send encouragement to your teammates'}
-                >
-                  <Zap className="w-3 h-3 mr-1" />
-                  {pushMutation.isPending ? 'Pushing...' : 'Push'}
-                </button>
-              )}
-            </div>
-            <div className="space-y-4">
-              {will.commitments && will.commitments.length > 0 && will.commitments.map((commitment: any) => {
-                const isCurrentUser = commitment.userId === user?.id;
-                const showWhy = expandedCommitments[commitment.id] || false;
-                const toggleWhy = () => {
-                  setExpandedCommitments(prev => ({
-                    ...prev,
-                    [commitment.id]: !prev[commitment.id]
-                  }));
-                };
-                
-                return (
-                  <div key={commitment.id} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
-                    {/* User name and actions row */}
-                    <div className="flex items-center justify-between mb-2 gap-3">
-                      <div className="flex items-center space-x-2 flex-1 min-w-0">
-                        <span className="text-base font-medium truncate">
-                          {commitment.user.firstName && commitment.user.lastName 
-                            ? `${commitment.user.firstName} ${commitment.user.lastName}`
-                            : commitment.user.email
-                          }
-                          {isCurrentUser && (
-                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                              You
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2 flex-shrink-0">
-                        {isCurrentUser && (will.status === 'pending' || will.status === 'scheduled') && (
-                          <button 
-                            onClick={() => setLocation(`/will/${id}/edit-commitment/${commitment.id}`)}
-                            className="px-3 py-1 text-sm rounded border bg-white shadow text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                            title="Edit commitment"
-                          >
-                            Edit
-                          </button>
-                        )}
-                        {isCurrentUser && (
-                          <button
-                            onClick={toggleWhy}
-                            className={`text-sm px-3 py-1 rounded border transition-all duration-200 shadow ${
-                              showWhy 
-                                ? 'bg-red-500 text-white border-red-500 shadow-md hover:bg-red-600' 
-                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                            }`}
-                            title={showWhy ? "Hide your reason" : "Show your reason"}
-                          >
-                            Why
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Commitment content */}
-                    <div className="space-y-2">
-                      <div>
-                        <div className="text-sm text-gray-500 font-medium italic mb-1">will</div>
-                        <div className="text-base text-gray-800 leading-relaxed">
-                          {commitment.what}
-                        </div>
-                      </div>
-                      
-                      {isCurrentUser && showWhy && (
-                        <div className="mt-3 p-4 bg-gray-50 border-l-4 border-gray-300 rounded-lg shadow-sm animate-in fade-in duration-300">
-                          <div className="text-base tracking-wide">
-                            <span className="font-bold text-black">Because</span> {commitment.why}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-
-
         {/* Submit Commitment Section */}
-        {/* ISSUE FIX: Allow adding commitments for both 'pending' AND 'scheduled' wills (before start time) */}
-        {/* Never allow adding commitments once will is 'active' or beyond */}
         {(will.status === 'pending' || will.status === 'scheduled') && !userHasCommitted && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-center">
@@ -899,6 +971,7 @@ export default function WillDetails() {
                 onClick={() => setLocation(`/will/${id}/commit`)}
                 className="bg-green-600 hover:bg-green-700 text-base py-3 px-6"
                 size="lg"
+                data-testid="button-submit-commitment"
               >
                 Submit My Commitment
               </Button>
@@ -906,7 +979,7 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Display Submitted Reviews - Only for completed status (will_review uses threaded layout) */}
+        {/* Display Submitted Reviews - Only for completed status */}
         {will.status === 'completed' && (
           <div className="bg-white border border-gray-200 rounded-lg p-4" data-testid="section-reviews-display">
             <div className="flex items-center mb-4">
@@ -1031,6 +1104,7 @@ export default function WillDetails() {
                   disabled={acknowledgeMutation.isPending}
                   className="bg-green-600 hover:bg-green-700 text-base py-3 px-6"
                   size="lg"
+                  data-testid="button-acknowledge"
                 >
                   {acknowledgeMutation.isPending ? 'Acknowledging...' : 'Acknowledge and Close Will'}
                 </Button>
@@ -1058,66 +1132,72 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Creator Actions */}
-        {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
-          <div className="bg-slate-50 border border-blue-100 rounded-2xl shadow-md py-4 px-6">
-            <div className="flex justify-between items-center gap-4">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-base font-medium text-blue-700">Creator Options</span>
-              </div>
-              <Button 
-                onClick={() => setLocation(`/will/${id}/edit`)}
-                className="border border-blue-500 text-blue-600 bg-white hover:bg-blue-50 rounded-lg px-4 py-2 text-base font-medium"
-                size="default"
-              >
-                Edit <em>Will</em>
-              </Button>
-            </div>
-          </div>
+        {/* Manage Will - Collapsed button that opens modal */}
+        {will.createdBy === user?.id && (will.status === 'active' || will.status === 'paused') && (
+          <button
+            onClick={() => setShowManageModal(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors"
+            data-testid="button-manage-will"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-sm font-medium">Manage Will</span>
+          </button>
         )}
 
-        {/* Active Will Creator Actions */}
-        {will.createdBy === user?.id && (will.status === 'active' || will.status === 'paused') && (
-          <div className="bg-gray-50 border border-gray-200 rounded-2xl shadow-md py-4 px-6 space-y-3">
-            <div className="flex items-center gap-2 mb-2">
-              <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span className="text-base font-medium text-gray-700">Manage Will</span>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {/* Pause/Resume Button */}
+        {/* Back to Hub */}
+        <div className="text-center mt-4">
+          <button 
+            onClick={() => setLocation(getHubUrl())}
+            className="text-base text-gray-600 hover:text-gray-800 underline font-medium"
+            data-testid="button-back-to-hub"
+          >
+            Back to Hub
+          </button>
+        </div>
+      </div>
+
+      {/* Manage Will Modal */}
+      {showManageModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setShowManageModal(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div 
+            className="relative w-full max-w-md bg-white rounded-t-2xl p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] animate-in slide-in-from-bottom duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Manage Will</h3>
+            <div className="space-y-3">
               {will.status === 'active' ? (
-                <Button 
-                  onClick={() => pauseMutation.mutate()}
+                <Button
+                  onClick={() => { pauseMutation.mutate(); setShowManageModal(false); }}
                   disabled={pauseMutation.isPending}
-                  className="border border-amber-500 text-amber-600 bg-white hover:bg-amber-50 rounded-lg px-4 py-2 text-sm font-medium"
-                  size="sm"
+                  className="w-full border border-amber-500 text-amber-600 bg-white hover:bg-amber-50 rounded-xl py-3 text-base font-medium"
+                  variant="outline"
+                  data-testid="button-pause-will"
                 >
-                  {pauseMutation.isPending ? "Pausing..." : "Pause"}
+                  {pauseMutation.isPending ? "Pausing..." : "Pause Will"}
                 </Button>
               ) : will.status === 'paused' ? (
-                <Button 
-                  onClick={() => resumeMutation.mutate()}
+                <Button
+                  onClick={() => { resumeMutation.mutate(); setShowManageModal(false); }}
                   disabled={resumeMutation.isPending}
-                  className="border border-green-500 text-green-600 bg-white hover:bg-green-50 rounded-lg px-4 py-2 text-sm font-medium"
-                  size="sm"
+                  className="w-full border border-green-500 text-green-600 bg-white hover:bg-green-50 rounded-xl py-3 text-base font-medium"
+                  variant="outline"
+                  data-testid="button-resume-will"
                 >
-                  {resumeMutation.isPending ? "Resuming..." : "Resume"}
+                  {resumeMutation.isPending ? "Resuming..." : "Resume Will"}
                 </Button>
               ) : null}
-
-              {/* Terminate Button */}
+              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
-                    className="border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-lg px-4 py-2 text-sm font-medium"
-                    size="sm"
+                    className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
+                    variant="outline"
+                    data-testid="button-end-will"
                   >
                     End Will
                   </Button>
@@ -1132,7 +1212,7 @@ export default function WillDetails() {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction 
-                      onClick={() => terminateMutation.mutate()}
+                      onClick={() => { terminateMutation.mutate(); setShowManageModal(false); }}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       {terminateMutation.isPending ? "Ending..." : "End Will"}
@@ -1140,20 +1220,19 @@ export default function WillDetails() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+
+              <Button
+                onClick={() => setShowManageModal(false)}
+                className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl py-3 text-base font-medium"
+                variant="ghost"
+                data-testid="button-cancel-manage"
+              >
+                Cancel
+              </Button>
             </div>
           </div>
-        )}
-
-        {/* Back to Hub */}
-        <div className="text-center mt-4">
-          <button 
-            onClick={() => setLocation(getHubUrl())}
-            className="text-base text-gray-600 hover:text-gray-800 underline font-medium"
-          >
-            Back to Hub
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Final Will Summary Modal */}
       <FinalWillSummary
