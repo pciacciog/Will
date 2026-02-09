@@ -927,115 +927,102 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         {currentStep === 4 && !showTransition && !showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep4Submit} className="flex flex-col flex-1">
-              <div className="flex-1 flex flex-col justify-center py-4">
-                
-                {/* Auto-determined tracking type info */}
-                <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                    isIndefinite 
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}>
-                    {isIndefinite ? (
-                      <>
-                        <Calendar className="w-4 h-4" />
-                        Daily check-ins
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Final review when complete
-                      </>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {isIndefinite 
-                      ? "Track progress daily with yes/no/partial check-ins" 
-                      : "You'll reflect on your commitment when the Will ends"}
-                  </p>
-                </div>
+              <div className="flex-1 flex flex-col py-6 px-4">
 
-                {/* Check-In Time */}
-                <div className="px-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                      {isIndefinite ? 'Daily Check-In Time' : 'Reminder Time'}
-                    </p>
-                  </div>
-                  <p className="text-xs text-gray-400 text-center mb-3">
-                    {isIndefinite ? "When should we remind you to check in?" : "When should we nudge you?"}
-                  </p>
-                  <div className="flex justify-center">
-                    <TimeChipPicker
-                      value={checkInTime}
-                      onChange={setCheckInTime}
-                      testId="input-check-in-time"
-                    />
-                  </div>
-                </div>
+                {isIndefinite ? (
+                  <>
+                    <h2 className="text-xl font-semibold text-gray-900 text-center mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300" data-testid="text-step4-title">
+                      Daily Check-In
+                    </h2>
 
-                {/* Active Days - Ongoing Wills Only */}
-                {isIndefinite && (
-                  <div className="mt-6 pt-5 border-t border-gray-100 px-4 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '200ms' }}>
-                    <div className="flex items-center justify-center gap-2 mb-3">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                        Active Days
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-400 text-center mb-3">Which days does this apply to?</p>
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setActiveDays('every_day')}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                            activeDays === 'every_day' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          data-testid="button-active-days-every"
-                        >
-                          Every day
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveDays('custom')}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                            activeDays === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          data-testid="button-active-days-custom"
-                        >
-                          Custom
-                        </button>
-                      </div>
-                      {activeDays === 'custom' && (
-                        <div className="flex gap-1.5 mt-2 animate-in fade-in duration-200">
-                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => {
-                                setCustomDays(prev => 
-                                  prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
-                                );
-                              }}
-                              className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
-                                customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                              }`}
-                              data-testid={`button-day-${i}`}
-                            >
-                              {day}
-                            </button>
-                          ))}
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '80ms' }}>
+                      <p className="text-sm font-medium text-gray-700 text-center mb-3" data-testid="text-active-days-label">Active Days</p>
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setActiveDays('every_day')}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                              activeDays === 'every_day' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            data-testid="button-active-days-every"
+                          >
+                            Every day
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveDays('custom')}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                              activeDays === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            data-testid="button-active-days-custom"
+                          >
+                            Custom
+                          </button>
                         </div>
-                      )}
+                        {activeDays === 'custom' && (
+                          <div className="flex gap-1.5 mt-2 animate-in fade-in duration-200">
+                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => {
+                                  setCustomDays(prev => 
+                                    prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
+                                  );
+                                }}
+                                className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
+                                  customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                }`}
+                                data-testid={`button-day-${i}`}
+                              >
+                                {day}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+
+                    <div className="my-5 border-t border-gray-100" />
+
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '160ms' }}>
+                      <p className="text-sm font-medium text-gray-700 text-center mb-3" data-testid="text-checkin-time-label">Check-In Time</p>
+                      <div className="flex justify-center">
+                        <TimeChipPicker
+                          value={checkInTime}
+                          onChange={setCheckInTime}
+                          testId="input-check-in-time"
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '240ms' }} data-testid="text-checkin-confirm">
+                      We'll check in with you on your active days
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-xl font-semibold text-gray-900 text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300" data-testid="text-step4-title">
+                      Daily Reminder
+                    </h2>
+
+                    <div className="flex justify-center animate-in fade-in slide-in-from-bottom-3 duration-400" style={{ animationDelay: '100ms' }}>
+                      <TimeChipPicker
+                        value={checkInTime}
+                        onChange={setCheckInTime}
+                        testId="input-check-in-time"
+                      />
+                    </div>
+
+                    <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
+                      We'll check in with you each day
+                    </p>
+                  </>
                 )}
 
               </div>
               
-              {/* Navigation - Create Will */}
               <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center space-x-2">
                   <Button type="button" variant="ghost" onClick={handleCancel} className="text-gray-500" data-testid="button-cancel">

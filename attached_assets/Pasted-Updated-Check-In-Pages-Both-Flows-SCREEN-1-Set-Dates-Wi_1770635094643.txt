@@ -1,0 +1,86 @@
+Updated Check-In Pages - Both Flows
+
+SCREEN 1: Set Dates Will - Check-In Page (Step 4)
+Simplify to absolute minimum:
+Remove:
+* "Final review when complete" badge and explanation
+* "REMINDER TIME" section header
+* All question text ("When should we check in with you?", "When should we nudge you?")
+* Any explanatory paragraphs
+New layout:
+
+
+┌─────────────────────────────────┐
+│   1 What — 2 Why — 3 When — 4   │
+└─────────────────────────────────┘
+
+
+Daily Reminder
+
+[8:00 PM]
+
+We'll check in with you each day
+
+
+[Cancel]  [?]  [Create Will →]
+Elements:
+* Title: "Daily Reminder"
+* Time Picker: Prominent, centered
+* Confirmation text: "We'll check in with you each day"
+* Buttons: Cancel, help icon (?), Create Will
+
+SCREEN 2: Ongoing Will - Check-In Page (Step 4)
+Simplify while keeping essential ongoing elements:
+Remove:
+* "Daily check-ins" badge
+* "Set your daily check-in preferences" subtitle
+* "Track progress daily with yes/no/partial check-ins" explanation
+* "DAILY CHECK-IN TIME" section header
+* "ACTIVE DAYS" section header
+* Question text ("When should we remind you to check in?", "Which days does this apply to?")
+New layout:
+
+
+┌─────────────────────────────────┐
+│   1 What — 2 Why — 3 When — 4   │
+└─────────────────────────────────┘
+
+
+Daily Check-In
+
+Active Days
+
+[Every day]  [Custom]
+
+[If Custom selected:]
+S  M  T  W  T  F  S
+[Day selection buttons]
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Check-In Time
+
+[8:00 PM]
+
+We'll check in with you on your active days
+
+
+[Cancel]  [?]  [Create Will →]
+Elements:
+* Title: "Daily Check-In"
+* Active Days label: Simple text, no header styling
+* Buttons: Every day / Custom
+* Day selection: Shows if Custom selected
+* Divider line: Separates sections
+* Check-In Time label: Simple text, no header styling
+* Time Picker: Standard picker
+* Confirmation text: "We'll check in with you on your active days"
+* Buttons: Cancel, help icon (?), Create Will
+
+Key Consistency Between Both:
+✅ Minimal question text - just labels ✅ Authoritative confirmation ("We'll check in with you...") ✅ Clean typography - no ALL CAPS headers ✅ Same button layout at bottom ✅ Help icon (?) for explanations if needed
+Difference:
+* Set Dates: Just time (simpler)
+* Ongoing: Active Days + Time (what's needed for data tracking)
+
+Please implement both simplified check-in pages following these exact layouts.
