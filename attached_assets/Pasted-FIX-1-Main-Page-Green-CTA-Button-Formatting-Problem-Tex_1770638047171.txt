@@ -1,0 +1,52 @@
+FIX 1: Main Page - Green CTA Button Formatting
+Problem: Text inside the green “I Will" button is too small relative to the button size. Poor proportion/formatting.
+Changes needed:
+1. Increase text size inside the button to better fill the space or reducen the actual box (what makes more sense)
+2. Change button text from "I will" to "Create a Will"
+3. Ensure text is properly centered both horizontally and vertically
+
+FIX 2: Remove "Check-In" from Visual Step Indicator
+Current: Step indicator shows: 1 What — 2 Why — 3 When — 4 Check-In
+Change to: 1 What — 2 Why — 3 When
+Important:
+* Only remove from visual display (the numbered step indicator at top of screen)
+* Keep the actual Check-In page in the flow - users should still go through it
+* Add "One final step..." loading modal after "When" page (Step 3) and before Check-In page displays
+* Think of it as: Show 3 steps visually, but surprise with 4th step after brief loading moment
+Flow should be:
+
+What page (Step 1 of 3) 
+  → Why page (Step 2 of 3) 
+  → When page (Step 3 of 3) 
+  → [Loading modal: "One final step..."] 
+  → Check-In page (no step number shown) 
+  → Create Will
+
+FIX 3: Ongoing Tab - Clarify Text
+Location: Timeline page, when "Ongoing" tab is selected
+Current text: "You can pause or end this anytime"
+Change to: "You can pause or end this Will at any time"
+Why: More specific and clear that it refers to the Will, not just generic "this"
+
+FIX 4: Ongoing Wills - Remove Confusing "End:" Field
+Problem: When viewing active Ongoing Wills, it displays:
+
+Start: Feb 9 at 6:23 AM
+End:
+The empty "End:" field is confusing because Ongoing Wills don't have end dates.
+Solution:
+For Ongoing Wills, show:
+
+Start: Feb 9 at 6:23 AM
+Type: Ongoing
+OR just:
+
+Started: Feb 9 at 6:23 AM
+(Ongoing commitment)
+For Set Dates Wills, keep:
+
+Start: Feb 9 at 6:23 AM
+End: Feb 15 at 11:59 PM
+Logic: Only display "End:" field when timeline === 'set_dates'. For timeline === 'ongoing', either show "Type: Ongoing" or just omit the end date entirely.
+
+Please implement these four fixes. Let me know if any part needs clarification!
