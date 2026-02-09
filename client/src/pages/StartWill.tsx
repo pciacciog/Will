@@ -15,7 +15,7 @@ import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, U
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users, Lock, Eye, ClipboardList, MessageCircle, CalendarDays } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 
 const ENABLE_END_ROOM = false;
@@ -75,16 +75,14 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [showTransition, setShowTransition] = useState(false);
   const [showFinalStepLoading, setShowFinalStepLoading] = useState(false);
   
-  // 4 steps: What, Why, When, Check-In
-  // 5 steps with End Room enabled: What, Why, When, Check-In, End Room
-  const totalSteps = ENABLE_END_ROOM ? 5 : 4;
+  // 5 steps: What, Why, When, Check-In, Confirm
+  // 6 steps with End Room enabled: What, Why, When, Check-In, Confirm, End Room
+  const totalSteps = ENABLE_END_ROOM ? 6 : 5;
   
   // Get step label based on mode
   const getStepLabel = (step: number) => {
-    if (ENABLE_END_ROOM && step === 5) {
-      return isSoloMode ? "Confirm" : "End Room";
-    }
-    const labels = ["", "What", "Why", "When", "Check-In"];
+    if (step === 6) return "End Room";
+    const labels = ["", "What", "Why", "When", "Check-In", "Confirm"];
     return labels[step] || "";
   };
   
@@ -427,8 +425,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       });
     }
 
+    setCurrentStep(5);
+  };
+
+  const handleConfirmSubmit = () => {
     if (ENABLE_END_ROOM && !isSoloMode) {
-      setCurrentStep(5);
+      setCurrentStep(6);
     } else if (isSoloMode) {
       createWillMutation.mutate({
         title: willData.what || "Personal Goal",
@@ -665,7 +667,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               <div className="w-11"></div>
             </div>
             
-            {/* Hide step indicators during type selection and on step 4 (Check-In is a surprise step) */}
+            {/* Hide step indicators during type selection and on steps 4-5 (Check-In and Confirm are unlabeled steps) */}
             {!showTypeSelection && currentStep <= 3 && (
               <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
                 {/* Step 1: What */}
@@ -703,6 +705,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               {!showTypeSelection && currentStep === 2 && "Why would you like to do this?"}
               {!showTypeSelection && currentStep === 3 && "Set Your Timeline"}
               {!showTypeSelection && currentStep === 4 && "Tracking"}
+              {!showTypeSelection && currentStep === 5 && "Review Your Will"}
             </h1>
             {!showTypeSelection && currentStep === 1 && (
               <>
@@ -730,6 +733,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             {!showTypeSelection && currentStep === 4 && (
               <p className="text-sm text-gray-500 mt-1">
                 When should we check in with you?
+              </p>
+            )}
+            {!showTypeSelection && currentStep === 5 && (
+              <p className="text-sm text-gray-500 mt-1">
+                Make sure everything looks right.
               </p>
             )}
           </div>
@@ -1045,17 +1053,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 </div>
                 <button
                   type="submit"
-                  disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
-                  className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
-                    createWillMutation.isPending || addCommitmentMutation.isPending
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm'
-                  }`}
-                  data-testid="button-create-will"
+                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                  data-testid="button-review-will"
                 >
-                  {createWillMutation.isPending || addCommitmentMutation.isPending 
-                    ? 'Creating...' 
-                    : (ENABLE_END_ROOM && !isSoloMode ? 'Next' : 'Create Will')}
+                  Review
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </button>
               </div>
@@ -1063,6 +1064,136 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
         
+        {/* Step 5: Confirmation / Review Page */}
+        {currentStep === 5 && !showTransition && !showTypeSelection && (
+          <div className="flex flex-col animate-in fade-in duration-500">
+            <div className="flex-1 flex flex-col py-4 px-4">
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <ClipboardList className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">What</p>
+                      <p className="text-sm font-medium text-gray-900 mt-0.5" data-testid="text-confirm-what">
+                        {willType === 'cumulative' ? 'We Will' : 'I Will'} {willData.what}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200"></div>
+
+                  <div className="flex items-start gap-3">
+                    <MessageCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Why</p>
+                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-why">{willData.why}</p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200"></div>
+
+                  <div className="flex items-start gap-3">
+                    <Calendar className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Timeline</p>
+                      {isIndefinite ? (
+                        <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-timeline">
+                          Ongoing commitment
+                        </p>
+                      ) : (
+                        <div className="mt-0.5" data-testid="text-confirm-timeline">
+                          <p className="text-sm text-gray-700">
+                            {formatDateForDisplay(willData.startDate)} — {formatDateForDisplay(willData.endDate)}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {getDurationText(willData.startDate, willData.endDate)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {isIndefinite && (
+                    <>
+                      <div className="border-t border-gray-200"></div>
+                      <div className="flex items-start gap-3">
+                        <CalendarDays className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Active Days</p>
+                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-active-days">
+                            {activeDays === 'every_day' && 'Every day'}
+                            {activeDays === 'weekdays' && 'Weekdays (Mon–Fri)'}
+                            {activeDays === 'custom' && (() => {
+                              const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                              return customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ');
+                            })()}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="border-t border-gray-200"></div>
+
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Check-In Time</p>
+                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-checkin-time">
+                        {(() => {
+                          const [h, m] = checkInTime.split(':').map(Number);
+                          const period = h >= 12 ? 'PM' : 'AM';
+                          const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                          return `${displayHour}:${String(m).padStart(2, '0')} ${period}`;
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {isSoloMode && (
+                    <>
+                      <div className="border-t border-gray-200"></div>
+                      <div className="flex items-start gap-3">
+                        {visibility === 'private' 
+                          ? <Lock className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                          : <Eye className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        }
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Visibility</p>
+                          <p className="text-sm text-gray-700 mt-0.5 capitalize" data-testid="text-confirm-visibility">
+                            {visibility}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <Button type="button" variant="ghost" onClick={() => setCurrentStep(4)} className="text-gray-500" data-testid="button-back-to-tracking">
+                Back
+              </Button>
+              <button
+                onClick={handleConfirmSubmit}
+                disabled={createWillMutation.isPending || addCommitmentMutation.isPending}
+                className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
+                  createWillMutation.isPending || addCommitmentMutation.isPending
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm'
+                }`}
+                data-testid="button-create-will"
+              >
+                {createWillMutation.isPending || addCommitmentMutation.isPending 
+                  ? 'Creating...' 
+                  : 'Create Will'}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: What Will You Do - Focused Writing Experience */}
         {currentStep === 1 && !showTransition && !showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500">
@@ -1216,7 +1347,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         )}
         
         {/* Step 4: End Room Scheduling (Circle mode only, behind ENABLE_END_ROOM flag) */}
-        {ENABLE_END_ROOM && currentStep === 5 && !showTransition && !isSoloMode && (
+        {ENABLE_END_ROOM && currentStep === 6 && !showTransition && !isSoloMode && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleEndRoomSubmit} className="flex flex-col">
               <div className="flex flex-col pt-2 pb-4">
