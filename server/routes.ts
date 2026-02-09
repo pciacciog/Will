@@ -1513,7 +1513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Date and status are required" });
       }
 
-      const will = await storage.getWill(willId);
+      const will = await storage.getWillById(willId);
       if (will && !will.isIndefinite) {
         return res.json({ id: 0, willId, userId, date, status, reflectionText: reflectionText || null, isRetroactive: isRetroactive || false, acknowledged: true });
       }
