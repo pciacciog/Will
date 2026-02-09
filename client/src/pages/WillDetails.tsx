@@ -729,21 +729,27 @@ export default function WillDetails() {
           </div>
           <div className="space-y-2">
             <div className="text-base">
-              <span className="font-medium">Start:</span> {new Date(will.startDate).toLocaleDateString('en-US', { 
+              <span className="font-medium">{will.endDate ? 'Start:' : 'Started:'}</span> {new Date(will.startDate).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit'
               })}
             </div>
-            <div className="text-base">
-              <span className="font-medium">End:</span> {will.endDate ? new Date(will.endDate).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
-              }) : 'Ongoing'}
-            </div>
+            {will.endDate ? (
+              <div className="text-base">
+                <span className="font-medium">End:</span> {new Date(will.endDate).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit'
+                })}
+              </div>
+            ) : (
+              <div className="text-base text-gray-500 italic">
+                (Ongoing commitment)
+              </div>
+            )}
           </div>
         </div>
 

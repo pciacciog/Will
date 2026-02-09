@@ -162,13 +162,13 @@ export default function Home() {
             >
               <div className="relative">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-20 group-hover:opacity-35 transition-opacity duration-300"></div>
-                <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl px-6 py-4 shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-0.5">
+                <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl px-6 py-3.5 shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-0.5">
                   <div className="flex items-center justify-between text-white">
                     <div>
-                      <h2 className="text-base font-semibold tracking-wide">I Will</h2>
+                      <h2 className="text-lg font-bold tracking-wide">Create a Will</h2>
                       <p className="text-emerald-100/80 text-xs mt-0.5">Make a commitment. Stay accountable.</p>
                     </div>
-                    <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-80 group-hover:translate-x-0.5 transition-all duration-200" />
+                    <ArrowRight className="w-5 h-5 opacity-50 group-hover:opacity-80 group-hover:translate-x-0.5 transition-all duration-200" />
                   </div>
                 </div>
               </div>

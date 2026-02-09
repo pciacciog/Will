@@ -73,6 +73,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [showTransition, setShowTransition] = useState(false);
+  const [showFinalStepLoading, setShowFinalStepLoading] = useState(false);
   
   // 4 steps: What, Why, When, Check-In
   // 5 steps with End Room enabled: What, Why, When, Check-In, End Room
@@ -399,7 +400,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
 
     const updatedWillData = { ...willData, startDate: startDateTime, endDate: endDateTime };
     setWillData(updatedWillData);
-    setCurrentStep(4);
+    setShowFinalStepLoading(true);
+    setTimeout(() => {
+      setShowFinalStepLoading(false);
+      setCurrentStep(4);
+    }, 1500);
   };
 
   const handleStep4Submit = (e: React.FormEvent) => {
@@ -622,6 +627,17 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
 
   return (
     <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden bg-gradient-to-br from-gray-50 via-white to-gray-50/50 min-h-screen">
+      {showFinalStepLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm">
+          <div className="text-center animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
+              <CheckCircle className="w-7 h-7 text-white animate-pulse" />
+            </div>
+            <p className="text-lg font-semibold text-gray-800">One final step...</p>
+            <p className="text-sm text-gray-500 mt-1">Almost there!</p>
+          </div>
+        </div>
+      )}
       <MobileLayout>
         {/* Sticky Header with Progress Indicator */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
@@ -649,9 +665,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               <div className="w-11"></div>
             </div>
             
-            {/* Hide step indicators during type selection */}
-            {!showTypeSelection && (
-              <div className="flex items-center justify-center space-x-1.5 min-w-0 flex-1">
+            {/* Hide step indicators during type selection and on step 4 (Check-In is a surprise step) */}
+            {!showTypeSelection && currentStep <= 3 && (
+              <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
                 {/* Step 1: What */}
                 <div className="flex items-center">
                   <div className={`w-6 h-6 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-[10px] font-semibold`}>
@@ -659,7 +675,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </div>
                   <span className={`ml-1 text-[10px] ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(1)}</span>
                 </div>
-                <div className={`w-3 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                <div className={`w-5 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
                 {/* Step 2: Why */}
                 <div className="flex items-center">
                   <div className={`w-6 h-6 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-[10px] font-semibold`}>
@@ -667,21 +683,13 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </div>
                   <span className={`ml-1 text-[10px] ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(2)}</span>
                 </div>
-                <div className={`w-4 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                <div className={`w-5 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
                 {/* Step 3: When */}
                 <div className="flex items-center">
                   <div className={`w-6 h-6 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-[10px] font-semibold`}>
                     3
                   </div>
                   <span className={`ml-1 text-[10px] ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(3)}</span>
-                </div>
-                <div className={`w-3 h-0.5 ${currentStep >= 4 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                {/* Step 4: Check-In */}
-                <div className="flex items-center">
-                  <div className={`w-6 h-6 ${currentStep >= 4 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-[10px] font-semibold`}>
-                    4
-                  </div>
-                  <span className={`ml-1 text-[10px] ${currentStep >= 4 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>{getStepLabel(4)}</span>
                 </div>
               </div>
             )}
@@ -906,7 +914,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   
                   {isIndefinite && (
                     <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300 pt-1" style={{ animationDelay: '200ms' }}>
-                      You can pause or end this anytime
+                      You can pause or end this Will at any time
                     </p>
                   )}
                 </div>
