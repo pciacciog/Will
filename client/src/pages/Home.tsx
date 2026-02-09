@@ -152,19 +152,18 @@ export default function Home() {
             <h1 className="text-2xl font-semibold text-gray-900 mb-1" data-testid="text-welcome">
               Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
             </h1>
-            <p className="text-sm text-gray-400 mb-8">What will you commit to today?</p>
+            <p className="text-sm text-gray-400 mb-3">What will you commit to today?</p>
 
             {/* Create Will Button */}
             <button
               onClick={handleCreateWill}
-              className="mb-3 group"
+              className="w-full max-w-sm mb-8 group"
               data-testid="button-create-will"
             >
-              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl px-10 py-3 shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98]">
-                <span className="text-white text-xl font-semibold tracking-tight">Create a Will</span>
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-5 shadow-lg group-hover:shadow-xl transition-all duration-200 group-active:scale-[0.98]">
+                <span className="text-white text-2xl font-bold tracking-tight">Create a Will</span>
               </div>
             </button>
-            <p className="text-sm text-gray-400 mb-8">Make a commitment. Stay accountable.</p>
 
             {/* Active Wills (Personal + Circle) */}
             {activeWills.length > 0 && (
