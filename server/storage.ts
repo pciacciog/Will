@@ -82,7 +82,7 @@ export interface IStorage {
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserActiveSoloWill(userId: string): Promise<Will | undefined>;
   getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string })[]>;
-  getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
+  getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
   getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
   updateWillStatus(willId: number, status: string): Promise<void>;
@@ -698,13 +698,14 @@ export class DatabaseStorage implements IStorage {
     return willsWithCommitments;
   }
 
-  async getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
+  async getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
     const publicWillsList = await db
       .select({
         id: wills.id,
         checkInType: wills.checkInType,
         startDate: wills.startDate,
         endDate: wills.endDate,
+        isIndefinite: wills.isIndefinite,
         createdBy: wills.createdBy,
         status: wills.status,
       })
@@ -741,6 +742,7 @@ export class DatabaseStorage implements IStorage {
           checkInType: will.checkInType,
           startDate: will.startDate,
           endDate: will.endDate,
+          isIndefinite: will.isIndefinite,
           createdBy: will.createdBy,
           creatorName: creator?.firstName || 'Anonymous',
           memberCount: Number(memberCountResult?.count || 0) + 1,
