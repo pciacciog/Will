@@ -729,7 +729,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             )}
             {!showTypeSelection && currentStep === 4 && (
               <p className="text-sm text-gray-500 mt-1">
-                {isIndefinite ? "Set your daily check-in preferences" : "When should we check in with you?"}
+                When should we check in with you?
               </p>
             )}
           </div>
@@ -913,9 +913,60 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   )}
                   
                   {isIndefinite && (
-                    <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300 pt-1" style={{ animationDelay: '200ms' }}>
-                      You can pause or end this Will at any time
-                    </p>
+                    <>
+                      <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '150ms' }}>
+                        <p className="text-sm font-medium text-gray-700 text-center mb-3" data-testid="text-active-days-label">Active Days</p>
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setActiveDays('every_day')}
+                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                activeDays === 'every_day' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                              data-testid="button-active-days-every"
+                            >
+                              Every day
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActiveDays('custom')}
+                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                activeDays === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                              data-testid="button-active-days-custom"
+                            >
+                              Custom
+                            </button>
+                          </div>
+                          {activeDays === 'custom' && (
+                            <div className="flex gap-1.5 mt-2 animate-in fade-in duration-200">
+                              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => {
+                                    setCustomDays(prev => 
+                                      prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
+                                    );
+                                  }}
+                                  className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
+                                    customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                  }`}
+                                  data-testid={`button-day-${i}`}
+                                >
+                                  {day}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300 pt-4" style={{ animationDelay: '250ms' }}>
+                        You can pause or end this Will at any time
+                      </p>
+                    </>
                   )}
                 </div>
 
@@ -939,62 +990,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
 
                 {isIndefinite ? (
                   <>
-                    <h2 className="text-xl font-semibold text-gray-900 text-center mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300" data-testid="text-step4-title">
+                    <h2 className="text-xl font-semibold text-gray-900 text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300" data-testid="text-step4-title">
                       Daily Check-In
                     </h2>
 
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '80ms' }}>
-                      <p className="text-sm font-medium text-gray-700 text-center mb-3" data-testid="text-active-days-label">Active Days</p>
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setActiveDays('every_day')}
-                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                              activeDays === 'every_day' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                            data-testid="button-active-days-every"
-                          >
-                            Every day
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setActiveDays('custom')}
-                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                              activeDays === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                            data-testid="button-active-days-custom"
-                          >
-                            Custom
-                          </button>
-                        </div>
-                        {activeDays === 'custom' && (
-                          <div className="flex gap-1.5 mt-2 animate-in fade-in duration-200">
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => {
-                                  setCustomDays(prev => 
-                                    prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
-                                  );
-                                }}
-                                className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
-                                  customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                }`}
-                                data-testid={`button-day-${i}`}
-                              >
-                                {day}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="my-5 border-t border-gray-100" />
-
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '160ms' }}>
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
                       <p className="text-sm font-medium text-gray-700 text-center mb-3" data-testid="text-checkin-time-label">Check-In Time</p>
                       <div className="flex justify-center">
                         <TimeChipPicker
@@ -1005,7 +1005,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                       </div>
                     </div>
 
-                    <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '240ms' }} data-testid="text-checkin-confirm">
+                    <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
                       We'll check in with you on your active days
                     </p>
                   </>
