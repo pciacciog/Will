@@ -950,9 +950,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(allWills);
     } catch (error: any) {
       console.error('[ALL-ACTIVE] ERROR:', error.message);
-      console.error('[ALL-ACTIVE] Full error:', error);
+      console.error('[ALL-ACTIVE] Stack:', error.stack?.split('\n').slice(0, 5).join(' | '));
       console.log('═══════════════════════════════════');
-      res.status(500).json({ message: "Failed to fetch wills" });
+      res.status(500).json({ message: "Failed to fetch wills", detail: error.message });
     }
   });
 
