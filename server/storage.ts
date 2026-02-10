@@ -647,57 +647,87 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string })[]> {
+    console.log('[STORAGE] getUserAllActiveWills called for userId:', userId);
+    
     const personalWillsList = await db
       .select()
       .from(wills)
       .where(and(
         eq(wills.createdBy, userId),
         or(eq(wills.mode, 'personal'), eq(wills.mode, 'solo')),
-        sql`status NOT IN ('completed', 'archived', 'terminated')`
+        sql`${wills.status} NOT IN ('completed', 'archived', 'terminated')`
       ))
       .orderBy(desc(wills.createdAt));
+    console.log('[STORAGE] Personal wills found:', personalWillsList.length);
 
-    const circleWillsList = await db
-      .select({
-        will: wills,
-        circleName: circles.name,
-      })
+    const circleWillCommitments = await db
+      .select()
       .from(willCommitments)
       .innerJoin(wills, eq(willCommitments.willId, wills.id))
-      .leftJoin(circles, eq(wills.circleId, circles.id))
       .where(and(
         eq(willCommitments.userId, userId),
         eq(wills.mode, 'circle'),
-        sql`wills.status NOT IN ('completed', 'archived', 'terminated')`
+        sql`${wills.status} NOT IN ('completed', 'archived', 'terminated')`
       ))
       .orderBy(desc(wills.createdAt));
+    console.log('[STORAGE] Circle will commitments found:', circleWillCommitments.length);
 
-    const allWills = [
-      ...personalWillsList.filter(w => w != null).map(w => ({ ...w, circleName: undefined as string | undefined })),
-      ...circleWillsList.filter(r => r?.will != null).map(r => ({ ...r.will, circleName: r.circleName || undefined })),
+    const circleWillsList: (typeof wills.$inferSelect & { circleName?: string })[] = [];
+    for (const row of circleWillCommitments) {
+      if (!row.wills) continue;
+      let circleName: string | undefined = undefined;
+      if (row.wills.circleId) {
+        try {
+          const circleRows = await db.select({ name: circles.name }).from(circles).where(eq(circles.id, row.wills.circleId));
+          circleName = circleRows[0]?.name || undefined;
+        } catch (e) {
+          console.warn('[STORAGE] Could not fetch circle name for circleId:', row.wills.circleId);
+        }
+      }
+      circleWillsList.push({ ...row.wills, circleName });
+    }
+    console.log('[STORAGE] Circle wills processed:', circleWillsList.length);
+
+    const allWills: (typeof wills.$inferSelect & { circleName?: string })[] = [
+      ...personalWillsList.map(w => ({ ...w, circleName: undefined as string | undefined })),
+      ...circleWillsList,
     ];
+    console.log('[STORAGE] Combined wills:', allWills.length);
 
-    const willsWithCommitments = await Promise.all(
-      allWills.map(async (will) => {
-        const commitmentsList = await db
-          .select()
+    const willsWithCommitments = [];
+    for (const will of allWills) {
+      try {
+        const commitmentRows = await db
+          .select({
+            commitment: willCommitments,
+            user: users,
+          })
           .from(willCommitments)
           .innerJoin(users, eq(willCommitments.userId, users.id))
           .where(eq(willCommitments.willId, will.id));
 
-        return {
-          ...will,
-          commitments: commitmentsList
-            .filter(c => c?.will_commitments != null && c?.users != null)
-            .map(c => ({
-              ...c.will_commitments,
-              user: c.users,
-            })),
-        };
-      })
-    );
+        const mappedCommitments = commitmentRows
+          .filter(c => c.commitment && c.user)
+          .map(c => ({
+            ...c.commitment,
+            user: c.user,
+          }));
 
-    return willsWithCommitments;
+        willsWithCommitments.push({
+          ...will,
+          commitments: mappedCommitments,
+        });
+      } catch (e: any) {
+        console.error(`[STORAGE] Failed to fetch commitments for will ${will.id}:`, e.message);
+        willsWithCommitments.push({
+          ...will,
+          commitments: [],
+        });
+      }
+    }
+
+    console.log('[STORAGE] Final result:', willsWithCommitments.length, 'wills with commitments');
+    return willsWithCommitments as any;
   }
 
   async getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
