@@ -78,7 +78,7 @@ export default function Home() {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError, failureCount, isLoading: willsLoading, refetch: refetchWills } = useQuery<Will[] | null>({
+  const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError, failureCount, isLoading: willsLoading, isFetching: willsFetching, refetch: refetchWills, status: willsQueryStatus, fetchStatus: willsFetchStatus } = useQuery<Will[] | null>({
     queryKey: ['/api/wills/all-active', user?.id],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user && !!user.id,
@@ -100,21 +100,29 @@ export default function Home() {
 
   useEffect(() => {
     console.log('[Home] Wills query state:', {
+      data: allActiveWills === null ? 'NULL (auth failed?)' : allActiveWills === undefined ? 'UNDEFINED' : `Array(${allActiveWills.length})`,
       count: allActiveWills?.length,
       isLoading: willsLoading,
+      isFetching: willsFetching,
+      queryStatus: willsQueryStatus,
+      fetchStatus: willsFetchStatus,
       hasError: isActiveWillsError,
       failureCount,
       willIds: allActiveWills?.map(w => w.id),
+      willStatuses: allActiveWills?.map(w => `${w.id}:${w.status}:${w.mode}`),
       userId: user?.id,
       enabled: !!user && !!user.id,
     });
     if (isActiveWillsError) {
       console.error('[Home] Active wills query error:', activeWillsError);
     }
-  }, [allActiveWills, isActiveWillsError, activeWillsError, willsLoading, failureCount, user]);
+    if (allActiveWills === null) {
+      console.warn('[Home] ⚠️ Wills query returned NULL - likely a 401 auth issue. Token may not be sent with request.');
+    }
+  }, [allActiveWills, isActiveWillsError, activeWillsError, willsLoading, willsFetching, willsQueryStatus, willsFetchStatus, failureCount, user]);
 
   const activeWills = allActiveWills?.filter(w => 
-    w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending'
+    w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending' || w.status === 'paused'
   ) || [];
 
   const handleCreateWill = () => {
@@ -196,6 +204,42 @@ export default function Home() {
             </button>
 
             {/* Active Wills (Personal + Circle) */}
+            {willsLoading && user?.id && (
+              <div className="w-full mb-8">
+                <div className="flex items-center gap-2 justify-center py-4">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
+                  <span className="text-sm text-gray-400">Loading your wills...</span>
+                </div>
+              </div>
+            )}
+            {isActiveWillsError && (
+              <div className="w-full mb-8">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+                  <p className="text-sm text-red-600 mb-2">Could not load your wills</p>
+                  <button 
+                    onClick={() => refetchWills()} 
+                    className="text-xs text-red-500 underline"
+                    data-testid="button-retry-wills"
+                  >
+                    Tap to retry
+                  </button>
+                </div>
+              </div>
+            )}
+            {allActiveWills === null && !willsLoading && user?.id && (
+              <div className="w-full mb-8">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+                  <p className="text-sm text-amber-600 mb-2">Session expired — please sign out and back in</p>
+                  <button 
+                    onClick={() => refetchWills()} 
+                    className="text-xs text-amber-500 underline"
+                    data-testid="button-retry-auth"
+                  >
+                    Tap to retry
+                  </button>
+                </div>
+              </div>
+            )}
             {activeWills.length > 0 && (
               <div className="w-full mb-8">
                 <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Your Active Wills</h3>
@@ -208,6 +252,7 @@ export default function Home() {
                       will_review: 'bg-amber-100 text-amber-700',
                       scheduled: 'bg-blue-100 text-blue-700',
                       pending: 'bg-gray-100 text-gray-700',
+                      paused: 'bg-orange-100 text-orange-700',
                     };
                     
                     return (
