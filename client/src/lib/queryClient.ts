@@ -90,9 +90,10 @@ export const getQueryFn: <T>(options: {
     // Convert relative URLs to absolute URLs for native apps
     const fullUrl = getApiPath(queryKey[0] as string);
     
-    // DEBUG: Log fetch attempts for review endpoints
-    if (queryKey[0]?.toString().includes('review')) {
-      console.log('[QueryClient] 🔍 FETCH ATTEMPT:', {
+    // DEBUG: Log fetch attempts for critical endpoints
+    const urlStr = queryKey[0]?.toString() || '';
+    if (urlStr.includes('review') || urlStr.includes('all-active')) {
+      console.log('[QueryClient] FETCH ATTEMPT:', {
         queryKey,
         fullUrl,
         isNative: Capacitor.isNativePlatform(),
@@ -117,9 +118,9 @@ export const getQueryFn: <T>(options: {
     
     const res = await fetch(fullUrl, fetchOptions);
 
-    // DEBUG: Log responses for review endpoints
-    if (queryKey[0]?.toString().includes('review')) {
-      console.log('[QueryClient] 📥 FETCH RESPONSE:', {
+    // DEBUG: Log responses for critical endpoints
+    if (urlStr.includes('review') || urlStr.includes('all-active')) {
+      console.log('[QueryClient] FETCH RESPONSE:', {
         queryKey,
         status: res.status,
         statusText: res.statusText,

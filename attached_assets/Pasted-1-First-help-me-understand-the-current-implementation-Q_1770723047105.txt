@@ -1,0 +1,127 @@
+1. First, help me understand the current implementation:
+Questions:
+* Where is the active wills query configured? (Which file/component fetches /api/wills/all-active?)
+* What are the current TanStack Query settings? (retry, retryDelay, enabled, staleTime)
+* How is authentication checked before fetching wills? (Is there an enabled: !!token condition?)
+* Is there any difference between how development and production handle cold starts?
+2. Add diagnostic logging:
+Can you add comprehensive logging to help us see what's happening?
+Backend logging (in /api/wills/all-active endpoint):
+
+
+javascript
+app.get('/api/wills/all-active', async (req, res) => {
+  console.log('═══════════════════════════════════');
+  console.log('🔍 GET /api/wills/all-active');
+  console.log('⏰ Timestamp:', new Date().toISOString());
+  console.log('👤 User ID:', req.user?.id);
+  console.log('👤 User email:', req.user?.email);
+  console.log('🔐 Auth header present:', !!req.headers.authorization);
+  
+  try {
+    const wills = await getActiveWills(req.user.id); // or however you query
+    
+    console.log('✅ Query successful');
+    console.log('📊 Wills found:', wills.length);
+    console.log('🆔 Will IDs:', wills.map(w => w.id));
+    console.log('📝 Will commitments:', wills.map(w => w.commitment_text || w.what));
+    console.log('═══════════════════════════════════');
+    
+    res.json(wills);
+  } catch (error) {
+    console.error('❌ Error in all-active:', error.message);
+    console.error('❌ Full error:', error);
+    console.log('═══════════════════════════════════');
+    res.status(500).json({ error: error.message });
+  }
+});
+Frontend logging (where active wills query is):
+
+
+typescript
+const { data: wills, isLoading, error, failureCount } = useQuery({
+  queryKey: ['active-wills'],
+  queryFn: async () => {
+    console.log('🔄 [Frontend] Fetching active wills...');
+    console.log('🔄 [Frontend] Auth token present:', !!authToken);
+    
+    const response = await fetch('/api/wills/all-active', {
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
+    
+    console.log('📡 [Frontend] Response status:', response.status);
+    const data = await response.json();
+    console.log('✅ [Frontend] Response data:', data);
+    console.log('✅ [Frontend] Wills count:', data?.length || 0);
+    
+    return data;
+  },
+  // ... existing config
+});
+
+console.log('🏠 [Homepage] Wills state:', {
+  count: wills?.length,
+  isLoading,
+  hasError: !!error,
+  failureCount,
+  willIds: wills?.map(w => w.id)
+});
+3. Check and improve query configuration:
+Can you show me the current TanStack Query configuration for active wills and help me improve it?
+What I think we need:
+
+
+typescript
+useQuery({
+  queryKey: ['active-wills', userId],
+  queryFn: fetchActiveWills,
+  enabled: !!authToken && !!userId, // CRITICAL: Wait for auth
+  retry: 3, // Retry on failure (for cold starts)
+  retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
+  staleTime: 1000 * 60 * 5, // 5 minutes
+})
+Can you:
+* Show me the current configuration
+* Update it with proper retry logic if missing
+* Ensure it only fires when auth is ready
+4. Verify the database query:
+Can you show me the actual SQL query or function that fetches active wills? I want to verify:
+* It's checking the correct user ID
+* It's filtering for correct statuses ('active', 'scheduled', 'pending', 'in_review')
+* It's returning all necessary fields
+5. Check for iOS-specific issues:
+In Capacitor setup:
+* How is the JWT token stored and retrieved on iOS?
+* Is there a timing issue where the token isn't loaded before the query fires?
+* Is there proper handling of app lifecycle (cold start vs resume)?
+Proposed Fixes to Test
+Based on the hypothesis, here are fixes I think we should try:
+Fix 1: Add retry logic for cold starts
+
+
+typescript
+// In active wills query
+retry: 3,
+retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
+Fix 2: Ensure auth timing
+
+
+typescript
+// In active wills query
+enabled: !!authToken && !!userId,
+Fix 3: Add loading state management
+
+
+typescript
+// In homepage component
+if (authLoading) return <LoadingScreen />;
+if (!authToken) return <LoginScreen />;
+// Only show wills UI after auth confirmed
+What I Need You To Do
+1. Review the codebase and answer the questions in section 1
+2. Add the diagnostic logging from section 2 (both frontend and backend)
+3. Show me the current query configuration and help improve it (section 3)
+4. Verify the database query is correct (section 4)
+5. Implement the proposed fixes from section 5

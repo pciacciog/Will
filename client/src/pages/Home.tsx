@@ -78,25 +78,31 @@ export default function Home() {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError } = useQuery<Will[] | null>({
-    queryKey: ['/api/wills/all-active'],
+  const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError, failureCount, isLoading: willsLoading } = useQuery<Will[] | null>({
+    queryKey: ['/api/wills/all-active', user?.id],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    enabled: !!user,
-    staleTime: 0,
+    enabled: !!user && !!user.id,
+    staleTime: 1000 * 60 * 5,
     refetchOnMount: 'always',
-    retry: 2,
-    retryDelay: 1000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     refetchInterval: 30000,
   });
 
   useEffect(() => {
+    console.log('[Home] Wills query state:', {
+      count: allActiveWills?.length,
+      isLoading: willsLoading,
+      hasError: isActiveWillsError,
+      failureCount,
+      willIds: allActiveWills?.map(w => w.id),
+      userId: user?.id,
+      enabled: !!user && !!user.id,
+    });
     if (isActiveWillsError) {
       console.error('[Home] Active wills query error:', activeWillsError);
     }
-    if (allActiveWills) {
-      console.log('[Home] Active wills loaded:', allActiveWills.length, 'wills');
-    }
-  }, [allActiveWills, isActiveWillsError, activeWillsError]);
+  }, [allActiveWills, isActiveWillsError, activeWillsError, willsLoading, failureCount, user]);
 
   const activeWills = allActiveWills?.filter(w => 
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending'

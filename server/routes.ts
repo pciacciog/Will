@@ -932,14 +932,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get('/api/wills/all-active', isAuthenticated, async (req: any, res) => {
+    console.log('═══════════════════════════════════');
+    console.log('[ALL-ACTIVE] GET /api/wills/all-active');
+    console.log('[ALL-ACTIVE] Timestamp:', new Date().toISOString());
+    console.log('[ALL-ACTIVE] User ID:', req.user?.id);
+    console.log('[ALL-ACTIVE] User email:', req.user?.email);
+    console.log('[ALL-ACTIVE] Auth header present:', !!req.headers.authorization);
+    console.log('[ALL-ACTIVE] Session auth:', req.isAuthenticated?.() || false);
     try {
       const userId = req.user.id;
-      console.log(`[ALL-ACTIVE] Fetching active wills for user ${userId}`);
       const allWills = await storage.getUserAllActiveWills(userId);
-      console.log(`[ALL-ACTIVE] Found ${allWills.length} active wills for user ${userId}`);
+      console.log('[ALL-ACTIVE] Query successful');
+      console.log('[ALL-ACTIVE] Wills found:', allWills.length);
+      console.log('[ALL-ACTIVE] Will IDs:', allWills.map((w: any) => w.id));
+      console.log('[ALL-ACTIVE] Will statuses:', allWills.map((w: any) => `${w.id}:${w.status}`));
+      console.log('═══════════════════════════════════');
       res.json(allWills);
-    } catch (error) {
-      console.error("[ALL-ACTIVE] Error fetching all active wills:", error);
+    } catch (error: any) {
+      console.error('[ALL-ACTIVE] ERROR:', error.message);
+      console.error('[ALL-ACTIVE] Full error:', error);
+      console.log('═══════════════════════════════════');
       res.status(500).json({ message: "Failed to fetch wills" });
     }
   });
@@ -1794,6 +1806,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching wills:", error);
       res.status(500).json({ message: "Failed to fetch wills" });
+    }
+  });
+
+  // TEMPORARY: Secured one-time cleanup for user's test wills - REMOVE AFTER USE
+  app.post('/api/cleanup-test-wills', async (req: any, res) => {
+    const { secret } = req.body;
+    if (secret !== 'cleanup-bebo-test-wills-2026') {
+      return res.status(403).json({ message: "Invalid secret" });
+    }
+    try {
+      const results: string[] = [];
+      for (const willId of [38, 39]) {
+        const will = await storage.getWillById(willId);
+        if (will && will.createdBy === '1768756059932eniavxoo6') {
+          await storage.deleteWill(willId);
+          results.push(`Will #${willId} deleted`);
+        } else {
+          results.push(`Will #${willId} not found or wrong owner`);
+        }
+      }
+      res.json({ success: true, results });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 
