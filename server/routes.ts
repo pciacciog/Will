@@ -968,6 +968,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug test endpoint - admin-only, for diagnosing active wills issue
+  app.get('/api/wills/test-active/:userId', isAuthenticated, isAdmin, async (req: any, res) => {
+    const userId = req.params.userId;
+    console.log('[TEST-ACTIVE] Raw test for user:', userId);
+    try {
+      const allWills = await storage.getUserAllActiveWills(userId);
+      console.log('[TEST-ACTIVE] Found:', allWills.length, 'wills');
+      console.log('[TEST-ACTIVE] IDs:', allWills.map((w: any) => w.id));
+      res.json({
+        timestamp: new Date().toISOString(),
+        userId,
+        willsCount: allWills.length,
+        wills: allWills,
+      });
+    } catch (error: any) {
+      console.error('[TEST-ACTIVE] Error:', error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Legacy solo wills endpoint (redirects to personal)
   app.get('/api/wills/solo', isAuthenticated, async (req: any, res) => {
     try {
@@ -1806,29 +1826,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching wills:", error);
       res.status(500).json({ message: "Failed to fetch wills" });
-    }
-  });
-
-  // TEMPORARY: Secured one-time cleanup for user's test wills - REMOVE AFTER USE
-  app.post('/api/cleanup-test-wills', async (req: any, res) => {
-    const { secret } = req.body;
-    if (secret !== 'cleanup-bebo-test-wills-2026') {
-      return res.status(403).json({ message: "Invalid secret" });
-    }
-    try {
-      const results: string[] = [];
-      for (const willId of [38, 39]) {
-        const will = await storage.getWillById(willId);
-        if (will && will.createdBy === '1768756059932eniavxoo6') {
-          await storage.deleteWill(willId);
-          results.push(`Will #${willId} deleted`);
-        } else {
-          results.push(`Will #${willId} not found or wrong owner`);
-        }
-      }
-      res.json({ success: true, results });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
     }
   });
 

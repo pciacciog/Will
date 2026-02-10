@@ -1,0 +1,135 @@
+Can you:
+* Deploy these changes to production
+* Confirm the deployment is complete
+* Give me the green light to test on iOS
+2. After I Test, I'll Share These Logs
+I'll open the app on my iOS device and share:
+Frontend logs (from iOS Safari DevTools or Xcode console):
+
+
+Example of what I'll capture:
+🏠 [Homepage] Wills state: { count: 0, isLoading: true, ... }
+🔄 [Frontend] Fetching active wills...
+🔄 [Frontend] Auth token present: true
+📡 [Frontend] Response status: 200
+✅ [Frontend] Response data: [...]
+✅ [Frontend] Wills count: 2
+Backend logs (from Replit console):
+
+
+Example:
+═══════════════════════════════════
+🔍 GET /api/wills/all-active
+⏰ Timestamp: 2026-02-10T12:00:00.000Z
+👤 User ID: 1768755557944fw0z204st
+👤 User email: bebociaccio@me.com
+✅ Query successful
+📊 Wills found: 2
+═══════════════════════════════════
+3. Expected Scenarios
+Based on the logs, we'll see one of these patterns:
+Scenario A: Cold Start Delay (Now Fixed) ✅
+
+
+[iOS] 🔄 Attempt 1 - timeout
+[iOS] 🔄 Attempt 2 - timeout  
+[Backend] 🔍 GET /api/wills/all-active (server now ready)
+[Backend] ✅ Found 2 wills
+[iOS] ✅ Response: 2 wills
+Meaning: Retry logic successfully handled cold start. Bug fixed! ✅
+Scenario B: Auth Works, But Empty Response
+
+
+[iOS] 🔄 Fetching...
+[Backend] 🔍 GET /api/wills/all-active
+[Backend] 👤 User ID: 1768755557944fw0z204st
+[Backend] ✅ Query successful
+[Backend] 📊 Wills found: 0 ← UNEXPECTED
+Meaning: Query runs but returns empty. Database query issue.
+Scenario C: Auth Token Missing
+
+
+[iOS] 🔄 Fetching...
+[Backend] 🔍 GET /api/wills/all-active
+[Backend] 👤 User ID: undefined ← PROBLEM
+[Backend] ❌ Error: Cannot read user.id
+Meaning: JWT not being sent or parsed correctly.
+Scenario D: Request Never Reaches Backend
+
+
+[iOS] 🔄 Fetching...
+[iOS] 🔄 Attempt 1 failed
+[iOS] 🔄 Attempt 2 failed
+[iOS] 🔄 Attempt 3 failed
+[Backend] (no logs at all)
+Meaning: Network issue or routing problem.
+4. Additional Debugging If Needed
+If we still see issues after testing, can you help me:
+Check the database directly:
+
+
+sql
+-- Run this query in Neon console to verify data exists:
+SELECT 
+  w.id,
+  w.commitment_text,
+  w.status,
+  w.created_by,
+  w.timeline,
+  w.visibility
+FROM wills w
+WHERE w.created_by = '1768755557944fw0z204st'
+AND w.status NOT IN ('completed', 'archived', 'terminated')
+ORDER BY w.created_at DESC;
+
+-- Also check circle wills:
+SELECT 
+  w.id,
+  w.commitment_text,
+  w.status,
+  wc.user_id,
+  c.name as circle_name
+FROM wills w
+JOIN will_commitments wc ON w.id = wc.will_id
+JOIN circles c ON w.circle_id = c.id
+WHERE wc.user_id = '1768755557944fw0z204st'
+AND w.status NOT IN ('completed', 'archived', 'terminated');
+Check the actual API response: Can you add a temporary test endpoint that bypasses TanStack Query so I can test the raw API?
+
+
+javascript
+// Temporary test endpoint - remove after debugging
+app.get('/api/wills/test-active/:userId', async (req, res) => {
+  console.log('🧪 TEST ENDPOINT - User ID:', req.params.userId);
+  
+  try {
+    const wills = await getUserAllActiveWills(req.params.userId);
+    console.log('🧪 TEST ENDPOINT - Wills found:', wills.length);
+    
+    res.json({
+      timestamp: new Date().toISOString(),
+      userId: req.params.userId,
+      willsCount: wills.length,
+      wills: wills
+    });
+  } catch (error) {
+    console.error('🧪 TEST ENDPOINT - Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+Then I can test: https://your-app.replit.app/api/wills/test-active/1768755557944fw0z204st
+5. Capacity/Performance Check
+Can you also confirm:
+* What's the typical cold start time for your Replit server? (How many seconds?)
+* Does the 5-second max retry delay give enough time?
+* Should we increase max delay or add more retry attempts?
+Questions Before I Test
+1. Is the deployment ready? Can I test now?
+2. How do I access the backend logs? (Replit console? Do I need access?)
+3. If the issue persists, are you able to:
+    * Check the database directly with the queries above?
+    * Add the test endpoint for raw API testing?
+    * Temporarily increase logging verbosity?
+4. Cold start timing: Do you have metrics on how long cold starts typically take? Should we adjust retry timing?
+
+Once you deploy and give me the green light, I'll test on iOS and immediately share all the logs so we can diagnose together. Ready when you are!
