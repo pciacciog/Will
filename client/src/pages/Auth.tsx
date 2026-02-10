@@ -68,6 +68,10 @@ export default function Auth() {
       
       queryClient.setQueryData(['/api/user'], user);
       
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
+      console.log('[Login] 🔄 Invalidated wills queries to trigger fetch after auth');
+      
       // 🔥 FIX: Token may arrive AFTER login (iOS generates token ~2 sec after app launch)
       // We need to wait for the token to arrive and then associate it
       const immediateTokenData = localStorage.getItem('pendingDeviceToken');
@@ -181,6 +185,10 @@ export default function Auth() {
       }
       
       queryClient.setQueryData(['/api/user'], user);
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
+      console.log('[Registration] 🔄 Invalidated wills queries to trigger fetch after auth');
       
       // 🔥 FIX: Token may arrive AFTER registration (iOS generates token ~2 sec after app launch)
       // We need to wait for the token to arrive and then associate it

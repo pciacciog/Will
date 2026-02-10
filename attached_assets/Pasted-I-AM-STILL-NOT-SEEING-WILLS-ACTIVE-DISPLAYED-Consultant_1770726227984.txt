@@ -1,0 +1,111 @@
+I AM STILL NOT SEEING WILLS ACTIVE DISPLAYED.
+
+Consultant Reply
+The Good News:
+✅ Login works perfectly ✅ Token gets saved successfully ✅ User is authenticated ✅ Server is responding fine (no cold start issues!)
+The Bad News - THE ACTUAL BUG:
+After you log in, the app NEVER TRIES to fetch your active Wills!
+Look at what's missing from your logs:
+
+
+❌ No "🔄 [Frontend] Fetching active wills..."
+❌ No request to /api/wills/all-active
+❌ No "📊 Wills found: X"
+The query to get your Wills is not running at all after login.
+
+What's Happening (Simple Version):
+1. You open app → No token found (you weren't logged in)
+2. App shows login screen ✅
+3. You log in → Token saved successfully ✅
+4. App shows homepage ✅
+5. BUT → Homepage never asks for your Wills ❌
+It's like opening your email app after logging in, and it never checks for new messages!
+
+Why This Happens:
+The homepage query is probably configured to only run:
+* When the app first loads with existing auth, OR
+* Not configured to re-run after login state changes
+After you log in, the query doesn't realize "hey, user just authenticated, I should fetch Wills now!"
+
+The Fix Needed:
+In the Homepage component (client/src/pages/Home.tsx):
+The active wills query needs to:
+1. Refetch when auth state changes (when you log in)
+2. Refetch when returning to homepage
+
+Prompt for Replit Agent:
+Copy this:
+
+DIAGNOSIS COMPLETE - Found the bug!
+The issue is NOT cold start or auth timing. The logs show:
+* ✅ Login works
+* ✅ Token saves successfully
+* ✅ User authenticated
+* ✅ Server responding
+The actual problem: After login, the homepage never tries to fetch active Wills. The query doesn't run at all.
+Evidence from logs:
+
+
+After login:
+✅ Router debug: {"isAuthenticated":true, "location":"/"}
+❌ NO logs for "Fetching active wills..."
+❌ NO request to /api/wills/all-active
+❌ NO "Wills found: X"
+The query isn't triggering after authentication state changes.
+
+Fix Needed:
+In client/src/pages/Home.tsx:
+Current active wills query likely looks like:
+
+
+typescript
+const { data: wills } = useQuery({
+  queryKey: ['active-wills', user?.id],
+  queryFn: fetchActiveWills,
+  enabled: !!user && !!user.id,
+  retry: 3,
+  retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
+})
+Change to:
+
+
+typescript
+const { data: wills } = useQuery({
+  queryKey: ['active-wills', user?.id],
+  queryFn: fetchActiveWills,
+  enabled: !!user && !!user.id,
+  retry: 3,
+  retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
+  refetchOnMount: 'always', // ← ADD THIS
+  refetchOnWindowFocus: true, // ← ADD THIS
+})
+OR use React Query's refetch:
+
+
+typescript
+const { data: wills, refetch } = useQuery({...});
+
+// In a useEffect watching auth state:
+useEffect(() => {
+  if (user?.id) {
+    refetch(); // Fetch wills when user logs in
+  }
+}, [user?.id, refetch]);
+```
+
+---
+
+## **Verify the Fix:**
+
+After implementing, the logs should show:
+```
+✅ User logs in
+✅ Token saved
+✅ 🔄 [Frontend] Fetching active wills...
+✅ 📡 [Frontend] Response status: 200
+✅ ✅ [Frontend] Wills count: 2
+Please implement this fix and redeploy. The cold start retry logic we added was good practice, but wasn't the actual issue - the query just wasn't running at all!
+
+TL;DR: The homepage isn't asking for Wills after you log in. Add refetchOnMount: 'always' or trigger a manual refetch when auth state changes.
+
+

@@ -78,16 +78,25 @@ export default function Home() {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError, failureCount, isLoading: willsLoading } = useQuery<Will[] | null>({
+  const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError, failureCount, isLoading: willsLoading, refetch: refetchWills } = useQuery<Will[] | null>({
     queryKey: ['/api/wills/all-active', user?.id],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user && !!user.id,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     refetchInterval: 30000,
   });
+
+  useEffect(() => {
+    if (user?.id) {
+      console.log('[Home] 🔄 Auth state ready - triggering wills fetch for user:', user.id);
+      refetchWills();
+    }
+  }, [user?.id, refetchWills]);
 
   useEffect(() => {
     console.log('[Home] Wills query state:', {

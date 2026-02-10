@@ -116,14 +116,16 @@ function Router() {
   // JWT tokens are now saved directly in login/register handlers
   // No need to save session here anymore
 
-  // Initialize notifications AFTER authentication
+  // Initialize notifications and refresh data AFTER authentication
   useEffect(() => {
     if (isAuthenticated && user) {
       console.log('User authenticated - initializing push notifications');
       notificationService.initialize().catch(console.error);
-      // 🔥 DISABLED: Server now handles token association automatically during login
-      // No need for frontend to also attempt token registration - this was causing conflicts
       console.log('✅ User authenticated - server handles token association automatically');
+      
+      console.log('[App] 🔄 Auth state changed to authenticated - invalidating wills queries');
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
     }
   }, [isAuthenticated, user]);
 
