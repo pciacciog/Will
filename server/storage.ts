@@ -673,8 +673,8 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(wills.createdAt));
 
     const allWills = [
-      ...personalWillsList.map(w => ({ ...w, circleName: undefined as string | undefined })),
-      ...circleWillsList.map(r => ({ ...r.will, circleName: r.circleName || undefined })),
+      ...personalWillsList.filter(w => w != null).map(w => ({ ...w, circleName: undefined as string | undefined })),
+      ...circleWillsList.filter(r => r?.will != null).map(r => ({ ...r.will, circleName: r.circleName || undefined })),
     ];
 
     const willsWithCommitments = await Promise.all(
@@ -687,10 +687,12 @@ export class DatabaseStorage implements IStorage {
 
         return {
           ...will,
-          commitments: commitmentsList.map(c => ({
-            ...c.will_commitments,
-            user: c.users,
-          })),
+          commitments: commitmentsList
+            .filter(c => c?.will_commitments != null && c?.users != null)
+            .map(c => ({
+              ...c.will_commitments,
+              user: c.users,
+            })),
         };
       })
     );
