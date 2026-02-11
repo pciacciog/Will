@@ -763,7 +763,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold tracking-tight text-gray-900 text-sm"><em>Will</em> Active</h3>
-                    <p className="text-xs text-gray-500 tracking-tight">Ends at {formatDisplayDateTime(will?.endDate)}</p>
+                    <p className="text-xs text-gray-500 tracking-tight">{will?.isIndefinite ? 'Ongoing' : `Ends ${formatDisplayDateTime(will?.endDate)}`}</p>
                   </div>
                 </div>
                 <Badge className="bg-green-100 text-green-800 border border-green-200 text-xs py-0.5">
