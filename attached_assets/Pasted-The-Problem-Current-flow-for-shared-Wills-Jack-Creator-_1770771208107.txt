@@ -1,0 +1,96 @@
+The Problem:
+Current flow for shared Wills:
+Jack (Creator):
+1. What → Why → When → Check-in time ✅ → Create Will
+2. Jack sets his preferred check-in time (e.g., 8:00 PM)
+Bebo (Recipient):
+1. Ready to commit? → Timeline → Why → Confirm
+2. NO check-in time step ❌
+3. Bebo joins but... when does HE want to check in? He is only seeing the daily reminder but remember that this is not the same as the check in.
+The issue: Bebo might want to check in at 9:00 PM (after his evening workout), but Jack wants them at 8:00 PM. Each person needs to set THEIR OWN reminder time!
+
+ Proposed Fix:
+New Flow for Will Recipients:
+1. Ready to Commit?
+   ↓
+2. Proposed Will Timeline (fix loading bug)
+   ↓
+3. Why Page
+   ↓
+4. Check-In Time Page ← ADD THIS
+   ↓
+5. "One last step..." loading
+   ↓
+6. Confirm Your Commitment (updated)
+
+Page-by-Page Breakdown:
+
+Page 1: Ready to Commit?
+Current text:
+
+
+"Join your circle members by adding your 
+commitment to this will"
+New text:
+
+
+"Join your circle members on this will"
+✅ Cleaner, more direct
+
+Page 2: Proposed Will Timeline
+Current issue: Schedule stuck loading, Will details stuck loading
+Fix needed: Debug why timeline/details aren't loading for recipients
+Keep page structure - just fix the loading bug
+
+Page 3: Why Page
+Keep as is ✅
+User enters their personal "why" for joining
+
+Page 4: Check-In Time ← NEW PAGE
+Add this page to recipient flow:
+
+
+┌─────────────────────────────────┐
+│ Tracking                        │
+│                                 │
+│ When should we check in with    │
+│ you?                            │
+│                                 │
+│ [8:00 PM]                       │
+│                                 │
+│ We'll check in with you on      │
+│ your active days                │
+│                                 │
+│ [Continue →]                    │
+└─────────────────────────────────┘
+This is the SAME page creators see, but now recipients see it too.
+
+Page 5: "One Last Step..." Loading Screen
+Move this AFTER check-in time page & before confirm your commitment
+Shows while creating commitment in database
+
+Page 6: Confirm Your Commitment
+Current page shows:
+
+
+Team's Commitment:
+"Not hit snooze button"
+
+Your Because:
+"To be more disciplined"
+
+Daily Reminder:
+[Some time display]
+
+[Let's Do It! →]
+Updated page:
+
+Changes:
+* ❌ Remove "Daily Reminder" section (obsolete)
+* ✅ Add "Check-In Time: 9:00 PM" (shows their chosen time)
+* ✅ Keep "Let's Do It!" button
+
+
+Additional Fix Needed:
+Page 2 bug: "Proposed Will Timeline stuck loading"
+This needs investigation - the timeline and Will details should display for recipients viewing the proposal.

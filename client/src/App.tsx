@@ -31,6 +31,7 @@ import IconGenerator from "@/pages/IconGenerator";
 import CircleLobby from "@/pages/CircleLobby";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import MyWills from "@/pages/MyWills";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -348,6 +349,7 @@ function Router() {
             <Route path="/circles/:circleId">{(params) => <InnerCircleHub circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/hub" component={LegacyHubRedirect} />
             <Route path="/solo/hub" component={Home} />
+            <Route path="/wills" component={MyWills} />
             <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/explore" component={Explore} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>

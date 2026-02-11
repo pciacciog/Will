@@ -34,6 +34,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Authentication**: Email/password sign-up/sign-in, secure password changes.
+- **Homepage**: Clean summary dashboard with "Create a Will" CTA, active wills summary card (count + Solo/Circle/Review breakdown), Explore and Circles navigation cards. Full will list moved to dedicated "My Wills" page.
+- **My Wills Page** (`/wills`): Dedicated page with tabs (All/Solo/Circle) showing full WillCard list with status badges, duration labels, and tap-to-view navigation. Back button returns to homepage.
 - **Mode Selection**: Users choose between Solo Mode (personal goals) or Inner Circle Mode (group accountability).
 - **Solo Mode**: 
   - Personal Will creation without circle coordination

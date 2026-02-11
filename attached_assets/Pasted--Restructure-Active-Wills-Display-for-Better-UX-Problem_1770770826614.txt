@@ -1,0 +1,90 @@
+
+Restructure Active Wills Display for Better UX
+Problem: Showing all active Wills on homepage will get cluttered 
+Solution: Dashboard overview on homepage + dedicated "My Wills" page with proper organization.
+
+Changes Needed:
+1. Homepage - Show Summary Card Instead of Full List
+Replace current active Wills list with summary card:
+
+
+typescript
+// On Homepage (Home.tsx)
+
+<div className="summary-card">
+  <div className="header">
+    <h3>📊 Active Wills</h3>
+    <span className="count">{activeWills.length}</span>
+  </div>
+  
+  <div className="stats">
+    <div>🔥 {needsCheckInToday} due today</div>
+    <div>✅ {onTrack} on track</div>
+  </div>
+  
+  <button onClick={() => navigate('/wills')}>
+    View All →
+  </button>
+</div>
+Don't show full Will cards on homepage - just summary.
+
+2. Create New Page: "My Wills" (/wills)
+New file: client/src/pages/MyWills.tsx
+Structure:
+
+
+typescript
+// Organize Wills into sections
+
+const soloWills = activeWills.filter(will => !will.circle_id);
+const circleWills = activeWills.filter(will => will.circle_id);
+
+return (
+  <>
+    <Header title="My Wills" backButton />
+    
+    {soloWills.length > 0 && (
+      <section>
+        <h2>Solo Wills ({soloWills.length})</h2>
+        {soloWills.map(will => (
+          <WillCard key={will.id} will={will} />
+        ))}
+      </section>
+    )}
+    
+    {circleWills.length > 0 && (
+      <section>
+        <h2>Circle Wills ({circleWills.length})</h2>
+        {circleWills.map(will => (
+          <WillCard key={will.id} will={will} />
+        ))}
+      </section>
+    )}
+  </>
+);
+Each WillCard shows:
+* Title/commitment
+* Type (Ongoing / X days remaining)
+* Progress (if applicable)
+* Quick "Check In" button
+* Tap card → Navigate to full Will details
+
+3. Update Routes
+Add route for new page:
+
+
+typescript
+<Route path="/wills" element={<MyWills />} />
+```
+
+---
+
+### **4. Optional: Add to Bottom Nav**
+
+If you want quick access from anywhere:
+```
+[Home] [My Wills] [Circles] [Profile]
+
+Goal: Homepage stays clean with just a summary. Users tap "View All" to see organized list of all their Wills (Solo vs Circle sections). Scalable for any number of Wills.
+
+Does this structure make sense? Should we go with sections (Solo/Circle) or tabs? Maybe tabs might be clean. Whatever is more elegant.
