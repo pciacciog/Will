@@ -14,6 +14,13 @@ import { notificationService } from "@/services/NotificationService";
 import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Handshake, Clock } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 
+function formatTimeForDisplay(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${displayHour}:${String(m).padStart(2, '0')} ${period}`;
+}
+
 export default function SubmitCommitment() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
@@ -28,15 +35,9 @@ export default function SubmitCommitment() {
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [showHelpIcon, setShowHelpIcon] = useState(false);
   
-  // Daily reminder settings for joining members
-  const [dailyReminderTime, setDailyReminderTime] = useState<string>('07:30');
-  const [skipDailyReminder, setSkipDailyReminder] = useState<boolean>(false);
-  const [hasModifiedReminder, setHasModifiedReminder] = useState(false);
-  
-  // Tracking type for progress check-ins (each member chooses their own for classic wills)
   const [checkInType, setCheckInType] = useState<'daily' | 'one-time'>('one-time');
+  const [checkInTime, setCheckInTime] = useState<string>('19:00');
   
-  // Auto-resize refs for textareas
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
   
@@ -65,43 +66,24 @@ export default function SubmitCommitment() {
     queryKey: ['/api/circles/mine'],
   });
 
-  // Fetch user data for reminder settings
   const { data: user } = useQuery({
     queryKey: ['/api/user'],
   });
   
-  // Initialize reminder settings from user data
-  useEffect(() => {
-    if (user) {
-      setDailyReminderTime((user as any).dailyReminderTime || '07:30');
-      setSkipDailyReminder((user as any).dailyReminderEnabled === false);
-    }
-  }, [user]);
-  
-  // Mutation to update reminder settings
-  const updateReminderSettingsMutation = useMutation({
-    mutationFn: async (settings: { dailyReminderTime?: string | null; dailyReminderEnabled?: boolean }) => {
-      const response = await apiRequest('/api/user/reminder-settings', {
-        method: 'PATCH',
-        body: JSON.stringify(settings)
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-    },
-  });
-
-  // Check if this is a cumulative will (shared commitment)
   const isCumulative = (will as any)?.willType === 'cumulative';
   const sharedWhat = (will as any)?.sharedWhat;
   
-  // For cumulative wills, step 1 goes directly to step 2 (Why), skipping the What step
-  // Classic flow: 1-When, 2-What, 3-Why, 4-Track, 5-Confirm (5 steps)
-  // Cumulative flow: 1-When, 2-Why, 3-Confirm (3 steps - skip What & Track since proposer chose)
-  const totalSteps = isCumulative ? 3 : 5;
+  // Initialize check-in time from will's check-in time if available
+  useEffect(() => {
+    if ((will as any)?.checkInTime) {
+      setCheckInTime((will as any).checkInTime);
+    }
+  }, [will]);
+  
+  // Classic flow: 1-Timeline, 2-What, 3-Why, 4-Track, 5-CheckIn, 6-Confirm (6 steps)
+  // Cumulative flow: 1-Timeline, 2-Why, 3-CheckIn, 4-Confirm (4 steps)
+  const totalSteps = isCumulative ? 4 : 6;
 
-  // Check if user should see instruction modal for first-time submission
   useEffect(() => {
     const hasSeenInstruction = localStorage.getItem('willInstructionSeen');
     const hasSubmittedCommitment = localStorage.getItem('hasSubmittedCommitment');
@@ -110,12 +92,11 @@ export default function SubmitCommitment() {
       setShowInstructionModal(true);
     }
     
-    // Always show help icon once the component is loaded
     setShowHelpIcon(true);
   }, []);
 
   const commitmentMutation = useMutation({
-    mutationFn: async (data: { what: string; why: string; checkInType?: string }) => {
+    mutationFn: async (data: { what: string; why: string; checkInType?: string; checkInTime?: string }) => {
       const response = await apiRequest(`/api/wills/${id}/commitments`, {
         method: 'POST',
         body: JSON.stringify(data)
@@ -123,14 +104,10 @@ export default function SubmitCommitment() {
       return response.json();
     },
     onSuccess: async () => {
-      // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${(circle as any)?.id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      
-      // Note: No notification needed for commitment submission
-      // Notifications are sent at key lifecycle moments only
       
       toast({
         title: "Commitment Submitted",
@@ -150,11 +127,10 @@ export default function SubmitCommitment() {
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isCumulative) {
-      // For cumulative wills, skip the What step (use sharedWhat automatically)
       setWhat(sharedWhat || '');
-      setCurrentStep(2); // Goes to Why step
+      setCurrentStep(2);
     } else {
-      setCurrentStep(2); // Goes to What step
+      setCurrentStep(2);
     }
   };
 
@@ -195,71 +171,61 @@ export default function SubmitCommitment() {
     setWhy(whyInput.trim());
     
     if (isCumulative) {
-      // For cumulative wills, skip tracking type (proposer chose) and go to confirmation step
-      setShowTransition(true);
-      setTimeout(() => {
-        setShowTransition(false);
-        setCurrentStep(3); // Goes to Confirm step for cumulative
-      }, 3500);
+      setCurrentStep(3);
     } else {
-      // Classic wills: go to tracking type step (step 4)
       setCurrentStep(4);
     }
   };
   
-  // Handler for tracking type selection (classic wills only)
   const handleTrackingTypeSelect = (type: 'daily' | 'one-time') => {
     setCheckInType(type);
-    // Show transition animation then go to confirmation step
+    setCurrentStep(5);
+  };
+
+  const handleCheckInTimeSubmit = () => {
     setShowTransition(true);
     setTimeout(() => {
       setShowTransition(false);
-      setCurrentStep(5);
-    }, 2000);
+      if (isCumulative) {
+        setCurrentStep(4);
+      } else {
+        setCurrentStep(6);
+      }
+    }, 2500);
   };
 
   const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Save daily reminder settings if user modified them
-    if (hasModifiedReminder) {
-      updateReminderSettingsMutation.mutate({
-        dailyReminderTime: skipDailyReminder ? null : dailyReminderTime,
-        dailyReminderEnabled: !skipDailyReminder
-      });
-    }
-    
-    // For cumulative wills, use the sharedWhat from the will
     const whatToSubmit = isCumulative ? (sharedWhat || what) : what.trim();
-    // For cumulative wills, inherit checkInType from the will (proposer's choice)
-    // For classic wills, use the member's own checkInType selection
     const willCheckInType = (will as any)?.checkInType;
     commitmentMutation.mutate({ 
       what: whatToSubmit, 
       why: why.trim(),
-      checkInType: isCumulative ? willCheckInType : checkInType
+      checkInType: isCumulative ? willCheckInType : checkInType,
+      checkInTime: checkInTime,
     });
   };
 
   const handleBack = () => {
     if (currentStep === 1) {
-      // From step 1, go back to will details
       setLocation(`/will/${id}`);
-    } else if (currentStep === 2) {
-      setCurrentStep(1);
-    } else if (currentStep === 3) {
-      setCurrentStep(2);
-    } else if (currentStep === 4) {
-      setCurrentStep(3);
-    } else if (currentStep === 5) {
-      setCurrentStep(4);
+    } else if (isCumulative) {
+      if (currentStep === 2) setCurrentStep(1);
+      else if (currentStep === 3) setCurrentStep(2);
+      else if (currentStep === 4) setCurrentStep(3);
+      else setLocation(`/will/${id}`);
     } else {
-      setLocation(`/will/${id}`);
+      if (currentStep === 2) setCurrentStep(1);
+      else if (currentStep === 3) setCurrentStep(2);
+      else if (currentStep === 4) setCurrentStep(3);
+      else if (currentStep === 5) setCurrentStep(4);
+      else if (currentStep === 6) setCurrentStep(5);
+      else setLocation(`/will/${id}`);
     }
   };
 
   const handleModalStart = () => {
-    // Mark that user has started submitting a commitment
     localStorage.setItem('hasSubmittedCommitment', 'true');
   };
 
@@ -267,13 +233,25 @@ export default function SubmitCommitment() {
     setShowInstructionModal(false);
   };
 
+  const getStepLabel = (step: number): string => {
+    if (isCumulative) {
+      const labels: Record<number, string> = { 1: 'When', 2: 'Why', 3: 'Check-In', 4: 'Join' };
+      return labels[step] || '';
+    } else {
+      const labels: Record<number, string> = { 1: 'When', 2: 'What', 3: 'Why', 4: 'Track', 5: 'Check-In', 6: 'Join' };
+      return labels[step] || '';
+    }
+  };
+
+  const isWhyStep = (isCumulative && currentStep === 2) || (!isCumulative && currentStep === 3);
+  const isCheckInStep = (isCumulative && currentStep === 3) || (!isCumulative && currentStep === 5);
+  const isConfirmStep = (isCumulative && currentStep === 4) || (!isCumulative && currentStep === 6);
+
   return (
     <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
       <MobileLayout>
-        {/* Sticky Header with Progress Indicator */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
-            {/* Back Button Row */}
             <div className="flex items-center mb-2">
               <UnifiedBackButton 
                 onClick={handleBack}
@@ -286,68 +264,32 @@ export default function SubmitCommitment() {
             </div>
             
             <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
-              {/* Step 1: When (always shown) */}
-              <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 1 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                  1
-                </div>
-                <span className={`ml-1 text-sm ${currentStep >= 1 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>When</span>
-              </div>
-              <div className={`w-6 h-0.5 ${currentStep >= 2 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-              
-              {/* Step 2: What (classic) or Why (cumulative) */}
-              <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                  2
-                </div>
-                <span className={`ml-1 text-sm ${currentStep >= 2 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>
-                  {isCumulative ? 'Why' : 'What'}
-                </span>
-              </div>
-              <div className={`w-6 h-0.5 ${currentStep >= 3 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-              
-              {/* Step 3: Why (classic) or Confirm (cumulative) */}
-              <div className="flex items-center">
-                <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-sm font-semibold`}>
-                  3
-                </div>
-                <span className={`ml-1 text-sm ${currentStep >= 3 ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>
-                  {isCumulative ? 'Join' : 'Why'}
-                </span>
-              </div>
-              
-              {/* Steps 4 & 5 for Classic wills only */}
-              {!isCumulative && (
-                <>
-                  <div className={`w-4 h-0.5 ${currentStep >= 4 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                  <div className="flex items-center">
-                    <div className={`w-6 h-6 ${currentStep >= 4 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
-                      4
-                    </div>
+              {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
+                <div key={step} className="flex items-center">
+                  {step > 1 && (
+                    <div className={`w-4 h-0.5 mr-1 ${currentStep >= step ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                  )}
+                  <div className={`w-7 h-7 ${currentStep >= step ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                    {step}
                   </div>
-                  <div className={`w-4 h-0.5 ${currentStep >= 5 ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                  <div className="flex items-center">
-                    <div className={`w-6 h-6 ${currentStep >= 5 ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
-                      5
-                    </div>
-                  </div>
-                </>
-              )}
+                  {step <= 3 && (
+                    <span className={`ml-1 text-xs ${currentStep >= step ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>
+                      {getStepLabel(step)}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           
-          {/* Current Step Title */}
           <div className="text-center mt-16">
             <h1 className="text-xl font-semibold text-gray-900">
               {currentStep === 1 && "Proposed Will Timeline"}
               {currentStep === 2 && !isCumulative && "What would you like to do?"}
-              {currentStep === 2 && isCumulative && "Why would you like to do this?"}
-              {currentStep === 3 && !isCumulative && "Why would you like to do this?"}
-              {currentStep === 3 && isCumulative && "Confirm Your Commitment"}
-              {currentStep === 4 && !isCumulative && "How Will You Track?"}
-              {currentStep === 5 && !isCumulative && "Confirm Your Commitment"}
+              {isWhyStep && "Why would you like to do this?"}
+              {!isCumulative && currentStep === 4 && "How Will You Track?"}
+              {isCheckInStep && "Tracking"}
+              {isConfirmStep && "Confirm Your Commitment"}
             </h1>
-{/* Team Commitment box moved inside Will Schedule card for Shared Wills */}
-            {/* Classic: What step icon */}
             {currentStep === 2 && !isCumulative && (
               <>
                 <div className="flex justify-center my-3">
@@ -358,8 +300,7 @@ export default function SubmitCommitment() {
                 <p className="text-sm text-gray-500 mt-1">Cause it's as simple as wanting.</p>
               </>
             )}
-            {/* Classic: Why step icon OR Cumulative: Why step icon on step 2 */}
-            {((currentStep === 3 && !isCumulative) || (currentStep === 2 && isCumulative)) && (
+            {isWhyStep && (
               <>
                 <div className="flex justify-center my-3">
                   <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
@@ -376,7 +317,6 @@ export default function SubmitCommitment() {
 
       <div className="flex-1 space-y-6">
         
-        {/* Transition Animation Screen */}
         {showTransition && (
           <div className="flex items-center justify-center py-16">
             <div className="text-center space-y-6 animate-fade-in">
@@ -395,7 +335,6 @@ export default function SubmitCommitment() {
           <SectionCard>
             <form onSubmit={handleStep1Submit} className="space-y-6">
               <div className="space-y-6 mt-8">
-                {/* Creator Information */}
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-2">
                     <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
@@ -404,12 +343,11 @@ export default function SubmitCommitment() {
                       </svg>
                     </div>
                     <span className="text-sm font-medium text-blue-800">
-                      {will?.creatorFirstName ? `${will.creatorFirstName} ${will.creatorLastName || ''}`.trim() : 'Loading...'} {isCumulative ? 'has proposed a shared commitment:' : 'has proposed the following:'}
+                      {(will as any)?.creatorFirstName ? `${(will as any).creatorFirstName} ${(will as any).creatorLastName || ''}`.trim() : 'Loading...'} {isCumulative ? 'has proposed a shared commitment:' : 'has proposed the following:'}
                     </span>
                   </div>
                 </div>
 
-                {/* Enhanced Schedule Card */}
                 <div className="text-center">
                   <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200 shadow-sm mx-auto max-w-sm">
                     <div className="flex items-center justify-center mb-4">
@@ -420,25 +358,26 @@ export default function SubmitCommitment() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Will Schedule</h3>
                     <div className="text-base text-gray-800 leading-relaxed">
                       <div className="font-medium mb-2">
-                        {will?.startDate && will?.endDate ? (
+                        {(will as any)?.startDate && ((will as any)?.endDate || (will as any)?.isIndefinite) ? (
                           <>
-                            {new Date(will.startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                            {new Date((will as any).startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                           </>
                         ) : (
                           'Loading...'
                         )}
                       </div>
                       <div className="text-sm text-gray-600 mb-3">
-                        {will?.startDate && will?.endDate ? (
+                        {(will as any)?.isIndefinite ? (
+                          <span>Ongoing commitment</span>
+                        ) : (will as any)?.startDate && (will as any)?.endDate ? (
                           <>
-                            {new Date(will.startDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} to{' '}
-                            {new Date(will.endDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                            {new Date((will as any).startDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} to{' '}
+                            {new Date((will as any).endDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                           </>
                         ) : (
                           'Loading...'
                         )}
                       </div>
-                      {/* Team Commitment box - only for Shared Wills */}
                       {isCumulative && sharedWhat && (
                         <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-xl">
                           <p className="text-xs text-purple-600 font-medium mb-1">Team Commitment</p>
@@ -456,28 +395,28 @@ export default function SubmitCommitment() {
                   testId="button-back-inline"
                   className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
                 />
-                <PrimaryButton type="submit">
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                  data-testid="button-join-will"
+                >
                   Join Will <ArrowRight className="w-4 h-4 ml-2" />
-                </PrimaryButton>
+                </button>
               </div>
             </form>
           </SectionCard>
         )}
 
-        {/* Step 2: What - Focused Writing Experience (Classic wills only, Cumulative skips this) */}
+        {/* Step 2: What - Classic wills only (Cumulative skips this) */}
         {currentStep === 2 && !showTransition && !isCumulative && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep2Submit} className="flex flex-col">
-              {/* Main Writing Area - Compact, No Scroll */}
               <div className="flex flex-col pt-4 pb-6">
-                {/* The Writing Statement */}
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
-                  {/* "I Will" - Large, Prominent, Strong */}
                   <p className="text-3xl font-bold text-gray-900 text-center tracking-tight">
                     I Will
                   </p>
                   
-                  {/* Text Input - Clean, Minimal, Focused */}
                   <div className="relative px-2">
                     <Textarea 
                       ref={whatRef}
@@ -502,14 +441,12 @@ export default function SubmitCommitment() {
                     />
                   </div>
                   
-                  {/* Character count - Subtle */}
                   <p className="text-xs text-gray-400 text-center tracking-tight animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
                     {whatCharCount} / 75
                   </p>
                 </div>
               </div>
               
-              {/* Navigation - Anchored */}
               <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center space-x-2">
                   {showHelpIcon && (
@@ -519,21 +456,24 @@ export default function SubmitCommitment() {
                     />
                   )}
                 </div>
-                <PrimaryButton type="submit" disabled={!what.trim()} data-testid="button-next">
+                <button
+                  type="submit"
+                  disabled={!what.trim()}
+                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50"
+                  data-testid="button-next"
+                >
                   Next <ArrowRight className="w-4 h-4 ml-2" />
-                </PrimaryButton>
+                </button>
               </div>
             </form>
           </div>
         )}
 
-        {/* Step 2 (Cumulative) or Step 3 (Classic): Why - Focused Writing Experience */}
-        {((currentStep === 2 && isCumulative) || (currentStep === 3 && !isCumulative)) && !showTransition && (
+        {/* Why Step: Step 2 (Cumulative) or Step 3 (Classic) */}
+        {isWhyStep && !showTransition && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep3Submit} className="flex flex-col">
-              {/* Main Writing Area - Compact, No Scroll */}
               <div className="flex flex-col pt-4 pb-6">
-                {/* Commitment Preview - Prominent reminder */}
                 {(what || (isCumulative && sharedWhat)) && (
                   <div className="mb-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
                     {isCumulative ? (
@@ -547,9 +487,7 @@ export default function SubmitCommitment() {
                   </div>
                 )}
                 
-                {/* The Writing Statement */}
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ animationDelay: '100ms' }}>
-                  {/* "Because" - Large, Prominent with privacy note */}
                   <div className="text-center">
                     <p className="text-3xl font-bold text-gray-900 tracking-tight">
                       Because
@@ -557,7 +495,6 @@ export default function SubmitCommitment() {
                     <p className="text-xs text-gray-400 mt-1">(Private — only you can see this)</p>
                   </div>
                   
-                  {/* Text Input - Clean, Minimal, Focused */}
                   <div className="relative px-2">
                     <Textarea 
                       ref={whyRef}
@@ -582,14 +519,12 @@ export default function SubmitCommitment() {
                     />
                   </div>
                   
-                  {/* Character count - Subtle */}
                   <p className="text-xs text-gray-400 text-center tracking-tight animate-in fade-in duration-300" style={{ animationDelay: '200ms' }}>
                     {whyCharCount} / 75
                   </p>
                 </div>
               </div>
               
-              {/* Navigation - Anchored */}
               <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center space-x-2">
                   {showHelpIcon && (
@@ -599,101 +534,17 @@ export default function SubmitCommitment() {
                     />
                   )}
                 </div>
-                <PrimaryButton 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={!why.trim()}
+                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50"
                   data-testid="button-next"
                 >
                   Next <ArrowRight className="w-4 h-4 ml-2" />
-                </PrimaryButton>
+                </button>
               </div>
             </form>
           </div>
-        )}
-
-        {/* Step 3: Confirmation (Cumulative wills only) - Compact single-screen layout */}
-        {currentStep === 3 && isCumulative && !showTransition && (
-          <SectionCard>
-            <form onSubmit={handleFinalSubmit} className="space-y-3">
-              <div className="space-y-3 mt-2">
-                {/* Cumulative Commitment Summary - Compact */}
-                <div className="text-center">
-                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200 shadow-sm mx-auto max-w-sm">
-                    <div className="flex items-center justify-center mb-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                        <Handshake className="w-5 h-5 text-white" />
-                      </div>
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-2">Your Commitment</h3>
-                    <div className="text-sm text-gray-800 leading-relaxed">
-                      <div className="font-medium mb-2">
-                        <span className="text-purple-600">We Will</span> {sharedWhat}
-                      </div>
-                      <div className="font-medium">
-                        <span className="text-red-500">Because</span> <span className="text-xs text-gray-400">(Private)</span> {why}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Daily Reminder Settings - Compact */}
-                <div className="pt-2 border-t border-gray-100">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Clock className="w-3 h-3 text-gray-400" />
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                      Daily Reminder
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <TimeChipPicker
-                      value={dailyReminderTime}
-                      onChange={(time) => {
-                        setDailyReminderTime(time);
-                        setHasModifiedReminder(true);
-                      }}
-                      disabled={skipDailyReminder === true}
-                      testId="input-daily-reminder-time"
-                    />
-                    <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={skipDailyReminder === true}
-                        onChange={(e) => {
-                          setSkipDailyReminder(e.target.checked);
-                          setHasModifiedReminder(true);
-                        }}
-                        className="w-3 h-3 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
-                        data-testid="checkbox-skip-daily-reminder"
-                      />
-                      Skip daily reminders
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-2">
-                <InlineBackButton 
-                  onClick={handleBack}
-                  testId="button-back-inline"
-                  className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                />
-                <PrimaryButton 
-                  type="submit" 
-                  disabled={commitmentMutation.isPending}
-                  className="flex items-center"
-                >
-                  {commitmentMutation.isPending ? (
-                    "Submitting..."
-                  ) : (
-                    <>
-                      <Handshake className="w-4 h-4 mr-2" />
-                      Let's do it
-                    </>
-                  )}
-                </PrimaryButton>
-              </div>
-            </form>
-          </SectionCard>
         )}
 
         {/* Step 4: Tracking Type Selection (Classic wills only) */}
@@ -704,7 +555,6 @@ export default function SubmitCommitment() {
                 How would you like to track your progress on this commitment?
               </p>
               
-              {/* Daily Check-ins Option */}
               <button
                 type="button"
                 onClick={() => handleTrackingTypeSelect('daily')}
@@ -729,7 +579,6 @@ export default function SubmitCommitment() {
                 </div>
               </button>
               
-              {/* One-time Option */}
               <button
                 type="button"
                 onClick={() => handleTrackingTypeSelect('one-time')}
@@ -757,12 +606,115 @@ export default function SubmitCommitment() {
           </SectionCard>
         )}
 
-        {/* Step 5: Confirmation (Classic wills only) */}
-        {currentStep === 5 && !isCumulative && !showTransition && (
+        {/* Check-In Time Step */}
+        {isCheckInStep && !showTransition && (
+          <div className="flex flex-col animate-in fade-in duration-500">
+            <div className="flex flex-col flex-1">
+              <div className="flex-1 flex flex-col py-6 px-4">
+                <h2 className="text-base font-medium text-gray-700 text-center mb-2" data-testid="text-checkin-subtitle">
+                  When should we check in with you?
+                </h2>
+
+                <div className="flex justify-center mt-6 animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
+                  <TimeChipPicker
+                    value={checkInTime}
+                    onChange={setCheckInTime}
+                    testId="input-check-in-time"
+                  />
+                </div>
+
+                <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
+                  We'll check in with you on your active days
+                </p>
+              </div>
+              
+              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
+                <InlineBackButton 
+                  onClick={handleBack}
+                  testId="button-back-inline"
+                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                />
+                <button
+                  type="button"
+                  onClick={handleCheckInTimeSubmit}
+                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                  data-testid="button-continue-checkin"
+                >
+                  Continue <ArrowRight className="w-4 h-4 ml-2" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirm Step: Cumulative */}
+        {isConfirmStep && isCumulative && !showTransition && (
+          <SectionCard>
+            <form onSubmit={handleFinalSubmit} className="space-y-3">
+              <div className="space-y-3 mt-2">
+                <div className="text-center">
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200 shadow-sm mx-auto max-w-sm">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                        <Handshake className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">Your Commitment</h3>
+                    <div className="text-sm text-gray-800 leading-relaxed">
+                      <div className="font-medium mb-2">
+                        <span className="text-purple-600">We Will</span> {sharedWhat}
+                      </div>
+                      <div className="font-medium">
+                        <span className="text-red-500">Because</span> <span className="text-xs text-gray-400">(Private)</span> {why}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Clock className="w-3 h-3 text-amber-500" />
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+                      Check-In Time
+                    </p>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 text-center" data-testid="text-confirm-checkin-time">
+                    {formatTimeForDisplay(checkInTime)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-2">
+                <InlineBackButton 
+                  onClick={handleBack}
+                  testId="button-back-inline"
+                  className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                />
+                <button
+                  type="submit"
+                  disabled={commitmentMutation.isPending}
+                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50"
+                  data-testid="button-submit-commitment"
+                >
+                  {commitmentMutation.isPending ? (
+                    "Submitting..."
+                  ) : (
+                    <>
+                      <Handshake className="w-4 h-4 mr-2" />
+                      Let's do it
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </SectionCard>
+        )}
+
+        {/* Confirm Step: Classic */}
+        {isConfirmStep && !isCumulative && !showTransition && (
           <SectionCard>
             <form onSubmit={handleFinalSubmit} className="space-y-6">
               <div className="space-y-6 mt-4">
-                {/* Commitment Summary Card */}
                 <div className="text-center">
                   <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-200 shadow-sm mx-auto max-w-sm">
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Commitment</h3>
@@ -777,7 +729,6 @@ export default function SubmitCommitment() {
                         {why}
                       </div>
                     </div>
-                    {/* Tracking Type Display */}
                     <div className="mt-3 pt-3 border-t border-blue-100">
                       <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                         {checkInType === 'daily' ? (
@@ -796,7 +747,6 @@ export default function SubmitCommitment() {
                   </div>
                 </div>
                 
-                {/* End Room Card (if scheduled) */}
                 {(will as any)?.endRoomScheduledAt && (
                   <div className="text-center">
                     <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-5 border border-purple-200 shadow-sm mx-auto max-w-sm">
@@ -817,38 +767,16 @@ export default function SubmitCommitment() {
                   </div>
                 )}
                 
-                {/* Daily Reminder Settings */}
                 <div className="pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Clock className="w-3 h-3 text-gray-400" />
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Clock className="w-3 h-3 text-amber-500" />
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                      Daily Reminder
+                      Check-In Time
                     </p>
                   </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <TimeChipPicker
-                      value={dailyReminderTime}
-                      onChange={(time) => {
-                        setDailyReminderTime(time);
-                        setHasModifiedReminder(true);
-                      }}
-                      disabled={skipDailyReminder === true}
-                      testId="input-daily-reminder-time-classic"
-                    />
-                    <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={skipDailyReminder === true}
-                        onChange={(e) => {
-                          setSkipDailyReminder(e.target.checked);
-                          setHasModifiedReminder(true);
-                        }}
-                        className="w-3 h-3 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
-                        data-testid="checkbox-skip-daily-reminder-classic"
-                      />
-                      Skip daily reminders
-                    </label>
-                  </div>
+                  <p className="text-sm font-medium text-gray-700 text-center" data-testid="text-confirm-checkin-time-classic">
+                    {formatTimeForDisplay(checkInTime)}
+                  </p>
                 </div>
               </div>
 
@@ -858,10 +786,11 @@ export default function SubmitCommitment() {
                   testId="button-back-inline"
                   className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
                 />
-                <PrimaryButton 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={commitmentMutation.isPending}
-                  className="flex items-center"
+                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50"
+                  data-testid="button-submit-commitment"
                 >
                   {commitmentMutation.isPending ? (
                     "Submitting..."
@@ -871,13 +800,12 @@ export default function SubmitCommitment() {
                       Let's do it
                     </>
                   )}
-                </PrimaryButton>
+                </button>
               </div>
             </form>
           </SectionCard>
         )}
 
-        {/* Instruction Modal */}
         <WillInstructionModal
           isOpen={showInstructionModal}
           onClose={handleModalClose}

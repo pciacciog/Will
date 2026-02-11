@@ -970,7 +970,7 @@ export default function WillDetails() {
               <p className="text-sm text-gray-500 mb-4">
                 {isSoloMode 
                   ? "Define your personal commitment for this will."
-                  : "Join your circle members by adding your commitment to this will."
+                  : "Join your circle members on this will."
                 }
               </p>
               <Button 

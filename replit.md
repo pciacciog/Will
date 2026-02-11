@@ -64,6 +64,12 @@ Preferred communication style: Simple, everyday language.
   - Database fields: `willType` ('classic' or 'cumulative'), `sharedWhat` (stores team commitment for cumulative wills)
   - Routes: `/circles` (lobby), `/circles/:circleId` (hub), `/start-will` (will creation)
 - **Will Creation & Management**: Multi-step guided creation, commitment editing, role-based permissions.
+- **Recipient Commitment Flow** (SubmitCommitment.tsx):
+  - Classic wills: Timeline → What → Why → Track Type → Check-In Time → Confirm (6 steps)
+  - Cumulative/Shared wills: Timeline → Why → Check-In Time → Confirm (4 steps)
+  - Each recipient sets their own check-in time (stored per-commitment in `will_commitments.check_in_time`)
+  - "One last step..." transition appears after check-in time, before confirm
+  - Confirm page shows check-in time instead of daily reminder
 - **Indefinite Duration Wills**: Users can create ongoing wills without end dates (isIndefinite=true, endDate=null). UI shows "Ongoing" instead of end date.
 - **Will Lifecycle Management**: 
   - **Pause**: Temporarily stop tracking an active will (sets pausedAt, status='paused')

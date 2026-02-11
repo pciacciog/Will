@@ -1185,7 +1185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const memberCount = await storage.getCircleMemberCount(willWithCommitments.circleId);
+      const memberCount = willWithCommitments.circleId ? await storage.getCircleMemberCount(willWithCommitments.circleId) : 1;
       const acknowledgedCount = await storage.getWillAcknowledgmentCount(willId);
       
       const status = getWillStatus(willWithCommitments, memberCount);

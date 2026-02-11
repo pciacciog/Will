@@ -106,6 +106,7 @@ export const willCommitments = pgTable("will_commitments", {
   what: text("what").notNull(),
   why: text("why").notNull(),
   checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time' (for circle mode - per member)
+  checkInTime: varchar("check_in_time", { length: 5 }), // HH:MM format for member's personal check-in time
   createdAt: timestamp("created_at").defaultNow(),
   // Notification tracking field for acknowledgment reminder
   ackReminderSentAt: timestamp("ack_reminder_sent_at"), // For 6hr unacknowledged reminder
