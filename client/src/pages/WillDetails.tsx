@@ -249,7 +249,7 @@ export default function WillDetails() {
   });
 
   // Detect solo mode from will data with localStorage fallback for error states
-  const isSoloMode = will?.mode === 'solo';
+  const isSoloMode = will?.mode === 'solo' || will?.mode === 'personal';
   
   // Store the mode when will is loaded so we can use it in error states
   useEffect(() => {
