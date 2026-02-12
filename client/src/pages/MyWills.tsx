@@ -4,12 +4,13 @@ import { getQueryFn } from "@/lib/queryClient";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Users, Target, ChevronRight, Calendar, Flame, Pause, Clock } from "lucide-react";
+import { ArrowLeft, Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe } from "lucide-react";
 
 type Will = {
   id: number;
   mode: string;
   visibility: string;
+  parentWillId?: number | null;
   status: string;
   startDate: string;
   endDate: string | null;
@@ -23,6 +24,7 @@ type Will = {
 function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
   const commitment = will.commitments?.[0];
   const isCircle = will.mode === 'circle';
+  const isPublic = will.visibility === 'public' || !!will.parentWillId;
 
   const statusConfig: Record<string, { label: string; className: string; icon: typeof Flame }> = {
     active: { label: 'Active', className: 'bg-emerald-100 text-emerald-700', icon: Flame },
@@ -56,15 +58,19 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
       <Card className={`bg-white border shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98] ${
         isCircle
           ? 'border-purple-200 group-hover:border-purple-300'
+          : isPublic
+          ? 'border-blue-200 group-hover:border-blue-300'
           : 'border-gray-200 group-hover:border-emerald-300'
       }`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              isCircle ? 'bg-purple-50' : 'bg-emerald-50'
+              isCircle ? 'bg-purple-50' : isPublic ? 'bg-blue-50' : 'bg-emerald-50'
             }`}>
               {isCircle
                 ? <Users className="w-5 h-5 text-purple-600" />
+                : isPublic
+                ? <Globe className="w-5 h-5 text-blue-600" />
                 : <Target className="w-5 h-5 text-emerald-600" />
               }
             </div>
@@ -73,6 +79,11 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
                 {commitment?.what || 'Untitled commitment'}
               </p>
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                {isPublic && (
+                  <Badge className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-100" data-testid={`badge-public-${will.id}`}>
+                    Public
+                  </Badge>
+                )}
                 {isCircle && (
                   <Badge className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-100" data-testid={`badge-circle-name-${will.id}`}>
                     {will.circleName || 'Circle'}
@@ -89,6 +100,8 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
             <ChevronRight className={`w-5 h-5 mt-2.5 flex-shrink-0 ${
               isCircle
                 ? 'text-gray-300 group-hover:text-purple-400'
+                : isPublic
+                ? 'text-gray-300 group-hover:text-blue-400'
                 : 'text-gray-300 group-hover:text-emerald-400'
             }`} />
           </div>
@@ -100,7 +113,7 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
 
 export default function MyWills() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<'all' | 'solo' | 'circle'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'solo' | 'circle' | 'public'>('all');
 
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
@@ -119,10 +132,12 @@ export default function MyWills() {
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending' || w.status === 'paused'
   ) || [];
 
-  const soloWills = activeWills.filter(w => w.mode !== 'circle');
+  const isPublicWill = (w: Will) => w.visibility === 'public' || !!w.parentWillId;
+  const soloWills = activeWills.filter(w => w.mode !== 'circle' && !isPublicWill(w));
   const circleWills = activeWills.filter(w => w.mode === 'circle');
+  const publicWills = activeWills.filter(w => isPublicWill(w));
 
-  const displayWills = activeTab === 'all' ? activeWills : activeTab === 'solo' ? soloWills : circleWills;
+  const displayWills = activeTab === 'all' ? activeWills : activeTab === 'solo' ? soloWills : activeTab === 'circle' ? circleWills : publicWills;
 
   const handleViewWill = (will: Will) => {
     sessionStorage.setItem('willBackUrl', '/wills');
@@ -156,6 +171,7 @@ export default function MyWills() {
               { key: 'all' as const, label: 'All', count: activeWills.length },
               { key: 'solo' as const, label: 'Solo', count: soloWills.length },
               { key: 'circle' as const, label: 'Circle', count: circleWills.length },
+              { key: 'public' as const, label: 'Public', count: publicWills.length },
             ]).map(tab => (
               <button
                 key={tab.key}

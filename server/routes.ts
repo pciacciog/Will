@@ -1002,9 +1002,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public wills endpoint - fetch all discoverable public wills for Explore page
   app.get('/api/wills/public', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.id;
       const search = req.query.search as string | undefined;
       const publicWills = await storage.getPublicWills(search);
-      res.json(publicWills);
+      const enriched = await Promise.all(
+        publicWills.map(async (w) => {
+          const isOwner = w.createdBy === userId;
+          let hasJoined = false;
+          if (!isOwner) {
+            const joined = await storage.getUserJoinedWill(userId, w.id);
+            hasJoined = !!joined;
+          }
+          return { ...w, isOwner, hasJoined };
+        })
+      );
+      res.json(enriched);
     } catch (error) {
       console.error("Error fetching public wills:", error);
       res.status(500).json({ message: "Failed to fetch public wills" });

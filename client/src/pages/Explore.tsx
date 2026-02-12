@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, ArrowRight, ArrowLeft, Target } from "lucide-react";
+import { Users, ArrowRight, ArrowLeft, Target, CheckCircle } from "lucide-react";
 
 type PublicWill = {
   id: number;
@@ -16,6 +16,8 @@ type PublicWill = {
   creatorName: string;
   memberCount: number;
   status: string;
+  isOwner: boolean;
+  hasJoined: boolean;
 };
 
 export default function Explore() {
@@ -125,15 +127,33 @@ export default function Explore() {
                   </span>
                 </div>
 
-                <button
-                  onClick={() => joinMutation.mutate(will.id)}
-                  disabled={joinMutation.isPending}
-                  className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-                  data-testid={`button-join-${will.id}`}
-                >
-                  {joinMutation.isPending ? 'Joining...' : 'Join'}
-                  {!joinMutation.isPending && <ArrowRight className="w-3.5 h-3.5" />}
-                </button>
+                {will.isOwner ? (
+                  <div
+                    className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center gap-1.5"
+                    data-testid={`label-owner-${will.id}`}
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Your Will
+                  </div>
+                ) : will.hasJoined ? (
+                  <div
+                    className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center gap-1.5"
+                    data-testid={`label-joined-${will.id}`}
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Joined
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => joinMutation.mutate(will.id)}
+                    disabled={joinMutation.isPending}
+                    className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                    data-testid={`button-join-${will.id}`}
+                  >
+                    {joinMutation.isPending ? 'Joining...' : 'Join'}
+                    {!joinMutation.isPending && <ArrowRight className="w-3.5 h-3.5" />}
+                  </button>
+                )}
               </div>
             ))}
           </div>
