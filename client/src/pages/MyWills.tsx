@@ -30,6 +30,7 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
     scheduled: { label: 'Scheduled', className: 'bg-blue-100 text-blue-700', icon: Calendar },
     pending: { label: 'Pending', className: 'bg-gray-100 text-gray-700', icon: Clock },
     paused: { label: 'Paused', className: 'bg-orange-100 text-orange-700', icon: Pause },
+    terminated: { label: 'Ended', className: 'bg-gray-100 text-gray-700', icon: Clock },
   };
 
   const status = statusConfig[will.status] || statusConfig.pending;

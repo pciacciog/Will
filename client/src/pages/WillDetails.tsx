@@ -646,6 +646,7 @@ export default function WillDetails() {
                will.status === 'pending' ? 'Pending' :
                will.status === 'scheduled' ? 'Scheduled' :
                will.status === 'completed' ? 'Completed' :
+               will.status === 'terminated' ? 'Ended' :
                will.status.charAt(0).toUpperCase() + will.status.slice(1)}
             </Badge>
           </div>

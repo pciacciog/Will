@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Compass, Sparkles, Settings, LogOut, Target, ChevronRight, Flame, Clock } from "lucide-react";
+import { Users, Compass, Sparkles, Settings, LogOut, ChevronRight, Flame } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { queryClient } from "@/lib/queryClient";
@@ -252,24 +252,7 @@ export default function Home() {
                       <span className="text-lg font-bold text-emerald-600">{activeWills.length}</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
-                      {activeWills.filter(w => w.mode !== 'circle').length > 0 && (
-                        <div className="flex items-center gap-1" data-testid="text-solo-count">
-                          <Target className="w-3.5 h-3.5 text-emerald-500" />
-                          <span>{activeWills.filter(w => w.mode !== 'circle').length} Solo</span>
-                        </div>
-                      )}
-                      {activeWills.filter(w => w.mode === 'circle').length > 0 && (
-                        <div className="flex items-center gap-1" data-testid="text-circle-count">
-                          <Users className="w-3.5 h-3.5 text-purple-500" />
-                          <span>{activeWills.filter(w => w.mode === 'circle').length} Circle</span>
-                        </div>
-                      )}
-                      {activeWills.filter(w => w.status === 'will_review').length > 0 && (
-                        <div className="flex items-center gap-1" data-testid="text-review-count">
-                          <Clock className="w-3.5 h-3.5 text-amber-500" />
-                          <span>{activeWills.filter(w => w.status === 'will_review').length} needs review</span>
-                        </div>
-                      )}
+                      <span data-testid="text-active-wills-label">{activeWills.length} active {activeWills.length === 1 ? 'will' : 'wills'}</span>
                     </div>
                     <div className="flex items-center justify-end mt-2">
                       <span className="text-xs text-emerald-600 font-medium group-hover:underline">View All</span>
