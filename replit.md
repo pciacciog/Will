@@ -65,11 +65,12 @@ Preferred communication style: Simple, everyday language.
   - Routes: `/circles` (lobby), `/circles/:circleId` (hub), `/start-will` (will creation)
 - **Will Creation & Management**: Multi-step guided creation, commitment editing, role-based permissions.
 - **Recipient Commitment Flow** (SubmitCommitment.tsx):
-  - Classic wills: Timeline → What → Why → Track Type → Check-In Time → Confirm (6 steps)
-  - Cumulative/Shared wills: Timeline → Why → Check-In Time → Confirm (4 steps)
+  - Classic wills: Timeline → What → Why → [Check-In Time] → [Confirm] (5 internal steps, ladder shows 3: When/What/Why)
+  - Cumulative/Shared wills: Timeline → Why → [Check-In Time] → [Confirm] (4 internal steps, ladder shows 2: When/Why)
   - Each recipient sets their own check-in time (stored per-commitment in `will_commitments.check_in_time`)
   - "One last step..." transition appears after check-in time, before confirm
   - Confirm page shows check-in time instead of daily reminder
+  - Ladder visibility rule: Only core decision steps shown (What, Why, When); utility steps (Check-in, Loading, Confirm) hidden from ladder
 - **Indefinite Duration Wills**: Users can create ongoing wills without end dates (isIndefinite=true, endDate=null). UI shows "Ongoing" instead of end date.
 - **Will Lifecycle Management**: 
   - **Pause**: Temporarily stop tracking an active will (sets pausedAt, status='paused')

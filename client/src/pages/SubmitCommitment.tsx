@@ -80,9 +80,9 @@ export default function SubmitCommitment() {
     }
   }, [will]);
   
-  // Classic flow: 1-Timeline, 2-What, 3-Why, 4-Track, 5-CheckIn, 6-Confirm (6 steps)
-  // Cumulative flow: 1-Timeline, 2-Why, 3-CheckIn, 4-Confirm (4 steps)
-  const totalSteps = isCumulative ? 4 : 6;
+  // Classic flow: 1-Timeline, 2-What, 3-Why, [4-CheckIn], [5-Confirm] (5 total, ladder shows 3)
+  // Cumulative flow: 1-Timeline, 2-Why, [3-CheckIn], [4-Confirm] (4 total, ladder shows 2)
+  const ladderSteps = isCumulative ? 2 : 3;
 
   useEffect(() => {
     const hasSeenInstruction = localStorage.getItem('willInstructionSeen');
@@ -176,11 +176,6 @@ export default function SubmitCommitment() {
       setCurrentStep(4);
     }
   };
-  
-  const handleTrackingTypeSelect = (type: 'daily' | 'one-time') => {
-    setCheckInType(type);
-    setCurrentStep(5);
-  };
 
   const handleCheckInTimeSubmit = () => {
     setShowTransition(true);
@@ -189,7 +184,7 @@ export default function SubmitCommitment() {
       if (isCumulative) {
         setCurrentStep(4);
       } else {
-        setCurrentStep(6);
+        setCurrentStep(5);
       }
     }, 2500);
   };
@@ -220,7 +215,6 @@ export default function SubmitCommitment() {
       else if (currentStep === 3) setCurrentStep(2);
       else if (currentStep === 4) setCurrentStep(3);
       else if (currentStep === 5) setCurrentStep(4);
-      else if (currentStep === 6) setCurrentStep(5);
       else setLocation(`/will/${id}`);
     }
   };
@@ -235,17 +229,17 @@ export default function SubmitCommitment() {
 
   const getStepLabel = (step: number): string => {
     if (isCumulative) {
-      const labels: Record<number, string> = { 1: 'When', 2: 'Why', 3: 'Check-In', 4: 'Join' };
+      const labels: Record<number, string> = { 1: 'When', 2: 'Why' };
       return labels[step] || '';
     } else {
-      const labels: Record<number, string> = { 1: 'When', 2: 'What', 3: 'Why', 4: 'Track', 5: 'Check-In', 6: 'Join' };
+      const labels: Record<number, string> = { 1: 'When', 2: 'What', 3: 'Why' };
       return labels[step] || '';
     }
   };
 
   const isWhyStep = (isCumulative && currentStep === 2) || (!isCumulative && currentStep === 3);
-  const isCheckInStep = (isCumulative && currentStep === 3) || (!isCumulative && currentStep === 5);
-  const isConfirmStep = (isCumulative && currentStep === 4) || (!isCumulative && currentStep === 6);
+  const isCheckInStep = (isCumulative && currentStep === 3) || (!isCumulative && currentStep === 4);
+  const isConfirmStep = (isCumulative && currentStep === 4) || (!isCumulative && currentStep === 5);
 
   return (
     <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
@@ -263,30 +257,29 @@ export default function SubmitCommitment() {
               <div className="w-11"></div>
             </div>
             
-            <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
-              {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
-                <div key={step} className="flex items-center">
-                  {step > 1 && (
-                    <div className={`w-4 h-0.5 mr-1 ${currentStep >= step ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
-                  )}
-                  <div className={`w-7 h-7 ${currentStep >= step ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
-                    {step}
-                  </div>
-                  {step <= 3 && (
+            {currentStep <= ladderSteps && (
+              <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
+                {Array.from({ length: ladderSteps }, (_, i) => i + 1).map((step) => (
+                  <div key={step} className="flex items-center">
+                    {step > 1 && (
+                      <div className={`w-4 h-0.5 mr-1 ${currentStep >= step ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                    )}
+                    <div className={`w-7 h-7 ${currentStep >= step ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                      {step}
+                    </div>
                     <span className={`ml-1 text-xs ${currentStep >= step ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>
                       {getStepLabel(step)}
                     </span>
-                  )}
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
           
           <div className="text-center mt-16">
             <h1 className="text-xl font-semibold text-gray-900">
               {currentStep === 1 && "Proposed Will Timeline"}
               {currentStep === 2 && !isCumulative && "What would you like to do?"}
               {isWhyStep && "Why would you like to do this?"}
-              {!isCumulative && currentStep === 4 && "How Will You Track?"}
               {isCheckInStep && "Tracking"}
               {isConfirmStep && "Confirm Your Commitment"}
             </h1>
@@ -545,65 +538,6 @@ export default function SubmitCommitment() {
               </div>
             </form>
           </div>
-        )}
-
-        {/* Step 4: Tracking Type Selection (Classic wills only) */}
-        {currentStep === 4 && !isCumulative && !showTransition && (
-          <SectionCard>
-            <div className="space-y-6 px-4 py-2">
-              <p className="text-sm text-gray-600 text-center">
-                How would you like to track your progress on this commitment?
-              </p>
-              
-              <button
-                type="button"
-                onClick={() => handleTrackingTypeSelect('daily')}
-                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                  checkInType === 'daily' 
-                    ? 'border-purple-500 bg-purple-50' 
-                    : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
-                }`}
-                data-testid="button-tracking-daily"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Daily Check-ins</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Track your progress every day with a simple yes/no/partial check-in
-                    </p>
-                    <p className="text-xs text-purple-600 mt-2">Best for habits and recurring actions</p>
-                  </div>
-                </div>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => handleTrackingTypeSelect('one-time')}
-                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                  checkInType === 'one-time' 
-                    ? 'border-green-500 bg-green-50' 
-                    : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
-                }`}
-                data-testid="button-tracking-onetime"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">One-time Check-in</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Reflect on your progress at the end of the Will period
-                    </p>
-                    <p className="text-xs text-green-600 mt-2">Best for single goals or projects</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </SectionCard>
         )}
 
         {/* Check-In Time Step */}
