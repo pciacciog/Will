@@ -139,17 +139,16 @@ export default function MyWills() {
       <div className="pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
         <div className="max-w-sm mx-auto px-5">
 
-          <div className="flex items-center gap-3 py-4">
+          <div className="relative flex items-center justify-center py-4">
             <button
               onClick={() => setLocation('/')}
-              className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              className="absolute left-0 w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
               data-testid="button-back"
             >
               <ArrowLeft className="w-4 h-4 text-gray-600" />
             </button>
             <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">My Wills</h1>
-            <div className="flex-1" />
-            <span className="text-sm text-gray-400" data-testid="text-active-count">{activeWills.length} active</span>
+            <span className="absolute right-0 text-sm text-gray-400" data-testid="text-active-count">{activeWills.length} active</span>
           </div>
 
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
