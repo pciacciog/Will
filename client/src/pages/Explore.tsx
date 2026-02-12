@@ -68,16 +68,16 @@ export default function Explore() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto px-4 pt-4 pb-8">
-        <div className="flex items-center mb-6">
+      <div className="max-w-md mx-auto px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+        <div className="relative flex items-center justify-center py-4 mb-4">
           <button
             onClick={() => setLocation('/')}
-            className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="absolute left-0 w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
             data-testid="button-back"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <h1 className="text-xl font-semibold text-gray-900 ml-2" data-testid="text-page-title">
+          <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">
             Explore Wills
           </h1>
         </div>

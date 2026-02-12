@@ -136,7 +136,7 @@ export default function MyWills() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+      <div className="pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
         <div className="max-w-sm mx-auto px-5">
 
           <div className="relative flex items-center justify-center py-4">
