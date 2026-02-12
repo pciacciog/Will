@@ -639,7 +639,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(wills.createdBy, userId),
         or(eq(wills.mode, 'solo'), eq(wills.mode, 'personal')),
-        sql`status NOT IN ('completed', 'archived')`
+        sql`status IN ('active', 'pending')`
       ))
       .orderBy(desc(wills.createdAt))
       .limit(1);
