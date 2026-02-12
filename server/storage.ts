@@ -80,7 +80,7 @@ export interface IStorage {
   getCircleActiveWill(circleId: number): Promise<Will | undefined>;
   getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
-  getUserActiveSoloWill(userId: string): Promise<Will | undefined>;
+  getUserActiveSoloWillCount(userId: string): Promise<number>;
   getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string })[]>;
   getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
   getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
@@ -632,18 +632,16 @@ export class DatabaseStorage implements IStorage {
     return this.getUserPersonalWills(userId);
   }
 
-  async getUserActiveSoloWill(userId: string): Promise<Will | undefined> {
-    const [will] = await db
-      .select()
+  async getUserActiveSoloWillCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
       .from(wills)
       .where(and(
         eq(wills.createdBy, userId),
         or(eq(wills.mode, 'solo'), eq(wills.mode, 'personal')),
         sql`status IN ('active', 'pending')`
-      ))
-      .orderBy(desc(wills.createdAt))
-      .limit(1);
-    return will;
+      ));
+    return Number(result[0]?.count || 0);
   }
 
   async getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string })[]> {
