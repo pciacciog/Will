@@ -2124,12 +2124,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Will is already completed or terminated" });
       }
       
-      // Set status to terminated
-      await db.update(wills)
-        .set({ status: 'terminated' })
-        .where(eq(wills.id, willId));
-      
-      res.json({ message: "Will terminated successfully" });
+      if (will.isIndefinite) {
+        await db.update(wills)
+          .set({ status: 'will_review' })
+          .where(eq(wills.id, willId));
+        res.json({ message: "Will moved to review", status: 'will_review' });
+      } else {
+        await db.update(wills)
+          .set({ status: 'terminated' })
+          .where(eq(wills.id, willId));
+        res.json({ message: "Will terminated successfully", status: 'terminated' });
+      }
     } catch (error) {
       console.error("Error terminating will:", error);
       res.status(500).json({ message: "Failed to terminate Will" });

@@ -20,6 +20,7 @@ import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import DailyGutCheckModal from "@/components/DailyGutCheckModal";
+import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import ProgressView from "@/components/ProgressView";
 import DayStrip from "@/components/DayStrip";
 import type { WillCheckIn } from "@shared/schema";
@@ -508,10 +509,14 @@ export default function WillDetails() {
       const res = await apiRequest(`/api/wills/${id}/terminate`, { method: 'POST' });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       invalidateAllWillQueries();
-      toast({ title: "Will Ended", description: "Your Will has been ended" });
-      setLocation(getHubUrl());
+      if (data?.status === 'will_review') {
+        toast({ title: "Will ended", description: "Review your results before wrapping up" });
+      } else {
+        toast({ title: "Will Ended", description: "Your Will has been ended" });
+        setLocation(getHubUrl());
+      }
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to end Will", variant: "destructive" });
@@ -713,6 +718,16 @@ export default function WillDetails() {
                   </>
                 )}
               </div>
+            ) : will.isIndefinite ? (
+              <OngoingWillReviewFlow
+                willId={will.id}
+                startDate={will.startDate}
+                onComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/review-status`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/reviews`] });
+                }}
+              />
             ) : (
               <WillReviewFlow 
                 willId={will.id}
