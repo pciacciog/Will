@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
+import DailyGutCheckModal from "@/components/DailyGutCheckModal";
 import ProgressView from "@/components/ProgressView";
 import DayStrip from "@/components/DayStrip";
 import type { WillCheckIn } from "@shared/schema";
@@ -181,6 +182,7 @@ export default function WillDetails() {
   const [showFinalSummary, setShowFinalSummary] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [selectedCheckInDate, setSelectedCheckInDate] = useState<string | null>(null);
+  const [showGutCheckModal, setShowGutCheckModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   
   const handleDayClick = (date: string) => {
@@ -332,8 +334,15 @@ export default function WillDetails() {
   
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
     queryKey: [`/api/wills/${id}/check-ins`],
-    enabled: !!id && !!user && hasDailyCheckIns,
+    enabled: !!id && !!user,
   });
+
+  const todayGutCheckStatus = useMemo(() => {
+    if (hasDailyCheckIns) return null;
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return checkIns.find(c => c.date === todayKey)?.status || null;
+  }, [checkIns, hasDailyCheckIns]);
   
   // Debug logging for query states
   console.log('[WillDetails] Query States:', {
@@ -919,7 +928,27 @@ export default function WillDetails() {
           </Button>
         )}
 
-        {/* Daily Progress Section - Simplified conditional display */}
+        {/* Daily Gut-Check Button - Lightweight check for active set-duration wills */}
+        {!hasDailyCheckIns && will.status === 'active' && (
+          todayGutCheckStatus ? (
+            <div className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 text-sm" data-testid="gut-check-completed">
+              <CheckCircle className="w-4 h-4 text-emerald-500" />
+              <span>Checked in today: <span className="font-medium capitalize">{todayGutCheckStatus}</span></span>
+            </div>
+          ) : (
+            <Button
+              onClick={() => setShowGutCheckModal(true)}
+              variant="outline"
+              className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50 py-6 text-base"
+              data-testid="button-gut-check"
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Did you follow through today?
+            </Button>
+          )
+        )}
+
+        {/* Daily Progress Section - Simplified conditional display (ongoing/daily wills ONLY) */}
         {hasDailyCheckIns && (will.status === 'active' || will.status === 'will_review' || will.status === 'completed') && (
           <DailyProgressSection 
             willId={Number(id)} 
@@ -1261,7 +1290,7 @@ export default function WillDetails() {
         reviews={reviews || []}
       />
 
-      {/* Daily Check-in Modal */}
+      {/* Daily Check-in Modal (ongoing/daily wills only) */}
       {hasDailyCheckIns && (
         <DailyCheckInModal
           isOpen={showCheckInModal}
@@ -1274,6 +1303,15 @@ export default function WillDetails() {
           endDate={will?.endDate || ''}
           existingCheckIns={checkIns}
           initialDate={selectedCheckInDate}
+        />
+      )}
+
+      {/* Daily Gut-Check Modal (set-duration wills only) */}
+      {!hasDailyCheckIns && (
+        <DailyGutCheckModal
+          isOpen={showGutCheckModal}
+          onClose={() => setShowGutCheckModal(false)}
+          willId={Number(id)}
         />
       )}
     </MobileLayout>

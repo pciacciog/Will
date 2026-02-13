@@ -686,8 +686,8 @@ export class EndRoomScheduler {
     try {
       let remindersSent = 0;
 
-      // APPROACH 1: Will-specific reminders (new feature)
-      // Check for active daily wills that have their own reminderTime set
+      // APPROACH 1: Will-specific reminders
+      // Check for ALL active wills that have their own reminderTime set (daily AND one-time/set-duration)
       const willsWithReminders = await db
         .select({
           willId: wills.id,
@@ -703,7 +703,6 @@ export class EndRoomScheduler {
         .where(
           and(
             eq(wills.status, 'active'),
-            eq(wills.checkInType, 'daily'),
             isNotNull(wills.reminderTime)
           )
         )
@@ -790,7 +789,6 @@ export class EndRoomScheduler {
               and(
                 eq(willCommitments.userId, user.id),
                 eq(wills.status, 'active'),
-                eq(wills.checkInType, 'daily'),
                 isNull(wills.reminderTime) // Only for wills without specific reminder
               )
             )

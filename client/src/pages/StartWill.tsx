@@ -594,7 +594,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       what: willData.what,
       because: willData.why,
       checkInType: checkInType,
-      reminderTime: checkInType === 'daily' ? willReminderTime : null,
+      reminderTime: willReminderTime,
       isIndefinite: isIndefinite,
     });
   };
