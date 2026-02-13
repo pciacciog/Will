@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,13 @@ export default function SubmitCommitment() {
   
   const isCumulative = (will as any)?.willType === 'cumulative';
   const sharedWhat = (will as any)?.sharedWhat;
+
+  const isShortDuration = useMemo(() => {
+    const w = will as any;
+    if (!w?.startDate || !w?.endDate || w?.isIndefinite) return false;
+    const diffMs = new Date(w.endDate).getTime() - new Date(w.startDate).getTime();
+    return diffMs < 24 * 60 * 60 * 1000;
+  }, [will]);
   
   // Initialize check-in time from will's check-in time if available
   useEffect(() => {
@@ -171,9 +178,9 @@ export default function SubmitCommitment() {
     setWhy(whyInput.trim());
     
     if (isCumulative) {
-      setCurrentStep(3);
+      setCurrentStep(isShortDuration ? 4 : 3);
     } else {
-      setCurrentStep(4);
+      setCurrentStep(isShortDuration ? 5 : 4);
     }
   };
 
@@ -198,7 +205,7 @@ export default function SubmitCommitment() {
       what: whatToSubmit, 
       why: why.trim(),
       checkInType: isCumulative ? willCheckInType : checkInType,
-      checkInTime: checkInTime,
+      checkInTime: isShortDuration ? undefined : checkInTime,
     });
   };
 
@@ -208,13 +215,13 @@ export default function SubmitCommitment() {
     } else if (isCumulative) {
       if (currentStep === 2) setCurrentStep(1);
       else if (currentStep === 3) setCurrentStep(2);
-      else if (currentStep === 4) setCurrentStep(3);
+      else if (currentStep === 4) setCurrentStep(isShortDuration ? 2 : 3);
       else setLocation(`/will/${id}`);
     } else {
       if (currentStep === 2) setCurrentStep(1);
       else if (currentStep === 3) setCurrentStep(2);
       else if (currentStep === 4) setCurrentStep(3);
-      else if (currentStep === 5) setCurrentStep(4);
+      else if (currentStep === 5) setCurrentStep(isShortDuration ? 3 : 4);
       else setLocation(`/will/${id}`);
     }
   };

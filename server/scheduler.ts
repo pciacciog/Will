@@ -861,6 +861,9 @@ export class EndRoomScheduler {
           userWhy: willCommitments.why,
           userTimezone: users.timezone,
           lastMotivationalSentAt: users.lastMotivationalSentAt,
+          willStartDate: wills.startDate,
+          willEndDate: wills.endDate,
+          willIsIndefinite: wills.isIndefinite,
         })
         .from(willCommitments)
         .innerJoin(wills, eq(willCommitments.willId, wills.id))
@@ -873,7 +876,7 @@ export class EndRoomScheduler {
         )
         .limit(200);
 
-      const userMap = new Map<string, { why: string; willId: number; timezone: string; lastSent: Date | null }>();
+      const userMap = new Map<string, { why: string; willId: number; timezone: string; lastSent: Date | null; willStartDate: Date | null; willEndDate: Date | null; willIsIndefinite: boolean | null }>();
       for (const row of activeCommitments) {
         if (!row.userTimezone || !row.userWhy) continue;
         if (userMap.has(row.userId)) continue;
@@ -882,6 +885,9 @@ export class EndRoomScheduler {
           willId: row.willId,
           timezone: row.userTimezone,
           lastSent: row.lastMotivationalSentAt,
+          willStartDate: row.willStartDate,
+          willEndDate: row.willEndDate,
+          willIsIndefinite: row.willIsIndefinite,
         });
       }
 
@@ -897,7 +903,14 @@ export class EndRoomScheduler {
           if (hasToken.length === 0) continue;
 
           const userLocalTime = this.getTimeInTimezone(now, data.timezone);
-          const randomHour = this.getDailyRandomHour(userId, now, data.timezone);
+
+          // For short-duration wills (< 24 hours), pick random time within the will's actual window
+          const isShortWill = !data.willIsIndefinite && data.willStartDate && data.willEndDate &&
+            (new Date(data.willEndDate).getTime() - new Date(data.willStartDate).getTime()) < 24 * 60 * 60 * 1000;
+
+          const randomHour = isShortWill
+            ? this.getShortWillRandomTime(userId, now, data.timezone, data.willStartDate!, data.willEndDate!)
+            : this.getDailyRandomHour(userId, now, data.timezone);
 
           if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
 
@@ -937,6 +950,39 @@ export class EndRoomScheduler {
     }
     const totalMinutes = Math.abs(hash) % (13 * 60); // 0 to 779 minutes (13 hour range)
     const hour = 8 + Math.floor(totalMinutes / 60); // 8am to 8pm
+    const minute = totalMinutes % 60;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  }
+
+  // Generate a random time within a short will's actual start-to-end window
+  private getShortWillRandomTime(userId: string, now: Date, timezone: string, willStart: Date, willEnd: Date): string {
+    const startTime = this.getTimeInTimezone(willStart, timezone);
+    const endTime = this.getTimeInTimezone(willEnd, timezone);
+    const startMinutes = startTime.hours * 60 + startTime.minutes;
+    let endMinutes = endTime.hours * 60 + endTime.minutes;
+    // Handle midnight crossing (e.g. 11pm to 2am)
+    if (endMinutes <= startMinutes) {
+      endMinutes += 24 * 60;
+    }
+    const windowMinutes = Math.max(endMinutes - startMinutes, 1);
+
+    const todayFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const dateStr = todayFormatter.format(now);
+    const seed = `${userId}-${dateStr}-short`;
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+      hash |= 0;
+    }
+    const offset = Math.abs(hash) % windowMinutes;
+    const rawMinutes = startMinutes + offset;
+    const totalMinutes = rawMinutes % (24 * 60); // Wrap back to 0-23h
+    const hour = Math.floor(totalMinutes / 60);
     const minute = totalMinutes % 60;
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -165,6 +165,16 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   
   // Check-in type is auto-determined: Ongoing = 'daily' (data-driven), Set Dates = 'one-time' (reflection-based)
   const checkInType = isIndefinite ? 'daily' : 'one-time';
+
+  // Short-duration wills (< 24 hours) skip the check-in time step entirely
+  const isShortDuration = useMemo(() => {
+    if (isIndefinite) return false;
+    if (!startDate || !endDate || !startTime) return false;
+    const start = new Date(`${startDate}T${startTime}`);
+    const end = new Date(`${endDate}T${endTime || '23:59'}`);
+    const diffMs = end.getTime() - start.getTime();
+    return diffMs < 24 * 60 * 60 * 1000;
+  }, [startDate, startTime, endDate, endTime, isIndefinite]);
   
   // Will-specific reminder time for daily check-ins (HH:MM format)
   const [willReminderTime, setWillReminderTime] = useState<string>('20:00');
@@ -399,9 +409,14 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     const updatedWillData = { ...willData, startDate: startDateTime, endDate: endDateTime };
     setWillData(updatedWillData);
     setShowFinalStepLoading(true);
+
+    // Short-duration wills (< 24 hours) skip check-in step, go straight to confirm
+    const skipCheckIn = !isIndefinite && endDateTime &&
+      (new Date(endDateTime).getTime() - new Date(startDateTime).getTime()) < 24 * 60 * 60 * 1000;
+
     setTimeout(() => {
       setShowFinalStepLoading(false);
-      setCurrentStep(4);
+      setCurrentStep(skipCheckIn ? 5 : 4);
     }, 1500);
   };
 
@@ -445,10 +460,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         checkInType: checkInType,
         isIndefinite: isIndefinite,
         visibility: visibility,
-        checkInTime: checkInTime,
+        checkInTime: isShortDuration ? undefined : checkInTime,
         activeDays: isIndefinite ? activeDays : undefined,
         customDays: isIndefinite && activeDays === 'custom' ? JSON.stringify(customDays) : undefined,
-        reminderTime: willReminderTime,
+        reminderTime: isShortDuration ? undefined : willReminderTime,
       });
     } else {
       createWillMutation.mutate({
@@ -1172,7 +1187,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             </div>
 
             <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <Button type="button" variant="ghost" onClick={() => setCurrentStep(4)} className="text-gray-500" data-testid="button-back-to-tracking">
+              <Button type="button" variant="ghost" onClick={() => setCurrentStep(isShortDuration ? 3 : 4)} className="text-gray-500" data-testid="button-back-to-tracking">
                 Back
               </Button>
               <button
