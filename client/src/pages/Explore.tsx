@@ -1,9 +1,9 @@
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, ArrowRight, ArrowLeft, Target, CheckCircle } from "lucide-react";
+import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
+import { Users, ArrowRight, Target, CheckCircle } from "lucide-react";
 
 type PublicWill = {
   id: number;
@@ -69,19 +69,19 @@ export default function Explore() {
   const wills = publicWills || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
-        <div className="relative flex items-center justify-center py-4 mb-4">
-          <button
+    <MobileLayout>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between mb-2">
+          <UnifiedBackButton
             onClick={() => setLocation('/')}
-            className="absolute left-0 w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="w-4 h-4 text-gray-600" />
-          </button>
-          <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">
-            Explore Wills
-          </h1>
+            testId="button-back"
+          />
+          <div className="flex-1 text-center -ml-2">
+            <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">
+              Explore Wills
+            </h1>
+          </div>
+          <div className="w-11"></div>
         </div>
 
         {isLoading ? (
@@ -94,14 +94,7 @@ export default function Explore() {
               <Target className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-1" data-testid="text-empty-title">No public Wills yet</h3>
-            <p className="text-sm text-gray-500 mb-5">Be the first to create!</p>
-            <Button
-              onClick={() => setLocation('/solo/start-will')}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
-              data-testid="button-create-public"
-            >
-              Create Public Will
-            </Button>
+            <p className="text-sm text-gray-500">Check back later for Wills you can join.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -120,7 +113,7 @@ export default function Explore() {
 
                 <div className="flex items-center gap-2 mt-2.5 text-xs text-gray-500">
                   <span data-testid={`text-timeline-${will.id}`}>{getTimelineLabel(will)}</span>
-                  <span className="text-gray-300">•</span>
+                  <span className="text-gray-300">&bull;</span>
                   <span className="inline-flex items-center gap-1" data-testid={`text-members-${will.id}`}>
                     <Users className="w-3 h-3" />
                     {will.memberCount} {will.memberCount === 1 ? 'member' : 'members'}
@@ -159,6 +152,6 @@ export default function Explore() {
           </div>
         )}
       </div>
-    </div>
+    </MobileLayout>
   );
 }
