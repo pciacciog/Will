@@ -80,6 +80,9 @@ export class EndRoomScheduler {
     // NEW: Send daily reminder notifications (user-scheduled)
     await this.checkDailyReminders(now);
 
+    // NEW: Send random motivational "because" notifications (once per day)
+    await this.checkMotivationalNotifications(now);
+
     console.log('[EndRoomScheduler] Heavy operations completed');
   }
 
@@ -737,11 +740,9 @@ export class EndRoomScheduler {
             continue;
           }
 
-          // Send the daily reminder with user's "why" statement
           const success = await pushNotificationService.sendDailyReminderNotification(
             willData.userId, 
-            willData.willId, 
-            willData.userWhy
+            willData.willId
           );
 
           if (success) {
@@ -827,10 +828,8 @@ export class EndRoomScheduler {
             continue;
           }
 
-          // Send the daily reminder with user's "why" statement
           const willId = activeWillsWithCommitment[0].id;
-          const userWhy = activeWillsWithCommitment[0].userWhy;
-          const success = await pushNotificationService.sendDailyReminderNotification(user.id, willId, userWhy);
+          const success = await pushNotificationService.sendDailyReminderNotification(user.id, willId);
 
           if (success) {
             await storage.updateUserLastDailyReminderSent(user.id);
@@ -850,6 +849,98 @@ export class EndRoomScheduler {
     } catch (error) {
       console.error('[EndRoomScheduler] Error checking daily reminders:', error);
     }
+  }
+
+  // Motivational "because" notification — random once per day across all active wills
+  private async checkMotivationalNotifications(now: Date) {
+    try {
+      let sent = 0;
+
+      const activeCommitments = await db
+        .select({
+          userId: willCommitments.userId,
+          willId: willCommitments.willId,
+          userWhy: willCommitments.why,
+          userTimezone: users.timezone,
+          lastMotivationalSentAt: users.lastMotivationalSentAt,
+        })
+        .from(willCommitments)
+        .innerJoin(wills, eq(willCommitments.willId, wills.id))
+        .innerJoin(users, eq(willCommitments.userId, users.id))
+        .where(
+          and(
+            eq(wills.status, 'active'),
+            isNotNull(willCommitments.why)
+          )
+        )
+        .limit(200);
+
+      const userMap = new Map<string, { why: string; willId: number; timezone: string; lastSent: Date | null }>();
+      for (const row of activeCommitments) {
+        if (!row.userTimezone || !row.userWhy) continue;
+        if (userMap.has(row.userId)) continue;
+        userMap.set(row.userId, {
+          why: row.userWhy,
+          willId: row.willId,
+          timezone: row.userTimezone,
+          lastSent: row.lastMotivationalSentAt,
+        });
+      }
+
+      for (const [userId, data] of Array.from(userMap.entries())) {
+        try {
+          if (this.alreadySentToday(data.lastSent, data.timezone)) continue;
+
+          const hasToken = await db
+            .select({ id: deviceTokens.id })
+            .from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, userId), eq(deviceTokens.isActive, true)))
+            .limit(1);
+          if (hasToken.length === 0) continue;
+
+          const userLocalTime = this.getTimeInTimezone(now, data.timezone);
+          const randomHour = this.getDailyRandomHour(userId, now, data.timezone);
+
+          if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
+
+          const success = await pushNotificationService.sendMotivationalNotification(userId, data.why, data.willId);
+          if (success) {
+            await db.update(users).set({ lastMotivationalSentAt: now }).where(eq(users.id, userId));
+            sent++;
+            console.log(`[SCHEDULER] \u2705 Motivational notification sent to ${userId} at random time ${randomHour} ${data.timezone}`);
+          }
+        } catch (error) {
+          console.error(`[SCHEDULER] Failed motivational notification for ${userId}:`, error);
+        }
+      }
+
+      if (sent > 0) {
+        console.log(`[SCHEDULER] Motivational notifications sent: ${sent}`);
+      }
+    } catch (error) {
+      console.error('[EndRoomScheduler] Error checking motivational notifications:', error);
+    }
+  }
+
+  // Generate a deterministic "random" time (HH:MM) for a user each day (8am-9pm range)
+  private getDailyRandomHour(userId: string, now: Date, timezone: string): string {
+    const todayFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const dateStr = todayFormatter.format(now);
+    const seed = `${userId}-${dateStr}`;
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+      hash |= 0;
+    }
+    const totalMinutes = Math.abs(hash) % (13 * 60); // 0 to 779 minutes (13 hour range)
+    const hour = 8 + Math.floor(totalMinutes / 60); // 8am to 8pm
+    const minute = totalMinutes % 60;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   }
 
   // Helper: Get current time in a specific timezone

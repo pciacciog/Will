@@ -542,22 +542,35 @@ class PushNotificationService {
     await this.sendToMultipleUsers(committedMembers, payload);
   }
 
-  // NEW NOTIFICATION: Daily Reminder (user-scheduled daily check-in)
-  // Shows the user's personal "why" statement to remind them of their motivation
-  async sendDailyReminderNotification(userId: string, willId?: number, userWhy?: string | null): Promise<boolean> {
-    // Use the user's "why" statement as the notification body, prefixed with "Because"
-    // Truncate to 110 characters for iOS lock screen display if needed
-    let notificationBody = userWhy ? `Because ${userWhy}` : "Take a moment to check in with your commitment today.";
+  // Daily check-in reminder — simple prompt to log progress
+  async sendDailyReminderNotification(userId: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: "Time to check in",
+      body: "Take a moment to log your progress today.",
+      category: 'daily_reminder',
+      data: {
+        type: 'daily_reminder',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub'
+      }
+    };
+
+    return await this.sendToUser(userId, payload);
+  }
+
+  // Motivational notification — displays the user's "because" statement
+  async sendMotivationalNotification(userId: string, userWhy: string, willId?: number): Promise<boolean> {
+    let notificationBody = `Because ${userWhy}`;
     if (notificationBody.length > 110) {
       notificationBody = notificationBody.substring(0, 107) + "...";
     }
 
     const payload: PushNotificationPayload = {
-      title: "🤍",
+      title: "\u{1F90D}",
       body: notificationBody,
-      category: 'daily_reminder',
+      category: 'motivational',
       data: {
-        type: 'daily_reminder',
+        type: 'motivational',
         willId: willId?.toString() || '',
         deepLink: willId ? `/will/${willId}` : '/solo/hub'
       }
