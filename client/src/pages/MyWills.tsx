@@ -4,7 +4,8 @@ import { getQueryFn } from "@/lib/queryClient";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe } from "lucide-react";
+import { Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe } from "lucide-react";
+import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 
 type Will = {
   id: number;
@@ -150,21 +151,18 @@ export default function MyWills() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
-        <div className="max-w-sm mx-auto px-5">
-
-          <div className="relative flex items-center justify-center py-4">
-            <button
-              onClick={() => setLocation('/')}
-              className="absolute left-0 w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-4 h-4 text-gray-600" />
-            </button>
+    <MobileLayout>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between mb-2">
+          <UnifiedBackButton
+            onClick={() => setLocation('/')}
+            testId="button-back"
+          />
+          <div className="flex-1 text-center -ml-2">
             <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">My Wills</h1>
-            <span className="absolute right-0 text-sm text-gray-400" data-testid="text-active-count">{activeWills.length} active</span>
           </div>
+          <span className="text-sm text-gray-400 w-11 text-right" data-testid="text-active-count">{activeWills.length}</span>
+        </div>
 
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
             {([
@@ -260,8 +258,7 @@ export default function MyWills() {
             </div>
           )}
 
-        </div>
       </div>
-    </div>
+    </MobileLayout>
   );
 }
