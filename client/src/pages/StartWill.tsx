@@ -1150,22 +1150,26 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </>
                   )}
 
-                  <div className="border-t border-gray-200"></div>
+                  {!isShortDuration && (
+                    <>
+                      <div className="border-t border-gray-200"></div>
 
-                  <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Check-In Time</p>
-                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-checkin-time">
-                        {(() => {
-                          const [h, m] = checkInTime.split(':').map(Number);
-                          const period = h >= 12 ? 'PM' : 'AM';
-                          const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
-                          return `${displayHour}:${String(m).padStart(2, '0')} ${period}`;
-                        })()}
-                      </p>
-                    </div>
-                  </div>
+                      <div className="flex items-start gap-3">
+                        <Clock className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Check-In Time</p>
+                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-checkin-time">
+                            {(() => {
+                              const [h, m] = checkInTime.split(':').map(Number);
+                              const period = h >= 12 ? 'PM' : 'AM';
+                              const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                              return `${displayHour}:${String(m).padStart(2, '0')} ${period}`;
+                            })()}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {isSoloMode && (
                     <>
