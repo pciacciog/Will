@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MobileLayout } from "@/components/ui/design-system";
-import { Users, Plus, ArrowLeft, ChevronRight } from "lucide-react";
+import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
+import { Users, Plus, ChevronRight } from "lucide-react";
 
 interface CircleMember {
   id: number;
@@ -144,36 +144,17 @@ export default function CircleLobby() {
 
   return (
     <MobileLayout>
-      <div className="min-h-screen-safe bg-gradient-to-br from-gray-50 via-white to-gray-50/50">
-        <div className="h-full flex flex-col px-4">
-          {/* Header */}
-          <div className="flex-shrink-0 pt-[calc(env(safe-area-inset-top)+1rem)] pb-4">
-            <div className="flex items-center mb-6">
-              <button 
-                onClick={() => setLocation('/')}
-                className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <h1 className="flex-1 text-xl font-bold text-gray-900 text-center -ml-7">My Circles</h1>
-              <div className="w-9"></div>
-            </div>
-            
-            {/* Circle counter - only show if user has circles */}
-            {circleCount > 0 && (
-              <p className="text-center text-sm text-gray-500 mb-2">
-                {isAtMaxCircles ? (
-                  <span className="text-amber-600 font-medium">3/3 circles (maximum)</span>
-                ) : (
-                  `${circleCount}/3 circles`
-                )}
-              </p>
-            )}
-          </div>
+      <div className="space-y-3">
+        <div className="relative flex items-center justify-between mb-2 min-h-[44px]">
+          <UnifiedBackButton
+            onClick={() => setLocation('/')}
+            testId="button-back"
+          />
+          <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none" data-testid="text-page-title">My Circles</h1>
+          <div className="w-11"></div>
+        </div>
 
-          {/* Main Content */}
-          <div className="flex-1 space-y-4 pb-6">
+        <div className="space-y-4 pb-6">
             {circles.length === 0 ? (
               /* Empty State */
               <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -357,7 +338,6 @@ export default function CircleLobby() {
               </>
             )}
           </div>
-        </div>
       </div>
     </MobileLayout>
   );
