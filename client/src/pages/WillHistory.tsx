@@ -199,7 +199,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
         <div className="max-w-sm mx-auto px-5">
           
           {/* Header with Back Button */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="relative flex items-center justify-between mb-4 min-h-[44px]">
             <button
               onClick={handleBack}
               className="w-11 h-11 -ml-2 flex items-center justify-center"
@@ -211,11 +211,9 @@ export default function WillHistory({ mode }: WillHistoryProps) {
               </span>
             </button>
             
-            <div className="flex-1 text-center -ml-2">
-              <h1 className="text-xl font-semibold text-gray-900">
-                {isSolo ? 'Solo' : 'Circle'} Insights
-              </h1>
-            </div>
+            <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">
+              {isSolo ? 'Solo' : 'Circle'} Insights
+            </h1>
             
             <div className="w-9" />
           </div>
@@ -462,7 +460,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
         <div className="max-w-sm mx-auto px-5">
           
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="relative flex items-center justify-between mb-4 min-h-[44px]">
             <button
               onClick={onBack}
               className="w-11 h-11 -ml-2 flex items-center justify-center"
@@ -474,9 +472,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
               </span>
             </button>
             
-            <div className="flex-1 text-center -ml-2">
-              <h1 className="text-xl font-semibold text-gray-900">Will Details</h1>
-            </div>
+            <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">Will Details</h1>
             
             <div className="w-9" />
           </div>

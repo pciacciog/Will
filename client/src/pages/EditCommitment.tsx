@@ -188,15 +188,13 @@ export default function EditCommitment() {
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
             {/* Back Button Row */}
-            <div className="flex items-center mb-2">
+            <div className="relative flex items-center mb-2 min-h-[44px]">
               <UnifiedBackButton 
                 onClick={() => setLocation(`/will/${willId}`)} 
                 testId="button-back"
               />
-              <div className="flex-1 text-center -ml-2">
-                <span className="text-sm font-medium text-gray-500">Edit Commitment</span>
-              </div>
-              <div className="w-11"></div>
+              <span className="absolute left-0 right-0 text-center text-sm font-medium text-gray-500 pointer-events-none">Edit Commitment</span>
+              <div className="w-11 ml-auto"></div>
             </div>
             
             <div className="flex items-center justify-between px-2">
@@ -286,15 +284,13 @@ export default function EditCommitment() {
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <div className="pt-4 space-y-3">
           {/* Back Button Row */}
-          <div className="flex items-center mb-2">
+          <div className="relative flex items-center mb-2 min-h-[44px]">
             <UnifiedBackButton 
               onClick={() => setLocation(`/will/${willId}`)} 
               testId="button-back"
             />
-            <div className="flex-1 text-center -ml-2">
-              <span className="text-sm font-medium text-gray-500">Edit Commitment</span>
-            </div>
-            <div className="w-11"></div>
+            <span className="absolute left-0 right-0 text-center text-sm font-medium text-gray-500 pointer-events-none">Edit Commitment</span>
+            <div className="w-11 ml-auto"></div>
           </div>
           
           <div className="flex items-center justify-between px-2">

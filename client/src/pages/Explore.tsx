@@ -71,16 +71,14 @@ export default function Explore() {
   return (
     <MobileLayout>
       <div className="space-y-3">
-        <div className="flex items-center justify-between mb-2">
+        <div className="relative flex items-center justify-between mb-2 min-h-[44px]">
           <UnifiedBackButton
             onClick={() => setLocation('/')}
             testId="button-back"
           />
-          <div className="flex-1 text-center -ml-2">
-            <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">
-              Explore Wills
-            </h1>
-          </div>
+          <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none" data-testid="text-page-title">
+            Explore Wills
+          </h1>
           <div className="w-11"></div>
         </div>
 

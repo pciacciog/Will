@@ -660,7 +660,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
             {/* Back Button Row */}
-            <div className="flex items-center mb-2">
+            <div className="relative flex items-center mb-2 min-h-[44px]">
               <UnifiedBackButton 
                 onClick={() => {
                   const circleHubPath = circle?.id ? `/circles/${circle.id}` : '/circles';
@@ -676,10 +676,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 }} 
                 testId="button-back"
               />
-              <div className="flex-1 text-center -ml-2">
-                <span className="text-sm font-medium text-gray-500">Create Will</span>
-              </div>
-              <div className="w-11"></div>
+              <span className="absolute left-0 right-0 text-center text-sm font-medium text-gray-500 pointer-events-none">Create Will</span>
+              <div className="w-11 ml-auto"></div>
             </div>
             
             {/* Hide step indicators during type selection and on steps 4-5 (Check-In and Confirm are unlabeled steps) */}

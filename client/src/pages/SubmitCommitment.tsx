@@ -253,15 +253,13 @@ export default function SubmitCommitment() {
       <MobileLayout>
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
-            <div className="flex items-center mb-2">
+            <div className="relative flex items-center mb-2 min-h-[44px]">
               <UnifiedBackButton 
                 onClick={handleBack}
                 testId="button-back"
               />
-              <div className="flex-1 text-center -ml-2">
-                <span className="text-sm font-medium text-gray-500">Join Will</span>
-              </div>
-              <div className="w-11"></div>
+              <span className="absolute left-0 right-0 text-center text-sm font-medium text-gray-500 pointer-events-none">Join Will</span>
+              <div className="w-11 ml-auto"></div>
             </div>
             
             {currentStep <= ladderSteps && (

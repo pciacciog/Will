@@ -628,14 +628,12 @@ export default function WillDetails() {
     <MobileLayout>
       <div className="space-y-3">
         {/* Header with Back Button */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="relative flex items-center justify-between mb-2 min-h-[44px]">
           <UnifiedBackButton 
             onClick={() => setLocation(getHubUrl())} 
             testId="button-back-hub"
           />
-          <div className="flex-1 text-center -ml-2">
-            <h1 className="text-xl font-semibold"><em>Will</em></h1>
-          </div>
+          <h1 className="absolute left-0 right-0 text-center text-xl font-semibold pointer-events-none"><em>Will</em></h1>
           <div className="w-11"></div>
         </div>
         
