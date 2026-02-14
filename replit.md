@@ -24,7 +24,7 @@ Preferred communication style: Simple, everyday language.
 - **Frontend**: React (TypeScript), Wouter for routing, TanStack Query for server state management, Vite for building.
 - **Backend**: Express.js (TypeScript), Drizzle ORM, Passport.js for authentication (now with JWT for mobile persistence).
 - **Build Process**: ESBuild-only production builds.
-- **Authentication**: Custom email/password system, Express sessions with PostgreSQL storage.
+- **Authentication**: Custom email/password system, Express sessions with PostgreSQL storage (30-day cookie). JWT tokens for mobile persistence (365-day expiry) with silent refresh endpoint (`/api/auth/refresh`) and 30-day grace period for expired tokens. Client-side auto-refresh on 401 responses and proactive refresh when token is within 7 days of expiry.
 - **Will System**: Structured goal commitments with status tracking and individual member commitments.
 - **Multi-Circle System**: Users can join up to 3 circles simultaneously (max 4 members per circle). "My Circles" lobby at `/circles` lists all circles, circle hub at `/circles/:circleId` shows specific circle.
 - **Real-time Updates**: Continuous polling and robust cache invalidation.

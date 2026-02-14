@@ -13,6 +13,15 @@ async function throwIfResNotOk(res: Response) {
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await sessionPersistence.getToken();
   if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiresAt = payload.exp * 1000;
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      if (expiresAt - Date.now() < sevenDaysMs) {
+        console.log('[Auth] Token expiring within 7 days — refreshing silently');
+        sessionPersistence.attemptTokenRefresh().catch(() => {});
+      }
+    } catch {}
     return { Authorization: `Bearer ${token}` };
   }
   return {};
@@ -71,7 +80,20 @@ export async function apiRequest(url: string, options?: {
     fetchOptions.credentials = "include";
   }
   
-  const res = await fetch(fullUrl, fetchOptions);
+  let res = await fetch(fullUrl, fetchOptions);
+
+  if (res.status === 401) {
+    const refreshed = await sessionPersistence.attemptTokenRefresh();
+    if (refreshed) {
+      const newAuthHeaders = await getAuthHeaders();
+      const retryHeaders = { ...allHeaders, ...newAuthHeaders };
+      const retryOptions: RequestInit = { method, headers: retryHeaders, body };
+      if (!Capacitor.isNativePlatform()) {
+        retryOptions.credentials = "include";
+      }
+      res = await fetch(fullUrl, retryOptions);
+    }
+  }
 
   await throwIfResNotOk(res);
   return res;
@@ -116,9 +138,8 @@ export const getQueryFn: <T>(options: {
       fetchOptions.credentials = "include";
     }
     
-    const res = await fetch(fullUrl, fetchOptions);
+    let res = await fetch(fullUrl, fetchOptions);
 
-    // DEBUG: Log responses for critical endpoints
     if (urlStr.includes('review') || urlStr.includes('all-active')) {
       console.log('[QueryClient] FETCH RESPONSE:', {
         queryKey,
@@ -126,6 +147,20 @@ export const getQueryFn: <T>(options: {
         statusText: res.statusText,
         timestamp: new Date().toISOString()
       });
+    }
+
+    if (res.status === 401) {
+      const refreshed = await sessionPersistence.attemptTokenRefresh();
+      if (refreshed) {
+        const newAuthHeaders = await getAuthHeaders();
+        const retryOptions: RequestInit = {
+          headers: { ...platformHeaders, ...newAuthHeaders },
+        };
+        if (!Capacitor.isNativePlatform()) {
+          retryOptions.credentials = "include";
+        }
+        res = await fetch(fullUrl, retryOptions);
+      }
     }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

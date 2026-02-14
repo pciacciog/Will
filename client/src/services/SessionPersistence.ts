@@ -169,38 +169,34 @@ class SessionPersistenceService {
     // 🔥 NEW: Validate token with server before claiming session restored
     console.log('🔐 [SessionPersistence] Token found - validating with server...');
     try {
-      const response = await fetch(getApiPath('/api/user'), {
+      const fetchOpts: RequestInit = {
         headers: { 
           "X-Requested-With": "XMLHttpRequest",
-          "Origin": "https://will-staging-porfirioaciacci.replit.app",
-          "Referer": "https://will-staging-porfirioaciacci.replit.app",
           Authorization: `Bearer ${token}` 
         },
-        credentials: 'include'
-      });
+      };
+      if (!this.isNativePlatform) {
+        fetchOpts.credentials = 'include';
+      }
+      const response = await fetch(getApiPath('/api/user'), fetchOpts);
       
       if (response.ok) {
         const user = await response.json();
-        console.log('╔════════════════════════════════════════════════════════════╗');
-        console.log('║ SESSION SUCCESSFULLY RESTORED                              ║');
-        console.log('╚════════════════════════════════════════════════════════════╝');
-        console.log(`✅ [SessionPersistence] Token VALID - User authenticated`);
-        console.log(`✅ [SessionPersistence] User ID: ${user.id}`);
-        console.log(`✅ [SessionPersistence] User Email: ${user.email}`);
-        console.log('════════════════════════════════════════════════════════════');
+        console.log(`✅ [SessionPersistence] Token VALID - User ${user.id} authenticated`);
         return true;
-      } else {
-        console.log('╔════════════════════════════════════════════════════════════╗');
-        console.log('║ TOKEN VALIDATION FAILED                                    ║');
-        console.log('╚════════════════════════════════════════════════════════════╝');
-        console.error(`❌ [SessionPersistence] Server returned ${response.status}: ${response.statusText}`);
-        console.error('❌ [SessionPersistence] Token is INVALID or EXPIRED');
-        console.error('❌ [SessionPersistence] Clearing invalid token from storage...');
-        
-        // Clear the invalid token
+      } else if (response.status === 401) {
+        console.log('⚠️ [SessionPersistence] Token rejected (401) — attempting refresh...');
+        const refreshed = await this.attemptTokenRefresh();
+        if (refreshed) {
+          console.log('✅ [SessionPersistence] Session restored via token refresh');
+          return true;
+        }
+        console.log('❌ [SessionPersistence] Refresh failed — clearing session');
         await this.clearSession();
-        
-        console.log('════════════════════════════════════════════════════════════');
+        return false;
+      } else {
+        console.error(`❌ [SessionPersistence] Server returned ${response.status}: ${response.statusText}`);
+        await this.clearSession();
         return false;
       }
     } catch (error) {
@@ -213,6 +209,37 @@ class SessionPersistenceService {
       console.error('════════════════════════════════════════════════════════════');
       // If network error, assume token is valid and let the app try
       return true;
+    }
+  }
+
+  async attemptTokenRefresh(): Promise<boolean> {
+    const token = await this.getToken();
+    if (!token) return false;
+
+    try {
+      console.log('🔄 [SessionPersistence] Attempting token refresh...');
+      const response = await fetch(getApiPath('/api/auth/refresh'), {
+        method: 'POST',
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          Authorization: `Bearer ${token}`
+        },
+        ...(this.isNativePlatform ? {} : { credentials: 'include' as RequestCredentials })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          await this.saveToken(data.token);
+          console.log('✅ [SessionPersistence] Token refreshed successfully');
+          return true;
+        }
+      }
+      console.log(`❌ [SessionPersistence] Refresh failed: ${response.status}`);
+      return false;
+    } catch (error) {
+      console.error('❌ [SessionPersistence] Refresh network error:', error);
+      return false;
     }
   }
 

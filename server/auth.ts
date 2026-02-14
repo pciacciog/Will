@@ -50,7 +50,8 @@ async function comparePasswords(supplied: string, stored: string) {
 
 // JWT token generation and verification for mobile auth persistence
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'development-jwt-secret-change-in-production';
-const JWT_EXPIRES_IN = '7d'; // 7 days for mobile apps
+const JWT_EXPIRES_IN = '365d'; // 1 year — users should stay logged in indefinitely
+const JWT_REFRESH_GRACE_PERIOD = '30d'; // Allow refresh within 30 days after expiry
 
 // 🔥 CRITICAL: Log JWT secret configuration on server startup
 console.log('╔════════════════════════════════════════════════════════════╗');
@@ -181,7 +182,7 @@ export function setupAuth(app: Express) {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: false, // Allow JavaScript access for mobile app
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' requires secure=true, so use 'lax' in development
     },
   };
@@ -463,6 +464,50 @@ export function setupAuth(app: Express) {
     }
     
     return res.sendStatus(401);
+  });
+
+  app.post("/api/auth/refresh", async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.substring(7);
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string; exp?: number; iat?: number };
+      const user = await storage.getUser(decoded.id);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      const newToken = generateAuthToken(user);
+      console.log(`🔄 [JWT Refresh] Issued new token for user ${user.id} (valid token refresh)`);
+      return res.json({ token: newToken, user });
+    } catch (error: any) {
+      if (error.name === 'TokenExpiredError') {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true }) as { id: string; email: string; role: string; exp?: number };
+          if (decoded.exp) {
+            const expiredAt = decoded.exp * 1000;
+            const gracePeriodMs = parseInt(JWT_REFRESH_GRACE_PERIOD) * 24 * 60 * 60 * 1000;
+            if (Date.now() - expiredAt > gracePeriodMs) {
+              console.log(`❌ [JWT Refresh] Token expired beyond grace period for user ${decoded.id}`);
+              return res.status(401).json({ message: "Token expired beyond grace period. Please log in again." });
+            }
+          }
+          const user = await storage.getUser(decoded.id);
+          if (!user) {
+            return res.status(401).json({ message: "User not found" });
+          }
+          const newToken = generateAuthToken(user);
+          console.log(`🔄 [JWT Refresh] Issued new token for user ${user.id} (expired token within grace period)`);
+          return res.json({ token: newToken, user });
+        } catch {
+          return res.status(401).json({ message: "Invalid token" });
+        }
+      }
+      return res.status(401).json({ message: "Invalid token" });
+    }
   });
 
   // SECURE: Device-specific token association for logged-in users
