@@ -565,7 +565,9 @@ export default function SubmitCommitment() {
                 </div>
 
                 <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
-                  We'll check in with you on your active days
+                  {(will as any)?.isIndefinite && (will as any)?.activeDays && (will as any)?.activeDays !== 'every_day'
+                    ? "We'll check in with you on your active days"
+                    : "We'll check in with you daily at this time"}
                 </p>
               </div>
               

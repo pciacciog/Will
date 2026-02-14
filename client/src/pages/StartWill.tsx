@@ -1029,7 +1029,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </div>
 
                     <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
-                      We'll check in with you on your active days
+                      {isIndefinite && activeDays !== 'every_day'
+                        ? "We'll check in with you on your active days"
+                        : "We'll check in with you daily at this time"}
                     </p>
                   </>
                 ) : (
