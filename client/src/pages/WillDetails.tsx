@@ -833,15 +833,42 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Commitment Details (What/Why) */}
-        {will.status !== 'will_review' && (
+        {/* Commitment Details - Solo Mode */}
+        {will.status !== 'will_review' && isSoloMode && will.commitments?.[0] && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-brandGreen" />
+                <span className="text-base font-semibold text-gray-900">Your Commitment</span>
+              </div>
+              {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
+                <button
+                  onClick={() => setLocation(`/will/${id}/edit`)}
+                  className="text-sm text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                  data-testid="button-edit-will"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+            <div className="text-lg text-gray-900 leading-relaxed">
+              <span className="font-semibold">I will</span> {will.commitments[0].what}
+            </div>
+            {will.commitments[0].why && (
+              <div className="mt-2 text-sm text-gray-500 italic">
+                Because {will.commitments[0].why}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Commitment Details - Circle Mode */}
+        {will.status !== 'will_review' && !isSoloMode && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-brandGreen" />
-                <span className="text-base font-semibold text-gray-900">
-                  {isSoloMode ? 'Your Commitment' : 'Commitments'}
-                </span>
+                <span className="text-base font-semibold text-gray-900">Commitments</span>
               </div>
               {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
                 <Button 
@@ -870,8 +897,8 @@ export default function WillDetails() {
                     <div className="flex items-center justify-between mb-2 gap-3">
                       <div className="flex items-center space-x-2 flex-1 min-w-0">
                         <span className="text-base font-medium truncate">
-                          {!isSoloMode && (commitment.user.firstName || commitment.user.email)}
-                          {!isSoloMode && isCurrentUser && (
+                          {commitment.user.firstName || commitment.user.email}
+                          {isCurrentUser && (
                             <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                               You
                             </span>
