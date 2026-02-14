@@ -167,51 +167,51 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen flex flex-col">
-        <div className={`max-w-sm mx-auto px-5 flex-1 flex flex-col ${activeWills.length > 0 ? 'justify-start pt-8' : 'justify-center'}`} style={activeWills.length > 0 ? undefined : { paddingTop: '15vh' }}>
+      <div className="pt-[calc(env(safe-area-inset-top)+2.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] min-h-screen flex flex-col">
+        <div className={`max-w-sm mx-auto px-5 flex-1 flex flex-col ${activeWills.length > 0 ? 'justify-start' : 'justify-center'}`} style={activeWills.length > 0 ? undefined : { paddingTop: '10vh' }}>
           
           <div className="flex flex-col items-center">
             {/* Star Icon */}
-            <div className="mb-5">
+            <div className="mb-3">
               <div className="relative">
                 <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full blur-2xl opacity-30"></div>
-                <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-200 flex items-center justify-center shadow-lg">
-                  <Sparkles className="w-8 h-8 text-emerald-600" />
+                <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-200 flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-7 h-7 text-emerald-600" />
                 </div>
               </div>
             </div>
 
             {/* Greeting */}
-            <h1 className="text-2xl font-semibold text-gray-900 mb-1" data-testid="text-welcome">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-0.5" data-testid="text-welcome">
               Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
             </h1>
-            <p className="text-sm text-gray-400 mb-3">What will you commit to today?</p>
+            <p className="text-sm text-gray-400 mb-4">What will you commit to today?</p>
 
             {/* Create Will Button */}
             <button
               onClick={handleCreateWill}
-              className="w-full max-w-sm mb-8 group"
+              className="w-full max-w-sm mb-5 group"
               data-testid="button-create-will"
             >
-              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-5 shadow-lg group-hover:shadow-xl transition-all duration-200 group-active:scale-[0.98]">
-                <span className="text-white text-2xl font-bold tracking-tight">Create a Will</span>
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-4 shadow-lg group-hover:shadow-xl transition-all duration-200 group-active:scale-[0.98]">
+                <span className="text-white text-xl font-bold tracking-tight">Create a Will</span>
               </div>
             </button>
 
             {/* Active Wills Summary Card */}
             {willsLoading && user?.id && (
-              <div className="w-full mb-8">
-                <div className="flex items-center gap-2 justify-center py-4">
+              <div className="w-full mb-4">
+                <div className="flex items-center gap-2 justify-center py-3">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
                   <span className="text-sm text-gray-400">Loading your wills...</span>
                 </div>
               </div>
             )}
             {isActiveWillsError && (
-              <div className="w-full mb-8">
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-                  <p className="text-sm text-red-600 mb-2">Could not load your wills</p>
-                  <p className="text-xs text-red-400 mb-2 font-mono break-all">{activeWillsError?.message || 'Unknown error'}</p>
+              <div className="w-full mb-4">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+                  <p className="text-sm text-red-600 mb-1">Could not load your wills</p>
+                  <p className="text-xs text-red-400 mb-1 font-mono break-all">{activeWillsError?.message || 'Unknown error'}</p>
                   <button 
                     onClick={() => refetchWills()} 
                     className="text-xs text-red-500 underline"
@@ -223,9 +223,9 @@ export default function Home() {
               </div>
             )}
             {allActiveWills === null && !willsLoading && user?.id && (
-              <div className="w-full mb-8">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-                  <p className="text-sm text-amber-600 mb-2">Session expired — please sign out and back in</p>
+              <div className="w-full mb-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                  <p className="text-sm text-amber-600 mb-1">Session expired — please sign out and back in</p>
                   <button 
                     onClick={() => refetchWills()} 
                     className="text-xs text-amber-500 underline"
@@ -239,24 +239,21 @@ export default function Home() {
             {activeWills.length > 0 && !willsLoading && (
               <button
                 onClick={() => setLocation('/wills')}
-                className="w-full mb-8 group"
+                className="w-full mb-4 group"
                 data-testid="button-view-all-wills"
               >
                 <Card className="bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-emerald-300 transition-all duration-200 group-active:scale-[0.98]">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
+                  <CardContent className="px-4 py-3">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Flame className="w-4 h-4 text-emerald-600" />
                         <h3 className="text-sm font-semibold text-gray-900">Active Wills</h3>
+                        <span className="text-sm font-bold text-emerald-600" data-testid="text-active-wills-label">{activeWills.length}</span>
                       </div>
-                      <span className="text-lg font-bold text-emerald-600">{activeWills.length}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span data-testid="text-active-wills-label">{activeWills.length} active {activeWills.length === 1 ? 'will' : 'wills'}</span>
-                    </div>
-                    <div className="flex items-center justify-end mt-2">
-                      <span className="text-xs text-emerald-600 font-medium group-hover:underline">View All</span>
-                      <ChevronRight className="w-4 h-4 text-emerald-500 ml-0.5" />
+                      <div className="flex items-center">
+                        <span className="text-xs text-emerald-600 font-medium group-hover:underline">View All</span>
+                        <ChevronRight className="w-4 h-4 text-emerald-500 ml-0.5" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -264,7 +261,7 @@ export default function Home() {
             )}
 
             {/* Explore & Circles Cards */}
-            <div className="grid grid-cols-2 gap-4 w-full mb-8">
+            <div className="grid grid-cols-2 gap-3 w-full mb-4">
               <button
                 onClick={() => { setActiveCard('explore'); handleExplore(); }}
                 onPointerDown={() => setActiveCard('explore')}
@@ -276,8 +273,8 @@ export default function Home() {
                     ? 'bg-white border-2 border-blue-300 shadow-md shadow-blue-100/50'
                     : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-blue-200'
                 }`}>
-                  <div className="p-5 flex flex-col items-center justify-center text-center">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-2.5 transition-colors duration-200 ${
+                  <div className="p-4 flex flex-col items-center justify-center text-center">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors duration-200 ${
                       activeCard === 'explore' ? 'bg-blue-100' : 'bg-blue-50'
                     }`}>
                       <Compass className={`w-5 h-5 transition-colors duration-200 ${
@@ -301,8 +298,8 @@ export default function Home() {
                     ? 'bg-white border-2 border-purple-300 shadow-md shadow-purple-100/50'
                     : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-purple-200'
                 }`}>
-                  <div className="p-5 flex flex-col items-center justify-center text-center">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-2.5 transition-colors duration-200 ${
+                  <div className="p-4 flex flex-col items-center justify-center text-center">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors duration-200 ${
                       activeCard === 'circles' ? 'bg-purple-100' : 'bg-purple-50'
                     }`}>
                       <Users className={`w-5 h-5 transition-colors duration-200 ${
