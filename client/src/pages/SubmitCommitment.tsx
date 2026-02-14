@@ -357,27 +357,28 @@ export default function SubmitCommitment() {
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Will Schedule</h3>
                     <div className="text-base text-gray-800 leading-relaxed">
-                      <div className="font-medium mb-2">
-                        {(will as any)?.startDate && ((will as any)?.endDate || (will as any)?.isIndefinite) ? (
-                          <>
-                            {new Date((will as any).startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                          </>
-                        ) : (
-                          'Loading...'
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 mb-3">
-                        {(will as any)?.isIndefinite ? (
-                          <span>Ongoing commitment</span>
-                        ) : (will as any)?.startDate && (will as any)?.endDate ? (
-                          <>
-                            {new Date((will as any).startDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} to{' '}
+                      {(will as any)?.isIndefinite ? (
+                        <>
+                          <div className="font-medium mb-2">
+                            Starts {new Date((will as any).startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                          </div>
+                          <div className="text-sm text-gray-600 mb-3">Ongoing commitment</div>
+                        </>
+                      ) : (will as any)?.startDate && (will as any)?.endDate ? (
+                        <>
+                          <div className="font-medium mb-1">
+                            {new Date((will as any).startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })},{' '}
+                            {new Date((will as any).startDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          </div>
+                          <div className="text-sm text-gray-500 mb-1">to</div>
+                          <div className="font-medium mb-3">
+                            {new Date((will as any).endDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })},{' '}
                             {new Date((will as any).endDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                          </>
-                        ) : (
-                          'Loading...'
-                        )}
-                      </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="mb-3">Loading...</div>
+                      )}
                       {isCumulative && sharedWhat && (
                         <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-xl">
                           <p className="text-xs text-purple-600 font-medium mb-1">Team Commitment</p>
