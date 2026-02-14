@@ -236,7 +236,7 @@ export default function Home() {
                 </div>
               </div>
             )}
-            {activeWills.length > 0 && !willsLoading && (
+            {!willsLoading && !isActiveWillsError && allActiveWills !== null && (
               <button
                 onClick={() => setLocation('/wills')}
                 className="w-full mb-4 group"
@@ -246,13 +246,12 @@ export default function Home() {
                   <CardContent className="px-4 py-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Flame className="w-4 h-4 text-emerald-600" />
-                        <h3 className="text-sm font-semibold text-gray-900">Active Wills</h3>
-                        <span className="text-sm font-bold text-emerald-600" data-testid="text-active-wills-label">{activeWills.length}</span>
+                        <Flame className={`w-4 h-4 ${activeWills.length > 0 ? 'text-emerald-600' : 'text-gray-400'}`} />
+                        <h3 className="text-sm font-semibold text-gray-900">My Wills</h3>
+                        <span className={`text-sm font-bold ${activeWills.length > 0 ? 'text-emerald-600' : 'text-gray-400'}`} data-testid="text-active-wills-label">{activeWills.length}</span>
                       </div>
                       <div className="flex items-center">
-                        <span className="text-xs text-emerald-600 font-medium group-hover:underline">View All</span>
-                        <ChevronRight className="w-4 h-4 text-emerald-500 ml-0.5" />
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-500 ml-0.5" />
                       </div>
                     </div>
                   </CardContent>

@@ -4,7 +4,7 @@ import { getQueryFn } from "@/lib/queryClient";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe } from "lucide-react";
+import { Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe, History } from "lucide-react";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 
 type Will = {
@@ -254,6 +254,20 @@ export default function MyWills() {
                 />
               ))}
             </div>
+          )}
+
+          {!isLoading && !isError && allActiveWills !== null && (
+            <button
+              onClick={() => setLocation(activeTab === 'circle' ? '/circle/history' : '/solo/history')}
+              className="w-full mt-4 group"
+              data-testid="button-will-history"
+            >
+              <div className="flex items-center justify-center gap-2 py-3 text-gray-400 hover:text-gray-600 transition-colors">
+                <History className="w-4 h-4" />
+                <span className="text-sm font-medium">Past Wills</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </button>
           )}
 
       </div>
