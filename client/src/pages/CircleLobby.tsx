@@ -263,13 +263,25 @@ export default function CircleLobby() {
                             </h3>
                             <div className="flex items-center gap-3 text-sm text-gray-500">
                               <span>{circle.members.length} member{circle.members.length !== 1 ? 's' : ''}</span>
-                              {circle.activeWillCount > 0 && circle.currentWillStatus ? (
-                                <span className="flex items-center gap-1 text-emerald-600">
-                                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                              {circle.activeWillCount > 0 && circle.currentWillStatus && 
+                               ['pending', 'scheduled', 'active', 'will_review', 'paused'].includes(circle.currentWillStatus) ? (
+                                <span className={`flex items-center gap-1 ${
+                                  circle.currentWillStatus === 'paused' ? 'text-amber-600' :
+                                  circle.currentWillStatus === 'pending' || circle.currentWillStatus === 'scheduled' ? 'text-blue-600' :
+                                  'text-emerald-600'
+                                }`}>
+                                  <span className={`w-2 h-2 rounded-full ${
+                                    circle.currentWillStatus === 'active' ? 'bg-emerald-500 animate-pulse' :
+                                    circle.currentWillStatus === 'will_review' ? 'bg-emerald-500' :
+                                    circle.currentWillStatus === 'paused' ? 'bg-amber-500' :
+                                    'bg-blue-500'
+                                  }`}></span>
                                   {circle.currentWillStatus === 'pending' ? 'Pending' : 
+                                   circle.currentWillStatus === 'scheduled' ? 'Scheduled' :
                                    circle.currentWillStatus === 'active' ? 'Active' : 
                                    circle.currentWillStatus === 'will_review' ? 'In Review' : 
-                                   circle.currentWillStatus}
+                                   circle.currentWillStatus === 'paused' ? 'Paused' :
+                                   'Active'}
                                 </span>
                               ) : (
                                 <span className="flex items-center gap-1 text-gray-400">
