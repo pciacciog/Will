@@ -27,7 +27,7 @@ import type { WillCheckIn } from "@shared/schema";
 
 
 function DailyProgressSection({ willId, startDate, endDate, checkInType, onDayClick }: { 
-  willId: number; startDate: string; endDate: string; checkInType: 'daily' | 'one-time'; 
+  willId: number; startDate: string; endDate: string | null; checkInType: 'daily' | 'one-time'; 
   onDayClick?: (date: string) => void;
 }) {
   const { data: progress } = useQuery<{

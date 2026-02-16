@@ -9,7 +9,7 @@ import DayStrip from "./DayStrip";
 interface ProgressViewProps {
   willId: number;
   startDate: string;
-  endDate: string;
+  endDate: string | null;
   checkInType: 'daily' | 'one-time';
   onDayClick?: (date: string) => void;
 }

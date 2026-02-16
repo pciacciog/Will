@@ -4,7 +4,7 @@ import type { WillCheckIn } from "@shared/schema";
 
 interface DayStripProps {
   startDate: string;
-  endDate: string;
+  endDate: string | null;
   checkIns: WillCheckIn[];
   onDayClick?: (date: string) => void;
 }
@@ -38,7 +38,7 @@ export default function DayStrip({ startDate, endDate, checkIns, onDayClick }: D
   const days = useMemo(() => {
     const result: DayInfo[] = [];
     const start = new Date(startDate);
-    const end = new Date(endDate);
+    const end = endDate ? new Date(endDate) : new Date();
     
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
