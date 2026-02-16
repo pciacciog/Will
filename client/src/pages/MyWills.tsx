@@ -114,7 +114,7 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
 
 export default function MyWills() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<'all' | 'solo' | 'circle' | 'public'>('all');
+  const [activeTab, setActiveTab] = useState<'solo' | 'circle' | 'public'>('solo');
 
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
@@ -138,7 +138,7 @@ export default function MyWills() {
   const circleWills = activeWills.filter(w => w.mode === 'circle');
   const publicWills = activeWills.filter(w => isPublicWill(w));
 
-  const displayWills = activeTab === 'all' ? activeWills : activeTab === 'solo' ? soloWills : activeTab === 'circle' ? circleWills : publicWills;
+  const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'circle' ? circleWills : publicWills;
 
   const handleViewWill = (will: Will) => {
     sessionStorage.setItem('willBackUrl', '/wills');
@@ -159,12 +159,11 @@ export default function MyWills() {
             testId="button-back"
           />
           <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none" data-testid="text-page-title">My Wills</h1>
-          <span className="text-sm text-gray-400" data-testid="text-active-count">{activeWills.length}</span>
+          <span></span>
         </div>
 
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
             {([
-              { key: 'all' as const, label: 'All', count: activeWills.length },
               { key: 'solo' as const, label: 'Solo', count: soloWills.length },
               { key: 'circle' as const, label: 'Circle', count: circleWills.length },
               { key: 'public' as const, label: 'Public', count: publicWills.length },
@@ -231,7 +230,7 @@ export default function MyWills() {
                 <Target className="w-7 h-7 text-gray-400" />
               </div>
               <p className="text-gray-500 text-sm mb-1">
-                {activeTab === 'all' ? 'No active wills yet' : `No ${activeTab} wills yet`}
+                {`No ${activeTab} wills yet`}
               </p>
               <p className="text-gray-400 text-xs mb-5">Create a Will to start your accountability journey</p>
               <button
