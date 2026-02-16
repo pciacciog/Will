@@ -26,7 +26,7 @@ export function MobileLayout({
       className
     )}>
       {/* Fixed safe area top spacer - always visible above content */}
-      <div className="flex-shrink-0 bg-background h-[calc(env(safe-area-inset-top)+3rem)] w-full"></div>
+      <div className="flex-shrink-0 bg-background h-[calc(env(safe-area-inset-top)+4rem)] w-full"></div>
       
       {/* Header */}
       {header && (
