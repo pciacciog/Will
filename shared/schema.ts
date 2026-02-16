@@ -515,3 +515,23 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
 ]);
 
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+export const userNotifications = pgTable("user_notifications", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: varchar("type", { length: 50 }).notNull(),
+  willId: integer("will_id").references(() => wills.id),
+  circleId: integer("circle_id").references(() => circles.id),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_user_notifications_user_unread").on(table.userId, table.isRead),
+  index("IDX_user_notifications_user_type_will").on(table.userId, table.type, table.willId),
+]);
+
+export const insertUserNotificationSchema = createInsertSchema(userNotifications).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertUserNotification = z.infer<typeof insertUserNotificationSchema>;
+export type UserNotification = typeof userNotifications.$inferSelect;

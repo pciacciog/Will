@@ -852,6 +852,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const isSharedWill = willType === 'cumulative';
             await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers, will.id, isSharedWill);
             console.log(`Sent Will proposed notifications to ${otherMembers.length} members (isSharedWill: ${isSharedWill})`);
+
+            for (const memberId of otherMembers) {
+              await storage.createUserNotification({
+                userId: memberId,
+                type: 'will_proposed',
+                willId: will.id,
+                circleId: circle.id,
+                isRead: false,
+              });
+            }
           } else {
             console.log("No other members to notify");
           }
@@ -901,6 +911,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Add commitment
       const commitment = await storage.addWillCommitment(commitmentData);
+
+      // Auto-clear any "will_proposed" in-app notification for this will
+      try {
+        await storage.markNotificationsReadByTypeAndWill(userId, 'will_proposed', willId);
+      } catch (e) { /* non-critical */ }
 
       // For solo wills, status is already active - no need to check circle
       if (will.mode === 'solo') {
@@ -1390,6 +1405,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add review
       const review = await storage.addWillReview(reviewData);
 
+      // Auto-clear any "review_required" in-app notification for this will
+      try {
+        await storage.markNotificationsReadByTypeAndWill(userId, 'review_required', willId);
+      } catch (e) { /* non-critical */ }
+
       // NEW: Send member_review_submitted notification to other members (CIRCLE MODE ONLY)
       try {
         const will = await storage.getWillById(willId);
@@ -1743,6 +1763,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting push status:", error);
       res.status(500).json({ message: "Failed to get push status" });
+    }
+  });
+
+  // In-app notification routes
+  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const notifications = await storage.getUserUnreadNotifications(userId);
+      const count = notifications.length;
+      res.json({ notifications, count });
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch('/api/notifications/circle/:circleId/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const circleId = parseInt(req.params.circleId);
+      await storage.markNotificationsReadByCircle(userId, circleId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking circle notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark notifications as read" });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const notificationId = parseInt(req.params.id);
+      await storage.markNotificationRead(notificationId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
     }
   });
 

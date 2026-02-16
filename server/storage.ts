@@ -42,6 +42,9 @@ import {
   type InsertBlogPost,
   type PageContent,
   type InsertPageContent,
+  type UserNotification,
+  type InsertUserNotification,
+  userNotifications,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
@@ -240,6 +243,13 @@ export interface IStorage {
       successRate: number;
     };
   }[]>;
+
+  createUserNotification(notification: InsertUserNotification): Promise<UserNotification>;
+  getUserUnreadNotifications(userId: string): Promise<UserNotification[]>;
+  getUserUnreadNotificationCount(userId: string): Promise<number>;
+  markNotificationRead(notificationId: number, userId: string): Promise<void>;
+  markNotificationsReadByTypeAndWill(userId: string, type: string, willId: number): Promise<void>;
+  markNotificationsReadByCircle(userId: string, circleId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1745,6 +1755,58 @@ export class DatabaseStorage implements IStorage {
     }
     
     return results;
+  }
+
+  async createUserNotification(notification: InsertUserNotification): Promise<UserNotification> {
+    const existing = await db.select().from(userNotifications)
+      .where(and(
+        eq(userNotifications.userId, notification.userId),
+        eq(userNotifications.type, notification.type),
+        notification.willId ? eq(userNotifications.willId, notification.willId) : sql`true`,
+        eq(userNotifications.isRead, false),
+      ));
+    if (existing.length > 0) return existing[0];
+
+    const [created] = await db.insert(userNotifications).values(notification).returning();
+    return created;
+  }
+
+  async getUserUnreadNotifications(userId: string): Promise<UserNotification[]> {
+    return db.select().from(userNotifications)
+      .where(and(eq(userNotifications.userId, userId), eq(userNotifications.isRead, false)))
+      .orderBy(desc(userNotifications.createdAt));
+  }
+
+  async getUserUnreadNotificationCount(userId: string): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)::int` })
+      .from(userNotifications)
+      .where(and(eq(userNotifications.userId, userId), eq(userNotifications.isRead, false)));
+    return result?.count ?? 0;
+  }
+
+  async markNotificationRead(notificationId: number, userId: string): Promise<void> {
+    await db.update(userNotifications)
+      .set({ isRead: true })
+      .where(and(eq(userNotifications.id, notificationId), eq(userNotifications.userId, userId)));
+  }
+
+  async markNotificationsReadByTypeAndWill(userId: string, type: string, willId: number): Promise<void> {
+    await db.update(userNotifications)
+      .set({ isRead: true })
+      .where(and(
+        eq(userNotifications.userId, userId),
+        eq(userNotifications.type, type),
+        eq(userNotifications.willId, willId),
+      ));
+  }
+
+  async markNotificationsReadByCircle(userId: string, circleId: number): Promise<void> {
+    await db.update(userNotifications)
+      .set({ isRead: true })
+      .where(and(
+        eq(userNotifications.userId, userId),
+        eq(userNotifications.circleId, circleId),
+      ));
   }
 }
 

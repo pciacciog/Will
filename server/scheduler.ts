@@ -172,7 +172,20 @@ export class EndRoomScheduler {
             if (willWithCommitments && willWithCommitments.commitments) {
               const participants = willWithCommitments.commitments.map(c => c.userId);
               await pushNotificationService.sendWillReviewRequiredNotification(will.id, participants);
-              // Mark notification as sent
+
+              for (const participantId of participants) {
+                const existingReview = await storage.getWillReview(will.id, participantId);
+                if (!existingReview) {
+                  await storage.createUserNotification({
+                    userId: participantId,
+                    type: 'review_required',
+                    willId: will.id,
+                    circleId: will.circleId,
+                    isRead: false,
+                  });
+                }
+              }
+
               await db.update(wills)
                 .set({ completionNotificationSentAt: now })
                 .where(eq(wills.id, will.id));

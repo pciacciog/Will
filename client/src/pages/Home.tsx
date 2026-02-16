@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Compass, Sparkles, Settings, LogOut, ChevronRight, Flame } from "lucide-react";
+import { Users, Compass, Sparkles, Settings, LogOut, ChevronRight, Flame, Bell } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { queryClient } from "@/lib/queryClient";
@@ -124,6 +124,12 @@ export default function Home() {
   const activeWills = allActiveWills?.filter(w => 
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending' || w.status === 'paused'
   ) || [];
+
+  const { data: notificationsData } = useQuery<{ notifications: any[]; count: number }>({
+    queryKey: ['/api/notifications'],
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
 
   const handleCreateWill = () => {
     setLocation('/create-will');
@@ -298,12 +304,19 @@ export default function Home() {
                     : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-purple-200'
                 }`}>
                   <div className="p-4 flex flex-col items-center justify-center text-center">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors duration-200 ${
-                      activeCard === 'circles' ? 'bg-purple-100' : 'bg-purple-50'
-                    }`}>
-                      <Users className={`w-5 h-5 transition-colors duration-200 ${
-                        activeCard === 'circles' ? 'text-purple-600' : 'text-purple-400'
-                      }`} />
+                    <div className="relative">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors duration-200 ${
+                        activeCard === 'circles' ? 'bg-purple-100' : 'bg-purple-50'
+                      }`}>
+                        <Users className={`w-5 h-5 transition-colors duration-200 ${
+                          activeCard === 'circles' ? 'text-purple-600' : 'text-purple-400'
+                        }`} />
+                      </div>
+                      {(notificationsData?.count ?? 0) > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1" data-testid="badge-notification-count">
+                          {notificationsData!.count}
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-sm font-semibold text-gray-900">Circles</h3>
                     <p className="text-[11px] text-gray-400 mt-0.5">Shared Accountability</p>

@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
-import { Users, Plus, ChevronRight } from "lucide-react";
+import { Users, Plus, ChevronRight, Bell } from "lucide-react";
 
 interface CircleMember {
   id: number;
@@ -42,6 +42,25 @@ export default function CircleLobby() {
     queryKey: ['/api/circles/mine'],
     staleTime: 0,
   });
+
+  const { data: notificationsData } = useQuery<{ notifications: { id: number; type: string; willId: number | null; circleId: number | null }[]; count: number }>({
+    queryKey: ['/api/notifications'],
+    refetchInterval: 30000,
+  });
+
+  const getCircleNotificationCount = (circleId: number) => {
+    if (!notificationsData?.notifications) return 0;
+    return notificationsData.notifications.filter(n => n.circleId === circleId).length;
+  };
+
+  const handleNotificationTap = async (circleId: number) => {
+    if (!notificationsData?.notifications) return;
+    if (getCircleNotificationCount(circleId) === 0) return;
+    try {
+      await apiRequest(`/api/notifications/circle/${circleId}/read`, { method: 'PATCH' });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    } catch (e) { /* non-critical */ }
+  };
 
   const circleCount = circles.length;
   const isAtMaxCircles = circleCount >= 3;
@@ -118,6 +137,7 @@ export default function CircleLobby() {
   };
 
   const handleEnterCircle = (circleId: number) => {
+    handleNotificationTap(circleId);
     setLocation(`/circles/${circleId}`);
   };
 
@@ -235,8 +255,15 @@ export default function CircleLobby() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Users className="w-6 h-6 text-emerald-600" />
+                          <div className="relative w-12 h-12 flex-shrink-0">
+                            <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                              <Users className="w-6 h-6 text-emerald-600" />
+                            </div>
+                            {getCircleNotificationCount(circle.id) > 0 && (
+                              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1" data-testid={`badge-circle-notification-${circle.id}`}>
+                                {getCircleNotificationCount(circle.id)}
+                              </span>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900 truncate">

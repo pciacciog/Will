@@ -89,6 +89,14 @@ Preferred communication style: Simple, everyday language.
   - **Idempotency**: Database tracking fields (completionNotificationSentAt, midpointAt, midpointNotificationSentAt on wills; ackReminderSentAt on will_commitments; commitmentReminders table) prevent duplicate sends.
   - **Token Cleanup**: Invalid APNs tokens (410/400/403 errors) automatically marked inactive to prevent wasted API calls.
   - **Performance**: 14 database indexes optimize scheduler queries for scale (wills, will_commitments, commitment_reminders, device_tokens tables).
+- **In-App Notification Badges**: Red badge system that surfaces action items inside the app (complements push notifications).
+  - **Notification types**: `will_proposed` (circle Will needs your commitment), `review_required` (Will ended, submit your review)
+  - **Badge placement**: Red count badge on Circles card (homepage), individual circle cards (lobby)
+  - **Auto-dismiss**: Badges clear when user taps into a circle (lobby) or completes the action (submits commitment/review)
+  - **Duplicate prevention**: Only one active notification per user per type per Will
+  - **Polling**: Frontend polls every 30 seconds for unread notifications
+  - **Database**: `user_notifications` table with indexes on (userId, isRead) and (userId, type, willId)
+  - **API**: `GET /api/notifications` (unread list + count), `PATCH /api/notifications/:id/read`
 - **Team Encouragement**: "Push" feature to send encouragement (circle mode only).
 
 ### System Design Choices
