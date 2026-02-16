@@ -82,7 +82,7 @@ export default function DailyGutCheckModal({ isOpen, onClose, willId }: DailyGut
             </div>
             <p className="text-base font-semibold text-gray-900">Already checked in today</p>
             <p className="text-sm text-gray-500">
-              You responded: <span className="font-medium capitalize">{todayCheckIn.status}</span>
+              You responded: <span className={`font-medium capitalize ${todayCheckIn.status === 'yes' ? 'text-emerald-600' : todayCheckIn.status === 'partial' ? 'text-amber-500' : 'text-red-400'}`}>{todayCheckIn.status}</span>
             </p>
             <Button
               variant="outline"

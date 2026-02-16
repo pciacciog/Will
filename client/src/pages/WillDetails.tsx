@@ -971,9 +971,12 @@ export default function WillDetails() {
         {/* Daily Gut-Check Button - Lightweight check for active set-duration wills */}
         {!hasDailyCheckIns && will.status === 'active' && (
           todayGutCheckStatus ? (
-            <div className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 text-sm" data-testid="gut-check-completed">
-              <CheckCircle className="w-4 h-4 text-emerald-500" />
-              <span>Checked in today: <span className="font-medium capitalize">{todayGutCheckStatus}</span></span>
+            <div className="w-full flex items-center justify-between py-4 px-4 rounded-lg bg-gray-50 border border-gray-200 text-sm" data-testid="gut-check-completed">
+              <div className="flex items-center gap-2 text-emerald-600">
+                <CheckCircle className="w-4 h-4" />
+                <span className="font-medium">Checked in today</span>
+              </div>
+              <span className="text-gray-500">Today: <span className={`font-medium capitalize ${todayGutCheckStatus === 'yes' ? 'text-emerald-600' : todayGutCheckStatus === 'partial' ? 'text-amber-500' : 'text-red-400'}`}>{todayGutCheckStatus}</span></span>
             </div>
           ) : (
             <Button
