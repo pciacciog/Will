@@ -917,9 +917,9 @@ export class EndRoomScheduler {
 
           const userLocalTime = this.getTimeInTimezone(now, data.timezone);
 
-          // For short-duration wills (< 24 hours), pick random time within the will's actual window
+          // For short-duration wills (<= 24 hours), pick random time within the will's actual window
           const isShortWill = !data.willIsIndefinite && data.willStartDate && data.willEndDate &&
-            (new Date(data.willEndDate).getTime() - new Date(data.willStartDate).getTime()) < 24 * 60 * 60 * 1000;
+            (new Date(data.willEndDate).getTime() - new Date(data.willStartDate).getTime()) <= 24 * 60 * 60 * 1000;
 
           const randomHour = isShortWill
             ? this.getShortWillRandomTime(userId, now, data.timezone, data.willStartDate!, data.willEndDate!)

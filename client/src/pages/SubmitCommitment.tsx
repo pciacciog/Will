@@ -77,7 +77,7 @@ export default function SubmitCommitment() {
     const w = will as any;
     if (!w?.startDate || !w?.endDate || w?.isIndefinite) return false;
     const diffMs = new Date(w.endDate).getTime() - new Date(w.startDate).getTime();
-    return diffMs < 24 * 60 * 60 * 1000;
+    return diffMs <= 24 * 60 * 60 * 1000;
   }, [will]);
   
   // Initialize check-in time from will's check-in time if available
@@ -613,6 +613,7 @@ export default function SubmitCommitment() {
                   </div>
                 </div>
                 
+                {!isShortDuration && (
                 <div className="pt-2 border-t border-gray-100">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <Clock className="w-3 h-3 text-amber-500" />
@@ -624,6 +625,7 @@ export default function SubmitCommitment() {
                     {formatTimeForDisplay(checkInTime)}
                   </p>
                 </div>
+                )}
               </div>
 
               <div className="flex justify-between items-center pt-2">
@@ -709,6 +711,7 @@ export default function SubmitCommitment() {
                   </div>
                 )}
                 
+                {!isShortDuration && (
                 <div className="pt-3 border-t border-gray-100">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <Clock className="w-3 h-3 text-amber-500" />
@@ -720,6 +723,7 @@ export default function SubmitCommitment() {
                     {formatTimeForDisplay(checkInTime)}
                   </p>
                 </div>
+                )}
               </div>
 
               <div className="flex justify-between items-center pt-2">

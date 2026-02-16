@@ -173,7 +173,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     const start = new Date(`${startDate}T${startTime}`);
     const end = new Date(`${endDate}T${endTime || '23:59'}`);
     const diffMs = end.getTime() - start.getTime();
-    return diffMs < 24 * 60 * 60 * 1000;
+    return diffMs <= 24 * 60 * 60 * 1000;
   }, [startDate, startTime, endDate, endTime, isIndefinite]);
   
   // Will-specific reminder time for daily check-ins (HH:MM format)
