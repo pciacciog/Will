@@ -687,21 +687,14 @@ export default function SubmitCommitment() {
                         {why}
                       </div>
                     </div>
+                    {checkInType === 'daily' && (
                     <div className="mt-3 pt-3 border-t border-blue-100">
                       <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                        {checkInType === 'daily' ? (
-                          <>
-                            <Calendar className="w-4 h-4 text-purple-500" />
-                            <span>Daily check-ins</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            <span>One-time check-in</span>
-                          </>
-                        )}
+                        <Calendar className="w-4 h-4 text-purple-500" />
+                        <span>Daily check-ins</span>
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
                 
