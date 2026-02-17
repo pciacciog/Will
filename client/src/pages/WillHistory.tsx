@@ -9,6 +9,7 @@ import { ChevronLeft, Calendar as CalendarIcon, User, Users, Globe, Clock, Trend
 import { getApiPath } from "@/config/api";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { cn } from "@/lib/utils";
+import { MobileLayout } from "@/components/ui/mobile-layout";
 
 type WillCheckInStats = {
   total: number;
@@ -206,29 +207,28 @@ export default function WillHistory({ mode }: WillHistoryProps) {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${themeColors.gradient}`}>
-      <div className="pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
-        <div className="max-w-sm mx-auto px-5">
+    <MobileLayout className={`bg-gradient-to-br ${themeColors.gradient}`}>
+      <div className="max-w-sm mx-auto w-full">
           
-          {/* Header with Back Button */}
-          <div className="relative flex items-center justify-between mb-4 min-h-[44px]">
-            <button
-              onClick={handleBack}
-              className="w-11 h-11 -ml-2 flex items-center justify-center"
-              data-testid="button-back"
-              aria-label="Go back"
-            >
-              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:border-gray-300 transition-all duration-200 active:scale-95">
-                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-              </span>
-            </button>
-            
-            <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">
-              {isPublic ? 'Public' : isSolo ? 'Solo' : 'Circle'} Insights
-            </h1>
-            
-            <div className="w-9" />
-          </div>
+        {/* Header with Back Button */}
+        <div className="relative flex items-center justify-between mb-4 min-h-[44px]">
+          <button
+            onClick={handleBack}
+            className="w-11 h-11 -ml-2 flex items-center justify-center"
+            data-testid="button-back"
+            aria-label="Go back"
+          >
+            <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:border-gray-300 transition-all duration-200 active:scale-95">
+              <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+            </span>
+          </button>
+          
+          <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">
+            {isPublic ? 'Public' : isSolo ? 'Solo' : 'Circle'} Insights
+          </h1>
+          
+          <div className="w-9" />
+        </div>
 
           {/* Overall Stats Section */}
           {stats && stats.totalWills > 0 && (
@@ -332,9 +332,8 @@ export default function WillHistory({ mode }: WillHistoryProps) {
             <EmptyState mode={mode} themeColors={themeColors} message="No History Yet" />
           )}
 
-        </div>
       </div>
-    </div>
+    </MobileLayout>
   );
 }
 
@@ -467,27 +466,26 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${themeColors.gradient}`}>
-      <div className="pt-[calc(env(safe-area-inset-top)+3rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] min-h-screen">
-        <div className="max-w-sm mx-auto px-5">
+    <MobileLayout className={`bg-gradient-to-br ${themeColors.gradient}`}>
+      <div className="max-w-sm mx-auto w-full">
           
-          {/* Header */}
-          <div className="relative flex items-center justify-between mb-4 min-h-[44px]">
-            <button
-              onClick={onBack}
-              className="w-11 h-11 -ml-2 flex items-center justify-center"
-              data-testid="button-back-detail"
-              aria-label="Go back"
-            >
-              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:border-gray-300 transition-all duration-200 active:scale-95">
-                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-              </span>
-            </button>
-            
-            <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">Will Details</h1>
-            
-            <div className="w-9" />
-          </div>
+        {/* Header */}
+        <div className="relative flex items-center justify-between mb-4 min-h-[44px]">
+          <button
+            onClick={onBack}
+            className="w-11 h-11 -ml-2 flex items-center justify-center"
+            data-testid="button-back-detail"
+            aria-label="Go back"
+          >
+            <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:border-gray-300 transition-all duration-200 active:scale-95">
+              <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+            </span>
+          </button>
+          
+          <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">Will Details</h1>
+          
+          <div className="w-9" />
+        </div>
 
           {/* Commitment Header */}
           <div className={`${themeColors.accentBg} rounded-xl p-4 mb-4 border ${themeColors.cardBorder}`}>
@@ -619,8 +617,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
             </div>
           )}
 
-        </div>
       </div>
-    </div>
+    </MobileLayout>
   );
 }
