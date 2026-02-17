@@ -360,7 +360,21 @@ export default function SubmitCommitment() {
                           <div className="font-medium mb-2">
                             Starts {new Date((will as any).startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                           </div>
-                          <div className="text-sm text-gray-600 mb-3">Ongoing commitment</div>
+                          <div className="text-sm text-gray-600 mb-3">
+                            {(() => {
+                              const ad = (will as any)?.activeDays;
+                              if (!ad || ad === 'every_day') return 'Ongoing · Every day';
+                              if (ad === 'weekdays') return 'Ongoing · Weekdays (Mon–Fri)';
+                              if (ad === 'custom') {
+                                try {
+                                  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                  const days: number[] = JSON.parse((will as any)?.customDays || '[]');
+                                  return `Ongoing · ${days.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')}`;
+                                } catch { return 'Ongoing commitment'; }
+                              }
+                              return 'Ongoing commitment';
+                            })()}
+                          </div>
                         </>
                       ) : (will as any)?.startDate && (will as any)?.endDate ? (
                         <>
