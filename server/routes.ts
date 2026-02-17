@@ -1157,8 +1157,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const mode = req.query.mode as 'solo' | 'circle' | undefined;
-      const validModes = ['solo', 'circle'];
+      const mode = req.query.mode as 'solo' | 'circle' | 'public' | undefined;
+      const validModes = ['solo', 'circle', 'public'];
       const filteredMode = mode && validModes.includes(mode) ? mode : undefined;
       const stats = await storage.getUserWillStats(userId, filteredMode);
       res.json(stats);
@@ -1172,14 +1172,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/wills/history', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const mode = req.query.mode as 'solo' | 'circle';
+      const mode = req.query.mode as 'solo' | 'circle' | 'public';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const enhanced = req.query.enhanced === 'true';
       
       console.log(`[HISTORY] Fetching ${mode} history for user ${userId} (enhanced: ${enhanced})`);
       
-      if (!mode || (mode !== 'solo' && mode !== 'circle')) {
-        return res.status(400).json({ message: "Invalid mode. Must be 'solo' or 'circle'." });
+      if (!mode || !['solo', 'circle', 'public'].includes(mode)) {
+        return res.status(400).json({ message: "Invalid mode. Must be 'solo', 'circle', or 'public'." });
       }
       
       // Use enhanced version with check-in data if requested

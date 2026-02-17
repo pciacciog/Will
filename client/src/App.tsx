@@ -357,6 +357,7 @@ function Router() {
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/personal/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>
+            <Route path="/public/history">{() => <WillHistory mode="public" />}</Route>
             <Route path="/circles/:circleId/start-will">{(params) => <StartWill circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/start-will">{() => <StartWill />}</Route>
             <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>

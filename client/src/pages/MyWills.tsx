@@ -257,7 +257,7 @@ export default function MyWills() {
 
           {!isLoading && !isError && allActiveWills !== null && (
             <button
-              onClick={() => setLocation(activeTab === 'circle' ? '/circle/history' : '/solo/history')}
+              onClick={() => setLocation(activeTab === 'circle' ? '/circle/history' : activeTab === 'public' ? '/public/history' : '/solo/history')}
               className="w-full mt-4 group"
               data-testid="button-will-history"
             >

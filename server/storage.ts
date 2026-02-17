@@ -116,7 +116,7 @@ export interface IStorage {
   getWillReviewCount(willId: number): Promise<number>;
   
   // Will history operations
-  getUserWillHistory(userId: string, mode: 'solo' | 'circle', limit?: number): Promise<{
+  getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'public', limit?: number): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -200,7 +200,7 @@ export interface IStorage {
   getWillFinalReflection(willId: number, userId: string): Promise<WillFinalReflection | undefined>;
   
   // User stats operations
-  getUserWillStats(userId: string, mode?: 'solo' | 'circle'): Promise<{
+  getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'public'): Promise<{
     totalWills: number;
     overallSuccessRate: number;
     dailyStats: { totalDays: number; successfulDays: number; successRate: number };
@@ -208,7 +208,7 @@ export interface IStorage {
   }>;
   
   // Enhanced history with check-in data
-  getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle', limit?: number): Promise<{
+  getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'public', limit?: number): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -957,7 +957,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Will history operations
-  async getUserWillHistory(userId: string, mode: 'solo' | 'circle', limit: number = 20): Promise<{
+  async getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'public', limit: number = 20): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -974,24 +974,56 @@ export class DatabaseStorage implements IStorage {
       reflectionText: string | null;
     }[];
   }[]> {
-    // Get completed wills where user participated (has a commitment)
     let completedWills;
     
     if (mode === 'solo') {
-      // Solo mode: get wills created by the user
-      // Include both 'completed' and 'archived' statuses since wills are archived after acknowledgment
       completedWills = await db
         .select()
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
-          eq(wills.mode, 'solo'),
+          inArray(wills.mode, ['solo', 'personal']),
+          eq(wills.visibility, 'private'),
           inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
         .limit(limit);
+    } else if (mode === 'public') {
+      const userCommitmentWills = await db
+        .select({ willId: willCommitments.willId })
+        .from(willCommitments)
+        .where(eq(willCommitments.userId, userId));
+      const commitmentWillIds = userCommitmentWills.map(c => c.willId);
+      
+      const createdPublic = await db
+        .select()
+        .from(wills)
+        .where(and(
+          eq(wills.createdBy, userId),
+          inArray(wills.mode, ['solo', 'personal']),
+          eq(wills.visibility, 'public'),
+          inArray(wills.status, ['completed', 'archived'])
+        ));
+      
+      let joinedPublic: typeof createdPublic = [];
+      if (commitmentWillIds.length > 0) {
+        joinedPublic = await db
+          .select()
+          .from(wills)
+          .where(and(
+            inArray(wills.id, commitmentWillIds),
+            inArray(wills.mode, ['solo', 'personal']),
+            eq(wills.visibility, 'public'),
+            inArray(wills.status, ['completed', 'archived'])
+          ));
+      }
+      
+      const allPublic = [...createdPublic, ...joinedPublic];
+      const uniqueMap = new Map(allPublic.map(w => [w.id, w]));
+      completedWills = Array.from(uniqueMap.values())
+        .sort((a, b) => new Date(b.endDate!).getTime() - new Date(a.endDate!).getTime())
+        .slice(0, limit);
     } else {
-      // Circle mode: get wills where user has a commitment
       const userCommitments = await db
         .select({ willId: willCommitments.willId })
         .from(willCommitments)
@@ -1003,7 +1035,6 @@ export class DatabaseStorage implements IStorage {
         return [];
       }
       
-      // Include both 'completed' and 'archived' statuses since wills are archived after acknowledgment
       completedWills = await db
         .select()
         .from(wills)
@@ -1473,7 +1504,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getUserWillStats(userId: string, mode?: 'solo' | 'circle'): Promise<{
+  async getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'public'): Promise<{
     totalWills: number;
     overallSuccessRate: number;
     dailyStats: { totalDays: number; successfulDays: number; successRate: number };
@@ -1496,6 +1527,7 @@ export class DatabaseStorage implements IStorage {
     
     let soloWillsList: any[] = [];
     let circleWillsList: any[] = [];
+    let publicWillsList: any[] = [];
     
     if (!mode || mode === 'solo') {
       soloWillsList = await db
@@ -1504,8 +1536,37 @@ export class DatabaseStorage implements IStorage {
         .where(and(
           eq(wills.createdBy, userId),
           inArray(wills.mode, ['solo', 'personal']),
+          eq(wills.visibility, 'private'),
           inArray(wills.status, ['completed', 'archived'])
         ));
+    }
+    
+    if (!mode || mode === 'public') {
+      const createdPublic = await db
+        .select()
+        .from(wills)
+        .where(and(
+          eq(wills.createdBy, userId),
+          inArray(wills.mode, ['solo', 'personal']),
+          eq(wills.visibility, 'public'),
+          inArray(wills.status, ['completed', 'archived'])
+        ));
+      
+      let joinedPublic: typeof createdPublic = [];
+      if (willIds.length > 0) {
+        joinedPublic = await db
+          .select()
+          .from(wills)
+          .where(and(
+            inArray(wills.id, willIds),
+            inArray(wills.mode, ['solo', 'personal']),
+            eq(wills.visibility, 'public'),
+            inArray(wills.status, ['completed', 'archived'])
+          ));
+      }
+      const allPublic = [...createdPublic, ...joinedPublic];
+      const uniqueMap = new Map(allPublic.map((w: any) => [w.id, w]));
+      publicWillsList = Array.from(uniqueMap.values());
     }
     
     if (!mode || mode === 'circle') {
@@ -1521,7 +1582,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    const relevantWills = [...soloWillsList, ...circleWillsList];
+    const relevantWills = [...soloWillsList, ...circleWillsList, ...publicWillsList];
     const totalWills = relevantWills.length;
     const relevantWillIds = relevantWills.map(w => w.id);
     
@@ -1551,7 +1612,8 @@ export class DatabaseStorage implements IStorage {
     let oneTimeTotal = 0;
     let oneTimeSuccessful = 0;
     
-    for (const w of soloWillsList) {
+    const personalWills = [...soloWillsList, ...publicWillsList];
+    for (const w of personalWills) {
       if (w.checkInType === 'one-time' || !w.checkInType) {
         const review = userReviews.find((r: any) => r.willId === w.id);
         if (review) {
@@ -1599,7 +1661,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle', limit: number = 20): Promise<{
+  async getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'public', limit: number = 20): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -1627,7 +1689,6 @@ export class DatabaseStorage implements IStorage {
       successRate: number;
     };
   }[]> {
-    // Get completed wills using existing history method logic
     let completedWills;
     
     if (mode === 'solo') {
@@ -1636,11 +1697,47 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
-          eq(wills.mode, 'solo'),
+          inArray(wills.mode, ['solo', 'personal']),
+          eq(wills.visibility, 'private'),
           inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
         .limit(limit);
+    } else if (mode === 'public') {
+      const userCommitmentWills = await db
+        .select({ willId: willCommitments.willId })
+        .from(willCommitments)
+        .where(eq(willCommitments.userId, userId));
+      const commitmentWillIds = userCommitmentWills.map(c => c.willId);
+      
+      const createdPublic = await db
+        .select()
+        .from(wills)
+        .where(and(
+          eq(wills.createdBy, userId),
+          inArray(wills.mode, ['solo', 'personal']),
+          eq(wills.visibility, 'public'),
+          inArray(wills.status, ['completed', 'archived'])
+        ));
+      
+      let joinedPublic: typeof createdPublic = [];
+      if (commitmentWillIds.length > 0) {
+        joinedPublic = await db
+          .select()
+          .from(wills)
+          .where(and(
+            inArray(wills.id, commitmentWillIds),
+            inArray(wills.mode, ['solo', 'personal']),
+            eq(wills.visibility, 'public'),
+            inArray(wills.status, ['completed', 'archived'])
+          ));
+      }
+      
+      const allPublic = [...createdPublic, ...joinedPublic];
+      const uniqueMap = new Map(allPublic.map(w => [w.id, w]));
+      completedWills = Array.from(uniqueMap.values())
+        .sort((a, b) => new Date(b.endDate!).getTime() - new Date(a.endDate!).getTime())
+        .slice(0, limit);
     } else {
       const userCommitmentsList = await db
         .select({ willId: willCommitments.willId })
@@ -1709,7 +1806,7 @@ export class DatabaseStorage implements IStorage {
       
       // Determine user's check-in type
       const userCommitment = participants.find(p => p.userId === userId);
-      const userCheckInType = mode === 'solo' 
+      const userCheckInType = (mode === 'solo' || mode === 'public')
         ? will.checkInType 
         : (will.willType === 'cumulative' ? will.checkInType : userCommitment?.checkInType);
       

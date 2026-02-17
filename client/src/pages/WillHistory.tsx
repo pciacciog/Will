@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronLeft, Calendar as CalendarIcon, User, Users, Clock, TrendingUp, CheckCircle, XCircle, MinusCircle, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, Calendar as CalendarIcon, User, Users, Globe, Clock, TrendingUp, CheckCircle, XCircle, MinusCircle, ChevronRight, X } from "lucide-react";
 import { getApiPath } from "@/config/api";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { cn } from "@/lib/utils";
@@ -65,13 +65,14 @@ type WillCheckIn = {
 };
 
 interface WillHistoryProps {
-  mode: 'solo' | 'circle';
+  mode: 'solo' | 'circle' | 'public';
 }
 
 export default function WillHistory({ mode }: WillHistoryProps) {
   const [, setLocation] = useLocation();
   const [selectedWill, setSelectedWill] = useState<WillHistoryItem | null>(null);
   const isSolo = mode === 'solo';
+  const isPublic = mode === 'public';
 
   const { data: stats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: ['/api/user/stats', mode],
@@ -104,7 +105,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
     if (selectedWill) {
       setSelectedWill(null);
     } else {
-      setLocation(isSolo ? '/solo/hub' : '/hub');
+      setLocation('/wills');
     }
   };
 
@@ -139,13 +140,24 @@ export default function WillHistory({ mode }: WillHistoryProps) {
   };
 
   const getUserCheckInType = (will: WillHistoryItem) => {
-    if (will.mode === 'solo') return will.checkInType || 'one-time';
+    if (will.mode === 'solo' || will.mode === 'personal') return will.checkInType || 'one-time';
     if (will.willType === 'cumulative') return will.checkInType || 'one-time';
-    // Use current user's participant data for classic circle wills
     return will.currentUserParticipant?.checkInType || 'one-time';
   };
 
-  const themeColors = isSolo
+  const themeColors = isPublic
+    ? {
+        gradient: 'from-gray-50 via-white to-blue-50/30',
+        iconBg: 'from-blue-50 to-indigo-50',
+        iconBorder: 'border-blue-100',
+        iconColor: 'text-blue-600',
+        cardBorder: 'border-blue-100',
+        headerColor: 'text-blue-700',
+        accentBg: 'bg-blue-50',
+        accentText: 'text-blue-600',
+        statsBg: 'bg-gradient-to-r from-blue-500 to-indigo-600',
+      }
+    : isSolo
     ? {
         gradient: 'from-gray-50 via-white to-purple-50/30',
         iconBg: 'from-purple-50 to-indigo-50',
@@ -174,7 +186,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${isSolo ? 'border-purple-500' : 'border-emerald-500'}`}></div>
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${isPublic ? 'border-blue-500' : isSolo ? 'border-purple-500' : 'border-emerald-500'}`}></div>
       </div>
     );
   }
@@ -212,7 +224,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
             </button>
             
             <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">
-              {isSolo ? 'Solo' : 'Circle'} Insights
+              {isPublic ? 'Public' : isSolo ? 'Solo' : 'Circle'} Insights
             </h1>
             
             <div className="w-9" />
@@ -244,7 +256,9 @@ export default function WillHistory({ mode }: WillHistoryProps) {
             <div className="inline-flex items-center justify-center mb-2">
               <div className="relative">
                 <div className={`relative w-12 h-12 bg-gradient-to-br ${themeColors.iconBg} rounded-full border-2 ${themeColors.iconBorder} flex items-center justify-center shadow-md`}>
-                  {isSolo ? (
+                  {isPublic ? (
+                    <Globe className={`w-6 h-6 ${themeColors.iconColor}`} />
+                  ) : isSolo ? (
                     <User className={`w-6 h-6 ${themeColors.iconColor}`} />
                   ) : (
                     <Users className={`w-6 h-6 ${themeColors.iconColor}`} />
@@ -253,13 +267,13 @@ export default function WillHistory({ mode }: WillHistoryProps) {
               </div>
             </div>
             <p className="text-gray-500 text-sm">
-              Your completed {isSolo ? 'solo' : 'circle'} wills
+              Your completed {isPublic ? 'public' : isSolo ? 'solo' : 'circle'} wills
             </p>
           </div>
 
           {/* History List */}
           {error ? (
-            <EmptyState isSolo={isSolo} themeColors={themeColors} message="No History Available" />
+            <EmptyState mode={mode} themeColors={themeColors} message="No History Available" />
           ) : history && history.length > 0 ? (
             <div className="space-y-3">
               {history.map((will) => {
@@ -315,7 +329,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
               })}
             </div>
           ) : (
-            <EmptyState isSolo={isSolo} themeColors={themeColors} message="No History Yet" />
+            <EmptyState mode={mode} themeColors={themeColors} message="No History Yet" />
           )}
 
         </div>
@@ -324,7 +338,8 @@ export default function WillHistory({ mode }: WillHistoryProps) {
   );
 }
 
-function EmptyState({ isSolo, themeColors, message }: { isSolo: boolean; themeColors: any; message: string }) {
+function EmptyState({ mode, themeColors, message }: { mode: 'solo' | 'circle' | 'public'; themeColors: any; message: string }) {
+  const modeLabel = mode === 'public' ? 'public' : mode === 'solo' ? 'solo' : 'circle';
   return (
     <div className="text-center py-12">
       <div className={`w-16 h-16 mx-auto mb-4 bg-gradient-to-br ${themeColors.iconBg} rounded-full border-2 ${themeColors.iconBorder} flex items-center justify-center`}>
@@ -332,10 +347,7 @@ function EmptyState({ isSolo, themeColors, message }: { isSolo: boolean; themeCo
       </div>
       <h3 className="text-lg font-medium text-gray-900 mb-2">{message}</h3>
       <p className="text-gray-500 text-sm">
-        {isSolo 
-          ? "Complete your first solo Will to see it here."
-          : "Complete your first circle Will to see it here."
-        }
+        Complete your first {modeLabel} Will to see it here.
       </p>
     </div>
   );
@@ -343,7 +355,7 @@ function EmptyState({ isSolo, themeColors, message }: { isSolo: boolean; themeCo
 
 interface WillDetailViewProps {
   will: WillHistoryItem;
-  mode: 'solo' | 'circle';
+  mode: 'solo' | 'circle' | 'public';
   themeColors: any;
   onBack: () => void;
   formatSingleDate: (date: string) => string;
