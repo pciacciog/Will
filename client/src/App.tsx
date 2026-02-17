@@ -18,6 +18,7 @@ import Home from "@/pages/Home";
 import InnerCircle from "@/pages/InnerCircle";
 import InnerCircleHub from "@/pages/InnerCircleHub";
 import Explore from "@/pages/Explore";
+import JoinWill from "@/pages/JoinWill";
 import WillHistory from "@/pages/WillHistory";
 import StartWill from "@/pages/StartWill";
 import WillDetails from "@/pages/WillDetails";
@@ -352,6 +353,7 @@ function Router() {
             <Route path="/wills" component={MyWills} />
             <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/explore" component={Explore} />
+            <Route path="/explore/join/:willId" component={JoinWill} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/personal/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>

@@ -1,7 +1,5 @@
 import { useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 import { Users, ArrowRight, Target, CheckCircle } from "lucide-react";
 
@@ -22,39 +20,10 @@ type PublicWill = {
 
 export default function Explore() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: publicWills, isLoading } = useQuery<PublicWill[]>({
     queryKey: ['/api/wills/public'],
     staleTime: 30000,
-  });
-
-  const joinMutation = useMutation({
-    mutationFn: async (willId: number) => {
-      return apiRequest(`/api/wills/${willId}/join`, {
-        method: 'POST',
-      });
-    },
-    onSuccess: (data: any) => {
-      toast({
-        title: "Joined!",
-        description: "You've joined this commitment. Good luck!",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/public'] });
-      if (data?.willId) {
-        sessionStorage.setItem('willBackUrl', '/explore');
-        setLocation(`/will/${data.willId}`);
-      }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Couldn't join",
-        description: error.message || "Something went wrong",
-        variant: "destructive",
-      });
-    },
   });
 
   const getTimelineLabel = (will: PublicWill) => {
@@ -136,13 +105,12 @@ export default function Explore() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => joinMutation.mutate(will.id)}
-                    disabled={joinMutation.isPending}
-                    className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                    onClick={() => setLocation(`/explore/join/${will.id}`)}
+                    className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5"
                     data-testid={`button-join-${will.id}`}
                   >
-                    {joinMutation.isPending ? 'Joining...' : 'Join'}
-                    {!joinMutation.isPending && <ArrowRight className="w-3.5 h-3.5" />}
+                    Join
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>

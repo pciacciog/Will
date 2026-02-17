@@ -1038,6 +1038,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/wills/:id/public-details', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will || will.visibility !== 'public') {
+        return res.status(404).json({ message: "Public Will not found" });
+      }
+      
+      const validStatuses = ['pending', 'scheduled', 'active'];
+      if (!will.status || !validStatuses.includes(will.status)) {
+        return res.status(404).json({ message: "This Will is no longer available to join" });
+      }
+      
+      const commitmentList = await storage.getWillCommitments(willId);
+      const firstCommitment = commitmentList[0];
+      
+      const [creator] = await db
+        .select({ firstName: users.firstName })
+        .from(users)
+        .where(eq(users.id, will.createdBy));
+      
+      const [memberCountResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(wills)
+        .where(eq(wills.parentWillId, willId));
+      
+      res.json({
+        id: will.id,
+        what: firstCommitment?.what || 'Untitled commitment',
+        checkInType: will.checkInType,
+        startDate: will.startDate,
+        endDate: will.endDate,
+        isIndefinite: will.isIndefinite,
+        activeDays: will.activeDays,
+        customDays: will.customDays,
+        creatorName: creator?.firstName || 'Anonymous',
+        memberCount: Number(memberCountResult?.count || 0) + 1,
+        status: will.status,
+      });
+    } catch (error) {
+      console.error("Error fetching public will details:", error);
+      res.status(500).json({ message: "Failed to fetch Will details" });
+    }
+  });
+
   // Join a public will - creates a new will instance for the user
   app.post('/api/wills/:id/join', isAuthenticated, async (req: any, res) => {
     try {
@@ -1091,12 +1136,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateWillStatus(newWill.id, 'active');
       }
       
-      // Copy the commitment
+      const userWhy = req.body.why || parentCommitment.why;
+      
       await storage.addWillCommitment({
         willId: newWill.id,
         userId: userId,
         what: parentCommitment.what,
-        why: parentCommitment.why,
+        why: userWhy,
         checkInType: parentWill.checkInType || 'one-time',
       });
       
