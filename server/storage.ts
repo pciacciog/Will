@@ -200,7 +200,7 @@ export interface IStorage {
   getWillFinalReflection(willId: number, userId: string): Promise<WillFinalReflection | undefined>;
   
   // User stats operations
-  getUserWillStats(userId: string): Promise<{
+  getUserWillStats(userId: string, mode?: 'solo' | 'circle'): Promise<{
     totalWills: number;
     overallSuccessRate: number;
     dailyStats: { totalDays: number; successfulDays: number; successRate: number };
@@ -1473,13 +1473,12 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getUserWillStats(userId: string): Promise<{
+  async getUserWillStats(userId: string, mode?: 'solo' | 'circle'): Promise<{
     totalWills: number;
     overallSuccessRate: number;
     dailyStats: { totalDays: number; successfulDays: number; successRate: number };
     oneTimeStats: { total: number; successful: number; successRate: number };
   }> {
-    // Get all user commitments with their reviews
     const userCommitmentsList = await db
       .select({ 
         willId: willCommitments.willId, 
@@ -1488,7 +1487,6 @@ export class DatabaseStorage implements IStorage {
       .from(willCommitments)
       .where(eq(willCommitments.userId, userId));
     
-    // Get all user's will reviews (for followThrough data)
     const userReviews = await db
       .select()
       .from(willReviews)
@@ -1496,39 +1494,48 @@ export class DatabaseStorage implements IStorage {
     
     const willIds = userCommitmentsList.map(c => c.willId);
     
-    // Get solo wills
-    const soloWillsList = await db
-      .select()
-      .from(wills)
-      .where(and(
-        eq(wills.createdBy, userId),
-        eq(wills.mode, 'solo'),
-        inArray(wills.status, ['completed', 'archived'])
-      ));
+    let soloWillsList: any[] = [];
+    let circleWillsList: any[] = [];
     
-    // Get circle wills the user was part of
-    let circleWillsList: typeof soloWillsList = [];
-    if (willIds.length > 0) {
-      circleWillsList = await db
+    if (!mode || mode === 'solo') {
+      soloWillsList = await db
         .select()
         .from(wills)
         .where(and(
-          inArray(wills.id, willIds),
-          eq(wills.mode, 'circle'),
+          eq(wills.createdBy, userId),
+          inArray(wills.mode, ['solo', 'personal']),
           inArray(wills.status, ['completed', 'archived'])
         ));
     }
     
-    const allWills = [...soloWillsList, ...circleWillsList];
-    const totalWills = allWills.length;
+    if (!mode || mode === 'circle') {
+      if (willIds.length > 0) {
+        circleWillsList = await db
+          .select()
+          .from(wills)
+          .where(and(
+            inArray(wills.id, willIds),
+            eq(wills.mode, 'circle'),
+            inArray(wills.status, ['completed', 'archived'])
+          ));
+      }
+    }
     
-    // Get all check-ins for user
-    const allCheckIns = await db
-      .select()
-      .from(willCheckIns)
-      .where(eq(willCheckIns.userId, userId));
+    const relevantWills = [...soloWillsList, ...circleWillsList];
+    const totalWills = relevantWills.length;
+    const relevantWillIds = relevantWills.map(w => w.id);
     
-    // Calculate daily stats
+    let allCheckIns: any[] = [];
+    if (relevantWillIds.length > 0) {
+      allCheckIns = await db
+        .select()
+        .from(willCheckIns)
+        .where(and(
+          eq(willCheckIns.userId, userId),
+          inArray(willCheckIns.willId, relevantWillIds)
+        ));
+    }
+    
     let totalDays = 0;
     let successfulDays = 0;
     for (const checkIn of allCheckIns) {
@@ -1541,14 +1548,12 @@ export class DatabaseStorage implements IStorage {
     }
     const dailySuccessRate = totalDays > 0 ? Math.round((successfulDays / totalDays) * 100) : 0;
     
-    // Calculate one-time stats based on followThrough from reviews
     let oneTimeTotal = 0;
     let oneTimeSuccessful = 0;
     
-    // For solo wills with one-time check-in type
     for (const w of soloWillsList) {
       if (w.checkInType === 'one-time' || !w.checkInType) {
-        const review = userReviews.find(r => r.willId === w.id);
+        const review = userReviews.find((r: any) => r.willId === w.id);
         if (review) {
           oneTimeTotal++;
           if (review.followThrough === 'yes') {
@@ -1560,11 +1565,10 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    // For circle wills where user had one-time check-in
     for (const commitment of userCommitmentsList) {
-      const w = circleWillsList.find(cw => cw.id === commitment.willId);
+      const w = circleWillsList.find((cw: any) => cw.id === commitment.willId);
       if (w && (commitment.checkInType === 'one-time' || !commitment.checkInType)) {
-        const review = userReviews.find(r => r.willId === w.id);
+        const review = userReviews.find((r: any) => r.willId === w.id);
         if (review) {
           oneTimeTotal++;
           if (review.followThrough === 'yes') {
@@ -1578,7 +1582,6 @@ export class DatabaseStorage implements IStorage {
     
     const oneTimeSuccessRate = oneTimeTotal > 0 ? Math.round((oneTimeSuccessful / oneTimeTotal) * 100) : 0;
     
-    // Combined success rate: weight both equally if both exist
     let overallSuccessRate = 0;
     if (totalDays > 0 && oneTimeTotal > 0) {
       overallSuccessRate = Math.round((dailySuccessRate + oneTimeSuccessRate) / 2);

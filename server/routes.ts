@@ -1157,7 +1157,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const stats = await storage.getUserWillStats(userId);
+      const mode = req.query.mode as 'solo' | 'circle' | undefined;
+      const validModes = ['solo', 'circle'];
+      const filteredMode = mode && validModes.includes(mode) ? mode : undefined;
+      const stats = await storage.getUserWillStats(userId, filteredMode);
       res.json(stats);
     } catch (error) {
       console.error("[USER-STATS] Error fetching user stats:", error);

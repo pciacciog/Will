@@ -74,12 +74,12 @@ export default function WillHistory({ mode }: WillHistoryProps) {
   const isSolo = mode === 'solo';
 
   const { data: stats, isLoading: statsLoading } = useQuery<UserStats>({
-    queryKey: ['/api/user/stats'],
+    queryKey: ['/api/user/stats', mode],
     queryFn: async () => {
       const token = await sessionPersistence.getToken();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const response = await fetch(getApiPath('/api/user/stats'), { credentials: 'include', headers });
+      const response = await fetch(getApiPath(`/api/user/stats?mode=${mode}`), { credentials: 'include', headers });
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },
