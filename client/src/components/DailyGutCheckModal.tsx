@@ -80,9 +80,9 @@ export default function DailyGutCheckModal({ isOpen, onClose, willId }: DailyGut
             <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
               <CheckCircle className="w-6 h-6 text-emerald-600" />
             </div>
-            <p className="text-base font-semibold text-gray-900">Already checked in today</p>
+            <p className="text-base font-semibold text-gray-900">Already logged today</p>
             <p className="text-sm text-gray-500">
-              You responded: <span className={`font-medium capitalize ${todayCheckIn.status === 'yes' ? 'text-emerald-600' : todayCheckIn.status === 'partial' ? 'text-amber-500' : 'text-red-400'}`}>{todayCheckIn.status}</span>
+              Today's progress: <span className={`font-medium capitalize ${todayCheckIn.status === 'yes' ? 'text-emerald-600' : todayCheckIn.status === 'partial' ? 'text-amber-500' : 'text-red-400'}`}>{todayCheckIn.status}</span>
             </p>
             <Button
               variant="outline"
@@ -102,7 +102,7 @@ export default function DailyGutCheckModal({ isOpen, onClose, willId }: DailyGut
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { onClose(); setSelected(null); } }}>
       <DialogContent className="max-w-[340px] rounded-2xl p-6 text-center">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-lg font-semibold text-gray-900">Did you follow through today?</p>
+          <p className="text-lg font-semibold text-gray-900">Did you honor your will today?</p>
           <p className="text-sm text-gray-500 -mt-2">Quick daily accountability check</p>
 
           <div className="flex gap-3 w-full mt-1">
