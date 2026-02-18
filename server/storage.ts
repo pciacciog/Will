@@ -84,7 +84,7 @@ export interface IStorage {
   getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserActiveSoloWillCount(userId: string): Promise<number>;
-  getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string })[]>;
+  getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string; circleCode?: string })[]>;
   getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
   getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
@@ -680,24 +680,26 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(wills.createdAt));
     console.log('[STORAGE] Circle will commitments found:', circleWillCommitments.length);
 
-    const circleWillsList: (typeof wills.$inferSelect & { circleName?: string })[] = [];
+    const circleWillsList: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [];
     for (const row of circleWillCommitments) {
       if (!row.wills) continue;
       let circleName: string | undefined = undefined;
+      let circleCode: string | undefined = undefined;
       if (row.wills.circleId) {
         try {
-          const circleRows = await db.select({ name: circles.name }).from(circles).where(eq(circles.id, row.wills.circleId));
+          const circleRows = await db.select({ name: circles.name, inviteCode: circles.inviteCode }).from(circles).where(eq(circles.id, row.wills.circleId));
           circleName = circleRows[0]?.name || undefined;
+          circleCode = circleRows[0]?.inviteCode || undefined;
         } catch (e) {
-          console.warn('[STORAGE] Could not fetch circle name for circleId:', row.wills.circleId);
+          console.warn('[STORAGE] Could not fetch circle info for circleId:', row.wills.circleId);
         }
       }
-      circleWillsList.push({ ...row.wills, circleName });
+      circleWillsList.push({ ...row.wills, circleName, circleCode });
     }
     console.log('[STORAGE] Circle wills processed:', circleWillsList.length);
 
-    const allWills: (typeof wills.$inferSelect & { circleName?: string })[] = [
-      ...personalWillsList.map(w => ({ ...w, circleName: undefined as string | undefined })),
+    const allWills: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [
+      ...personalWillsList.map(w => ({ ...w, circleName: undefined as string | undefined, circleCode: undefined as string | undefined })),
       ...circleWillsList,
     ];
     console.log('[STORAGE] Combined wills:', allWills.length);
