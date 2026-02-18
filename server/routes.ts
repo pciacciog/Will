@@ -704,11 +704,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Auto-create commitment for Solo user (required for scheduler to find participants)
         try {
-          const commitmentData = {
+          const commitmentData: any = {
             willId: will.id,
             userId: userId,
             what: req.body.what || "My personal goal",
             why: req.body.because || "",
+            checkInType: willDataWithDefaults.checkInType || 'one-time',
           };
           await storage.addWillCommitment(commitmentData);
           console.log(`[Routes] Auto-created commitment for solo Will ${will.id}`);

@@ -139,7 +139,7 @@ export default function JoinWill() {
   }
 
   const isOngoing = will.isIndefinite;
-  const checkInLabel = will.checkInType === 'daily' ? 'Daily check-ins' : 'Review at the end';
+  const checkInLabel = will.checkInType === 'daily' ? 'Ongoing check-ins' : 'Review at the end';
 
   return (
     <MobileLayout>
