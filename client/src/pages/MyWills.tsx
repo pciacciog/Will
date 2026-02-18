@@ -77,7 +77,7 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate" data-testid={`text-will-title-${will.id}`}>
-                {commitment?.what || 'Untitled commitment'}
+                {commitment?.what ? `I will ${commitment.what}` : 'Untitled commitment'}
               </p>
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                 {isPublic && (
