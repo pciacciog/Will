@@ -983,7 +983,7 @@ export default function WillDetails() {
               data-testid="button-gut-check"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
-              Did you honor your will today?
+              Have you honored your will today?
             </Button>
           )
         )}

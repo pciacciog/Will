@@ -102,7 +102,7 @@ export default function DailyGutCheckModal({ isOpen, onClose, willId }: DailyGut
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { onClose(); setSelected(null); } }}>
       <DialogContent className="max-w-[340px] rounded-2xl p-6 text-center">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-lg font-semibold text-gray-900">Did you honor your will today?</p>
+          <p className="text-lg font-semibold text-gray-900">Have you honored your will today?</p>
           <p className="text-sm text-gray-500 -mt-2">Quick daily accountability check</p>
 
           <div className="flex gap-3 w-full mt-1">
