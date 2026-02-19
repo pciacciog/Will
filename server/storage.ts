@@ -99,6 +99,7 @@ export interface IStorage {
   getWillWithCommitments(willId: number): Promise<(Will & { commitments: (WillCommitment & { user: User })[] }) | undefined>;
   
   // Will commitment operations
+  getWillCommitments(willId: number): Promise<WillCommitment[]>;
   addWillCommitment(commitment: InsertWillCommitment): Promise<WillCommitment>;
   getWillCommitmentCount(willId: number): Promise<number>;
   hasUserCommitted(willId: number, userId: string): Promise<boolean>;
@@ -854,6 +855,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Will commitment operations
+  async getWillCommitments(willId: number): Promise<WillCommitment[]> {
+    return await db
+      .select()
+      .from(willCommitments)
+      .where(eq(willCommitments.willId, willId));
+  }
+
   async addWillCommitment(commitment: InsertWillCommitment): Promise<WillCommitment> {
     const [newCommitment] = await db.insert(willCommitments).values(commitment).returning();
     return newCommitment;
