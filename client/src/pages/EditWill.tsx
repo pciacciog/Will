@@ -127,7 +127,7 @@ export default function EditWill() {
   });
 
   const handleSave = async () => {
-    if (!isIndefinite) {
+    if (!isIndefinite && !isPublicWillJoiner) {
       if (!startDate || !endDate || !startTime || !endTime) {
         toast({ title: "Missing Information", description: "Please provide start and end dates with times", variant: "destructive" });
         return;
@@ -148,20 +148,29 @@ export default function EditWill() {
       }
     }
 
-    if (isSoloMode && (!what.trim() || !why.trim())) {
+    if (isSoloMode && !isPublicWillJoiner && (!what.trim() || !why.trim())) {
       toast({ title: "Missing Information", description: "Please fill in your commitment and reason", variant: "destructive" });
       return;
     }
 
+    if (isSoloMode && isPublicWillJoiner && !why.trim()) {
+      toast({ title: "Missing Information", description: "Please fill in your reason", variant: "destructive" });
+      return;
+    }
+
     try {
-      if (!isIndefinite) {
+      if (!isIndefinite && !isPublicWillJoiner) {
         const startDateTime = createDateTimeFromInputs(startDate, startTime);
         const endDateTime = createDateTimeFromInputs(endDate, endTime);
         await updateWillMutation.mutateAsync({ startDate: startDateTime, endDate: endDateTime });
       }
 
       if (isSoloMode && userCommitment) {
-        await updateCommitmentMutation.mutateAsync({ what: what.trim(), why: why.trim() });
+        if (isPublicWillJoiner) {
+          await updateCommitmentMutation.mutateAsync({ what: what.trim(), why: why.trim() });
+        } else {
+          await updateCommitmentMutation.mutateAsync({ what: what.trim(), why: why.trim() });
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
@@ -200,6 +209,8 @@ export default function EditWill() {
     );
   }
 
+  const isPublicWillJoiner = !!will?.parentWillId;
+
   if (will.createdBy !== user?.id) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
@@ -233,7 +244,7 @@ export default function EditWill() {
             testId="button-back"
           />
           <span className="absolute left-0 right-0 text-center text-lg font-semibold text-gray-900 pointer-events-none">
-            Edit Will
+            {isPublicWillJoiner ? 'Edit Settings' : 'Edit Will'}
           </span>
           <div className="w-11 ml-auto"></div>
         </div>
@@ -241,26 +252,35 @@ export default function EditWill() {
         <div className="space-y-5">
           {isSoloMode && userCommitment && (
             <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Commitment</h3>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">I will...</label>
-                <div className="flex items-start bg-white border border-gray-200 rounded-lg p-3 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
-                  <Textarea
-                    ref={whatRef}
-                    rows={1}
-                    maxLength={75}
-                    value={what}
-                    onChange={(e) => {
-                      if (e.target.value.length <= 75) setWhat(e.target.value);
-                    }}
-                    className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
-                    style={{ maxHeight: '96px' }}
-                    placeholder="go to bjj"
-                    data-testid="input-what"
-                  />
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                {isPublicWillJoiner ? 'Your Personal Settings' : 'Your Commitment'}
+              </h3>
+              {isPublicWillJoiner ? (
+                <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Commitment (set by creator)</label>
+                  <p className="text-base text-gray-700" data-testid="text-locked-what">I will {what}</p>
                 </div>
-                <div className="text-xs text-gray-400 mt-1 text-right">{what.length}/75</div>
-              </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">I will...</label>
+                  <div className="flex items-start bg-white border border-gray-200 rounded-lg p-3 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                    <Textarea
+                      ref={whatRef}
+                      rows={1}
+                      maxLength={75}
+                      value={what}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 75) setWhat(e.target.value);
+                      }}
+                      className="flex-1 border-none outline-none resize-none overflow-y-auto text-base leading-relaxed p-0 shadow-none focus:ring-0 bg-transparent placeholder:text-gray-400"
+                      style={{ maxHeight: '96px' }}
+                      placeholder="go to bjj"
+                      data-testid="input-what"
+                    />
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1 text-right">{what.length}/75</div>
+                </div>
+              )}
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-medium text-gray-500">Because...</label>
@@ -291,7 +311,7 @@ export default function EditWill() {
             </div>
           )}
 
-          {!isIndefinite && (
+          {!isIndefinite && !isPublicWillJoiner && (
             <div className="bg-white rounded-xl border border-gray-200 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Calendar className="w-4 h-4 text-blue-500" />

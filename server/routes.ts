@@ -2136,10 +2136,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Commitments can only be edited while the will is pending or scheduled" });
       }
       
-      // Update the commitment
+      // Public Will joiners cannot change the commitment text — only their personal "why"
+      const isPublicWillJoiner = !!will.parentWillId;
+      const updateData: { what?: string; why: string } = { why: why.trim() };
+      if (!isPublicWillJoiner) {
+        updateData.what = what.trim();
+      }
+
       const [updatedCommitment] = await db
         .update(willCommitments)
-        .set({ what: what.trim(), why: why.trim() })
+        .set(updateData)
         .where(eq(willCommitments.id, commitmentId))
         .returning();
       
@@ -2164,6 +2170,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Only creator can update the will
       if (will.createdBy !== userId) {
         return res.status(403).json({ message: "Only the creator can update the will" });
+      }
+
+      // Public Will joiners cannot modify the timeline (it's set by the original creator)
+      if (will.parentWillId) {
+        return res.status(403).json({ message: "Timeline is set by the Public Will creator and cannot be changed" });
       }
       
       // Can only update if status is pending or scheduled
