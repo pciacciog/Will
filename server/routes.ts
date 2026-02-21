@@ -2303,6 +2303,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Leave a circle will — ends the will for ALL members
+  app.post('/api/wills/:id/leave', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+
+      if (will.mode !== 'circle') {
+        return res.status(400).json({ message: "Leave is only available for Circle Wills" });
+      }
+
+      if (will.status === 'completed' || will.status === 'terminated' || will.status === 'archived') {
+        return res.status(400).json({ message: "This Will has already ended" });
+      }
+
+      const commitments = await db
+        .select({ userId: willCommitments.userId })
+        .from(willCommitments)
+        .where(eq(willCommitments.willId, willId));
+
+      const isMember = commitments.some(c => c.userId === userId);
+      if (!isMember && will.createdBy !== userId) {
+        return res.status(403).json({ message: "You are not a member of this Will" });
+      }
+
+      await db.update(wills)
+        .set({ status: 'terminated', endDate: new Date() })
+        .where(eq(wills.id, willId));
+
+      const leavingUser = await db
+        .select({ firstName: users.firstName })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      const leaverName = leavingUser[0]?.firstName || 'A member';
+
+      const otherMemberIds = commitments
+        .map(c => c.userId)
+        .filter(id => id !== userId);
+      if (will.createdBy !== userId && !commitments.some(c => c.userId === will.createdBy)) {
+        otherMemberIds.push(will.createdBy);
+      }
+
+      if (otherMemberIds.length > 0) {
+        try {
+          await pushNotificationService.sendWillLeftNotification(leaverName, willId, otherMemberIds);
+        } catch (notifError) {
+          console.error('[LeaveWill] Failed to send notifications:', notifError);
+        }
+      }
+
+      console.log(`[LeaveWill] User ${userId} (${leaverName}) left Will ${willId}, ending it for all members`);
+      res.json({ message: "You left the Will. It has ended for everyone.", status: 'terminated' });
+    } catch (error) {
+      console.error("Error leaving will:", error);
+      res.status(500).json({ message: "Failed to leave Will" });
+    }
+  });
+
   // Delete will (only allowed for pending/scheduled status)
   app.delete('/api/wills/:id', isAuthenticated, async (req: any, res) => {
     try {

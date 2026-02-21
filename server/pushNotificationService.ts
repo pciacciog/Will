@@ -543,6 +543,22 @@ class PushNotificationService {
     await this.sendToMultipleUsers(otherMembers, payload);
   }
 
+  async sendWillLeftNotification(leaverName: string, willId: number, otherMembers: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "Will ended",
+      body: `${leaverName} left the Will. The Will has ended for everyone.`,
+      category: 'will_left',
+      data: {
+        type: 'will_left',
+        leaverName,
+        willId: willId.toString(),
+        deepLink: `/will/${willId}`
+      }
+    };
+
+    await this.sendToMultipleUsers(otherMembers, payload);
+  }
+
   // Midpoint milestone notification — factual time-remaining with will statement
   async sendMidpointMilestoneNotification(willId: number, committedMembers: string[], endDate: Date, willWhat?: string): Promise<void> {
     const now = new Date();

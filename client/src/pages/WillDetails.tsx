@@ -548,6 +548,23 @@ export default function WillDetails() {
     },
   });
 
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+
+  const leaveMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest(`/api/wills/${id}/leave`, { method: 'POST' });
+      return res.json();
+    },
+    onSuccess: () => {
+      invalidateAllWillQueries();
+      toast({ title: "You left the Will", description: "The Will has ended for everyone." });
+      setLocation(getHubUrl());
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to leave Will", variant: "destructive" });
+    },
+  });
+
   // Push notification query and mutation
   const { data: pushStatus, isLoading: isPushLoading } = useQuery<any>({
     queryKey: [`/api/wills/${id}/push/status`],
@@ -1273,7 +1290,7 @@ export default function WillDetails() {
         )}
 
         {/* Manage Will - Collapsed button that opens modal */}
-        {will.createdBy === user?.id && (will.status === 'active' || will.status === 'paused') && (
+        {(will.createdBy === user?.id || (will.mode === 'circle' && userHasCommitted)) && (will.status === 'active' || will.status === 'paused') && (
           <button
             onClick={() => setShowManageModal(true)}
             className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors"
@@ -1310,56 +1327,71 @@ export default function WillDetails() {
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
             <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Manage Will</h3>
             <div className="space-y-3">
-              {will.status === 'active' ? (
-                <Button
-                  onClick={() => { pauseMutation.mutate(); setShowManageModal(false); }}
-                  disabled={pauseMutation.isPending}
-                  className="w-full border border-amber-500 text-amber-600 bg-white hover:bg-amber-50 rounded-xl py-3 text-base font-medium"
-                  variant="outline"
-                  data-testid="button-pause-will"
-                >
-                  {pauseMutation.isPending ? "Pausing..." : "Pause Will"}
-                </Button>
-              ) : will.status === 'paused' ? (
-                <Button
-                  onClick={() => { resumeMutation.mutate(); setShowManageModal(false); }}
-                  disabled={resumeMutation.isPending}
-                  className="w-full border border-green-500 text-green-600 bg-white hover:bg-green-50 rounded-xl py-3 text-base font-medium"
-                  variant="outline"
-                  data-testid="button-resume-will"
-                >
-                  {resumeMutation.isPending ? "Resuming..." : "Resume Will"}
-                </Button>
-              ) : null}
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
-                    variant="outline"
-                    data-testid="button-end-will"
-                  >
-                    End Will
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>End this Will?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently end this Will. Your progress will be saved but you won't be able to continue tracking.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={() => { terminateMutation.mutate(); setShowManageModal(false); }}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              {will.createdBy === user?.id && (
+                <>
+                  {will.status === 'active' ? (
+                    <Button
+                      onClick={() => { pauseMutation.mutate(); setShowManageModal(false); }}
+                      disabled={pauseMutation.isPending}
+                      className="w-full border border-amber-500 text-amber-600 bg-white hover:bg-amber-50 rounded-xl py-3 text-base font-medium"
+                      variant="outline"
+                      data-testid="button-pause-will"
                     >
-                      {terminateMutation.isPending ? "Ending..." : "End Will"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      {pauseMutation.isPending ? "Pausing..." : "Pause Will"}
+                    </Button>
+                  ) : will.status === 'paused' ? (
+                    <Button
+                      onClick={() => { resumeMutation.mutate(); setShowManageModal(false); }}
+                      disabled={resumeMutation.isPending}
+                      className="w-full border border-green-500 text-green-600 bg-white hover:bg-green-50 rounded-xl py-3 text-base font-medium"
+                      variant="outline"
+                      data-testid="button-resume-will"
+                    >
+                      {resumeMutation.isPending ? "Resuming..." : "Resume Will"}
+                    </Button>
+                  ) : null}
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
+                        variant="outline"
+                        data-testid="button-end-will"
+                      >
+                        End Will
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>End this Will?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently end this Will. Your progress will be saved but you won't be able to continue tracking.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => { terminateMutation.mutate(); setShowManageModal(false); }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {terminateMutation.isPending ? "Ending..." : "End Will"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+
+              {will.mode === 'circle' && (
+                <Button
+                  onClick={() => { setShowManageModal(false); setShowLeaveModal(true); }}
+                  className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
+                  variant="outline"
+                  data-testid="button-leave-will"
+                >
+                  Leave Will
+                </Button>
+              )}
 
               <Button
                 onClick={() => setShowManageModal(false)}
@@ -1368,6 +1400,58 @@ export default function WillDetails() {
                 data-testid="button-cancel-manage"
               >
                 Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Will Confirmation Modal */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowLeaveModal(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div 
+            className="relative w-full max-w-sm bg-white rounded-2xl p-6 animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center" data-testid="title-leave-will">Leave this Will?</h3>
+            <p className="text-sm text-gray-500 text-center mb-4">
+              If you leave, <span className="font-medium text-red-600">this Will ends for everyone</span>. All progress will be saved but no one can continue tracking.
+            </p>
+            {will.commitments && will.commitments.length > 0 && (
+              <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                <p className="text-xs text-gray-500 mb-2 font-medium">Members affected:</p>
+                <div className="space-y-1">
+                  {will.commitments.map((c: any) => (
+                    <div key={c.userId} className="flex items-center gap-2" data-testid={`text-leave-member-${c.userId}`}>
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-[10px] font-bold text-white">
+                        {(c.userFirstName || '?')[0]}
+                      </div>
+                      <span className="text-sm text-gray-700">
+                        {c.userFirstName || 'Member'}
+                        {c.userId === user?.id ? ' (you)' : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowLeaveModal(false)}
+                className="flex-1 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl py-3"
+                variant="ghost"
+                data-testid="button-cancel-leave"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => { leaveMutation.mutate(); setShowLeaveModal(false); }}
+                disabled={leaveMutation.isPending}
+                className="flex-1 bg-red-600 text-white hover:bg-red-700 rounded-xl py-3"
+                data-testid="button-confirm-leave"
+              >
+                {leaveMutation.isPending ? "Leaving..." : "Leave Will"}
               </Button>
             </div>
           </div>
