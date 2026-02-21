@@ -212,6 +212,16 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
     }
   });
 
+  const { data: notificationsData } = useQuery<{ notifications: { id: number; type: string; willId: number | null; circleId: number | null }[]; count: number }>({
+    queryKey: ['/api/notifications'],
+    refetchInterval: 30000,
+    enabled: !!user,
+  });
+
+  const circleNotifications = notificationsData?.notifications?.filter(n => n.circleId === circleId) || [];
+  const hasProposalNotification = circleNotifications.some(n => n.type === 'will_proposed');
+  const hasReviewNotification = circleNotifications.some(n => n.type === 'review_required');
+
   const willStatus = getWillStatus(will, user?.id);
   const [previousWillStatus, setPreviousWillStatus] = useState<string | null>(null);
 
@@ -359,8 +369,17 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
     }
   };
 
+  const markCircleNotificationsRead = async () => {
+    if (!circleId || circleNotifications.length === 0) return;
+    try {
+      await apiRequest(`/api/notifications/circle/${circleId}/read`, { method: 'PATCH' });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    } catch (e) { /* non-critical */ }
+  };
+
   const handleViewWillDetails = () => {
     if (will?.id) {
+      markCircleNotificationsRead();
       sessionStorage.setItem('willBackUrl', `/circles/${circleId}`);
       setLocation(`/will/${will.id}`);
     }
@@ -670,7 +689,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
           )}
 
           {willStatus === 'pending' && (
-            <div className="bg-gradient-to-br from-amber-50/50 to-yellow-50/30 border border-amber-200/60 rounded-lg p-3 space-y-2 text-center">
+            <div className={`bg-gradient-to-br from-amber-50/50 to-yellow-50/30 rounded-lg p-3 space-y-2 text-center ${hasProposalNotification ? 'border-2 border-amber-400 ring-2 ring-amber-200/50' : 'border border-amber-200/60'}`} data-testid="section-pending-will">
               {/* Dynamic Will Initiator Message */}
               <div className="text-xs text-gray-600">
                 {(() => {
@@ -688,6 +707,9 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
               <div className="flex justify-center items-center space-x-1.5 text-amber-600 text-xs font-semibold">
                 <Clock className="w-3.5 h-3.5" />
                 <span><em>Will</em> Pending</span>
+                {hasProposalNotification && (
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" data-testid="dot-proposal-action"></span>
+                )}
               </div>
 
               {/* Submission Progress */}
@@ -781,21 +803,24 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
           )}
 
           {willStatus === 'will_review' && (
-            <div data-testid="section-will-review">
+            <div data-testid="section-will-review" className={hasReviewNotification ? 'ring-2 ring-purple-300/60 rounded-lg p-1 -m-1' : ''}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-purple-500/20 blur-sm rounded-lg"></div>
+                    <div className={`absolute inset-0 ${hasReviewNotification ? 'bg-purple-500/30 animate-pulse' : 'bg-purple-500/20'} blur-sm rounded-lg`}></div>
                     <div className="relative w-9 h-9 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg flex items-center justify-center border border-purple-100 shadow-sm">
                       <CheckCircle className="w-4 h-4 text-purple-600" />
                     </div>
+                    {hasReviewNotification && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" data-testid="dot-review-action"></span>
+                    )}
                   </div>
                   <div>
                     <h3 className="font-semibold tracking-tight text-gray-900 text-sm" data-testid="text-will-review-heading">
                       <em>Will</em> Review
                     </h3>
                     <p className="text-xs text-gray-500 tracking-tight" data-testid="text-will-review-description">
-                      Reflect on your experience
+                      {hasReviewNotification ? 'Your review is needed' : 'Reflect on your experience'}
                     </p>
                   </div>
                 </div>
@@ -806,6 +831,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
               
               <Button 
                 onClick={() => {
+                  markCircleNotificationsRead();
                   sessionStorage.setItem('willBackUrl', `/circles/${circleId}`);
                   setLocation(`/will/${will.id}`);
                 }}
