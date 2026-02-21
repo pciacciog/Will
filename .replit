@@ -47,3 +47,4 @@ expertMode = true
 [userenv.shared]
 APNS_PRODUCTION = "False"
 APP_ENV = "production"
+APP_URL = "https://will-1-porfirioaciacci.replit.app"
