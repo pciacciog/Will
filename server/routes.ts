@@ -278,11 +278,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Send email
         const { emailService } = await import('./emailService');
+        let originFromRequest = req.headers.origin || '';
+        if (!originFromRequest && req.headers.referer) {
+          try {
+            const refUrl = new URL(req.headers.referer);
+            originFromRequest = refUrl.origin;
+          } catch {}
+        }
         const { getDefaultOrigin } = await import('./config/environment');
-        // Use APP_URL if explicitly set, otherwise use environment-aware default origin
-        const baseUrl = process.env.APP_URL || getDefaultOrigin();
+        const baseUrl = process.env.APP_URL || originFromRequest || getDefaultOrigin();
         
-        console.log(`[PasswordReset] Using base URL: ${baseUrl}`);
+        console.log(`[PasswordReset] Using base URL: ${baseUrl} (from origin: ${req.headers.origin}, referer: ${req.headers.referer})`);
         await emailService.sendPasswordResetEmail(user.email, token, baseUrl);
         
         console.log(`[PasswordReset] Reset email sent to ${user.email}`);
