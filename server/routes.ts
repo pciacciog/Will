@@ -2233,12 +2233,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (will.isIndefinite) {
         await db.update(wills)
-          .set({ status: 'will_review' })
+          .set({ status: 'will_review', endDate: new Date() })
           .where(eq(wills.id, willId));
         res.json({ message: "Will moved to review", status: 'will_review' });
       } else {
         await db.update(wills)
-          .set({ status: 'terminated' })
+          .set({ status: 'terminated', endDate: new Date() })
           .where(eq(wills.id, willId));
         res.json({ message: "Will terminated successfully", status: 'terminated' });
       }
