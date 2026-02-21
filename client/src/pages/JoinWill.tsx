@@ -132,9 +132,18 @@ export default function JoinWill() {
     }
   };
 
-  const stepLabels = needsCheckInTime 
-    ? ['Details', 'Because', 'Check-In', 'Confirm'] 
-    : ['Details', 'Because', 'Confirm'];
+  const ladderSteps = needsCheckInTime 
+    ? ['What', 'Why', 'When'] 
+    : ['What', 'Why'];
+
+  const totalInternalSteps = needsCheckInTime ? 4 : 3;
+  const confirmStep = totalInternalSteps;
+
+  const ladderIndex = currentStep >= confirmStep ? ladderSteps.length : currentStep - 1;
+
+  const pageTitles: Record<number, string> = needsCheckInTime
+    ? { 1: 'What', 2: 'Why', 3: 'When', 4: 'Confirm' }
+    : { 1: 'What', 2: 'Why', 3: 'Confirm' };
 
   if (isLoading) {
     return (
@@ -175,30 +184,30 @@ export default function JoinWill() {
             testId="button-back"
           />
           <h1 className="absolute left-0 right-0 text-center text-lg font-semibold text-gray-900 pointer-events-none" data-testid="text-page-title">
-            {stepLabels[currentStep - 1]}
+            {pageTitles[currentStep] || ''}
           </h1>
           <div className="w-11"></div>
         </div>
 
-        <div className="flex justify-center gap-2 mb-6">
-          {stepLabels.map((label, i) => (
+        {currentStep < confirmStep && <div className="flex justify-center gap-2 mb-6">
+          {ladderSteps.map((label, i) => (
             <div key={label} className="flex items-center gap-2">
-              <div className={`flex items-center gap-1.5 ${i + 1 <= currentStep ? 'text-emerald-600' : 'text-gray-300'}`}>
+              <div className={`flex items-center gap-1.5 ${i < ladderIndex ? 'text-emerald-600' : i === ladderIndex ? 'text-emerald-600' : 'text-gray-300'}`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                  i + 1 < currentStep ? 'bg-emerald-500 text-white' :
-                  i + 1 === currentStep ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' :
+                  i < ladderIndex ? 'bg-emerald-500 text-white' :
+                  i === ladderIndex ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' :
                   'bg-gray-100 text-gray-400'
                 }`}>
-                  {i + 1 < currentStep ? <CheckCircle className="w-3.5 h-3.5" /> : i + 1}
+                  {i < ladderIndex ? <CheckCircle className="w-3.5 h-3.5" /> : i + 1}
                 </div>
-                <span className={`text-xs font-medium ${i + 1 <= currentStep ? 'text-gray-700' : 'text-gray-400'}`}>{label}</span>
+                <span className={`text-xs font-medium ${i <= ladderIndex ? 'text-gray-700' : 'text-gray-400'}`}>{label}</span>
               </div>
-              {i < stepLabels.length - 1 && (
-                <div className={`w-6 h-px ${i + 1 < currentStep ? 'bg-emerald-300' : 'bg-gray-200'}`}></div>
+              {i < ladderSteps.length - 1 && (
+                <div className={`w-6 h-px ${i < ladderIndex ? 'bg-emerald-300' : 'bg-gray-200'}`}></div>
               )}
             </div>
           ))}
-        </div>
+        </div>}
 
         <div className="flex-1">
           {currentStep === 1 && (
