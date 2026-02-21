@@ -445,8 +445,8 @@ class PushNotificationService {
   // NOTIFICATION: Will Review Required (fires when Will ENDS and status → will_review)
   async sendWillReviewRequiredNotification(willId: number, participants: string[]): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "Your Will has ended 🎯",
-      body: "Time to reflect - submit your review now!",
+      title: "Your will has ended",
+      body: "Please review and reflect on your journey.",
       category: 'will_review_required',
       data: {
         type: 'will_review_required',
@@ -542,11 +542,10 @@ class PushNotificationService {
     await this.sendToMultipleUsers(committedMembers, payload);
   }
 
-  // Daily check-in reminder — simple prompt to log progress
   async sendDailyReminderNotification(userId: string, willId?: number): Promise<boolean> {
     const payload: PushNotificationPayload = {
-      title: "Time to check in",
-      body: "Take a moment to log your progress today.",
+      title: "Have you honored your will today?",
+      body: "Tap to check in and log your progress.",
       category: 'daily_reminder',
       data: {
         type: 'daily_reminder',

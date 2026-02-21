@@ -694,19 +694,17 @@ export class EndRoomScheduler {
     }
   }
 
-  // NEW: Check and send daily reminder notifications (user-scheduled)
   private async checkDailyReminders(now: Date) {
     try {
       let remindersSent = 0;
+      const sentUserIds = new Set<string>();
 
-      // APPROACH 1: Will-specific reminders
-      // Check for ALL active wills that have their own reminderTime set (daily AND one-time/set-duration)
+      // APPROACH 1: Will-specific reminders (wills with their own reminderTime set)
       const willsWithReminders = await db
         .select({
           willId: wills.id,
           reminderTime: wills.reminderTime,
           userId: willCommitments.userId,
-          userWhy: willCommitments.why,
           userTimezone: users.timezone,
           lastDailyReminderSentAt: users.lastDailyReminderSentAt,
         })
@@ -724,51 +722,32 @@ export class EndRoomScheduler {
       for (const willData of willsWithReminders) {
         try {
           if (!willData.userTimezone) continue;
+          if (sentUserIds.has(willData.userId)) continue;
+          if (this.alreadySentToday(willData.lastDailyReminderSentAt, willData.userTimezone)) continue;
 
-          // Check if user has a valid device token
           const hasToken = await db
             .select({ id: deviceTokens.id })
             .from(deviceTokens)
-            .where(
-              and(
-                eq(deviceTokens.userId, willData.userId),
-                eq(deviceTokens.isActive, true)
-              )
-            )
+            .where(and(eq(deviceTokens.userId, willData.userId), eq(deviceTokens.isActive, true)))
             .limit(1);
-
           if (hasToken.length === 0) continue;
 
-          // Convert current time to user's local timezone
           const userLocalTime = this.getTimeInTimezone(now, willData.userTimezone);
+          if (!this.isWithinReminderWindow(userLocalTime, willData.reminderTime!)) continue;
 
-          // Check if current time is within ±5 minutes of Will's reminder time
-          if (!this.isWithinReminderWindow(userLocalTime, willData.reminderTime!)) {
-            continue;
-          }
-
-          // Check if we already sent a reminder today (in user's timezone)
-          if (this.alreadySentToday(willData.lastDailyReminderSentAt, willData.userTimezone)) {
-            continue;
-          }
-
-          const success = await pushNotificationService.sendDailyReminderNotification(
-            willData.userId, 
-            willData.willId
-          );
-
+          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId);
           if (success) {
+            sentUserIds.add(willData.userId);
             await storage.updateUserLastDailyReminderSent(willData.userId);
             remindersSent++;
-            console.log(`[SCHEDULER] ✅ Will-specific reminder sent to user ${willData.userId} for Will ${willData.willId} at ${willData.reminderTime} ${willData.userTimezone}`);
+            console.log(`[SCHEDULER] ✅ Will-specific reminder sent to user ${willData.userId} for Will ${willData.willId} at ${willData.reminderTime}`);
           }
         } catch (error) {
           console.error(`[SCHEDULER] Failed to send Will-specific reminder:`, error);
         }
       }
 
-      // APPROACH 2: User-level reminders (legacy/fallback)
-      // For wills without specific reminderTime, use user's global dailyReminderTime
+      // APPROACH 2: User-level reminders (legacy/fallback for wills without reminderTime)
       const usersWithReminders = await db
         .select({
           id: users.id,
@@ -789,72 +768,110 @@ export class EndRoomScheduler {
 
       for (const user of usersWithReminders) {
         try {
-          // Check if user has an active daily Will WITHOUT its own reminderTime
+          if (sentUserIds.has(user.id)) continue;
+          if (this.alreadySentToday(user.lastDailyReminderSentAt, user.timezone!)) continue;
+
           const activeWillsWithCommitment = await db
-            .select({ 
-              id: wills.id,
-              userWhy: willCommitments.why,
-              reminderTime: wills.reminderTime,
-            })
+            .select({ id: wills.id, isIndefinite: wills.isIndefinite, startDate: wills.startDate, endDate: wills.endDate })
             .from(wills)
             .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
             .where(
               and(
                 eq(willCommitments.userId, user.id),
                 eq(wills.status, 'active'),
-                isNull(wills.reminderTime) // Only for wills without specific reminder
+                isNull(wills.reminderTime),
+                or(eq(wills.isIndefinite, true), isNull(wills.endDate), gte(wills.endDate, now))
               )
             )
             .limit(1);
+          if (activeWillsWithCommitment.length === 0) continue;
 
-          if (activeWillsWithCommitment.length === 0) {
-            continue; // No active Will without specific reminder, skip
-          }
+          const willCandidate = activeWillsWithCommitment[0];
+          const isShortDuration = !willCandidate.isIndefinite && willCandidate.endDate &&
+            (new Date(willCandidate.endDate).getTime() - new Date(willCandidate.startDate).getTime()) <= 24 * 60 * 60 * 1000;
+          if (isShortDuration) continue;
 
-          // Check if user has a valid device token
           const hasToken = await db
             .select({ id: deviceTokens.id })
             .from(deviceTokens)
-            .where(
-              and(
-                eq(deviceTokens.userId, user.id),
-                eq(deviceTokens.isActive, true)
-              )
-            )
+            .where(and(eq(deviceTokens.userId, user.id), eq(deviceTokens.isActive, true)))
             .limit(1);
-
           if (hasToken.length === 0) continue;
 
-          // Convert current time to user's local timezone
           const userLocalTime = this.getTimeInTimezone(now, user.timezone!);
-          const reminderTime = user.dailyReminderTime!;
+          if (!this.isWithinReminderWindow(userLocalTime, user.dailyReminderTime!)) continue;
 
-          // Check if current time is within ±5 minutes of reminder time
-          if (!this.isWithinReminderWindow(userLocalTime, reminderTime)) {
-            continue;
-          }
-
-          // Check if we already sent a reminder today
-          if (this.alreadySentToday(user.lastDailyReminderSentAt, user.timezone!)) {
-            continue;
-          }
-
-          const willId = activeWillsWithCommitment[0].id;
-          const success = await pushNotificationService.sendDailyReminderNotification(user.id, willId);
-
+          const success = await pushNotificationService.sendDailyReminderNotification(user.id, willCandidate.id);
           if (success) {
+            sentUserIds.add(user.id);
             await storage.updateUserLastDailyReminderSent(user.id);
             remindersSent++;
-            console.log(`[SCHEDULER] ✅ User-level reminder sent to user ${user.id} at ${reminderTime} ${user.timezone}`);
+            console.log(`[SCHEDULER] ✅ User-level reminder sent to user ${user.id} at ${user.dailyReminderTime} ${user.timezone}`);
           }
-
         } catch (error) {
           console.error(`[SCHEDULER] Failed to send user-level reminder to user ${user.id}:`, error);
         }
       }
 
+      // APPROACH 3: Short-duration wills (<=24 hours) without reminderTime — random time within the will's active window
+      const shortWills = await db
+        .select({
+          willId: wills.id,
+          willStartDate: wills.startDate,
+          willEndDate: wills.endDate,
+          userId: willCommitments.userId,
+          userTimezone: users.timezone,
+          lastDailyReminderSentAt: users.lastDailyReminderSentAt,
+        })
+        .from(wills)
+        .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
+        .innerJoin(users, eq(willCommitments.userId, users.id))
+        .where(
+          and(
+            eq(wills.status, 'active'),
+            eq(wills.isIndefinite, false),
+            isNotNull(wills.endDate),
+            isNull(wills.reminderTime)
+          )
+        )
+        .limit(100);
+
+      for (const willData of shortWills) {
+        try {
+          if (!willData.userTimezone || !willData.willEndDate) continue;
+          if (sentUserIds.has(willData.userId)) continue;
+
+          const durationMs = new Date(willData.willEndDate).getTime() - new Date(willData.willStartDate).getTime();
+          if (durationMs > 24 * 60 * 60 * 1000) continue;
+
+          if (this.alreadySentToday(willData.lastDailyReminderSentAt, willData.userTimezone)) continue;
+
+          const hasToken = await db
+            .select({ id: deviceTokens.id })
+            .from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, willData.userId), eq(deviceTokens.isActive, true)))
+            .limit(1);
+          if (hasToken.length === 0) continue;
+
+          const userLocalTime = this.getTimeInTimezone(now, willData.userTimezone);
+          const targetTime = this.getShortWillRandomTime(willData.userId, now, willData.userTimezone, willData.willStartDate, willData.willEndDate, 'checkin');
+
+          if (!this.isWithinReminderWindow(userLocalTime, targetTime)) continue;
+
+          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId);
+          if (success) {
+            sentUserIds.add(willData.userId);
+            await storage.updateUserLastDailyReminderSent(willData.userId);
+            remindersSent++;
+            console.log(`[SCHEDULER] ✅ Short-will check-in sent to user ${willData.userId} for Will ${willData.willId} at random time ${targetTime}`);
+          }
+        } catch (error) {
+          console.error(`[SCHEDULER] Failed to send short-will check-in reminder:`, error);
+        }
+      }
+
       if (remindersSent > 0) {
-        console.log(`[SCHEDULER] Daily reminders sent: ${remindersSent}`);
+        console.log(`[SCHEDULER] Check-in reminders sent: ${remindersSent}`);
       }
 
     } catch (error) {
@@ -921,9 +938,26 @@ export class EndRoomScheduler {
           const isShortWill = !data.willIsIndefinite && data.willStartDate && data.willEndDate &&
             (new Date(data.willEndDate).getTime() - new Date(data.willStartDate).getTime()) <= 24 * 60 * 60 * 1000;
 
-          const randomHour = isShortWill
-            ? this.getShortWillRandomTime(userId, now, data.timezone, data.willStartDate!, data.willEndDate!)
+          let randomHour = isShortWill
+            ? this.getShortWillRandomTime(userId, now, data.timezone, data.willStartDate!, data.willEndDate!, 'motivational')
             : this.getDailyRandomHour(userId, now, data.timezone);
+
+          if (isShortWill) {
+            const checkinTime = this.getShortWillRandomTime(userId, now, data.timezone, data.willStartDate!, data.willEndDate!, 'checkin');
+            if (randomHour === checkinTime) {
+              const startTime = this.getTimeInTimezone(data.willStartDate!, data.timezone);
+              const endTime = this.getTimeInTimezone(data.willEndDate!, data.timezone);
+              const startMin = startTime.hours * 60 + startTime.minutes;
+              let endMin = endTime.hours * 60 + endTime.minutes;
+              if (endMin <= startMin) endMin += 24 * 60;
+
+              const [h, m] = randomHour.split(':').map(Number);
+              let shifted = h * 60 + m + 15;
+              if (shifted > endMin) shifted = startMin + Math.floor((endMin - startMin) / 2);
+              const clampedMin = shifted % (24 * 60);
+              randomHour = `${Math.floor(clampedMin / 60).toString().padStart(2, '0')}:${(clampedMin % 60).toString().padStart(2, '0')}`;
+            }
+          }
 
           if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
 
@@ -967,13 +1001,11 @@ export class EndRoomScheduler {
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   }
 
-  // Generate a random time within a short will's actual start-to-end window
-  private getShortWillRandomTime(userId: string, now: Date, timezone: string, willStart: Date, willEnd: Date): string {
+  private getShortWillRandomTime(userId: string, now: Date, timezone: string, willStart: Date, willEnd: Date, seedSuffix: string = 'short'): string {
     const startTime = this.getTimeInTimezone(willStart, timezone);
     const endTime = this.getTimeInTimezone(willEnd, timezone);
     const startMinutes = startTime.hours * 60 + startTime.minutes;
     let endMinutes = endTime.hours * 60 + endTime.minutes;
-    // Handle midnight crossing (e.g. 11pm to 2am)
     if (endMinutes <= startMinutes) {
       endMinutes += 24 * 60;
     }
@@ -986,7 +1018,7 @@ export class EndRoomScheduler {
       day: '2-digit',
     });
     const dateStr = todayFormatter.format(now);
-    const seed = `${userId}-${dateStr}-short`;
+    const seed = `${userId}-${dateStr}-${seedSuffix}`;
     let hash = 0;
     for (let i = 0; i < seed.length; i++) {
       hash = ((hash << 5) - hash) + seed.charCodeAt(i);
@@ -994,7 +1026,7 @@ export class EndRoomScheduler {
     }
     const offset = Math.abs(hash) % windowMinutes;
     const rawMinutes = startMinutes + offset;
-    const totalMinutes = rawMinutes % (24 * 60); // Wrap back to 0-23h
+    const totalMinutes = rawMinutes % (24 * 60);
     const hour = Math.floor(totalMinutes / 60);
     const minute = totalMinutes % 60;
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
