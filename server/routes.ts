@@ -1118,6 +1118,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Parent Will has no commitment" });
       }
       
+      // Use joiner's own check-in time if provided, otherwise fall back to parent's
+      const userCheckInTime = req.body.checkInTime || parentWill.checkInTime || null;
+      
       // Create a new will instance for this user
       const newWill = await storage.createWill({
         createdBy: userId,
@@ -1127,7 +1130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: parentWill.startDate,
         endDate: parentWill.endDate,
         checkInType: parentWill.checkInType || 'one-time',
-        checkInTime: parentWill.checkInTime || null,
+        checkInTime: userCheckInTime,
         activeDays: parentWill.activeDays || 'every_day',
         customDays: parentWill.customDays || null,
       });
@@ -1145,6 +1148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         what: parentCommitment.what,
         why: userWhy,
         checkInType: parentWill.checkInType || 'one-time',
+        checkInTime: userCheckInTime,
       });
       
       res.json({ willId: newWill.id, message: "Successfully joined" });

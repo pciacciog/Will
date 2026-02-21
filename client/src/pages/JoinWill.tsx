@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +7,7 @@ import { MobileLayout, UnifiedBackButton, PrimaryButton } from "@/components/ui/
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, CalendarDays, Users, ClipboardList, MessageCircle, CheckCircle, Clock } from "lucide-react";
+import TimeChipPicker from "@/components/TimeChipPicker";
 
 type PublicWillDetails = {
   id: number;
@@ -26,6 +27,13 @@ function formatDateForDisplay(dateStr: string | null) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatTimeForDisplay(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${displayHour}:${m.toString().padStart(2, '0')} ${period}`;
 }
 
 function getDurationText(startDate: string, endDate: string) {
@@ -61,6 +69,7 @@ export default function JoinWill() {
   const [currentStep, setCurrentStep] = useState(1);
   const [why, setWhy] = useState('');
   const [charCount, setCharCount] = useState(0);
+  const [checkInTime, setCheckInTime] = useState<string>('19:00');
   const whyRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: will, isLoading, error } = useQuery<PublicWillDetails>({
@@ -68,12 +77,23 @@ export default function JoinWill() {
     enabled: willId > 0,
   });
 
+  const isShortDuration = useMemo(() => {
+    if (!will?.startDate || !will?.endDate || will?.isIndefinite) return false;
+    const diffMs = new Date(will.endDate).getTime() - new Date(will.startDate).getTime();
+    return diffMs <= 24 * 60 * 60 * 1000;
+  }, [will]);
+
+  const needsCheckInTime = will?.checkInType === 'daily' && !isShortDuration;
+
   const joinMutation = useMutation({
     mutationFn: async () => {
       return apiRequest(`/api/wills/${willId}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ why }),
+        body: JSON.stringify({ 
+          why,
+          checkInTime: needsCheckInTime ? checkInTime : undefined,
+        }),
       });
     },
     onSuccess: (data: any) => {
@@ -112,7 +132,9 @@ export default function JoinWill() {
     }
   };
 
-  const stepLabels = ['Details', 'Because', 'Confirm'];
+  const stepLabels = needsCheckInTime 
+    ? ['Details', 'Because', 'Check-In', 'Confirm'] 
+    : ['Details', 'Because', 'Confirm'];
 
   if (isLoading) {
     return (
@@ -153,7 +175,7 @@ export default function JoinWill() {
             testId="button-back"
           />
           <h1 className="absolute left-0 right-0 text-center text-lg font-semibold text-gray-900 pointer-events-none" data-testid="text-page-title">
-            {currentStep === 1 ? 'Will Details' : currentStep === 2 ? 'Your Why' : 'Confirm'}
+            {stepLabels[currentStep - 1]}
           </h1>
           <div className="w-11"></div>
         </div>
@@ -310,7 +332,38 @@ export default function JoinWill() {
             </div>
           )}
 
-          {currentStep === 3 && (
+          {needsCheckInTime && currentStep === 3 && (
+            <div className="flex flex-col animate-in fade-in duration-500">
+              <div className="flex-1 flex flex-col items-center justify-center py-8">
+                <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">Daily Check-In</p>
+                  <p className="text-2xl font-bold text-gray-900 mb-2">When should we check in?</p>
+                  <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                    Pick a time each day when you'd like to be reminded to log your progress.
+                  </p>
+                </div>
+
+                <div className="flex justify-center animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
+                  <TimeChipPicker
+                    value={checkInTime}
+                    onChange={setCheckInTime}
+                    testId="input-join-check-in-time"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '200ms' }}>
+                <Button type="button" variant="ghost" onClick={() => setCurrentStep(2)} className="text-gray-500" data-testid="button-back-to-why">
+                  Back
+                </Button>
+                <PrimaryButton onClick={() => setCurrentStep(4)} data-testid="button-next-to-confirm-from-checkin">
+                  Next <ArrowRight className="w-4 h-4 ml-2" />
+                </PrimaryButton>
+              </div>
+            </div>
+          )}
+
+          {currentStep === (needsCheckInTime ? 4 : 3) && (
             <div className="flex flex-col animate-in fade-in duration-500">
               <div className="flex-1 flex flex-col py-4 px-4">
                 <div className="space-y-4">
@@ -363,12 +416,27 @@ export default function JoinWill() {
                         <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-tracking">{checkInLabel}</p>
                       </div>
                     </div>
+
+                    {needsCheckInTime && (
+                    <>
+                      <div className="border-t border-gray-200"></div>
+                      <div className="flex items-start gap-3">
+                        <Clock className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Daily Check-In</p>
+                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-checkin-time">
+                            {formatTimeForDisplay(checkInTime)}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <Button type="button" variant="ghost" onClick={() => setCurrentStep(2)} className="text-gray-500" data-testid="button-back-to-why">
+                <Button type="button" variant="ghost" onClick={() => setCurrentStep(needsCheckInTime ? 3 : 2)} className="text-gray-500" data-testid="button-back-from-confirm">
                   Back
                 </Button>
                 <button
