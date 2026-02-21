@@ -646,13 +646,16 @@ export class EndRoomScheduler {
   // NEW: Send midpoint milestone notifications (50% through Will duration)
   private async sendMilestoneNotifications(now: Date) {
     try {
-      // Find active wills where midpoint has passed but notification hasn't been sent
+      // Find active set-date wills where midpoint has passed but notification hasn't been sent
+      // Only for wills with defined end dates (skip indefinite/ongoing wills)
       const willsAtMidpoint = await db
         .select()
         .from(wills)
         .where(
           and(
             eq(wills.status, 'active'),
+            eq(wills.isIndefinite, false),
+            isNotNull(wills.endDate),
             lt(wills.midpointAt, now),
             isNull(wills.midpointNotificationSentAt)
           )
@@ -661,19 +664,16 @@ export class EndRoomScheduler {
 
       for (const will of willsAtMidpoint) {
         try {
-          // RACE CONDITION FIX: Use atomic update with WHERE clause to prevent duplicates
-          // Only proceed if we successfully claim this notification (no one else has set it)
           const updateResult = await db.update(wills)
             .set({ midpointNotificationSentAt: now })
             .where(
               and(
                 eq(wills.id, will.id),
-                isNull(wills.midpointNotificationSentAt) // Only update if still null
+                isNull(wills.midpointNotificationSentAt)
               )
             )
             .returning({ id: wills.id });
           
-          // If no rows updated, another scheduler instance already claimed it
           if (updateResult.length === 0) {
             console.log(`[SCHEDULER] ⏭️ Midpoint notification already sent for Will ${will.id} (skipping duplicate)`);
             continue;
@@ -682,7 +682,13 @@ export class EndRoomScheduler {
           const willWithCommitments = await storage.getWillWithCommitments(will.id);
           if (willWithCommitments && willWithCommitments.commitments) {
             const committedMembers = willWithCommitments.commitments.map(c => c.userId);
-            await pushNotificationService.sendMidpointMilestoneNotification(will.id, committedMembers);
+            const willStatement = will.sharedWhat || willWithCommitments.commitments[0]?.what || undefined;
+            await pushNotificationService.sendMidpointMilestoneNotification(
+              will.id,
+              committedMembers,
+              will.endDate!,
+              willStatement
+            );
             console.log(`[SCHEDULER] ✅ Midpoint milestone notification sent for Will ${will.id}`);
           }
         } catch (error) {

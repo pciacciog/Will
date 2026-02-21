@@ -526,11 +526,32 @@ class PushNotificationService {
     await this.sendToMultipleUsers(otherMembers, payload);
   }
 
-  // NEW NOTIFICATION #6: Will Midpoint Milestone (50% complete)
-  async sendMidpointMilestoneNotification(willId: number, committedMembers: string[]): Promise<void> {
+  // Midpoint milestone notification — factual time-remaining with will statement
+  async sendMidpointMilestoneNotification(willId: number, committedMembers: string[], endDate: Date, willWhat?: string): Promise<void> {
+    const now = new Date();
+    const remainingMs = Math.max(0, endDate.getTime() - now.getTime());
+    const remainingTotalHours = remainingMs / (1000 * 60 * 60);
+    const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+
+    let timeRemaining: string;
+    if (remainingDays >= 2) {
+      timeRemaining = `${remainingDays} days remaining`;
+    } else if (remainingTotalHours >= 1) {
+      const hours = Math.ceil(remainingTotalHours);
+      timeRemaining = `${hours} hour${hours !== 1 ? 's' : ''} remaining`;
+    } else {
+      timeRemaining = `Less than an hour remaining`;
+    }
+
+    let body = timeRemaining;
+    if (willWhat) {
+      const truncatedWhat = willWhat.length > 80 ? willWhat.substring(0, 77) + '...' : willWhat;
+      body = `${timeRemaining} — ${truncatedWhat}`;
+    }
+
     const payload: PushNotificationPayload = {
-      title: "Halfway there! 🎯",
-      body: "You're halfway through your Will. Keep it up!",
+      title: "Your will ends soon",
+      body,
       category: 'will_midpoint',
       data: {
         type: 'will_midpoint',
