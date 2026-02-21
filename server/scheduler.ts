@@ -697,17 +697,18 @@ export class EndRoomScheduler {
   private async checkDailyReminders(now: Date) {
     try {
       let remindersSent = 0;
-      const sentUserIds = new Set<string>();
 
-      // APPROACH 1: Will/commitment-specific reminders (wills.reminderTime OR willCommitments.checkInTime set)
+      // APPROACH 1: Per-commitment check-in reminders (each commitment fires independently at its own time)
+      // Covers: wills with reminderTime set OR commitments with checkInTime set
       const willsWithReminders = await db
         .select({
+          commitmentId: willCommitments.id,
           willId: wills.id,
           willReminderTime: wills.reminderTime,
           commitmentCheckInTime: willCommitments.checkInTime,
+          lastCheckInReminderSentAt: willCommitments.lastCheckInReminderSentAt,
           userId: willCommitments.userId,
           userTimezone: users.timezone,
-          lastDailyReminderSentAt: users.lastDailyReminderSentAt,
         })
         .from(wills)
         .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
@@ -718,16 +719,16 @@ export class EndRoomScheduler {
             or(isNotNull(wills.reminderTime), isNotNull(willCommitments.checkInTime))
           )
         )
-        .limit(100);
+        .limit(200);
 
       for (const willData of willsWithReminders) {
         try {
           if (!willData.userTimezone) continue;
-          if (sentUserIds.has(willData.userId)) continue;
-          if (this.alreadySentToday(willData.lastDailyReminderSentAt, willData.userTimezone)) continue;
 
           const effectiveReminderTime = willData.commitmentCheckInTime || willData.willReminderTime;
           if (!effectiveReminderTime) continue;
+
+          if (this.alreadySentToday(willData.lastCheckInReminderSentAt, willData.userTimezone)) continue;
 
           const hasToken = await db
             .select({ id: deviceTokens.id })
@@ -741,92 +742,25 @@ export class EndRoomScheduler {
 
           const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId);
           if (success) {
-            sentUserIds.add(willData.userId);
-            await storage.updateUserLastDailyReminderSent(willData.userId);
+            await db.update(willCommitments).set({ lastCheckInReminderSentAt: now }).where(eq(willCommitments.id, willData.commitmentId));
             remindersSent++;
-            console.log(`[SCHEDULER] ✅ Will-specific reminder sent to user ${willData.userId} for Will ${willData.willId} at ${effectiveReminderTime}`);
+            console.log(`[SCHEDULER] ✅ Commitment-specific reminder sent to user ${willData.userId} for Will ${willData.willId} at ${effectiveReminderTime}`);
           }
         } catch (error) {
-          console.error(`[SCHEDULER] Failed to send Will-specific reminder:`, error);
+          console.error(`[SCHEDULER] Failed to send commitment-specific reminder:`, error);
         }
       }
 
-      // APPROACH 2: User-level reminders (legacy/fallback for wills without reminderTime)
-      const usersWithReminders = await db
-        .select({
-          id: users.id,
-          dailyReminderTime: users.dailyReminderTime,
-          dailyReminderEnabled: users.dailyReminderEnabled,
-          timezone: users.timezone,
-          lastDailyReminderSentAt: users.lastDailyReminderSentAt,
-        })
-        .from(users)
-        .where(
-          and(
-            eq(users.dailyReminderEnabled, true),
-            isNotNull(users.dailyReminderTime),
-            isNotNull(users.timezone)
-          )
-        )
-        .limit(100);
-
-      for (const user of usersWithReminders) {
-        try {
-          if (sentUserIds.has(user.id)) continue;
-          if (this.alreadySentToday(user.lastDailyReminderSentAt, user.timezone!)) continue;
-
-          const activeWillsWithCommitment = await db
-            .select({ id: wills.id, isIndefinite: wills.isIndefinite, startDate: wills.startDate, endDate: wills.endDate })
-            .from(wills)
-            .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
-            .where(
-              and(
-                eq(willCommitments.userId, user.id),
-                eq(wills.status, 'active'),
-                isNull(wills.reminderTime),
-                isNull(willCommitments.checkInTime),
-                or(eq(wills.isIndefinite, true), isNull(wills.endDate), gte(wills.endDate, now))
-              )
-            )
-            .limit(1);
-          if (activeWillsWithCommitment.length === 0) continue;
-
-          const willCandidate = activeWillsWithCommitment[0];
-          const isShortDuration = !willCandidate.isIndefinite && willCandidate.endDate &&
-            (new Date(willCandidate.endDate).getTime() - new Date(willCandidate.startDate).getTime()) <= 24 * 60 * 60 * 1000;
-          if (isShortDuration) continue;
-
-          const hasToken = await db
-            .select({ id: deviceTokens.id })
-            .from(deviceTokens)
-            .where(and(eq(deviceTokens.userId, user.id), eq(deviceTokens.isActive, true)))
-            .limit(1);
-          if (hasToken.length === 0) continue;
-
-          const userLocalTime = this.getTimeInTimezone(now, user.timezone!);
-          if (!this.isWithinReminderWindow(userLocalTime, user.dailyReminderTime!)) continue;
-
-          const success = await pushNotificationService.sendDailyReminderNotification(user.id, willCandidate.id);
-          if (success) {
-            sentUserIds.add(user.id);
-            await storage.updateUserLastDailyReminderSent(user.id);
-            remindersSent++;
-            console.log(`[SCHEDULER] ✅ User-level reminder sent to user ${user.id} at ${user.dailyReminderTime} ${user.timezone}`);
-          }
-        } catch (error) {
-          console.error(`[SCHEDULER] Failed to send user-level reminder to user ${user.id}:`, error);
-        }
-      }
-
-      // APPROACH 3: Short-duration wills (<=24 hours) without reminderTime — random time within the will's active window
+      // APPROACH 2: Short-duration wills (<=24 hours) without check-in time — random time within the will's active window
       const shortWills = await db
         .select({
+          commitmentId: willCommitments.id,
           willId: wills.id,
           willStartDate: wills.startDate,
           willEndDate: wills.endDate,
+          lastCheckInReminderSentAt: willCommitments.lastCheckInReminderSentAt,
           userId: willCommitments.userId,
           userTimezone: users.timezone,
-          lastDailyReminderSentAt: users.lastDailyReminderSentAt,
         })
         .from(wills)
         .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
@@ -836,7 +770,8 @@ export class EndRoomScheduler {
             eq(wills.status, 'active'),
             eq(wills.isIndefinite, false),
             isNotNull(wills.endDate),
-            isNull(wills.reminderTime)
+            isNull(wills.reminderTime),
+            isNull(willCommitments.checkInTime)
           )
         )
         .limit(100);
@@ -844,12 +779,11 @@ export class EndRoomScheduler {
       for (const willData of shortWills) {
         try {
           if (!willData.userTimezone || !willData.willEndDate) continue;
-          if (sentUserIds.has(willData.userId)) continue;
 
           const durationMs = new Date(willData.willEndDate).getTime() - new Date(willData.willStartDate).getTime();
           if (durationMs > 24 * 60 * 60 * 1000) continue;
 
-          if (this.alreadySentToday(willData.lastDailyReminderSentAt, willData.userTimezone)) continue;
+          if (this.alreadySentToday(willData.lastCheckInReminderSentAt, willData.userTimezone)) continue;
 
           const hasToken = await db
             .select({ id: deviceTokens.id })
@@ -865,8 +799,7 @@ export class EndRoomScheduler {
 
           const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId);
           if (success) {
-            sentUserIds.add(willData.userId);
-            await storage.updateUserLastDailyReminderSent(willData.userId);
+            await db.update(willCommitments).set({ lastCheckInReminderSentAt: now }).where(eq(willCommitments.id, willData.commitmentId));
             remindersSent++;
             console.log(`[SCHEDULER] ✅ Short-will check-in sent to user ${willData.userId} for Will ${willData.willId} at random time ${targetTime}`);
           }
@@ -889,13 +822,15 @@ export class EndRoomScheduler {
     try {
       let sent = 0;
 
+      // Per-commitment motivational notifications: each commitment sends its own "Because..." independently
       const activeCommitments = await db
         .select({
+          commitmentId: willCommitments.id,
           userId: willCommitments.userId,
           willId: willCommitments.willId,
           userWhy: willCommitments.why,
           userTimezone: users.timezone,
-          lastMotivationalSentAt: users.lastMotivationalSentAt,
+          lastMotivationalSentAt: willCommitments.lastMotivationalSentAt,
           willStartDate: wills.startDate,
           willEndDate: wills.endDate,
           willIsIndefinite: wills.isIndefinite,
@@ -911,47 +846,36 @@ export class EndRoomScheduler {
         )
         .limit(200);
 
-      const userMap = new Map<string, { why: string; willId: number; timezone: string; lastSent: Date | null; willStartDate: Date | null; willEndDate: Date | null; willIsIndefinite: boolean | null }>();
       for (const row of activeCommitments) {
-        if (!row.userTimezone || !row.userWhy) continue;
-        if (userMap.has(row.userId)) continue;
-        userMap.set(row.userId, {
-          why: row.userWhy,
-          willId: row.willId,
-          timezone: row.userTimezone,
-          lastSent: row.lastMotivationalSentAt,
-          willStartDate: row.willStartDate,
-          willEndDate: row.willEndDate,
-          willIsIndefinite: row.willIsIndefinite,
-        });
-      }
-
-      for (const [userId, data] of Array.from(userMap.entries())) {
         try {
-          if (this.alreadySentToday(data.lastSent, data.timezone)) continue;
+          if (!row.userTimezone || !row.userWhy) continue;
+
+          if (this.alreadySentToday(row.lastMotivationalSentAt, row.userTimezone)) continue;
 
           const hasToken = await db
             .select({ id: deviceTokens.id })
             .from(deviceTokens)
-            .where(and(eq(deviceTokens.userId, userId), eq(deviceTokens.isActive, true)))
+            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true)))
             .limit(1);
           if (hasToken.length === 0) continue;
 
-          const userLocalTime = this.getTimeInTimezone(now, data.timezone);
+          const userLocalTime = this.getTimeInTimezone(now, row.userTimezone);
 
           // For short-duration wills (<= 24 hours), pick random time within the will's actual window
-          const isShortWill = !data.willIsIndefinite && data.willStartDate && data.willEndDate &&
-            (new Date(data.willEndDate).getTime() - new Date(data.willStartDate).getTime()) <= 24 * 60 * 60 * 1000;
+          const isShortWill = !row.willIsIndefinite && row.willStartDate && row.willEndDate &&
+            (new Date(row.willEndDate).getTime() - new Date(row.willStartDate).getTime()) <= 24 * 60 * 60 * 1000;
 
+          // Use will ID in seed so each will gets a different random time
+          const willSeed = `${row.userId}-will${row.willId}`;
           let randomHour = isShortWill
-            ? this.getShortWillRandomTime(userId, now, data.timezone, data.willStartDate!, data.willEndDate!, 'motivational')
-            : this.getDailyRandomHour(userId, now, data.timezone);
+            ? this.getShortWillRandomTime(row.userId, now, row.userTimezone, row.willStartDate!, row.willEndDate!, 'motivational')
+            : this.getDailyRandomHourForWill(willSeed, now, row.userTimezone);
 
           if (isShortWill) {
-            const checkinTime = this.getShortWillRandomTime(userId, now, data.timezone, data.willStartDate!, data.willEndDate!, 'checkin');
+            const checkinTime = this.getShortWillRandomTime(row.userId, now, row.userTimezone, row.willStartDate!, row.willEndDate!, 'checkin');
             if (randomHour === checkinTime) {
-              const startTime = this.getTimeInTimezone(data.willStartDate!, data.timezone);
-              const endTime = this.getTimeInTimezone(data.willEndDate!, data.timezone);
+              const startTime = this.getTimeInTimezone(row.willStartDate!, row.userTimezone);
+              const endTime = this.getTimeInTimezone(row.willEndDate!, row.userTimezone);
               const startMin = startTime.hours * 60 + startTime.minutes;
               let endMin = endTime.hours * 60 + endTime.minutes;
               if (endMin <= startMin) endMin += 24 * 60;
@@ -966,14 +890,14 @@ export class EndRoomScheduler {
 
           if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
 
-          const success = await pushNotificationService.sendMotivationalNotification(userId, data.why, data.willId);
+          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId);
           if (success) {
-            await db.update(users).set({ lastMotivationalSentAt: now }).where(eq(users.id, userId));
+            await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
             sent++;
-            console.log(`[SCHEDULER] \u2705 Motivational notification sent to ${userId} at random time ${randomHour} ${data.timezone}`);
+            console.log(`[SCHEDULER] ✅ Motivational notification sent to ${row.userId} for Will ${row.willId} at random time ${randomHour} ${row.userTimezone}`);
           }
         } catch (error) {
-          console.error(`[SCHEDULER] Failed motivational notification for ${userId}:`, error);
+          console.error(`[SCHEDULER] Failed motivational notification for ${row.userId}:`, error);
         }
       }
 
@@ -987,6 +911,11 @@ export class EndRoomScheduler {
 
   // Generate a deterministic "random" time (HH:MM) for a user each day (8am-9pm range)
   private getDailyRandomHour(userId: string, now: Date, timezone: string): string {
+    return this.getDailyRandomHourForWill(userId, now, timezone);
+  }
+
+  // Generate a deterministic "random" time (HH:MM) for a specific seed (user+will) each day (8am-9pm range)
+  private getDailyRandomHourForWill(seed: string, now: Date, timezone: string): string {
     const todayFormatter = new Intl.DateTimeFormat('en-CA', {
       timeZone: timezone,
       year: 'numeric',
@@ -994,10 +923,10 @@ export class EndRoomScheduler {
       day: '2-digit',
     });
     const dateStr = todayFormatter.format(now);
-    const seed = `${userId}-${dateStr}`;
+    const fullSeed = `${seed}-${dateStr}`;
     let hash = 0;
-    for (let i = 0; i < seed.length; i++) {
-      hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+    for (let i = 0; i < fullSeed.length; i++) {
+      hash = ((hash << 5) - hash) + fullSeed.charCodeAt(i);
       hash |= 0;
     }
     const totalMinutes = Math.abs(hash) % (13 * 60); // 0 to 779 minutes (13 hour range)

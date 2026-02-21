@@ -111,6 +111,8 @@ export const willCommitments = pgTable("will_commitments", {
   createdAt: timestamp("created_at").defaultNow(),
   // Notification tracking field for acknowledgment reminder
   ackReminderSentAt: timestamp("ack_reminder_sent_at"), // For 6hr unacknowledged reminder
+  lastCheckInReminderSentAt: timestamp("last_check_in_reminder_sent_at"), // Per-commitment dedup for daily check-in notifications
+  lastMotivationalSentAt: timestamp("last_motivational_sent_at"), // Per-commitment dedup for motivational notifications
 }, (table) => [
   index("IDX_will_commitments_will_id").on(table.willId),
   index("IDX_will_commitments_user_id").on(table.userId),
