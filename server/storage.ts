@@ -688,8 +688,7 @@ export class DatabaseStorage implements IStorage {
       let circleCode: string | undefined = undefined;
       if (row.wills.circleId) {
         try {
-          const circleRows = await db.select({ name: circles.name, inviteCode: circles.inviteCode }).from(circles).where(eq(circles.id, row.wills.circleId));
-          circleName = circleRows[0]?.name || undefined;
+          const circleRows = await db.select({ inviteCode: circles.inviteCode }).from(circles).where(eq(circles.id, row.wills.circleId));
           circleCode = circleRows[0]?.inviteCode || undefined;
         } catch (e) {
           console.warn('[STORAGE] Could not fetch circle info for circleId:', row.wills.circleId);

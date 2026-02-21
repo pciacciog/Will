@@ -80,12 +80,12 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
               <p className="text-sm font-medium text-gray-900 truncate" data-testid={`text-will-title-${will.id}`}>
                 {commitment?.what ? `I will ${commitment.what}` : 'Untitled commitment'}
               </p>
-              {isCircle && (will.circleCode || will.circleName) && (
+              {isCircle && (
                 <p className="text-xs text-purple-600 font-medium mt-0.5 truncate" data-testid={`text-circle-info-${will.id}`}>
-                  {will.circleCode || will.circleName}
+                  {will.circleCode && <span>{will.circleCode}</span>}
                   {will.commitments && will.commitments.length > 0 && (
                     <span className="text-gray-400 font-normal">
-                      {' · '}{will.commitments.map(c => c.user?.firstName).filter(Boolean).join(', ')}
+                      {will.circleCode ? ' · ' : ''}{will.commitments.map(c => c.user?.firstName).filter(Boolean).join(', ')}
                     </span>
                   )}
                 </p>
