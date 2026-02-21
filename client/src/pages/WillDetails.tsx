@@ -185,6 +185,7 @@ export default function WillDetails() {
   const [selectedCheckInDate, setSelectedCheckInDate] = useState<string | null>(null);
   const [showGutCheckModal, setShowGutCheckModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
+  const [checkinAutoOpened, setCheckinAutoOpened] = useState(false);
   
   const handleDayClick = (date: string) => {
     setSelectedCheckInDate(date);
@@ -332,7 +333,21 @@ export default function WillDetails() {
   };
   const userCheckInType = getUserCheckInType();
   const hasDailyCheckIns = userCheckInType === 'daily';
-  
+
+  useEffect(() => {
+    if (checkinAutoOpened || !will || will.status !== 'active') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('action') === 'checkin') {
+      setCheckinAutoOpened(true);
+      if (hasDailyCheckIns) {
+        setShowCheckInModal(true);
+      } else {
+        setShowGutCheckModal(true);
+      }
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [will, hasDailyCheckIns, checkinAutoOpened]);
+
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
     queryKey: [`/api/wills/${id}/check-ins`],
     enabled: !!id && !!user,

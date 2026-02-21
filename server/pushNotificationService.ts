@@ -550,7 +550,7 @@ class PushNotificationService {
       data: {
         type: 'daily_reminder',
         willId: willId?.toString() || '',
-        deepLink: willId ? `/will/${willId}` : '/solo/hub'
+        deepLink: willId ? `/will/${willId}?action=checkin` : '/solo/hub'
       }
     };
 
