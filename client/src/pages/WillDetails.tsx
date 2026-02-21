@@ -489,6 +489,7 @@ export default function WillDetails() {
     queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
     queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
     queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/wills/public'] });
   };
 
   const pauseMutation = useMutation({

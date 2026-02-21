@@ -477,10 +477,27 @@ class PushNotificationService {
   // NOTIFICATION: Will Review Reminder (6hrs after Will ends, for users who haven't submitted review)
   async sendWillReviewReminderNotification(willId: number, usersWithoutReview: string[], isSoloMode: boolean = false): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "Review reminder ⏰",
+      title: "Review reminder",
       body: isSoloMode 
         ? "Don't forget to submit your Will review!" 
         : "Your Circle is waiting for your review.",
+      category: 'will_review_reminder',
+      data: {
+        type: 'will_review_reminder',
+        willId: willId.toString(),
+        deepLink: `/will/${willId}/review`
+      }
+    };
+
+    await this.sendToMultipleUsers(usersWithoutReview, payload);
+  }
+
+  async sendFinalReviewWarningNotification(willId: number, usersWithoutReview: string[], isSoloMode: boolean = false): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "Last chance to review",
+      body: isSoloMode
+        ? "Your review will be auto-completed tomorrow if not submitted."
+        : "Your Circle is waiting. Your review will be auto-completed tomorrow.",
       category: 'will_review_reminder',
       data: {
         type: 'will_review_reminder',

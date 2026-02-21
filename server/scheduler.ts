@@ -587,7 +587,7 @@ export class EndRoomScheduler {
         }
       }
 
-      // 2. WILL REVIEW REMINDER: Wills in will_review status where completion notification was sent 6+ hours ago
+      // 2. WILL REVIEW REMINDERS: Escalating daily reminders for 3 days + auto-complete
       // Works for BOTH Circle and Solo modes
       const willsInReview = await db
         .select()
@@ -602,37 +602,81 @@ export class EndRoomScheduler {
 
       for (const will of willsInReview) {
         try {
-          // Get all committed members
           const commitments = await db
             .select()
             .from(willCommitments)
             .where(eq(willCommitments.willId, will.id));
 
-          // Get users who have already submitted REVIEWS (not acknowledgments)
           const reviewedUsers = await db
             .select({ userId: willReviews.userId })
             .from(willReviews)
             .where(eq(willReviews.willId, will.id));
           const reviewedUserIds = reviewedUsers.map(r => r.userId);
 
-          // Find committed members who haven't submitted review AND haven't been reminded yet
-          const unreviewedToRemind = commitments.filter(
-            c => !reviewedUserIds.includes(c.userId) && !c.ackReminderSentAt
+          const unreviewedCommitments = commitments.filter(
+            c => !reviewedUserIds.includes(c.userId)
+          );
+
+          if (unreviewedCommitments.length === 0) continue;
+
+          // Calculate days since will entered review (endDate = when will ended)
+          const reviewStartDate = will.endDate || will.completionNotificationSentAt || now;
+          const daysSinceReview = (now.getTime() - new Date(reviewStartDate).getTime()) / (1000 * 60 * 60 * 24);
+
+          // AUTO-COMPLETE after 3 days: submit skipped reviews for all unreviewed members
+          if (daysSinceReview >= 3) {
+            let autoCompletedCount = 0;
+            for (const commitment of unreviewedCommitments) {
+              // Idempotent check: skip if review already exists (e.g., from a previous partial run)
+              const existingReview = await db
+                .select({ id: willReviews.id })
+                .from(willReviews)
+                .where(and(eq(willReviews.willId, will.id), eq(willReviews.userId, commitment.userId)))
+                .limit(1);
+              if (existingReview.length > 0) continue;
+
+              await db.insert(willReviews).values({
+                willId: will.id,
+                userId: commitment.userId,
+                followThrough: 'skipped',
+                reflectionText: 'Auto-completed: review period expired after 3 days.',
+              });
+              autoCompletedCount++;
+              console.log(`[SCHEDULER] ⏭️ Auto-completed review for user ${commitment.userId} on Will ${will.id}`);
+            }
+
+            // Transition will to completed
+            await db.update(wills)
+              .set({ status: 'completed' })
+              .where(and(eq(wills.id, will.id), eq(wills.status, 'will_review')));
+            console.log(`[SCHEDULER] ✅ Will ${will.id} auto-completed after 3-day review deadline (${autoCompletedCount} reviews auto-submitted)`);
+            continue;
+          }
+
+          // ESCALATING REMINDERS: Send daily reminders to unreviewed members
+          // Only send if 24+ hours since last reminder (or never reminded)
+          const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          const unreviewedToRemind = unreviewedCommitments.filter(
+            c => !c.ackReminderSentAt || new Date(c.ackReminderSentAt) < oneDayAgo
           );
 
           if (unreviewedToRemind.length > 0) {
             const userIdsToRemind = unreviewedToRemind.map(c => c.userId);
             const isSoloMode = will.mode === 'solo';
-            await pushNotificationService.sendWillReviewReminderNotification(will.id, userIdsToRemind, isSoloMode);
-            
-            // Mark reminders as sent on each commitment record (idempotency)
-            // Reusing ackReminderSentAt field for review reminders (same purpose)
+            const isFinalWarning = daysSinceReview >= 2;
+
+            if (isFinalWarning) {
+              await pushNotificationService.sendFinalReviewWarningNotification(will.id, userIdsToRemind, isSoloMode);
+            } else {
+              await pushNotificationService.sendWillReviewReminderNotification(will.id, userIdsToRemind, isSoloMode);
+            }
+
             for (const commitment of unreviewedToRemind) {
               await db.update(willCommitments)
                 .set({ ackReminderSentAt: now })
                 .where(eq(willCommitments.id, commitment.id));
             }
-            console.log(`[SCHEDULER] ✅ Will review reminder sent to ${userIdsToRemind.length} users for Will ${will.id} (${isSoloMode ? 'Solo' : 'Circle'} mode)`);
+            console.log(`[SCHEDULER] ✅ Will review ${isFinalWarning ? 'FINAL WARNING' : 'reminder'} sent to ${userIdsToRemind.length} users for Will ${will.id} (day ${Math.floor(daysSinceReview) + 1})`);
           }
         } catch (error) {
           console.error(`[SCHEDULER] Failed to send will review reminder for Will ${will.id}:`, error);

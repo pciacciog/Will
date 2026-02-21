@@ -2232,8 +2232,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (will.isIndefinite) {
+        const nowDate = new Date();
         await db.update(wills)
-          .set({ status: 'will_review', endDate: new Date() })
+          .set({ status: 'will_review', endDate: nowDate, completionNotificationSentAt: nowDate })
           .where(eq(wills.id, willId));
         res.json({ message: "Will moved to review", status: 'will_review' });
       } else {
