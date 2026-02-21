@@ -699,11 +699,12 @@ export class EndRoomScheduler {
       let remindersSent = 0;
       const sentUserIds = new Set<string>();
 
-      // APPROACH 1: Will-specific reminders (wills with their own reminderTime set)
+      // APPROACH 1: Will/commitment-specific reminders (wills.reminderTime OR willCommitments.checkInTime set)
       const willsWithReminders = await db
         .select({
           willId: wills.id,
-          reminderTime: wills.reminderTime,
+          willReminderTime: wills.reminderTime,
+          commitmentCheckInTime: willCommitments.checkInTime,
           userId: willCommitments.userId,
           userTimezone: users.timezone,
           lastDailyReminderSentAt: users.lastDailyReminderSentAt,
@@ -714,7 +715,7 @@ export class EndRoomScheduler {
         .where(
           and(
             eq(wills.status, 'active'),
-            isNotNull(wills.reminderTime)
+            or(isNotNull(wills.reminderTime), isNotNull(willCommitments.checkInTime))
           )
         )
         .limit(100);
@@ -725,6 +726,9 @@ export class EndRoomScheduler {
           if (sentUserIds.has(willData.userId)) continue;
           if (this.alreadySentToday(willData.lastDailyReminderSentAt, willData.userTimezone)) continue;
 
+          const effectiveReminderTime = willData.commitmentCheckInTime || willData.willReminderTime;
+          if (!effectiveReminderTime) continue;
+
           const hasToken = await db
             .select({ id: deviceTokens.id })
             .from(deviceTokens)
@@ -733,14 +737,14 @@ export class EndRoomScheduler {
           if (hasToken.length === 0) continue;
 
           const userLocalTime = this.getTimeInTimezone(now, willData.userTimezone);
-          if (!this.isWithinReminderWindow(userLocalTime, willData.reminderTime!)) continue;
+          if (!this.isWithinReminderWindow(userLocalTime, effectiveReminderTime)) continue;
 
           const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId);
           if (success) {
             sentUserIds.add(willData.userId);
             await storage.updateUserLastDailyReminderSent(willData.userId);
             remindersSent++;
-            console.log(`[SCHEDULER] ✅ Will-specific reminder sent to user ${willData.userId} for Will ${willData.willId} at ${willData.reminderTime}`);
+            console.log(`[SCHEDULER] ✅ Will-specific reminder sent to user ${willData.userId} for Will ${willData.willId} at ${effectiveReminderTime}`);
           }
         } catch (error) {
           console.error(`[SCHEDULER] Failed to send Will-specific reminder:`, error);
@@ -780,6 +784,7 @@ export class EndRoomScheduler {
                 eq(willCommitments.userId, user.id),
                 eq(wills.status, 'active'),
                 isNull(wills.reminderTime),
+                isNull(willCommitments.checkInTime),
                 or(eq(wills.isIndefinite, true), isNull(wills.endDate), gte(wills.endDate, now))
               )
             )
