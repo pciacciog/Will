@@ -1,0 +1,35 @@
+Bug: Notification Badges Don't Guide User to Specific Action Item
+The notification badge system we just implemented only works at the top level (Circles tab), but doesn't continue guiding the user through the flow to find what actually needs their attention.
+Current Broken Flow:
+1. User sees badge on Circles tab ✓ (working)
+2. User taps Circles → sees "My Circles" screen with 3 different circles
+3. No badges on individual circle cards ✗ (broken - user doesn't know which circle needs attention)
+4. User is stuck guessing which of the 3 circles to tap
+Expected Flow:
+1. User sees badge on Circles tab ✓
+2. User taps Circles → sees "My Circles" screen
+3. Badge appears on the specific circle card that needs attention (e.g., "BJJ Crew" circle shows a "1" badge)
+4. User taps that circle → goes to Circle Hub
+5. Badge/highlight appears on the specific item that needs action (e.g., a Will proposal card is highlighted or has a badge)
+6. User taps that item → completes the action
+7. All badges clear
+The Fix:
+The notification badge system needs to cascade through the entire hierarchy:
+* Level 1: Circles tab badge (shows total count across all circles) ✓ Already working
+* Level 2: Individual circle cards in "My Circles" list (shows count per circle) ✗ MISSING - ADD THIS
+* Level 3: Specific item within circle that needs action (Will proposal, acknowledgment, etc.) ✗ MISSING - ADD THIS
+Example:
+* Circles tab shows "2" badge (2 total action items)
+* My Circles screen shows:
+    * "BJJ Crew" circle with "1" badge
+    * "Family" circle with "1" badge
+    * "Work Team" circle with no badge
+* User taps "BJJ Crew" → sees Will proposal card with visual indicator (dot, highlight, or badge)
+* User taps that card → completes action → badges clear
+Implementation:
+Each notification in the database has a circleId - use this to:
+1. Group unread notifications by circle
+2. Display count badge on each circle card
+3. When user enters a circle, highlight the specific items that have unread notifications
+4. When user interacts with that item, mark related notifications as read and clear badges
+Does this make sense? The badge needs to guide the user all the way to the action, not just alert them that something somewhere needs attention.
