@@ -723,9 +723,37 @@ export class DatabaseStorage implements IStorage {
             user: c.user,
           }));
 
+        let publicParticipantCount: number | undefined = undefined;
+        let creatorName: string | undefined = undefined;
+
+        const isPublicWill = will.visibility === 'public' || !!will.parentWillId;
+        if (isPublicWill) {
+          try {
+            const rootWillId = will.parentWillId || will.id;
+            const [countResult] = await db
+              .select({ count: sql<number>`count(*)::int` })
+              .from(wills)
+              .where(eq(wills.parentWillId, rootWillId));
+            publicParticipantCount = (countResult?.count || 0) + 1;
+
+            const rootWill = will.parentWillId ? await this.getWillById(will.parentWillId) : will;
+            if (rootWill) {
+              const [creator] = await db
+                .select({ firstName: users.firstName })
+                .from(users)
+                .where(eq(users.id, rootWill.createdBy));
+              creatorName = creator?.firstName || 'Anonymous';
+            }
+          } catch (e) {
+            console.warn('[STORAGE] Could not fetch public will info for will:', will.id);
+          }
+        }
+
         willsWithCommitments.push({
           ...will,
           commitments: mappedCommitments,
+          publicParticipantCount,
+          creatorName,
         });
       } catch (e: any) {
         console.error(`[STORAGE] Failed to fetch commitments for will ${will.id}:`, e.message);

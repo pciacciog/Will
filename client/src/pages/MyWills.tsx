@@ -20,6 +20,8 @@ type Will = {
   circleId?: number;
   circleName?: string;
   circleCode?: string;
+  publicParticipantCount?: number;
+  creatorName?: string;
   commitments?: { id: number; userId: string; what: string; why: string; user?: { firstName?: string } }[];
 };
 
@@ -57,12 +59,12 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
       className="w-full text-left group"
       data-testid={`card-will-${will.id}`}
     >
-      <Card className={`bg-white border shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98] ${
+      <Card className={`border shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98] ${
         isCircle
-          ? 'border-purple-200 group-hover:border-purple-300'
+          ? 'bg-white border-purple-200 group-hover:border-purple-300'
           : isPublic
-          ? 'border-blue-200 group-hover:border-blue-300'
-          : 'border-gray-200 group-hover:border-emerald-300'
+          ? 'bg-gradient-to-br from-white to-blue-50/60 border-blue-200 group-hover:border-blue-300'
+          : 'bg-white border-gray-200 group-hover:border-emerald-300'
       }`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
@@ -89,6 +91,21 @@ function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
                     </span>
                   )}
                 </p>
+              )}
+              {isPublic && (
+                <div className="mt-0.5 space-y-0.5" data-testid={`text-public-info-${will.id}`}>
+                  {will.creatorName && (
+                    <p className="text-xs text-blue-600 font-medium truncate">
+                      Created by {will.creatorName}
+                    </p>
+                  )}
+                  {will.publicParticipantCount && will.publicParticipantCount > 1 && (
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      {will.publicParticipantCount} {will.publicParticipantCount === 1 ? 'person has' : 'people have'} committed
+                    </p>
+                  )}
+                </div>
               )}
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                 {isPublic && (

@@ -21,7 +21,7 @@ import {
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db, pool } from "./db";
-import { eq, and, or, isNull, sql } from "drizzle-orm";
+import { eq, and, or, isNull, sql, inArray } from "drizzle-orm";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
 import { getEnvironment, getDatabaseUrl, getBackendHost, isProduction } from "./config/environment";
@@ -1081,6 +1081,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching public will details:", error);
       res.status(500).json({ message: "Failed to fetch Will details" });
+    }
+  });
+
+  app.get('/api/wills/:id/participants', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+
+      if (will.visibility !== 'public' && !will.parentWillId) {
+        return res.status(403).json({ message: "Participants are only available for Public Wills" });
+      }
+
+      const rootWillId = will.parentWillId || will.id;
+      const rootWill = will.parentWillId ? await storage.getWillById(rootWillId) : will;
+
+      const childWills = await db
+        .select({ id: wills.id, createdBy: wills.createdBy })
+        .from(wills)
+        .where(eq(wills.parentWillId, rootWillId));
+
+      const allParticipantIds = [rootWill!.createdBy, ...childWills.map(w => w.createdBy)];
+      const uniqueIds = Array.from(new Set(allParticipantIds));
+
+      const participants = await db
+        .select({ id: users.id, firstName: users.firstName })
+        .from(users)
+        .where(inArray(users.id, uniqueIds));
+
+      const [creator] = await db
+        .select({ firstName: users.firstName })
+        .from(users)
+        .where(eq(users.id, rootWill!.createdBy));
+
+      res.json({
+        participants: participants.map(p => ({ id: p.id, firstName: p.firstName })),
+        totalCount: uniqueIds.length,
+        creatorName: creator?.firstName || 'Anonymous',
+      });
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+      res.status(500).json({ message: "Failed to fetch participants" });
     }
   });
 

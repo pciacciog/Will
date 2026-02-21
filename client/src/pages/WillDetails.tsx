@@ -13,7 +13,7 @@ import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
-import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle } from "lucide-react";
+import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, X } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
@@ -186,6 +186,7 @@ export default function WillDetails() {
   const [showGutCheckModal, setShowGutCheckModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [checkinAutoOpened, setCheckinAutoOpened] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
   
   const handleDayClick = (date: string) => {
     setSelectedCheckInDate(date);
@@ -284,6 +285,14 @@ export default function WillDetails() {
     enabled: !!user && !isSoloMode,
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
     staleTime: 0, // Always consider data stale for immediate updates
+  });
+
+  const isPublicWill = will?.visibility === 'public' || !!will?.parentWillId;
+  const participantWillId = will?.parentWillId || will?.id;
+
+  const { data: participantsData } = useQuery<{ participants: { id: string; firstName: string }[]; totalCount: number; creatorName: string }>({
+    queryKey: [`/api/wills/${participantWillId}/participants`],
+    enabled: !!participantWillId && isPublicWill,
   });
 
   // NEW FEATURE: Fetch review status to check if user has reviewed
@@ -849,6 +858,45 @@ export default function WillDetails() {
           </div>
         )}
 
+        {/* Public Will Participants */}
+        {isPublicWill && participantsData && participantsData.totalCount > 1 && (
+          <button
+            onClick={() => setShowParticipants(true)}
+            className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-3 flex items-center gap-3 hover:shadow-sm transition-all active:scale-[0.98]"
+            data-testid="button-show-participants"
+          >
+            <div className="flex -space-x-2 flex-shrink-0">
+              {participantsData.participants.slice(0, 4).map((p, i) => (
+                <div
+                  key={p.id}
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-xs font-semibold border-2 border-white"
+                  style={{ zIndex: 4 - i }}
+                  data-testid={`avatar-participant-${i}`}
+                >
+                  {p.firstName?.charAt(0).toUpperCase() || '?'}
+                </div>
+              ))}
+              {participantsData.totalCount > 4 && (
+                <div
+                  className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-semibold border-2 border-white"
+                  style={{ zIndex: 0 }}
+                >
+                  +{participantsData.totalCount - 4}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-medium text-gray-900">
+                You + {participantsData.totalCount - 1} {participantsData.totalCount - 1 === 1 ? 'other' : 'others'} committed
+              </p>
+              <p className="text-xs text-gray-500">
+                Created by {participantsData.creatorName}
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          </button>
+        )}
+
         {/* Commitment Details - Solo Mode */}
         {will.status !== 'will_review' && isSoloMode && will.commitments?.[0] && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -1369,6 +1417,45 @@ export default function WillDetails() {
           onClose={() => setShowGutCheckModal(false)}
           willId={Number(id)}
         />
+      )}
+
+      {/* Participants Modal for Public Wills */}
+      {showParticipants && participantsData && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" data-testid="modal-participants">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowParticipants(false)} />
+          <div className="relative w-full max-w-lg bg-white rounded-t-2xl max-h-[70vh] flex flex-col animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Participants</h3>
+                <p className="text-sm text-gray-500">{participantsData.totalCount} people committed</p>
+              </div>
+              <button
+                onClick={() => setShowParticipants(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                data-testid="button-close-participants"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 space-y-2">
+              {participantsData.participants.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg" data-testid={`participant-${p.id}`}>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                    {p.firstName?.charAt(0).toUpperCase() || '?'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">
+                      {p.firstName}
+                      {p.id === user?.id && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">You</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </MobileLayout>
   );
