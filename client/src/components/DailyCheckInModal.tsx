@@ -16,6 +16,26 @@ interface DailyCheckInModalProps {
   endDate: string;
   existingCheckIns?: WillCheckIn[];
   initialDate?: string | null;
+  checkInType?: string;
+  activeDays?: string;
+  customDays?: string;
+}
+
+function isActiveDayForCheckIn(date: Date, activeDays?: string, customDays?: string): boolean {
+  if (!activeDays || activeDays === 'every_day') return true;
+  if (activeDays === 'weekdays') {
+    const day = date.getDay();
+    return day >= 1 && day <= 5;
+  }
+  if (activeDays === 'custom' && customDays) {
+    try {
+      const days = JSON.parse(customDays) as number[];
+      return days.includes(date.getDay());
+    } catch {
+      return true;
+    }
+  }
+  return true;
 }
 
 type CheckInStatus = 'yes' | 'no' | 'partial';
@@ -69,8 +89,12 @@ export default function DailyCheckInModal({
   startDate, 
   endDate,
   existingCheckIns = [],
-  initialDate = null
+  initialDate = null,
+  checkInType,
+  activeDays,
+  customDays
 }: DailyCheckInModalProps) {
+  const isSpecificDays = checkInType === 'specific_days';
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -114,13 +138,19 @@ export default function DailyCheckInModal({
     }
   }, [isOpen, initialDate, today, checkInMap]);
 
+  const isDateInactive = useCallback((date: Date): boolean => {
+    if (!isSpecificDays) return false;
+    return !isActiveDayForCheckIn(date, activeDays, customDays);
+  }, [isSpecificDays, activeDays, customDays]);
+
   const isDateDisabled = useCallback((date: Date): boolean => {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
     if (d < willStart || d > willEnd) return true;
     if (d > today) return true;
+    if (isDateInactive(d)) return true;
     return false;
-  }, [willStart, willEnd, today]);
+  }, [willStart, willEnd, today, isDateInactive]);
 
   const getDateStatus = useCallback((date: Date): CheckInStatus | null => {
     const key = formatDateKey(date);
@@ -266,13 +296,16 @@ export default function DailyCheckInModal({
     d.setHours(0, 0, 0, 0);
     const key = formatDateKey(d);
     const disabled = isDateDisabled(d);
+    const inactive = isDateInactive(d);
     const isToday = d.getTime() === today.getTime();
     const isSelected = selectedDate ? d.getTime() === selectedDate.getTime() : false;
     const dayStatus = getDateStatus(d);
     const isOutOfMonth = !isCurrentMonth;
 
     let bgClass = 'bg-white text-gray-300';
-    if (!disabled) {
+    if (inactive && !disabled) {
+      bgClass = 'bg-gray-50 text-gray-300 line-through';
+    } else if (!disabled) {
       if (dayStatus === 'yes') bgClass = isOutOfMonth ? 'bg-emerald-300 text-white' : 'bg-emerald-500 text-white';
       else if (dayStatus === 'partial') bgClass = isOutOfMonth ? 'bg-amber-300 text-white' : 'bg-amber-400 text-white';
       else if (dayStatus === 'no') bgClass = isOutOfMonth ? 'bg-red-300 text-white' : 'bg-red-500 text-white';

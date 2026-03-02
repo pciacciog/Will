@@ -26,21 +26,41 @@ import DayStrip from "@/components/DayStrip";
 import type { WillCheckIn } from "@shared/schema";
 
 
-function DailyProgressSection({ willId, startDate, endDate, checkInType, onDayClick }: { 
-  willId: number; startDate: string; endDate: string | null; checkInType: 'daily' | 'one-time'; 
+function isActiveDay(date: Date, activeDays: string, customDays?: string): boolean {
+  if (!activeDays || activeDays === 'every_day') return true;
+  if (activeDays === 'weekdays') {
+    const day = date.getDay();
+    return day >= 1 && day <= 5;
+  }
+  if (activeDays === 'custom' && customDays) {
+    try {
+      const days = JSON.parse(customDays) as number[];
+      return days.includes(date.getDay());
+    } catch {
+      return true;
+    }
+  }
+  return true;
+}
+
+function DailyProgressSection({ willId, startDate, endDate, checkInType, activeDays, customDays, onDayClick }: { 
+  willId: number; startDate: string; endDate: string | null; checkInType: string; 
+  activeDays?: string; customDays?: string;
   onDayClick?: (date: string) => void;
 }) {
+  const isTracking = checkInType === 'daily' || checkInType === 'specific_days';
+
   const { data: progress } = useQuery<{
     totalDays: number; checkedInDays: number; successRate: number;
     yesCount: number; partialCount: number; noCount: number; streak: number;
   }>({
     queryKey: [`/api/wills/${willId}/check-in-progress`],
-    enabled: checkInType === 'daily',
+    enabled: isTracking,
   });
 
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
     queryKey: [`/api/wills/${willId}/check-ins`],
-    enabled: checkInType === 'daily',
+    enabled: isTracking,
   });
 
   const hasData = (progress?.totalDays ?? 0) > 0;
@@ -322,26 +342,34 @@ export default function WillDetails() {
     staleTime: 0,
   });
 
-  // Determine if current user has daily check-ins
-  // For solo wills: check will.checkInType
-  // For shared/cumulative circle wills: check will.checkInType (proposer chose for everyone)
-  // For classic circle wills: check user's commitment checkInType
   const getUserCheckInType = () => {
     if (!will || !user) return 'one-time';
     if (will.mode === 'solo') {
       return will.checkInType || 'one-time';
     }
-    // Circle mode: check if shared/cumulative (uses will-level checkInType) or classic (uses commitment-level)
     if (will.willType === 'cumulative') {
-      // Shared wills: all members use the same tracking type from the will
       return will.checkInType || 'one-time';
     }
-    // Classic wills: each member has their own tracking type
     const userCommitment = will.commitments?.find((c: any) => c.userId === user.id);
     return userCommitment?.checkInType || 'one-time';
   };
+
+  const getUserActiveDays = () => {
+    if (!will || !user) return { activeDays: 'every_day' as string, customDays: undefined as string | undefined };
+    if (will.mode === 'solo') {
+      return { activeDays: will.activeDays || 'every_day', customDays: will.customDays };
+    }
+    if (will.willType === 'cumulative') {
+      return { activeDays: will.activeDays || 'every_day', customDays: will.customDays };
+    }
+    const userCommitment = will.commitments?.find((c: any) => c.userId === user.id);
+    return { activeDays: userCommitment?.activeDays || 'every_day', customDays: userCommitment?.customDays };
+  };
+
   const userCheckInType = getUserCheckInType();
-  const hasDailyCheckIns = userCheckInType === 'daily';
+  const { activeDays: userActiveDays, customDays: userCustomDays } = getUserActiveDays();
+  const hasDailyCheckIns = userCheckInType === 'daily' || userCheckInType === 'specific_days';
+  const isFinalReviewOnly = userCheckInType === 'final_review' || userCheckInType === 'one-time';
 
   useEffect(() => {
     if (checkinAutoOpened || !will || will.status !== 'active') return;
@@ -1049,8 +1077,7 @@ export default function WillDetails() {
           </Button>
         )}
 
-        {/* Daily Gut-Check Button - Lightweight check for active set-duration wills */}
-        {!hasDailyCheckIns && will.status === 'active' && (
+        {!hasDailyCheckIns && !isFinalReviewOnly && will.status === 'active' && (
           todayGutCheckStatus ? (
             <div className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-lg bg-gray-50 border border-gray-200 text-sm" data-testid="gut-check-completed">
               <CheckCircle className={`w-4 h-4 ${todayGutCheckStatus === 'yes' ? 'text-emerald-500' : todayGutCheckStatus === 'partial' ? 'text-amber-500' : 'text-red-400'}`} />
@@ -1069,6 +1096,13 @@ export default function WillDetails() {
           )
         )}
 
+        {isFinalReviewOnly && will.status === 'active' && (
+          <div className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-lg bg-blue-50 border border-blue-200 text-sm" data-testid="final-review-info">
+            <Target className="w-4 h-4 text-blue-500" />
+            <span className="text-gray-600">No daily check-ins — just review at the end</span>
+          </div>
+        )}
+
         {/* Daily Progress Section - Simplified conditional display (ongoing/daily wills ONLY) */}
         {hasDailyCheckIns && (will.status === 'active' || will.status === 'will_review' || will.status === 'completed') && (
           <DailyProgressSection 
@@ -1076,6 +1110,8 @@ export default function WillDetails() {
             startDate={will.startDate} 
             endDate={will.endDate}
             checkInType={userCheckInType}
+            activeDays={userActiveDays}
+            customDays={userCustomDays}
             onDayClick={will.status === 'active' ? handleDayClick : undefined}
           />
         )}
@@ -1478,7 +1514,6 @@ export default function WillDetails() {
         reviews={reviews || []}
       />
 
-      {/* Daily Check-in Modal (ongoing/daily wills only) */}
       {hasDailyCheckIns && (
         <DailyCheckInModal
           isOpen={showCheckInModal}
@@ -1491,6 +1526,9 @@ export default function WillDetails() {
           endDate={will?.endDate || ''}
           existingCheckIns={checkIns}
           initialDate={selectedCheckInDate}
+          checkInType={userCheckInType}
+          activeDays={userActiveDays}
+          customDays={userCustomDays}
         />
       )}
 

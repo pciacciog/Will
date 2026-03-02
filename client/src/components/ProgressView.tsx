@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +11,27 @@ interface ProgressViewProps {
   willId: number;
   startDate: string;
   endDate: string | null;
-  checkInType: 'daily' | 'one-time';
+  checkInType: string;
+  activeDays?: string;
+  customDays?: string;
   onDayClick?: (date: string) => void;
+}
+
+function isActiveDayForProgress(date: Date, activeDays?: string, customDays?: string): boolean {
+  if (!activeDays || activeDays === 'every_day') return true;
+  if (activeDays === 'weekdays') {
+    const day = date.getDay();
+    return day >= 1 && day <= 5;
+  }
+  if (activeDays === 'custom' && customDays) {
+    try {
+      const days = JSON.parse(customDays) as number[];
+      return days.includes(date.getDay());
+    } catch {
+      return true;
+    }
+  }
+  return true;
 }
 
 interface CheckInProgress {
@@ -24,18 +44,62 @@ interface CheckInProgress {
   streak: number;
 }
 
-export default function ProgressView({ willId, startDate, endDate, checkInType, onDayClick }: ProgressViewProps) {
+export default function ProgressView({ willId, startDate, endDate, checkInType, activeDays, customDays, onDayClick }: ProgressViewProps) {
+  const isTracking = checkInType === 'daily' || checkInType === 'specific_days';
+  const isSpecificDays = checkInType === 'specific_days';
+
   const { data: checkIns = [], isLoading: checkInsLoading } = useQuery<WillCheckIn[]>({
     queryKey: [`/api/wills/${willId}/check-ins`],
-    enabled: checkInType === 'daily',
+    enabled: isTracking,
   });
 
   const { data: progress, isLoading: progressLoading } = useQuery<CheckInProgress>({
     queryKey: [`/api/wills/${willId}/check-in-progress`],
-    enabled: checkInType === 'daily',
+    enabled: isTracking,
   });
 
-  if (checkInType === 'one-time') {
+  const adjustedProgress = useMemo(() => {
+    if (!isSpecificDays || !progress) return progress;
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = endDate ? new Date(endDate) : new Date();
+    end.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const effectiveEnd = end < today ? end : today;
+
+    let activeDayCount = 0;
+    const current = new Date(start);
+    while (current <= effectiveEnd) {
+      if (isActiveDayForProgress(current, activeDays, customDays)) {
+        activeDayCount++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    const activeCheckIns = checkIns.filter(c => {
+      const d = new Date(c.date + 'T12:00:00');
+      return isActiveDayForProgress(d, activeDays, customDays);
+    });
+    const yesCount = activeCheckIns.filter(c => c.status === 'yes').length;
+    const partialCount = activeCheckIns.filter(c => c.status === 'partial').length;
+    const noCount = activeCheckIns.filter(c => c.status === 'no').length;
+    const successRate = activeDayCount > 0 ? ((yesCount + 0.5 * partialCount) / activeDayCount) * 100 : 0;
+
+    return {
+      totalDays: activeDayCount,
+      checkedInDays: activeCheckIns.length,
+      successRate,
+      yesCount,
+      partialCount,
+      noCount,
+      streak: progress.streak,
+    };
+  }, [isSpecificDays, progress, checkIns, startDate, endDate, activeDays, customDays]);
+
+  const displayProgress = isSpecificDays ? adjustedProgress : progress;
+
+  if (checkInType === 'one-time' || checkInType === 'final_review') {
     return (
       <Card className="border-gray-100">
         <CardHeader className="pb-3">
@@ -47,7 +111,7 @@ export default function ProgressView({ willId, startDate, endDate, checkInType, 
         <CardContent>
           <div className="text-center py-6">
             <p className="text-gray-600">
-              This Will uses one-time tracking. Complete your final review at the end to mark it done!
+              No daily check-ins — just review at the end!
             </p>
           </div>
         </CardContent>
@@ -68,14 +132,14 @@ export default function ProgressView({ willId, startDate, endDate, checkInType, 
     );
   }
 
-  const successRate = progress?.successRate ?? 0;
+  const successRate = displayProgress?.successRate ?? 0;
 
   return (
     <Card className="border-gray-100">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-blue-500" />
-          Daily Progress
+          {isSpecificDays ? 'Specific Days Progress' : 'Daily Progress'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -84,21 +148,21 @@ export default function ProgressView({ willId, startDate, endDate, checkInType, 
             <div className="flex items-center justify-center gap-1 mb-1">
               <CheckCircle className="h-4 w-4 text-emerald-600" />
             </div>
-            <div className="text-2xl font-bold text-emerald-700">{progress?.yesCount ?? 0}</div>
+            <div className="text-2xl font-bold text-emerald-700">{displayProgress?.yesCount ?? 0}</div>
             <div className="text-xs text-emerald-600">Completed</div>
           </div>
           <div className="text-center p-3 bg-amber-50 rounded-lg">
             <div className="flex items-center justify-center gap-1 mb-1">
               <MinusCircle className="h-4 w-4 text-amber-600" />
             </div>
-            <div className="text-2xl font-bold text-amber-700">{progress?.partialCount ?? 0}</div>
+            <div className="text-2xl font-bold text-amber-700">{displayProgress?.partialCount ?? 0}</div>
             <div className="text-xs text-amber-600">Partial</div>
           </div>
           <div className="text-center p-3 bg-red-50 rounded-lg">
             <div className="flex items-center justify-center gap-1 mb-1">
               <XCircle className="h-4 w-4 text-red-500" />
             </div>
-            <div className="text-2xl font-bold text-red-600">{progress?.noCount ?? 0}</div>
+            <div className="text-2xl font-bold text-red-600">{displayProgress?.noCount ?? 0}</div>
             <div className="text-xs text-red-500">Missed</div>
           </div>
         </div>
@@ -130,7 +194,7 @@ export default function ProgressView({ willId, startDate, endDate, checkInType, 
             />
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            {progress?.checkedInDays ?? 0} of {progress?.totalDays ?? 0} days tracked
+            {displayProgress?.checkedInDays ?? 0} of {displayProgress?.totalDays ?? 0} {isSpecificDays ? 'active' : ''} days tracked
           </p>
         </div>
 

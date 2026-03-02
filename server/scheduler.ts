@@ -768,6 +768,7 @@ export class EndRoomScheduler {
 
       // APPROACH 1: Per-commitment check-in reminders (each commitment fires independently at its own time)
       // Covers: wills with reminderTime set OR commitments with checkInTime set
+      // Skips: final_review/one-time check-in types (no daily notifications)
       const willsWithReminders = await db
         .select({
           commitmentId: willCommitments.id,
@@ -777,6 +778,12 @@ export class EndRoomScheduler {
           lastCheckInReminderSentAt: willCommitments.lastCheckInReminderSentAt,
           userId: willCommitments.userId,
           userTimezone: users.timezone,
+          willCheckInType: wills.checkInType,
+          commitmentCheckInType: willCommitments.checkInType,
+          willActiveDays: wills.activeDays,
+          willCustomDays: wills.customDays,
+          commitmentActiveDays: willCommitments.activeDays,
+          commitmentCustomDays: willCommitments.customDays,
         })
         .from(wills)
         .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
@@ -792,6 +799,15 @@ export class EndRoomScheduler {
       for (const willData of willsWithReminders) {
         try {
           if (!willData.userTimezone) continue;
+
+          const effectiveCheckInType = willData.commitmentCheckInType || willData.willCheckInType || 'daily';
+          if (effectiveCheckInType === 'final_review' || effectiveCheckInType === 'one-time') continue;
+
+          if (effectiveCheckInType === 'specific_days') {
+            const effectiveActiveDays = willData.commitmentActiveDays || willData.willActiveDays;
+            const effectiveCustomDays = willData.commitmentCustomDays || willData.willCustomDays;
+            if (!this.isTodayActiveDay(now, willData.userTimezone, effectiveActiveDays, effectiveCustomDays)) continue;
+          }
 
           const effectiveReminderTime = willData.commitmentCheckInTime || willData.willReminderTime;
           if (!effectiveReminderTime) continue;
@@ -820,6 +836,7 @@ export class EndRoomScheduler {
       }
 
       // APPROACH 2: Short-duration wills (<=24 hours) without check-in time — random time within the will's active window
+      // Skips: final_review/one-time check-in types
       const shortWills = await db
         .select({
           commitmentId: willCommitments.id,
@@ -829,6 +846,12 @@ export class EndRoomScheduler {
           lastCheckInReminderSentAt: willCommitments.lastCheckInReminderSentAt,
           userId: willCommitments.userId,
           userTimezone: users.timezone,
+          willCheckInType: wills.checkInType,
+          commitmentCheckInType: willCommitments.checkInType,
+          willActiveDays: wills.activeDays,
+          willCustomDays: wills.customDays,
+          commitmentActiveDays: willCommitments.activeDays,
+          commitmentCustomDays: willCommitments.customDays,
         })
         .from(wills)
         .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
@@ -847,6 +870,15 @@ export class EndRoomScheduler {
       for (const willData of shortWills) {
         try {
           if (!willData.userTimezone || !willData.willEndDate) continue;
+
+          const effectiveCheckInType = willData.commitmentCheckInType || willData.willCheckInType || 'daily';
+          if (effectiveCheckInType === 'final_review' || effectiveCheckInType === 'one-time') continue;
+
+          if (effectiveCheckInType === 'specific_days') {
+            const effectiveActiveDays = willData.commitmentActiveDays || willData.willActiveDays;
+            const effectiveCustomDays = willData.commitmentCustomDays || willData.willCustomDays;
+            if (!this.isTodayActiveDay(now, willData.userTimezone, effectiveActiveDays, effectiveCustomDays)) continue;
+          }
 
           const durationMs = new Date(willData.willEndDate).getTime() - new Date(willData.willStartDate).getTime();
           if (durationMs > 24 * 60 * 60 * 1000) continue;
@@ -891,6 +923,7 @@ export class EndRoomScheduler {
       let sent = 0;
 
       // Per-commitment motivational notifications: each commitment sends its own "Because..." independently
+      // Skips: final_review/one-time check-in types; specific_days only on active days
       const activeCommitments = await db
         .select({
           commitmentId: willCommitments.id,
@@ -902,6 +935,12 @@ export class EndRoomScheduler {
           willStartDate: wills.startDate,
           willEndDate: wills.endDate,
           willIsIndefinite: wills.isIndefinite,
+          willCheckInType: wills.checkInType,
+          commitmentCheckInType: willCommitments.checkInType,
+          willActiveDays: wills.activeDays,
+          willCustomDays: wills.customDays,
+          commitmentActiveDays: willCommitments.activeDays,
+          commitmentCustomDays: willCommitments.customDays,
         })
         .from(willCommitments)
         .innerJoin(wills, eq(willCommitments.willId, wills.id))
@@ -917,6 +956,15 @@ export class EndRoomScheduler {
       for (const row of activeCommitments) {
         try {
           if (!row.userTimezone || !row.userWhy) continue;
+
+          const effectiveCheckInType = row.commitmentCheckInType || row.willCheckInType || 'daily';
+          if (effectiveCheckInType === 'final_review' || effectiveCheckInType === 'one-time') continue;
+
+          if (effectiveCheckInType === 'specific_days') {
+            const effectiveActiveDays = row.commitmentActiveDays || row.willActiveDays;
+            const effectiveCustomDays = row.commitmentCustomDays || row.willCustomDays;
+            if (!this.isTodayActiveDay(now, row.userTimezone, effectiveActiveDays, effectiveCustomDays)) continue;
+          }
 
           if (this.alreadySentToday(row.lastMotivationalSentAt, row.userTimezone)) continue;
 
@@ -1068,6 +1116,32 @@ export class EndRoomScheduler {
     }
     
     return diff <= 5; // Within 5 minutes
+  }
+
+  private isTodayActiveDay(now: Date, timezone: string, activeDays: string | null, customDays: string | null): boolean {
+    try {
+      const dayFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        weekday: 'short',
+      });
+      const dayName = dayFormatter.format(now);
+      const dayMap: Record<string, number> = { 'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6 };
+      const todayDayNumber = dayMap[dayName] ?? new Date().getDay();
+
+      if (activeDays === 'every_day' || !activeDays) return true;
+      if (activeDays === 'weekdays') return todayDayNumber >= 1 && todayDayNumber <= 5;
+      if (activeDays === 'custom' && customDays) {
+        try {
+          const days: number[] = JSON.parse(customDays);
+          return days.includes(todayDayNumber);
+        } catch {
+          return true;
+        }
+      }
+      return true;
+    } catch {
+      return true;
+    }
   }
 
   // Helper: Check if reminder was already sent today in user's timezone

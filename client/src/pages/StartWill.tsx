@@ -150,6 +150,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       }
     }
   }, [startDate, startTime]);
+
+  useEffect(() => {
+    setCheckInType(isIndefinite ? 'daily' : 'final_review');
+  }, [isIndefinite]);
   
   const [willData, setWillData] = useState({
     startDate: '',
@@ -163,8 +167,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   // Will type for Circle mode: 'classic' (individual commitments) or 'cumulative' (shared commitment)
   const [willType, setWillType] = useState<'classic' | 'cumulative' | null>(null);
   
-  // Check-in type is auto-determined: Ongoing = 'daily' (data-driven), Set Dates = 'one-time' (reflection-based)
-  const checkInType = isIndefinite ? 'daily' : 'one-time';
+  const [checkInType, setCheckInType] = useState<'daily' | 'specific_days' | 'final_review'>('daily');
 
   // Short-duration wills (< 24 hours) skip the check-in time step entirely
   const isShortDuration = useMemo(() => {
@@ -182,9 +185,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   // Check-in time: when to prompt the user (HH:MM format)
   const [checkInTime, setCheckInTime] = useState<string>('20:00');
   
-  // Active days: which days the will applies to (Ongoing wills only)
   const [activeDays, setActiveDays] = useState<'every_day' | 'weekdays' | 'custom'>('every_day');
-  const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri default
+  const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   
   // Visibility: 'private' (default) or 'public' (discoverable in Explore)
   const [visibility, setVisibility] = useState<'private' | 'public'>('private');
@@ -433,6 +435,15 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       return;
     }
 
+    if (checkInType === 'specific_days' && customDays.length === 0) {
+      toast({
+        title: "No Days Selected",
+        description: "Please select at least one day for check-ins",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (hasModifiedReminder) {
       updateReminderSettingsMutation.mutate({
         dailyReminderTime: skipDailyReminder ? null : dailyReminderTime,
@@ -460,10 +471,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         checkInType: checkInType,
         isIndefinite: isIndefinite,
         visibility: visibility,
-        checkInTime: isShortDuration ? undefined : checkInTime,
-        activeDays: isIndefinite ? activeDays : undefined,
-        customDays: isIndefinite && activeDays === 'custom' ? JSON.stringify(customDays) : undefined,
-        reminderTime: isShortDuration ? undefined : willReminderTime,
+        checkInTime: checkInType !== 'final_review' && !isShortDuration ? checkInTime : undefined,
+        activeDays: checkInType === 'specific_days' ? 'custom' : (checkInType === 'daily' ? 'every_day' : undefined),
+        customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
+        reminderTime: checkInType !== 'final_review' && !isShortDuration ? willReminderTime : undefined,
       });
     } else {
       createWillMutation.mutate({
@@ -478,10 +489,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         sharedWhat: willType === 'cumulative' ? willData.what : undefined,
         checkInType: checkInType,
         isIndefinite: isIndefinite,
-        checkInTime: checkInTime,
-        activeDays: isIndefinite ? activeDays : undefined,
-        customDays: isIndefinite && activeDays === 'custom' ? JSON.stringify(customDays) : undefined,
-        reminderTime: willReminderTime,
+        checkInTime: checkInType !== 'final_review' ? checkInTime : undefined,
+        activeDays: checkInType === 'specific_days' ? 'custom' : (checkInType === 'daily' ? 'every_day' : undefined),
+        customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
+        reminderTime: checkInType !== 'final_review' ? willReminderTime : undefined,
       });
     }
   };
@@ -532,7 +543,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     setCurrentStep(3);
   };
   
-  // Handler for circle Will creation (used when End Room is disabled)
   const handleCircleCreateSubmit = () => {
     createWillMutation.mutate({
       title: willData.what || "Group Goal",
@@ -545,6 +555,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       sharedWhat: willType === 'cumulative' ? willData.what : undefined,
       checkInType: checkInType,
       isIndefinite: isIndefinite,
+      checkInTime: checkInType !== 'final_review' ? checkInTime : undefined,
+      activeDays: checkInType === 'specific_days' ? 'custom' : (checkInType === 'daily' ? 'every_day' : undefined),
+      customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
+      reminderTime: checkInType !== 'final_review' ? willReminderTime : undefined,
     });
   };
 
@@ -593,10 +607,13 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       sharedWhat: willType === 'cumulative' ? willData.what : undefined,
       checkInType: checkInType,
       isIndefinite: isIndefinite,
+      checkInTime: checkInType !== 'final_review' ? checkInTime : undefined,
+      activeDays: checkInType === 'specific_days' ? 'custom' : (checkInType === 'daily' ? 'every_day' : undefined),
+      customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
+      reminderTime: checkInType !== 'final_review' ? willReminderTime : undefined,
     });
   };
 
-  // Handler for personal Will creation
   const handlePersonalConfirmSubmit = () => {
     createWillMutation.mutate({
       title: willData.what || "Personal Goal",
@@ -609,8 +626,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       what: willData.what,
       because: willData.why,
       checkInType: checkInType,
-      reminderTime: willReminderTime,
+      reminderTime: checkInType !== 'final_review' ? willReminderTime : undefined,
       isIndefinite: isIndefinite,
+      checkInTime: checkInType !== 'final_review' ? checkInTime : undefined,
+      activeDays: checkInType === 'specific_days' ? 'custom' : (checkInType === 'daily' ? 'every_day' : undefined),
+      customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
     });
   };
 
@@ -934,60 +954,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   )}
                   
                   {isIndefinite && (
-                    <>
-                      <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '150ms' }}>
-                        <p className="text-sm font-medium text-gray-700 text-center mb-3" data-testid="text-active-days-label">Active Days</p>
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setActiveDays('every_day')}
-                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                activeDays === 'every_day' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                              data-testid="button-active-days-every"
-                            >
-                              Every day
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setActiveDays('custom')}
-                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                activeDays === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                              data-testid="button-active-days-custom"
-                            >
-                              Custom
-                            </button>
-                          </div>
-                          {activeDays === 'custom' && (
-                            <div className="flex gap-1.5 mt-2 animate-in fade-in duration-200">
-                              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={() => {
-                                    setCustomDays(prev => 
-                                      prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
-                                    );
-                                  }}
-                                  className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
-                                    customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                  }`}
-                                  data-testid={`button-day-${i}`}
-                                >
-                                  {day}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300 pt-4" style={{ animationDelay: '250ms' }}>
-                        You can pause or end this Will at any time
-                      </p>
-                    </>
+                    <p className="text-xs text-gray-400 text-center italic animate-in fade-in duration-300 pt-4" style={{ animationDelay: '250ms' }}>
+                      You can pause or end this Will at any time
+                    </p>
                   )}
                 </div>
 
@@ -1003,54 +972,130 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
 
-        {/* Step 4: Check-In Preferences */}
+        {/* Step 4: Check-In Preferences - 3 Option Selector */}
         {currentStep === 4 && !showTransition && !showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep4Submit} className="flex flex-col flex-1">
-              <div className="flex-1 flex flex-col py-6 px-4">
+              <div className="flex-1 flex flex-col py-4 px-4">
 
-                {isIndefinite ? (
-                  <>
-                    <h2 className="text-xl font-semibold text-gray-900 text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300" data-testid="text-step4-title">
-                      Daily Check-In
-                    </h2>
-
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
-                      <p className="text-sm font-medium text-gray-700 text-center mb-3" data-testid="text-checkin-time-label">Check-In Time</p>
-                      <div className="flex justify-center">
-                        <TimeChipPicker
-                          value={checkInTime}
-                          onChange={setCheckInTime}
-                          testId="input-check-in-time"
-                        />
+                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <button
+                    type="button"
+                    onClick={() => setCheckInType('daily')}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+                      checkInType === 'daily'
+                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    data-testid="button-checkin-daily"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        checkInType === 'daily' ? 'border-blue-500' : 'border-gray-300'
+                      }`}>
+                        {checkInType === 'daily' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Every Day</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Check in every day at a chosen time</p>
                       </div>
                     </div>
+                  </button>
 
-                    <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
-                      {isIndefinite && activeDays !== 'every_day'
-                        ? "We'll check in with you on your active days"
-                        : "We'll check in with you daily at this time"}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h2 className="text-xl font-semibold text-gray-900 text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300" data-testid="text-step4-title">
-                      Daily Reminder
-                    </h2>
+                  <button
+                    type="button"
+                    onClick={() => setCheckInType('specific_days')}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+                      checkInType === 'specific_days'
+                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    data-testid="button-checkin-specific-days"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        checkInType === 'specific_days' ? 'border-blue-500' : 'border-gray-300'
+                      }`}>
+                        {checkInType === 'specific_days' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Specific Days</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Pick which days of the week to check in</p>
+                      </div>
+                    </div>
+                  </button>
 
-                    <div className="flex justify-center animate-in fade-in slide-in-from-bottom-3 duration-400" style={{ animationDelay: '100ms' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCheckInType('final_review')}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+                      checkInType === 'final_review'
+                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    data-testid="button-checkin-final-review"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        checkInType === 'final_review' ? 'border-blue-500' : 'border-gray-300'
+                      }`}>
+                        {checkInType === 'final_review' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Final Review Only</p>
+                        <p className="text-xs text-gray-500 mt-0.5">No daily check-ins — just review at the end</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {checkInType === 'specific_days' && (
+                  <div className="mt-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Select Days</p>
+                    <div className="flex justify-center gap-1.5">
+                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setCustomDays(prev =>
+                              prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
+                            );
+                          }}
+                          className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
+                            customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                          data-testid={`button-day-${i}`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {checkInType !== 'final_review' && (
+                  <div className="mt-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Check-In Time</p>
+                    <div className="flex justify-center">
                       <TimeChipPicker
                         value={checkInTime}
                         onChange={setCheckInTime}
                         testId="input-check-in-time"
                       />
                     </div>
-
-                    <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
-                      We'll check in with you each day
-                    </p>
-                  </>
+                  </div>
                 )}
+
+                <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" data-testid="text-checkin-confirm">
+                  {checkInType === 'daily' && "We'll check in with you daily at this time"}
+                  {checkInType === 'specific_days' && (() => {
+                    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const selected = customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ');
+                    return selected ? `We'll check in on ${selected} at this time` : 'Select at least one day';
+                  })()}
+                  {checkInType === 'final_review' && "No daily check-ins — just review at the end"}
+                </p>
 
               </div>
               
@@ -1128,30 +1173,25 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </div>
                   </div>
 
-                  {isIndefinite && (
+                  <div className="border-t border-gray-200"></div>
+                  <div className="flex items-start gap-3">
+                    <CalendarDays className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Tracking</p>
+                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-tracking">
+                        {checkInType === 'daily' && 'Every day'}
+                        {checkInType === 'specific_days' && (() => {
+                          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                          return customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ');
+                        })()}
+                        {checkInType === 'final_review' && 'Final review only'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {checkInType !== 'final_review' && !isShortDuration && (
                     <>
                       <div className="border-t border-gray-200"></div>
-                      <div className="flex items-start gap-3">
-                        <CalendarDays className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Active Days</p>
-                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-active-days">
-                            {activeDays === 'every_day' && 'Every day'}
-                            {activeDays === 'weekdays' && 'Weekdays (Mon–Fri)'}
-                            {activeDays === 'custom' && (() => {
-                              const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                              return customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ');
-                            })()}
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {!isShortDuration && (
-                    <>
-                      <div className="border-t border-gray-200"></div>
-
                       <div className="flex items-start gap-3">
                         <Clock className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -1486,6 +1526,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                       sharedWhat: willType === 'cumulative' ? willData.what : undefined,
                       checkInType: checkInType,
                       isIndefinite: isIndefinite,
+                      checkInTime: checkInType !== 'final_review' ? checkInTime : undefined,
+                      activeDays: checkInType === 'specific_days' ? 'custom' : (checkInType === 'daily' ? 'every_day' : undefined),
+                      customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
+                      reminderTime: checkInType !== 'final_review' ? willReminderTime : undefined,
                     });
                   }}
                   disabled={createWillMutation.isPending || addCommitmentMutation.isPending}

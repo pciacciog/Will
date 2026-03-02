@@ -69,7 +69,7 @@ export const wills = pgTable("wills", {
   parentWillId: integer("parent_will_id"), // For joined instances: references the original public will
   willType: varchar("will_type", { length: 20 }).default("classic"), // 'classic' or 'cumulative' (only for circle mode)
   sharedWhat: text("shared_what"), // For cumulative wills: the shared commitment everyone does
-  checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time' — auto-determined: ongoing=daily, set-dates=one-time
+  checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily', 'specific_days', 'final_review' (legacy: 'one-time' treated as 'final_review')
   reminderTime: varchar("reminder_time", { length: 5 }), // HH:MM format for daily check-in reminders (user's local time)
   checkInTime: varchar("check_in_time", { length: 5 }), // HH:MM format for when to prompt check-in (user's local time)
   activeDays: varchar("active_days", { length: 20 }).default("every_day"), // 'every_day', 'weekdays', 'custom'
@@ -106,8 +106,10 @@ export const willCommitments = pgTable("will_commitments", {
   userId: varchar("user_id").notNull().references(() => users.id),
   what: text("what").notNull(),
   why: text("why").notNull(),
-  checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily' or 'one-time' (for circle mode - per member)
+  checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily', 'specific_days', 'final_review' (legacy: 'one-time' treated as 'final_review')
   checkInTime: varchar("check_in_time", { length: 5 }), // HH:MM format for member's personal check-in time
+  activeDays: varchar("active_days", { length: 20 }).default("every_day"), // 'every_day', 'custom' — per-member active days for specific_days check-in type
+  customDays: text("custom_days"), // JSON array of day numbers (0=Sun, 1=Mon, ..., 6=Sat) when activeDays='custom'
   createdAt: timestamp("created_at").defaultNow(),
   // Notification tracking field for acknowledgment reminder
   ackReminderSentAt: timestamp("ack_reminder_sent_at"), // For 6hr unacknowledged reminder

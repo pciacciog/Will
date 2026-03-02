@@ -674,6 +674,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Prepare will data with proper types
       const isIndefinite = req.body.isIndefinite === true;
+      let rawCheckInType = req.body.checkInType || (isIndefinite ? 'daily' : 'final_review');
+      if (rawCheckInType === 'one-time') rawCheckInType = 'final_review';
+      const validCheckInTypes = ['daily', 'specific_days', 'final_review'];
+      const normalizedCheckInType = validCheckInTypes.includes(rawCheckInType) ? rawCheckInType : 'final_review';
+
       const willDataWithDefaults: any = {
         title: req.body.title,
         description: req.body.description,
@@ -683,10 +688,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mode: isPersonalMode ? 'personal' : 'circle',
         visibility: req.body.visibility || 'private',
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
-        checkInType: req.body.checkInType || (isIndefinite ? 'daily' : 'one-time'),
+        checkInType: normalizedCheckInType,
         reminderTime: req.body.reminderTime || null,
         checkInTime: req.body.checkInTime || null,
-        activeDays: req.body.activeDays || 'every_day',
+        activeDays: normalizedCheckInType === 'specific_days' ? (req.body.activeDays || 'custom') : (req.body.activeDays || 'every_day'),
         customDays: req.body.customDays || null,
         isIndefinite: isIndefinite,
       };
@@ -725,7 +730,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: userId,
             what: req.body.what || "My personal goal",
             why: req.body.because || "",
-            checkInType: willDataWithDefaults.checkInType || 'one-time',
+            checkInType: normalizedCheckInType,
+            checkInTime: willDataWithDefaults.checkInTime || null,
+            activeDays: willDataWithDefaults.activeDays || 'every_day',
+            customDays: willDataWithDefaults.customDays || null,
           };
           await storage.addWillCommitment(commitmentData);
           console.log(`[Routes] Auto-created commitment for solo Will ${will.id}`);
@@ -913,11 +921,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         whatValue = will.sharedWhat;
       }
       
+      let commitCheckInType = req.body.checkInType || will.checkInType || 'final_review';
+      if (commitCheckInType === 'one-time') commitCheckInType = 'final_review';
+      const commitValidTypes = ['daily', 'specific_days', 'final_review'];
+      if (!commitValidTypes.includes(commitCheckInType)) commitCheckInType = 'final_review';
+
       const commitmentData = insertWillCommitmentSchema.parse({
         ...req.body,
         what: whatValue,
         willId,
         userId,
+        checkInType: commitCheckInType,
+        activeDays: req.body.activeDays || will.activeDays || 'every_day',
+        customDays: req.body.customDays || will.customDays || null,
       });
 
       // Check if user already committed
@@ -1181,6 +1197,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use joiner's own check-in time if provided, otherwise fall back to parent's
       const userCheckInTime = req.body.checkInTime || parentWill.checkInTime || null;
       
+      let joinCheckInType = parentWill.checkInType || 'final_review';
+      if (joinCheckInType === 'one-time') joinCheckInType = 'final_review';
+
       // Create a new will instance for this user
       const newWill = await storage.createWill({
         createdBy: userId,
@@ -1189,7 +1208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         parentWillId: parentWillId,
         startDate: parentWill.startDate,
         endDate: parentWill.endDate,
-        checkInType: parentWill.checkInType || 'one-time',
+        checkInType: joinCheckInType,
         checkInTime: userCheckInTime,
         activeDays: parentWill.activeDays || 'every_day',
         customDays: parentWill.customDays || null,
@@ -1207,8 +1226,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: userId,
         what: parentCommitment.what,
         why: userWhy,
-        checkInType: parentWill.checkInType || 'one-time',
+        checkInType: joinCheckInType,
         checkInTime: userCheckInTime,
+        activeDays: parentWill.activeDays || 'every_day',
+        customDays: parentWill.customDays || null,
       });
       
       res.json({ willId: newWill.id, message: "Successfully joined" });
@@ -2148,9 +2169,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Public Will joiners cannot change the commitment text — only their personal "why"
       const isPublicWillJoiner = !!will.parentWillId;
-      const updateData: { what?: string; why: string } = { why: why.trim() };
+      const updateData: Record<string, any> = { why: why.trim() };
       if (!isPublicWillJoiner) {
         updateData.what = what.trim();
+      }
+
+      if (req.body.checkInType !== undefined) {
+        let editCheckInType = req.body.checkInType;
+        if (editCheckInType === 'one-time') editCheckInType = 'final_review';
+        const editValidTypes = ['daily', 'specific_days', 'final_review'];
+        if (editValidTypes.includes(editCheckInType)) {
+          updateData.checkInType = editCheckInType;
+        }
+      }
+      if (req.body.checkInTime !== undefined) {
+        updateData.checkInTime = req.body.checkInTime;
+      }
+      if (req.body.activeDays !== undefined) {
+        updateData.activeDays = req.body.activeDays;
+      }
+      if (req.body.customDays !== undefined) {
+        updateData.customDays = req.body.customDays;
       }
 
       const [updatedCommitment] = await db

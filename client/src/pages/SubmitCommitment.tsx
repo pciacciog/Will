@@ -35,8 +35,10 @@ export default function SubmitCommitment() {
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [showHelpIcon, setShowHelpIcon] = useState(false);
   
-  const [checkInType, setCheckInType] = useState<'daily' | 'one-time'>('one-time');
+  const [checkInType, setCheckInType] = useState<'daily' | 'specific_days' | 'final_review'>('final_review');
   const [checkInTime, setCheckInTime] = useState<string>('19:00');
+  const [activeDays, setActiveDays] = useState<'every_day' | 'custom'>('every_day');
+  const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
@@ -80,12 +82,32 @@ export default function SubmitCommitment() {
     return diffMs <= 24 * 60 * 60 * 1000;
   }, [will]);
   
-  // Initialize check-in time from will's check-in time if available
   useEffect(() => {
     if ((will as any)?.checkInTime) {
       setCheckInTime((will as any).checkInTime);
     }
-  }, [will]);
+    if ((will as any)?.isIndefinite) {
+      setCheckInType('daily');
+    } else {
+      setCheckInType('final_review');
+    }
+    if (isCumulative && (will as any)?.checkInType) {
+      const willCIT = (will as any).checkInType;
+      if (willCIT === 'daily' || willCIT === 'specific_days' || willCIT === 'final_review') {
+        setCheckInType(willCIT);
+      } else if (willCIT === 'one-time') {
+        setCheckInType('final_review');
+      }
+    }
+    if (isCumulative && (will as any)?.activeDays) {
+      setActiveDays((will as any).activeDays === 'custom' ? 'custom' : 'every_day');
+    }
+    if (isCumulative && (will as any)?.customDays) {
+      try {
+        setCustomDays(JSON.parse((will as any).customDays));
+      } catch {}
+    }
+  }, [will, isCumulative]);
   
   // Classic flow: 1-Timeline, 2-What, 3-Why, [4-CheckIn], [5-Confirm] (5 total, ladder shows 3)
   // Cumulative flow: 1-Timeline, 2-Why, [3-CheckIn], [4-Confirm] (4 total, ladder shows 2)
@@ -103,7 +125,7 @@ export default function SubmitCommitment() {
   }, []);
 
   const commitmentMutation = useMutation({
-    mutationFn: async (data: { what: string; why: string; checkInType?: string; checkInTime?: string }) => {
+    mutationFn: async (data: { what: string; why: string; checkInType?: string; checkInTime?: string; activeDays?: string; customDays?: string }) => {
       const response = await apiRequest(`/api/wills/${id}/commitments`, {
         method: 'POST',
         body: JSON.stringify(data)
@@ -200,13 +222,20 @@ export default function SubmitCommitment() {
     e.preventDefault();
     
     const whatToSubmit = isCumulative ? (sharedWhat || what) : what.trim();
-    const willCheckInType = (will as any)?.checkInType;
-    commitmentMutation.mutate({ 
-      what: whatToSubmit, 
+    const effectiveCheckInType = isCumulative ? checkInType : checkInType;
+    const submitData: { what: string; why: string; checkInType?: string; checkInTime?: string; activeDays?: string; customDays?: string } = {
+      what: whatToSubmit,
       why: why.trim(),
-      checkInType: isCumulative ? willCheckInType : checkInType,
-      checkInTime: isShortDuration ? undefined : checkInTime,
-    });
+      checkInType: effectiveCheckInType,
+      checkInTime: (effectiveCheckInType === 'final_review' || isShortDuration) ? undefined : checkInTime,
+    };
+    if (effectiveCheckInType === 'specific_days') {
+      submitData.activeDays = 'custom';
+      submitData.customDays = JSON.stringify(customDays);
+    } else if (effectiveCheckInType === 'daily') {
+      submitData.activeDays = 'every_day';
+    }
+    commitmentMutation.mutate(submitData);
   };
 
   const handleBack = () => {
@@ -560,27 +589,155 @@ export default function SubmitCommitment() {
           </div>
         )}
 
-        {/* Check-In Time Step */}
+        {/* Check-In Tracking Step */}
         {isCheckInStep && !showTransition && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <div className="flex flex-col flex-1">
               <div className="flex-1 flex flex-col py-6 px-4">
-                <h2 className="text-base font-medium text-gray-700 text-center mb-2" data-testid="text-checkin-subtitle">
-                  When should we check in with you?
+                <h2 className="text-base font-medium text-gray-700 text-center mb-6" data-testid="text-checkin-subtitle">
+                  How would you like to track this?
                 </h2>
 
-                <div className="flex justify-center mt-6 animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
-                  <TimeChipPicker
-                    value={checkInTime}
-                    onChange={setCheckInTime}
-                    testId="input-check-in-time"
-                  />
-                </div>
+                {isCumulative ? (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-400">
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+                      <p className="text-xs text-purple-600 font-medium mb-1">Inherited from Will</p>
+                      <p className="text-sm font-semibold text-gray-800" data-testid="text-tracking-inherited">
+                        {checkInType === 'daily' && 'Every Day'}
+                        {checkInType === 'specific_days' && (() => {
+                          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                          return `Specific Days: ${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')}`;
+                        })()}
+                        {checkInType === 'final_review' && 'Final Review Only'}
+                      </p>
+                    </div>
+                    {checkInType !== 'final_review' && (
+                      <div className="animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
+                        <p className="text-sm font-medium text-gray-700 text-center mb-3">Check-In Time</p>
+                        <div className="flex justify-center">
+                          <TimeChipPicker
+                            value={checkInTime}
+                            onChange={setCheckInTime}
+                            testId="input-check-in-time"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-400">
+                    <button
+                      type="button"
+                      onClick={() => setCheckInType('daily')}
+                      className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                        checkInType === 'daily'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                      data-testid="option-daily"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          checkInType === 'daily' ? 'border-blue-500' : 'border-gray-300'
+                        }`}>
+                          {checkInType === 'daily' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Every Day</p>
+                          <p className="text-xs text-gray-500">Check in every day at a chosen time</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCheckInType('specific_days')}
+                      className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                        checkInType === 'specific_days'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                      data-testid="option-specific-days"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          checkInType === 'specific_days' ? 'border-blue-500' : 'border-gray-300'
+                        }`}>
+                          {checkInType === 'specific_days' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Specific Days</p>
+                          <p className="text-xs text-gray-500">Pick which days of the week + a time</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCheckInType('final_review')}
+                      className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                        checkInType === 'final_review'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                      data-testid="option-final-review"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          checkInType === 'final_review' ? 'border-blue-500' : 'border-gray-300'
+                        }`}>
+                          {checkInType === 'final_review' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">Final Review Only</p>
+                          <p className="text-xs text-gray-500">No daily check-ins — just review at the end</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {checkInType === 'specific_days' && (
+                      <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex justify-center gap-2">
+                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((label, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => {
+                                setCustomDays(prev =>
+                                  prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i]
+                                );
+                              }}
+                              className={`w-9 h-9 rounded-full text-xs font-semibold transition-all duration-150 ${
+                                customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              }`}
+                              data-testid={`day-${i}`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {checkInType !== 'final_review' && (
+                      <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
+                        <p className="text-sm font-medium text-gray-700 text-center mb-3">Check-In Time</p>
+                        <div className="flex justify-center">
+                          <TimeChipPicker
+                            value={checkInTime}
+                            onChange={setCheckInTime}
+                            testId="input-check-in-time"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
-                  {(will as any)?.isIndefinite && (will as any)?.activeDays && (will as any)?.activeDays !== 'every_day'
-                    ? "We'll check in with you on your active days"
-                    : "We'll check in with you daily at this time"}
+                  {checkInType === 'daily' && "We'll check in with you daily at this time"}
+                  {checkInType === 'specific_days' && "We'll check in on your selected days"}
+                  {checkInType === 'final_review' && "No daily check-ins — just review at the end"}
                 </p>
               </div>
               
@@ -593,7 +750,8 @@ export default function SubmitCommitment() {
                 <button
                   type="button"
                   onClick={handleCheckInTimeSubmit}
-                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                  disabled={checkInType === 'specific_days' && customDays.length === 0}
+                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50"
                   data-testid="button-continue-checkin"
                 >
                   Continue <ArrowRight className="w-4 h-4 ml-2" />
@@ -632,11 +790,16 @@ export default function SubmitCommitment() {
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <Clock className="w-3 h-3 text-amber-500" />
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                      Check-In Time
+                      Tracking
                     </p>
                   </div>
-                  <p className="text-sm font-medium text-gray-700 text-center" data-testid="text-confirm-checkin-time">
-                    {formatTimeForDisplay(checkInTime)}
+                  <p className="text-sm font-medium text-gray-700 text-center" data-testid="text-confirm-tracking">
+                    {checkInType === 'daily' && `Every Day at ${formatTimeForDisplay(checkInTime)}`}
+                    {checkInType === 'specific_days' && (() => {
+                      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                      return `${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')} at ${formatTimeForDisplay(checkInTime)}`;
+                    })()}
+                    {checkInType === 'final_review' && 'Final Review Only'}
                   </p>
                 </div>
                 )}
@@ -687,14 +850,19 @@ export default function SubmitCommitment() {
                         {why}
                       </div>
                     </div>
-                    {checkInType === 'daily' && (
                     <div className="mt-3 pt-3 border-t border-blue-100">
                       <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                         <Calendar className="w-4 h-4 text-purple-500" />
-                        <span>Daily check-ins</span>
+                        <span>
+                          {checkInType === 'daily' && 'Every Day check-ins'}
+                          {checkInType === 'specific_days' && (() => {
+                            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                            return `Check-ins: ${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')}`;
+                          })()}
+                          {checkInType === 'final_review' && 'Final review only'}
+                        </span>
                       </div>
                     </div>
-                    )}
                   </div>
                 </div>
                 
@@ -718,7 +886,7 @@ export default function SubmitCommitment() {
                   </div>
                 )}
                 
-                {!isShortDuration && (
+                {!isShortDuration && checkInType !== 'final_review' && (
                 <div className="pt-3 border-t border-gray-100">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <Clock className="w-3 h-3 text-amber-500" />
@@ -727,6 +895,10 @@ export default function SubmitCommitment() {
                     </p>
                   </div>
                   <p className="text-sm font-medium text-gray-700 text-center" data-testid="text-confirm-checkin-time-classic">
+                    {checkInType === 'specific_days' && (() => {
+                      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                      return `${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')} at `;
+                    })()}
                     {formatTimeForDisplay(checkInTime)}
                   </p>
                 </div>
