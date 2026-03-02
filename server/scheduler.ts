@@ -131,7 +131,7 @@ export class EndRoomScheduler {
             const willTitle = willWithCommitments.commitments[0]?.what || "Your Will";
             // Circle mode (scheduler only handles circle wills)
             const isSoloMode = will.circleId === null;
-            await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers, will.id, isSoloMode);
+            await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers, will.id, isSoloMode, will.circleId ?? undefined);
             console.log(`[EndRoomScheduler] Will Started notification sent for Will ${will.id} (solo: ${isSoloMode})`);
           }
         } catch (error) {
@@ -306,7 +306,7 @@ export class EndRoomScheduler {
                 // circleId is guaranteed to be non-null here (filtered in query)
                 const circleMembers = await storage.getCircleMembers(will.circleId!);
                 const memberIds = circleMembers.map(member => member.userId);
-                await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id);
+                await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id, will.circleId ?? undefined);
                 console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
               } catch (error) {
                 console.error(`[EndRoomScheduler] Failed to send End Room Live notification:`, error);
@@ -323,7 +323,7 @@ export class EndRoomScheduler {
                 // circleId is guaranteed to be non-null here (filtered in query)
                 const circleMembers = await storage.getCircleMembers(will.circleId!);
                 const memberIds = circleMembers.map(member => member.userId);
-                await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id);
+                await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id, will.circleId ?? undefined);
                 console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
               } catch (error) {
                 console.error(`[EndRoomScheduler] Failed to send End Room Live notification:`, error);
@@ -462,7 +462,7 @@ export class EndRoomScheduler {
               console.log(`[EndRoomScheduler] User ${member.user.firstName} (${userTimezone}): End Room at ${endRoomTime}`);
               
               // Send personalized notification to this user
-              await pushNotificationService.sendEndRoomNotification('24_hours', endRoomTime, [member.userId], will.id);
+              await pushNotificationService.sendEndRoomNotification('24_hours', endRoomTime, [member.userId], will.id, will.circleId ?? undefined);
             } catch (memberError) {
               console.error(`[EndRoomScheduler] Failed to send notification to user ${member.userId}:`, memberError);
             }
@@ -517,7 +517,7 @@ export class EndRoomScheduler {
               console.log(`[EndRoomScheduler] User ${member.user.firstName} (${userTimezone}): End Room at ${endRoomTime}`);
               
               // Send personalized notification to this user
-              await pushNotificationService.sendEndRoomNotification('15_minutes', endRoomTime, [member.userId], will.id);
+              await pushNotificationService.sendEndRoomNotification('15_minutes', endRoomTime, [member.userId], will.id, will.circleId ?? undefined);
             } catch (memberError) {
               console.error(`[EndRoomScheduler] Failed to send notification to user ${member.userId}:`, memberError);
             }

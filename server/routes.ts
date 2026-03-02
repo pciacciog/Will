@@ -875,7 +875,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const creatorName = creator ? creator.firstName : 'Someone';
             const isSharedWill = willType === 'cumulative';
-            await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers, will.id, isSharedWill);
+            await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers, will.id, isSharedWill, circle.id);
             console.log(`Sent Will proposed notifications to ${otherMembers.length} members (isSharedWill: ${isSharedWill})`);
 
             for (const memberId of otherMembers) {
@@ -1460,7 +1460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`[Routes] ISSUE #2 FIX: Sending Ready for New Will notification to ${memberIds.length} CURRENT members of circle ${willWithCommitments.circleId}`);
           console.log(`[Routes] Circle members:`, memberIds);
           
-          await pushNotificationService.sendReadyForNewWillNotification(memberIds);
+          await pushNotificationService.sendReadyForNewWillNotification(memberIds, willWithCommitments.circleId);
           console.log(`[Routes] ✅ Ready for New Will notification sent for Will ${willId}`);
         } catch (error) {
           console.error(`[Routes] ❌ Failed to send Ready for New Will notification:`, error);
@@ -1868,7 +1868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (memberIds.length > 0) {
         const { pushNotificationService } = await import('./pushNotificationService');
         const willTitle = (will as any).title || 'Your Will';
-        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, willId);
+        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, willId, will.circleId);
         console.log(`[Push] Sent encouragement notification from ${pusherName} to ${memberIds.length} members for Will: ${willTitle}`);
       }
       
@@ -3212,7 +3212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (activeWill) {
         const willWithCommitments = await storage.getWillWithCommitments(activeWill.id);
         const committedMembers = willWithCommitments?.commitments?.map((c: any) => c.userId) || [];
-        await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers, activeWill.id, false);
+        await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers, activeWill.id, false, userCircle.id);
       }
       
       res.json({ success: true, message: "Will started notifications sent" });
@@ -3240,7 +3240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activeWill = await storage.getCircleActiveWill(userCircle.id);
       
       // Send push notifications for End Room timing
-      await pushNotificationService.sendEndRoomNotification(type, endRoomTime, memberIds, activeWill?.id);
+      await pushNotificationService.sendEndRoomNotification(type, endRoomTime, memberIds, activeWill?.id, userCircle.id);
       
       res.json({ success: true, message: "End room notifications sent" });
     } catch (error) {

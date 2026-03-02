@@ -164,9 +164,10 @@ function Router() {
           }
           
           // Handle /will/:id/commit -> /will/:id/commit (valid route)
-          // Handle /circle/:id -> /hub (circle view is in hub)
-          if (targetPath.startsWith('/circle/')) {
-            targetPath = '/hub';
+          // Handle /circle/:id -> /circles/:id (correct route)
+          if (targetPath.match(/^\/circle\/\d+$/)) {
+            const circleId = targetPath.split('/')[2];
+            targetPath = `/circles/${circleId}`;
             console.log('🔗 [DeepLink] Mapped circle link to:', targetPath);
           }
           
@@ -181,23 +182,22 @@ function Router() {
           
           console.log('🔗 [DeepLink] Fallback info:', { type, isSoloMode, willId });
           
+          const circleId = data?.circleId;
+          
           // If we have a willId, navigate to the will details
           if (willId && isMounted) {
             setLocation(`/will/${willId}`);
           } else if (type === 'daily_reminder' || type === 'will_midpoint') {
-            // Solo mode notifications without willId go to solo hub
-            setLocation(isSoloMode ? '/solo/hub' : '/hub');
+            setLocation(isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles'));
           } else if (type === 'will_started') {
-            // Will started - use isSoloMode to determine destination
-            setLocation(isSoloMode ? '/solo/hub' : '/hub');
+            setLocation(isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles'));
           } else if (type === 'end_room_now' || type === 'end_room_15_minutes' || type === 'end_room_24_hours') {
-            // End room notifications are circle-only
-            setLocation('/hub');
+            setLocation(circleId ? `/circles/${circleId}` : '/circles');
           } else if (type === 'will_proposed' || type === 'circle_member_joined') {
-            // Circle-only notifications
-            setLocation('/hub');
+            setLocation(circleId ? `/circles/${circleId}` : '/circles');
+          } else if (type === 'ready_for_new_will') {
+            setLocation(circleId ? `/circles/${circleId}` : '/circles');
           } else {
-            // Default fallback
             setLocation('/');
           }
         }
