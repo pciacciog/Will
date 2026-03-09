@@ -1,0 +1,67 @@
+CHAT
+
+I would like to add a basic messaging feature .
+
+Keep It Simple
+What to Build:
+1. Messages List in Circle Hub
+    * Show below the Wills or in a dedicated "Messages" section
+    * Simple chronological list (newest at bottom or top - your call)
+    * Shows: sender name, message text, timestamp
+2. Send Message
+    * Text input field at bottom
+    * Send button
+    * Max length: ~500 characters (prevent essays)
+    * Text only - no images, files, links
+3. Who Can See
+    * All circle members see all messages
+    * No private DMs - everything is group chat
+4. Push Notifications
+    * When someone sends a message, notify other circle members
+    * Notification: "[Name] sent a message in [Circle name]"
+    * Tapping notification opens that circle
+5. Data Persistence
+    * Messages stored permanently (not disappearing)
+    * Load last 50 messages when opening circle (or all if under 50)
+
+What NOT to Build (Skip for MVP):
+* ❌ Typing indicators
+* ❌ Read receipts
+* ❌ Online/offline status
+* ❌ Image/file uploads
+* ❌ Message reactions/emojis
+* ❌ Edit or delete messages
+* ❌ Thread replies
+* ❌ Search functionality
+* ❌ Real-time updates (polling/refresh is fine)
+
+Suggested Data Model
+
+
+typescript
+messages table:
+- id
+- circleId (foreign key)
+- userId (who sent it)
+- text (message content)
+- createdAt (timestamp)
+
+UI Placement
+Option A: Dedicated Messages Tab in Circle Hub
+* Circle Hub has tabs: "Wills" | "Messages" | "Members"
+* Keeps messages separate from Wills view
+Option B: Messages Section Below Wills
+* Wills at top
+* Messages section below
+* Everything on one scrollable page
+Your call on what makes most UI sense.
+
+Real-Time Updates
+Question: Do messages need to appear instantly (WebSockets), or is it okay if they only show up when user navigates to the circle or pulls to refresh?
+My preference: Simple polling or refresh is fine for MVP. Don't need real-time if it adds complexity.
+
+Implementation Questions
+1. How difficult is this?
+2. Best approach given current architecture?
+3. Any concerns about adding this feature?
+4. Notifications - any concerns with the setup? 
