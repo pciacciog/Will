@@ -45,6 +45,9 @@ import {
   type UserNotification,
   type InsertUserNotification,
   userNotifications,
+  circleMessages,
+  type CircleMessage,
+  type InsertCircleMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
@@ -245,6 +248,9 @@ export interface IStorage {
     };
   }[]>;
 
+  getCircleMessages(circleId: number, limit?: number): Promise<(CircleMessage & { user: { firstName: string } })[]>;
+  createCircleMessage(data: InsertCircleMessage): Promise<CircleMessage>;
+
   createUserNotification(notification: InsertUserNotification): Promise<UserNotification>;
   getUserUnreadNotifications(userId: string): Promise<UserNotification[]>;
   getUserUnreadNotificationCount(userId: string): Promise<number>;
@@ -357,8 +363,9 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(userId: string): Promise<void> {
     // Delete all user data in proper order to respect foreign key constraints
     
-    // 1. Delete device tokens
+    // 1. Delete device tokens and circle messages
     await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
+    await db.delete(circleMessages).where(eq(circleMessages.userId, userId));
     
     // 2. Delete will-related data for this user
     await db.delete(willPushes).where(eq(willPushes.userId, userId));
@@ -400,10 +407,8 @@ export class DatabaseStorage implements IStorage {
         await db.delete(wills).where(eq(wills.id, will.id));
       }
       
-      // Delete all circle memberships for this circle
+      await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
       await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
-      
-      // Delete the circle
       await db.delete(circles).where(eq(circles.id, circle.id));
     }
     
@@ -1256,7 +1261,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCircle(circleId: number): Promise<void> {
-    // Delete related data first
+    await db.delete(circleMessages).where(eq(circleMessages.circleId, circleId));
     await db.delete(circleMembers).where(eq(circleMembers.circleId, circleId));
     await db.delete(circles).where(eq(circles.id, circleId));
   }
@@ -1944,6 +1949,28 @@ export class DatabaseStorage implements IStorage {
         eq(userNotifications.userId, userId),
         eq(userNotifications.circleId, circleId),
       ));
+  }
+
+  async getCircleMessages(circleId: number, limit: number = 50): Promise<(CircleMessage & { user: { firstName: string } })[]> {
+    const results = await db
+      .select({
+        message: circleMessages,
+        firstName: users.firstName,
+      })
+      .from(circleMessages)
+      .innerJoin(users, eq(circleMessages.userId, users.id))
+      .where(eq(circleMessages.circleId, circleId))
+      .orderBy(desc(circleMessages.createdAt))
+      .limit(limit);
+
+    return results
+      .map(r => ({ ...r.message, user: { firstName: r.firstName } }))
+      .reverse();
+  }
+
+  async createCircleMessage(data: InsertCircleMessage): Promise<CircleMessage> {
+    const [message] = await db.insert(circleMessages).values(data).returning();
+    return message;
   }
 }
 

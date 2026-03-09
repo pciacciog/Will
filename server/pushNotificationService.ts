@@ -642,6 +642,23 @@ class PushNotificationService {
 
     return await this.sendToUser(userId, payload);
   }
+  async sendCircleMessageNotification(senderName: string, circleId: number, messagePreview: string, otherMembers: string[]): Promise<void> {
+    const truncatedPreview = messagePreview.length > 100 ? messagePreview.substring(0, 97) + '...' : messagePreview;
+
+    const payload: PushNotificationPayload = {
+      title: `${senderName} sent a message`,
+      body: truncatedPreview,
+      category: 'circle_message',
+      data: {
+        type: 'circle_message',
+        circleId: circleId.toString(),
+        senderName,
+        deepLink: `/circles/${circleId}?tab=messages`,
+      }
+    };
+
+    await this.sendToMultipleUsers(otherMembers, payload);
+  }
 }
 
 export const pushNotificationService = new PushNotificationService();

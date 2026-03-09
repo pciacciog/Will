@@ -197,6 +197,8 @@ function Router() {
             setLocation(circleId ? `/circles/${circleId}` : '/circles');
           } else if (type === 'ready_for_new_will') {
             setLocation(circleId ? `/circles/${circleId}` : '/circles');
+          } else if (type === 'circle_message') {
+            setLocation(circleId ? `/circles/${circleId}?tab=messages` : '/circles');
           } else {
             setLocation('/');
           }

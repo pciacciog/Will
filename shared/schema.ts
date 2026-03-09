@@ -234,6 +234,16 @@ export const deviceTokens = pgTable("device_tokens", {
   index("IDX_device_tokens_user_active").on(table.userId, table.isActive),
 ]);
 
+export const circleMessages = pgTable("circle_messages", {
+  id: serial("id").primaryKey(),
+  circleId: integer("circle_id").notNull().references(() => circles.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_circle_messages_circle_id").on(table.circleId),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   circleMembers: many(circleMembers),
@@ -380,6 +390,17 @@ export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
 export const pageContentsRelations = relations(pageContents, ({ one }) => ({
   updatedByUser: one(users, {
     fields: [pageContents.updatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const circleMessagesRelations = relations(circleMessages, ({ one }) => ({
+  circle: one(circles, {
+    fields: [circleMessages.circleId],
+    references: [circles.id],
+  }),
+  user: one(users, {
+    fields: [circleMessages.userId],
     references: [users.id],
   }),
 }));
@@ -539,3 +560,10 @@ export const insertUserNotificationSchema = createInsertSchema(userNotifications
 });
 export type InsertUserNotification = z.infer<typeof insertUserNotificationSchema>;
 export type UserNotification = typeof userNotifications.$inferSelect;
+
+export const insertCircleMessageSchema = createInsertSchema(circleMessages).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCircleMessage = z.infer<typeof insertCircleMessageSchema>;
+export type CircleMessage = typeof circleMessages.$inferSelect;

@@ -21,6 +21,8 @@ import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
+import CircleMessages from "@/components/CircleMessages";
+import { MessageCircle } from "lucide-react";
 
 function formatTimeRemaining(endDate: string): string {
   const now = new Date();
@@ -112,6 +114,17 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
   const [showVideoRoom, setShowVideoRoom] = useState(false);
   const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null);
   const [showFinalSummary, setShowFinalSummary] = useState(false);
+  const [activeTab, setActiveTab] = useState<'circle' | 'messages'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') === 'messages' ? 'messages' : 'circle';
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'messages') {
+      setActiveTab('messages');
+    }
+  }, []);
 
   const queryClient = useQueryClient();
   
@@ -586,6 +599,47 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
             </p>
           </div>
 
+          {/* Tab Switcher */}
+          <div className="flex items-center justify-center gap-2 mb-4" data-testid="tab-switcher">
+            <button
+              onClick={() => setActiveTab('circle')}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeTab === 'circle'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              data-testid="tab-circle"
+            >
+              <Users className="w-3.5 h-3.5" />
+              Circle
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeTab === 'messages'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              data-testid="tab-messages"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Messages
+            </button>
+          </div>
+
+          {activeTab === 'messages' ? (
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
+              <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
+                <CardContent className="p-0" style={{ height: 'calc(100vh - 320px)', minHeight: '400px' }}>
+                  {circle && user && (
+                    <CircleMessages circleId={circle.id} currentUserId={user.id} />
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+          <>
           {/* Members Section - More Breathing Room */}
           <div className="relative mb-4">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
@@ -961,6 +1015,8 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
               View History
             </button>
           </div>
+          </>
+          )}
 
         </div>
       </div>

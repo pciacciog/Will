@@ -666,6 +666,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/circles/:circleId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const circleId = parseInt(req.params.circleId);
+
+      if (isNaN(circleId)) {
+        return res.status(400).json({ message: "Invalid circle ID" });
+      }
+
+      const isMember = await storage.isUserInCircle(userId, circleId);
+      if (!isMember) {
+        return res.status(403).json({ message: "You are not a member of this circle" });
+      }
+
+      const messages = await storage.getCircleMessages(circleId, 50);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching circle messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post('/api/circles/:circleId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const circleId = parseInt(req.params.circleId);
+
+      if (isNaN(circleId)) {
+        return res.status(400).json({ message: "Invalid circle ID" });
+      }
+
+      const text = (req.body.text || '').trim();
+      if (!text) {
+        return res.status(400).json({ message: "Message text is required" });
+      }
+      if (text.length > 500) {
+        return res.status(400).json({ message: "Message must be 500 characters or less" });
+      }
+
+      const isMember = await storage.isUserInCircle(userId, circleId);
+      if (!isMember) {
+        return res.status(403).json({ message: "You are not a member of this circle" });
+      }
+
+      const message = await storage.createCircleMessage({
+        circleId,
+        userId,
+        text,
+      });
+
+      const sender = await storage.getUser(userId);
+      const senderName = sender?.firstName || 'Someone';
+
+      const members = await storage.getCircleMembers(circleId);
+      const otherMemberIds = members
+        .map(m => m.userId)
+        .filter(id => id !== userId);
+
+      if (otherMemberIds.length > 0) {
+        await pushNotificationService.sendCircleMessageNotification(
+          senderName,
+          circleId,
+          text,
+          otherMemberIds,
+        );
+      }
+
+      res.json({ ...message, user: { firstName: senderName } });
+    } catch (error) {
+      console.error("Error sending circle message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
   // Will routes
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {
