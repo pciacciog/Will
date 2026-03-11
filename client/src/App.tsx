@@ -17,6 +17,7 @@ import Auth from "@/pages/Auth";
 import Home from "@/pages/Home";
 import InnerCircle from "@/pages/InnerCircle";
 import InnerCircleHub from "@/pages/InnerCircleHub";
+import CircleMessagesPage from "@/pages/CircleMessagesPage";
 import Explore from "@/pages/Explore";
 import JoinWill from "@/pages/JoinWill";
 import WillHistory from "@/pages/WillHistory";
@@ -171,6 +172,12 @@ function Router() {
             console.log('🔗 [DeepLink] Mapped circle link to:', targetPath);
           }
           
+          // Handle legacy ?tab=messages deep links -> /circles/:id/messages
+          if (targetPath.includes('?tab=messages')) {
+            targetPath = targetPath.replace('?tab=messages', '/messages');
+            console.log('🔗 [DeepLink] Mapped legacy tab link to:', targetPath);
+          }
+          
           console.log('🔗 [DeepLink] Navigating to:', targetPath);
           setLocation(targetPath);
         } else {
@@ -198,7 +205,7 @@ function Router() {
           } else if (type === 'ready_for_new_will') {
             setLocation(circleId ? `/circles/${circleId}` : '/circles');
           } else if (type === 'circle_message') {
-            setLocation(circleId ? `/circles/${circleId}?tab=messages` : '/circles');
+            setLocation(circleId ? `/circles/${circleId}/messages` : '/circles');
           } else {
             setLocation('/');
           }
@@ -349,6 +356,7 @@ function Router() {
             <Route path="/" component={Home} />
             <Route path="/inner-circle" component={InnerCircle} />
             <Route path="/circles" component={CircleLobby} />
+            <Route path="/circles/:circleId/messages">{(params) => <CircleMessagesPage circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/circles/:circleId">{(params) => <InnerCircleHub circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/hub" component={LegacyHubRedirect} />
             <Route path="/solo/hub" component={Home} />

@@ -21,7 +21,6 @@ import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
-import CircleMessages from "@/components/CircleMessages";
 import { MessageCircle } from "lucide-react";
 
 function formatTimeRemaining(endDate: string): string {
@@ -114,17 +113,6 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
   const [showVideoRoom, setShowVideoRoom] = useState(false);
   const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null);
   const [showFinalSummary, setShowFinalSummary] = useState(false);
-  const [activeTab, setActiveTab] = useState<'circle' | 'messages'>(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('tab') === 'messages' ? 'messages' : 'circle';
-  });
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('tab') === 'messages') {
-      setActiveTab('messages');
-    }
-  }, []);
 
   const queryClient = useQueryClient();
   
@@ -583,8 +571,8 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
             </DropdownMenu>
           </div>
 
-          {/* Circle Icon with Glow + Tagline */}
-          <div className="text-center mb-4 mt-2">
+          {/* Circle Icon with Glow + Tagline + Chat Bubble */}
+          <div className="relative text-center mb-4 mt-2">
             <div className="inline-flex items-center justify-center mb-1.5">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 blur-2xl opacity-40 animate-pulse"></div>
@@ -597,49 +585,16 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
             <p className="text-emerald-600 text-sm font-medium italic">
               "Become more… together"
             </p>
-          </div>
-
-          {/* Tab Switcher */}
-          <div className="flex items-center justify-center gap-2 mb-4" data-testid="tab-switcher">
             <button
-              onClick={() => setActiveTab('circle')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                activeTab === 'circle'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              data-testid="tab-circle"
+              onClick={() => circle && setLocation(`/circles/${circle.id}/messages`)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100 hover:border-emerald-300 transition-all duration-200 active:scale-95 shadow-sm"
+              data-testid="button-open-messages"
+              aria-label="Open circle messages"
             >
-              <Users className="w-3.5 h-3.5" />
-              Circle
-            </button>
-            <button
-              onClick={() => setActiveTab('messages')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                activeTab === 'messages'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              data-testid="tab-messages"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              Messages
+              <MessageCircle className="w-5 h-5" />
             </button>
           </div>
 
-          {activeTab === 'messages' ? (
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
-              <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-                <CardContent className="p-0" style={{ height: 'calc(100vh - 320px)', minHeight: '400px' }}>
-                  {circle && user && (
-                    <CircleMessages circleId={circle.id} currentUserId={user.id} />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-          <>
           {/* Members Section - More Breathing Room */}
           <div className="relative mb-4">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
@@ -1015,8 +970,6 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
               View History
             </button>
           </div>
-          </>
-          )}
 
         </div>
       </div>

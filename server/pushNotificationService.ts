@@ -653,7 +653,7 @@ class PushNotificationService {
         type: 'circle_message',
         circleId: circleId.toString(),
         senderName,
-        deepLink: `/circles/${circleId}?tab=messages`,
+        deepLink: `/circles/${circleId}/messages`,
       }
     };
 
