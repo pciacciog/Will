@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { notificationService } from "@/services/NotificationService";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { useLocation } from "wouter";
@@ -59,6 +59,7 @@ function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
   const [sessionRestored, setSessionRestored] = useState(false);
+  const pendingDeepLinkRef = useRef<string | null>(null);
 
   // Debug logging
   console.log('Router debug:', { isAuthenticated, isLoading, user: user?.id, location });
@@ -129,8 +130,15 @@ function Router() {
       console.log('[App] 🔄 Auth state changed to authenticated - invalidating wills queries');
       queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
+
+      if (pendingDeepLinkRef.current) {
+        const pendingPath = pendingDeepLinkRef.current;
+        pendingDeepLinkRef.current = null;
+        console.log('🔗 [DeepLink] Applying pending deep link after auth:', pendingPath);
+        setTimeout(() => setLocation(pendingPath), 100);
+      }
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, setLocation]);
 
   // DEEP LINK HANDLER: Handle push notification taps and navigate to the deep link
   useEffect(() => {
@@ -151,64 +159,60 @@ function Router() {
         const data = notification.notification?.data;
         console.log('🔗 [DeepLink] Notification data:', JSON.stringify(data, null, 2));
         
-        if (data?.deepLink && isMounted) {
+        let targetPath: string | null = null;
+
+        if (data?.deepLink) {
           console.log('🔗 [DeepLink] Deep link found:', data.deepLink);
+          targetPath = data.deepLink;
           
-          // Map deep link paths to valid routes
-          let targetPath = data.deepLink;
-          
-          // Handle /will/:id/review -> /will/:id (review is shown on will details page)
-          // The WillDetails component shows the review UI based on Will status
           if (targetPath.includes('/review')) {
             targetPath = targetPath.replace('/review', '');
             console.log('🔗 [DeepLink] Mapped review link to:', targetPath);
           }
           
-          // Handle /will/:id/commit -> /will/:id/commit (valid route)
-          // Handle /circle/:id -> /circles/:id (correct route)
           if (targetPath.match(/^\/circle\/\d+$/)) {
             const circleId = targetPath.split('/')[2];
             targetPath = `/circles/${circleId}`;
             console.log('🔗 [DeepLink] Mapped circle link to:', targetPath);
           }
           
-          // Handle legacy ?tab=messages deep links -> /circles/:id/messages
           if (targetPath.includes('?tab=messages')) {
             targetPath = targetPath.replace('?tab=messages', '/messages');
             console.log('🔗 [DeepLink] Mapped legacy tab link to:', targetPath);
           }
-          
-          console.log('🔗 [DeepLink] Navigating to:', targetPath);
-          setLocation(targetPath);
         } else {
           console.log('🔗 [DeepLink] No deep link in notification data, using fallback navigation');
-          // Fallback navigation based on notification type and mode
           const type = data?.type;
           const isSoloMode = data?.isSoloMode === 'true';
           const willId = data?.willId;
+          const circleId = data?.circleId;
           
           console.log('🔗 [DeepLink] Fallback info:', { type, isSoloMode, willId });
           
-          const circleId = data?.circleId;
-          
-          // If we have a willId, navigate to the will details
-          if (willId && isMounted) {
-            setLocation(`/will/${willId}`);
+          if (willId) {
+            targetPath = `/will/${willId}`;
           } else if (type === 'daily_reminder' || type === 'will_midpoint') {
-            setLocation(isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles'));
+            targetPath = isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles');
           } else if (type === 'will_started') {
-            setLocation(isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles'));
+            targetPath = isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles');
           } else if (type === 'end_room_now' || type === 'end_room_15_minutes' || type === 'end_room_24_hours') {
-            setLocation(circleId ? `/circles/${circleId}` : '/circles');
+            targetPath = circleId ? `/circles/${circleId}` : '/circles';
           } else if (type === 'will_proposed' || type === 'circle_member_joined') {
-            setLocation(circleId ? `/circles/${circleId}` : '/circles');
+            targetPath = circleId ? `/circles/${circleId}` : '/circles';
           } else if (type === 'ready_for_new_will') {
-            setLocation(circleId ? `/circles/${circleId}` : '/circles');
+            targetPath = circleId ? `/circles/${circleId}` : '/circles';
           } else if (type === 'circle_message') {
-            setLocation(circleId ? `/circles/${circleId}/messages` : '/circles');
+            targetPath = circleId ? `/circles/${circleId}/messages` : '/circles';
           } else {
-            setLocation('/');
+            targetPath = '/';
           }
+        }
+
+        if (targetPath && isMounted) {
+          console.log('🔗 [DeepLink] Target path resolved:', targetPath);
+          pendingDeepLinkRef.current = targetPath;
+          setLocation(targetPath);
+          console.log('🔗 [DeepLink] Navigated to:', targetPath);
         }
       });
 
