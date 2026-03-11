@@ -1,0 +1,17 @@
+The Circle Messages feature needs several fixes. The root cause is an iOS rendering issue — everything else flows from that.
+
+Issue 1 — Messages don't render on iOS (root cause of everything)
+The chat works correctly on the web browser but on iOS the chat history never displays — it stays blank even though the database has messages. To confirm this is iOS-specific: on web, messages send and appear in the chat log correctly. On iPhone, it stays permanently on "No messages yet" regardless of what's in the database.
+The 10-second polling IS firing on iOS (visible as a brief flicker), and all other API calls on the same Circle page work fine on iOS — so this is not a headers or network issue. It is isolated to the messages component.
+The most likely cause is a data shape mismatch. The GET /api/circles/:circleId/messages endpoint probably returns { messages: [...] } but the CircleMessages component is treating the response as the array directly (e.g. data.map(...) instead of data.messages.map(...)). Web browsers handle this mismatch more forgivingly — iOS WebView does not, so it silently fails to render anything.
+Fix: Console log the raw response from the messages GET endpoint and confirm the exact shape. Then make sure the component correctly destructures it before mapping over it. Add a defensive check so that if the shape is unexpected, it fails visibly rather than silently.
+
+Issue 2 — Add immediate refetch after sending (quality improvement)
+This is not a separate bug — it's a nice-to-have on top of Issue 1. On web, sent messages already appear correctly. But currently the sender has to wait up to 10 seconds for the next poll cycle to see their message.
+Fix: In the onSuccess callback of the send mutation, call queryClient.invalidateQueries on the messages query key for this circle. This forces an instant refetch so the message appears immediately after sending on both web and iOS.
+
+Issue 3 — Verify empty state condition
+The "No messages yet" screen disappears once messages exist, which is correct on web. After fixing Issue 1, confirm the empty state condition uses messages.length === 0 and not !messages — the latter evaluates to true for both an empty array and undefined/null, which could cause it to display even when data has loaded.
+
+Issue 4 — Verify auto-scroll on iOS
+The component auto-scrolls to the newest message on load and when near the bottom. After Issue 1 is resolved, test that this works correctly on a physical iPhone — Capacitor's WebView sometimes handles scroll behavior differently than a browser.
