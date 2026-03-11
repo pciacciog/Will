@@ -1,0 +1,52 @@
+The Circle Messages page needs a full iOS messaging experience overhaul. Right now it feels like a web page forced onto a phone. The goal is a smooth, native-feeling chat interface similar to WhatsApp or iMessage. Here is every issue to fix:
+
+1. Safe area insets — content bleeding behind system UI
+The chat content starts from the very top of the screen, bleeding behind the status bar. The input bar at the bottom likely also sits too close to the home indicator swipe area on newer iPhones.
+
+Apply padding-top: env(safe-area-inset-top) to the page container
+Apply padding-bottom: env(safe-area-inset-bottom) to the input bar
+These are the standard CSS values for Capacitor/iOS WebView safe areas
+
+
+2. Message bubble spacing — excessive empty space inside bubbles
+Longer messages have a large empty gap inside the bubble below the text, before the timestamp. The bubble is expanding far beyond its content.
+
+Remove any min-height on message bubbles
+If the timestamp uses position: absolute, change it to inline flow so it sits naturally after the text
+Bubbles should wrap tightly around content with consistent, modest padding
+
+
+3. Keyboard behavior — the most important iOS fix
+When the keyboard opens on iOS, the chat should behave exactly like WhatsApp — the entire chat scrolls up, the input bar rises with the keyboard, and the most recent messages stay visible. Right now this almost certainly doesn't happen — the keyboard covers the input bar and the messages don't adjust.
+
+Use position: fixed on the input bar so it sticks to the bottom of the viewport
+On keyboard open, the viewport shrinks — the message list needs to resize and scroll to the bottom automatically so the last message stays visible
+In Capacitor, use the Keyboard plugin events (keyboardWillShow, keyboardWillHide) to adjust the bottom padding of the message list dynamically when the keyboard appears and disappears
+The transition should be smooth — no jarring jumps
+
+
+4. Scroll behavior — smooth and automatic
+
+When the chat first loads, it should scroll instantly to the most recent message
+When a new message arrives (from polling or after sending), if the user is near the bottom, auto-scroll to the new message smoothly
+If the user has scrolled up to read history, do NOT auto-scroll — let them stay where they are
+Use smooth scroll behavior throughout
+
+
+5. Input bar polish
+
+The input bar should always sit just above the keyboard, never behind it
+On send, clear the input and keep focus on the text field so the user can type again immediately without re-tapping
+The send button should be disabled and visually muted when the input is empty, active and green when there's text
+
+
+6. Message timestamp grouping
+Right now every single message shows its own timestamp ("3h ago", "2h ago", "just now"). This creates visual clutter. Instead:
+
+Group messages sent within a few minutes of each other under one sender label and one timestamp
+Only show the timestamp again when there's a significant time gap (e.g. 5+ minutes) between messages
+This is the standard WhatsApp/iMessage pattern and dramatically cleans up the visual noise
+
+
+7. Overall feel
+The goal is for this to feel like a native iOS messaging interface — smooth keyboard transitions, content that never hides behind system UI, bubbles that are clean and tight, and a scroll experience that just works without the user thinking about it. Reference WhatsApp or iMessage as the standard. Every interaction should feel fluid and intentiona
