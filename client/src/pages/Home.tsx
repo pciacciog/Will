@@ -318,7 +318,7 @@ export default function Home() {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900">Circles</h3>
+                    <h3 className="text-sm font-semibold text-gray-900">My Circles</h3>
                     <p className="text-[11px] text-gray-400 mt-0.5">Shared Accountability</p>
                   </div>
                 </div>
