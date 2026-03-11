@@ -587,11 +587,11 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
             </p>
             <button
               onClick={() => circle && setLocation(`/circles/${circle.id}/messages`)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white transition-all duration-200 active:scale-95 shadow-lg"
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-14 h-14 flex items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white transition-all duration-200 active:scale-95 shadow-lg"
               data-testid="button-open-messages"
               aria-label="Open circle messages"
             >
-              <MessageCircle className="w-8 h-8" />
+              <MessageCircle className="w-10 h-10" strokeWidth={2.5} />
             </button>
           </div>
 
