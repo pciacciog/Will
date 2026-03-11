@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import type { WillCheckIn } from "@shared/schema";
 
@@ -19,6 +19,8 @@ interface DayInfo {
 }
 
 export default function DayStrip({ startDate, endDate, checkIns, onDayClick }: DayStripProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const todayRef = useRef<HTMLButtonElement>(null);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -72,6 +74,12 @@ export default function DayStrip({ startDate, endDate, checkIns, onDayClick }: D
     return result;
   }, [startDate, endDate, checkInMap, today]);
 
+  useEffect(() => {
+    if (todayRef.current && scrollContainerRef.current) {
+      todayRef.current.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
+    }
+  }, [days]);
+
   const getStatusStyles = (status: DayInfo['status'], isToday: boolean) => {
     const baseStyles = "w-11 h-11 rounded-full flex flex-col items-center justify-center transition-all duration-200";
     
@@ -92,10 +100,11 @@ export default function DayStrip({ startDate, endDate, checkIns, onDayClick }: D
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 px-1 -mx-1 scrollbar-hide">
+      <div ref={scrollContainerRef} className="flex items-center gap-2 overflow-x-auto pb-2 px-1 -mx-1 scrollbar-hide">
         {days.map((day) => (
           <button
             key={day.dateKey}
+            ref={day.isToday ? todayRef : undefined}
             type="button"
             onClick={() => day.status !== 'future' && onDayClick?.(day.dateKey)}
             disabled={day.status === 'future'}
