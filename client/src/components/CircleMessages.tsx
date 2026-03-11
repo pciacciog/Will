@@ -54,8 +54,9 @@ export default function CircleMessages({
 
   const sendMutation = useMutation({
     mutationFn: async (messageText: string) => {
-      const res = await apiRequest("POST", `/api/circles/${circleId}/messages`, {
-        text: messageText,
+      const res = await apiRequest(`/api/circles/${circleId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ text: messageText }),
       });
       return res.json();
     },
