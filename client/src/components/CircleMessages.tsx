@@ -40,17 +40,17 @@ export default function CircleMessages({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [hasScrolledOnLoad, setHasScrolledOnLoad] = useState(false);
 
-  const { data: messages = [], isLoading } = useQuery<Message[]>({
+  const { data: rawMessages, isLoading } = useQuery<Message[]>({
     queryKey: ["/api/circles", circleId, "messages"],
     queryFn: async () => {
-      const res = await fetch(`/api/circles/${circleId}/messages`, {
-        credentials: "include",
-      });
+      const res = await apiRequest(`/api/circles/${circleId}/messages`);
       if (!res.ok) throw new Error("Failed to fetch messages");
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
     refetchInterval: 10000,
   });
+  const messages = rawMessages ?? [];
 
   const sendMutation = useMutation({
     mutationFn: async (messageText: string) => {
