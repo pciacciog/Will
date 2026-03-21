@@ -1401,12 +1401,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (joinCheckInType === 'one-time') joinCheckInType = 'final_review';
 
       // Create a new will instance for this user
+      // Start date is when the user joins, not when the parent will started
+      const joinDate = new Date();
+      joinDate.setHours(0, 0, 0, 0);
+      const effectiveStartDate = joinDate > new Date(parentWill.startDate) ? joinDate : parentWill.startDate;
+
       const newWill = await storage.createWill({
         createdBy: userId,
         mode: 'personal',
         visibility: 'private',
         parentWillId: parentWillId,
-        startDate: parentWill.startDate,
+        startDate: effectiveStartDate,
         endDate: parentWill.endDate,
         checkInType: joinCheckInType,
         checkInTime: userCheckInTime,
