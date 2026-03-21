@@ -983,7 +983,7 @@ export default function WillDetails() {
                 <span className="text-base font-semibold text-gray-900">Messages</span>
               </div>
               <button
-                onClick={() => setLocation(`/will/${participantWillId}/messages`)}
+                onClick={() => setLocation(`/will/${id}/messages`)}
                 className="text-sm text-blue-600 font-medium hover:text-blue-700"
                 data-testid="button-will-messages-expand"
               >
