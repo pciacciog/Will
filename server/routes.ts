@@ -1169,7 +1169,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [memberCountResult] = await db
         .select({ count: sql<number>`count(*)` })
         .from(wills)
-        .where(eq(wills.parentWillId, willId));
+        .where(and(
+          eq(wills.parentWillId, willId),
+          inArray(wills.status, ['pending', 'active', 'paused', 'will_review'])
+        ));
       
       res.json({
         id: will.id,
@@ -1206,11 +1209,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rootWill = will.parentWillId ? await storage.getWillById(rootWillId) : will;
 
       const childWills = await db
-        .select({ id: wills.id, createdBy: wills.createdBy })
+        .select({ id: wills.id, createdBy: wills.createdBy, status: wills.status })
         .from(wills)
         .where(eq(wills.parentWillId, rootWillId));
 
-      const allParticipantIds = [rootWill!.createdBy, ...childWills.map(w => w.createdBy)];
+      const activeChildWills = childWills.filter(w => !['terminated', 'completed', 'archived'].includes(w.status));
+      const allParticipantIds = [rootWill!.createdBy, ...activeChildWills.map(w => w.createdBy)];
       const uniqueIds = Array.from(new Set(allParticipantIds));
 
       const participants = await db
@@ -1305,7 +1309,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activeDays: parentWill.activeDays || 'every_day',
         customDays: parentWill.customDays || null,
       });
-      
+
+      const joiningUser = await db
+        .select({ firstName: users.firstName })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      const joinerName = joiningUser[0]?.firstName || 'Someone';
+
+      const activeChildWills = await db
+        .select({ createdBy: wills.createdBy })
+        .from(wills)
+        .where(and(
+          eq(wills.parentWillId, parentWillId),
+          inArray(wills.status, ['pending', 'active', 'paused', 'will_review'])
+        ));
+      const otherParticipantIds = [
+        parentWill.createdBy,
+        ...activeChildWills.map(w => w.createdBy)
+      ].filter(id => id !== userId);
+      const uniqueOtherIds = Array.from(new Set(otherParticipantIds));
+
+      if (uniqueOtherIds.length > 0) {
+        try {
+          await pushNotificationService.sendPublicWillJoinedNotification(joinerName, parentWillId, uniqueOtherIds, parentCommitment.what);
+        } catch (notifError) {
+          console.error('[JoinPublicWill] Failed to send notifications:', notifError);
+        }
+      }
+
       res.json({ willId: newWill.id, message: "Successfully joined" });
     } catch (error) {
       console.error("Error joining will:", error);
@@ -2437,7 +2469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Leave a circle will — ends the will for ALL members
+  // Leave a will — for circle wills ends for ALL members, for public wills ends only the user's child will
   app.post('/api/wills/:id/leave', isAuthenticated, async (req: any, res) => {
     try {
       const willId = parseInt(req.params.id);
@@ -2448,12 +2480,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      if (will.mode !== 'circle') {
-        return res.status(400).json({ message: "Leave is only available for Circle Wills" });
-      }
-
       if (will.status === 'completed' || will.status === 'terminated' || will.status === 'archived') {
         return res.status(400).json({ message: "This Will has already ended" });
+      }
+
+      // Handle public will leave (child will with parentWillId)
+      if (will.parentWillId) {
+        if (will.createdBy !== userId) {
+          return res.status(403).json({ message: "You can only leave your own joined Will" });
+        }
+
+        await db.update(wills)
+          .set({ status: 'terminated', endDate: new Date() })
+          .where(eq(wills.id, willId));
+
+        const leavingUser = await db
+          .select({ firstName: users.firstName })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+        const leaverName = leavingUser[0]?.firstName || 'A member';
+
+        const parentWill = await storage.getWillById(will.parentWillId);
+        const parentWillId = will.parentWillId;
+
+        const [parentCommitment] = await db
+          .select({ what: willCommitments.what })
+          .from(willCommitments)
+          .where(eq(willCommitments.willId, parentWillId))
+          .limit(1);
+        const willTitle = parentCommitment?.what || undefined;
+
+        const activeChildWills = await db
+          .select({ createdBy: wills.createdBy })
+          .from(wills)
+          .where(and(
+            eq(wills.parentWillId, parentWillId),
+            sql`${wills.id} != ${willId}`,
+            inArray(wills.status, ['pending', 'active', 'paused', 'will_review'])
+          ));
+
+        const otherParticipantIds = [
+          ...(parentWill ? [parentWill.createdBy] : []),
+          ...activeChildWills.map(w => w.createdBy)
+        ].filter(id => id !== userId);
+        const uniqueOtherIds = Array.from(new Set(otherParticipantIds));
+
+        if (uniqueOtherIds.length > 0) {
+          try {
+            await pushNotificationService.sendPublicWillLeftNotification(leaverName, parentWillId, uniqueOtherIds, willTitle);
+          } catch (notifError) {
+            console.error('[LeavePublicWill] Failed to send notifications:', notifError);
+          }
+        }
+
+        console.log(`[LeavePublicWill] User ${userId} (${leaverName}) left public Will ${willId} (parent: ${parentWillId})`);
+        return res.json({ message: "You left the Will. Your progress has been saved.", status: 'terminated' });
+      }
+
+      // Handle circle will leave (original behavior — ends for ALL members)
+      if (will.mode !== 'circle') {
+        return res.status(400).json({ message: "Leave is only available for Circle or Public Wills" });
       }
 
       const commitments = await db

@@ -570,6 +570,40 @@ class PushNotificationService {
     await this.sendToMultipleUsers(otherMembers, payload);
   }
 
+  async sendPublicWillJoinedNotification(joinerName: string, parentWillId: number, otherParticipants: string[], willTitle?: string): Promise<void> {
+    const titleText = willTitle ? `'${willTitle}'` : 'your public Will';
+    const payload: PushNotificationPayload = {
+      title: "New participant! 🎉",
+      body: `${joinerName} joined ${titleText}`,
+      category: 'public_will_joined',
+      data: {
+        type: 'public_will_joined',
+        joinerName,
+        willId: parentWillId.toString(),
+        deepLink: `/will/${parentWillId}`
+      }
+    };
+
+    await this.sendToMultipleUsers(otherParticipants, payload);
+  }
+
+  async sendPublicWillLeftNotification(leaverName: string, parentWillId: number, otherParticipants: string[], willTitle?: string): Promise<void> {
+    const titleText = willTitle ? `'${willTitle}'` : 'the public Will';
+    const payload: PushNotificationPayload = {
+      title: "Participant left",
+      body: `${leaverName} left ${titleText}`,
+      category: 'public_will_left',
+      data: {
+        type: 'public_will_left',
+        leaverName,
+        willId: parentWillId.toString(),
+        deepLink: `/will/${parentWillId}`
+      }
+    };
+
+    await this.sendToMultipleUsers(otherParticipants, payload);
+  }
+
   // Midpoint milestone notification — factual time-remaining with will statement
   async sendMidpointMilestoneNotification(willId: number, committedMembers: string[], endDate: Date, willWhat?: string): Promise<void> {
     const now = new Date();

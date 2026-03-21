@@ -839,7 +839,8 @@ export class DatabaseStorage implements IStorage {
       .from(wills)
       .where(and(
         eq(wills.createdBy, userId),
-        eq(wills.parentWillId, parentWillId)
+        eq(wills.parentWillId, parentWillId),
+        inArray(wills.status, ['pending', 'active', 'paused', 'will_review'])
       ))
       .limit(1);
     return will;
@@ -1026,17 +1027,12 @@ export class DatabaseStorage implements IStorage {
           eq(wills.createdBy, userId),
           inArray(wills.mode, ['solo', 'personal']),
           eq(wills.visibility, 'private'),
+          sql`${wills.parentWillId} IS NULL`,
           inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
         .limit(limit);
     } else if (mode === 'public') {
-      const userCommitmentWills = await db
-        .select({ willId: willCommitments.willId })
-        .from(willCommitments)
-        .where(eq(willCommitments.userId, userId));
-      const commitmentWillIds = userCommitmentWills.map(c => c.willId);
-      
       const createdPublic = await db
         .select()
         .from(wills)
@@ -1044,23 +1040,19 @@ export class DatabaseStorage implements IStorage {
           eq(wills.createdBy, userId),
           inArray(wills.mode, ['solo', 'personal']),
           eq(wills.visibility, 'public'),
-          inArray(wills.status, ['completed', 'archived'])
+          inArray(wills.status, ['completed', 'archived', 'terminated'])
         ));
       
-      let joinedPublic: typeof createdPublic = [];
-      if (commitmentWillIds.length > 0) {
-        joinedPublic = await db
-          .select()
-          .from(wills)
-          .where(and(
-            inArray(wills.id, commitmentWillIds),
-            inArray(wills.mode, ['solo', 'personal']),
-            eq(wills.visibility, 'public'),
-            inArray(wills.status, ['completed', 'archived'])
-          ));
-      }
+      const joinedChildWills = await db
+        .select()
+        .from(wills)
+        .where(and(
+          eq(wills.createdBy, userId),
+          sql`${wills.parentWillId} IS NOT NULL`,
+          inArray(wills.status, ['completed', 'archived', 'terminated'])
+        ));
       
-      const allPublic = [...createdPublic, ...joinedPublic];
+      const allPublic = [...createdPublic, ...joinedChildWills];
       const uniqueMap = new Map(allPublic.map(w => [w.id, w]));
       completedWills = Array.from(uniqueMap.values())
         .sort((a, b) => new Date(b.endDate!).getTime() - new Date(a.endDate!).getTime())
@@ -1741,17 +1733,12 @@ export class DatabaseStorage implements IStorage {
           eq(wills.createdBy, userId),
           inArray(wills.mode, ['solo', 'personal']),
           eq(wills.visibility, 'private'),
+          sql`${wills.parentWillId} IS NULL`,
           inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
         .limit(limit);
     } else if (mode === 'public') {
-      const userCommitmentWills = await db
-        .select({ willId: willCommitments.willId })
-        .from(willCommitments)
-        .where(eq(willCommitments.userId, userId));
-      const commitmentWillIds = userCommitmentWills.map(c => c.willId);
-      
       const createdPublic = await db
         .select()
         .from(wills)
@@ -1759,23 +1746,19 @@ export class DatabaseStorage implements IStorage {
           eq(wills.createdBy, userId),
           inArray(wills.mode, ['solo', 'personal']),
           eq(wills.visibility, 'public'),
-          inArray(wills.status, ['completed', 'archived'])
+          inArray(wills.status, ['completed', 'archived', 'terminated'])
         ));
       
-      let joinedPublic: typeof createdPublic = [];
-      if (commitmentWillIds.length > 0) {
-        joinedPublic = await db
-          .select()
-          .from(wills)
-          .where(and(
-            inArray(wills.id, commitmentWillIds),
-            inArray(wills.mode, ['solo', 'personal']),
-            eq(wills.visibility, 'public'),
-            inArray(wills.status, ['completed', 'archived'])
-          ));
-      }
+      const joinedChildWills = await db
+        .select()
+        .from(wills)
+        .where(and(
+          eq(wills.createdBy, userId),
+          sql`${wills.parentWillId} IS NOT NULL`,
+          inArray(wills.status, ['completed', 'archived', 'terminated'])
+        ));
       
-      const allPublic = [...createdPublic, ...joinedPublic];
+      const allPublic = [...createdPublic, ...joinedChildWills];
       const uniqueMap = new Map(allPublic.map(w => [w.id, w]));
       completedWills = Array.from(uniqueMap.values())
         .sort((a, b) => new Date(b.endDate!).getTime() - new Date(a.endDate!).getTime())

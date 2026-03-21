@@ -585,8 +585,13 @@ export default function WillDetails() {
     },
     onSuccess: () => {
       invalidateAllWillQueries();
-      toast({ title: "You left the Will", description: "The Will has ended for everyone." });
-      setLocation(getHubUrl());
+      if (will?.parentWillId) {
+        toast({ title: "You left the Will", description: "Your copy has been ended. Other participants are unaffected." });
+        setShowFinalSummary(true);
+      } else {
+        toast({ title: "You left the Will", description: "The Will has ended for everyone." });
+        setLocation(getHubUrl());
+      }
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to leave Will", variant: "destructive" });
@@ -1104,7 +1109,7 @@ export default function WillDetails() {
         )}
 
         {/* Daily Progress Section - Simplified conditional display (ongoing/daily wills ONLY) */}
-        {hasDailyCheckIns && (will.status === 'active' || will.status === 'will_review' || will.status === 'completed') && (
+        {hasDailyCheckIns && (will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
           <DailyProgressSection 
             willId={Number(id)} 
             startDate={will.startDate} 
@@ -1363,7 +1368,7 @@ export default function WillDetails() {
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
             <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Manage Will</h3>
             <div className="space-y-3">
-              {will.createdBy === user?.id && (
+              {will.createdBy === user?.id && !will.parentWillId && (
                 <>
                   {will.status === 'active' ? (
                     <Button
@@ -1418,7 +1423,7 @@ export default function WillDetails() {
                 </>
               )}
 
-              {will.mode === 'circle' && (
+              {(will.mode === 'circle' || !!will.parentWillId) && (
                 <Button
                   onClick={() => { setShowManageModal(false); setShowLeaveModal(true); }}
                   className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
@@ -1452,9 +1457,13 @@ export default function WillDetails() {
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center" data-testid="title-leave-will">Leave this Will?</h3>
             <p className="text-sm text-gray-500 text-center mb-4">
-              If you leave, <span className="font-medium text-red-600">this Will ends for everyone</span>. All progress will be saved but no one can continue tracking.
+              {will.parentWillId ? (
+                <>Your progress will be saved, but you will no longer be tracking this Will. Other participants are <span className="font-medium text-gray-700">not affected</span>.</>
+              ) : (
+                <>If you leave, <span className="font-medium text-red-600">this Will ends for everyone</span>. All progress will be saved but no one can continue tracking.</>
+              )}
             </p>
-            {will.commitments && will.commitments.length > 0 && (
+            {!will.parentWillId && will.commitments && will.commitments.length > 0 && (
               <div className="bg-gray-50 rounded-xl p-3 mb-4">
                 <p className="text-xs text-gray-500 mb-2 font-medium">Members affected:</p>
                 <div className="space-y-1">
@@ -1499,8 +1508,7 @@ export default function WillDetails() {
         isOpen={showFinalSummary}
         onClose={() => {
           setShowFinalSummary(false);
-          // Navigate back to dashboard if already acknowledged
-          if (will?.hasUserAcknowledged) {
+          if (will?.hasUserAcknowledged || will?.status === 'terminated') {
             setLocation(getHubUrl());
           }
         }}

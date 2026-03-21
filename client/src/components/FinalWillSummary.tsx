@@ -141,10 +141,10 @@ export function FinalWillSummary({
               </div>
             </div>
             <h2 className="text-lg font-bold text-gray-900 mb-1">
-              Your <em>Will</em> has been completed
+              {will.status === 'terminated' ? <>You left this <em>Will</em></> : <>Your <em>Will</em> has been completed</>}
             </h2>
             <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
-              Final Summary
+              {will.status === 'terminated' ? 'Your Progress' : 'Final Summary'}
             </p>
           </div>
 
@@ -225,7 +225,22 @@ export function FinalWillSummary({
 
           {/* Bottom Actions with glowy buttons */}
           <div className="space-y-3">
-            {userParticipated ? (
+            {will.status === 'terminated' ? (
+              <div className="relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-300 to-gray-400 rounded-xl blur-sm opacity-25"></div>
+                <div className="relative bg-gray-50/90 backdrop-blur-sm border border-gray-200 rounded-xl p-3 text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <Clock className="w-4 h-4 text-gray-600 mr-2" />
+                    <p className="font-semibold text-gray-900 text-sm">
+                      <em>Will</em> Ended
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Your progress has been saved. You can view it in your Will History.
+                  </p>
+                </div>
+              </div>
+            ) : userParticipated ? (
               <div className="relative">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-xl blur-sm opacity-25"></div>
                 <div className="relative bg-emerald-50/90 backdrop-blur-sm border border-emerald-200 rounded-xl p-3 text-center">
