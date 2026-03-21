@@ -87,6 +87,29 @@ function getWillStatus(will: any, memberCount: number): string {
 
 
 
+async function getPublicWillParticipantIds(parentWillId: number): Promise<string[]> {
+  const childWills = await storage.getWillsByParentId(parentWillId);
+  const parentWill = await storage.getWillById(parentWillId);
+  const participantIds = new Set<string>();
+  childWills.forEach(w => {
+    if (w.status === 'active' || w.status === 'committed') participantIds.add(w.createdBy);
+  });
+  if (parentWill && (parentWill.status === 'active' || parentWill.status === 'committed')) {
+    participantIds.add(parentWill.createdBy);
+  }
+  return Array.from(participantIds);
+}
+
+async function isUserPublicWillParticipant(userId: string, parentWillId: number): Promise<boolean> {
+  const participantIds = await getPublicWillParticipantIds(parentWillId);
+  return participantIds.includes(userId);
+}
+
+async function getOtherPublicWillParticipants(userId: string, parentWillId: number): Promise<string[]> {
+  const participantIds = await getPublicWillParticipantIds(parentWillId);
+  return participantIds.filter(id => id !== userId);
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Use local authentication only - bypass Replit auth
   setupAuth(app);
@@ -736,6 +759,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ ...message, user: { firstName: senderName } });
     } catch (error) {
       console.error("Error sending circle message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Will messages routes (for public wills)
+  app.get('/api/wills/:willId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.willId);
+
+      if (isNaN(willId)) {
+        return res.status(400).json({ message: "Invalid will ID" });
+      }
+
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+
+      const parentId = (will as any).parentWillId || willId;
+
+      const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+      if (!isParticipant) {
+        return res.status(403).json({ message: "You are not a participant of this Will" });
+      }
+
+      const messages = await storage.getWillMessages(parentId, 50);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching will messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post('/api/wills/:willId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.willId);
+
+      if (isNaN(willId)) {
+        return res.status(400).json({ message: "Invalid will ID" });
+      }
+
+      const text = (req.body.text || '').trim();
+      if (!text) {
+        return res.status(400).json({ message: "Message text is required" });
+      }
+      if (text.length > 500) {
+        return res.status(400).json({ message: "Message must be 500 characters or less" });
+      }
+
+      const will = await storage.getWillById(willId);
+      if (!will) {
+        return res.status(404).json({ message: "Will not found" });
+      }
+
+      const parentId = (will as any).parentWillId || willId;
+
+      const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+      if (!isParticipant) {
+        return res.status(403).json({ message: "You are not a participant of this Will" });
+      }
+
+      const message = await storage.createWillMessage({
+        willId: parentId,
+        userId,
+        text,
+      });
+
+      const sender = await storage.getUser(userId);
+      const senderName = sender?.firstName || 'Someone';
+
+      const otherParticipantIds = await getOtherPublicWillParticipants(userId, parentId);
+
+      if (otherParticipantIds.length > 0) {
+        const { pushNotificationService } = await import('./pushNotificationService');
+        await pushNotificationService.sendWillMessageNotification(
+          senderName,
+          parentId,
+          text,
+          otherParticipantIds,
+        );
+      }
+
+      res.json({ ...message, user: { firstName: senderName } });
+    } catch (error) {
+      console.error("Error sending will message:", error);
       res.status(500).json({ message: "Failed to send message" });
     }
   });
@@ -1978,10 +2088,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? `${pusher.firstName} ${pusher.lastName}`
         : pusher?.email || 'Someone';
 
-      // Get circle members to notify (excluding the pusher)
-      const circleMembers = await storage.getCircleMembers(will.circleId);
-      const membersToNotify = circleMembers.filter(member => member.userId !== userId);
-      const memberIds = membersToNotify.map(member => member.userId);
+      let memberIds: string[] = [];
+
+      const isPublicWill = (will as any).visibility === 'public' || (will as any).parentWillId;
+
+      if (isPublicWill) {
+        const parentId = (will as any).parentWillId || willId;
+        const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+        if (!isParticipant) {
+          return res.status(403).json({ message: "You are not a participant of this Will" });
+        }
+        memberIds = await getOtherPublicWillParticipants(userId, parentId);
+      } else if (will.circleId) {
+        const circleMembers = await storage.getCircleMembers(will.circleId);
+        const membersToNotify = circleMembers.filter(member => member.userId !== userId);
+        memberIds = membersToNotify.map(member => member.userId);
+      }
 
       // Record the push
       const push = await storage.addWillPush({
@@ -1989,7 +2111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
 
-      // Send real push notifications to all other circle members via APNs
+      // Send real push notifications to all other members via APNs
       if (memberIds.length > 0) {
         const { pushNotificationService } = await import('./pushNotificationService');
         const willTitle = (will as any).title || 'Your Will';

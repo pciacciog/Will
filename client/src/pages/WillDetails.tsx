@@ -13,7 +13,7 @@ import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
-import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, X } from "lucide-react";
+import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, X, MessageCircle, Rocket } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
@@ -617,7 +617,7 @@ export default function WillDetails() {
       
       toast({
         title: "Push Sent! 🚀",
-        description: "Your circle members will receive a push notification",
+        description: "Encouragement sent to all participants",
       });
     },
     onError: (error: any) => {
@@ -952,6 +952,35 @@ export default function WillDetails() {
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
           </button>
+        )}
+
+        {/* Public Will Actions: Push + Messages */}
+        {isPublicWill && will.status === 'active' && participantsData && participantsData.totalCount > 1 && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => setLocation(`/will/${participantWillId}/messages`)}
+              className="flex-1 flex items-center justify-center gap-2 bg-white rounded-lg border border-gray-200 py-3 px-4 hover:bg-gray-50 transition-all active:scale-[0.98]"
+              data-testid="button-will-messages"
+            >
+              <MessageCircle className="w-5 h-5 text-blue-600" />
+              <span className="text-sm font-medium text-gray-900">Messages</span>
+            </button>
+            <button
+              onClick={() => pushMutation.mutate()}
+              disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-lg border py-3 px-4 transition-all active:scale-[0.98] ${
+                pushStatus?.hasUserPushed
+                  ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
+                  : 'bg-green-600 border-green-600 hover:bg-green-700'
+              }`}
+              data-testid="button-public-push"
+            >
+              <Rocket className={`w-5 h-5 ${pushStatus?.hasUserPushed ? 'text-gray-400' : 'text-white'}`} />
+              <span className={`text-sm font-medium ${pushStatus?.hasUserPushed ? 'text-gray-400' : 'text-white'}`}>
+                {pushMutation.isPending ? 'Sending...' : pushStatus?.hasUserPushed ? 'Pushed' : 'Push'}
+              </span>
+            </button>
+          </div>
         )}
 
         {/* Commitment Details - Solo Mode */}

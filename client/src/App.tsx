@@ -23,6 +23,7 @@ import JoinWill from "@/pages/JoinWill";
 import WillHistory from "@/pages/WillHistory";
 import StartWill from "@/pages/StartWill";
 import WillDetails from "@/pages/WillDetails";
+import WillMessagesPage from "@/pages/WillMessagesPage";
 import SubmitCommitment from "@/pages/SubmitCommitment";
 import EditWill from "@/pages/EditWill";
 import EditCommitment from "@/pages/EditCommitment";
@@ -375,6 +376,7 @@ function Router() {
             <Route path="/circles/:circleId/start-will">{(params) => <StartWill circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/start-will">{() => <StartWill />}</Route>
             <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>
+            <Route path="/will/:id/messages">{(params) => <WillMessagesPage willId={parseInt(params.id)} />}</Route>
             <Route path="/will/:id" component={WillDetails} />
             <Route path="/will/:id/commit" component={SubmitCommitment} />
             <Route path="/will/:id/edit" component={EditWill} />

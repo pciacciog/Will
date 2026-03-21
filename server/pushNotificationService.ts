@@ -676,6 +676,24 @@ class PushNotificationService {
 
     return await this.sendToUser(userId, payload);
   }
+  async sendWillMessageNotification(senderName: string, willId: number, messagePreview: string, otherParticipants: string[]): Promise<void> {
+    const truncatedPreview = messagePreview.length > 100 ? messagePreview.substring(0, 97) + '...' : messagePreview;
+
+    const payload: PushNotificationPayload = {
+      title: `${senderName} sent a message`,
+      body: truncatedPreview,
+      category: 'will_message',
+      data: {
+        type: 'will_message',
+        willId: willId.toString(),
+        senderName,
+        deepLink: `/will/${willId}/messages`,
+      }
+    };
+
+    await this.sendToMultipleUsers(otherParticipants, payload);
+  }
+
   async sendCircleMessageNotification(senderName: string, circleId: number, messagePreview: string, otherMembers: string[]): Promise<void> {
     const truncatedPreview = messagePreview.length > 100 ? messagePreview.substring(0, 97) + '...' : messagePreview;
 

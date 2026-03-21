@@ -244,6 +244,16 @@ export const circleMessages = pgTable("circle_messages", {
   index("IDX_circle_messages_circle_id").on(table.circleId),
 ]);
 
+export const willMessages = pgTable("will_messages", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_will_messages_will_id").on(table.willId),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   circleMembers: many(circleMembers),
@@ -401,6 +411,17 @@ export const circleMessagesRelations = relations(circleMessages, ({ one }) => ({
   }),
   user: one(users, {
     fields: [circleMessages.userId],
+    references: [users.id],
+  }),
+}));
+
+export const willMessagesRelations = relations(willMessages, ({ one }) => ({
+  will: one(wills, {
+    fields: [willMessages.willId],
+    references: [wills.id],
+  }),
+  user: one(users, {
+    fields: [willMessages.userId],
     references: [users.id],
   }),
 }));
@@ -567,3 +588,10 @@ export const insertCircleMessageSchema = createInsertSchema(circleMessages).omit
 });
 export type InsertCircleMessage = z.infer<typeof insertCircleMessageSchema>;
 export type CircleMessage = typeof circleMessages.$inferSelect;
+
+export const insertWillMessageSchema = createInsertSchema(willMessages).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertWillMessage = z.infer<typeof insertWillMessageSchema>;
+export type WillMessage = typeof willMessages.$inferSelect;

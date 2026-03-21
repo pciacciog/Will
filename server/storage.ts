@@ -48,6 +48,9 @@ import {
   circleMessages,
   type CircleMessage,
   type InsertCircleMessage,
+  willMessages,
+  type WillMessage,
+  type InsertWillMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
@@ -250,6 +253,10 @@ export interface IStorage {
 
   getCircleMessages(circleId: number, limit?: number): Promise<(CircleMessage & { user: { firstName: string } })[]>;
   createCircleMessage(data: InsertCircleMessage): Promise<CircleMessage>;
+
+  getWillMessages(willId: number, limit?: number): Promise<(WillMessage & { user: { firstName: string } })[]>;
+  createWillMessage(data: InsertWillMessage): Promise<WillMessage>;
+  getWillsByParentId(parentWillId: number): Promise<Will[]>;
 
   createUserNotification(notification: InsertUserNotification): Promise<UserNotification>;
   getUserUnreadNotifications(userId: string): Promise<UserNotification[]>;
@@ -1954,6 +1961,32 @@ export class DatabaseStorage implements IStorage {
   async createCircleMessage(data: InsertCircleMessage): Promise<CircleMessage> {
     const [message] = await db.insert(circleMessages).values(data).returning();
     return message;
+  }
+
+  async getWillMessages(willId: number, limit: number = 50): Promise<(WillMessage & { user: { firstName: string } })[]> {
+    const results = await db
+      .select({
+        message: willMessages,
+        firstName: users.firstName,
+      })
+      .from(willMessages)
+      .innerJoin(users, eq(willMessages.userId, users.id))
+      .where(eq(willMessages.willId, willId))
+      .orderBy(desc(willMessages.createdAt))
+      .limit(limit);
+
+    return results
+      .map(r => ({ ...r.message, user: { firstName: r.firstName } }))
+      .reverse();
+  }
+
+  async createWillMessage(data: InsertWillMessage): Promise<WillMessage> {
+    const [message] = await db.insert(willMessages).values(data).returning();
+    return message;
+  }
+
+  async getWillsByParentId(parentWillId: number): Promise<Will[]> {
+    return await db.select().from(wills).where(eq(wills.parentWillId, parentWillId));
   }
 }
 

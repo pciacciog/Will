@@ -28,8 +28,9 @@ Authentication features a custom email/password system, Express sessions with Po
 - **Account Settings**: User profile management and account deletion.
 - **Push Notifications**: APNs integration with 12 types, per-user timezone personalization, including time-based and event-based notifications, short-duration will specific notifications, and a review escalation/auto-complete mechanism.
 - **In-App Notification Badges**: Red badge system for action items like pending commitments and reviews, cleared upon action.
-- **Team Encouragement**: "Push" feature to send encouragement within circles.
+- **Team Encouragement**: "Push" feature to send encouragement within circles and public wills. Public will push finds participants via child wills with same `parentWillId`.
 - **Circle Messaging**: Group chat within circles via "Messages" tab in Circle Hub. Text-only (500 char max), polling-based (10s), last 50 messages loaded. Push notifications sent to other circle members on new messages. Messages stored permanently in `circle_messages` table.
+- **Public Will Messaging**: Group chat for public will participants via dedicated Messages page (`/will/:id/messages`). Same UX pattern as circle messages. Messages stored in `will_messages` table, keyed by parent will ID. Push notifications sent to other participants on new messages. Authorization enforced: only active participants can read/send.
 
 ### System Design Choices
 The application uses PostgreSQL (Neon serverless) with Drizzle ORM, employing environment-based database routing. API design is RESTful with JSON responses, robust error handling, and consistent UTC storage with per-user local time display. Privacy is maintained by keeping "Because" statements private and using only first names for members.
