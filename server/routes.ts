@@ -2128,7 +2128,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (memberIds.length > 0) {
         const { pushNotificationService } = await import('./pushNotificationService');
         const willTitle = (will as any).title || 'Your Will';
-        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, willId, will.circleId);
+        const notificationWillId = isPublicWill ? pushDedupeId : willId;
+        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, notificationWillId, will.circleId);
         console.log(`[Push] Sent encouragement notification from ${pusherName} to ${memberIds.length} members for Will: ${willTitle}`);
       }
       
