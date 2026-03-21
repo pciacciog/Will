@@ -780,6 +780,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
+      const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      if (!isPublic) {
+        return res.status(400).json({ message: "Messages are only available for public wills" });
+      }
+
       const parentId = (will as any).parentWillId || willId;
 
       const isParticipant = await isUserPublicWillParticipant(userId, parentId);
@@ -815,6 +820,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const will = await storage.getWillById(willId);
       if (!will) {
         return res.status(404).json({ message: "Will not found" });
+      }
+
+      const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      if (!isPublic) {
+        return res.status(400).json({ message: "Messages are only available for public wills" });
       }
 
       const parentId = (will as any).parentWillId || willId;
@@ -2067,12 +2077,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const willId = parseInt(req.params.id);
 
-      // Check if user has already pushed for this will
-      const hasAlreadyPushed = await storage.hasUserPushed(willId, userId);
-      if (hasAlreadyPushed) {
-        return res.status(409).json({ message: "You have already pushed for this will" });
-      }
-
       // Get will to ensure it exists and is active
       const will = await storage.getWillById(willId);
       if (!will) {
@@ -2084,6 +2088,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Push notifications are only available for active wills" });
       }
 
+      const isPublicWill = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      const pushDedupeId = isPublicWill ? ((will as any).parentWillId || willId) : willId;
+
+      // Check if user has already pushed (normalized to parent for public wills)
+      const hasAlreadyPushed = await storage.hasUserPushed(pushDedupeId, userId);
+      if (hasAlreadyPushed) {
+        return res.status(409).json({ message: "You have already pushed for this will" });
+      }
+
       // Get pusher info
       const pusher = await storage.getUser(userId);
       const pusherName = pusher?.firstName && pusher?.lastName 
@@ -2091,8 +2104,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : pusher?.email || 'Someone';
 
       let memberIds: string[] = [];
-
-      const isPublicWill = (will as any).visibility === 'public' || (will as any).parentWillId;
 
       if (isPublicWill) {
         const parentId = (will as any).parentWillId || willId;
@@ -2107,9 +2118,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memberIds = membersToNotify.map(member => member.userId);
       }
 
-      // Record the push
+      // Record the push (normalized to parent for public wills)
       const push = await storage.addWillPush({
-        willId,
+        willId: pushDedupeId,
         userId,
       });
 
@@ -2137,8 +2148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const willId = parseInt(req.params.id);
 
-      const hasUserPushed = await storage.hasUserPushed(willId, userId);
-      const pushes = await storage.getWillPushes(willId);
+      const will = await storage.getWillById(willId);
+      const isPublic = will && ((will as any).visibility === 'public' || !!(will as any).parentWillId);
+      const checkId = isPublic ? ((will as any).parentWillId || willId) : willId;
+
+      const hasUserPushed = await storage.hasUserPushed(checkId, userId);
+      const pushes = await storage.getWillPushes(checkId);
 
       res.json({ 
         hasUserPushed, 
