@@ -14,6 +14,7 @@ import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
 import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, X, MessageCircle, Rocket } from "lucide-react";
+import WillMessages from "@/components/WillMessages";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
@@ -954,32 +955,44 @@ export default function WillDetails() {
           </button>
         )}
 
-        {/* Public Will Actions: Push + Messages */}
+        {/* Public Will Push Encouragement */}
         {isPublicWill && will.status === 'active' && participantsData && participantsData.totalCount > 1 && (
-          <div className="flex gap-3">
-            <button
-              onClick={() => setLocation(`/will/${participantWillId}/messages`)}
-              className="flex-1 flex items-center justify-center gap-2 bg-white rounded-lg border border-gray-200 py-3 px-4 hover:bg-gray-50 transition-all active:scale-[0.98]"
-              data-testid="button-will-messages"
-            >
-              <MessageCircle className="w-5 h-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-900">Messages</span>
-            </button>
-            <button
-              onClick={() => pushMutation.mutate()}
-              disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg border py-3 px-4 transition-all active:scale-[0.98] ${
-                pushStatus?.hasUserPushed
-                  ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
-                  : 'bg-green-600 border-green-600 hover:bg-green-700'
-              }`}
-              data-testid="button-public-push"
-            >
-              <Rocket className={`w-5 h-5 ${pushStatus?.hasUserPushed ? 'text-gray-400' : 'text-white'}`} />
-              <span className={`text-sm font-medium ${pushStatus?.hasUserPushed ? 'text-gray-400' : 'text-white'}`}>
-                {pushMutation.isPending ? 'Sending...' : pushStatus?.hasUserPushed ? 'Pushed' : 'Push'}
-              </span>
-            </button>
+          <button
+            onClick={() => pushMutation.mutate()}
+            disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
+            className={`w-full flex items-center justify-center gap-2 rounded-lg border py-3 px-4 transition-all active:scale-[0.98] ${
+              pushStatus?.hasUserPushed
+                ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
+                : 'bg-green-600 border-green-600 hover:bg-green-700'
+            }`}
+            data-testid="button-public-push"
+          >
+            <Rocket className={`w-5 h-5 ${pushStatus?.hasUserPushed ? 'text-gray-400' : 'text-white'}`} />
+            <span className={`text-sm font-medium ${pushStatus?.hasUserPushed ? 'text-gray-400' : 'text-white'}`}>
+              {pushMutation.isPending ? 'Sending...' : pushStatus?.hasUserPushed ? 'Pushed' : 'Push Encouragement'}
+            </span>
+          </button>
+        )}
+
+        {/* Public Will Inline Chat */}
+        {isPublicWill && will.status === 'active' && participantsData && participantsData.totalCount > 1 && user && (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-blue-600" />
+                <span className="text-base font-semibold text-gray-900">Messages</span>
+              </div>
+              <button
+                onClick={() => setLocation(`/will/${participantWillId}/messages`)}
+                className="text-sm text-blue-600 font-medium hover:text-blue-700"
+                data-testid="button-will-messages-expand"
+              >
+                Full Screen
+              </button>
+            </div>
+            <div className="h-[350px]">
+              <WillMessages willId={participantWillId!} currentUserId={user.id} />
+            </div>
           </div>
         )}
 

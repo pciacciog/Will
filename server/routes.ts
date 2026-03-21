@@ -87,14 +87,16 @@ function getWillStatus(will: any, memberCount: number): string {
 
 
 
+const ACTIVE_PARTICIPANT_STATUSES = ['active', 'committed', 'pending', 'scheduled', 'paused', 'will_review'];
+
 async function getPublicWillParticipantIds(parentWillId: number): Promise<string[]> {
   const childWills = await storage.getWillsByParentId(parentWillId);
   const parentWill = await storage.getWillById(parentWillId);
   const participantIds = new Set<string>();
   childWills.forEach(w => {
-    if (w.status === 'active' || w.status === 'committed') participantIds.add(w.createdBy);
+    if (ACTIVE_PARTICIPANT_STATUSES.includes(w.status)) participantIds.add(w.createdBy);
   });
-  if (parentWill && (parentWill.status === 'active' || parentWill.status === 'committed')) {
+  if (parentWill && ACTIVE_PARTICIPANT_STATUSES.includes(parentWill.status)) {
     participantIds.add(parentWill.createdBy);
   }
   return Array.from(participantIds);
