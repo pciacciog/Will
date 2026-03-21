@@ -600,9 +600,10 @@ export default function WillDetails() {
   });
 
   // Push notification query and mutation
+  const ACTIVE_WILL_STATUSES = ['active', 'committed', 'pending', 'scheduled', 'paused', 'will_review'];
   const { data: pushStatus, isLoading: isPushLoading } = useQuery<any>({
     queryKey: [`/api/wills/${id}/push/status`],
-    enabled: !!will && will.status === 'active',
+    enabled: !!will && ACTIVE_WILL_STATUSES.includes(will.status),
     refetchInterval: 30000,
   });
 
@@ -956,7 +957,7 @@ export default function WillDetails() {
         )}
 
         {/* Public Will Push Encouragement */}
-        {isPublicWill && will.status === 'active' && participantsData && participantsData.totalCount > 1 && (
+        {isPublicWill && ['active', 'committed', 'pending', 'scheduled', 'paused', 'will_review'].includes(will.status) && participantsData && participantsData.totalCount > 1 && (
           <button
             onClick={() => pushMutation.mutate()}
             disabled={pushMutation.isPending || pushStatus?.hasUserPushed}
@@ -975,7 +976,7 @@ export default function WillDetails() {
         )}
 
         {/* Public Will Inline Chat */}
-        {isPublicWill && will.status === 'active' && participantsData && participantsData.totalCount > 1 && user && (
+        {isPublicWill && ['active', 'committed', 'pending', 'scheduled', 'paused', 'will_review'].includes(will.status) && participantsData && participantsData.totalCount > 1 && user && (
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <div className="flex items-center gap-2">

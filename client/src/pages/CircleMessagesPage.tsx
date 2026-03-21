@@ -14,8 +14,8 @@ export default function CircleMessagesPage({ circleId }: CircleMessagesPageProps
   if (!user) return null;
 
   return (
-    <div className="h-screen bg-white flex flex-col overflow-hidden">
-      <div className="bg-white safe-area-top shrink-0">
+    <div className="h-[100dvh] bg-white flex flex-col overflow-hidden">
+      <div className="bg-white ios-safe-area-top shrink-0">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <button
             onClick={() => setLocation(`/circles/${circleId}`)}

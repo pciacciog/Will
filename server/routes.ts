@@ -2088,8 +2088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      // Only allow pushing for active wills
-      if (will.status !== 'active') {
+      if (!ACTIVE_PARTICIPANT_STATUSES.includes(will.status)) {
         return res.status(400).json({ message: "Push notifications are only available for active wills" });
       }
 
