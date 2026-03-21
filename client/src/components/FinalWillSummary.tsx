@@ -41,7 +41,7 @@ export function FinalWillSummary({
   
   if (!will) return null;
 
-  const isSoloMode = will.mode === 'solo';
+  const isSoloMode = will.mode === 'solo' || will.mode === 'personal';
 
   const userParticipated = will.commitments?.some((commitment: any) => 
     commitment.userId === currentUserId
@@ -237,6 +237,21 @@ export function FinalWillSummary({
                   </div>
                   <p className="text-xs text-gray-600">
                     Your progress has been saved. You can view it in your Will History.
+                  </p>
+                </div>
+              </div>
+            ) : isSoloMode ? (
+              <div className="relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-xl blur-sm opacity-25"></div>
+                <div className="relative bg-emerald-50/90 backdrop-blur-sm border border-emerald-200 rounded-xl p-3 text-center">
+                  <div className="flex items-center justify-center mb-1.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 mr-2" />
+                    <p className="font-semibold text-gray-900 text-sm">
+                      <em>Will</em> Complete
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Great work! Your <em>Will</em> is complete. Ready for your next goal!
                   </p>
                 </div>
               </div>

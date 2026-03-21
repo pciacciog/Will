@@ -1685,9 +1685,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If all members reviewed, check if End Room exists
       if (allReviewed) {
+        const isSoloOrPersonal = willWithCommitments.mode === 'solo' || willWithCommitments.mode === 'personal';
+        
         if (!willWithCommitments.endRoomScheduledAt) {
           // No End Room - move directly to completed
           await storage.updateWillStatus(willId, 'completed');
+          
+          // Solo/personal wills skip acknowledgment — auto-acknowledge and archive
+          if (isSoloOrPersonal) {
+            console.log(`[REVIEW] Solo/personal will ${willId} — auto-acknowledging and archiving`);
+            try {
+              await storage.addWillAcknowledgment({ willId, userId });
+            } catch (e) { /* may already be acknowledged */ }
+            await storage.updateWillStatus(willId, 'archived');
+          }
         } else {
           // End Room exists - check if it already happened
           const now = new Date();
@@ -1695,6 +1706,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (now >= endRoomEnd) {
             // End Room already happened - move to completed
             await storage.updateWillStatus(willId, 'completed');
+            
+            if (isSoloOrPersonal) {
+              console.log(`[REVIEW] Solo/personal will ${willId} — auto-acknowledging and archiving (post End Room)`);
+              try {
+                await storage.addWillAcknowledgment({ willId, userId });
+              } catch (e) { /* may already be acknowledged */ }
+              await storage.updateWillStatus(willId, 'archived');
+            }
           }
           // Otherwise stay in will_review until End Room happens
         }

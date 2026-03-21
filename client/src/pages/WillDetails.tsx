@@ -631,16 +631,23 @@ export default function WillDetails() {
 
   // Auto-show Final Will Summary when Will is completed
   // Handles BOTH: Wills with End Room (after it finishes) AND Wills without End Room
+  // Solo/personal wills auto-archive after review, so also trigger on archived status
+  const [summaryDismissed, setSummaryDismissed] = useState(false);
   useEffect(() => {
     const willCompleted = will?.status === 'completed';
+    const willArchivedSolo = will?.status === 'archived' && isSoloMode;
     const endRoomNotScheduled = !will?.endRoomScheduledAt;
     const endRoomFinished = will?.endRoomStatus === 'completed';
-    const shouldShowSummary = willCompleted && (endRoomNotScheduled || endRoomFinished);
+    const shouldShowSummary = (willCompleted || willArchivedSolo) && (endRoomNotScheduled || endRoomFinished);
     
-    if (will && shouldShowSummary && !will.hasUserAcknowledged && !showFinalSummary) {
+    // Solo/personal wills: show summary once after completion (dismiss tracks if user closed it)
+    // Circle wills: show until user acknowledges
+    const canShow = isSoloMode ? !summaryDismissed : !will?.hasUserAcknowledged;
+    
+    if (will && shouldShowSummary && canShow && !showFinalSummary) {
       setShowFinalSummary(true);
     }
-  }, [will, showFinalSummary]);
+  }, [will, showFinalSummary, isSoloMode, summaryDismissed]);
 
   // Early returns after all hooks are defined
   if (!user) {
@@ -1285,8 +1292,8 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Acknowledgment Section for Completed Wills */}
-        {will.status === 'completed' && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
+        {/* Acknowledgment Section for Completed Circle Wills only */}
+        {will.status === 'completed' && !isSoloMode && will.commitments && will.commitments.some((c: any) => c.userId === user?.id) && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="text-center">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -1508,7 +1515,8 @@ export default function WillDetails() {
         isOpen={showFinalSummary}
         onClose={() => {
           setShowFinalSummary(false);
-          if (will?.hasUserAcknowledged || will?.status === 'terminated') {
+          setSummaryDismissed(true);
+          if (isSoloMode || will?.hasUserAcknowledged || will?.status === 'terminated') {
             setLocation(getHubUrl());
           }
         }}
