@@ -1283,7 +1283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(wills)
         .where(and(
           eq(wills.parentWillId, willId),
-          inArray(wills.status, ['pending', 'active', 'paused', 'will_review'])
+          inArray(wills.status, ACTIVE_PARTICIPANT_STATUSES)
         ));
       
       res.json({
@@ -1325,7 +1325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(wills)
         .where(eq(wills.parentWillId, rootWillId));
 
-      const activeChildWills = childWills.filter(w => !['terminated', 'completed', 'archived'].includes(w.status));
+      const activeChildWills = childWills.filter(w => ACTIVE_PARTICIPANT_STATUSES.includes(w.status));
       const allParticipantIds = [rootWill!.createdBy, ...activeChildWills.map(w => w.createdBy)];
       const uniqueIds = Array.from(new Set(allParticipantIds));
 
@@ -1434,7 +1434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(wills)
         .where(and(
           eq(wills.parentWillId, parentWillId),
-          inArray(wills.status, ['pending', 'active', 'paused', 'will_review'])
+          inArray(wills.status, ACTIVE_PARTICIPANT_STATUSES)
         ));
       const otherParticipantIds = [
         parentWill.createdBy,
@@ -2660,7 +2660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(and(
             eq(wills.parentWillId, parentWillId),
             sql`${wills.id} != ${willId}`,
-            inArray(wills.status, ['pending', 'active', 'paused', 'will_review'])
+            inArray(wills.status, ACTIVE_PARTICIPANT_STATUSES)
           ));
 
         const otherParticipantIds = [
