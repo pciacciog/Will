@@ -122,17 +122,16 @@ export class EndRoomScheduler {
         console.log(`[SCHEDULER] ⏩ Activating Will ${will.id} (started at ${will.startDate.toISOString()})`);
         await storage.updateWillStatus(will.id, 'active');
         
-        // Send Will Started notification
+        // Send Will Started notification — each member gets their own commitment text
         try {
           const willWithCommitments = await storage.getWillWithCommitments(will.id);
           if (willWithCommitments && willWithCommitments.commitments) {
-            const committedMembers = willWithCommitments.commitments.map(c => c.userId);
-            // Use first commitment's "what" as title or fallback to generic title
-            const willTitle = willWithCommitments.commitments[0]?.what || "Your Will";
-            // Circle mode (scheduler only handles circle wills)
             const isSoloMode = will.circleId === null;
-            await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers, will.id, isSoloMode, will.circleId ?? undefined);
-            console.log(`[EndRoomScheduler] Will Started notification sent for Will ${will.id} (solo: ${isSoloMode})`);
+            for (const commitment of willWithCommitments.commitments) {
+              const userWillTitle = commitment.what || "Your Will";
+              await pushNotificationService.sendWillStartedNotification(userWillTitle, [commitment.userId], will.id, isSoloMode, will.circleId ?? undefined);
+            }
+            console.log(`[EndRoomScheduler] Will Started notifications sent for Will ${will.id} (${willWithCommitments.commitments.length} members, solo: ${isSoloMode})`);
           }
         } catch (error) {
           console.error(`[EndRoomScheduler] Failed to send Will Started notification:`, error);

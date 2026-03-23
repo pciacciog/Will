@@ -3535,8 +3535,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (activeWill) {
         const willWithCommitments = await storage.getWillWithCommitments(activeWill.id);
-        const committedMembers = willWithCommitments?.commitments?.map((c: any) => c.userId) || [];
-        await pushNotificationService.sendWillStartedNotification(willTitle, committedMembers, activeWill.id, false, userCircle.id);
+        if (willWithCommitments?.commitments) {
+          for (const commitment of willWithCommitments.commitments) {
+            const userWillTitle = commitment.what || willTitle || "Your Will";
+            await pushNotificationService.sendWillStartedNotification(userWillTitle, [commitment.userId], activeWill.id, false, userCircle.id);
+          }
+        }
       }
       
       res.json({ success: true, message: "Will started notifications sent" });
