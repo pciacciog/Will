@@ -166,6 +166,7 @@ export default function CircleMessages({
   }
 
   const inputBarHeight = 60;
+  const safeAreaBottom = 34;
   const bottomOffset = keyboardHeight > 0 ? keyboardHeight : 0;
 
   return (
@@ -175,7 +176,7 @@ export default function CircleMessages({
         className="flex-1 overflow-y-auto px-3 py-3"
         style={{
           minHeight: 0,
-          paddingBottom: inputBarHeight + bottomOffset + 8,
+          paddingBottom: inputBarHeight + bottomOffset + (keyboardHeight > 0 ? 8 : safeAreaBottom + 8),
         }}
       >
         {messages.length === 0 ? (
