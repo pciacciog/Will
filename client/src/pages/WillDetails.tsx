@@ -970,7 +970,7 @@ export default function WillDetails() {
           >
             <Rocket className={`w-5 h-5 ${pushStatus?.hasUserPushed ? 'text-gray-400' : 'text-white'}`} />
             <span className={`text-sm font-medium ${pushStatus?.hasUserPushed ? 'text-gray-400' : 'text-white'}`}>
-              {pushMutation.isPending ? 'Sending...' : pushStatus?.hasUserPushed ? 'Pushed' : 'Push Encouragement'}
+              {pushMutation.isPending ? 'Sending...' : pushStatus?.hasUserPushed ? 'Pushed' : 'Push'}
             </span>
           </button>
         )}
