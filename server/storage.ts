@@ -847,7 +847,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(wills.createdBy, userId),
         eq(wills.parentWillId, parentWillId),
-        inArray(wills.status, ['pending', 'active', 'paused', 'will_review'])
+        inArray(wills.status, ['active', 'committed', 'pending', 'scheduled', 'paused', 'will_review'])
       ))
       .limit(1);
     return will;
