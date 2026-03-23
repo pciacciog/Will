@@ -940,6 +940,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Solo wills stay 'pending' until the scheduler transitions them to 'active' at startDate
         // The scheduler will also send the will_started notification when transitioning
         
+        // Notify all users when a new public will is created
+        if (willData.visibility === 'public') {
+          try {
+            const creator = await storage.getUser(userId);
+            const creatorName = creator?.firstName || 'Someone';
+            const willTitle = req.body.what || 'a new commitment';
+            const allUsers = await db.select({ id: users.id }).from(users);
+            const otherUserIds = allUsers.map(u => u.id).filter(id => id !== userId);
+            if (otherUserIds.length > 0) {
+              const { pushNotificationService } = await import('./pushNotificationService');
+              await pushNotificationService.sendNewPublicWillNotification(creatorName, willTitle, will.id, otherUserIds);
+              console.log(`[Routes] New public will notification sent to ${otherUserIds.length} users for Will ${will.id}`);
+            }
+          } catch (notifError) {
+            console.error('[Routes] Failed to send new public will notification:', notifError);
+          }
+        }
+        
         console.log(`Created solo Will ${will.id} for user ${userId}, status: pending, starts: ${req.body.startDate}, midpoint: ${midpointTime ? midpointTime.toISOString() : 'none (indefinite)'}`);
         
         res.json({ ...will, status: 'pending', midpointAt: midpointTime });

@@ -604,6 +604,23 @@ class PushNotificationService {
     await this.sendToMultipleUsers(otherParticipants, payload);
   }
 
+  async sendNewPublicWillNotification(creatorName: string, willTitle: string, willId: number, userIds: string[]): Promise<void> {
+    const payload: PushNotificationPayload = {
+      title: "New Public Will! 🌍",
+      body: `${creatorName} posted: "${willTitle}". Join them on Explore!`,
+      category: 'new_public_will',
+      data: {
+        type: 'new_public_will',
+        willId: willId.toString(),
+        creatorName,
+        willTitle,
+        deepLink: '/explore',
+      }
+    };
+
+    await this.sendToMultipleUsers(userIds, payload);
+  }
+
   // Midpoint milestone notification — factual time-remaining with will statement
   async sendMidpointMilestoneNotification(willId: number, committedMembers: string[], endDate: Date, willWhat?: string): Promise<void> {
     const now = new Date();
