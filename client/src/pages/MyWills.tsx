@@ -25,8 +25,8 @@ type Will = {
   commitments?: { id: number; userId: string; what: string; why: string; user?: { firstName?: string } }[];
 };
 
-function WillCard({ will, onClick }: { will: Will; onClick: () => void }) {
-  const commitment = will.commitments?.[0];
+function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; userId?: string }) {
+  const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
   const isCircle = will.mode === 'circle';
   const isPublic = will.visibility === 'public' || !!will.parentWillId;
 
@@ -273,6 +273,7 @@ export default function MyWills() {
                   key={will.id}
                   will={will}
                   onClick={() => handleViewWill(will)}
+                  userId={user?.id}
                 />
               ))}
             </div>
