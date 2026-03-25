@@ -3698,6 +3698,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/today/:date', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { date } = req.params;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
+      }
+      const entry = await storage.getTodayEntry(userId, date);
+      res.json(entry || { content: "", date });
+    } catch (error) {
+      console.error("Error fetching today entry:", error);
+      res.status(500).json({ message: "Failed to fetch today entry" });
+    }
+  });
+
+  app.put('/api/today/:date', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { date } = req.params;
+      const { content } = req.body;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
+      }
+      if (typeof content !== 'string') {
+        return res.status(400).json({ message: "Content must be a string." });
+      }
+      const entry = await storage.upsertTodayEntry(userId, date, content);
+      res.json(entry);
+    } catch (error) {
+      console.error("Error saving today entry:", error);
+      res.status(500).json({ message: "Failed to save today entry" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

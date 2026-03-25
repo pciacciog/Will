@@ -51,6 +51,8 @@ import {
   willMessages,
   type WillMessage,
   type InsertWillMessage,
+  todayEntries,
+  type TodayEntry,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
@@ -257,6 +259,9 @@ export interface IStorage {
   getWillMessages(willId: number, limit?: number): Promise<(WillMessage & { user: { firstName: string } })[]>;
   createWillMessage(data: InsertWillMessage): Promise<WillMessage>;
   getWillsByParentId(parentWillId: number): Promise<Will[]>;
+
+  getTodayEntry(userId: string, date: string): Promise<TodayEntry | undefined>;
+  upsertTodayEntry(userId: string, date: string, content: string): Promise<TodayEntry>;
 
   createUserNotification(notification: InsertUserNotification): Promise<UserNotification>;
   getUserUnreadNotifications(userId: string): Promise<UserNotification[]>;
@@ -1987,6 +1992,23 @@ export class DatabaseStorage implements IStorage {
 
   async getWillsByParentId(parentWillId: number): Promise<Will[]> {
     return await db.select().from(wills).where(eq(wills.parentWillId, parentWillId));
+  }
+
+  async getTodayEntry(userId: string, date: string): Promise<TodayEntry | undefined> {
+    const [entry] = await db.select().from(todayEntries)
+      .where(and(eq(todayEntries.userId, userId), eq(todayEntries.date, date)));
+    return entry;
+  }
+
+  async upsertTodayEntry(userId: string, date: string, content: string): Promise<TodayEntry> {
+    const [entry] = await db.insert(todayEntries)
+      .values({ userId, date, content })
+      .onConflictDoUpdate({
+        target: [todayEntries.userId, todayEntries.date],
+        set: { content, updatedAt: new Date() },
+      })
+      .returning();
+    return entry;
   }
 }
 

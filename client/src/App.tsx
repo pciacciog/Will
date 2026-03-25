@@ -35,6 +35,7 @@ import CircleLobby from "@/pages/CircleLobby";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import MyWills from "@/pages/MyWills";
+import Today from "@/pages/Today";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -366,6 +367,7 @@ function Router() {
             <Route path="/hub" component={LegacyHubRedirect} />
             <Route path="/solo/hub" component={Home} />
             <Route path="/wills" component={MyWills} />
+            <Route path="/today" component={Today} />
             <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/explore" component={Explore} />
             <Route path="/explore/join/:willId" component={JoinWill} />

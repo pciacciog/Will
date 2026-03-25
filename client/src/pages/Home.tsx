@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Compass, Sparkles, Settings, LogOut, ChevronRight, Flame, Bell } from "lucide-react";
+import { Users, Compass, Sparkles, Settings, LogOut, ChevronRight, Flame, Bell, Sun } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { queryClient } from "@/lib/queryClient";
@@ -191,7 +191,7 @@ export default function Home() {
             <h1 className="text-2xl font-semibold text-gray-900 mb-0.5" data-testid="text-welcome">
               Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
             </h1>
-            <p className="text-sm text-gray-400 mb-4">What will you commit to today?</p>
+            <p className="text-sm text-gray-400 mb-4">What will you commit to?</p>
 
             {/* Create Will Button */}
             <button
@@ -266,7 +266,7 @@ export default function Home() {
             )}
 
             {/* Explore & Circles Cards */}
-            <div className="grid grid-cols-2 gap-3 w-full mb-4">
+            <div className="grid grid-cols-2 gap-3 w-full mb-3">
               <button
                 onClick={() => { setActiveCard('explore'); handleExplore(); }}
                 onPointerDown={() => setActiveCard('explore')}
@@ -324,6 +324,26 @@ export default function Home() {
                 </div>
               </button>
             </div>
+
+            {/* Today Card */}
+            <button
+              onClick={() => setLocation('/today')}
+              className="w-full mb-4 group"
+              data-testid="button-today"
+            >
+              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm group-hover:shadow-md group-hover:border-amber-200 transition-all duration-200 group-active:scale-[0.98]">
+                <div className="px-4 py-3 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#fdf6ec' }}>
+                    <Sun className="w-5 h-5" style={{ color: '#E9A84C' }} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="text-sm font-semibold text-gray-900">Today</h3>
+                    <p className="text-[11px] text-gray-400 mt-0.5">What's on your heart?</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-amber-500" />
+                </div>
+              </div>
+            </button>
           </div>
 
           {/* Spacer */}

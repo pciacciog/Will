@@ -8,6 +8,7 @@ import {
   serial,
   integer,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -595,3 +596,22 @@ export const insertWillMessageSchema = createInsertSchema(willMessages).omit({
 });
 export type InsertWillMessage = z.infer<typeof insertWillMessageSchema>;
 export type WillMessage = typeof willMessages.$inferSelect;
+
+export const todayEntries = pgTable("today_entries", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: varchar("date", { length: 10 }).notNull(),
+  content: text("content").notNull().default(""),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("IDX_today_entries_user_date").on(table.userId, table.date),
+]);
+
+export const insertTodayEntrySchema = createInsertSchema(todayEntries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertTodayEntry = z.infer<typeof insertTodayEntrySchema>;
+export type TodayEntry = typeof todayEntries.$inferSelect;
