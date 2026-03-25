@@ -811,7 +811,7 @@ export class EndRoomScheduler {
           const effectiveReminderTime = willData.commitmentCheckInTime || willData.willReminderTime;
           if (!effectiveReminderTime) continue;
 
-          if (this.alreadySentToday(willData.lastCheckInReminderSentAt, willData.userTimezone)) continue;
+          if (this.alreadySentForScheduledOccurrence(willData.lastCheckInReminderSentAt, willData.userTimezone, effectiveReminderTime)) continue;
 
           const hasToken = await db
             .select({ id: deviceTokens.id })
@@ -882,7 +882,9 @@ export class EndRoomScheduler {
           const durationMs = new Date(willData.willEndDate).getTime() - new Date(willData.willStartDate).getTime();
           if (durationMs > 24 * 60 * 60 * 1000) continue;
 
-          if (this.alreadySentToday(willData.lastCheckInReminderSentAt, willData.userTimezone)) continue;
+          const targetTime = this.getShortWillRandomTime(willData.userId, now, willData.userTimezone, willData.willStartDate, willData.willEndDate, 'checkin');
+
+          if (this.alreadySentForScheduledOccurrence(willData.lastCheckInReminderSentAt, willData.userTimezone, targetTime)) continue;
 
           const hasToken = await db
             .select({ id: deviceTokens.id })
@@ -892,7 +894,6 @@ export class EndRoomScheduler {
           if (hasToken.length === 0) continue;
 
           const userLocalTime = this.getTimeInTimezone(now, willData.userTimezone);
-          const targetTime = this.getShortWillRandomTime(willData.userId, now, willData.userTimezone, willData.willStartDate, willData.willEndDate, 'checkin');
 
           if (!this.isWithinReminderWindow(userLocalTime, targetTime)) continue;
 
@@ -965,8 +966,6 @@ export class EndRoomScheduler {
             if (!this.isTodayActiveDay(now, row.userTimezone, effectiveActiveDays, effectiveCustomDays)) continue;
           }
 
-          if (this.alreadySentToday(row.lastMotivationalSentAt, row.userTimezone)) continue;
-
           const hasToken = await db
             .select({ id: deviceTokens.id })
             .from(deviceTokens)
@@ -976,11 +975,9 @@ export class EndRoomScheduler {
 
           const userLocalTime = this.getTimeInTimezone(now, row.userTimezone);
 
-          // For short-duration wills (<= 24 hours), pick random time within the will's actual window
           const isShortWill = !row.willIsIndefinite && row.willStartDate && row.willEndDate &&
             (new Date(row.willEndDate).getTime() - new Date(row.willStartDate).getTime()) <= 24 * 60 * 60 * 1000;
 
-          // Use will ID in seed so each will gets a different random time
           const willSeed = `${row.userId}-will${row.willId}`;
           let randomHour = isShortWill
             ? this.getShortWillRandomTime(row.userId, now, row.userTimezone, row.willStartDate!, row.willEndDate!, 'motivational')
@@ -1002,6 +999,8 @@ export class EndRoomScheduler {
               randomHour = `${Math.floor(clampedMin / 60).toString().padStart(2, '0')}:${(clampedMin % 60).toString().padStart(2, '0')}`;
             }
           }
+
+          if (this.alreadySentForScheduledOccurrence(row.lastMotivationalSentAt, row.userTimezone, randomHour)) continue;
 
           if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
 
@@ -1100,21 +1099,24 @@ export class EndRoomScheduler {
     }
   }
 
-  // Helper: Check if current time is within ±5 minutes of reminder time
+  // Helper: Check if current time is within the reminder window
+  // Uses a 2-hour FORWARD catch-up window: fires if current time is between
+  // reminderTime and reminderTime + 2 hours. This ensures notifications still
+  // fire if the server was asleep at the exact scheduled time (e.g. Autoscale).
   private isWithinReminderWindow(currentTime: { hours: number; minutes: number }, reminderTime: string): boolean {
     const [reminderHours, reminderMinutes] = reminderTime.split(':').map(Number);
     
-    // Convert to total minutes since midnight
     const currentTotalMinutes = currentTime.hours * 60 + currentTime.minutes;
     const reminderTotalMinutes = reminderHours * 60 + reminderMinutes;
     
-    // Calculate absolute difference (handle midnight crossing)
-    let diff = Math.abs(currentTotalMinutes - reminderTotalMinutes);
-    if (diff > 720) {
-      diff = 1440 - diff; // Handle crossing midnight
+    let diff = currentTotalMinutes - reminderTotalMinutes;
+    if (diff < -720) {
+      diff += 1440;
+    } else if (diff > 720) {
+      diff -= 1440;
     }
     
-    return diff <= 5; // Within 5 minutes
+    return diff >= 0 && diff <= 120;
   }
 
   private isTodayActiveDay(now: Date, timezone: string, activeDays: string | null, customDays: string | null): boolean {
@@ -1143,30 +1145,40 @@ export class EndRoomScheduler {
     }
   }
 
-  // Helper: Check if reminder was already sent today in user's timezone
-  private alreadySentToday(lastSentAt: Date | null, timezone: string): boolean {
+  private alreadySentForScheduledOccurrence(lastSentAt: Date | null, timezone: string, reminderTime?: string): boolean {
     if (!lastSentAt) {
       return false;
     }
 
     try {
       const now = new Date();
-      
-      // Get today's date in user's timezone
-      const todayFormatter = new Intl.DateTimeFormat('en-CA', {
+      const dateFormatter = new Intl.DateTimeFormat('en-CA', {
         timeZone: timezone,
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
       });
-      const todayString = todayFormatter.format(now);
-      
-      // Get the date when reminder was last sent in user's timezone
-      const lastSentString = todayFormatter.format(lastSentAt);
-      
-      return todayString === lastSentString;
+
+      const todayString = dateFormatter.format(now);
+      const lastSentString = dateFormatter.format(lastSentAt);
+
+      if (!reminderTime) {
+        return todayString === lastSentString;
+      }
+
+      const userLocalTime = this.getTimeInTimezone(now, timezone);
+      const [rH, rM] = reminderTime.split(':').map(Number);
+      const currentMin = userLocalTime.hours * 60 + userLocalTime.minutes;
+      const reminderMin = rH * 60 + rM;
+
+      if (currentMin < reminderMin) {
+        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const yesterdayString = dateFormatter.format(yesterday);
+        return lastSentString === yesterdayString || lastSentString === todayString;
+      }
+
+      return lastSentString === todayString;
     } catch {
-      // Fallback to UTC comparison
       const now = new Date();
       return lastSentAt.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
     }

@@ -254,10 +254,9 @@ class PushNotificationService {
       console.log(`[PushNotificationService] 📤 OUTGOING APNs REQUEST:`);
       console.log(`  🔍 Request ID: ${apnsId}`);
       console.log(`  🔍 Target Device: ${tokenHash}...${userInfo}`);
-      const isProduction = process.env.NODE_ENV === 'production';
-      const envMode = isProduction ? 'PRODUCTION' : 'SANDBOX';
-      const endpoint = isProduction ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
-      console.log(`  🔍 Endpoint: ${endpoint} (${envMode} - environment determined by NODE_ENV)`);
+      const envMode = this.isProductionMode ? 'PRODUCTION' : 'SANDBOX';
+      const endpoint = this.isProductionMode ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
+      console.log(`  🔍 Endpoint: ${endpoint} (${envMode})`);
       console.log(`  🔍 Auth Method: JWT (p8 key)`);
       console.log(`  🔍 Team ID: ${process.env.APNS_TEAM_ID}`);
       console.log(`  🔍 Key ID: ${process.env.APNS_KEY_ID}`);
