@@ -27,8 +27,6 @@ export default function Today() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [content, setContent] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const todayDate = getTodayDate();
@@ -56,30 +54,18 @@ export default function Today() {
 
   const saveContent = useCallback(async (text: string) => {
     if (!user) return;
-    setIsSaving(true);
     try {
       await apiRequest(`/api/today/${todayDate}`, {
         method: "PUT",
         body: { content: text },
       });
-      setLastSaved(new Date());
     } catch (error) {
       console.error("Failed to save today entry:", error);
-    } finally {
-      setIsSaving(false);
     }
   }, [user, todayDate]);
 
   const latestContentRef = useRef(content);
   latestContentRef.current = content;
-
-  const flushSave = useCallback(() => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = null;
-      saveContent(latestContentRef.current);
-    }
-  }, [saveContent]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
@@ -146,18 +132,6 @@ export default function Today() {
             data-testid="input-today-content"
           />
           
-          <div className="flex items-center justify-end pt-2">
-            {isSaving && (
-              <span className="text-xs text-gray-300" data-testid="text-saving-status">
-                Saving...
-              </span>
-            )}
-            {!isSaving && lastSaved && (
-              <span className="text-xs text-gray-300" data-testid="text-saved-status">
-                Saved
-              </span>
-            )}
-          </div>
         </div>
       </div>
     </div>
