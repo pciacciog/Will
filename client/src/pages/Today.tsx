@@ -40,6 +40,9 @@ export default function Today() {
   useEffect(() => {
     if (entry && entry.content !== undefined) {
       setContent(entry.content);
+      if (initialContentRef.current === null) {
+        initialContentRef.current = entry.content;
+      }
     }
   }, [entry]);
 
@@ -52,8 +55,11 @@ export default function Today() {
     }
   }, [isLoading]);
 
+  const initialContentRef = useRef<string | null>(null);
+
   const saveContent = useCallback(async (text: string) => {
     if (!user) return;
+    if (text === "" && initialContentRef.current === "") return;
     try {
       await apiRequest(`/api/today/${todayDate}`, {
         method: "PUT",
