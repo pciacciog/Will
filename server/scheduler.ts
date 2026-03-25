@@ -929,6 +929,7 @@ export class EndRoomScheduler {
           commitmentId: willCommitments.id,
           userId: willCommitments.userId,
           willId: willCommitments.willId,
+          userWhat: willCommitments.what,
           userWhy: willCommitments.why,
           userTimezone: users.timezone,
           lastMotivationalSentAt: willCommitments.lastMotivationalSentAt,
@@ -1004,7 +1005,7 @@ export class EndRoomScheduler {
 
           if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
 
-          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId);
+          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId, row.userWhat || undefined);
           if (success) {
             await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
             sent++;
