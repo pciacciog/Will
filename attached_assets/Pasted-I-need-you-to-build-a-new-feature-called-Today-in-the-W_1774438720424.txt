@@ -1,0 +1,86 @@
+I need you to build a new feature called "Today" in the Will app. Here is everything you need to know.
+
+---
+
+WHAT IT IS
+
+"Today" is a lightweight, ephemeral daily expression screen. It is NOT a to-do list, NOT a tracker, and NOT a productivity tool. It is a blank canvas that lets the user express what they want to do or experience on this particular day — from the heart, with no pressure. Think of it like a morning page or a daily intention space.
+
+---
+
+CORE PHILOSOPHY (do not violate these)
+
+- No checkboxes. No completion tracking. No streaks. No "you finished X of Y."
+- No pressure. No accountability. No social layer on this feature.
+- The value is in the act of writing it, not checking it off.
+- It resets every day at midnight. Yesterday's list is gone when the user opens it the next day.
+- The user should never feel behind. The blank canvas is always freeing, never guilt-inducing.
+- History exists in the database but is NEVER surfaced proactively. If accessible at all, it should be buried deep in settings — never shown on the main Today screen, never pushed via notification, never referenced.
+
+---
+
+HOME SCREEN CHANGES
+
+Add a "Today" card to the home screen, positioned below the existing Explore and Circles cards. It should match the same card style as Explore and Circles:
+- Title: "Today"
+- Subtitle: "What's on your heart?"
+- Icon: a warm amber/golden sun or person-with-sun icon to visually distinguish it from Explore (blue/purple) and Circles (purple). Use a soft amber background circle (#fdf6ec) with amber icon (#E9A84C).
+- Tapping the card navigates to the Today screen.
+
+Also update the welcome subtitle on the home screen from "What will you commit to today?" to "What will you commit to?" — this keeps "today" reserved for the Today feature and avoids de-emphasizing it.
+
+---
+
+THE TODAY SCREEN
+
+When the user taps the Today card, they land on a clean, minimal screen.
+
+Layout:
+- Header: "Today" as the title, with today's date (e.g. "Wednesday, March 25") as a soft subtitle beneath it. Back navigation to home.
+- Body: A large, open free-form text area. Placeholder text: "What's on your heart today..." in a soft, italic, muted style. The text area should feel generous and journal-like — not a cramped input box.
+- No submit button. No save button. Auto-save as the user types (debounced, every 1-2 seconds).
+- No character limit display. No item count. No progress indicator of any kind.
+- Keyboard opens automatically when the screen loads.
+
+Visual tone:
+- Soft and warm. Slightly different from the rest of the app — more personal, more intimate.
+- White or very soft off-white background.
+- The amber accent color (#E9A84C) can be used sparingly — perhaps just the header icon or a subtle top accent. Do not overdo it.
+- No heavy UI chrome. The text area IS the screen.
+
+---
+
+DATA & RESET LOGIC
+
+- Store today's entry in the database keyed by user ID + calendar date (YYYY-MM-DD).
+- On load: fetch the entry for today's date. If it exists, populate the text area. If not, show the blank canvas with placeholder.
+- At midnight (local time): the screen resets to blank. The previous entry is retained in the database but never shown unless the user explicitly navigates to history (if that is ever built — do not build it now).
+- Auto-save on every keystroke (debounced 1.5s). No manual save required.
+- The entry is plain text. No formatting, no bullet parsing, no structure imposed.
+
+---
+
+WHAT NOT TO BUILD
+
+Do not build any of the following as part of this feature:
+- Completion checkboxes or toggles
+- Streak counters or habit tracking
+- Sharing or social features
+- Notifications or reminders tied to Today
+- A history or archive screen
+- Any AI analysis or suggestions based on what the user writes
+- Any kind of scoring, rating, or reflection prompt
+
+---
+
+NAVIGATION
+
+- Today card on home screen → Today screen
+- Today screen has a standard back button → returns to home
+- No tab bar entry needed for Today at this stage. Home card is the entry point.
+
+---
+
+SUMMARY
+
+This feature should take no more than 5 minutes of the user's morning. Open it, write what you want, close it, go live your day. That is the entire feature. Keep the implementation clean, minimal, and true to that philosophy.
