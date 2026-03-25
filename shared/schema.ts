@@ -615,3 +615,21 @@ export const insertTodayEntrySchema = createInsertSchema(todayEntries).omit({
 });
 export type InsertTodayEntry = z.infer<typeof insertTodayEntrySchema>;
 export type TodayEntry = typeof todayEntries.$inferSelect;
+
+export const todayItems = pgTable("today_items", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: varchar("date", { length: 10 }).notNull(),
+  content: text("content").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_today_items_user_date").on(table.userId, table.date),
+]);
+
+export const insertTodayItemSchema = createInsertSchema(todayItems).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertTodayItem = z.infer<typeof insertTodayItemSchema>;
+export type TodayItem = typeof todayItems.$inferSelect;

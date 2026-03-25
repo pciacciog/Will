@@ -53,6 +53,8 @@ import {
   type InsertWillMessage,
   todayEntries,
   type TodayEntry,
+  todayItems,
+  type TodayItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
@@ -262,6 +264,10 @@ export interface IStorage {
 
   getTodayEntry(userId: string, date: string): Promise<TodayEntry | undefined>;
   upsertTodayEntry(userId: string, date: string, content: string): Promise<TodayEntry>;
+
+  getTodayItems(userId: string, date: string): Promise<TodayItem[]>;
+  createTodayItem(userId: string, date: string, content: string, sortOrder: number): Promise<TodayItem>;
+  deleteTodayItem(itemId: number, userId: string): Promise<void>;
 
   createUserNotification(notification: InsertUserNotification): Promise<UserNotification>;
   getUserUnreadNotifications(userId: string): Promise<UserNotification[]>;
@@ -2009,6 +2015,24 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return entry;
+  }
+
+  async getTodayItems(userId: string, date: string): Promise<TodayItem[]> {
+    return db.select().from(todayItems)
+      .where(and(eq(todayItems.userId, userId), eq(todayItems.date, date)))
+      .orderBy(todayItems.sortOrder);
+  }
+
+  async createTodayItem(userId: string, date: string, content: string, sortOrder: number): Promise<TodayItem> {
+    const [item] = await db.insert(todayItems)
+      .values({ userId, date, content, sortOrder })
+      .returning();
+    return item;
+  }
+
+  async deleteTodayItem(itemId: number, userId: string): Promise<void> {
+    await db.delete(todayItems)
+      .where(and(eq(todayItems.id, itemId), eq(todayItems.userId, userId)));
   }
 }
 

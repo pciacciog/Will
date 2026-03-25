@@ -13,6 +13,7 @@ import {
   insertBlogPostSchema,
   insertPageContentSchema,
   insertDeviceTokenSchema,
+  insertTodayItemSchema,
   willCommitments,
   deviceTokens,
   users,
@@ -3729,6 +3730,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error saving today entry:", error);
       res.status(500).json({ message: "Failed to save today entry" });
+    }
+  });
+
+  app.get('/api/today/:date/items', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { date } = req.params;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
+      }
+      const items = await storage.getTodayItems(userId, date);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching today items:", error);
+      res.status(500).json({ message: "Failed to fetch today items" });
+    }
+  });
+
+  app.post('/api/today/:date/items', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { date } = req.params;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
+      }
+      const parsed = insertTodayItemSchema.parse({
+        userId,
+        date,
+        content: req.body.content,
+        sortOrder: req.body.sortOrder ?? 0,
+      });
+      if (!parsed.content || parsed.content.trim().length === 0) {
+        return res.status(400).json({ message: "Content is required." });
+      }
+      const item = await storage.createTodayItem(userId, date, parsed.content.trim(), parsed.sortOrder);
+      res.json(item);
+    } catch (error: any) {
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid input.", errors: error.errors });
+      }
+      console.error("Error creating today item:", error);
+      res.status(500).json({ message: "Failed to create today item" });
+    }
+  });
+
+  app.delete('/api/today/items/:itemId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const itemId = parseInt(req.params.itemId);
+      if (isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid item ID." });
+      }
+      await storage.deleteTodayItem(itemId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting today item:", error);
+      res.status(500).json({ message: "Failed to delete today item" });
     }
   });
 
