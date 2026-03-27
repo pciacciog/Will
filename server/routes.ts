@@ -3790,6 +3790,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/today/items/:itemId/toggle', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const itemId = parseInt(req.params.itemId);
+      if (isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid item ID." });
+      }
+      const { checked } = req.body;
+      if (typeof checked !== 'boolean') {
+        return res.status(400).json({ message: "checked must be a boolean." });
+      }
+      const item = await storage.toggleTodayItem(itemId, userId, checked);
+      res.json(item);
+    } catch (error) {
+      console.error("Error toggling today item:", error);
+      res.status(500).json({ message: "Failed to toggle today item" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

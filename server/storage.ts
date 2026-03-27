@@ -268,6 +268,7 @@ export interface IStorage {
   getTodayItems(userId: string, date: string): Promise<TodayItem[]>;
   createTodayItem(userId: string, date: string, content: string, sortOrder: number): Promise<TodayItem>;
   deleteTodayItem(itemId: number, userId: string): Promise<void>;
+  toggleTodayItem(itemId: number, userId: string, checked: boolean): Promise<TodayItem>;
 
   createUserNotification(notification: InsertUserNotification): Promise<UserNotification>;
   getUserUnreadNotifications(userId: string): Promise<UserNotification[]>;
@@ -2033,6 +2034,14 @@ export class DatabaseStorage implements IStorage {
   async deleteTodayItem(itemId: number, userId: string): Promise<void> {
     await db.delete(todayItems)
       .where(and(eq(todayItems.id, itemId), eq(todayItems.userId, userId)));
+  }
+
+  async toggleTodayItem(itemId: number, userId: string, checked: boolean): Promise<TodayItem> {
+    const [item] = await db.update(todayItems)
+      .set({ checked })
+      .where(and(eq(todayItems.id, itemId), eq(todayItems.userId, userId)))
+      .returning();
+    return item;
   }
 }
 

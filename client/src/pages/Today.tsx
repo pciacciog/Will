@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQueryFn, apiRequest } from "@/lib/queryClient";
@@ -9,6 +9,7 @@ type TodayItem = {
   id: number;
   content: string;
   sortOrder: number;
+  checked: boolean;
 };
 
 function getTodayDate(): string {
@@ -29,7 +30,15 @@ function formatDateDisplay(dateStr: string): string {
   });
 }
 
-function SwipeableItem({ item, onDelete }: { item: TodayItem; onDelete: () => void }) {
+function SwipeableItem({
+  item,
+  onDelete,
+  onToggle,
+}: {
+  item: TodayItem;
+  onDelete: () => void;
+  onToggle: (checked: boolean) => void;
+}) {
   const [offsetX, setOffsetX] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const startXRef = useRef(0);
@@ -67,8 +76,9 @@ function SwipeableItem({ item, onDelete }: { item: TodayItem; onDelete: () => vo
       >
         <X className="w-5 h-5 text-white" />
       </div>
+
       <div
-        className="relative bg-[#FFFDF9] flex items-start gap-3 py-3 group"
+        className="relative bg-[#FFFDF9] flex items-center gap-3 py-3 group"
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: swiping ? "none" : "transform 0.2s ease-out",
@@ -77,13 +87,51 @@ function SwipeableItem({ item, onDelete }: { item: TodayItem; onDelete: () => vo
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <span className="text-gray-300 mt-0.5 select-none">—</span>
-        <p className="flex-1 text-gray-800 text-[17px] leading-relaxed" data-testid={`text-today-item-${item.id}`}>
-          {item.content}
-        </p>
+        {/* Circle acknowledgment button */}
+        <button
+          onClick={() => onToggle(!item.checked)}
+          className="flex-shrink-0 w-5 h-5 rounded-full border-[1.5px] transition-all duration-400 ease-in-out focus:outline-none"
+          style={{
+            borderColor: item.checked ? "#D4A853" : "#D1D5DB",
+            backgroundColor: item.checked ? "#D4A853" : "transparent",
+            transform: item.checked ? "scale(1.05)" : "scale(1)",
+            transition: "background-color 0.35s ease, border-color 0.35s ease, transform 0.2s ease",
+          }}
+          data-testid={`button-check-item-${item.id}`}
+          aria-label={item.checked ? "Unacknowledge" : "Acknowledge"}
+        />
+
+        {/* Text with animated strikethrough */}
+        <div className="relative flex-1 overflow-hidden">
+          <p
+            className="text-[17px] leading-relaxed"
+            style={{
+              color: item.checked ? "#9CA3AF" : "#1F2937",
+              transition: "color 0.5s ease, opacity 0.5s ease",
+              opacity: item.checked ? 0.6 : 1,
+            }}
+            data-testid={`text-today-item-${item.id}`}
+          >
+            {item.content}
+          </p>
+          {/* Strikethrough line — draws across slowly */}
+          <span
+            className="absolute left-0 bg-gray-400 pointer-events-none"
+            style={{
+              top: "50%",
+              height: "1px",
+              width: item.checked ? "100%" : "0%",
+              transition: item.checked
+                ? "width 0.55s cubic-bezier(0.4, 0, 0.2, 1)"
+                : "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          />
+        </div>
+
+        {/* Desktop delete button */}
         <button
           onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-400 flex-shrink-0 mt-0.5"
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-400 flex-shrink-0"
           data-testid={`button-delete-item-${item.id}`}
           aria-label="Remove"
         >
@@ -123,12 +171,33 @@ export default function Today() {
 
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId: number) => {
-      return apiRequest(`/api/today/items/${itemId}`, {
-        method: "DELETE",
-      });
+      return apiRequest(`/api/today/items/${itemId}`, { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/today/${todayDate}/items`] });
+    },
+  });
+
+  const toggleItemMutation = useMutation({
+    mutationFn: async ({ itemId, checked }: { itemId: number; checked: boolean }) => {
+      return apiRequest(`/api/today/items/${itemId}/toggle`, {
+        method: "PATCH",
+        body: { checked },
+      });
+    },
+    onMutate: async ({ itemId, checked }) => {
+      // Optimistic update so the animation fires instantly
+      await queryClient.cancelQueries({ queryKey: [`/api/today/${todayDate}/items`] });
+      const previous = queryClient.getQueryData<TodayItem[]>([`/api/today/${todayDate}/items`]);
+      queryClient.setQueryData<TodayItem[]>([`/api/today/${todayDate}/items`], (old) =>
+        (old || []).map((item) => (item.id === itemId ? { ...item, checked } : item))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([`/api/today/${todayDate}/items`], context.previous);
+      }
     },
   });
 
@@ -187,12 +256,13 @@ export default function Today() {
                 key={item.id}
                 item={item}
                 onDelete={() => deleteItemMutation.mutate(item.id)}
+                onToggle={(checked) => toggleItemMutation.mutate({ itemId: item.id, checked })}
               />
             ))}
           </div>
 
-          <div className="flex items-start gap-3 py-3">
-            <span className="text-amber-400 mt-0.5 select-none">—</span>
+          <div className="flex items-center gap-3 py-3">
+            <span className="w-5 h-5 flex-shrink-0" />
             <input
               ref={inputRef}
               type="text"
