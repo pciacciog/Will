@@ -116,9 +116,6 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
                 <Badge className={`text-xs ${status.className} hover:${status.className}`} data-testid={`badge-status-${will.id}`}>
                   {status.label}
                 </Badge>
-                <span className="text-xs text-gray-400" data-testid={`text-duration-${will.id}`}>
-                  {getDurationLabel()}
-                </span>
               </div>
             </div>
             <ChevronRight className={`w-5 h-5 mt-2.5 flex-shrink-0 ${
