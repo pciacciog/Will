@@ -182,46 +182,46 @@ export default function Today() {
   });
 
   const addItemMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const sortOrder = items.length;
-      return apiRequest(`/api/today/${activeDate}/items`, {
+    mutationFn: async ({ content, date }: { content: string; date: string }) => {
+      const currentItems = queryClient.getQueryData<TodayItem[]>([`/api/today/${date}/items`]) || [];
+      return apiRequest(`/api/today/${date}/items`, {
         method: "POST",
-        body: { content, sortOrder },
+        body: { content, sortOrder: currentItems.length },
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/today/${activeDate}/items`] });
+    onSuccess: (_data, { date }) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/today/${date}/items`] });
     },
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: async (itemId: number) => {
+    mutationFn: async ({ itemId, date }: { itemId: number; date: string }) => {
       return apiRequest(`/api/today/items/${itemId}`, { method: "DELETE" });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/today/${activeDate}/items`] });
+    onSuccess: (_data, { date }) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/today/${date}/items`] });
     },
   });
 
   const toggleItemMutation = useMutation({
-    mutationFn: async ({ itemId, checked }: { itemId: number; checked: boolean }) => {
+    mutationFn: async ({ itemId, checked, date }: { itemId: number; checked: boolean; date: string }) => {
       return apiRequest(`/api/today/items/${itemId}/toggle`, {
         method: "PATCH",
         body: { checked },
       });
     },
-    onMutate: async ({ itemId, checked }) => {
-      const key = [`/api/today/${activeDate}/items`];
+    onMutate: async ({ itemId, checked, date }) => {
+      const key = [`/api/today/${date}/items`];
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<TodayItem[]>(key);
       queryClient.setQueryData<TodayItem[]>(key, (old) =>
         (old || []).map((item) => (item.id === itemId ? { ...item, checked } : item))
       );
-      return { previous };
+      return { previous, date };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData([`/api/today/${activeDate}/items`], context.previous);
+      if (context?.previous && context.date) {
+        queryClient.setQueryData([`/api/today/${context.date}/items`], context.previous);
       }
     },
   });
@@ -244,7 +244,7 @@ export default function Today() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && inputValue.trim()) {
       e.preventDefault();
-      addItemMutation.mutate(inputValue.trim());
+      addItemMutation.mutate({ content: inputValue.trim(), date: activeDate });
       setInputValue("");
     }
   };
@@ -323,8 +323,8 @@ export default function Today() {
               <SwipeableItem
                 key={item.id}
                 item={item}
-                onDelete={() => deleteItemMutation.mutate(item.id)}
-                onToggle={(checked) => toggleItemMutation.mutate({ itemId: item.id, checked })}
+                onDelete={() => deleteItemMutation.mutate({ itemId: item.id, date: activeDate })}
+                onToggle={(checked) => toggleItemMutation.mutate({ itemId: item.id, checked, date: activeDate })}
               />
             ))}
           </div>
