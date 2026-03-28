@@ -2546,6 +2546,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update notification settings for a will (reminderTime)
+  app.patch('/api/wills/:id/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+
+      const hasAccess = will.createdBy === userId;
+      if (!hasAccess) {
+        const commitments = await storage.getWillCommitments(willId);
+        const isParticipant = commitments.some((c: any) => c.userId === userId);
+        if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const { reminderTime } = req.body;
+
+      if (reminderTime !== null && reminderTime !== undefined) {
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        if (!timeRegex.test(reminderTime)) {
+          return res.status(400).json({ message: "Invalid time format. Use HH:MM" });
+        }
+      }
+
+      await db.update(wills).set({ reminderTime: reminderTime || null }).where(eq(wills.id, willId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating will notifications:", error);
+      res.status(500).json({ message: "Failed to update notification settings" });
+    }
+  });
+
   // Pause a will (only allowed for active indefinite wills)
   app.post('/api/wills/:id/pause', isAuthenticated, async (req: any, res) => {
     try {

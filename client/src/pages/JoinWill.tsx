@@ -170,7 +170,7 @@ export default function JoinWill() {
   }
 
   const isOngoing = will.isIndefinite;
-  const checkInLabel = will.checkInType === 'daily' ? 'Ongoing check-ins' : 'Review at the end';
+  const checkInLabel = will.checkInType === 'daily' ? 'Habit check-ins' : 'Review at the end';
 
   return (
     <MobileLayout>
@@ -230,7 +230,7 @@ export default function JoinWill() {
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Timeline</p>
                     {isOngoing ? (
-                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-join-timeline">Ongoing commitment</p>
+                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-join-timeline">Habit</p>
                     ) : (
                       <div className="mt-0.5" data-testid="text-join-timeline">
                         <p className="text-sm text-gray-700">
@@ -404,7 +404,7 @@ export default function JoinWill() {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Timeline</p>
                         {isOngoing ? (
-                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-timeline">Ongoing commitment</p>
+                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-timeline">Habit</p>
                         ) : (
                           <div className="mt-0.5" data-testid="text-confirm-timeline">
                             <p className="text-sm text-gray-700">

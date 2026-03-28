@@ -13,7 +13,7 @@ import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
-import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, X, MessageCircle, Rocket } from "lucide-react";
+import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, ChevronLeft, X, MessageCircle, Rocket, Bell } from "lucide-react";
 import WillMessages from "@/components/WillMessages";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
@@ -126,7 +126,7 @@ function DailyProgressSection({ willId, startDate, endDate, checkInType, activeD
 function formatDateRange(startDate: string, endDate: string | null): string {
   const start = new Date(startDate);
   if (!endDate) {
-    return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - Ongoing`;
+    return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - Habit`;
   }
   const end = new Date(endDate);
   return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
@@ -206,6 +206,9 @@ export default function WillDetails() {
   const [selectedCheckInDate, setSelectedCheckInDate] = useState<string | null>(null);
   const [showGutCheckModal, setShowGutCheckModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifTime, setNotifTime] = useState('20:00');
   const [checkinAutoOpened, setCheckinAutoOpened] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   
@@ -577,6 +580,21 @@ export default function WillDetails() {
     },
   });
 
+  const updateNotifMutation = useMutation({
+    mutationFn: async ({ reminderTime }: { reminderTime: string | null }) => {
+      const res = await apiRequest(`/api/wills/${id}/notifications`, { method: 'PATCH', body: { reminderTime } });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      toast({ title: "Saved", description: "Notification settings updated" });
+      setShowNotifPanel(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to save", variant: "destructive" });
+    },
+  });
+
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const leaveMutation = useMutation({
@@ -854,7 +872,7 @@ export default function WillDetails() {
               </div>
             ) : (
               <div className="text-base text-gray-500 italic">
-                (Ongoing commitment)
+                (Habit)
               </div>
             )}
           </div>
@@ -1409,90 +1427,170 @@ export default function WillDetails() {
 
       {/* Manage Will Modal */}
       {showManageModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setShowManageModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => { setShowManageModal(false); setShowNotifPanel(false); }}>
           <div className="absolute inset-0 bg-black/40" />
           <div 
             className="relative w-full max-w-md bg-white rounded-t-2xl p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Manage Will</h3>
-            <div className="space-y-3">
-              {will.createdBy === user?.id && !will.parentWillId && (
-                <>
-                  {will.status === 'active' ? (
-                    <Button
-                      onClick={() => { pauseMutation.mutate(); setShowManageModal(false); }}
-                      disabled={pauseMutation.isPending}
-                      className="w-full border border-amber-500 text-amber-600 bg-white hover:bg-amber-50 rounded-xl py-3 text-base font-medium"
-                      variant="outline"
-                      data-testid="button-pause-will"
+
+            {showNotifPanel ? (
+              /* Notification editing sub-panel */
+              <div>
+                <div className="flex items-center gap-2 mb-5">
+                  <button
+                    onClick={() => setShowNotifPanel(false)}
+                    className="p-1 rounded-lg hover:bg-gray-100 text-gray-500"
+                    data-testid="button-notif-back"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h3 className="text-lg font-semibold text-gray-900 flex-1 text-center pr-6">Notifications</h3>
+                </div>
+                <div className="space-y-5">
+                  {/* Toggle */}
+                  <div className="flex items-center justify-between py-1">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-800">Send me reminders</span>
+                    </div>
+                    <button
+                      onClick={() => setNotifEnabled(!notifEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                      data-testid="toggle-notif-enabled"
                     >
-                      {pauseMutation.isPending ? "Pausing..." : "Pause Will"}
-                    </Button>
-                  ) : will.status === 'paused' ? (
-                    <Button
-                      onClick={() => { resumeMutation.mutate(); setShowManageModal(false); }}
-                      disabled={resumeMutation.isPending}
-                      className="w-full border border-green-500 text-green-600 bg-white hover:bg-green-50 rounded-xl py-3 text-base font-medium"
-                      variant="outline"
-                      data-testid="button-resume-will"
-                    >
-                      {resumeMutation.isPending ? "Resuming..." : "Resume Will"}
-                    </Button>
-                  ) : null}
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
-                        variant="outline"
-                        data-testid="button-end-will"
-                      >
-                        End Will
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>End this Will?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently end this Will. Your progress will be saved but you won't be able to continue tracking.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => { terminateMutation.mutate(); setShowManageModal(false); }}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${notifEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+
+                  {/* Time picker */}
+                  {notifEnabled && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                      <label className="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-2">
+                        Reminder time
+                      </label>
+                      <input
+                        type="time"
+                        value={notifTime}
+                        onChange={(e) => setNotifTime(e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 focus:outline-none"
+                        data-testid="input-notif-time"
+                      />
+                      <p className="text-xs text-gray-400 mt-1.5">In your local time zone</p>
+                    </div>
+                  )}
+
+                  {/* Save */}
+                  <Button
+                    onClick={() => updateNotifMutation.mutate({ reminderTime: notifEnabled ? notifTime : null })}
+                    disabled={updateNotifMutation.isPending}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-3 text-base font-medium"
+                    data-testid="button-save-notif"
+                  >
+                    {updateNotifMutation.isPending ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Main manage buttons */
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Manage Will</h3>
+                <div className="space-y-3">
+                  {will.createdBy === user?.id && !will.parentWillId && (
+                    <>
+                      {will.status === 'active' ? (
+                        <Button
+                          onClick={() => { pauseMutation.mutate(); setShowManageModal(false); }}
+                          disabled={pauseMutation.isPending}
+                          className="w-full border border-amber-500 text-amber-600 bg-white hover:bg-amber-50 rounded-xl py-3 text-base font-medium"
+                          variant="outline"
+                          data-testid="button-pause-will"
                         >
-                          {terminateMutation.isPending ? "Ending..." : "End Will"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
+                          {pauseMutation.isPending ? "Pausing..." : "Pause Will"}
+                        </Button>
+                      ) : will.status === 'paused' ? (
+                        <Button
+                          onClick={() => { resumeMutation.mutate(); setShowManageModal(false); }}
+                          disabled={resumeMutation.isPending}
+                          className="w-full border border-green-500 text-green-600 bg-white hover:bg-green-50 rounded-xl py-3 text-base font-medium"
+                          variant="outline"
+                          data-testid="button-resume-will"
+                        >
+                          {resumeMutation.isPending ? "Resuming..." : "Resume Will"}
+                        </Button>
+                      ) : null}
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
+                            variant="outline"
+                            data-testid="button-end-will"
+                          >
+                            End Will
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>End this Will?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently end this Will. Your progress will be saved but you won't be able to continue tracking.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => { terminateMutation.mutate(); setShowManageModal(false); }}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {terminateMutation.isPending ? "Ending..." : "End Will"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </>
+                  )}
 
-              {(will.mode === 'circle' || !!will.parentWillId) && (
-                <Button
-                  onClick={() => { setShowManageModal(false); setShowLeaveModal(true); }}
-                  className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
-                  variant="outline"
-                  data-testid="button-leave-will"
-                >
-                  Leave Will
-                </Button>
-              )}
+                  {/* Edit Notifications — available to anyone with check-in type reminders */}
+                  {will.checkInType !== 'final_review' && will.checkInType !== 'one-time' && (
+                    <Button
+                      onClick={() => {
+                        setNotifEnabled(!!will.reminderTime);
+                        setNotifTime(will.reminderTime || '20:00');
+                        setShowNotifPanel(true);
+                      }}
+                      className="w-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-xl py-3 text-base font-medium flex items-center justify-center gap-2"
+                      variant="outline"
+                      data-testid="button-edit-notifications"
+                    >
+                      <Bell className="w-4 h-4" />
+                      Edit Notifications
+                    </Button>
+                  )}
 
-              <Button
-                onClick={() => setShowManageModal(false)}
-                className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl py-3 text-base font-medium"
-                variant="ghost"
-                data-testid="button-cancel-manage"
-              >
-                Cancel
-              </Button>
-            </div>
+                  {(will.mode === 'circle' || !!will.parentWillId) && (
+                    <Button
+                      onClick={() => { setShowManageModal(false); setShowLeaveModal(true); }}
+                      className="w-full border border-red-500 text-red-600 bg-white hover:bg-red-50 rounded-xl py-3 text-base font-medium"
+                      variant="outline"
+                      data-testid="button-leave-will"
+                    >
+                      Leave Will
+                    </Button>
+                  )}
+
+                  <Button
+                    onClick={() => setShowManageModal(false)}
+                    className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl py-3 text-base font-medium"
+                    variant="ghost"
+                    data-testid="button-cancel-manage"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

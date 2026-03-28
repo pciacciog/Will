@@ -893,7 +893,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     }`}
                     data-testid="button-duration-indefinite"
                   >
-                    Ongoing
+                    Habit
                   </button>
                 </div>
 
@@ -1158,7 +1158,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                       <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Timeline</p>
                       {isIndefinite ? (
                         <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-timeline">
-                          Ongoing commitment
+                          Habit
                         </p>
                       ) : (
                         <div className="mt-0.5" data-testid="text-confirm-timeline">
