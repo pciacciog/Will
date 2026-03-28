@@ -802,6 +802,7 @@ export class DatabaseStorage implements IStorage {
         isIndefinite: wills.isIndefinite,
         createdBy: wills.createdBy,
         status: wills.status,
+        createdAt: wills.createdAt,
       })
       .from(wills)
       .where(and(
@@ -841,15 +842,25 @@ export class DatabaseStorage implements IStorage {
           creatorName: creator?.firstName || 'Anonymous',
           memberCount: Number(memberCountResult?.count || 0) + 1,
           status: will.status,
+          createdAt: will.createdAt,
         };
       })
     );
-    
+
+    // Sort by most participants first; newest first as tiebreaker
+    results.sort((a, b) => {
+      if (b.memberCount !== a.memberCount) return b.memberCount - a.memberCount;
+      return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
+    });
+
+    // Strip createdAt before returning (not part of the public contract)
+    const sorted = results.map(({ createdAt: _ca, ...rest }) => rest);
+
     if (search) {
-      return results.filter(w => w.what.toLowerCase().includes(search.toLowerCase()));
+      return sorted.filter(w => w.what.toLowerCase().includes(search.toLowerCase()));
     }
     
-    return results;
+    return sorted;
   }
 
   async getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined> {
