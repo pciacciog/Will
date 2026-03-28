@@ -1,0 +1,48 @@
+Please add the following enhancement to the Today feature. Do not rebuild anything from scratch — this is an addition and a design refinement only.
+
+---
+
+HEADER CHANGE
+
+Update the screen header from "Today I will:" to simply "I will:" — the toggle below it already communicates which day the user is on, so the header can be shorter and more universal. The colon should render in amber (#E9A84C) as a subtle brand accent. Below the header, show the date of the currently selected tab in a small, soft muted style (e.g. "Saturday, March 28"). This date updates automatically when the user switches tabs.
+
+---
+
+ADD A TODAY / TOMORROW TOGGLE
+
+Directly below the header and date, add a simple pill-style toggle with two options: "Today" and "Tomorrow." This is the same screen, same feature — just two time modes.
+
+Toggle design:
+- Soft pill container with a warm off-white/light sand background (#f0ece6)
+- Active tab: white background, dark text, very subtle shadow
+- Inactive tab: no background, muted gray text
+- Two words only. No icons. No heavy UI.
+
+How it works:
+- Default always opens on Today
+- Switching to Tomorrow shows a completely separate list — same format, same micro Will list input, same circle + strikethrough interaction, same auto-save
+- The two lists are stored independently: one keyed to today's date, one keyed to tomorrow's date
+- Both views are fully editable at all times
+
+Midnight transition logic:
+- Tomorrow's list moves into the Today slot
+- Old Today's list is deleted — consistent with the impermanence philosophy
+- Tomorrow resets to blank
+- The cycle: user plans Tomorrow the night before → wakes up and it's already seeded as Today → lives it → Tomorrow is blank again
+
+---
+
+CIRCLE BUTTON REDESIGN
+
+Make it smaller and a little more aesthetic and matching to the next text.
+
+Please adhere to the screenshot for design inspiration
+
+---
+
+LIST ROW DESIGN
+
+- Each row: circle button on the left, intention text to the right, generous padding top and bottom (~14px)
+- Thin warm divider line between rows (0.5px, #f0ece6)
+- Last row: the "Add another..." placeholder input — soft italic, muted, no circle fill or border on that row's button
+- No item count. No progress indicator. No percentage. No score anywhere on the screen.
