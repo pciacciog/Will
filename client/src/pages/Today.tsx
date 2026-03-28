@@ -12,8 +12,19 @@ type TodayItem = {
   checked: boolean;
 };
 
+type Tab = "today" | "tomorrow";
+
 function getTodayDate(): string {
   const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getTomorrowDate(): string {
+  const now = new Date();
+  now.setDate(now.getDate() + 1);
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
@@ -69,7 +80,12 @@ function SwipeableItem({
   };
 
   return (
-    <div className="relative overflow-hidden" data-testid={`today-item-wrapper-${item.id}`}>
+    <div
+      className="relative overflow-hidden"
+      style={{ borderBottom: "0.5px solid #f0ece6" }}
+      data-testid={`today-item-wrapper-${item.id}`}
+    >
+      {/* Swipe-to-delete reveal */}
       <div
         className="absolute inset-y-0 right-0 w-24 bg-red-400 flex items-center justify-center"
         style={{ opacity: offsetX < -10 ? 1 : 0, transition: swiping ? "none" : "opacity 0.2s" }}
@@ -78,8 +94,10 @@ function SwipeableItem({
       </div>
 
       <div
-        className="relative bg-[#FFFDF9] flex items-center gap-3 py-3 group"
+        className="relative bg-[#FFFDF9] flex items-center gap-3 group"
         style={{
+          paddingTop: 14,
+          paddingBottom: 14,
           transform: `translateX(${offsetX}px)`,
           transition: swiping ? "none" : "transform 0.2s ease-out",
         }}
@@ -87,14 +105,16 @@ function SwipeableItem({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Circle acknowledgment button */}
+        {/* Circle acknowledgment button — smaller, lighter */}
         <button
           onClick={() => onToggle(!item.checked)}
-          className="flex-shrink-0 w-5 h-5 rounded-full border-[1.5px] transition-all duration-400 ease-in-out focus:outline-none"
+          className="flex-shrink-0 rounded-full focus:outline-none"
           style={{
-            borderColor: item.checked ? "#D4A853" : "#D1D5DB",
-            backgroundColor: item.checked ? "#D4A853" : "transparent",
-            transform: item.checked ? "scale(1.05)" : "scale(1)",
+            width: 15,
+            height: 15,
+            border: `1px solid ${item.checked ? "#E9A84C" : "#D1D5DB"}`,
+            backgroundColor: item.checked ? "#E9A84C" : "transparent",
+            transform: item.checked ? "scale(1.08)" : "scale(1)",
             transition: "background-color 0.35s ease, border-color 0.35s ease, transform 0.2s ease",
           }}
           data-testid={`button-check-item-${item.id}`}
@@ -107,8 +127,8 @@ function SwipeableItem({
             className="text-[17px] leading-relaxed"
             style={{
               color: item.checked ? "#9CA3AF" : "#1F2937",
-              transition: "color 0.5s ease, opacity 0.5s ease",
               opacity: item.checked ? 0.6 : 1,
+              transition: "color 0.5s ease, opacity 0.5s ease",
             }}
             data-testid={`text-today-item-${item.id}`}
           >
@@ -116,10 +136,11 @@ function SwipeableItem({
           </p>
           {/* Strikethrough line — draws across slowly */}
           <span
-            className="absolute left-0 bg-gray-400 pointer-events-none"
+            className="absolute left-0 pointer-events-none"
             style={{
               top: "50%",
               height: "1px",
+              backgroundColor: "#9CA3AF",
               width: item.checked ? "100%" : "0%",
               transition: item.checked
                 ? "width 0.55s cubic-bezier(0.4, 0, 0.2, 1)"
@@ -145,13 +166,17 @@ function SwipeableItem({
 export default function Today() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<Tab>("today");
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const todayDate = getTodayDate();
   const queryClient = useQueryClient();
 
+  const todayDate = getTodayDate();
+  const tomorrowDate = getTomorrowDate();
+  const activeDate = activeTab === "today" ? todayDate : tomorrowDate;
+
   const { data: items = [], isLoading } = useQuery<TodayItem[]>({
-    queryKey: [`/api/today/${todayDate}/items`],
+    queryKey: [`/api/today/${activeDate}/items`],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user,
   });
@@ -159,13 +184,13 @@ export default function Today() {
   const addItemMutation = useMutation({
     mutationFn: async (content: string) => {
       const sortOrder = items.length;
-      return apiRequest(`/api/today/${todayDate}/items`, {
+      return apiRequest(`/api/today/${activeDate}/items`, {
         method: "POST",
         body: { content, sortOrder },
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/today/${todayDate}/items`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/today/${activeDate}/items`] });
     },
   });
 
@@ -174,7 +199,7 @@ export default function Today() {
       return apiRequest(`/api/today/items/${itemId}`, { method: "DELETE" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/today/${todayDate}/items`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/today/${activeDate}/items`] });
     },
   });
 
@@ -186,29 +211,35 @@ export default function Today() {
       });
     },
     onMutate: async ({ itemId, checked }) => {
-      // Optimistic update so the animation fires instantly
-      await queryClient.cancelQueries({ queryKey: [`/api/today/${todayDate}/items`] });
-      const previous = queryClient.getQueryData<TodayItem[]>([`/api/today/${todayDate}/items`]);
-      queryClient.setQueryData<TodayItem[]>([`/api/today/${todayDate}/items`], (old) =>
+      const key = [`/api/today/${activeDate}/items`];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<TodayItem[]>(key);
+      queryClient.setQueryData<TodayItem[]>(key, (old) =>
         (old || []).map((item) => (item.id === itemId ? { ...item, checked } : item))
       );
       return { previous };
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        queryClient.setQueryData([`/api/today/${todayDate}/items`], context.previous);
+        queryClient.setQueryData([`/api/today/${activeDate}/items`], context.previous);
       }
     },
   });
 
+  // Focus input after initial load or tab switch
   useEffect(() => {
     if (!isLoading && inputRef.current) {
       const timer = setTimeout(() => {
         inputRef.current?.focus();
-      }, 300);
+      }, 150);
       return () => clearTimeout(timer);
     }
-  }, [isLoading]);
+  }, [isLoading, activeTab]);
+
+  const handleTabSwitch = (tab: Tab) => {
+    setActiveTab(tab);
+    setInputValue("");
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && inputValue.trim()) {
@@ -218,7 +249,7 @@ export default function Today() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return (
       <div className="min-h-screen bg-[#FFFDF9] flex items-center justify-center">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-400"></div>
@@ -229,7 +260,8 @@ export default function Today() {
   return (
     <div className="min-h-screen bg-[#FFFDF9] flex flex-col">
       <div className="pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] flex flex-col flex-1">
-        <div className="px-5 pt-4 pb-2">
+        <div className="px-5 pt-4 pb-3">
+          {/* Back button */}
           <button
             onClick={() => setLocation("/")}
             className="flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors mb-4"
@@ -239,18 +271,54 @@ export default function Today() {
             <span className="text-sm">Home</span>
           </button>
 
-          <div className="mb-6">
+          {/* Header */}
+          <div className="mb-1">
             <h1 className="text-2xl font-semibold text-gray-900" data-testid="text-today-title">
-              Today I will:
+              I will<span style={{ color: "#E9A84C" }}>:</span>
             </h1>
-            <p className="text-sm text-gray-400 mt-0.5" data-testid="text-today-date">
-              {formatDateDisplay(todayDate)}
-            </p>
+          </div>
+
+          {/* Active date — updates with tab */}
+          <p className="text-sm text-gray-400 mb-4" data-testid="text-today-date">
+            {formatDateDisplay(activeDate)}
+          </p>
+
+          {/* Today / Tomorrow pill toggle */}
+          <div
+            className="flex rounded-full p-[3px]"
+            style={{ backgroundColor: "#f0ece6" }}
+            data-testid="toggle-today-tomorrow"
+          >
+            <button
+              onClick={() => handleTabSwitch("today")}
+              className="flex-1 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+              style={
+                activeTab === "today"
+                  ? { backgroundColor: "white", color: "#1F2937", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                  : { color: "#9CA3AF" }
+              }
+              data-testid="tab-today"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => handleTabSwitch("tomorrow")}
+              className="flex-1 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+              style={
+                activeTab === "tomorrow"
+                  ? { backgroundColor: "white", color: "#1F2937", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                  : { color: "#9CA3AF" }
+              }
+              data-testid="tab-tomorrow"
+            >
+              Tomorrow
+            </button>
           </div>
         </div>
 
+        {/* List */}
         <div className="flex-1 px-5 pb-4">
-          <div className="space-y-0 divide-y divide-gray-100" data-testid="list-today-items">
+          <div data-testid="list-today-items">
             {(items || []).map((item) => (
               <SwipeableItem
                 key={item.id}
@@ -261,15 +329,25 @@ export default function Today() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 py-3">
-            <span className="w-5 h-5 flex-shrink-0" />
+          {/* Input row — no circle, just a spacer for alignment */}
+          <div
+            className="flex items-center gap-3"
+            style={{ paddingTop: 14, paddingBottom: 14 }}
+          >
+            <span style={{ width: 15, height: 15, flexShrink: 0 }} />
             <input
               ref={inputRef}
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={items.length === 0 ? "What's on your heart today..." : "Add another..."}
+              placeholder={
+                items.length === 0
+                  ? activeTab === "today"
+                    ? "What's on your heart today..."
+                    : "What will you do tomorrow..."
+                  : "Add another..."
+              }
               className="flex-1 bg-transparent text-gray-800 text-[17px] leading-relaxed outline-none placeholder:text-gray-300 placeholder:italic"
               data-testid="input-today-new-item"
             />
