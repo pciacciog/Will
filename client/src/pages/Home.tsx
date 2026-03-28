@@ -173,16 +173,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-      <div className="pt-[calc(env(safe-area-inset-top)+4rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] min-h-screen flex flex-col">
-        <div className={`max-w-sm mx-auto px-5 flex-1 flex flex-col ${activeWills.length > 0 ? 'justify-start' : 'justify-center'}`} style={activeWills.length > 0 ? undefined : { paddingTop: '10vh' }}>
+      <div className="pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] min-h-screen flex flex-col">
+        <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col justify-between">
           
           <div className="flex flex-col items-center">
             {/* Star Icon */}
-            <div className="mb-3">
+            <div className="mb-2">
               <div className="relative">
                 <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full blur-2xl opacity-30"></div>
-                <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-200 flex items-center justify-center shadow-lg">
-                  <Sparkles className="w-7 h-7 text-emerald-600" />
+                <div className="relative w-12 h-12 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-full border-2 border-emerald-200 flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-6 h-6 text-emerald-600" />
                 </div>
               </div>
             </div>
@@ -191,12 +191,12 @@ export default function Home() {
             <h1 className="text-2xl font-semibold text-gray-900 mb-0.5" data-testid="text-welcome">
               Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
             </h1>
-            <p className="text-sm text-gray-400 mb-4">What will you commit to?</p>
+            <p className="text-sm text-gray-400 mb-3">What will you commit to?</p>
 
             {/* Create Will Button */}
             <button
               onClick={handleCreateWill}
-              className="w-full max-w-sm mb-5 group"
+              className="w-full max-w-sm mb-3 group"
               data-testid="button-create-will"
             >
               <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-4 shadow-lg group-hover:shadow-xl transition-all duration-200 group-active:scale-[0.98]">
@@ -245,7 +245,7 @@ export default function Home() {
             {!willsLoading && !isActiveWillsError && allActiveWills !== null && (
               <button
                 onClick={() => setLocation('/wills')}
-                className="w-full mb-4 group"
+                className="w-full mb-2 group"
                 data-testid="button-view-all-wills"
               >
                 <Card className="bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-emerald-300 transition-all duration-200 group-active:scale-[0.98]">
@@ -266,7 +266,7 @@ export default function Home() {
             )}
 
             {/* Explore & Circles Cards */}
-            <div className="grid grid-cols-2 gap-3 w-full mb-3">
+            <div className="grid grid-cols-2 gap-3 w-full mb-2">
               <button
                 onClick={() => { setActiveCard('explore'); handleExplore(); }}
                 onPointerDown={() => setActiveCard('explore')}
@@ -278,8 +278,8 @@ export default function Home() {
                     ? 'bg-white border-2 border-blue-300 shadow-md shadow-blue-100/50'
                     : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-blue-200'
                 }`}>
-                  <div className="p-4 flex flex-col items-center justify-center text-center">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors duration-200 ${
+                  <div className="p-3 flex flex-col items-center justify-center text-center">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1 transition-colors duration-200 ${
                       activeCard === 'explore' ? 'bg-blue-100' : 'bg-blue-50'
                     }`}>
                       <Compass className={`w-5 h-5 transition-colors duration-200 ${
@@ -287,7 +287,7 @@ export default function Home() {
                       }`} />
                     </div>
                     <h3 className="text-sm font-semibold text-gray-900">Explore</h3>
-                    <p className="text-[11px] text-gray-400 mt-0.5">Browse public Wills</p>
+                    <p className="text-[11px] text-gray-400">Browse public Wills</p>
                   </div>
                 </div>
               </button>
@@ -303,9 +303,9 @@ export default function Home() {
                     ? 'bg-white border-2 border-purple-300 shadow-md shadow-purple-100/50'
                     : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-purple-200'
                 }`}>
-                  <div className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="p-3 flex flex-col items-center justify-center text-center">
                     <div className="relative">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors duration-200 ${
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1 transition-colors duration-200 ${
                         activeCard === 'circles' ? 'bg-purple-100' : 'bg-purple-50'
                       }`}>
                         <Users className={`w-5 h-5 transition-colors duration-200 ${
@@ -319,7 +319,7 @@ export default function Home() {
                       )}
                     </div>
                     <h3 className="text-sm font-semibold text-gray-900">My Circles</h3>
-                    <p className="text-[11px] text-gray-400 mt-0.5">Shared Accountability</p>
+                    <p className="text-[11px] text-gray-400">Shared Accountability</p>
                   </div>
                 </div>
               </button>
@@ -328,7 +328,7 @@ export default function Home() {
             {/* Today Card */}
             <button
               onClick={() => setLocation('/today')}
-              className="w-full mb-4 group"
+              className="w-full group"
               data-testid="button-today"
             >
               <div className="bg-white border border-gray-200 rounded-2xl shadow-sm group-hover:shadow-md group-hover:border-amber-200 transition-all duration-200 group-active:scale-[0.98]">
@@ -338,7 +338,7 @@ export default function Home() {
                   </div>
                   <div className="flex-1 text-left">
                     <h3 className="text-sm font-semibold text-gray-900">Today</h3>
-                    <p className="text-[11px] text-gray-400 mt-0.5">What's on your heart?</p>
+                    <p className="text-[11px] text-gray-400">What's on your heart?</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-amber-500" />
                 </div>
@@ -346,11 +346,8 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1"></div>
-
           {/* Account Actions - Settings & Sign Out */}
-          <div className="pt-4 border-t border-gray-200">
+          <div className="pt-3 border-t border-gray-200">
             <div className="flex items-center justify-center gap-6">
               <button
                 onClick={() => setShowAccountSettings(true)}
