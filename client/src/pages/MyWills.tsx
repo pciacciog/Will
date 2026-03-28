@@ -117,7 +117,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
                   {status.label}
                 </Badge>
                 <span className="text-xs text-gray-400" data-testid={`text-duration-${will.id}`}>
-                  {will.checkInType === 'daily' ? 'Ongoing' : getDurationLabel()}
+                  {getDurationLabel()}
                 </span>
               </div>
             </div>
