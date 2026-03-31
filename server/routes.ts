@@ -3854,9 +3854,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // In-memory upload tokens: map uploadToken → { userId, publicId, expiresAt }
   // Issued by /api/cloudinary/sign; consumed/validated by /api/cloudinary/abandon
   const uploadTokenStore = new Map<string, { userId: string; publicId: string; expiresAt: number }>();
+  // Prune expired tokens every 15 minutes to prevent unbounded growth
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, val] of uploadTokenStore.entries()) {
+      if (val.expiresAt < now) uploadTokenStore.delete(key);
+    }
+  }, 15 * 60 * 1000).unref();
 
   // Simple in-memory rate limiter: 10 POST /proofs per user per hour
   const proofRateLimiter = new Map<string, { count: number; resetAt: number }>();
+  // Prune expired rate limit entries every hour
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, val] of proofRateLimiter.entries()) {
+      if (val.resetAt < now) proofRateLimiter.delete(key);
+    }
+  }, 60 * 60 * 1000).unref();
   function checkProofRateLimit(userId: string): boolean {
     const now = Date.now();
     const entry = proofRateLimiter.get(userId);
@@ -3919,6 +3933,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!willId || typeof willId !== 'number') {
         return res.status(400).json({ message: 'willId is required.' });
       }
+
+      // Validate willId belongs to this circle
+      const [willCheck] = await db.select({ id: wills.id }).from(wills)
+        .where(and(eq(wills.id, willId), eq(wills.circleId, circleId))).limit(1);
+      if (!willCheck) return res.status(400).json({ message: 'Will does not belong to this circle.' });
 
       // Validate that cloudinaryPublicId is scoped to our upload folder
       if (!cloudinaryPublicId || typeof cloudinaryPublicId !== 'string' || !cloudinaryPublicId.startsWith('will_proofs/')) {
