@@ -511,15 +511,15 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
         if (signRes.status === 503) throw new Error('Photo uploads are not configured yet.');
         throw new Error('Failed to get upload credentials.');
       }
-      const { timestamp, signature, folder, apiKey: cApiKey, cloudName: cCloudName, eager: eagerTransform } = await signRes.json();
+      const { timestamp, signature, publicId: serverPublicId, apiKey: cApiKey, cloudName: cCloudName, eager: eagerTransform, uploadToken } = await signRes.json();
 
-      // 2. Upload to Cloudinary
+      // 2. Upload to Cloudinary using the server-assigned public_id
       const formData = new FormData();
       formData.append('file', file);
       formData.append('timestamp', String(timestamp));
       formData.append('signature', signature);
       formData.append('api_key', cApiKey);
-      formData.append('folder', folder);
+      formData.append('public_id', serverPublicId);
       formData.append('transformation', 'c_limit,w_1200,h_1200,q_auto');
       if (eagerTransform) formData.append('eager', eagerTransform);
 
@@ -544,13 +544,13 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
       });
       if (!createRes.ok) {
         const err = await createRes.json().catch(() => ({}));
-        // Cloudinary upload succeeded but DB save failed — clean up orphan asset
-        if (cloudinaryPublicId) {
+        // Cloudinary upload succeeded but DB save failed — clean up orphan asset using ownership-verified token
+        if (uploadToken) {
           fetch(getApiPath('/api/cloudinary/abandon'), {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json', ...headers },
-            body: JSON.stringify({ publicId: cloudinaryPublicId }),
+            body: JSON.stringify({ uploadToken }),
           }).catch(() => {});
         }
         throw new Error(err.message || 'Failed to save proof.');

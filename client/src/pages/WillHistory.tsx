@@ -411,7 +411,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
       const token = await sessionPersistence.getToken();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const resp = await fetch(getApiPath(`/api/circles/${circleId}/proofs?willId=${will.id}&limit=50`), {
+      const resp = await fetch(getApiPath(`/api/circles/${circleId}/proofs?willId=${will.id}&limit=200`), {
         credentials: 'include',
         headers,
       });

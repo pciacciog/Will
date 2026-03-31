@@ -3851,6 +3851,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PROOF ROUTES
   // ──────────────────────────────────────────────
 
+  // In-memory upload tokens: map uploadToken → { userId, publicId, expiresAt }
+  // Issued by /api/cloudinary/sign; consumed/validated by /api/cloudinary/abandon
+  const uploadTokenStore = new Map<string, { userId: string; publicId: string; expiresAt: number }>();
+
   // Simple in-memory rate limiter: 10 POST /proofs per user per hour
   const proofRateLimiter = new Map<string, { count: number; resetAt: number }>();
   function checkProofRateLimit(userId: string): boolean {
@@ -3865,21 +3869,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return true;
   }
 
-  // GET /api/cloudinary/sign — signed upload params
-  app.get('/api/cloudinary/sign', isAuthenticated, async (_req: any, res) => {
+  // GET /api/cloudinary/sign — signed upload params; also issues a short-TTL upload token for secure orphan cleanup
+  app.get('/api/cloudinary/sign', isAuthenticated, async (req: any, res) => {
     if (!cloudName || !cloudApiKey || !process.env.CLOUDINARY_API_SECRET) {
       return res.status(503).json({ message: 'Photo uploads are not configured.' });
     }
     try {
+      const userId = req.user.id;
       const timestamp = Math.round(Date.now() / 1000);
+      // Derive a server-controlled public_id so we own the namespace
+      const publicId = `will_proofs/${userId}_${timestamp}_${Math.random().toString(36).slice(2, 8)}`;
       const params: Record<string, any> = {
-        folder: 'will_proofs',
+        public_id: publicId,
         timestamp,
         transformation: 'c_limit,w_1200,h_1200,q_auto',
         eager: 'c_fill,w_200,h_200,q_auto',
       };
       const signature = cloudinary.utils.api_sign_request(params, process.env.CLOUDINARY_API_SECRET!);
-      res.json({ timestamp, signature, folder: 'will_proofs', apiKey: cloudApiKey, cloudName, eager: params.eager });
+      // Issue a short-TTL upload token (10 min) to allow ownership-verified orphan cleanup
+      const uploadToken = `ut_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+      uploadTokenStore.set(uploadToken, { userId, publicId, expiresAt: Date.now() + 10 * 60 * 1000 });
+      res.json({ timestamp, signature, publicId, apiKey: cloudApiKey, cloudName, eager: params.eager, uploadToken });
     } catch (err) {
       console.error('[Proof] Failed to sign upload:', err);
       res.status(500).json({ message: 'Failed to generate upload signature.' });
@@ -4028,7 +4038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.query.willId) return res.status(400).json({ message: 'willId is required.' });
       const willId = parseInt(req.query.willId as string);
       if (isNaN(willId)) return res.status(400).json({ message: 'Invalid willId.' });
-      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 200);
       const cursor = req.query.cursor ? new Date(req.query.cursor as string) : null;
 
       // Validate membership
@@ -4073,20 +4083,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /api/cloudinary/abandon — user-callable; abandon an asset that was never saved to DB
-  // Used to clean up orphan Cloudinary assets when DB create fails after successful upload
+  // POST /api/cloudinary/abandon — ownership-verified; abandon an orphan asset using a short-TTL upload token
+  // The token is issued by /api/cloudinary/sign and binds the userId to the publicId
   app.post('/api/cloudinary/abandon', isAuthenticated, async (req: any, res) => {
     if (!process.env.CLOUDINARY_API_SECRET) {
       return res.status(503).json({ message: 'Cloudinary not configured.' });
     }
-    const { publicId } = req.body;
-    if (!publicId || typeof publicId !== 'string') {
-      return res.status(400).json({ message: 'publicId is required.' });
+    const { uploadToken } = req.body;
+    if (!uploadToken || typeof uploadToken !== 'string') {
+      return res.status(400).json({ message: 'uploadToken is required.' });
     }
-    // Safety: only allow abandoning assets in the will_proofs folder
-    if (!publicId.startsWith('will_proofs/')) {
-      return res.status(400).json({ message: 'publicId must be in will_proofs folder.' });
+    const userId = req.user.id;
+    const entry = uploadTokenStore.get(uploadToken);
+    if (!entry) return res.status(403).json({ message: 'Invalid or expired upload token.' });
+    if (entry.expiresAt < Date.now()) {
+      uploadTokenStore.delete(uploadToken);
+      return res.status(403).json({ message: 'Upload token expired.' });
     }
+    if (entry.userId !== userId) return res.status(403).json({ message: 'Token does not belong to you.' });
+    // Consume the token (single-use)
+    uploadTokenStore.delete(uploadToken);
+    const { publicId } = entry;
     try {
       await cloudinary.uploader.destroy(publicId);
       res.json({ success: true });
