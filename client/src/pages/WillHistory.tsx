@@ -420,7 +420,8 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
     },
     enabled: mode === 'circle' && !!circleId,
   });
-  const proofDrops: ProofDrop[] = proofsData?.items || [];
+  // Show oldest-first in history view (chronological order)
+  const proofDrops: ProofDrop[] = [...(proofsData?.items || [])].reverse();
 
   const checkInMap = new Map<string, WillCheckIn>();
   checkIns.forEach(c => checkInMap.set(c.date, c));

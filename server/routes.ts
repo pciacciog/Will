@@ -4066,6 +4066,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/cloudinary/abandon — user-callable; abandon an asset that was never saved to DB
+  // Used to clean up orphan Cloudinary assets when DB create fails after successful upload
+  app.post('/api/cloudinary/abandon', isAuthenticated, async (req: any, res) => {
+    if (!process.env.CLOUDINARY_API_SECRET) {
+      return res.status(503).json({ message: 'Cloudinary not configured.' });
+    }
+    const { publicId } = req.body;
+    if (!publicId || typeof publicId !== 'string') {
+      return res.status(400).json({ message: 'publicId is required.' });
+    }
+    // Safety: only allow abandoning assets in the will_proofs folder
+    if (!publicId.startsWith('will_proofs/')) {
+      return res.status(400).json({ message: 'publicId must be in will_proofs folder.' });
+    }
+    try {
+      await cloudinary.uploader.destroy(publicId);
+      res.json({ success: true });
+    } catch (err: any) {
+      const reason = String(err?.message || err);
+      await db.insert(cloudinaryCleanupLog).values({ publicId, reason });
+      console.error('[Proof] Abandon failed for', publicId, reason);
+      res.status(500).json({ message: 'Cloudinary deletion failed.', logged: true });
+    }
+  });
+
   // DELETE /api/cloudinary/cleanup — delete a specific asset by publicId; admin-only
   app.delete('/api/cloudinary/cleanup', isAuthenticated, isAdmin, async (req: any, res) => {
     if (!process.env.CLOUDINARY_API_SECRET) {

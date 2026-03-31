@@ -544,6 +544,15 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
       });
       if (!createRes.ok) {
         const err = await createRes.json().catch(() => ({}));
+        // Cloudinary upload succeeded but DB save failed — clean up orphan asset
+        if (cloudinaryPublicId) {
+          fetch(getApiPath('/api/cloudinary/abandon'), {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...headers },
+            body: JSON.stringify({ publicId: cloudinaryPublicId }),
+          }).catch(() => {});
+        }
         throw new Error(err.message || 'Failed to save proof.');
       }
       const created = await createRes.json();
