@@ -548,11 +548,12 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
       proofId = created.id;
 
       // 4. Confirm proof
-      await fetch(getApiPath(`/api/proofs/${proofId}/confirm`), {
+      const confirmRes = await fetch(getApiPath(`/api/proofs/${proofId}/confirm`), {
         method: 'PATCH',
         credentials: 'include',
         headers,
       });
+      if (!confirmRes.ok) throw new Error('Failed to confirm proof.');
 
       await refetchProofs();
       toast({ title: 'Drop added!', description: 'Your proof has been posted.' });
@@ -1111,8 +1112,8 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
             }}
           />
 
-          {/* Proof Card — only visible when there's a current will */}
-          {will && willStatus !== 'no_will' && (
+          {/* Proof Card — only visible for the active will */}
+          {will && willStatus === 'active' && (
             <div className="relative mt-3">
               <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
               <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">

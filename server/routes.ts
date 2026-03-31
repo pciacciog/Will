@@ -3876,11 +3876,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         folder: 'will_proofs',
         timestamp,
         transformation: 'c_limit,w_1200,h_1200,q_auto',
-        eager: 'c_fill,w_200,h_200,q_auto',
-        eager_async: 'true',
       };
       const signature = cloudinary.utils.api_sign_request(params, process.env.CLOUDINARY_API_SECRET!);
-      res.json({ timestamp, signature, folder: 'will_proofs', apiKey: cloudApiKey, cloudName, eager: params.eager });
+      res.json({ timestamp, signature, folder: 'will_proofs', apiKey: cloudApiKey, cloudName });
     } catch (err) {
       console.error('[Proof] Failed to sign upload:', err);
       res.status(500).json({ message: 'Failed to generate upload signature.' });
@@ -3906,6 +3904,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { imageUrl, thumbnailUrl, cloudinaryPublicId, caption, willId } = req.body;
 
+      // willId is required
+      if (!willId || typeof willId !== 'number') {
+        return res.status(400).json({ message: 'willId is required.' });
+      }
+
       // Validate Cloudinary URL format
       const isValidCloudinaryUrl = (url: string) =>
         typeof url === 'string' &&
@@ -3919,7 +3922,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // One drop per user per will per day
-      if (willId) {
+      {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const existing = await db
@@ -3940,7 +3943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const [proof] = await db.insert(circleProofs).values({
         circleId,
-        willId: willId || null,
+        willId,
         userId,
         imageUrl,
         thumbnailUrl: thumbnailUrl || null,
