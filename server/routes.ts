@@ -3876,9 +3876,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         folder: 'will_proofs',
         timestamp,
         transformation: 'c_limit,w_1200,h_1200,q_auto',
+        eager: 'c_fill,w_200,h_200,q_auto',
+        eager_async: 'true',
       };
       const signature = cloudinary.utils.api_sign_request(params, process.env.CLOUDINARY_API_SECRET!);
-      res.json({ timestamp, signature, folder: 'will_proofs', apiKey: cloudApiKey, cloudName });
+      res.json({ timestamp, signature, folder: 'will_proofs', apiKey: cloudApiKey, cloudName, eager: params.eager });
     } catch (err) {
       console.error('[Proof] Failed to sign upload:', err);
       res.status(500).json({ message: 'Failed to generate upload signature.' });
@@ -3904,9 +3906,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { imageUrl, thumbnailUrl, cloudinaryPublicId, caption, willId } = req.body;
 
-      // Basic URL validation
-      if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('https://')) {
-        return res.status(400).json({ message: 'Invalid image URL.' });
+      // Validate Cloudinary URL format
+      const isValidCloudinaryUrl = (url: string) =>
+        typeof url === 'string' &&
+        (url.includes('res.cloudinary.com') || url.includes('cloudinary.com')) &&
+        url.startsWith('https://');
+      if (!imageUrl || !isValidCloudinaryUrl(imageUrl)) {
+        return res.status(400).json({ message: 'Invalid image URL. Must be a Cloudinary URL.' });
+      }
+      if (thumbnailUrl && !isValidCloudinaryUrl(thumbnailUrl)) {
+        return res.status(400).json({ message: 'Invalid thumbnail URL. Must be a Cloudinary URL.' });
       }
 
       // One drop per user per will per day
@@ -4004,7 +4013,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const circleId = parseInt(req.params.circleId);
       if (isNaN(circleId)) return res.status(400).json({ message: 'Invalid circle ID.' });
 
-      const willId = req.query.willId ? parseInt(req.query.willId as string) : null;
+      if (!req.query.willId) return res.status(400).json({ message: 'willId is required.' });
+      const willId = parseInt(req.query.willId as string);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid willId.' });
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
       const cursor = req.query.cursor ? new Date(req.query.cursor as string) : null;
 
@@ -4015,8 +4026,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const conditions = [
         eq(circleProofs.circleId, circleId),
+        eq(circleProofs.willId, willId),
         eq(circleProofs.status, 'confirmed'),
-        ...(willId ? [eq(circleProofs.willId, willId)] : []),
         ...(cursor ? [lt(circleProofs.createdAt, cursor)] : []),
       ];
 
@@ -4047,6 +4058,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error('[Proof] Failed to fetch proofs:', err);
       res.status(500).json({ message: 'Failed to fetch proofs.' });
+    }
+  });
+
+  // DELETE /api/cloudinary/cleanup — retry deletion of logged orphan assets
+  app.delete('/api/cloudinary/cleanup', isAuthenticated, async (req: any, res) => {
+    if (!process.env.CLOUDINARY_API_SECRET) {
+      return res.status(503).json({ message: 'Cloudinary not configured.' });
+    }
+    try {
+      const pending = await db.select().from(cloudinaryCleanupLog).limit(50);
+      const results: { publicId: string; success: boolean; error?: string }[] = [];
+      for (const entry of pending) {
+        try {
+          await cloudinary.uploader.destroy(entry.publicId);
+          await db.delete(cloudinaryCleanupLog).where(eq(cloudinaryCleanupLog.id, entry.id));
+          results.push({ publicId: entry.publicId, success: true });
+        } catch (err: any) {
+          results.push({ publicId: entry.publicId, success: false, error: String(err?.message || err) });
+        }
+      }
+      res.json({ processed: results.length, results });
+    } catch (err) {
+      console.error('[Proof] Cloudinary cleanup failed:', err);
+      res.status(500).json({ message: 'Cleanup failed.' });
     }
   });
 

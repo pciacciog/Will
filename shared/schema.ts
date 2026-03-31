@@ -667,3 +667,18 @@ export const cloudinaryCleanupLog = pgTable("cloudinary_cleanup_log", {
 });
 
 export type CloudinaryCleanupLog = typeof cloudinaryCleanupLog.$inferSelect;
+
+export const circleProofsRelations = relations(circleProofs, ({ one }) => ({
+  circle: one(circles, {
+    fields: [circleProofs.circleId],
+    references: [circles.id],
+  }),
+  will: one(wills, {
+    fields: [circleProofs.willId],
+    references: [wills.id],
+  }),
+  user: one(users, {
+    fields: [circleProofs.userId],
+    references: [users.id],
+  }),
+}));
