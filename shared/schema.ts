@@ -634,3 +634,36 @@ export const insertTodayItemSchema = createInsertSchema(todayItems).omit({
 });
 export type InsertTodayItem = z.infer<typeof insertTodayItemSchema>;
 export type TodayItem = typeof todayItems.$inferSelect;
+
+export const circleProofs = pgTable("circle_proofs", {
+  id: serial("id").primaryKey(),
+  circleId: integer("circle_id").notNull().references(() => circles.id),
+  willId: integer("will_id").references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  imageUrl: text("image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  cloudinaryPublicId: text("cloudinary_public_id"),
+  caption: text("caption"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_circle_proofs_circle_will").on(table.circleId, table.willId),
+  index("IDX_circle_proofs_user").on(table.userId),
+  index("IDX_circle_proofs_status").on(table.status),
+]);
+
+export const insertCircleProofSchema = createInsertSchema(circleProofs).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCircleProof = z.infer<typeof insertCircleProofSchema>;
+export type CircleProof = typeof circleProofs.$inferSelect;
+
+export const cloudinaryCleanupLog = pgTable("cloudinary_cleanup_log", {
+  id: serial("id").primaryKey(),
+  publicId: text("public_id").notNull(),
+  failedAt: timestamp("failed_at").defaultNow(),
+  reason: text("reason"),
+});
+
+export type CloudinaryCleanupLog = typeof cloudinaryCleanupLog.$inferSelect;

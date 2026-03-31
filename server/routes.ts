@@ -14,6 +14,9 @@ import {
   insertPageContentSchema,
   insertDeviceTokenSchema,
   insertTodayItemSchema,
+  circleProofs,
+  cloudinaryCleanupLog,
+  circleMembers,
   willCommitments,
   deviceTokens,
   users,
@@ -22,7 +25,8 @@ import {
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db, pool } from "./db";
-import { eq, and, or, isNull, sql, inArray } from "drizzle-orm";
+import { eq, and, or, isNull, sql, inArray, lt, gte, desc } from "drizzle-orm";
+import { cloudinary, cloudName, apiKey as cloudApiKey } from "./cloudinary";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
 import { getEnvironment, getDatabaseUrl, getBackendHost, isProduction } from "./config/environment";
@@ -3840,6 +3844,239 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error toggling today item:", error);
       res.status(500).json({ message: "Failed to toggle today item" });
+    }
+  });
+
+  // ──────────────────────────────────────────────
+  // PROOF ROUTES
+  // ──────────────────────────────────────────────
+
+  // Simple in-memory rate limiter: 10 POST /proofs per user per hour
+  const proofRateLimiter = new Map<string, { count: number; resetAt: number }>();
+  function checkProofRateLimit(userId: string): boolean {
+    const now = Date.now();
+    const entry = proofRateLimiter.get(userId);
+    if (!entry || now > entry.resetAt) {
+      proofRateLimiter.set(userId, { count: 1, resetAt: now + 60 * 60 * 1000 });
+      return true;
+    }
+    if (entry.count >= 10) return false;
+    entry.count++;
+    return true;
+  }
+
+  // GET /api/cloudinary/sign — signed upload params
+  app.get('/api/cloudinary/sign', isAuthenticated, async (_req: any, res) => {
+    if (!cloudName || !cloudApiKey || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(503).json({ message: 'Photo uploads are not configured.' });
+    }
+    try {
+      const timestamp = Math.round(Date.now() / 1000);
+      const params: Record<string, any> = {
+        folder: 'will_proofs',
+        timestamp,
+        transformation: 'c_limit,w_1200,h_1200,q_auto',
+      };
+      const signature = cloudinary.utils.api_sign_request(params, process.env.CLOUDINARY_API_SECRET!);
+      res.json({ timestamp, signature, folder: 'will_proofs', apiKey: cloudApiKey, cloudName });
+    } catch (err) {
+      console.error('[Proof] Failed to sign upload:', err);
+      res.status(500).json({ message: 'Failed to generate upload signature.' });
+    }
+  });
+
+  // POST /api/circles/:circleId/proofs — create a new proof drop
+  app.post('/api/circles/:circleId/proofs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const circleId = parseInt(req.params.circleId);
+      if (isNaN(circleId)) return res.status(400).json({ message: 'Invalid circle ID.' });
+
+      // Rate limit
+      if (!checkProofRateLimit(userId)) {
+        return res.status(429).json({ message: 'Too many drops. Try again later.' });
+      }
+
+      // Validate circle membership
+      const members = await storage.getCircleMembers(circleId);
+      const isMember = members.some((m: any) => m.userId === userId);
+      if (!isMember) return res.status(403).json({ message: 'You are not a member of this circle.' });
+
+      const { imageUrl, thumbnailUrl, cloudinaryPublicId, caption, willId } = req.body;
+
+      // Basic URL validation
+      if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('https://')) {
+        return res.status(400).json({ message: 'Invalid image URL.' });
+      }
+
+      // One drop per user per will per day
+      if (willId) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const existing = await db
+          .select({ id: circleProofs.id })
+          .from(circleProofs)
+          .where(
+            and(
+              eq(circleProofs.userId, userId),
+              eq(circleProofs.willId, willId),
+              gte(circleProofs.createdAt, today)
+            )
+          )
+          .limit(1);
+        if (existing.length > 0) {
+          return res.status(429).json({ message: 'You already dropped a proof today for this Will.' });
+        }
+      }
+
+      const [proof] = await db.insert(circleProofs).values({
+        circleId,
+        willId: willId || null,
+        userId,
+        imageUrl,
+        thumbnailUrl: thumbnailUrl || null,
+        cloudinaryPublicId: cloudinaryPublicId || null,
+        caption: caption || null,
+        status: 'pending',
+      }).returning();
+
+      res.status(201).json({ id: proof.id, status: proof.status, createdAt: proof.createdAt });
+    } catch (err) {
+      console.error('[Proof] Failed to create proof:', err);
+      res.status(500).json({ message: 'Failed to create proof drop.' });
+    }
+  });
+
+  // PATCH /api/proofs/:proofId/confirm — confirm a proof drop
+  app.patch('/api/proofs/:proofId/confirm', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const proofId = parseInt(req.params.proofId);
+      if (isNaN(proofId)) return res.status(400).json({ message: 'Invalid proof ID.' });
+
+      const [existing] = await db.select().from(circleProofs).where(eq(circleProofs.id, proofId)).limit(1);
+      if (!existing) return res.status(404).json({ message: 'Proof not found.' });
+      if (existing.userId !== userId) return res.status(403).json({ message: 'Not your proof.' });
+
+      const [updated] = await db.update(circleProofs).set({ status: 'confirmed' }).where(eq(circleProofs.id, proofId)).returning();
+      res.json(updated);
+    } catch (err) {
+      console.error('[Proof] Failed to confirm proof:', err);
+      res.status(500).json({ message: 'Failed to confirm proof.' });
+    }
+  });
+
+  // PATCH /api/proofs/:proofId/fail — mark proof as failed + attempt Cloudinary delete
+  app.patch('/api/proofs/:proofId/fail', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const proofId = parseInt(req.params.proofId);
+      if (isNaN(proofId)) return res.status(400).json({ message: 'Invalid proof ID.' });
+
+      const [existing] = await db.select().from(circleProofs).where(eq(circleProofs.id, proofId)).limit(1);
+      if (!existing) return res.status(404).json({ message: 'Proof not found.' });
+      if (existing.userId !== userId) return res.status(403).json({ message: 'Not your proof.' });
+
+      await db.update(circleProofs).set({ status: 'failed' }).where(eq(circleProofs.id, proofId));
+
+      if (existing.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET) {
+        try {
+          await cloudinary.uploader.destroy(existing.cloudinaryPublicId);
+        } catch (cloudErr: any) {
+          await db.insert(cloudinaryCleanupLog).values({
+            publicId: existing.cloudinaryPublicId,
+            reason: String(cloudErr?.message || cloudErr),
+          });
+        }
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[Proof] Failed to fail proof:', err);
+      res.status(500).json({ message: 'Failed to update proof status.' });
+    }
+  });
+
+  // GET /api/circles/:circleId/proofs?willId=&cursor=&limit= — paginated confirmed proofs
+  app.get('/api/circles/:circleId/proofs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const circleId = parseInt(req.params.circleId);
+      if (isNaN(circleId)) return res.status(400).json({ message: 'Invalid circle ID.' });
+
+      const willId = req.query.willId ? parseInt(req.query.willId as string) : null;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      const cursor = req.query.cursor ? new Date(req.query.cursor as string) : null;
+
+      // Validate membership
+      const members = await storage.getCircleMembers(circleId);
+      const isMember = members.some((m: any) => m.userId === userId);
+      if (!isMember) return res.status(403).json({ message: 'Not a circle member.' });
+
+      const conditions = [
+        eq(circleProofs.circleId, circleId),
+        eq(circleProofs.status, 'confirmed'),
+        ...(willId ? [eq(circleProofs.willId, willId)] : []),
+        ...(cursor ? [lt(circleProofs.createdAt, cursor)] : []),
+      ];
+
+      const rows = await db
+        .select({
+          id: circleProofs.id,
+          circleId: circleProofs.circleId,
+          willId: circleProofs.willId,
+          userId: circleProofs.userId,
+          imageUrl: circleProofs.imageUrl,
+          thumbnailUrl: circleProofs.thumbnailUrl,
+          caption: circleProofs.caption,
+          status: circleProofs.status,
+          createdAt: circleProofs.createdAt,
+          firstName: users.firstName,
+          email: users.email,
+        })
+        .from(circleProofs)
+        .innerJoin(users, eq(circleProofs.userId, users.id))
+        .where(and(...conditions))
+        .orderBy(desc(circleProofs.createdAt))
+        .limit(limit + 1);
+
+      const hasMore = rows.length > limit;
+      const items = hasMore ? rows.slice(0, limit) : rows;
+
+      res.json({ items, hasMore, nextCursor: hasMore ? items[items.length - 1].createdAt : null });
+    } catch (err) {
+      console.error('[Proof] Failed to fetch proofs:', err);
+      res.status(500).json({ message: 'Failed to fetch proofs.' });
+    }
+  });
+
+  // DELETE /api/proofs/:proofId — delete a proof (ownership required)
+  app.delete('/api/proofs/:proofId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const proofId = parseInt(req.params.proofId);
+      if (isNaN(proofId)) return res.status(400).json({ message: 'Invalid proof ID.' });
+
+      const [existing] = await db.select().from(circleProofs).where(eq(circleProofs.id, proofId)).limit(1);
+      if (!existing) return res.status(404).json({ message: 'Proof not found.' });
+      if (existing.userId !== userId) return res.status(403).json({ message: 'Not your proof.' });
+
+      if (existing.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET) {
+        try {
+          await cloudinary.uploader.destroy(existing.cloudinaryPublicId);
+        } catch (cloudErr: any) {
+          await db.insert(cloudinaryCleanupLog).values({
+            publicId: existing.cloudinaryPublicId,
+            reason: String(cloudErr?.message || cloudErr),
+          });
+        }
+      }
+
+      await db.delete(circleProofs).where(eq(circleProofs.id, proofId));
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[Proof] Failed to delete proof:', err);
+      res.status(500).json({ message: 'Failed to delete proof.' });
     }
   });
 

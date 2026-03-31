@@ -36,6 +36,7 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import MyWills from "@/pages/MyWills";
 import Today from "@/pages/Today";
+import ProofFeed from "@/pages/ProofFeed";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -363,6 +364,7 @@ function Router() {
             <Route path="/inner-circle" component={InnerCircle} />
             <Route path="/circles" component={CircleLobby} />
             <Route path="/circles/:circleId/messages">{(params) => <CircleMessagesPage circleId={parseInt(params.circleId)} />}</Route>
+            <Route path="/circles/:circleId/proof">{(params) => <ProofFeed circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/circles/:circleId">{(params) => <InnerCircleHub circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/hub" component={LegacyHubRedirect} />
             <Route path="/solo/hub" component={Home} />

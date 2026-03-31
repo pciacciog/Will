@@ -1,7 +1,8 @@
 import * as cron from 'node-cron';
 import { db } from './db';
-import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders, willReviews, users, deviceTokens } from '@shared/schema';
+import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders, willReviews, users, deviceTokens, circleProofs, cloudinaryCleanupLog } from '@shared/schema';
 import { eq, and, or, lt, gte, isNull, isNotNull, ne, notInArray, inArray } from 'drizzle-orm';
+import { cloudinary } from './cloudinary';
 import { dailyService } from './daily';
 import { storage } from './storage';
 import { pushNotificationService } from './pushNotificationService';
@@ -1187,3 +1188,36 @@ export class EndRoomScheduler {
 }
 
 export const endRoomScheduler = new EndRoomScheduler();
+
+// Nightly 2am cron: clean up pending/orphan proof drops older than 24 hours
+cron.schedule('0 2 * * *', async () => {
+  try {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const stale = await db
+      .select()
+      .from(circleProofs)
+      .where(and(eq(circleProofs.status, 'pending'), lt(circleProofs.createdAt, cutoff)));
+
+    console.log(`[ProofCleanup] Found ${stale.length} stale pending proof(s) to clean up`);
+
+    for (const proof of stale) {
+      try {
+        if (proof.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET) {
+          await cloudinary.uploader.destroy(proof.cloudinaryPublicId);
+        }
+        await db.delete(circleProofs).where(eq(circleProofs.id, proof.id));
+        console.log(`[ProofCleanup] Deleted stale proof ${proof.id}`);
+      } catch (err: any) {
+        console.error(`[ProofCleanup] Failed to clean proof ${proof.id}:`, err);
+        if (proof.cloudinaryPublicId) {
+          await db.insert(cloudinaryCleanupLog).values({
+            publicId: proof.cloudinaryPublicId,
+            reason: String(err?.message || err),
+          }).catch(() => {});
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[ProofCleanup] Nightly cleanup error:', err);
+  }
+});

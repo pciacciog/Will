@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { Copy, Settings, UserMinus, ChevronDown, Shield, Users, Target, Plus, Video, Clock, CheckCircle, ChevronLeft, History } from "lucide-react";
+import { Copy, Settings, UserMinus, ChevronDown, Shield, Users, Target, Plus, Video, Clock, CheckCircle, ChevronLeft, History, Camera, X, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -22,6 +22,7 @@ import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
 import { MessageCircle } from "lucide-react";
+import { sessionPersistence } from "@/services/SessionPersistence";
 
 function formatTimeRemaining(endDate: string): string {
   const now = new Date();
@@ -105,6 +106,30 @@ interface InnerCircleHubProps {
   circleId?: number;
 }
 
+type PendingProof = {
+  tempId: string;
+  blobUrl: string;
+};
+
+type ProofDrop = {
+  id: number;
+  userId: string;
+  imageUrl: string;
+  thumbnailUrl: string | null;
+  caption: string | null;
+  createdAt: string;
+  firstName: string | null;
+  email: string;
+};
+
+type PhotoModalState = {
+  imageUrl: string;
+  firstName: string | null;
+  email: string;
+  caption: string | null;
+  createdAt: string;
+} | null;
+
 export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -113,6 +138,10 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
   const [showVideoRoom, setShowVideoRoom] = useState(false);
   const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null);
   const [showFinalSummary, setShowFinalSummary] = useState(false);
+  const [pendingProofs, setPendingProofs] = useState<PendingProof[]>([]);
+  const [photoModal, setPhotoModal] = useState<PhotoModalState>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
   
@@ -437,7 +466,118 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
     });
   };
 
+  // ── PROOF ─────────────────────────────────────────────────────────────────
+  const { data: proofsData, refetch: refetchProofs } = useQuery<{ items: ProofDrop[]; hasMore: boolean }>({
+    queryKey: [`/api/circles/${circleId}/proofs`, will?.id],
+    queryFn: async () => {
+      if (!circleId || !will?.id) return { items: [], hasMore: false };
+      const token = await sessionPersistence.getToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const resp = await fetch(getApiPath(`/api/circles/${circleId}/proofs?willId=${will.id}&limit=4`), {
+        credentials: 'include',
+        headers,
+      });
+      if (!resp.ok) throw new Error('Failed to fetch proofs');
+      return resp.json();
+    },
+    enabled: !!circleId && !!will?.id,
+    refetchInterval: 30000,
+    staleTime: 0,
+  });
 
+  const proofItems: ProofDrop[] = proofsData?.items || [];
+
+  const handleDropPhoto = async (file: File) => {
+    if (isUploading) return;
+    if (!circleId || !will?.id) return;
+
+    const tempId = `tmp-${Date.now()}`;
+    const blobUrl = URL.createObjectURL(file);
+    setPendingProofs(prev => [...prev, { tempId, blobUrl }]);
+    setIsUploading(true);
+
+    let proofId: number | null = null;
+
+    try {
+      // 1. Get signed upload params
+      const token = await sessionPersistence.getToken();
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const signRes = await fetch(getApiPath('/api/cloudinary/sign'), { credentials: 'include', headers });
+      if (!signRes.ok) {
+        if (signRes.status === 503) throw new Error('Photo uploads are not configured yet.');
+        throw new Error('Failed to get upload credentials.');
+      }
+      const { timestamp, signature, folder, apiKey: cApiKey, cloudName: cCloudName } = await signRes.json();
+
+      // 2. Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('timestamp', String(timestamp));
+      formData.append('signature', signature);
+      formData.append('api_key', cApiKey);
+      formData.append('folder', folder);
+      formData.append('transformation', 'c_limit,w_1200,h_1200,q_auto');
+
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cCloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!uploadRes.ok) throw new Error('Photo upload failed.');
+      const uploadData = await uploadRes.json();
+
+      const imageUrl: string = uploadData.secure_url;
+      const cloudinaryPublicId: string = uploadData.public_id;
+      // Build a 200×200 thumbnail URL
+      const thumbnailUrl = imageUrl.replace('/upload/', '/upload/c_fill,w_200,h_200,q_auto/');
+
+      // 3. Create proof record
+      const createRes = await fetch(getApiPath(`/api/circles/${circleId}/proofs`), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ imageUrl, thumbnailUrl, cloudinaryPublicId, willId: will.id }),
+      });
+      if (!createRes.ok) {
+        const err = await createRes.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to save proof.');
+      }
+      const created = await createRes.json();
+      proofId = created.id;
+
+      // 4. Confirm proof
+      await fetch(getApiPath(`/api/proofs/${proofId}/confirm`), {
+        method: 'PATCH',
+        credentials: 'include',
+        headers,
+      });
+
+      await refetchProofs();
+      toast({ title: 'Drop added!', description: 'Your proof has been posted.' });
+    } catch (err: any) {
+      console.error('[Proof] Upload error:', err);
+      // If we have a proofId, mark it failed
+      if (proofId) {
+        const token2 = await sessionPersistence.getToken();
+        const h: Record<string, string> = {};
+        if (token2) h['Authorization'] = `Bearer ${token2}`;
+        fetch(getApiPath(`/api/proofs/${proofId}/fail`), { method: 'PATCH', credentials: 'include', headers: h }).catch(() => {});
+      }
+      toast({
+        title: 'Drop failed',
+        description: err?.message || 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setPendingProofs(prev => prev.filter(p => p.tempId !== tempId));
+      URL.revokeObjectURL(blobUrl);
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+  // ── END PROOF ──────────────────────────────────────────────────────────────
 
   if (!user) {
     return (
@@ -959,6 +1099,111 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
             </Card>
           </div>
 
+          {/* Hidden file input for proof uploads */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleDropPhoto(file);
+            }}
+          />
+
+          {/* Proof Card — only visible when there's a current will */}
+          {will && willStatus !== 'no_will' && (
+            <div className="relative mt-3">
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
+              <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
+                <CardContent className="p-3">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <button
+                      onClick={() => setLocation(`/circles/${circleId}/proof?willId=${will.id}`)}
+                      className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
+                      data-testid="button-proof-header"
+                    >
+                      <Camera className="w-4 h-4 text-emerald-600" />
+                      <h3 className="font-semibold text-gray-900 text-sm">Proof</h3>
+                    </button>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 py-1 rounded-full transition-colors"
+                      data-testid="button-add-drop"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Drop
+                    </button>
+                  </div>
+
+                  {/* Thumbnails row */}
+                  {proofItems.length === 0 && pendingProofs.length === 0 ? (
+                    <div className="flex items-center justify-center gap-2 py-3 text-gray-400">
+                      <Camera className="w-4 h-4 opacity-50" />
+                      <span className="text-xs">No drops yet — be the first</span>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      {/* Show up to 3 confirmed proofs */}
+                      {proofItems.slice(0, 3).map((proof) => {
+                        const initial = (proof.firstName || proof.email)?.charAt(0).toUpperCase() || '?';
+                        const src = proof.thumbnailUrl || proof.imageUrl;
+                        return (
+                          <button
+                            key={proof.id}
+                            onClick={() => setPhotoModal({
+                              imageUrl: proof.imageUrl,
+                              firstName: proof.firstName,
+                              email: proof.email,
+                              caption: proof.caption,
+                              createdAt: proof.createdAt,
+                            })}
+                            className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
+                            data-testid={`button-proof-thumb-${proof.id}`}
+                          >
+                            <img src={src} alt="Proof" className="w-full h-full object-cover" />
+                            <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
+                              {initial}
+                            </span>
+                          </button>
+                        );
+                      })}
+
+                      {/* Pending optimistic uploads */}
+                      {pendingProofs.map((p) => (
+                        <div
+                          key={p.tempId}
+                          className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm"
+                        >
+                          <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* "+N more" tile */}
+                      {proofsData?.hasMore || proofItems.length > 3 ? (
+                        <button
+                          onClick={() => setLocation(`/circles/${circleId}/proof?willId=${will.id}`)}
+                          className="w-16 h-16 rounded-[10px] flex-shrink-0 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-300 transition-colors"
+                          data-testid="button-proof-more"
+                        >
+                          <Plus className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {proofsData?.hasMore ? `${proofItems.length - 3}+ more` : `${proofItems.length - 3} more`}
+                          </span>
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* History Link - Compact */}
           <div className="mt-4 text-center">
             <button
@@ -998,6 +1243,45 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
           commitmentCount={will.commitmentCount || 0}
           acknowledgments={will.acknowledgments || []}
         />
+      )}
+
+      {/* Full-screen photo modal */}
+      {photoModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex flex-col"
+          onClick={() => setPhotoModal(null)}
+        >
+          <div className="flex items-center justify-between px-4 py-3 text-white">
+            <div className="min-w-0">
+              <p className="font-semibold text-sm truncate">
+                {photoModal.firstName || photoModal.email?.split('@')[0]}
+              </p>
+              <p className="text-xs text-white/60">
+                {new Date(photoModal.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+              </p>
+            </div>
+            <button
+              onClick={() => setPhotoModal(null)}
+              className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-colors flex-shrink-0"
+              data-testid="button-close-photo-modal"
+            >
+              <X className="w-4 h-4 text-white" />
+            </button>
+          </div>
+          <div
+            className="flex-1 flex items-center justify-center px-4 pb-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={photoModal.imageUrl}
+              alt="Proof"
+              className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+            />
+          </div>
+          {photoModal.caption && (
+            <p className="text-white/80 text-sm px-4 pb-6 text-center">{photoModal.caption}</p>
+          )}
+        </div>
       )}
     </div>
   );

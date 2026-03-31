@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronLeft, Calendar as CalendarIcon, User, Users, Globe, Clock, TrendingUp, CheckCircle, XCircle, MinusCircle, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, Calendar as CalendarIcon, User, Users, Globe, Clock, TrendingUp, CheckCircle, XCircle, MinusCircle, ChevronRight, X, Camera } from "lucide-react";
 import { getApiPath } from "@/config/api";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { cn } from "@/lib/utils";
@@ -361,8 +361,20 @@ interface WillDetailViewProps {
   getFollowThroughBadge: (value: string | null) => JSX.Element;
 }
 
+type ProofDrop = {
+  id: number;
+  userId: string;
+  imageUrl: string;
+  thumbnailUrl: string | null;
+  caption: string | null;
+  createdAt: string;
+  firstName: string | null;
+  email: string;
+};
+
 function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, getFollowThroughBadge }: WillDetailViewProps) {
   const isSolo = mode === 'solo';
+  const [proofPhotoModal, setProofPhotoModal] = useState<ProofDrop | null>(null);
   
   const getUserCheckInType = () => {
     if (will.mode === 'solo') return will.checkInType || 'one-time';
@@ -390,6 +402,25 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
     },
     enabled: isDailyTracked,
   });
+
+  // Fetch proof drops for circle wills
+  const circleId = will.circle?.id;
+  const { data: proofsData } = useQuery<{ items: ProofDrop[] }>({
+    queryKey: [`/api/circles/${circleId}/proofs`, will.id, 'history'],
+    queryFn: async () => {
+      const token = await sessionPersistence.getToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const resp = await fetch(getApiPath(`/api/circles/${circleId}/proofs?willId=${will.id}&limit=50`), {
+        credentials: 'include',
+        headers,
+      });
+      if (!resp.ok) throw new Error('Failed to fetch proofs');
+      return resp.json();
+    },
+    enabled: mode === 'circle' && !!circleId,
+  });
+  const proofDrops: ProofDrop[] = proofsData?.items || [];
 
   const checkInMap = new Map<string, WillCheckIn>();
   checkIns.forEach(c => checkInMap.set(c.date, c));
@@ -466,6 +497,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
   };
 
   return (
+    <>
     <MobileLayout className={`bg-gradient-to-br ${themeColors.gradient}`}>
       <div className="max-w-sm mx-auto w-full">
           
@@ -617,7 +649,88 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
             </div>
           )}
 
+          {/* Proof Drops — circle wills only */}
+          {mode === 'circle' && proofDrops.length > 0 && (
+            <div className="mt-4 bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Camera className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-semibold text-gray-700">Proof Drops</h3>
+              </div>
+              <div className="space-y-3">
+                {proofDrops.map((proof) => {
+                  const name = proof.firstName || proof.email?.split('@')[0] || '?';
+                  const initial = name.charAt(0).toUpperCase();
+                  const src = proof.thumbnailUrl || proof.imageUrl;
+                  return (
+                    <button
+                      key={proof.id}
+                      onClick={() => setProofPhotoModal(proof)}
+                      className="w-full flex items-center gap-3 hover:bg-gray-50 rounded-lg p-1 transition-colors text-left"
+                      data-testid={`button-history-proof-${proof.id}`}
+                    >
+                      <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
+                        <img src={src} alt="Proof" className="w-full h-full object-cover" />
+                        <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
+                          {initial}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{name}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(proof.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                        {proof.caption && (
+                          <p className="text-xs text-gray-500 italic truncate">"{proof.caption}"</p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
       </div>
     </MobileLayout>
+
+    {/* Full-screen photo modal */}
+    {proofPhotoModal && (
+      <div
+        className="fixed inset-0 z-50 bg-black/90 flex flex-col"
+        onClick={() => setProofPhotoModal(null)}
+      >
+        <div className="flex items-center justify-between px-4 py-3 text-white">
+          <div className="min-w-0">
+            <p className="font-semibold text-sm truncate">
+              {proofPhotoModal.firstName || proofPhotoModal.email?.split('@')[0]}
+            </p>
+            <p className="text-xs text-white/60">
+              {new Date(proofPhotoModal.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+            </p>
+          </div>
+          <button
+            onClick={() => setProofPhotoModal(null)}
+            className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-colors flex-shrink-0"
+            data-testid="button-close-proof-modal"
+          >
+            <X className="w-4 h-4 text-white" />
+          </button>
+        </div>
+        <div
+          className="flex-1 flex items-center justify-center px-4 pb-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img
+            src={proofPhotoModal.imageUrl}
+            alt="Proof"
+            className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+          />
+        </div>
+        {proofPhotoModal.caption && (
+          <p className="text-white/80 text-sm px-4 pb-6 text-center">{proofPhotoModal.caption}</p>
+        )}
+      </div>
+    )}
+    </>
   );
 }
