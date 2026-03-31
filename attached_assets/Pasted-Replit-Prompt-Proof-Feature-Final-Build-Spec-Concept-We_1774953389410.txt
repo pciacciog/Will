@@ -1,0 +1,309 @@
+Replit Prompt: "Proof" Feature — Final Build Spec
+
+Concept
+We are adding a feature called Proof to the Will app. When a user makes a commitment to their Circle (e.g. "I will run 5 times this week"), they can drop a photo as evidence they followed through. These photos are called Drops and live in a dedicated Proof section on the Circle screen.
+This is entirely separate from Circle Chat. It is not a conversation — it is a structured accountability feed tied to the active Will.
+User-facing language:
+
+Section name: Proof
+Action verb: Drop
+CTA button: + Drop
+
+
+Where it lives in the UI
+The Circle screen (CircleView) currently renders top to bottom:
+
+Nav bar
+Circle icon + tagline
+Circle Members card
+Current Will card
+"View History" link
+
+Insert a Proof card between items 4 and 5. The page must remain non-scrollable — single screen, everything fits. The Proof card must be visually smaller and lower weight than Current Will to preserve hierarchy.
+
+Proof card UI spec
+Header row: camera icon + label "Proof" (13px bold) on the left. Green pill "+ Drop" button on the right.
+Thumbnail row: up to 3 photo thumbnails (64×64pt, border-radius 10). Each thumbnail shows the posting member's initial in a small green circle badge top-left. If more than 3 drops exist, show a 4th dashed tile with "+N more" in gray.
+Empty state: centered camera icon + muted gray text: "No drops yet — be the first"
+Loading state: 3 gray skeleton placeholder boxes, same dimensions as thumbnails
+Pending state: if the current user has a drop in-flight, show it immediately in the thumbnail row at 50% opacity with a small UIActivityIndicatorView overlay
+Tapping any thumbnail → full-screen photo modal (member name, Will title, timestamp, photo)
+Tapping "+N more" or the Proof header → full Proof feed screen (all drops, newest first, paginated)
+
+Database schema
+Add to db/schema.ts. Run npx drizzle-kit push after:
+tsimport { pgTable, serial, integer, text, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+
+export const circleProofs = pgTable("circle_proofs", {
+  id: serial("id").primaryKey(),
+  circleId: integer("circle_id")
+    .references(() => circles.id, { onDelete: "cascade" })
+    .notNull(),
+  willId: integer("will_id")
+    .references(() => wills.id, { onDelete: "set null" }),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  imageUrl: text("image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url").notNull(),
+  cloudinaryPublicId: text("cloudinary_public_id").notNull(),
+  caption: text("caption"),
+  status: text("status").default("pending").notNull(), // 'pending' | 'confirmed' | 'failed'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+},
+(table) => ({
+  circleIdIdx: index("proof_circle_id_idx").on(table.circleId),
+  userIdIdx: index("proof_user_id_idx").on(table.userId),
+  willIdIdx: index("proof_will_id_idx").on(table.willId),
+  statusIdx: index("proof_status_idx").on(table.status),
+  oneDropPerDay: uniqueIndex("one_drop_per_user_per_will_per_day").on(
+    table.userId,
+    table.willId,
+    sql`DATE(created_at)`
+  ),
+}));
+```
+
+---
+
+## Cloudinary setup
+
+Install: `npm install cloudinary express-rate-limit`
+
+Add to `.env`:
+```
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+Create lib/cloudinary.ts:
+tsimport { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+export default cloudinary;
+
+Backend API
+Middleware — rate limiter
+Create middleware/proofRateLimit.ts:
+tsimport rateLimit from "express-rate-limit";
+
+export const proofRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  message: { error: "Too many requests. Please slow down." },
+  keyGenerator: (req) => req.user.id.toString(),
+});
+Apply to all proof routes.
+
+GET /api/cloudinary/sign
+Auth: JWT required.
+Returns a signed Cloudinary upload signature. Include transformation params in the signature so Cloudinary auto-processes the image on receipt.
+tsapp.get("/api/cloudinary/sign", requireAuth, (req, res) => {
+  const timestamp = Math.round(Date.now() / 1000);
+  const folder = "will_proofs";
+  const eager = "w_1200,q_auto,f_auto|w_200,h_200,c_fill,q_auto,f_auto";
+
+  const signature = cloudinary.utils.api_sign_request(
+    { timestamp, folder, eager },
+    process.env.CLOUDINARY_API_SECRET!
+  );
+
+  res.json({
+    timestamp,
+    signature,
+    folder,
+    eager,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  });
+});
+The eager param generates two versions: full-size optimized (imageUrl) and 200×200 thumbnail (thumbnailUrl). Cloudinary returns both URLs in the upload response — store both.
+
+POST /api/circles/:circleId/proofs
+Auth: JWT required. Rate limited.
+Validates:
+
+User is a member of the circle (query the circle_members table)
+imageUrl is a valid Cloudinary URL (starts with https://res.cloudinary.com/)
+cloudinaryPublicId is present
+File has not already been dropped today by this user for this Will (DB unique constraint will also enforce, but check first for a clean error message)
+
+Creates a proof record with status: 'pending'.
+Request body:
+json{
+  "willId": 42,
+  "imageUrl": "https://res.cloudinary.com/...",
+  "thumbnailUrl": "https://res.cloudinary.com/.../w_200,h_200,c_fill/...",
+  "cloudinaryPublicId": "will_proofs/abc123",
+  "caption": "Morning run done"
+}
+Response: { id, status: "pending", createdAt }
+On unique constraint violation return 429: "You've already dropped proof today for this Will."
+
+PATCH /api/proofs/:proofId/confirm
+Auth: JWT required.
+Verifies the requesting user owns this proof. Flips status to confirmed.
+Response: { id, status: "confirmed" }
+
+PATCH /api/proofs/:proofId/fail
+Auth: JWT required.
+Verifies ownership. Flips status to failed. Also calls Cloudinary delete on the cloudinaryPublicId immediately:
+tsawait cloudinary.uploader.destroy(proof.cloudinaryPublicId);
+If Cloudinary delete fails, log the cloudinaryPublicId to a cloudinary_cleanup_log table (id, publicId, failedAt, reason) for manual review — do not silently swallow this failure.
+Response: { id, status: "failed" }
+
+DELETE /api/cloudinary/cleanup
+Auth: JWT required.
+Called by the iOS client if the DB write fails after a successful Cloudinary upload — prevents orphaned Cloudinary assets.
+Request body: { "cloudinaryPublicId": "will_proofs/abc123" }
+Server calls cloudinary.uploader.destroy(publicId). If it fails, log to cloudinary_cleanup_log.
+Response: { deleted: true }
+
+GET /api/circles/:circleId/proofs
+Auth: JWT required.
+Verifies user is a circle member. Returns only confirmed proofs. Supports cursor-based pagination.
+Query params: ?limit=20&cursor=<lastCreatedAt ISO string>
+tsconst proofs = await db.query.circleProofs.findMany({
+  where: and(
+    eq(circleProofs.circleId, circleId),
+    eq(circleProofs.status, "confirmed"),
+    cursor ? lt(circleProofs.createdAt, new Date(cursor)) : undefined
+  ),
+  orderBy: desc(circleProofs.createdAt),
+  limit: limit + 1, // fetch one extra to determine if there's a next page
+  with: {
+    user: { columns: { id: true, name: true } },
+    will: { columns: { id: true, title: true } },
+  },
+});
+Response:
+json{
+  "proofs": [...],
+  "nextCursor": "2026-03-30T06:00:00Z",
+  "hasMore": true
+}
+
+DELETE /api/proofs/:proofId
+Auth: JWT required.
+Verifies ownership. Calls cloudinary.uploader.destroy(proof.cloudinaryPublicId). If Cloudinary delete fails, log to cloudinary_cleanup_log. Then deletes the DB row regardless — don't block DB cleanup on Cloudinary failure.
+
+Cleanup cron job
+Create server/cron/cleanupProofs.ts. Register it on server start.
+Runs daily at 2am. Finds all proofs with status = 'pending' older than 24 hours. For each:
+
+Call cloudinary.uploader.destroy(cloudinaryPublicId)
+If Cloudinary delete succeeds → delete the DB row
+If Cloudinary delete fails → log to cloudinary_cleanup_log, skip DB deletion, retry next run
+
+tsimport cron from "node-cron";
+import cloudinary from "../lib/cloudinary";
+import { db } from "../db";
+
+cron.schedule("0 2 * * *", async () => {
+  console.log("[Proof cleanup] Running stale proof sweep");
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const stale = await db.query.circleProofs.findMany({
+    where: and(
+      eq(circleProofs.status, "pending"),
+      lt(circleProofs.createdAt, cutoff)
+    ),
+  });
+
+  for (const proof of stale) {
+    try {
+      await cloudinary.uploader.destroy(proof.cloudinaryPublicId);
+      await db.delete(circleProofs).where(eq(circleProofs.id, proof.id));
+      console.log(`[Proof cleanup] Deleted stale proof ${proof.id}`);
+    } catch (err) {
+      console.error(`[Proof cleanup] Failed to delete proof ${proof.id}:`, err);
+      await db.insert(cloudinaryCleanupLog).values({
+        publicId: proof.cloudinaryPublicId,
+        failedAt: new Date(),
+        reason: String(err),
+      });
+    }
+  }
+});
+
+iOS implementation
+Photo picker
+Use PHPickerViewController. Single image selection only.
+Image prep before upload
+First resize, then compress:
+swiftfunc prepareImage(_ image: UIImage) -> Data? {
+  // Step 1: resize to max 1200px width
+  let maxWidth: CGFloat = 1200
+  let scale = maxWidth / image.size.width
+  let newSize = image.size.width > maxWidth
+    ? CGSize(width: maxWidth, height: image.size.height * scale)
+    : image.size
+  UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+  image.draw(in: CGRect(origin: .zero, size: newSize))
+  let resized = UIGraphicsGetImageFromCurrentImageContext()
+  UIGraphicsEndImageContext()
+
+  // Step 2: compress to ≤800KB
+  var compression: CGFloat = 0.8
+  guard var data = resized?.jpegData(compressionQuality: compression) else { return nil }
+  let maxBytes = 800_000
+  while data.count > maxBytes && compression > 0.1 {
+    compression -= 0.1
+    data = resized?.jpegData(compressionQuality: compression) ?? data
+  }
+  return data
+}
+```
+
+### Upload flow — strict order, do not deviate
+```
+1.  User taps "+ Drop" → PHPickerViewController opens
+2.  User selects photo → add to thumbnail row immediately at 50% opacity + spinner (optimistic UI)
+3.  Resize to max 1200px, compress to ≤800KB
+4.  GET /api/cloudinary/sign → receive { timestamp, signature, folder, eager, apiKey, cloudName }
+5.  POST image directly to Cloudinary (multipart) using signed params
+6.  Cloudinary returns { secure_url, eager[0].secure_url, public_id }
+    → imageUrl = secure_url
+    → thumbnailUrl = eager[0].secure_url
+    → cloudinaryPublicId = public_id
+7.  POST /api/circles/:circleId/proofs → receive { id }
+8.  PATCH /api/proofs/:id/confirm
+9.  Replace pending thumbnail with confirmed thumbnailUrl, restore full opacity, remove spinner
+10. If step 5 fails → remove optimistic thumbnail, show error toast "Drop failed — tap to retry"
+11. If steps 7–8 fail → call DELETE /api/cloudinary/cleanup with cloudinaryPublicId,
+    remove optimistic thumbnail, show error toast
+Retry logic
+Wrap steps 5, 7, and 8 each in a retry helper — 3 attempts, exponential backoff (1s, 2s, 4s). If all 3 fail, proceed to error handling in steps 10–11.
+swiftfunc withRetry<T>(attempts: Int = 3, delay: Double = 1.0, operation: @escaping () async throws -> T) async throws -> T {
+  for attempt in 0..<attempts {
+    do {
+      return try await operation()
+    } catch {
+      if attempt == attempts - 1 { throw error }
+      try await Task.sleep(nanoseconds: UInt64(delay * pow(2.0, Double(attempt)) * 1_000_000_000))
+    }
+  }
+  fatalError("Unreachable")
+}
+Proof feed screen
+Implement cursor-based pagination. On initial load fetch first 20. On scroll to bottom pass nextCursor to fetch the next page. Show a loading spinner at the bottom while fetching. Show "No more drops" when hasMore: false.
+
+Files to create or modify
+FileActiondb/schema.tsAdd circleProofs table + cloudinaryCleanupLog tablelib/cloudinary.tsNew — Cloudinary initmiddleware/proofRateLimit.tsNew — rate limiterserver/routes/proofs.tsNew — all proof endpointsserver/routes/cloudinary.tsNew — sign + cleanup endpointsserver/cron/cleanupProofs.tsNew — daily cronserver/index.tsRegister routes + cron on startios/Views/CircleView.swiftAdd Proof card sectionios/Views/ProofFeedView.swiftNew — paginated feed screenios/Views/ProofDetailModal.swiftNew — full screen photo modalios/Services/ProofService.swiftNew — upload flow + API calls + retry logic
+
+Build order — do not skip steps
+
+Update schema → run npx drizzle-kit push
+Build and test all backend endpoints (use Postman or curl — no iOS yet)
+Verify Cloudinary sign → upload → both URLs return correctly
+Verify pending → confirm flow end to end
+Verify fail → Cloudinary delete → cleanup log
+Verify daily cron fires correctly on server start
+Only then begin iOS — start with ProofService.swift upload flow in isolation
+Wire ProofService into CircleView.swift Proof card
+Build ProofFeedView.swift with pagination last

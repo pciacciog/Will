@@ -1,0 +1,44 @@
+The Mental Model
+The Proof section on the Circle screen is a live evidence board for the current Will only. The moment a Will ends, that board clears. Clean slate for the next Will.
+But the photos don't disappear — they get archived into the Will's historical record, accessible through View History. So nothing is lost, it just lives in the right place.
+
+How it works end to end
+During the Will (10 days):
+The Proof section shows only drops tied to the current active Will. Eduardo's run photos, Greg's no-Coke check-ins, Alvaro's church pics, Bebo's report screenshots — all live there, filtered strictly to willId = currentWill.id. This is already how the data model works since every proof stores a willId.
+When the Will ends:
+
+Proof section resets automatically — shows empty state "No drops yet" for the new Will
+All photos from the completed Will move into View History
+
+Inside View History:
+When you tap a completed Will, you see a final summary — who committed to what, who completed it, and below that, all the proof drops from that Will, in chronological order. It becomes a time capsule of the journey. Eduardo's 5 run photos. Alvaro's 10 Sunday church pics. The whole story of that Will, preserved.
+
+What this looks like structurally
+Circle Screen
+├── Current Will card
+├── Proof section  ← only shows proofs where willId = activeWill.id
+└── View History
+
+View History
+└── Will: "10-day commitment" (Mar 21 – Mar 31)
+    ├── Eduardo ✅  ran 5x
+    ├── Gregorio ✅  no Coke
+    ├── Alvaro ✅  church every Sunday
+    ├── Bebo ❌  report incomplete
+    └── [Proof Drops]
+        ├── Eduardo · Mar 22 · [photo]
+        ├── Alvaro · Mar 23 · [photo]
+        └── ...
+
+On storage — don't delete the photos
+The photos are already compressed to under 800KB. For a 10-day Will with 4 active members dropping maybe 2-3 proofs each, you're looking at under 10MB total per Will. Cloudinary's free tier handles thousands of these. Deleting them would destroy the historical record which is actually one of the most meaningful parts of the feature — being able to look back and see the journey.
+The only things that should get deleted are:
+
+failed and pending orphan records (the cron handles these)
+If a user manually deletes their own Drop
+
+
+What this means for the build
+Good news — this requires no schema changes. The willId association is already there. The only changes needed are:
+Backend: The GET /api/circles/:circleId/proofs endpoint gets a willId query param. When loading the Circle screen it passes the active Will's ID. When loading History it passes the completed Will's ID.
+iOS: The Proof section on CircleView always passes currentWill.id as the filter. The Will history detail view passes the historical willId. Same endpoint, same component, different filter.
