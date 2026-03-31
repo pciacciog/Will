@@ -1202,7 +1202,8 @@ cron.schedule('0 2 * * *', async () => {
 
     for (const proof of stale) {
       try {
-        if (proof.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET) {
+        if (proof.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET
+            && proof.cloudinaryPublicId.startsWith('will_proofs/')) {
           await cloudinary.uploader.destroy(proof.cloudinaryPublicId);
         }
         await db.delete(circleProofs).where(eq(circleProofs.id, proof.id));

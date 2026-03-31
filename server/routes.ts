@@ -3910,16 +3910,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'willId is required.' });
       }
 
+      // Validate that cloudinaryPublicId is scoped to our upload folder
+      if (!cloudinaryPublicId || typeof cloudinaryPublicId !== 'string' || !cloudinaryPublicId.startsWith('will_proofs/')) {
+        return res.status(400).json({ message: 'Invalid cloudinaryPublicId. Must be in will_proofs/ folder.' });
+      }
+
       // Validate Cloudinary URL format
       const isValidCloudinaryUrl = (url: string) =>
         typeof url === 'string' &&
         (url.includes('res.cloudinary.com') || url.includes('cloudinary.com')) &&
-        url.startsWith('https://');
+        url.startsWith('https://') &&
+        url.includes('/will_proofs/');
       if (!imageUrl || !isValidCloudinaryUrl(imageUrl)) {
-        return res.status(400).json({ message: 'Invalid image URL. Must be a Cloudinary URL.' });
+        return res.status(400).json({ message: 'Invalid image URL. Must be a Cloudinary will_proofs URL.' });
       }
       if (thumbnailUrl && !isValidCloudinaryUrl(thumbnailUrl)) {
-        return res.status(400).json({ message: 'Invalid thumbnail URL. Must be a Cloudinary URL.' });
+        return res.status(400).json({ message: 'Invalid thumbnail URL. Must be a Cloudinary will_proofs URL.' });
       }
 
       // One drop per user per will per day
@@ -3993,7 +3999,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await db.update(circleProofs).set({ status: 'failed' }).where(eq(circleProofs.id, proofId));
 
-      if (existing.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET) {
+      if (existing.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET
+          && existing.cloudinaryPublicId.startsWith('will_proofs/')) {
         try {
           await cloudinary.uploader.destroy(existing.cloudinaryPublicId);
         } catch (cloudErr: any) {
@@ -4123,7 +4130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing) return res.status(404).json({ message: 'Proof not found.' });
       if (existing.userId !== userId) return res.status(403).json({ message: 'Not your proof.' });
 
-      if (existing.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET) {
+      if (existing.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET
+          && existing.cloudinaryPublicId.startsWith('will_proofs/')) {
         try {
           await cloudinary.uploader.destroy(existing.cloudinaryPublicId);
         } catch (cloudErr: any) {
