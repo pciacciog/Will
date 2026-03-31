@@ -25,7 +25,7 @@ import {
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db, pool } from "./db";
-import { eq, and, or, isNull, sql, inArray, lt, gte, desc } from "drizzle-orm";
+import { eq, and, or, isNull, sql, inArray, lt, gte, desc, ne } from "drizzle-orm";
 import { cloudinary, cloudName, apiKey as cloudApiKey } from "./cloudinary";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
@@ -3876,9 +3876,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         folder: 'will_proofs',
         timestamp,
         transformation: 'c_limit,w_1200,h_1200,q_auto',
+        eager: 'c_fill,w_200,h_200,q_auto',
       };
       const signature = cloudinary.utils.api_sign_request(params, process.env.CLOUDINARY_API_SECRET!);
-      res.json({ timestamp, signature, folder: 'will_proofs', apiKey: cloudApiKey, cloudName });
+      res.json({ timestamp, signature, folder: 'will_proofs', apiKey: cloudApiKey, cloudName, eager: params.eager });
     } catch (err) {
       console.error('[Proof] Failed to sign upload:', err);
       res.status(500).json({ message: 'Failed to generate upload signature.' });
@@ -3932,7 +3933,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             and(
               eq(circleProofs.userId, userId),
               eq(circleProofs.willId, willId),
-              gte(circleProofs.createdAt, today)
+              gte(circleProofs.createdAt, today),
+              ne(circleProofs.status, 'failed')
             )
           )
           .limit(1);
@@ -4064,27 +4066,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // DELETE /api/cloudinary/cleanup — retry deletion of logged orphan assets
-  app.delete('/api/cloudinary/cleanup', isAuthenticated, async (req: any, res) => {
+  // DELETE /api/cloudinary/cleanup — delete a specific asset by publicId; admin-only
+  app.delete('/api/cloudinary/cleanup', isAuthenticated, isAdmin, async (req: any, res) => {
     if (!process.env.CLOUDINARY_API_SECRET) {
       return res.status(503).json({ message: 'Cloudinary not configured.' });
     }
+    const { publicId } = req.body;
+    if (!publicId || typeof publicId !== 'string') {
+      return res.status(400).json({ message: 'publicId is required.' });
+    }
     try {
-      const pending = await db.select().from(cloudinaryCleanupLog).limit(50);
-      const results: { publicId: string; success: boolean; error?: string }[] = [];
-      for (const entry of pending) {
-        try {
-          await cloudinary.uploader.destroy(entry.publicId);
-          await db.delete(cloudinaryCleanupLog).where(eq(cloudinaryCleanupLog.id, entry.id));
-          results.push({ publicId: entry.publicId, success: true });
-        } catch (err: any) {
-          results.push({ publicId: entry.publicId, success: false, error: String(err?.message || err) });
-        }
-      }
-      res.json({ processed: results.length, results });
-    } catch (err) {
-      console.error('[Proof] Cloudinary cleanup failed:', err);
-      res.status(500).json({ message: 'Cleanup failed.' });
+      await cloudinary.uploader.destroy(publicId);
+      await db.delete(cloudinaryCleanupLog).where(eq(cloudinaryCleanupLog.publicId, publicId));
+      res.json({ success: true, publicId });
+    } catch (err: any) {
+      const reason = String(err?.message || err);
+      await db.insert(cloudinaryCleanupLog).values({ publicId, reason });
+      console.error('[Proof] Cloudinary cleanup failed for', publicId, reason);
+      res.status(500).json({ message: 'Cloudinary deletion failed.', error: reason });
     }
   });
 

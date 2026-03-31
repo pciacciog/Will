@@ -128,6 +128,7 @@ type PhotoModalState = {
   email: string;
   caption: string | null;
   createdAt: string;
+  willTitle: string | null;
 } | null;
 
 export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
@@ -510,7 +511,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
         if (signRes.status === 503) throw new Error('Photo uploads are not configured yet.');
         throw new Error('Failed to get upload credentials.');
       }
-      const { timestamp, signature, folder, apiKey: cApiKey, cloudName: cCloudName } = await signRes.json();
+      const { timestamp, signature, folder, apiKey: cApiKey, cloudName: cCloudName, eager: eagerTransform } = await signRes.json();
 
       // 2. Upload to Cloudinary
       const formData = new FormData();
@@ -520,6 +521,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
       formData.append('api_key', cApiKey);
       formData.append('folder', folder);
       formData.append('transformation', 'c_limit,w_1200,h_1200,q_auto');
+      if (eagerTransform) formData.append('eager', eagerTransform);
 
       const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cCloudName}/image/upload`, {
         method: 'POST',
@@ -1160,6 +1162,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                               email: proof.email,
                               caption: proof.caption,
                               createdAt: proof.createdAt,
+                              willTitle: will?.title || will?.sharedWhat || null,
                             })}
                             className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
                             data-testid={`button-proof-thumb-${proof.id}`}
@@ -1257,6 +1260,9 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
               <p className="font-semibold text-sm truncate">
                 {photoModal.firstName || photoModal.email?.split('@')[0]}
               </p>
+              {photoModal.willTitle && (
+                <p className="text-xs text-white/80 truncate">{photoModal.willTitle}</p>
+              )}
               <p className="text-xs text-white/60">
                 {new Date(photoModal.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </p>
