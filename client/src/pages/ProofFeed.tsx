@@ -47,26 +47,16 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
   const [hasMore, setHasMore] = useState(true);
   const [photoModal, setPhotoModal] = useState<PhotoModal>(null);
 
-  // willId is required; render an error state if missing
-  if (!willId || isNaN(willId)) {
-    return (
-      <MobileLayout>
-        <div className="flex flex-col items-center justify-center h-full gap-4 px-6 text-center">
-          <Camera className="w-10 h-10 text-gray-300" />
-          <p className="text-gray-500 text-sm">No will selected. Please go back and try again.</p>
-          <Button variant="outline" onClick={() => setLocation('/')}>Go Home</Button>
-        </div>
-      </MobileLayout>
-    );
-  }
+  const validWillId = willId && !isNaN(willId) ? willId : null;
 
   const { data, isLoading } = useQuery<ProofResponse>({
-    queryKey: [`/api/circles/${circleId}/proofs`, willId, 'feed-init'],
+    queryKey: [`/api/circles/${circleId}/proofs`, validWillId, 'feed-init'],
+    enabled: validWillId !== null,
     queryFn: async () => {
       const token = await sessionPersistence.getToken();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const qs = new URLSearchParams({ limit: '20', willId: String(willId) });
+      const qs = new URLSearchParams({ limit: '20', willId: String(validWillId) });
       const resp = await fetch(getApiPath(`/api/circles/${circleId}/proofs?${qs}`), {
         credentials: 'include',
         headers,
@@ -78,7 +68,6 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
       setCursor(result.nextCursor);
       return result;
     },
-    enabled: !!circleId,
     staleTime: 0,
   });
 
@@ -107,6 +96,19 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
       minute: '2-digit',
     });
   };
+
+  // willId is required — render error state inside JSX so hooks are always called
+  if (!validWillId) {
+    return (
+      <MobileLayout>
+        <div className="flex flex-col items-center justify-center h-full gap-4 px-6 text-center">
+          <Camera className="w-10 h-10 text-gray-300" />
+          <p className="text-gray-500 text-sm">No will selected. Please go back and try again.</p>
+          <Button variant="outline" onClick={() => setLocation('/')}>Go Home</Button>
+        </div>
+      </MobileLayout>
+    );
+  }
 
   return (
     <MobileLayout className="bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
