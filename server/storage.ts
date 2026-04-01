@@ -2029,7 +2029,10 @@ export class DatabaseStorage implements IStorage {
       const [result] = await db
         .select({ count: sql<number>`count(*)` })
         .from(willMessages)
-        .where(eq(willMessages.willId, parentWillId));
+        .where(and(
+          eq(willMessages.willId, parentWillId),
+          sql`${willMessages.userId} != ${userId}`
+        ));
       return Number(result?.count || 0);
     }
 
@@ -2038,6 +2041,7 @@ export class DatabaseStorage implements IStorage {
       .from(willMessages)
       .where(and(
         eq(willMessages.willId, parentWillId),
+        sql`${willMessages.userId} != ${userId}`,
         sql`${willMessages.createdAt} > ${readRecord.lastReadAt}`
       ));
     return Number(result?.count || 0);

@@ -15,7 +15,7 @@ export default function WillMessagesPage({ willId }: WillMessagesPageProps) {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
+  const markRead = () => {
     if (!user || !willId) return;
     apiRequest(`/api/wills/${willId}/messages/mark-read`, { method: 'POST' })
       .then(() => {
@@ -25,6 +25,11 @@ export default function WillMessagesPage({ willId }: WillMessagesPageProps) {
         }});
       })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    markRead();
+    return () => { markRead(); };
   }, [willId, user]);
 
   if (!user) return null;
