@@ -316,7 +316,7 @@ export default function WillDetails() {
 
   const { data: unreadData } = useQuery<{ unreadCount: number }>({
     queryKey: ['/api/wills', participantWillId, 'messages', 'unread-count'],
-    queryFn: () => fetch(`/api/wills/${participantWillId}/messages/unread-count`, { credentials: 'include' }).then(r => r.json()),
+    queryFn: () => apiRequest(`/api/wills/${participantWillId}/messages/unread-count`),
     enabled: !!participantWillId && isPublicWill && !!user,
     refetchInterval: 15000,
   });
@@ -750,7 +750,7 @@ export default function WillDetails() {
           </h1>
           {isPublicWill && participantsData && participantsData.totalCount > 1 && user ? (
             <button
-              onClick={() => setLocation(`/will/${participantWillId}/messages`)}
+              onClick={() => setLocation(`/will/${id}/messages`)}
               className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md active:scale-95 transition-transform"
               data-testid="button-will-messages-chat"
             >
