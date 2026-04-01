@@ -2565,6 +2565,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update will title (originator only, max 40 chars)
+  // PATCH /api/wills/:id — originator-only update for title (and future fields)
+  app.patch('/api/wills/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+      if (will.createdBy !== userId) return res.status(403).json({ message: "Only the Will creator can update it" });
+
+      const updates: Partial<{ title: string | null }> = {};
+      const { title } = req.body;
+
+      if (title !== undefined) {
+        if (title === null || title === '') {
+          updates.title = null;
+        } else if (typeof title !== 'string' || title.trim().length > 40) {
+          return res.status(400).json({ message: "Title must be 40 characters or fewer" });
+        } else {
+          updates.title = title.trim();
+        }
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ message: "No valid fields to update" });
+      }
+
+      await storage.updateWill(willId, updates);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating will:", error);
+      res.status(500).json({ message: "Failed to update will" });
+    }
+  });
+
   app.patch('/api/wills/:id/title', isAuthenticated, async (req: any, res) => {
     try {
       const willId = parseInt(req.params.id);

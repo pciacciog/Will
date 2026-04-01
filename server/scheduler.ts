@@ -744,7 +744,7 @@ export class EndRoomScheduler {
           const willWithCommitments = await storage.getWillWithCommitments(will.id);
           if (willWithCommitments && willWithCommitments.commitments) {
             const committedMembers = willWithCommitments.commitments.map(c => c.userId);
-            const willStatement = willWithCommitments.title || will.sharedWhat || willWithCommitments.commitments[0]?.what || undefined;
+            const willStatement = willWithCommitments.title || willWithCommitments.commitments[0]?.what || will.sharedWhat || undefined;
             await pushNotificationService.sendMidpointMilestoneNotification(
               will.id,
               committedMembers,

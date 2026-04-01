@@ -49,7 +49,7 @@ function TitleEditRow({ value, onChange }: { value: string; onChange: (v: string
               onChange={(e) => onChange(e.target.value)}
               onBlur={() => setEditing(false)}
               onKeyDown={(e) => { if (e.key === 'Enter') setEditing(false); }}
-              placeholder="Give this Will a name…"
+              placeholder="Add a title to your Will…"
               className="w-full mt-1 text-sm text-gray-700 bg-transparent border-0 border-b border-emerald-300 focus:border-emerald-500 focus:outline-none focus:ring-0 pb-0.5"
               data-testid="input-will-title"
             />
@@ -60,7 +60,7 @@ function TitleEditRow({ value, onChange }: { value: string; onChange: (v: string
             {value ? (
               <span className="font-semibold text-gray-800">{value}</span>
             ) : (
-              <span className="italic text-gray-300">Give this Will a name…</span>
+              <span className="italic text-gray-300">Add a title to your Will…</span>
             )}
           </p>
         )}

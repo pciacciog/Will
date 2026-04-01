@@ -737,10 +737,11 @@ export default function WillDetails() {
           />
           <h1 className="absolute left-0 right-0 text-center text-xl font-semibold pointer-events-none truncate px-16">
             {(() => {
-              if (will?.title) return <span className="italic">{will.title}</span>;
               const myCommitment = will?.commitments?.find((c: any) => c.userId === user?.id);
-              const fallback = myCommitment?.what || will?.sharedWhat;
-              return fallback ? <span className="text-base font-medium truncate">{fallback}</span> : <em>Will</em>;
+              const displayTitle = will?.title || myCommitment?.what || will?.sharedWhat;
+              return displayTitle
+                ? <span className="italic">{displayTitle}</span>
+                : <em>Will</em>;
             })()}
           </h1>
           <div className="w-11"></div>

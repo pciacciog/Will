@@ -951,7 +951,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                         const displayTitle = will?.title || myCommitment?.what || will?.sharedWhat || 'Untitled';
                         return will?.title
                           ? <span className="font-bold italic">{displayTitle}</span>
-                          : <><em>Will</em> Active</>;
+                          : <span>{displayTitle}</span>;
                       })()}
                     </h3>
                     <p className="text-xs text-gray-500 tracking-tight">{will?.isIndefinite ? 'Habit' : `Ends ${formatDisplayDateTime(will?.endDate)}`}</p>
