@@ -946,7 +946,13 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold tracking-tight text-gray-900 text-sm">
-                      {will?.title ? <><em className="not-italic font-bold">{will.title}</em></> : <><em>Will</em> Active</>}
+                      {(() => {
+                        const myCommitment = will?.commitments?.find((c: any) => c.userId === user?.id);
+                        const displayTitle = will?.title || myCommitment?.what || will?.sharedWhat || 'Untitled';
+                        return will?.title
+                          ? <span className="font-bold italic">{displayTitle}</span>
+                          : <><em>Will</em> Active</>;
+                      })()}
                     </h3>
                     <p className="text-xs text-gray-500 tracking-tight">{will?.isIndefinite ? 'Habit' : `Ends ${formatDisplayDateTime(will?.endDate)}`}</p>
                   </div>

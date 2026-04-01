@@ -129,8 +129,8 @@ export class EndRoomScheduler {
           if (willWithCommitments && willWithCommitments.commitments) {
             const isSoloMode = will.circleId === null;
             for (const commitment of willWithCommitments.commitments) {
-              const userWillTitle = (willWithCommitments as any).title || commitment.what || (willWithCommitments as any).sharedWhat || "Your Will";
-              await pushNotificationService.sendWillStartedNotification(userWillTitle, [commitment.userId], will.id, isSoloMode, will.circleId ?? undefined);
+              const displayTitle = willWithCommitments.title || commitment.what || willWithCommitments.sharedWhat || "Your Will";
+              await pushNotificationService.sendWillStartedNotification(displayTitle, [commitment.userId], will.id, isSoloMode, will.circleId ?? undefined);
             }
             console.log(`[EndRoomScheduler] Will Started notifications sent for Will ${will.id} (${willWithCommitments.commitments.length} members, solo: ${isSoloMode})`);
           }
@@ -744,7 +744,7 @@ export class EndRoomScheduler {
           const willWithCommitments = await storage.getWillWithCommitments(will.id);
           if (willWithCommitments && willWithCommitments.commitments) {
             const committedMembers = willWithCommitments.commitments.map(c => c.userId);
-            const willStatement = will.sharedWhat || willWithCommitments.commitments[0]?.what || undefined;
+            const willStatement = willWithCommitments.title || will.sharedWhat || willWithCommitments.commitments[0]?.what || undefined;
             await pushNotificationService.sendMidpointMilestoneNotification(
               will.id,
               committedMembers,

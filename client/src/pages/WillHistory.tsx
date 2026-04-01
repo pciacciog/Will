@@ -282,7 +282,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
                 const isDailyTracked = checkInType === 'daily';
                 // Use current user's data, not participants[0]
                 const userData = will.currentUserParticipant;
-                const commitment = will.title || will.sharedWhat || userData?.commitment || 'Commitment';
+                const commitment = will.title || userData?.commitment || will.sharedWhat || 'Untitled';
                 
                 return (
                   <Card 
@@ -388,7 +388,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
   const isDailyTracked = checkInType === 'daily';
   // Use current user's data, not participants[0]
   const userData = will.currentUserParticipant;
-  const commitment = will.title || will.sharedWhat || userData?.commitment || 'Commitment';
+  const commitment = will.title || userData?.commitment || will.sharedWhat || 'Untitled';
 
   // Fetch check-ins for daily tracked wills
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({

@@ -2523,8 +2523,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Cannot modify an active or completed will" });
       }
       
-      const { startDate, endDate } = req.body;
+      const { startDate, endDate, title } = req.body;
       
+      // Allow title-only updates (no dates required for title change)
+      if (!startDate && !endDate) {
+        if (title !== undefined) {
+          const trimmed = title ? String(title).trim().slice(0, 40) : null;
+          await storage.updateWill(willId, { title: trimmed || null });
+          return res.json({ message: "Will updated successfully" });
+        }
+        return res.status(400).json({ message: "Start date and end date are required" });
+      }
+
       if (!startDate || !endDate) {
         return res.status(400).json({ message: "Start date and end date are required" });
       }
@@ -2540,8 +2550,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (end <= start) {
         return res.status(400).json({ message: "End date must be after start date" });
       }
-      
-      await storage.updateWill(willId, { startDate: start, endDate: end });
+
+      const updates: Record<string, any> = { startDate: start, endDate: end };
+      if (title !== undefined) {
+        updates.title = title ? String(title).trim().slice(0, 40) || null : null;
+      }
+      await storage.updateWill(willId, updates);
       
       res.json({ message: "Will updated successfully" });
     } catch (error) {

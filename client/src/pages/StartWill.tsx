@@ -20,6 +20,55 @@ import TimeChipPicker from "@/components/TimeChipPicker";
 
 const ENABLE_END_ROOM = false;
 
+function TitleEditRow({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editing]);
+
+  return (
+    <div
+      className="flex items-start gap-3 bg-emerald-50/60 rounded-lg p-2.5 -m-0.5 cursor-pointer"
+      onClick={() => { if (!editing) setEditing(true); }}
+      data-testid="row-will-title"
+    >
+      <Pencil className="w-4 h-4 text-emerald-500 mt-1 flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">Title · optional</p>
+        {editing ? (
+          <>
+            <input
+              ref={inputRef}
+              type="text"
+              maxLength={40}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              onBlur={() => setEditing(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setEditing(false); }}
+              placeholder="Give this Will a name…"
+              className="w-full mt-1 text-sm text-gray-700 bg-transparent border-0 border-b border-emerald-300 focus:border-emerald-500 focus:outline-none focus:ring-0 pb-0.5"
+              data-testid="input-will-title"
+            />
+            <p className="text-[10px] text-emerald-400 mt-0.5 text-right">{value.length}/40</p>
+          </>
+        ) : (
+          <p className="text-sm mt-1 pb-0.5 border-b border-emerald-200/60">
+            {value ? (
+              <span className="font-semibold text-gray-800">{value}</span>
+            ) : (
+              <span className="italic text-gray-300">Give this Will a name…</span>
+            )}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Helper function to get next Monday's date in YYYY-MM-DD format (local timezone)
 // Returns the upcoming Monday:
 // - Sunday: tomorrow (Monday)
@@ -1129,23 +1178,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             <div className="flex-1 flex flex-col py-4 px-4">
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-xl p-4 space-y-4">
-                  {/* TITLE row — optional, inline editable, originator only */}
-                  <div className="flex items-start gap-3 bg-emerald-50/60 rounded-lg p-2.5 -m-0.5">
-                    <Pencil className="w-4 h-4 text-emerald-500 mt-1 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">Title · optional</p>
-                      <input
-                        type="text"
-                        maxLength={40}
-                        value={willData.willTitle}
-                        onChange={(e) => setWillData({ ...willData, willTitle: e.target.value })}
-                        placeholder="Give this Will a name…"
-                        className="w-full mt-1 text-sm text-gray-700 italic bg-transparent border-0 border-b border-emerald-200 focus:border-emerald-400 focus:outline-none focus:ring-0 placeholder:text-gray-300 placeholder:not-italic pb-0.5"
-                        data-testid="input-will-title"
-                      />
-                      <p className="text-[10px] text-emerald-400 mt-0.5 text-right">{willData.willTitle.length}/40</p>
-                    </div>
-                  </div>
+                  {/* TITLE row — optional, tap-to-edit inline */}
+                  <TitleEditRow
+                    value={willData.willTitle}
+                    onChange={(v) => setWillData({ ...willData, willTitle: v })}
+                  />
 
                   <div className="border-t border-gray-200"></div>
 

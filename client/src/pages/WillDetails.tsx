@@ -736,7 +736,12 @@ export default function WillDetails() {
             testId="button-back-hub"
           />
           <h1 className="absolute left-0 right-0 text-center text-xl font-semibold pointer-events-none truncate px-16">
-            {will?.title ? <span className="italic">{will.title}</span> : <em>Will</em>}
+            {(() => {
+              if (will?.title) return <span className="italic">{will.title}</span>;
+              const myCommitment = will?.commitments?.find((c: any) => c.userId === user?.id);
+              const fallback = myCommitment?.what || will?.sharedWhat;
+              return fallback ? <span className="text-base font-medium truncate">{fallback}</span> : <em>Will</em>;
+            })()}
           </h1>
           <div className="w-11"></div>
         </div>
