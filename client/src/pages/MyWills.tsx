@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
+import { willDisplayTitle } from "@/lib/willUtils";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +29,7 @@ type Will = {
 };
 
 function getDisplayTitle(will: Will, userId?: string): string {
-  if (will.title) return will.title;
-  const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
-  return commitment?.what || will.sharedWhat || 'Untitled';
+  return willDisplayTitle(will, userId);
 }
 
 function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; userId?: string }) {

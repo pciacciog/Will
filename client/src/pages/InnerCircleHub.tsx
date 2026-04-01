@@ -21,6 +21,7 @@ import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
+import { willDisplayTitle } from "@/lib/willUtils";
 import { MessageCircle } from "lucide-react";
 import { sessionPersistence } from "@/services/SessionPersistence";
 
@@ -946,11 +947,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold tracking-tight text-gray-900 text-sm">
-                      {(() => {
-                        const myCommitment = will?.commitments?.find((c: any) => c.userId === user?.id);
-                        const displayTitle = will?.title || myCommitment?.what || will?.sharedWhat || 'Untitled';
-                        return <span className="font-bold italic">{displayTitle}</span>;
-                      })()}
+                      <span className="font-bold italic">{willDisplayTitle(will, user?.id)}</span>
                     </h3>
                     <p className="text-xs text-gray-500 tracking-tight">{will?.isIndefinite ? 'Habit' : `Ends ${formatDisplayDateTime(will?.endDate)}`}</p>
                   </div>

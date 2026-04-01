@@ -19,6 +19,7 @@ import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
+import { willDisplayTitle } from "@/lib/willUtils";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import DailyGutCheckModal from "@/components/DailyGutCheckModal";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
@@ -736,13 +737,9 @@ export default function WillDetails() {
             testId="button-back-hub"
           />
           <h1 className="absolute left-0 right-0 text-center text-xl font-semibold pointer-events-none truncate px-16">
-            {(() => {
-              const myCommitment = will?.commitments?.find((c: any) => c.userId === user?.id);
-              const displayTitle = will?.title || myCommitment?.what || will?.sharedWhat;
-              return displayTitle
-                ? <span className="font-bold italic">{displayTitle}</span>
-                : <em>Will</em>;
-            })()}
+            {will
+              ? <span className="font-bold italic">{willDisplayTitle(will, user?.id)}</span>
+              : <em>Will</em>}
           </h1>
           <div className="w-11"></div>
         </div>

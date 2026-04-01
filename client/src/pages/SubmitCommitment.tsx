@@ -13,6 +13,7 @@ import { HelpIcon } from "@/components/ui/HelpIcon";
 import { notificationService } from "@/services/NotificationService";
 import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Handshake, Clock } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
+import type { Will } from "@shared/schema";
 
 function formatTimeForDisplay(time: string): string {
   const [h, m] = time.split(':').map(Number);
@@ -59,7 +60,7 @@ export default function SubmitCommitment() {
     resizeTextarea(whyRef);
   }, [why, resizeTextarea]);
 
-  const { data: will } = useQuery({
+  const { data: will } = useQuery<Will>({
     queryKey: [`/api/wills/${id}/details`],
     enabled: !!id,
   });
@@ -362,10 +363,10 @@ export default function SubmitCommitment() {
           <SectionCard>
             <form onSubmit={handleStep1Submit} className="space-y-6">
               <div className="space-y-6 mt-8">
-                {(will as any)?.title && (
+                {will?.title && (
                   <div className="text-center mb-2">
                     <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">You're joining</p>
-                    <p className="text-base font-semibold text-emerald-700 italic">"{(will as any).title}"</p>
+                    <p className="text-base font-semibold text-emerald-700 italic">"{will.title}"</p>
                   </div>
                 )}
                 <div className="text-center mb-6">

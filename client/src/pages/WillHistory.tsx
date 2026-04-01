@@ -9,6 +9,7 @@ import { ChevronLeft, Calendar as CalendarIcon, User, Users, Globe, Clock, Trend
 import { getApiPath } from "@/config/api";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { cn } from "@/lib/utils";
+import { willDisplayTitle } from "@/lib/willUtils";
 import { MobileLayout } from "@/components/ui/mobile-layout";
 
 type WillCheckInStats = {
@@ -282,7 +283,10 @@ export default function WillHistory({ mode }: WillHistoryProps) {
                 const isDailyTracked = checkInType === 'daily';
                 // Use current user's data, not participants[0]
                 const userData = will.currentUserParticipant;
-                const commitment = will.title || userData?.commitment || will.sharedWhat || 'Untitled';
+                const commitment = willDisplayTitle(
+                  { title: will.title, sharedWhat: will.sharedWhat, commitments: userData ? [{ userId: will.currentUserId, what: userData.commitment }] : [] },
+                  will.currentUserId
+                );
                 
                 return (
                   <Card 
@@ -388,7 +392,10 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
   const isDailyTracked = checkInType === 'daily';
   // Use current user's data, not participants[0]
   const userData = will.currentUserParticipant;
-  const commitment = will.title || userData?.commitment || will.sharedWhat || 'Untitled';
+  const commitment = willDisplayTitle(
+    { title: will.title, sharedWhat: will.sharedWhat, commitments: userData ? [{ userId: will.currentUserId, what: userData.commitment }] : [] },
+    will.currentUserId
+  );
 
   // Fetch check-ins for daily tracked wills
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({

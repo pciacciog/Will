@@ -2600,32 +2600,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/wills/:id/title', isAuthenticated, async (req: any, res) => {
-    try {
-      const willId = parseInt(req.params.id);
-      const userId = req.user.id;
-
-      const will = await storage.getWillById(willId);
-      if (!will) return res.status(404).json({ message: "Will not found" });
-      if (will.createdBy !== userId) return res.status(403).json({ message: "Only the Will creator can set a title" });
-
-      const { title } = req.body;
-      if (title !== null && title !== undefined && title !== '') {
-        if (typeof title !== 'string' || title.trim().length > 40) {
-          return res.status(400).json({ message: "Title must be 40 characters or fewer" });
-        }
-        await storage.updateWill(willId, { title: title.trim() });
-      } else {
-        await storage.updateWill(willId, { title: null });
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error updating will title:", error);
-      res.status(500).json({ message: "Failed to update title" });
-    }
-  });
-
   // Update notification settings for a will (reminderTime)
   app.patch('/api/wills/:id/notifications', isAuthenticated, async (req: any, res) => {
     try {
