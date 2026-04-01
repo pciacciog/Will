@@ -2536,7 +2536,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Allow title-only updates (no dates required for title change)
       if (!startDate && !endDate) {
         if (title !== undefined) {
-          const trimmed = title ? String(title).trim().slice(0, 40) : null;
+          if (title !== null && title !== '' && (typeof title !== 'string' || title.trim().length > 40)) {
+            return res.status(400).json({ message: "Title must be 40 characters or fewer" });
+          }
+          const trimmed = title ? String(title).trim() : null;
           await storage.updateWill(willId, { title: trimmed || null });
           return res.json({ message: "Will updated successfully" });
         }
