@@ -1,0 +1,121 @@
+Will Titles Feature
+
+Concept
+We are adding an optional Title field to every Will. The title gives a Will an identity and a theme — it is the primary label the user sees everywhere across the app. The full commitment statement (WHAT) is secondary and only visible inside Will Details.
+If a user skips the title, the app falls back to the WHAT statement everywhere. This is already the current behavior — the title simply takes priority when it exists.
+
+Schema change
+In db/schema.ts, add title as a nullable text field to the wills table:
+tstitle: text("title"), // nullable — optional
+Nullable because it is optional and because existing Will records have no title. Do not backfill existing records. The fallback logic handles untitled Wills everywhere in the app.
+Run npx drizzle-kit push after updating the schema.
+
+Fallback logic — single rule, applied everywhere
+tsconst displayTitle = will.title ?? will.whatStatement
+```
+
+Never show a blank. Always fall back to the WHAT statement. This rule governs every UI touch point in the app.
+
+---
+
+## Will types and title ownership
+
+### Shared Will
+The originator sets the title AND the commitment statement. Both are identical for all Circle members — nobody writes their own anything. Other Circle members receive an invitation showing both the title and the commitment statement. They simply accept or decline. No individual customization for members of a shared Will.
+
+### Normal Will
+The originator sets the title and writes their own commitment statement. The title is **shared and locked for the group** — it becomes the collective identity of this Will season for the Circle. Other Circle members see the originator's title (they cannot change it) and each write their own individual commitment statement underneath it.
+
+Example:
+```
+Title: "Abundance April"  ← set by originator, same for everyone
+- Alvaro:   Go to church every Sunday
+- Gregorio: Finish book #3 of the year
+- Porfirio: Write a gratitude and confession list each night
+The title is the group's. The commitment is personal.
+
+UI touch points
+1. Review Your Will screen
+Add a TITLE row as the first row inside the review card, above WHAT. It has a subtle green tint (#edf8f3 background) to distinguish it as the only interactive row on the screen.
+Row anatomy:
+
+Left: pencil icon
+Label: TITLE in 9px green uppercase + · optional in 9px muted gray immediately after
+Body: if no title entered, show "Add a title to your Will..." in light gray italic
+Right: edit pencil icon in green
+Tapping the row opens an inline text field or bottom sheet. Max 40 characters. Saves to Will draft state immediately.
+When a title is entered, body shows it in 13px dark, font-weight 600, non-italic.
+
+Originator of a normal Will: sees the TITLE row as described above.
+Non-originator on a normal Will: does not see the TITLE row. Instead, a read-only header appears above the review card: "You're joining '[title]'" in muted style. They fill in only their own WHAT and WHY.
+Non-originator on a shared Will: sees the title and locked commitment statement both read-only. Review and confirm only — no fields to fill.
+
+2. My Wills page
+Each Will row currently shows the WHAT statement as its primary label. Replace with displayTitle. The WHAT statement is no longer visible on this page — only inside Will Details.
+
+3. Will Details screen — Solo mode
+Nav bar: Replace the current generic "Will" label with displayTitle in the same bold italic style.
+Your Commitment card: No change to the card — shows WHAT and WHY exactly as today. The title is not repeated inside the card since it already appears in the nav bar.
+
+4. Will Details screen — Circle mode
+Nav bar: Replace the current generic "Will" label with displayTitle in the same bold italic style.
+Commitments card: No change — shows each member's name and individual commitment exactly as today.
+All other cards (Timeline, Circle members row, Push button) remain untouched.
+
+5. Circle screen — Current Will card
+Inside the Current Will card, replace "Will Active" with displayTitle in the same bold italic font style. The end date line below it stays exactly as is. Everything else on the Circle screen is untouched.
+
+6. View History
+Each completed Will in the history list shows displayTitle as its primary label alongside the date range and completion status. The WHAT statement is not shown in the list — only inside the detail view of that historical Will. All Circle members' individual commitments are visible inside the detail view, grouped under the shared title.
+
+7. Push notifications
+Replace all references to the WHAT statement with displayTitle:
+
+Will ending soon: "Your Will '[title]' ends in 24 hours"
+Check-in reminder: "[title] — time to check in"
+Circle member drops proof: "[memberName] dropped proof in '[title]'"
+Will completed: "'[title]' is complete — time to reflect"
+New Circle Will invitation: "[originatorName] invited you to join '[title]'"
+
+Update all notification payload builders accordingly.
+
+API changes
+POST /api/wills
+Accept title as an optional string. Validate max 40 characters if present. Store on the Will record — title belongs to the Will, not per-member.
+PATCH /api/wills/:id
+Accept title as an updatable optional field. Only the originator can update the title — enforce this via JWT ownership check.
+All GET endpoints returning Will objects
+Include title in every Will response payload alongside existing fields. The client always receives both title and whatStatement and applies displayTitle logic for all display purposes.
+
+iOS changes
+Will model
+Add title: String? to the Will model.
+Display helper — add computed property, use it everywhere
+swiftvar displayTitle: String {
+    return title?.isEmpty == false ? title! : whatStatement
+}
+Use will.displayTitle everywhere in the UI for primary labeling. Never reference whatStatement directly for display outside of the Will Details commitment card.
+Screens to update
+
+ReviewWillView.swift — add TITLE row (originator) or read-only title header (non-originator)
+WillDetailView.swift (solo) — nav bar title → displayTitle
+CircleWillDetailView.swift — nav bar title → displayTitle
+MyWillsView.swift — primary label → displayTitle
+CircleView.swift — Current Will card label → displayTitle
+HistoryView.swift — Will list row label → displayTitle
+All notification payload builders → displayTitle
+
+
+Build order
+
+Schema change → npx drizzle-kit push
+Update POST and PATCH Will endpoints to accept and store title
+Update all GET Will responses to include title
+Update all notification payload builders
+Add displayTitle computed property to iOS Will model
+Update My Wills page
+Update Will Details — solo mode nav bar
+Update Will Details — Circle mode nav bar
+Update Circle screen Current Will card
+Update View History list
+Update Review Your Will screen — originator flow first, then non-originator flows
