@@ -1483,7 +1483,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (uniqueOtherIds.length > 0) {
         try {
-          await pushNotificationService.sendPublicWillJoinedNotification(joinerName, parentWillId, uniqueOtherIds, parentCommitment.what);
+          // Use full displayTitle fallback: title ?? commitment.what ?? sharedWhat
+          const joinNotifTitle = parentWill.title || parentCommitment.what || parentWill.sharedWhat || undefined;
+          await pushNotificationService.sendPublicWillJoinedNotification(joinerName, parentWillId, uniqueOtherIds, joinNotifTitle);
         } catch (notifError) {
           console.error('[JoinPublicWill] Failed to send notifications:', notifError);
         }
@@ -2155,7 +2157,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send real push notifications to all other members via APNs
       if (memberIds.length > 0) {
         const { pushNotificationService } = await import('./pushNotificationService');
-        const willTitle = (will as any).title || 'Your Will';
+        // Use full displayTitle fallback: title ?? commitment.what ?? sharedWhat
+        const willWithCommitmentsForPush = await storage.getWillWithCommitments(willId);
+        const pusherCommitment = willWithCommitmentsForPush?.commitments?.find(c => c.userId === userId);
+        const willTitle = will.title || pusherCommitment?.what || will.sharedWhat || 'Your Will';
         const notificationWillId = isPublicWill ? pushDedupeId : willId;
         await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, notificationWillId, will.circleId);
         console.log(`[Push] Sent encouragement notification from ${pusherName} to ${memberIds.length} members for Will: ${willTitle}`);
@@ -3645,7 +3650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const willWithCommitments = await storage.getWillWithCommitments(activeWill.id);
         if (willWithCommitments?.commitments) {
           for (const commitment of willWithCommitments.commitments) {
-            const userWillTitle = commitment.what || willTitle || "Your Will";
+            const userWillTitle = willWithCommitments.title || commitment.what || willWithCommitments.sharedWhat || willTitle || "Your Will";
             await pushNotificationService.sendWillStartedNotification(userWillTitle, [commitment.userId], activeWill.id, false, userCircle.id);
           }
         }
