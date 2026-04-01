@@ -1094,7 +1094,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const creatorName = creator ? creator.firstName : 'Someone';
             const isSharedWill = willType === 'cumulative';
-            await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers, will.id, isSharedWill, circle.id);
+            // Use full displayTitle fallback: title ?? sharedWhat ?? 'Your Will'
+            const proposedTitle = will.title || will.sharedWhat || undefined;
+            await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers, will.id, isSharedWill, circle.id, proposedTitle);
             console.log(`Sent Will proposed notifications to ${otherMembers.length} members (isSharedWill: ${isSharedWill})`);
 
             for (const memberId of otherMembers) {

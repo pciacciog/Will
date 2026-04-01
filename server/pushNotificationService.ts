@@ -345,9 +345,11 @@ class PushNotificationService {
   }
 
   // Predefined notification templates for the 4 key moments
-  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isSharedWill: boolean = false, circleId?: number): Promise<void> {
+  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isSharedWill: boolean = false, circleId?: number, willTitle?: string): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: isSharedWill ? "New Shared Will proposed! 📝" : "New Will proposed! 📝",
+      title: willTitle
+        ? `${willTitle} — new Will proposed! 📝`
+        : (isSharedWill ? "New Shared Will proposed! 📝" : "New Will proposed! 📝"),
       body: isSharedWill 
         ? `${creatorName} proposed a new Shared Will for your circle`
         : `${creatorName} has proposed starting a new Will`,
@@ -453,9 +455,9 @@ class PushNotificationService {
   }
 
   // NOTIFICATION: Will Review Required (fires when Will ENDS and status → will_review)
-  async sendWillReviewRequiredNotification(willId: number, participants: string[]): Promise<void> {
+  async sendWillReviewRequiredNotification(willId: number, participants: string[], willTitle?: string): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "Your will has ended",
+      title: willTitle ? `${willTitle} — time to review` : "Your will has ended",
       body: "Please review and reflect on your journey.",
       category: 'will_review_required',
       data: {

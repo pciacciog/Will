@@ -171,7 +171,8 @@ export class EndRoomScheduler {
             const willWithCommitments = await storage.getWillWithCommitments(will.id);
             if (willWithCommitments && willWithCommitments.commitments) {
               const participants = willWithCommitments.commitments.map(c => c.userId);
-              await pushNotificationService.sendWillReviewRequiredNotification(will.id, participants);
+              const reviewNotifTitle = willWithCommitments.title || willWithCommitments.commitments[0]?.what || willWithCommitments.sharedWhat || undefined;
+              await pushNotificationService.sendWillReviewRequiredNotification(will.id, participants, reviewNotifTitle);
 
               for (const participantId of participants) {
                 const existingReview = await storage.getWillReview(will.id, participantId);
@@ -218,7 +219,8 @@ export class EndRoomScheduler {
               console.log(`[SCHEDULER] 🔄 Retrying missed notification for Will ${will.id} (already in will_review)`);
               const participants = willWithCommitments.commitments?.map(c => c.userId) || [];
               if (participants.length > 0) {
-                await pushNotificationService.sendWillReviewRequiredNotification(will.id, participants);
+                const retryNotifTitle = willWithCommitments.title || willWithCommitments.commitments?.[0]?.what || willWithCommitments.sharedWhat || undefined;
+                await pushNotificationService.sendWillReviewRequiredNotification(will.id, participants, retryNotifTitle);
                 await db.update(wills)
                   .set({ completionNotificationSentAt: now })
                   .where(eq(wills.id, will.id));
