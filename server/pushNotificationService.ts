@@ -469,9 +469,9 @@ class PushNotificationService {
   }
 
   // NEW NOTIFICATION #2: Commitment Reminder (6hrs after Will creation)
-  async sendCommitmentReminderNotification(willId: number, uncommittedUsers: string[]): Promise<void> {
+  async sendCommitmentReminderNotification(willId: number, uncommittedUsers: string[], willTitle?: string): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "Your Circle is waiting 🤝",
+      title: willTitle ? `${willTitle} — your Circle is waiting 🤝` : "Your Circle is waiting 🤝",
       body: "Your Circle is waiting for your commitment.",
       category: 'commitment_reminder',
       data: {
@@ -485,9 +485,9 @@ class PushNotificationService {
   }
 
   // NOTIFICATION: Will Review Reminder (6hrs after Will ends, for users who haven't submitted review)
-  async sendWillReviewReminderNotification(willId: number, usersWithoutReview: string[], isSoloMode: boolean = false): Promise<void> {
+  async sendWillReviewReminderNotification(willId: number, usersWithoutReview: string[], isSoloMode: boolean = false, willTitle?: string): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "Review reminder",
+      title: willTitle ? `${willTitle} — review reminder` : "Review reminder",
       body: isSoloMode 
         ? "Don't forget to submit your Will review!" 
         : "Your Circle is waiting for your review.",
@@ -502,9 +502,9 @@ class PushNotificationService {
     await this.sendToMultipleUsers(usersWithoutReview, payload);
   }
 
-  async sendFinalReviewWarningNotification(willId: number, usersWithoutReview: string[], isSoloMode: boolean = false): Promise<void> {
+  async sendFinalReviewWarningNotification(willId: number, usersWithoutReview: string[], isSoloMode: boolean = false, willTitle?: string): Promise<void> {
     const payload: PushNotificationPayload = {
-      title: "Last chance to review",
+      title: willTitle ? `${willTitle} — last chance to review` : "Last chance to review",
       body: isSoloMode
         ? "Your review will be auto-completed tomorrow if not submitted."
         : "Your Circle is waiting. Your review will be auto-completed tomorrow.",
@@ -657,9 +657,9 @@ class PushNotificationService {
     await this.sendToMultipleUsers(committedMembers, payload);
   }
 
-  async sendDailyReminderNotification(userId: string, willId?: number): Promise<boolean> {
+  async sendDailyReminderNotification(userId: string, willId?: number, willTitle?: string): Promise<boolean> {
     const payload: PushNotificationPayload = {
-      title: "Have you honored your will today?",
+      title: willTitle ? `${willTitle}` : "Have you honored your will today?",
       body: "Tap to check in and log your progress.",
       category: 'daily_reminder',
       data: {

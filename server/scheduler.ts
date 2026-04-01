@@ -589,7 +589,7 @@ export class EndRoomScheduler {
 
           if (uncommittedToRemind.length > 0) {
             const userIdsToRemind = uncommittedToRemind.map(m => m.userId);
-            await pushNotificationService.sendCommitmentReminderNotification(will.id, userIdsToRemind);
+            await pushNotificationService.sendCommitmentReminderNotification(will.id, userIdsToRemind, will.title || undefined);
             
             // Record that reminders were sent (idempotency)
             for (const userId of userIdsToRemind) {
@@ -683,10 +683,11 @@ export class EndRoomScheduler {
             const isSoloMode = will.mode === 'solo';
             const isFinalWarning = daysSinceReview >= 2;
 
+            const reviewWillDisplay = will.title || undefined;
             if (isFinalWarning) {
-              await pushNotificationService.sendFinalReviewWarningNotification(will.id, userIdsToRemind, isSoloMode);
+              await pushNotificationService.sendFinalReviewWarningNotification(will.id, userIdsToRemind, isSoloMode, reviewWillDisplay);
             } else {
-              await pushNotificationService.sendWillReviewReminderNotification(will.id, userIdsToRemind, isSoloMode);
+              await pushNotificationService.sendWillReviewReminderNotification(will.id, userIdsToRemind, isSoloMode, reviewWillDisplay);
             }
 
             for (const commitment of unreviewedToRemind) {
@@ -773,6 +774,7 @@ export class EndRoomScheduler {
         .select({
           commitmentId: willCommitments.id,
           willId: wills.id,
+          willTitle: wills.title,
           willReminderTime: wills.reminderTime,
           commitmentCheckInTime: willCommitments.checkInTime,
           lastCheckInReminderSentAt: willCommitments.lastCheckInReminderSentAt,
@@ -824,7 +826,7 @@ export class EndRoomScheduler {
           const userLocalTime = this.getTimeInTimezone(now, willData.userTimezone);
           if (!this.isWithinReminderWindow(userLocalTime, effectiveReminderTime)) continue;
 
-          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId);
+          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId, willData.willTitle || undefined);
           if (success) {
             await db.update(willCommitments).set({ lastCheckInReminderSentAt: now }).where(eq(willCommitments.id, willData.commitmentId));
             remindersSent++;
@@ -841,6 +843,7 @@ export class EndRoomScheduler {
         .select({
           commitmentId: willCommitments.id,
           willId: wills.id,
+          willTitle: wills.title,
           willStartDate: wills.startDate,
           willEndDate: wills.endDate,
           lastCheckInReminderSentAt: willCommitments.lastCheckInReminderSentAt,
@@ -898,7 +901,7 @@ export class EndRoomScheduler {
 
           if (!this.isWithinReminderWindow(userLocalTime, targetTime)) continue;
 
-          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId);
+          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId, willData.willTitle || undefined);
           if (success) {
             await db.update(willCommitments).set({ lastCheckInReminderSentAt: now }).where(eq(willCommitments.id, willData.commitmentId));
             remindersSent++;
@@ -930,6 +933,7 @@ export class EndRoomScheduler {
           commitmentId: willCommitments.id,
           userId: willCommitments.userId,
           willId: willCommitments.willId,
+          willTitle: wills.title,
           userWhat: willCommitments.what,
           userWhy: willCommitments.why,
           userTimezone: users.timezone,
@@ -1006,7 +1010,8 @@ export class EndRoomScheduler {
 
           if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
 
-          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId, row.userWhat || undefined);
+          const motivationalDisplayTitle = row.willTitle || row.userWhat || undefined;
+          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId, motivationalDisplayTitle);
           if (success) {
             await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
             sent++;
