@@ -23,7 +23,7 @@ Authentication features a custom email/password system, Express sessions with Po
 - **Solo Mode**: Personal will creation with immediate start, offering flexible tracking types: "Every Day," "Specific Days," and "Final Review Only."
 - **Progress Tracking**: DailyCheckInModal, ProgressView with calendar, success rate calculation, and streak tracking.
 - **Inner Circle Mode**: Multi-circle support, lobby view, circle hub, and distinct "Normal" and "Shared" will types.
-- **Will Creation & Management**: Multi-step guided creation, commitment editing, and lifecycle management (Pause, Resume, Terminate).
+- **Will Creation & Management**: Multi-step guided creation, commitment editing, and lifecycle management (Pause, Resume, Terminate). Optional will `title` (max 40 chars) set by originator at creation (step 5 review card); shown in nav bar, My Wills list, Circle Hub "Current Will" card, history; used as push notification display name via fallback chain `title ?? commitment.what ?? sharedWhat ?? 'Your Will'`. PATCH `/api/wills/:id/title` for originator-only updates.
 - **Will Review**: Mandatory asynchronous review for will completion.
 - **Account Settings**: User profile management and account deletion.
 - **Push Notifications**: APNs integration with 12 types, per-user timezone personalization, including time-based and event-based notifications, short-duration will specific notifications, and a review escalation/auto-complete mechanism.

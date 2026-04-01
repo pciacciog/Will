@@ -27,6 +27,7 @@ type WillHistoryItem = {
   status: string;
   checkInType: string | null;
   willType: string | null;
+  title: string | null;
   sharedWhat: string | null;
   circle?: { id: number; inviteCode: string } | null;
   currentUserId: string;
@@ -281,7 +282,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
                 const isDailyTracked = checkInType === 'daily';
                 // Use current user's data, not participants[0]
                 const userData = will.currentUserParticipant;
-                const commitment = will.sharedWhat || userData?.commitment || 'Commitment';
+                const commitment = will.title || will.sharedWhat || userData?.commitment || 'Commitment';
                 
                 return (
                   <Card 
@@ -387,7 +388,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
   const isDailyTracked = checkInType === 'daily';
   // Use current user's data, not participants[0]
   const userData = will.currentUserParticipant;
-  const commitment = will.sharedWhat || userData?.commitment || 'Commitment';
+  const commitment = will.title || will.sharedWhat || userData?.commitment || 'Commitment';
 
   // Fetch check-ins for daily tracked wills
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({

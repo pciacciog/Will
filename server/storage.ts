@@ -227,6 +227,7 @@ export interface IStorage {
     status: string;
     checkInType: string | null;
     willType: string | null;
+    title: string | null;
     sharedWhat: string | null;
     circle?: { id: number; inviteCode: string } | null;
     currentUserId: string;
@@ -1900,6 +1901,7 @@ export class DatabaseStorage implements IStorage {
         status: will.status,
         checkInType: will.checkInType,
         willType: will.willType,
+        title: will.title,
         sharedWhat: will.sharedWhat,
         circle: circleInfo,
         currentUserId: userId,

@@ -15,7 +15,7 @@ import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, U
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users, Lock, Eye, ClipboardList, MessageCircle, CalendarDays } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users, Lock, Eye, ClipboardList, MessageCircle, CalendarDays, Pencil } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 
 const ENABLE_END_ROOM = false;
@@ -160,6 +160,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     endDate: '',
     what: '',
     why: '',
+    willTitle: '',
     circleId: null as number | null,
     endRoomScheduledAt: '' as string | null,
   });
@@ -459,8 +460,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       setCurrentStep(6);
     } else if (isSoloMode) {
       createWillMutation.mutate({
-        title: willData.what || "Personal Goal",
-        description: willData.why || "Personal commitment",
+        title: willData.willTitle.trim() || undefined,
         startDate: willData.startDate,
         endDate: isIndefinite ? null : willData.endDate,
         endRoomScheduledAt: null,
@@ -478,8 +478,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       });
     } else {
       createWillMutation.mutate({
-        title: willData.what || "Group Goal",
-        description: willData.why || "Group commitment",
+        title: willData.willTitle.trim() || undefined,
         startDate: willData.startDate,
         endDate: isIndefinite ? null : willData.endDate,
         endRoomScheduledAt: null,
@@ -1130,6 +1129,26 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             <div className="flex-1 flex flex-col py-4 px-4">
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+                  {/* TITLE row — optional, inline editable, originator only */}
+                  <div className="flex items-start gap-3 bg-emerald-50/60 rounded-lg p-2.5 -m-0.5">
+                    <Pencil className="w-4 h-4 text-emerald-500 mt-1 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">Title · optional</p>
+                      <input
+                        type="text"
+                        maxLength={40}
+                        value={willData.willTitle}
+                        onChange={(e) => setWillData({ ...willData, willTitle: e.target.value })}
+                        placeholder="Give this Will a name…"
+                        className="w-full mt-1 text-sm text-gray-700 italic bg-transparent border-0 border-b border-emerald-200 focus:border-emerald-400 focus:outline-none focus:ring-0 placeholder:text-gray-300 placeholder:not-italic pb-0.5"
+                        data-testid="input-will-title"
+                      />
+                      <p className="text-[10px] text-emerald-400 mt-0.5 text-right">{willData.willTitle.length}/40</p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200"></div>
+
                   <div className="flex items-start gap-3">
                     <ClipboardList className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">

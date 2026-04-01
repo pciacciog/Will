@@ -22,8 +22,18 @@ type Will = {
   circleCode?: string;
   publicParticipantCount?: number;
   creatorName?: string;
+  title?: string | null;
+  sharedWhat?: string | null;
   commitments?: { id: number; userId: string; what: string; why: string; user?: { firstName?: string } }[];
 };
+
+function getDisplayTitle(will: Will, userId?: string): string {
+  if (will.title) return will.title;
+  const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
+  if (commitment?.what) return `I will ${commitment.what}`;
+  if (will.sharedWhat) return will.sharedWhat;
+  return 'Untitled commitment';
+}
 
 function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; userId?: string }) {
   const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
@@ -80,7 +90,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate" data-testid={`text-will-title-${will.id}`}>
-                {commitment?.what ? `I will ${commitment.what}` : 'Untitled commitment'}
+                {getDisplayTitle(will, userId)}
               </p>
               {isCircle && (
                 <p className="text-xs text-purple-600 font-medium mt-0.5 truncate" data-testid={`text-circle-info-${will.id}`}>

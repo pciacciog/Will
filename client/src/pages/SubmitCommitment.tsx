@@ -362,6 +362,12 @@ export default function SubmitCommitment() {
           <SectionCard>
             <form onSubmit={handleStep1Submit} className="space-y-6">
               <div className="space-y-6 mt-8">
+                {(will as any)?.title && (
+                  <div className="text-center mb-2">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">You're joining</p>
+                    <p className="text-base font-semibold text-emerald-700 italic">"{(will as any).title}"</p>
+                  </div>
+                )}
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-2">
                     <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">

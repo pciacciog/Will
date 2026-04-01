@@ -69,6 +69,7 @@ export const wills = pgTable("wills", {
   visibility: varchar("visibility", { length: 10 }).notNull().default("private"), // 'private' or 'public'
   parentWillId: integer("parent_will_id"), // For joined instances: references the original public will
   willType: varchar("will_type", { length: 20 }).default("classic"), // 'classic' or 'cumulative' (only for circle mode)
+  title: text("title"), // Optional display title (max 40 chars), originator-only edit
   sharedWhat: text("shared_what"), // For cumulative wills: the shared commitment everyone does
   checkInType: varchar("check_in_type", { length: 20 }).default("one-time"), // 'daily', 'specific_days', 'final_review' (legacy: 'one-time' treated as 'final_review')
   reminderTime: varchar("reminder_time", { length: 5 }), // HH:MM format for daily check-in reminders (user's local time)

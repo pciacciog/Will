@@ -735,7 +735,9 @@ export default function WillDetails() {
             onClick={() => setLocation(getHubUrl())} 
             testId="button-back-hub"
           />
-          <h1 className="absolute left-0 right-0 text-center text-xl font-semibold pointer-events-none"><em>Will</em></h1>
+          <h1 className="absolute left-0 right-0 text-center text-xl font-semibold pointer-events-none truncate px-16">
+            {will?.title ? <span className="italic">{will.title}</span> : <em>Will</em>}
+          </h1>
           <div className="w-11"></div>
         </div>
         

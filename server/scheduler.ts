@@ -129,7 +129,7 @@ export class EndRoomScheduler {
           if (willWithCommitments && willWithCommitments.commitments) {
             const isSoloMode = will.circleId === null;
             for (const commitment of willWithCommitments.commitments) {
-              const userWillTitle = commitment.what || "Your Will";
+              const userWillTitle = (willWithCommitments as any).title || commitment.what || (willWithCommitments as any).sharedWhat || "Your Will";
               await pushNotificationService.sendWillStartedNotification(userWillTitle, [commitment.userId], will.id, isSoloMode, will.circleId ?? undefined);
             }
             console.log(`[EndRoomScheduler] Will Started notifications sent for Will ${will.id} (${willWithCommitments.commitments.length} members, solo: ${isSoloMode})`);
