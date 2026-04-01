@@ -95,7 +95,7 @@ export interface IStorage {
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserActiveSoloWillCount(userId: string): Promise<number>;
   getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string; circleCode?: string })[]>;
-  getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
+  getPublicWills(search?: string): Promise<{ id: number; title: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
   getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
   updateWillStatus(willId: number, status: string): Promise<void>;
@@ -793,10 +793,11 @@ export class DatabaseStorage implements IStorage {
     return willsWithCommitments as any;
   }
 
-  async getPublicWills(search?: string): Promise<{ id: number; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
+  async getPublicWills(search?: string): Promise<{ id: number; title: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
     const publicWillsList = await db
       .select({
         id: wills.id,
+        title: wills.title,
         checkInType: wills.checkInType,
         startDate: wills.startDate,
         endDate: wills.endDate,
@@ -834,6 +835,7 @@ export class DatabaseStorage implements IStorage {
         
         return {
           id: will.id,
+          title: will.title ?? null,
           what: commitment?.what || 'Untitled commitment',
           checkInType: will.checkInType,
           startDate: will.startDate,

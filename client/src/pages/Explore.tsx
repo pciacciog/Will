@@ -5,6 +5,7 @@ import { Users, ArrowRight, Target, CheckCircle } from "lucide-react";
 
 type PublicWill = {
   id: number;
+  title: string | null;
   what: string;
   checkInType: string;
   startDate: string;
@@ -72,7 +73,7 @@ export default function Explore() {
                 data-testid={`card-will-${will.id}`}
               >
                 <p className="text-base font-medium text-gray-900 leading-snug" data-testid={`text-title-${will.id}`}>
-                  {will.what}
+                  {will.title ?? will.what}
                 </p>
                 <p className="text-xs text-gray-500 mt-1" data-testid={`text-creator-${will.id}`}>
                   by @{will.creatorName?.toLowerCase().replace(/\s+/g, '')}
