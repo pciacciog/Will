@@ -1321,6 +1321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         id: will.id,
+        title: will.title ?? null,
         what: firstCommitment?.what || 'Untitled commitment',
         checkInType: will.checkInType,
         startDate: will.startDate,

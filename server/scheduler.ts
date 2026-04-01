@@ -589,7 +589,14 @@ export class EndRoomScheduler {
 
           if (uncommittedToRemind.length > 0) {
             const userIdsToRemind = uncommittedToRemind.map(m => m.userId);
-            await pushNotificationService.sendCommitmentReminderNotification(will.id, userIdsToRemind, will.title || undefined);
+            // Fallback chain: title ?? any committed member's what ?? sharedWhat
+            let anyCommittedWhat: string | undefined;
+            if (committedUserIds.length > 0) {
+              const allCommitments = await storage.getWillCommitments(will.id);
+              anyCommittedWhat = allCommitments.find(c => committedUserIds.includes(c.userId))?.what ?? undefined;
+            }
+            const commitmentDisplayTitle = will.title || anyCommittedWhat || will.sharedWhat || undefined;
+            await pushNotificationService.sendCommitmentReminderNotification(will.id, userIdsToRemind, commitmentDisplayTitle);
             
             // Record that reminders were sent (idempotency)
             for (const userId of userIdsToRemind) {
@@ -683,7 +690,12 @@ export class EndRoomScheduler {
             const isSoloMode = will.mode === 'solo';
             const isFinalWarning = daysSinceReview >= 2;
 
-            const reviewWillDisplay = will.title || undefined;
+            // Fallback chain: title ?? any unreviewed member's what ?? sharedWhat
+            let reviewCommitmentWhat: string | undefined;
+            if (unreviewedToRemind.length > 0) {
+              reviewCommitmentWhat = unreviewedToRemind[0].what ?? undefined;
+            }
+            const reviewWillDisplay = will.title || reviewCommitmentWhat || will.sharedWhat || undefined;
             if (isFinalWarning) {
               await pushNotificationService.sendFinalReviewWarningNotification(will.id, userIdsToRemind, isSoloMode, reviewWillDisplay);
             } else {
@@ -775,6 +787,8 @@ export class EndRoomScheduler {
           commitmentId: willCommitments.id,
           willId: wills.id,
           willTitle: wills.title,
+          willSharedWhat: wills.sharedWhat,
+          commitmentWhat: willCommitments.what,
           willReminderTime: wills.reminderTime,
           commitmentCheckInTime: willCommitments.checkInTime,
           lastCheckInReminderSentAt: willCommitments.lastCheckInReminderSentAt,
@@ -826,7 +840,8 @@ export class EndRoomScheduler {
           const userLocalTime = this.getTimeInTimezone(now, willData.userTimezone);
           if (!this.isWithinReminderWindow(userLocalTime, effectiveReminderTime)) continue;
 
-          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId, willData.willTitle || undefined);
+          const dailyDisplayTitle = willData.willTitle || willData.commitmentWhat || willData.willSharedWhat || undefined;
+          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId, dailyDisplayTitle);
           if (success) {
             await db.update(willCommitments).set({ lastCheckInReminderSentAt: now }).where(eq(willCommitments.id, willData.commitmentId));
             remindersSent++;
@@ -844,6 +859,8 @@ export class EndRoomScheduler {
           commitmentId: willCommitments.id,
           willId: wills.id,
           willTitle: wills.title,
+          willSharedWhat: wills.sharedWhat,
+          commitmentWhat: willCommitments.what,
           willStartDate: wills.startDate,
           willEndDate: wills.endDate,
           lastCheckInReminderSentAt: willCommitments.lastCheckInReminderSentAt,
@@ -901,7 +918,8 @@ export class EndRoomScheduler {
 
           if (!this.isWithinReminderWindow(userLocalTime, targetTime)) continue;
 
-          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId, willData.willTitle || undefined);
+          const shortWillDisplayTitle = willData.willTitle || willData.commitmentWhat || willData.willSharedWhat || undefined;
+          const success = await pushNotificationService.sendDailyReminderNotification(willData.userId, willData.willId, shortWillDisplayTitle);
           if (success) {
             await db.update(willCommitments).set({ lastCheckInReminderSentAt: now }).where(eq(willCommitments.id, willData.commitmentId));
             remindersSent++;
