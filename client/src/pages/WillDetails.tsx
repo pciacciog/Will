@@ -316,7 +316,7 @@ export default function WillDetails() {
 
   const { data: unreadData } = useQuery<{ unreadCount: number }>({
     queryKey: ['/api/wills', participantWillId, 'messages', 'unread-count'],
-    queryFn: () => apiRequest(`/api/wills/${participantWillId}/messages/unread-count`),
+    queryFn: async () => { const r = await apiRequest(`/api/wills/${participantWillId}/messages/unread-count`); return r.json(); },
     enabled: !!participantWillId && isPublicWill && !!user,
     refetchInterval: 15000,
   });

@@ -19,7 +19,10 @@ export default function WillMessagesPage({ willId }: WillMessagesPageProps) {
     if (!user || !willId) return;
     apiRequest(`/api/wills/${willId}/messages/mark-read`, { method: 'POST' })
       .then(() => {
-        queryClient.invalidateQueries({ queryKey: ['/api/wills', willId, 'messages', 'unread-count'] });
+        queryClient.invalidateQueries({ predicate: (q) => {
+          const key = q.queryKey;
+          return Array.isArray(key) && key.includes('unread-count') && key.includes('messages');
+        }});
       })
       .catch(() => {});
   }, [willId, user]);
