@@ -30,9 +30,7 @@ type Will = {
 function getDisplayTitle(will: Will, userId?: string): string {
   if (will.title) return will.title;
   const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
-  if (commitment?.what) return commitment.what;
-  if (will.sharedWhat) return will.sharedWhat;
-  return 'Untitled';
+  return commitment?.what || will.sharedWhat || 'Untitled';
 }
 
 function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; userId?: string }) {

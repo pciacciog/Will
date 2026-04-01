@@ -740,7 +740,7 @@ export default function WillDetails() {
               const myCommitment = will?.commitments?.find((c: any) => c.userId === user?.id);
               const displayTitle = will?.title || myCommitment?.what || will?.sharedWhat;
               return displayTitle
-                ? <span className="italic">{displayTitle}</span>
+                ? <span className="font-bold italic">{displayTitle}</span>
                 : <em>Will</em>;
             })()}
           </h1>
