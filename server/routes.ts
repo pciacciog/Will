@@ -867,6 +867,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET unread message count for a public will thread (per current user)
+  app.get('/api/wills/:willId/messages/unread-count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.willId);
+      if (isNaN(willId)) return res.status(400).json({ message: "Invalid will ID" });
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+
+      const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      if (!isPublic) return res.status(400).json({ message: "Messages are only available for public wills" });
+
+      const parentId = (will as any).parentWillId || willId;
+
+      const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+      if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
+
+      const unreadCount = await storage.getWillMessageUnreadCount(userId, parentId);
+      res.json({ unreadCount });
+    } catch (error) {
+      console.error("Error fetching unread message count:", error);
+      res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
+  // POST mark all messages in a public will thread as read
+  app.post('/api/wills/:willId/messages/mark-read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.willId);
+      if (isNaN(willId)) return res.status(400).json({ message: "Invalid will ID" });
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+
+      const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      if (!isPublic) return res.status(400).json({ message: "Messages are only available for public wills" });
+
+      const parentId = (will as any).parentWillId || willId;
+
+      const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+      if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
+
+      await storage.markWillMessagesRead(userId, parentId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      res.status(500).json({ message: "Failed to mark messages as read" });
+    }
+  });
+
   // Will routes
   app.post('/api/wills', isAuthenticated, async (req: any, res) => {
     try {

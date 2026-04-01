@@ -51,6 +51,7 @@ import {
   willMessages,
   type WillMessage,
   type InsertWillMessage,
+  willMessageReads,
   todayEntries,
   type TodayEntry,
   todayItems,
@@ -262,6 +263,8 @@ export interface IStorage {
   getWillMessages(willId: number, limit?: number): Promise<(WillMessage & { user: { firstName: string } })[]>;
   createWillMessage(data: InsertWillMessage): Promise<WillMessage>;
   getWillsByParentId(parentWillId: number): Promise<Will[]>;
+  getWillMessageUnreadCount(userId: string, parentWillId: number): Promise<number>;
+  markWillMessagesRead(userId: string, parentWillId: number): Promise<void>;
 
   getTodayEntry(userId: string, date: string): Promise<TodayEntry | undefined>;
   upsertTodayEntry(userId: string, date: string, content: string): Promise<TodayEntry>;
@@ -2014,6 +2017,40 @@ export class DatabaseStorage implements IStorage {
 
   async getWillsByParentId(parentWillId: number): Promise<Will[]> {
     return await db.select().from(wills).where(eq(wills.parentWillId, parentWillId));
+  }
+
+  async getWillMessageUnreadCount(userId: string, parentWillId: number): Promise<number> {
+    const [readRecord] = await db
+      .select({ lastReadAt: willMessageReads.lastReadAt })
+      .from(willMessageReads)
+      .where(and(eq(willMessageReads.userId, userId), eq(willMessageReads.parentWillId, parentWillId)));
+
+    if (!readRecord) {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(willMessages)
+        .where(eq(willMessages.willId, parentWillId));
+      return Number(result?.count || 0);
+    }
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(willMessages)
+      .where(and(
+        eq(willMessages.willId, parentWillId),
+        sql`${willMessages.createdAt} > ${readRecord.lastReadAt}`
+      ));
+    return Number(result?.count || 0);
+  }
+
+  async markWillMessagesRead(userId: string, parentWillId: number): Promise<void> {
+    await db
+      .insert(willMessageReads)
+      .values({ userId, parentWillId, lastReadAt: new Date() })
+      .onConflictDoUpdate({
+        target: [willMessageReads.userId, willMessageReads.parentWillId],
+        set: { lastReadAt: new Date() },
+      });
   }
 
   async getTodayEntry(userId: string, date: string): Promise<TodayEntry | undefined> {

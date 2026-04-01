@@ -256,6 +256,15 @@ export const willMessages = pgTable("will_messages", {
   index("IDX_will_messages_will_id").on(table.willId),
 ]);
 
+export const willMessageReads = pgTable("will_message_reads", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  parentWillId: integer("parent_will_id").notNull().references(() => wills.id),
+  lastReadAt: timestamp("last_read_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("IDX_will_message_reads_user_will").on(table.userId, table.parentWillId),
+]);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   circleMembers: many(circleMembers),
@@ -597,6 +606,8 @@ export const insertWillMessageSchema = createInsertSchema(willMessages).omit({
 });
 export type InsertWillMessage = z.infer<typeof insertWillMessageSchema>;
 export type WillMessage = typeof willMessages.$inferSelect;
+
+export type WillMessageRead = typeof willMessageReads.$inferSelect;
 
 export const todayEntries = pgTable("today_entries", {
   id: serial("id").primaryKey(),

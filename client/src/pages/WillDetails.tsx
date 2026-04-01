@@ -14,7 +14,6 @@ import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
 import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, ChevronLeft, X, MessageCircle, Rocket, Bell } from "lucide-react";
-import WillMessages from "@/components/WillMessages";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
@@ -314,6 +313,14 @@ export default function WillDetails() {
 
   const isPublicWill = will?.visibility === 'public' || !!will?.parentWillId;
   const participantWillId = will?.parentWillId || will?.id;
+
+  const { data: unreadData } = useQuery<{ unreadCount: number }>({
+    queryKey: ['/api/wills', participantWillId, 'messages', 'unread-count'],
+    queryFn: () => fetch(`/api/wills/${participantWillId}/messages/unread-count`, { credentials: 'include' }).then(r => r.json()),
+    enabled: !!participantWillId && isPublicWill && !!user,
+    refetchInterval: 15000,
+  });
+  const unreadCount = unreadData?.unreadCount ?? 0;
 
   const { data: participantsData } = useQuery<{ participants: { id: string; firstName: string }[]; totalCount: number; creatorName: string }>({
     queryKey: [`/api/wills/${participantWillId}/participants`],
@@ -741,7 +748,22 @@ export default function WillDetails() {
               ? <span className="font-bold italic">{willDisplayTitle(will, user?.id)}</span>
               : <em>Will</em>}
           </h1>
-          <div className="w-11"></div>
+          {isPublicWill && participantsData && participantsData.totalCount > 1 && user ? (
+            <button
+              onClick={() => setLocation(`/will/${participantWillId}/messages`)}
+              className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md active:scale-95 transition-transform"
+              data-testid="button-will-messages-chat"
+            >
+              <MessageCircle className="w-5 h-5 text-white" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+          ) : (
+            <div className="w-11"></div>
+          )}
         </div>
         
         {/* Status Badge */}
@@ -998,27 +1020,6 @@ export default function WillDetails() {
           </button>
         )}
 
-        {/* Public Will Inline Chat */}
-        {isPublicWill && ['active', 'committed', 'pending', 'scheduled', 'paused', 'will_review'].includes(will.status) && participantsData && participantsData.totalCount > 1 && user && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-blue-600" />
-                <span className="text-base font-semibold text-gray-900">Messages</span>
-              </div>
-              <button
-                onClick={() => setLocation(`/will/${id}/messages`)}
-                className="text-sm text-blue-600 font-medium hover:text-blue-700"
-                data-testid="button-will-messages-expand"
-              >
-                Full Screen
-              </button>
-            </div>
-            <div className="h-[350px]">
-              <WillMessages willId={participantWillId!} currentUserId={user.id} />
-            </div>
-          </div>
-        )}
 
         {/* Commitment Details - Solo Mode */}
         {will.status !== 'will_review' && isSoloMode && will.commitments?.[0] && (

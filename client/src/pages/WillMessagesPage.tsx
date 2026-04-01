@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import WillMessages from "@/components/WillMessages";
+import { apiRequest } from "@/lib/queryClient";
 
 interface WillMessagesPageProps {
   willId: number;
@@ -10,6 +13,16 @@ interface WillMessagesPageProps {
 export default function WillMessagesPage({ willId }: WillMessagesPageProps) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!user || !willId) return;
+    apiRequest(`/api/wills/${willId}/messages/mark-read`, { method: 'POST' })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/wills', willId, 'messages', 'unread-count'] });
+      })
+      .catch(() => {});
+  }, [willId, user]);
 
   if (!user) return null;
 
