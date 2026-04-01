@@ -1,0 +1,58 @@
+Public Will Messages — Collapse to Nav Bar Chat Icon
+
+What we're changing
+On the public Will details screen (WillDetails.tsx), the Messages section currently renders as a large embedded card with a chat input, taking up significant vertical space and forcing the rest of the screen (Your Commitment, Daily Check-in, Daily Progress, Manage Will) to scroll.
+We are removing the embedded Messages card entirely and replacing it with a chat icon button in the nav bar — identical in style to the Circle Chat button in InnerCircleHub.tsx. Tapping it opens the full message thread as a modal or sheet. When there are unread messages, a red badge with the unread count appears on the icon.
+
+Nav bar change
+The Will Details nav bar currently has:
+
+Left: back button
+Center: "Will" title (note: this will already be displayTitle after the Will Titles feature is implemented)
+Right: nothing
+
+After this change:
+
+Left: back button
+Center: displayTitle
+Right: green rounded square chat icon button — same style as Circle Chat (#1a9e75 background, border-radius: 10px, width: 38px, height: 38px, white chat bubble SVG icon)
+
+When unread messages exist, overlay a red badge on the top-right corner of the icon:
+
+Badge: width: 18px, height: 18px, border-radius: 50%, background: #e74c3c, border: 2px solid white
+Shows the unread count as white text (font-size: 9px, font-weight: 700)
+If unread count exceeds 9, show 9+
+If zero unread messages, badge is hidden entirely — do not show a 0 badge
+
+
+Remove the Messages card
+In WillDetails.tsx, remove the entire Messages card section — the card wrapper, the message list, the date separators, the "Full Screen" link, and the message input (Type a message... + send button). All of this is replaced by the modal triggered from the nav bar icon.
+
+Chat modal
+Tapping the nav bar chat icon opens the existing full-screen message thread as a modal sheet (the same view currently accessible via the "Full Screen" link). This view already exists — we are not rebuilding it. We are simply making it the only entry point.
+On open, mark all messages in this Will's thread as read and clear the unread badge.
+
+Unread message count
+Add an unread message count to the Will details data. The count represents messages in this Will's thread that the current user has not yet seen.
+Backend: Add a GET /api/wills/:willId/messages/unread-count endpoint that returns:
+json{ "unreadCount": 3 }
+Auth: JWT required. Count is per-user — only messages sent after the user's last-read timestamp for this thread.
+Alternatively, if an existing read-receipts or last-read mechanism already exists in the codebase, use that instead of adding a new endpoint. Check server/routes.ts before adding anything new.
+iOS / client: Poll or fetch this count when the Will Details screen loads and when the app returns to foreground. Store it in local component state. Pass it to the nav bar badge.
+When the chat modal is dismissed, refetch the unread count (should return 0) and update the badge accordingly.
+
+Relevant files
+
+client/src/pages/WillDetails.tsx — remove Messages card, add chat icon to nav bar, wire unread badge
+client/src/pages/InnerCircleHub.tsx — reference for chat icon style and modal open behavior
+server/routes.ts — add unread count endpoint if one doesn't already exist
+
+
+Build order
+
+Check if an unread count or last-read mechanism already exists in server/routes.ts — use it if so, add the new endpoint only if needed
+Remove the embedded Messages card from WillDetails.tsx
+Add the chat icon button to the nav bar in WillDetails.tsx, matching InnerCircleHub.tsx style exactly
+Wire the unread badge — fetch count on load, show/hide based on value, clear on modal open
+Verify the full-screen message thread modal opens correctly from the new entry point
+Verify badge clears after opening and re-appears if new messages arrive
