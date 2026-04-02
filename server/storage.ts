@@ -269,8 +269,8 @@ export interface IStorage {
   getTodayEntry(userId: string, date: string): Promise<TodayEntry | undefined>;
   upsertTodayEntry(userId: string, date: string, content: string): Promise<TodayEntry>;
 
-  getTodayItems(userId: string, date: string): Promise<TodayItem[]>;
-  createTodayItem(userId: string, date: string, content: string, sortOrder: number): Promise<TodayItem>;
+  getTodayItems(userId: string, date: string, context?: string): Promise<TodayItem[]>;
+  createTodayItem(userId: string, date: string, content: string, sortOrder: number, context?: string): Promise<TodayItem>;
   deleteTodayItem(itemId: number, userId: string): Promise<void>;
   toggleTodayItem(itemId: number, userId: string, checked: boolean): Promise<TodayItem>;
 
@@ -2074,15 +2074,15 @@ export class DatabaseStorage implements IStorage {
     return entry;
   }
 
-  async getTodayItems(userId: string, date: string): Promise<TodayItem[]> {
+  async getTodayItems(userId: string, date: string, context: string = 'personal'): Promise<TodayItem[]> {
     return db.select().from(todayItems)
-      .where(and(eq(todayItems.userId, userId), eq(todayItems.date, date)))
+      .where(and(eq(todayItems.userId, userId), eq(todayItems.date, date), eq(todayItems.context, context)))
       .orderBy(todayItems.sortOrder);
   }
 
-  async createTodayItem(userId: string, date: string, content: string, sortOrder: number): Promise<TodayItem> {
+  async createTodayItem(userId: string, date: string, content: string, sortOrder: number, context: string = 'personal'): Promise<TodayItem> {
     const [item] = await db.insert(todayItems)
-      .values({ userId, date, content, sortOrder })
+      .values({ userId, date, content, sortOrder, context })
       .returning();
     return item;
   }

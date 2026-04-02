@@ -3891,7 +3891,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
       }
-      const items = await storage.getTodayItems(userId, date);
+      const context = (req.query.context as string) || 'personal';
+      const items = await storage.getTodayItems(userId, date, context);
       res.json(items);
     } catch (error) {
       console.error("Error fetching today items:", error);
@@ -3906,16 +3907,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
       }
+      const context = req.body.context || 'personal';
       const parsed = insertTodayItemSchema.parse({
         userId,
         date,
         content: req.body.content,
         sortOrder: req.body.sortOrder ?? 0,
+        context,
       });
       if (!parsed.content || parsed.content.trim().length === 0) {
         return res.status(400).json({ message: "Content is required." });
       }
-      const item = await storage.createTodayItem(userId, date, parsed.content.trim(), parsed.sortOrder);
+      const item = await storage.createTodayItem(userId, date, parsed.content.trim(), parsed.sortOrder, context);
       res.json(item);
     } catch (error: any) {
       if (error?.name === 'ZodError') {

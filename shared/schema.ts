@@ -635,6 +635,7 @@ export const todayItems = pgTable("today_items", {
   content: text("content").notNull(),
   sortOrder: integer("sort_order").notNull().default(0),
   checked: boolean("checked").notNull().default(false),
+  context: text("context").notNull().default("personal"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("IDX_today_items_user_date").on(table.userId, table.date),

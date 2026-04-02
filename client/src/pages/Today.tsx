@@ -1,18 +1,26 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getQueryFn, apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { ChevronLeft, X } from "lucide-react";
+import { X, Check } from "lucide-react";
+import { UnifiedBackButton } from "@/components/ui/design-system";
 
 type TodayItem = {
   id: number;
   content: string;
   sortOrder: number;
   checked: boolean;
+  context: string;
 };
 
 type Tab = "today" | "tomorrow";
+type Context = "personal" | "work";
+
+const CONTEXT_COLORS: Record<Context, string> = {
+  personal: "#1a9e75",
+  work: "#4a7fd4",
+};
 
 function getTodayDate(): string {
   const now = new Date();
@@ -43,10 +51,12 @@ function formatDateDisplay(dateStr: string): string {
 
 const SwipeableItem = memo(function SwipeableItem({
   item,
+  context,
   onDelete,
   onToggle,
 }: {
   item: TodayItem;
+  context: Context;
   onDelete: () => void;
   onToggle: (checked: boolean) => void;
 }) {
@@ -54,6 +64,7 @@ const SwipeableItem = memo(function SwipeableItem({
   const [swiping, setSwiping] = useState(false);
   const startXRef = useRef(0);
   const currentXRef = useRef(0);
+  const activeColor = CONTEXT_COLORS[context];
 
   const handleTouchStart = (e: React.TouchEvent) => {
     startXRef.current = e.touches[0].clientX;
@@ -106,18 +117,20 @@ const SwipeableItem = memo(function SwipeableItem({
       >
         <button
           onClick={() => onToggle(!item.checked)}
-          className="flex-shrink-0 rounded-full focus:outline-none"
+          className="flex-shrink-0 rounded-full focus:outline-none flex items-center justify-center"
           style={{
             width: 15,
             height: 15,
-            border: `1px solid ${item.checked ? "#E9A84C" : "#D1D5DB"}`,
-            backgroundColor: item.checked ? "#E9A84C" : "transparent",
+            border: `1px solid ${item.checked ? activeColor : "#D1D5DB"}`,
+            backgroundColor: item.checked ? activeColor : "transparent",
             transform: item.checked ? "scale(1.08)" : "scale(1)",
             transition: "background-color 0.35s ease, border-color 0.35s ease, transform 0.2s ease",
           }}
           data-testid={`button-check-item-${item.id}`}
           aria-label={item.checked ? "Unacknowledge" : "Acknowledge"}
-        />
+        >
+          {item.checked && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+        </button>
 
         <div className="relative flex-1 overflow-hidden">
           <p
@@ -161,14 +174,16 @@ const SwipeableItem = memo(function SwipeableItem({
 function AddIntentionInput({
   activeTab,
   activeDate,
+  context,
   itemCount,
   onAdd,
   focusTrigger,
 }: {
   activeTab: Tab;
   activeDate: string;
+  context: Context;
   itemCount: number;
-  onAdd: (content: string, date: string) => void;
+  onAdd: (content: string, date: string, context: Context) => void;
   focusTrigger: number;
 }) {
   const [value, setValue] = useState("");
@@ -184,10 +199,21 @@ function AddIntentionInput({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && value.trim()) {
       e.preventDefault();
-      onAdd(value.trim(), activeDate);
+      onAdd(value.trim(), activeDate, context);
       setValue("");
     }
   };
+
+  const placeholder =
+    itemCount === 0
+      ? context === "work"
+        ? "Add a work intention..."
+        : activeTab === "today"
+        ? "What's on your heart today..."
+        : "What will you do tomorrow..."
+      : context === "work"
+      ? "Add a work intention..."
+      : "Add another...";
 
   return (
     <div className="flex items-center gap-3" style={{ paddingTop: 14, paddingBottom: 14 }}>
@@ -198,13 +224,7 @@ function AddIntentionInput({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={
-          itemCount === 0
-            ? activeTab === "today"
-              ? "What's on your heart today..."
-              : "What will you do tomorrow..."
-            : "Add another..."
-        }
+        placeholder={placeholder}
         className="flex-1 bg-transparent text-gray-800 text-[17px] leading-relaxed outline-none placeholder:text-gray-300 placeholder:italic"
         data-testid="input-today-new-item"
       />
@@ -216,62 +236,72 @@ export default function Today() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("today");
+  const [context, setContext] = useState<Context>(() => {
+    return (localStorage.getItem("today_context") as Context) ?? "personal";
+  });
   const [focusTrigger, setFocusTrigger] = useState(0);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    localStorage.setItem("today_context", context);
+  }, [context]);
 
   const todayDate = getTodayDate();
   const tomorrowDate = getTomorrowDate();
   const activeDate = activeTab === "today" ? todayDate : tomorrowDate;
 
   const { data: items = [], isLoading } = useQuery<TodayItem[]>({
-    queryKey: [`/api/today/${activeDate}/items`],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryKey: ["/api/today", activeDate, context, "items"],
+    queryFn: async () => {
+      const r = await apiRequest(`/api/today/${activeDate}/items?context=${context}`);
+      return r.json();
+    },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
   const addItemMutation = useMutation({
-    mutationFn: async ({ content, date }: { content: string; date: string }) => {
-      const currentItems = queryClient.getQueryData<TodayItem[]>([`/api/today/${date}/items`]) || [];
+    mutationFn: async ({ content, date, ctx }: { content: string; date: string; ctx: Context }) => {
+      const currentItems = queryClient.getQueryData<TodayItem[]>(["/api/today", date, ctx, "items"]) || [];
       return apiRequest(`/api/today/${date}/items`, {
         method: "POST",
-        body: { content, sortOrder: currentItems.length },
+        body: { content, sortOrder: currentItems.length, context: ctx },
       });
     },
-    onSuccess: (_data, { date }) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/today/${date}/items`] });
+    onSuccess: (_data, { date, ctx }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/today", date, ctx, "items"] });
     },
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: async ({ itemId }: { itemId: number; date: string }) => {
+    mutationFn: async ({ itemId }: { itemId: number; date: string; ctx: Context }) => {
       return apiRequest(`/api/today/items/${itemId}`, { method: "DELETE" });
     },
-    onSuccess: (_data, { date }) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/today/${date}/items`] });
+    onSuccess: (_data, { date, ctx }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/today", date, ctx, "items"] });
     },
   });
 
   const toggleItemMutation = useMutation({
-    mutationFn: async ({ itemId, checked }: { itemId: number; checked: boolean; date: string }) => {
+    mutationFn: async ({ itemId, checked }: { itemId: number; checked: boolean; date: string; ctx: Context }) => {
       return apiRequest(`/api/today/items/${itemId}/toggle`, {
         method: "PATCH",
         body: { checked },
       });
     },
-    onMutate: async ({ itemId, checked, date }) => {
-      const key = [`/api/today/${date}/items`];
+    onMutate: async ({ itemId, checked, date, ctx }) => {
+      const key = ["/api/today", date, ctx, "items"];
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<TodayItem[]>(key);
       queryClient.setQueryData<TodayItem[]>(key, (old) =>
         (old || []).map((item) => (item.id === itemId ? { ...item, checked } : item))
       );
-      return { previous, date };
+      return { previous, date, ctx };
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previous && context.date) {
-        queryClient.setQueryData([`/api/today/${context.date}/items`], context.previous);
+    onError: (_err, _vars, rollback) => {
+      if (rollback?.previous) {
+        queryClient.setQueryData(["/api/today", rollback.date, rollback.ctx, "items"], rollback.previous);
       }
     },
   });
@@ -281,16 +311,21 @@ export default function Today() {
     setFocusTrigger((n) => n + 1);
   };
 
-  const handleAdd = useCallback((content: string, date: string) => {
-    addItemMutation.mutate({ content, date });
+  const handleContextSwitch = (ctx: Context) => {
+    setContext(ctx);
+    setFocusTrigger((n) => n + 1);
+  };
+
+  const handleAdd = useCallback((content: string, date: string, ctx: Context) => {
+    addItemMutation.mutate({ content, date, ctx });
   }, []);
 
-  const handleDelete = useCallback((itemId: number, date: string) => {
-    deleteItemMutation.mutate({ itemId, date });
+  const handleDelete = useCallback((itemId: number, date: string, ctx: Context) => {
+    deleteItemMutation.mutate({ itemId, date, ctx });
   }, []);
 
-  const handleToggle = useCallback((itemId: number, checked: boolean, date: string) => {
-    toggleItemMutation.mutate({ itemId, checked, date });
+  const handleToggle = useCallback((itemId: number, checked: boolean, date: string, ctx: Context) => {
+    toggleItemMutation.mutate({ itemId, checked, date, ctx });
   }, []);
 
   if (isLoading && items.length === 0) {
@@ -301,80 +336,140 @@ export default function Today() {
     );
   }
 
+  const activeColor = CONTEXT_COLORS[context];
+
   return (
-    <div className="min-h-screen bg-[#FFFDF9] flex flex-col">
-      <div className="pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] flex flex-col flex-1">
-        <div className="px-5 pt-4 pb-3">
+    <div className="h-[100dvh] bg-[#FFFDF9] flex flex-col overflow-hidden">
+      {/* Safe area top */}
+      <div style={{ height: "calc(env(safe-area-inset-top, 0px) + 0.75rem)", flexShrink: 0 }} />
+
+      {/* Nav bar */}
+      <div className="px-4 flex items-center justify-between mb-2 min-h-[44px] flex-shrink-0">
+        <UnifiedBackButton
+          onClick={() => setLocation("/")}
+          testId="button-back-home"
+        />
+        <h1 className="absolute left-0 right-0 text-center text-xl font-semibold pointer-events-none" data-testid="text-today-title">
+          I Will<span style={{ color: "#E9A84C" }}>:</span>
+        </h1>
+        <div className="w-11" />
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-5">
+        <p className="text-sm text-gray-400 mb-4 mt-1" data-testid="text-today-date">
+          {formatDateDisplay(activeDate)}
+        </p>
+
+        {/* Today / Tomorrow pill toggle */}
+        <div
+          className="flex rounded-full p-[3px] mb-4"
+          style={{ backgroundColor: "#f0ece6" }}
+          data-testid="toggle-today-tomorrow"
+        >
           <button
-            onClick={() => setLocation("/")}
-            className="flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors mb-4"
-            data-testid="button-back-home"
+            onClick={() => handleTabSwitch("today")}
+            className="flex-1 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+            style={
+              activeTab === "today"
+                ? { backgroundColor: "white", color: "#1F2937", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                : { color: "#9CA3AF" }
+            }
+            data-testid="tab-today"
           >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm">Home</span>
+            Today
           </button>
-
-          <div className="mb-1">
-            <h1 className="text-2xl font-semibold text-gray-900" data-testid="text-today-title">
-              I will<span style={{ color: "#E9A84C" }}>:</span>
-            </h1>
-          </div>
-
-          <p className="text-sm text-gray-400 mb-4" data-testid="text-today-date">
-            {formatDateDisplay(activeDate)}
-          </p>
-
-          <div
-            className="flex rounded-full p-[3px]"
-            style={{ backgroundColor: "#f0ece6" }}
-            data-testid="toggle-today-tomorrow"
+          <button
+            onClick={() => handleTabSwitch("tomorrow")}
+            className="flex-1 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+            style={
+              activeTab === "tomorrow"
+                ? { backgroundColor: "white", color: "#1F2937", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                : { color: "#9CA3AF" }
+            }
+            data-testid="tab-tomorrow"
           >
-            <button
-              onClick={() => handleTabSwitch("today")}
-              className="flex-1 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
-              style={
-                activeTab === "today"
-                  ? { backgroundColor: "white", color: "#1F2937", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
-                  : { color: "#9CA3AF" }
-              }
-              data-testid="tab-today"
-            >
-              Today
-            </button>
-            <button
-              onClick={() => handleTabSwitch("tomorrow")}
-              className="flex-1 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
-              style={
-                activeTab === "tomorrow"
-                  ? { backgroundColor: "white", color: "#1F2937", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
-                  : { color: "#9CA3AF" }
-              }
-              data-testid="tab-tomorrow"
-            >
-              Tomorrow
-            </button>
-          </div>
+            Tomorrow
+          </button>
         </div>
 
-        <div className="flex-1 px-5 pb-4">
-          <div data-testid="list-today-items">
-            {items.map((item) => (
-              <SwipeableItem
-                key={item.id}
-                item={item}
-                onDelete={() => handleDelete(item.id, activeDate)}
-                onToggle={(checked) => handleToggle(item.id, checked, activeDate)}
-              />
-            ))}
-          </div>
+        {/* Items list */}
+        <div data-testid="list-today-items">
+          {items.map((item) => (
+            <SwipeableItem
+              key={item.id}
+              item={item}
+              context={context}
+              onDelete={() => handleDelete(item.id, activeDate, context)}
+              onToggle={(checked) => handleToggle(item.id, checked, activeDate, context)}
+            />
+          ))}
+        </div>
 
-          <AddIntentionInput
-            activeTab={activeTab}
-            activeDate={activeDate}
-            itemCount={items.length}
-            onAdd={handleAdd}
-            focusTrigger={focusTrigger}
-          />
+        <AddIntentionInput
+          activeTab={activeTab}
+          activeDate={activeDate}
+          context={context}
+          itemCount={items.length}
+          onAdd={handleAdd}
+          focusTrigger={focusTrigger}
+        />
+
+        {/* Bottom padding so last item clears the footer */}
+        <div style={{ height: 80 }} />
+      </div>
+
+      {/* Fixed footer — Personal / Work toggle */}
+      <div
+        className="flex-shrink-0"
+        style={{
+          background: "#FFFDF9",
+          borderTop: "1px solid #e8e6e0",
+          padding: "8px 14px 18px",
+          paddingBottom: `calc(18px + env(safe-area-inset-bottom, 0px))`,
+        }}
+      >
+        <div
+          className="flex rounded-full"
+          style={{ backgroundColor: "#eeece6", padding: 4, borderRadius: 30 }}
+          data-testid="toggle-personal-work"
+        >
+          <button
+            onClick={() => handleContextSwitch("personal")}
+            className="flex-1 transition-all duration-200"
+            style={{
+              borderRadius: 26,
+              padding: "9px 0",
+              fontSize: 13,
+              fontWeight: context === "personal" ? 600 : 500,
+              color: context === "personal" ? "white" : "#aaa",
+              backgroundColor: context === "personal" ? CONTEXT_COLORS.personal : "transparent",
+              boxShadow: context === "personal" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+            data-testid="tab-personal"
+          >
+            Personal
+          </button>
+          <button
+            onClick={() => handleContextSwitch("work")}
+            className="flex-1 transition-all duration-200"
+            style={{
+              borderRadius: 26,
+              padding: "9px 0",
+              fontSize: 13,
+              fontWeight: context === "work" ? 600 : 500,
+              color: context === "work" ? "white" : "#aaa",
+              backgroundColor: context === "work" ? CONTEXT_COLORS.work : "transparent",
+              boxShadow: context === "work" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+            data-testid="tab-work"
+          >
+            Work
+          </button>
         </div>
       </div>
     </div>
