@@ -1,0 +1,113 @@
+Today Screen — Personal / Work Toggle
+
+Concept
+The Today screen currently shows one flat list of intentions. We are adding a Personal / Work toggle at the bottom of the screen so users can keep their personal and work intentions completely separate. Same screen, same UI, same Today/Tomorrow toggle at the top — just two isolated contexts switchable from a fixed footer toggle.
+This is a context switch, not a filter. Personal intentions and Work intentions are entirely separate lists. Adding something in Personal never appears in Work and vice versa. Please refer to the screenshots attached footthe updated design. Also, please capitalize the letter “w” in “I will:” title text. Should read: “I Will:”
+
+UI changes
+Bottom toggle — fixed footer
+Add a fixed footer at the bottom of the Today screen, visually separated from the scrollable list by a subtle top border:
+
+
+┌─────────────────────────────────┐
+│  background: same as page       │
+│  border-top: 1px solid #e8e6e0  │
+│  padding: 8px 14px 18px         │
+│                                 │
+│  [ Personal ]  [   Work   ]     │
+│   green fill     gray text      │
+└─────────────────────────────────┘
+Toggle pill style — matches the existing Today/Tomorrow toggle at the top exactly:
+* Container: background: #eeece6, border-radius: 30px, padding: 4px
+* Active side: filled, border-radius: 26px, padding: 9px, font-size: 13px, font-weight: 600, white text
+* Inactive side: no fill, font-size: 13px, font-weight: 500, color: #aaa
+* Personal active: background: #1a9e75
+* Work active: background: #4a7fd4
+The scrollable list must not be hidden behind the footer — add paddingBottom to the list container equal to the footer height so the last intention is always fully visible above the toggle.
+
+Nav bar
+The existing "‹ Home" floating text nav needs to be replaced with a proper structured nav bar matching the rest of the app: use the same structured back button that is already present on other screens.
+
+Data model
+Add a context field to the intentions/today items table:
+
+
+ts
+context: text("context").default("personal").notNull() // 'personal' | 'work'
+Run npx drizzle-kit push after updating the schema.
+All existing intentions without a context value default to 'personal' automatically via the column default.
+
+State
+Add a context state to Today.tsx:
+
+
+ts
+const [context, setContext] = useState<'personal' | 'work'>('personal');
+Persist this to localStorage so the user's last selected context is remembered between sessions:
+
+
+ts
+const [context, setContext] = useState<'personal' | 'work'>(() => {
+  return (localStorage.getItem('today_context') as 'personal' | 'work') ?? 'personal';
+});
+
+useEffect(() => {
+  localStorage.setItem('today_context', context);
+}, [context]);
+
+Data fetching
+Pass context as a query parameter when fetching today's intentions:
+
+
+ts
+const { data } = useQuery(
+  ['intentions', activeDate, context],
+  () => fetchIntentions({ date: activeDate, context }),
+  { staleTime: 5 * 60 * 1000 }
+);
+The query key includes context so switching the toggle automatically loads the correct list without any manual refresh.
+
+Backend changes
+GET /api/intentions
+Accept an optional context query param (personal | work). Filter results by context. If no context param is provided, default to personal for backwards compatibility.
+POST /api/intentions
+Accept context in the request body. Store it on the intention record. Default to personal if not provided.
+PATCH /api/intentions/:id
+No change needed — context is set at creation and never changes.
+
+Checklist behavior per context
+The Today/Tomorrow toggle at the top operates independently per context:
+* Personal·Today, Personal·Tomorrow, Work·Today, Work·Tomorrow are four completely independent lists
+* Switching context while on Tomorrow stays on Tomorrow — the two toggles are independent axes
+The midnight reset applies to both contexts — both Personal·Today and Work·Today reset at midnight.
+The AddIntentionInput (already extracted) submits with the current active context value passed as a prop:
+
+
+tsx
+<AddIntentionInput
+  onAdd={(text) => createIntention({ text, context })}
+  placeholder={context === 'work' ? 'Add a work intention...' : 'Add another...'}
+/>
+
+Visual feedback on context switch
+When the toggle is tapped, the active checked item indicators follow the context color:
+* Personal context: checked items use green (#1a9e75) checkbox fill
+* Work context: checked items use blue (#4a7fd4) checkbox fill
+This gives the whole list a subtle contextual identity beyond just the toggle itself.
+
+Files to create or modify
+File	Change
+shared/schema.ts	Add context field to intentions table
+server/routes.ts	Update GET and POST intentions to handle context param
+client/src/pages/Today.tsx	Add context state, pass to query and input, add footer toggle, fix nav bar
+client/src/components/AddIntentionInput.tsx	Accept and pass context prop
+client/src/components/SwipeableItem.tsx	Accept context prop to drive checkbox fill color
+Build order
+1. Schema change → npx drizzle-kit push
+2. Update GET and POST intention endpoints to handle context
+3. Add context state to Today.tsx with localStorage persistence
+4. Update query key and fetch call to include context
+5. Add footer toggle UI
+6. Fix nav bar structure
+7. Update AddIntentionInput to pass context on submit
+8. Update SwipeableItem checkbox color to follow context
