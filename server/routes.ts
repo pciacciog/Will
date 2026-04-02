@@ -3891,7 +3891,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
       }
-      const context = (req.query.context as string) || 'personal';
+      const rawContext = req.query.context as string;
+      const context = rawContext === 'work' ? 'work' : 'personal';
       const items = await storage.getTodayItems(userId, date, context);
       res.json(items);
     } catch (error) {
@@ -3907,7 +3908,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
       }
-      const context = req.body.context || 'personal';
+      const rawContextPost = req.body.context;
+      const context = rawContextPost === 'work' ? 'work' : 'personal';
       const parsed = insertTodayItemSchema.parse({
         userId,
         date,

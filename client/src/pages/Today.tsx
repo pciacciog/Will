@@ -237,7 +237,8 @@ export default function Today() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("today");
   const [context, setContext] = useState<Context>(() => {
-    return (localStorage.getItem("today_context") as Context) ?? "personal";
+    const stored = localStorage.getItem("today_context");
+    return stored === "personal" || stored === "work" ? stored : "personal";
   });
   const [focusTrigger, setFocusTrigger] = useState(0);
   const queryClient = useQueryClient();
