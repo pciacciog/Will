@@ -1,0 +1,64 @@
+The problem
+The Today screen feels unresponsive and laggy compared to the rest of the app. Tapping a checkbox often requires a double tap to register, and there is a noticeable delay between tapping and seeing any visual change. Every tap should feel instant and native.
+There are potentially two layers to this problem but we need you to investigate the actual code before applying fixes — do not assume the cause.
+
+Step 1 — Apply the one fix we are certain about
+This is a known Capacitor/WebView issue that affects the entire app and costs nothing to add. In the global stylesheet (client/src/index.css or equivalent), add:
+css* {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+WebViews have a built-in 300ms tap delay designed to detect double-tap zoom gestures. touch-action: manipulation eliminates this delay globally. Apply this regardless of what the investigation finds.
+
+Step 2 — Investigate Today.tsx and report back
+Before applying any further fixes, open client/src/pages/Today.tsx and examine the following. For each point, report what you actually find:
+A. Checkbox toggle handler
+
+When a checkbox is tapped, does the UI update immediately or does it wait for an API response first?
+Is there a refetch(), invalidateQueries(), or any equivalent being called after a toggle?
+Is there a loading or disabled state being applied to the list while a request is in flight?
+
+B. "Add another..." input
+
+Does the input field share state with the intention list?
+Does typing in the input cause the intention list to re-render?
+
+C. List rendering
+
+Are intention rows wrapped in React.memo?
+Is the toggle handler wrapped in useCallback?
+
+D. Midnight reset logic
+
+Is the midnight reset timer inside a useEffect? What is its dependency array?
+Is any date comparison or timer recalculating on every render?
+
+E. React Query / data fetching
+
+What is the staleTime on the intentions query if React Query is being used?
+Does the list refetch when the screen regains focus?
+
+F. Anything else
+
+Are there any animations, transitions, or scroll listeners on this screen that could be blocking touch events?
+Is there anything else in the component that looks like it could be causing unnecessary re-renders or blocking the main thread?
+
+
+Step 3 — Apply fixes based on what you find
+Once you have reported the findings from Step 2, apply the appropriate fixes. Common fixes depending on what you find:
+If the toggle waits for API response before updating UI:
+Refactor to optimistic update — flip local state immediately, sync to backend silently, roll back only on failure.
+If refetch/invalidateQueries is called after every toggle:
+Remove it. Optimistic local state is sufficient. The list should never rebuild from the network on a tap.
+If the input shares state with the list:
+Extract the input into its own isolated component with its own local state so typing never triggers a list re-render.
+If no memoization exists:
+Wrap rows in React.memo and the toggle handler in useCallback.
+If the midnight reset recalculates on every render:
+Move it into a useEffect with an empty dependency array so it runs once on mount only.
+If React Query staleTime is 0 or undefined:
+Set it to at least 5 minutes so the list does not silently refetch on focus.
+
+Files to touch
+FileChangeclient/src/index.cssAdd global touch-action: manipulation — do this immediatelyclient/src/pages/Today.tsxInvestigate first, fix based on findingsclient/src/components/AddIntentionInput.tsxExtract input only if investigation confirms it is causing re-renders
+Do not modify any backend files, schema, or any screen other than Today until the investigation is complete. Report findings before applying any Today-specific fixes.

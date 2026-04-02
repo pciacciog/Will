@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQueryFn, apiRequest } from "@/lib/queryClient";
@@ -41,7 +41,7 @@ function formatDateDisplay(dateStr: string): string {
   });
 }
 
-function SwipeableItem({
+const SwipeableItem = memo(function SwipeableItem({
   item,
   onDelete,
   onToggle,
@@ -85,7 +85,6 @@ function SwipeableItem({
       style={{ borderBottom: "0.5px solid #f0ece6" }}
       data-testid={`today-item-wrapper-${item.id}`}
     >
-      {/* Swipe-to-delete reveal */}
       <div
         className="absolute inset-y-0 right-0 w-24 bg-red-400 flex items-center justify-center"
         style={{ opacity: offsetX < -10 ? 1 : 0, transition: swiping ? "none" : "opacity 0.2s" }}
@@ -105,7 +104,6 @@ function SwipeableItem({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Circle acknowledgment button — smaller, lighter */}
         <button
           onClick={() => onToggle(!item.checked)}
           className="flex-shrink-0 rounded-full focus:outline-none"
@@ -121,7 +119,6 @@ function SwipeableItem({
           aria-label={item.checked ? "Unacknowledge" : "Acknowledge"}
         />
 
-        {/* Text with animated strikethrough */}
         <div className="relative flex-1 overflow-hidden">
           <p
             className="text-[17px] leading-relaxed"
@@ -134,7 +131,6 @@ function SwipeableItem({
           >
             {item.content}
           </p>
-          {/* Strikethrough line — draws across slowly */}
           <span
             className="absolute left-0 pointer-events-none"
             style={{
@@ -149,7 +145,6 @@ function SwipeableItem({
           />
         </div>
 
-        {/* Desktop delete button */}
         <button
           onClick={onDelete}
           className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-400 flex-shrink-0"
@@ -161,14 +156,67 @@ function SwipeableItem({
       </div>
     </div>
   );
+});
+
+function AddIntentionInput({
+  activeTab,
+  activeDate,
+  itemCount,
+  onAdd,
+  focusTrigger,
+}: {
+  activeTab: Tab;
+  activeDate: string;
+  itemCount: number;
+  onAdd: (content: string, date: string) => void;
+  focusTrigger: number;
+}) {
+  const [value, setValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [focusTrigger]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && value.trim()) {
+      e.preventDefault();
+      onAdd(value.trim(), activeDate);
+      setValue("");
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3" style={{ paddingTop: 14, paddingBottom: 14 }}>
+      <span style={{ width: 15, height: 15, flexShrink: 0 }} />
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={
+          itemCount === 0
+            ? activeTab === "today"
+              ? "What's on your heart today..."
+              : "What will you do tomorrow..."
+            : "Add another..."
+        }
+        className="flex-1 bg-transparent text-gray-800 text-[17px] leading-relaxed outline-none placeholder:text-gray-300 placeholder:italic"
+        data-testid="input-today-new-item"
+      />
+    </div>
+  );
 }
 
 export default function Today() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("today");
-  const [inputValue, setInputValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [focusTrigger, setFocusTrigger] = useState(0);
   const queryClient = useQueryClient();
 
   const todayDate = getTodayDate();
@@ -179,6 +227,8 @@ export default function Today() {
     queryKey: [`/api/today/${activeDate}/items`],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const addItemMutation = useMutation({
@@ -195,7 +245,7 @@ export default function Today() {
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: async ({ itemId, date }: { itemId: number; date: string }) => {
+    mutationFn: async ({ itemId }: { itemId: number; date: string }) => {
       return apiRequest(`/api/today/items/${itemId}`, { method: "DELETE" });
     },
     onSuccess: (_data, { date }) => {
@@ -204,7 +254,7 @@ export default function Today() {
   });
 
   const toggleItemMutation = useMutation({
-    mutationFn: async ({ itemId, checked, date }: { itemId: number; checked: boolean; date: string }) => {
+    mutationFn: async ({ itemId, checked }: { itemId: number; checked: boolean; date: string }) => {
       return apiRequest(`/api/today/items/${itemId}/toggle`, {
         method: "PATCH",
         body: { checked },
@@ -226,28 +276,22 @@ export default function Today() {
     },
   });
 
-  // Focus input after initial load or tab switch
-  useEffect(() => {
-    if (!isLoading && inputRef.current) {
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, activeTab]);
-
   const handleTabSwitch = (tab: Tab) => {
     setActiveTab(tab);
-    setInputValue("");
+    setFocusTrigger((n) => n + 1);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && inputValue.trim()) {
-      e.preventDefault();
-      addItemMutation.mutate({ content: inputValue.trim(), date: activeDate });
-      setInputValue("");
-    }
-  };
+  const handleAdd = useCallback((content: string, date: string) => {
+    addItemMutation.mutate({ content, date });
+  }, []);
+
+  const handleDelete = useCallback((itemId: number, date: string) => {
+    deleteItemMutation.mutate({ itemId, date });
+  }, []);
+
+  const handleToggle = useCallback((itemId: number, checked: boolean, date: string) => {
+    toggleItemMutation.mutate({ itemId, checked, date });
+  }, []);
 
   if (isLoading && items.length === 0) {
     return (
@@ -261,7 +305,6 @@ export default function Today() {
     <div className="min-h-screen bg-[#FFFDF9] flex flex-col">
       <div className="pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] flex flex-col flex-1">
         <div className="px-5 pt-4 pb-3">
-          {/* Back button */}
           <button
             onClick={() => setLocation("/")}
             className="flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors mb-4"
@@ -271,19 +314,16 @@ export default function Today() {
             <span className="text-sm">Home</span>
           </button>
 
-          {/* Header */}
           <div className="mb-1">
             <h1 className="text-2xl font-semibold text-gray-900" data-testid="text-today-title">
               I will<span style={{ color: "#E9A84C" }}>:</span>
             </h1>
           </div>
 
-          {/* Active date — updates with tab */}
           <p className="text-sm text-gray-400 mb-4" data-testid="text-today-date">
             {formatDateDisplay(activeDate)}
           </p>
 
-          {/* Today / Tomorrow pill toggle */}
           <div
             className="flex rounded-full p-[3px]"
             style={{ backgroundColor: "#f0ece6" }}
@@ -316,42 +356,25 @@ export default function Today() {
           </div>
         </div>
 
-        {/* List */}
         <div className="flex-1 px-5 pb-4">
           <div data-testid="list-today-items">
-            {(items || []).map((item) => (
+            {items.map((item) => (
               <SwipeableItem
                 key={item.id}
                 item={item}
-                onDelete={() => deleteItemMutation.mutate({ itemId: item.id, date: activeDate })}
-                onToggle={(checked) => toggleItemMutation.mutate({ itemId: item.id, checked, date: activeDate })}
+                onDelete={() => handleDelete(item.id, activeDate)}
+                onToggle={(checked) => handleToggle(item.id, checked, activeDate)}
               />
             ))}
           </div>
 
-          {/* Input row — no circle, just a spacer for alignment */}
-          <div
-            className="flex items-center gap-3"
-            style={{ paddingTop: 14, paddingBottom: 14 }}
-          >
-            <span style={{ width: 15, height: 15, flexShrink: 0 }} />
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                items.length === 0
-                  ? activeTab === "today"
-                    ? "What's on your heart today..."
-                    : "What will you do tomorrow..."
-                  : "Add another..."
-              }
-              className="flex-1 bg-transparent text-gray-800 text-[17px] leading-relaxed outline-none placeholder:text-gray-300 placeholder:italic"
-              data-testid="input-today-new-item"
-            />
-          </div>
+          <AddIntentionInput
+            activeTab={activeTab}
+            activeDate={activeDate}
+            itemCount={items.length}
+            onAdd={handleAdd}
+            focusTrigger={focusTrigger}
+          />
         </div>
       </div>
     </div>
