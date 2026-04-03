@@ -121,14 +121,15 @@ async function main() {
       // No wills reference this circle at all — check for migrated wills (circleId was nulled)
       // using circle-scoped invite evidence: shared will where BOTH creator AND at least one
       // invitee are members of this circle.
-      const memberSet = new Set(memberUserIdList);
+      const memberUserIds = memberIds.map((m) => m.userId);
+      const memberSet = new Set(memberUserIds);
       const sharedWillsForMembers = await db
         .select({ id: wills.id, createdBy: wills.createdBy })
         .from(wills)
         .where(
           and(
             eq(wills.mode, 'shared'),
-            sql`${wills.createdBy} = ANY(ARRAY[${sql.join(memberUserIdList.map(id => sql`${id}`), sql`, `)}]::text[])`
+            sql`${wills.createdBy} = ANY(ARRAY[${sql.join(memberUserIds.map(id => sql`${id}`), sql`, `)}]::text[])`
           )
         );
 

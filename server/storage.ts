@@ -1127,8 +1127,8 @@ export class DatabaseStorage implements IStorage {
     
     const circlesWithMemberCount = await Promise.all(
       circlesList.map(async (circle) => {
-        const memberCount = await this.getCircleMemberCount(circle.id);
-        return { ...circle, memberCount };
+        const [result] = await db.select({ count: sql<number>`count(*)` }).from(circleMembers).where(eq(circleMembers.circleId, circle.id));
+        return { ...circle, memberCount: Number(result?.count || 0) };
       })
     );
     
@@ -1151,7 +1151,11 @@ export class DatabaseStorage implements IStorage {
 
     const willsWithMemberCount = await Promise.all(
       willsData.map(async (item) => {
-        const memberCount = item.will.circleId ? await this.getCircleMemberCount(item.will.circleId) : 0;
+        let memberCount = 0;
+        if (item.will.circleId) {
+          const [result] = await db.select({ count: sql<number>`count(*)` }).from(circleMembers).where(eq(circleMembers.circleId, item.will.circleId));
+          memberCount = Number(result?.count || 0);
+        }
         return {
           ...item.will,
           circle: item.circle,
