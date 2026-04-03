@@ -11,12 +11,13 @@
  *      2. Create shared_will_invites for committed members (per-invite idempotency)
  *      3. Migrate circle_messages → will_messages in a transaction (all-or-nothing per will)
  *      4. Set wills.circleId = NULL
- *      5. If all qualifying wills now migrated (no FK refs left): delete the circle
+ *      Source circle rows are PRESERVED for 30-day validation buffer. Stage B drops tables.
  *
- *   B) No qualifying wills:
- *      - If any will (any status) still references this circle: skip (FK constraint).
- *        These are completed/terminated wills — Stage B handles them when circleId column drops.
- *      - If no wills reference this circle: delete it (no FK dependency).
+ *   B) No qualifying wills AND no wills reference this circle at all:
+ *      Truly orphaned — delete immediately.
+ *
+ *   C) No qualifying wills BUT wills (any status) still reference this circle:
+ *      Skipped — FK constraint; Stage B will handle when circleId column drops.
  */
 
 import { drizzle } from "drizzle-orm/neon-serverless";
@@ -77,19 +78,19 @@ async function main() {
         .limit(1);
 
       if (anyWillCheck.length > 0) {
-        // FK constraint: non-qualifying wills still reference this circle — cannot delete.
-        // Stage B (drop circleId column) will clean these up.
+        // Historical wills (completed/terminated) still reference this circle via FK.
+        // Preserve for Stage B (when circleId column drops).
         console.log(`  ↩ Circle ${circle.id} skipped — has non-qualifying wills (FK constraint).`);
         skipped++;
         continue;
       }
 
-      // No wills reference this circle at all — safe to delete
+      // Truly orphaned: no wills ever referenced this circle — safe to delete
       try {
         await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
         await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
         await db.delete(circles).where(eq(circles.id, circle.id));
-        console.log(`  ✓ Deleted circle ${circle.id} (no qualifying wills).`);
+        console.log(`  ✓ Deleted orphaned circle ${circle.id}.`);
         circlesDeleted++;
       } catch (e) {
         console.warn(`  ⚠ Could not delete circle ${circle.id}:`, e);
@@ -157,35 +158,15 @@ async function main() {
         }
       }
 
-      // Step 4: Null out circleId — final completion marker for this will
+      // Step 4: Null out circleId — final completion marker.
+      // Source circle rows preserved for 30-day validation buffer (Stage A).
       await db.update(wills).set({ circleId: null }).where(eq(wills.id, will.id));
 
-      console.log(`    ✓ Will ${will.id} migrated`);
+      console.log(`    ✓ Will ${will.id} migrated (source circle ${circle.id} preserved for Stage A).`);
       willsMigrated++;
     }
 
-    // After migrating all qualifying wills, check if any wills still reference this circle
-    const remainingWills = await db
-      .select({ id: wills.id })
-      .from(wills)
-      .where(eq(wills.circleId, circle.id))
-      .limit(1);
-
-    if (remainingWills.length === 0) {
-      // All FK references removed — safe to delete circle
-      try {
-        await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
-        await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
-        await db.delete(circles).where(eq(circles.id, circle.id));
-        console.log(`  ✓ Deleted circle ${circle.id} (all wills migrated).`);
-        circlesDeleted++;
-      } catch (e) {
-        console.warn(`  ⚠ Could not delete circle ${circle.id}:`, e);
-      }
-    } else {
-      console.log(`  Circle ${circle.id} preserved — has non-qualifying wills still referencing it.`);
-      skipped++;
-    }
+    skipped++;
   }
 
   console.log("\n=== Migration Complete ===");
@@ -193,7 +174,7 @@ async function main() {
   console.log(`  Invites created:   ${invitesCreated}`);
   console.log(`  Messages migrated: ${messagesMigrated}`);
   console.log(`  Circles deleted:   ${circlesDeleted}`);
-  console.log(`  Skipped:           ${skipped}`);
+  console.log(`  Preserved/skipped: ${skipped}`);
   console.log("Finished at:", new Date().toISOString());
 
   await pool.end();
