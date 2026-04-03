@@ -46,19 +46,13 @@ export default function EditWill() {
     enabled: !!id,
   });
 
-  const { data: circle } = useQuery<any>({
-    queryKey: ['/api/circles/mine'],
-  });
-
   const isSoloMode = will?.mode === 'solo' || will?.mode === 'personal';
   const isIndefinite = will?.isIndefinite;
   const userCommitment = will?.commitments?.find((c: any) => c.userId === user?.id);
 
   const getHubUrl = () => {
     if (will?.mode === 'solo' || will?.mode === 'personal') return '/';
-    if (will?.mode === 'circle') return '/hub';
-    const lastMode = localStorage.getItem('lastWillMode');
-    return lastMode === 'solo' ? '/' : '/hub';
+    return '/my-wills';
   };
 
   useEffect(() => {
@@ -110,9 +104,7 @@ export default function EditWill() {
         queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
         queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
       } else {
-        queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-        queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-        queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
       }
       queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
       toast({
@@ -174,9 +166,7 @@ export default function EditWill() {
       }
 
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });

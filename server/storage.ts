@@ -433,150 +433,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Circle operations
-  async createCircle(circle: InsertCircle): Promise<Circle> {
-    const [newCircle] = await db.insert(circles).values(circle).returning();
-    return newCircle;
-  }
-
-  async getCircleByInviteCode(inviteCode: string): Promise<Circle | undefined> {
-    const [circle] = await db.select().from(circles).where(eq(circles.inviteCode, inviteCode));
-    return circle;
-  }
-
-  async getCircleById(id: number): Promise<Circle | undefined> {
-    const [circle] = await db.select().from(circles).where(eq(circles.id, id));
-    return circle;
-  }
-
-  async getUserCircle(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined> {
-    const result = await db
-      .select({
-        circle: circles,
-        member: circleMembers,
-        user: users,
-      })
-      .from(circleMembers)
-      .innerJoin(circles, eq(circleMembers.circleId, circles.id))
-      .innerJoin(users, eq(circleMembers.userId, users.id))
-      .where(eq(circleMembers.userId, userId));
-
-    if (result.length === 0) return undefined;
-
-    const circle = result[0].circle;
-    const allMembers = await this.getCircleMembers(circle.id);
-
-    return {
-      ...circle,
-      members: allMembers,
-    };
-  }
-
-  async getUserCircles(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[]; activeWillCount: number; currentWillStatus: string | null })[]> {
-    // Get all circles where user is a member
-    const userCircleIds = await db
-      .select({ circleId: circleMembers.circleId })
-      .from(circleMembers)
-      .where(eq(circleMembers.userId, userId));
-
-    if (userCircleIds.length === 0) return [];
-
-    const circleIds = userCircleIds.map(c => c.circleId);
-    
-    // Get all circles
-    const circlesList = await db
-      .select()
-      .from(circles)
-      .where(inArray(circles.id, circleIds));
-
-    // Build result with members, active will count, and current will status
-    const result = await Promise.all(circlesList.map(async (circle) => {
-      const members = await this.getCircleMembers(circle.id);
-      
-      // Count active wills (status not 'archived' or 'completed')
-      const [activeWillResult] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(wills)
-        .where(and(
-          eq(wills.circleId, circle.id),
-          sql`status NOT IN ('archived', 'completed')`
-        ));
-      
-      // Get the current will's status (most recent non-archived will)
-      const [currentWill] = await db
-        .select({ status: wills.status })
-        .from(wills)
-        .where(and(
-          eq(wills.circleId, circle.id),
-          sql`status NOT IN ('archived', 'completed')`
-        ))
-        .orderBy(sql`created_at DESC`)
-        .limit(1);
-      
-      return {
-        ...circle,
-        members,
-        activeWillCount: activeWillResult?.count || 0,
-        currentWillStatus: currentWill?.status || null,
-      };
-    }));
-
-    // Sort by circles with active wills first, then by most recent activity
-    return result.sort((a, b) => {
-      if (a.activeWillCount > 0 && b.activeWillCount === 0) return -1;
-      if (a.activeWillCount === 0 && b.activeWillCount > 0) return 1;
-      return (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0);
-    });
-  }
-
-  async getUserCircleCount(userId: string): Promise<number> {
-    const [result] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(circleMembers)
-      .where(eq(circleMembers.userId, userId));
-    return result?.count || 0;
-  }
-
-  async getCircleWithMembers(circleId: number): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined> {
-    const circle = await this.getCircleById(circleId);
-    if (!circle) return undefined;
-    
-    const members = await this.getCircleMembers(circleId);
-    return {
-      ...circle,
-      members,
-    };
-  }
-
-  // Circle member operations
-  async addCircleMember(member: InsertCircleMember): Promise<CircleMember> {
-    const [newMember] = await db.insert(circleMembers).values(member).returning();
-    return newMember;
-  }
-
-  async removeCircleMember(userId: string, circleId: number): Promise<void> {
-    await db.delete(circleMembers)
-      .where(and(
-        eq(circleMembers.userId, userId),
-        eq(circleMembers.circleId, circleId)
-      ));
-  }
-
-  async getCircleMemberCount(circleId: number): Promise<number> {
-    const [result] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(circleMembers)
-      .where(eq(circleMembers.circleId, circleId));
-    return result.count;
-  }
-
-  async isUserInCircle(userId: string, circleId: number): Promise<boolean> {
-    const [result] = await db
-      .select()
-      .from(circleMembers)
-      .where(and(eq(circleMembers.userId, userId), eq(circleMembers.circleId, circleId)));
-    return !!result;
-  }
-
+  // Circle member read (admin/migration use only during Stage A window)
   async getCircleMembers(circleId: number): Promise<(CircleMember & { user: User })[]> {
     const result = await db
       .select({
@@ -594,23 +451,6 @@ export class DatabaseStorage implements IStorage {
   async createWill(will: InsertWill): Promise<Will> {
     const [newWill] = await db.insert(wills).values(will).returning();
     return newWill;
-  }
-
-  async getCircleActiveWill(circleId: number): Promise<Will | undefined> {
-    // Return wills that are "in progress" OR completed (awaiting acknowledgments)
-    // Valid statuses: pending, scheduled, active, will_review, completed
-    // Archived wills are excluded - they are fully closed
-    // CRITICAL: 'completed' must be included so acknowledgment checks work!
-    const [will] = await db
-      .select()
-      .from(wills)
-      .where(and(
-        eq(wills.circleId, circleId),
-        sql`status IN ('pending', 'scheduled', 'active', 'will_review', 'completed')`
-      ))
-      .orderBy(desc(wills.createdAt))
-      .limit(1);
-    return will;
   }
 
   async getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]> {
@@ -2008,37 +1848,6 @@ export class DatabaseStorage implements IStorage {
         eq(userNotifications.type, type),
         eq(userNotifications.willId, willId),
       ));
-  }
-
-  async markNotificationsReadByCircle(userId: string, circleId: number): Promise<void> {
-    await db.update(userNotifications)
-      .set({ isRead: true })
-      .where(and(
-        eq(userNotifications.userId, userId),
-        eq(userNotifications.circleId, circleId),
-      ));
-  }
-
-  async getCircleMessages(circleId: number, limit: number = 50): Promise<(CircleMessage & { user: { firstName: string } })[]> {
-    const results = await db
-      .select({
-        message: circleMessages,
-        firstName: users.firstName,
-      })
-      .from(circleMessages)
-      .innerJoin(users, eq(circleMessages.userId, users.id))
-      .where(eq(circleMessages.circleId, circleId))
-      .orderBy(desc(circleMessages.createdAt))
-      .limit(limit);
-
-    return results
-      .map(r => ({ ...r.message, user: { firstName: r.firstName } }))
-      .reverse();
-  }
-
-  async createCircleMessage(data: InsertCircleMessage): Promise<CircleMessage> {
-    const [message] = await db.insert(circleMessages).values(data).returning();
-    return message;
   }
 
   async getWillMessages(willId: number, limit: number = 50): Promise<(WillMessage & { user: { firstName: string } })[]> {

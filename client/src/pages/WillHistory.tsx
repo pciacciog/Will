@@ -411,22 +411,21 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
     enabled: isDailyTracked,
   });
 
-  // Fetch proof drops for circle wills
-  const circleId = will.circle?.id;
+  // Fetch proof drops for circle/shared wills
   const { data: proofsData } = useQuery<{ items: ProofDrop[] }>({
-    queryKey: [`/api/circles/${circleId}/proofs`, will.id, 'history'],
+    queryKey: [`/api/wills/${will.id}/proofs`, 'history'],
     queryFn: async () => {
       const token = await sessionPersistence.getToken();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const resp = await fetch(getApiPath(`/api/circles/${circleId}/proofs?willId=${will.id}&limit=200`), {
+      const resp = await fetch(getApiPath(`/api/wills/${will.id}/proofs?limit=200`), {
         credentials: 'include',
         headers,
       });
       if (!resp.ok) throw new Error('Failed to fetch proofs');
       return resp.json();
     },
-    enabled: mode === 'circle' && !!circleId,
+    enabled: mode === 'circle' || mode === 'shared',
   });
   // Show oldest-first in history view (chronological order)
   const proofDrops: ProofDrop[] = [...(proofsData?.items || [])].reverse();

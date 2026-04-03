@@ -25,7 +25,7 @@ type ProofResponse = {
 };
 
 interface ProofFeedProps {
-  circleId: number;
+  circleId?: number;
 }
 
 type PhotoModal = {
@@ -50,14 +50,14 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
   const validWillId = willId && !isNaN(willId) ? willId : null;
 
   const { data, isLoading } = useQuery<ProofResponse>({
-    queryKey: [`/api/circles/${circleId}/proofs`, validWillId, 'feed-init'],
+    queryKey: [`/api/wills/${validWillId}/proofs`, 'feed-init'],
     enabled: validWillId !== null,
     queryFn: async () => {
       const token = await sessionPersistence.getToken();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const qs = new URLSearchParams({ limit: '20', willId: String(validWillId) });
-      const resp = await fetch(getApiPath(`/api/circles/${circleId}/proofs?${qs}`), {
+      const qs = new URLSearchParams({ limit: '20' });
+      const resp = await fetch(getApiPath(`/api/wills/${validWillId}/proofs?${qs}`), {
         credentials: 'include',
         headers,
       });
@@ -72,12 +72,12 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
   });
 
   const loadMore = async () => {
-    if (!cursor || !hasMore) return;
+    if (!cursor || !hasMore || !validWillId) return;
     const token = await sessionPersistence.getToken();
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const qs = new URLSearchParams({ limit: '20', cursor, willId: String(willId) });
-    const resp = await fetch(getApiPath(`/api/circles/${circleId}/proofs?${qs}`), {
+    const qs = new URLSearchParams({ limit: '20', cursor });
+    const resp = await fetch(getApiPath(`/api/wills/${validWillId}/proofs?${qs}`), {
       credentials: 'include',
       headers,
     });
@@ -117,7 +117,7 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
         {/* Header */}
         <div className="relative flex items-center justify-between mb-4 min-h-[44px]">
           <button
-            onClick={() => setLocation(`/circles/${circleId}`)}
+            onClick={() => validWillId ? setLocation(`/will/${validWillId}`) : setLocation('/my-wills')}
             className="w-11 h-11 -ml-2 flex items-center justify-center"
             data-testid="button-back"
             aria-label="Go back"

@@ -48,10 +48,6 @@ export default function EditCommitment() {
     enabled: !!willId,
   });
 
-  const { data: circle } = useQuery({
-    queryKey: ['/api/circles/mine'],
-  });
-
   // Find the user's commitment
   const userCommitment = will?.commitments?.find((c: any) => c.id === parseInt(commitmentId!));
 
@@ -73,11 +69,9 @@ export default function EditCommitment() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate all related queries to ensure UI updates everywhere
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
       
       toast({
         title: "Commitment Updated",

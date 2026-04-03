@@ -71,31 +71,26 @@ async function main() {
         )
       );
 
-    // --- Also find already-migrated wills: those that had circleId set to NULL but have
-    //     shared_will_invites where the invitedByUserId was a member of this circle.
-    //     We identify them via circle members who are also will originators.
-    //     Simpler approach: just look for any will that was ever in this circle by checking
-    //     if any circle member created a shared will whose invites contain other circle members.
-    //
-    //     Most reliable: check if there are ANY shared_will_invites for wills created by
-    //     members of this circle. If so, the circle was already migrated — skip deletion.
-    //
-    //     Implementation: if activeCircleWills.length === 0, check if this circle has any
-    //     members who are invitors in shared_will_invites. If yes → already migrated, skip deletion.
-
     if (activeCircleWills.length === 0) {
-      // Check whether any member of this circle has been involved in a migration as originator
+      // Check if there were previously wills in this circle that were already migrated
+      // (circleId nulled out after migration). We look for wills in 'shared' mode
+      // that were created by a member of this circle AND have invites — a reliable indicator
+      // of prior migration, since we set circleId=NULL on the will during migration.
+      //
+      // We use the circle's member list as proxy: if any member of this circle is an
+      // originator (createdBy) of a shared will that has accepted invites from other circle members,
+      // this circle was already migrated. This is circle-scoped because we check both creator AND invitees.
       const memberIds = await db
         .select({ userId: circleMembers.userId })
         .from(circleMembers)
         .where(eq(circleMembers.circleId, circle.id));
 
       if (memberIds.length === 0) {
-        // Truly empty circle — safe to delete
+        // Truly empty circle (no members) — safe to delete
         try {
           await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
           await db.delete(circles).where(eq(circles.id, circle.id));
-          console.log(`  ✓ Deleted empty circle ${circle.id} (inviteCode: ${circle.inviteCode})`);
+          console.log(`  ✓ Deleted memberless circle ${circle.id} (inviteCode: ${circle.inviteCode})`);
           circlesDeleted++;
         } catch (e) {
           console.warn(`  ⚠ Could not delete circle ${circle.id}:`, e);
@@ -103,26 +98,29 @@ async function main() {
         continue;
       }
 
-      const memberUserIds = memberIds.map((m) => m.userId);
+      const memberUserIdList = memberIds.map((m) => m.userId);
 
-      // Check if any member of this circle was an invitor in shared_will_invites
-      // (indicating this circle was already migrated in a prior run)
+      // Check if any shared_will_invite exists where BOTH invitedByUserId AND invitedUserId
+      // are members of this circle — indicating this circle's will was migrated in a prior run.
       const priorMigrationCheck = await db
         .select({ id: sharedWillInvites.id })
         .from(sharedWillInvites)
         .where(
-          sql`${sharedWillInvites.invitedByUserId} = ANY(${memberUserIds})`
+          and(
+            sql`${sharedWillInvites.invitedByUserId} = ANY(ARRAY[${sql.join(memberUserIdList.map(id => sql`${id}`), sql`, `)}]::text[])`,
+            sql`${sharedWillInvites.invitedUserId} = ANY(ARRAY[${sql.join(memberUserIdList.map(id => sql`${id}`), sql`, `)}]::text[])`
+          )
         )
         .limit(1);
 
       if (priorMigrationCheck.length > 0) {
-        // Circle was already migrated in a prior run — preserve circle data during Stage A window
-        console.log(`  ↩ Circle ${circle.id} already migrated (prior run), preserving source data`);
+        // Circle was already migrated — preserve source data during Stage A window
+        console.log(`  ↩ Circle ${circle.id} already migrated (prior run detected), preserving source data`);
         skipped++;
         continue;
       }
 
-      // No qualifying will and no prior migration evidence — this is a truly inactive circle
+      // No qualifying will and no prior migration evidence — truly inactive circle
       try {
         await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
         await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
