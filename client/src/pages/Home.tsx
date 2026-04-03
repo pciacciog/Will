@@ -124,12 +124,6 @@ export default function Home() {
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending' || w.status === 'paused'
   ) || [];
 
-  const { data: notificationsData } = useQuery<{ notifications: any[]; count: number }>({
-    queryKey: ['/api/notifications'],
-    enabled: !!user,
-    refetchInterval: 30000,
-  });
-
   const handleCreateWill = () => {
     setLocation('/create-will');
   };

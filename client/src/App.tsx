@@ -31,7 +31,6 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import Admin from "@/pages/Admin";
 import NotificationTest from "@/pages/NotificationTest";
 import IconGenerator from "@/pages/IconGenerator";
-import CircleLobby from "@/pages/CircleLobby";
 import FriendsPage from "@/pages/FriendsPage";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
