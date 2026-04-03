@@ -2,22 +2,28 @@
  * Circle → Shared Will Migration (Stage A)
  * Called on server startup — idempotent and safe to re-run.
  *
- * For each circle with qualifying wills (status in active/scheduled/pending/paused/will_review
- * with circleId still set):
- *   1. Set wills.mode = 'shared'
- *   2. Create shared_will_invites for committed members (per-invite idempotency)
- *   3. Migrate circle_messages → will_messages in a transaction (all-or-nothing per will)
- *   4. Set wills.circleId = NULL (final completion marker)
+ * For each circle:
  *
- * Source circle rows (circles, circle_members, circle_messages) are NEVER deleted here.
- * The startup migration only migrates will data — it does NOT delete anything.
- * Circle table cleanup is the responsibility of Stage B (explicit operator-run step).
+ *   A) Has qualifying wills (status in active/scheduled/pending/paused/will_review with circleId set):
+ *      1. Set wills.mode = 'shared'
+ *      2. Create shared_will_invites for committed members (per-invite idempotency)
+ *      3. Migrate circle_messages → will_messages in a transaction (all-or-nothing per will)
+ *      4. Set wills.circleId = NULL (final completion marker)
+ *      Source circle rows are preserved (NOT deleted) for 30-day Stage A validation buffer.
+ *
+ *   B) No qualifying wills AND no wills (any status) reference this circle:
+ *      Safe to delete now — no FK constraint prevents it. These are orphaned circles.
+ *
+ *   C) No qualifying wills BUT wills with other statuses still reference this circle:
+ *      Cannot delete — FK constraint from wills.circleId → circles.id.
+ *      These are preserved until Stage B when the circleId column is dropped.
  *
  * IDEMPOTENCY:
  * - Step 1: skipped if mode is already 'shared'.
  * - Step 2: per-invite existence check before inserting.
  * - Step 3: all-or-nothing transaction; if will_messages already has rows for this will, skipped.
  * - Step 4: once circleId is NULL, will no longer appears in qualifying query; fully skipped on rerun.
+ * - On rerun, migrated circles (all wills have circleId=NULL) fall into case B or C, not A.
  */
 
 import { db } from "./db";
@@ -41,6 +47,7 @@ export async function runCircleMigration(): Promise<void> {
   console.log(`[Migration] Starting circle → shared will migration. Found ${allCircles.length} circles.`);
 
   let willsMigrated = 0;
+  let circlesDeleted = 0;
   let messagesMigrated = 0;
   let invitesCreated = 0;
   let circlesWithNoWork = 0;
@@ -58,8 +65,26 @@ export async function runCircleMigration(): Promise<void> {
       );
 
     if (qualifyingWills.length === 0) {
-      // Nothing to migrate for this circle (already done or no qualifying wills)
-      circlesWithNoWork++;
+      // No qualifying wills — check if any will (any status) still references this circle
+      const anyWillCheck = await db
+        .select({ id: wills.id })
+        .from(wills)
+        .where(eq(wills.circleId, circle.id))
+        .limit(1);
+
+      if (anyWillCheck.length > 0) {
+        // FK constraint: wills still reference this circle — cannot delete.
+        // Preserved until Stage B (when circleId column drops).
+        circlesWithNoWork++;
+        continue;
+      }
+
+      // Truly orphaned: no wills reference this circle — safe to delete now
+      await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
+      await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
+      await db.delete(circles).where(eq(circles.id, circle.id));
+      console.log(`[Migration]   Deleted orphaned circle ${circle.id}.`);
+      circlesDeleted++;
       continue;
     }
 
@@ -133,9 +158,5 @@ export async function runCircleMigration(): Promise<void> {
     }
   }
 
-  if (willsMigrated > 0 || invitesCreated > 0 || messagesMigrated > 0) {
-    console.log(`[Migration] Done. Wills migrated: ${willsMigrated}, invites: ${invitesCreated}, messages: ${messagesMigrated}`);
-  } else {
-    console.log(`[Migration] Done. No qualifying wills found — nothing to migrate.`);
-  }
+  console.log(`[Migration] Done. Wills migrated: ${willsMigrated}, invites: ${invitesCreated}, messages: ${messagesMigrated}, circles deleted: ${circlesDeleted}, preserved: ${circlesWithNoWork}`);
 }

@@ -141,13 +141,11 @@ const PORT = parseInt(process.env.PORT || '5000', 10);
 // Run migration, register routes, and start server — all sequenced to ensure
 // migration completes before traffic is accepted.
 (async () => {
-  // Run circle → shared will migration before serving (idempotent, safe to re-run)
-  try {
-    const { runCircleMigration } = await import("./circleMigration");
-    await runCircleMigration();
-  } catch (err) {
-    console.error("[Startup] Circle migration failed (non-fatal):", err);
-  }
+  // Run circle → shared will migration before serving (idempotent, safe to re-run).
+  // FAIL-CLOSED: if migration throws, abort startup so users are never served
+  // post-circle code on unmigrated data.
+  const { runCircleMigration } = await import("./circleMigration");
+  await runCircleMigration();
 
   // Register all API routes after migration completes
   registerRoutes(app);
