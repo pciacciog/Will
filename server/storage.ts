@@ -74,25 +74,11 @@ export interface IStorage {
   updateUserLastDailyReminderSent(userId: string): Promise<void>;
   deleteUser(userId: string): Promise<void>;
   
-  // Circle operations
-  createCircle(circle: InsertCircle): Promise<Circle>;
-  getCircleByInviteCode(inviteCode: string): Promise<Circle | undefined>;
-  getCircleById(id: number): Promise<Circle | undefined>;
-  getUserCircle(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined>;
-  getUserCircles(userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[]; activeWillCount: number; currentWillStatus: string | null })[]>;
-  getUserCircleCount(userId: string): Promise<number>;
-  getCircleWithMembers(circleId: number): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | undefined>;
-  
-  // Circle member operations
-  addCircleMember(member: InsertCircleMember): Promise<CircleMember>;
-  removeCircleMember(userId: string, circleId: number): Promise<void>;
-  getCircleMemberCount(circleId: number): Promise<number>;
-  isUserInCircle(userId: string, circleId: number): Promise<boolean>;
+  // Circle operations (admin-only; preserved for 30-day Stage A window before Stage B drops tables)
   getCircleMembers(circleId: number): Promise<(CircleMember & { user: User })[]>;
   
   // Will operations
   createWill(will: InsertWill): Promise<Will>;
-  getCircleActiveWill(circleId: number): Promise<Will | undefined>;
   getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserActiveSoloWillCount(userId: string): Promise<number>;
@@ -258,9 +244,6 @@ export interface IStorage {
     };
   }[]>;
 
-  getCircleMessages(circleId: number, limit?: number): Promise<(CircleMessage & { user: { firstName: string } })[]>;
-  createCircleMessage(data: InsertCircleMessage): Promise<CircleMessage>;
-
   getWillMessages(willId: number, limit?: number): Promise<(WillMessage & { user: { firstName: string } })[]>;
   createWillMessage(data: InsertWillMessage): Promise<WillMessage>;
   getWillsByParentId(parentWillId: number): Promise<Will[]>;
@@ -280,7 +263,6 @@ export interface IStorage {
   getUserUnreadNotificationCount(userId: string): Promise<number>;
   markNotificationRead(notificationId: number, userId: string): Promise<void>;
   markNotificationsReadByTypeAndWill(userId: string, type: string, willId: number): Promise<void>;
-  markNotificationsReadByCircle(userId: string, circleId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

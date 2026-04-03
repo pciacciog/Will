@@ -8,14 +8,22 @@
  *   3. Migrate that circle's circle_messages into will_messages (idempotent — skips duplicates)
  *   4. Set wills.circleId = NULL
  *
- * For circles with NO qualifying will: delete the circle record.
+ * For circles with NO qualifying will (and never had one): delete the circle record.
  *
- * This script is idempotent — safe to re-run.
+ * This script is idempotent — safe to re-run without data loss.
+ *
+ * IDEMPOTENCY DESIGN:
+ * - A circle is only considered for deletion if it has NO qualifying wills at all
+ *   AND it has no corresponding shared_will_invites rows (indicating it was never migrated).
+ *   This prevents re-runs from deleting source circle data during the Stage A window.
+ * - Already-migrated wills (circleId=NULL, mode='shared') are found via originatingCircleId
+ *   or by cross-referencing shared_will_invites created during a prior run.
+ * - Messages are deduped by (willId, userId, text, createdAt to-the-second).
  */
 
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { neon } from "@neondatabase/serverless";
-import { eq, inArray, and, isNotNull, sql } from "drizzle-orm";
+import { eq, inArray, and, isNotNull, sql, or } from "drizzle-orm";
 import {
   circles,
   circleMembers,
@@ -52,8 +60,8 @@ async function main() {
   console.log(`Found ${allCircles.length} total circles`);
 
   for (const circle of allCircles) {
-    // Find qualifying wills for this circle
-    const circleWills = await db
+    // --- Find qualifying wills that still reference this circleId ---
+    const activeCircleWills = await db
       .select()
       .from(wills)
       .where(
@@ -63,16 +71,63 @@ async function main() {
         )
       );
 
-    if (circleWills.length === 0) {
-      // No qualifying will — delete the circle
+    // --- Also find already-migrated wills: those that had circleId set to NULL but have
+    //     shared_will_invites where the invitedByUserId was a member of this circle.
+    //     We identify them via circle members who are also will originators.
+    //     Simpler approach: just look for any will that was ever in this circle by checking
+    //     if any circle member created a shared will whose invites contain other circle members.
+    //
+    //     Most reliable: check if there are ANY shared_will_invites for wills created by
+    //     members of this circle. If so, the circle was already migrated — skip deletion.
+    //
+    //     Implementation: if activeCircleWills.length === 0, check if this circle has any
+    //     members who are invitors in shared_will_invites. If yes → already migrated, skip deletion.
+
+    if (activeCircleWills.length === 0) {
+      // Check whether any member of this circle has been involved in a migration as originator
+      const memberIds = await db
+        .select({ userId: circleMembers.userId })
+        .from(circleMembers)
+        .where(eq(circleMembers.circleId, circle.id));
+
+      if (memberIds.length === 0) {
+        // Truly empty circle — safe to delete
+        try {
+          await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
+          await db.delete(circles).where(eq(circles.id, circle.id));
+          console.log(`  ✓ Deleted empty circle ${circle.id} (inviteCode: ${circle.inviteCode})`);
+          circlesDeleted++;
+        } catch (e) {
+          console.warn(`  ⚠ Could not delete circle ${circle.id}:`, e);
+        }
+        continue;
+      }
+
+      const memberUserIds = memberIds.map((m) => m.userId);
+
+      // Check if any member of this circle was an invitor in shared_will_invites
+      // (indicating this circle was already migrated in a prior run)
+      const priorMigrationCheck = await db
+        .select({ id: sharedWillInvites.id })
+        .from(sharedWillInvites)
+        .where(
+          sql`${sharedWillInvites.invitedByUserId} = ANY(${memberUserIds})`
+        )
+        .limit(1);
+
+      if (priorMigrationCheck.length > 0) {
+        // Circle was already migrated in a prior run — preserve circle data during Stage A window
+        console.log(`  ↩ Circle ${circle.id} already migrated (prior run), preserving source data`);
+        skipped++;
+        continue;
+      }
+
+      // No qualifying will and no prior migration evidence — this is a truly inactive circle
       try {
-        // First delete circle members
         await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
-        // Delete circle messages
         await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
-        // Delete circle
         await db.delete(circles).where(eq(circles.id, circle.id));
-        console.log(`  ✓ Deleted empty circle ${circle.id} (inviteCode: ${circle.inviteCode})`);
+        console.log(`  ✓ Deleted inactive circle ${circle.id} (inviteCode: ${circle.inviteCode})`);
         circlesDeleted++;
       } catch (e) {
         console.warn(`  ⚠ Could not delete circle ${circle.id}:`, e);
@@ -92,8 +147,8 @@ async function main() {
       .from(circleMessages)
       .where(eq(circleMessages.circleId, circle.id));
 
-    for (const will of circleWills) {
-      // Idempotent check: already migrated?
+    for (const will of activeCircleWills) {
+      // Idempotent check: already fully migrated?
       if (will.mode === "shared" && will.circleId === null) {
         console.log(`  ↩ Will ${will.id} already migrated, skipping`);
         skipped++;
@@ -152,13 +207,11 @@ async function main() {
       }
 
       // 3. Migrate circle_messages into will_messages
-      // Idempotent: store original circle_message.id in a dedicated metadata column isn't available,
-      // so we dedupe by (willId, userId, text, createdAt truncated to the second) to avoid true duplicates
-      // while preserving legitimate repeated identical messages at different times.
+      // Idempotent: dedupe by (willId, userId, text, createdAt to-the-second)
+      // This preserves all messages including legitimate repeated identical ones at different times.
       for (const msg of msgs) {
         const msgCreatedAt = msg.createdAt ?? new Date();
 
-        // Idempotent check: exact match on willId + userId + text + createdAt (to the second)
         const existing = await db
           .select({ id: willMessages.id })
           .from(willMessages)
@@ -184,7 +237,7 @@ async function main() {
         messagesMigrated++;
       }
 
-      // 4. Set circleId = NULL
+      // 4. Set circleId = NULL (marks will as fully migrated)
       await db
         .update(wills)
         .set({ circleId: null })
