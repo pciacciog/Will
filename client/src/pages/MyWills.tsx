@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe, History } from "lucide-react";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
+import { WhoModal } from "@/components/WhoModal";
 
 type Will = {
   id: number;
@@ -169,6 +170,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
 export default function MyWills() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<'solo' | 'shared' | 'public'>('solo');
+  const [showWhoModal, setShowWhoModal] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
@@ -205,6 +207,7 @@ export default function MyWills() {
   }
 
   return (
+    <>
     <MobileLayout>
       <div className="space-y-3">
         <div className="relative flex items-center justify-between mb-2 min-h-[44px]">
@@ -288,7 +291,7 @@ export default function MyWills() {
               </p>
               <p className="text-gray-400 text-xs mb-5">Create a Will to start your accountability journey</p>
               <button
-                onClick={() => setLocation('/create-will')}
+                onClick={() => setShowWhoModal(true)}
                 className="text-sm text-emerald-600 font-medium hover:underline"
                 data-testid="button-create-will-empty"
               >
@@ -326,5 +329,10 @@ export default function MyWills() {
 
       </div>
     </MobileLayout>
+    <WhoModal
+      isOpen={showWhoModal}
+      onClose={() => setShowWhoModal(false)}
+    />
+    </>
   );
 }

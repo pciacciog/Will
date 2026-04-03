@@ -226,7 +226,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
           </button>
           
           <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">
-            {isPublic ? 'Public' : isSolo ? 'Solo' : 'Circle'} Insights
+            {isPublic ? 'Public' : isSolo ? 'Solo' : mode === 'shared' ? 'Shared' : 'Circle'} Insights
           </h1>
           
           <div className="w-9" />
