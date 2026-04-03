@@ -1377,8 +1377,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (invitedFriendIds.length > 5) {
           return res.status(400).json({ message: "You can invite up to 5 friends" });
         }
-        // Remove self from list in case
-        const filteredInviteIds = invitedFriendIds.filter((id: string) => id !== userId);
+        // Remove duplicates and self from list
+        const filteredInviteIds = [...new Set(invitedFriendIds.filter((id: string) => id !== userId))];
         if (filteredInviteIds.length === 0) {
           return res.status(400).json({ message: "Cannot invite only yourself" });
         }
@@ -1679,9 +1679,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.markNotificationsReadByTypeAndWill(userId, 'will_proposed', willId);
       } catch (e) { /* non-critical */ }
 
-      // For solo wills, status is already active - no need to check circle
-      if (will.mode === 'solo') {
-        // Solo will - commitment added, will is already active
+      // For solo/personal wills, status is already pending→active via scheduler - no circle check needed
+      if (will.mode === 'solo' || will.mode === 'personal') {
+        res.json(commitment);
+        return;
+      }
+
+      // For shared wills, commitment is accepted — will activates at startDate via scheduler
+      if (will.mode === 'shared') {
+        // Validate caller is the creator or has an accepted invite
+        const isCreator = will.createdBy === userId;
+        if (!isCreator) {
+          const [acceptedInvite] = await db
+            .select({ id: sharedWillInvites.id })
+            .from(sharedWillInvites)
+            .where(and(
+              eq(sharedWillInvites.willId, willId),
+              eq(sharedWillInvites.invitedUserId, userId),
+              eq(sharedWillInvites.status, 'accepted')
+            ))
+            .limit(1);
+          if (!acceptedInvite) {
+            // Dedupe: already caught hasCommitted above; but for clarity, return error if no accepted invite
+            return res.status(403).json({ message: "You must accept the invite before committing to this Will" });
+          }
+        }
         res.json(commitment);
         return;
       }
