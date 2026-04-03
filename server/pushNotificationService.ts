@@ -345,7 +345,7 @@ class PushNotificationService {
   }
 
   // Predefined notification templates for the 4 key moments
-  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isSharedWill: boolean = false, _circleId?: number, willTitle?: string): Promise<void> {
+  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isSharedWill: boolean = false, willTitle?: string): Promise<void> {
     const payload: PushNotificationPayload = {
       title: willTitle
         ? `${willTitle} — new Will proposed! 📝`
@@ -367,7 +367,7 @@ class PushNotificationService {
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  async sendWillStartedNotification(willTitle: string, committedMembers: string[], willId?: number, isSoloMode: boolean = false, _circleId?: number): Promise<void> {
+  async sendWillStartedNotification(willTitle: string, committedMembers: string[], willId?: number, isSoloMode: boolean = false): Promise<void> {
     const payload: PushNotificationPayload = {
       title: "Your Will has started! 🎯",
       body: `Time to begin your commitment: "${willTitle}"`,
@@ -384,7 +384,7 @@ class PushNotificationService {
     await this.sendToMultipleUsers(committedMembers, payload);
   }
 
-  async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string, circleMembers: string[], willId?: number, _circleId?: number): Promise<void> {
+  async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string, circleMembers: string[], willId?: number): Promise<void> {
     const notifications = {
       '24_hours': {
         title: "End Room tomorrow 📅",
@@ -416,7 +416,7 @@ class PushNotificationService {
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  async sendReadyForNewWillNotification(circleMembers: string[], _circleId?: number): Promise<void> {
+  async sendReadyForNewWillNotification(circleMembers: string[]): Promise<void> {
     const payload: PushNotificationPayload = {
       title: "Ready for new Will! 🚀",
       body: "All members acknowledged - you can start a new Will!",
@@ -431,7 +431,7 @@ class PushNotificationService {
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  async sendTeamPushNotification(pusherName: string, willTitle: string, circleMembers: string[], willId?: number, _circleId?: number): Promise<void> {
+  async sendTeamPushNotification(pusherName: string, willTitle: string, circleMembers: string[], willId?: number): Promise<void> {
     const payload: PushNotificationPayload = {
       title: `${pusherName} has pushed you! 🚀`,
       body: `Encouragement for your Will: "${willTitle}"`,
