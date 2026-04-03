@@ -68,7 +68,7 @@ type WillCheckIn = {
 };
 
 interface WillHistoryProps {
-  mode: 'solo' | 'circle' | 'public';
+  mode: 'solo' | 'circle' | 'shared' | 'public';
 }
 
 export default function WillHistory({ mode }: WillHistoryProps) {

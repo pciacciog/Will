@@ -22,6 +22,7 @@ type Will = {
   circleName?: string;
   circleCode?: string;
   publicParticipantCount?: number;
+  pendingInviteCount?: number;
   creatorName?: string;
   title?: string | null;
   sharedWhat?: string | null;
@@ -101,8 +102,10 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
                       {will.commitments.map(c => c.user?.firstName).filter(Boolean).join(', ')}
                     </p>
                   )}
-                  {will.status === 'pending' && (
-                    <p className="text-xs text-amber-600 mt-0.5">Waiting for friends to accept</p>
+                  {typeof will.pendingInviteCount === 'number' && will.pendingInviteCount > 0 && (
+                    <span className="inline-flex items-center mt-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full" data-testid={`badge-pending-invites-${will.id}`}>
+                      {will.pendingInviteCount} pending invite{will.pendingInviteCount !== 1 ? 's' : ''}
+                    </span>
                   )}
                 </div>
               )}
@@ -165,7 +168,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
 
 export default function MyWills() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<'solo' | 'circle' | 'public' | 'shared'>('solo');
+  const [activeTab, setActiveTab] = useState<'solo' | 'shared' | 'public'>('solo');
 
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
@@ -189,7 +192,7 @@ export default function MyWills() {
   const sharedWills = activeWills.filter(w => w.mode === 'shared');
   const publicWills = activeWills.filter(w => isPublicWill(w));
 
-  const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'circle' ? sharedWills : publicWills;
+  const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'shared' ? sharedWills : publicWills;
 
   const handleViewWill = (will: Will) => {
     sessionStorage.setItem('willBackUrl', '/wills');
@@ -216,7 +219,7 @@ export default function MyWills() {
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
             {([
               { key: 'solo' as const, label: 'Solo', count: soloWills.length },
-              { key: 'circle' as const, label: 'Shared', count: sharedWills.length },
+              { key: 'shared' as const, label: 'Shared', count: sharedWills.length },
               { key: 'public' as const, label: 'Public', count: publicWills.length },
             ]).map(tab => (
               <button
@@ -309,7 +312,7 @@ export default function MyWills() {
 
           {!isLoading && !isError && allActiveWills !== null && (
             <button
-              onClick={() => setLocation(activeTab === 'circle' ? '/circle/history' : activeTab === 'public' ? '/public/history' : '/solo/history')}
+              onClick={() => setLocation(activeTab === 'shared' ? '/shared/history' : activeTab === 'public' ? '/public/history' : '/solo/history')}
               className="w-full mt-4 group"
               data-testid="button-will-history"
             >
