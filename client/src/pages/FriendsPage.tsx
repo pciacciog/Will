@@ -68,10 +68,7 @@ export default function FriendsPage() {
     queryKey: ['/api/users/search', debouncedQ],
     queryFn: async () => {
       if (!debouncedQ || debouncedQ.length < 2) return [];
-      const res = await fetch(`/api/users/search?q=${encodeURIComponent(debouncedQ)}`, {
-        credentials: 'include',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      });
+      const res = await apiRequest(`/api/users/search?q=${encodeURIComponent(debouncedQ)}`);
       if (!res.ok) return [];
       return res.json();
     },

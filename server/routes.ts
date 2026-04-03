@@ -481,6 +481,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .set({ status: 'pending', requesterId, addresseeId, updatedAt: new Date() })
           .where(eq(friendships.id, existing.id))
           .returning();
+
+        // Send push notification for re-request
+        try {
+          const [sender] = await db
+            .select({ firstName: users.firstName })
+            .from(users)
+            .where(eq(users.id, requesterId));
+          const senderName = sender?.firstName || 'Someone';
+          await pushNotificationService.sendToUser(addresseeId, {
+            title: 'New friend request 👋',
+            body: `${senderName} sent you a friend request`,
+            category: 'friend_request',
+            data: { type: 'friend_request', deepLink: '/friends' },
+          });
+        } catch (notifError) {
+          console.error('[FRIENDS] Push notification failed (non-fatal):', notifError);
+        }
+
         return res.status(201).json(updated);
       }
 
