@@ -1145,7 +1145,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading}
-                      className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 py-1 rounded-full transition-colors"
+                      className="flex items-center gap-1 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 bg-transparent text-xs font-medium px-2.5 py-1 rounded-full transition-colors"
                       data-testid="button-add-drop"
                     >
                       <Plus className="w-3 h-3" />
@@ -1153,66 +1153,73 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                     </button>
                   </div>
 
-                  {/* Thumbnails row */}
+                  {/* Thumbnails row / Empty state */}
                   {proofItems.length === 0 && pendingProofs.length === 0 ? (
-                    <div className="flex items-center justify-center gap-2 py-3 text-gray-400">
-                      <Camera className="w-4 h-4 opacity-50" />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="w-full border border-dashed border-gray-300 rounded-xl py-4 flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50/40 transition-colors disabled:pointer-events-none"
+                      data-testid="button-empty-drop-zone"
+                    >
+                      <Camera className="w-5 h-5 opacity-60" />
                       <span className="text-xs">No drops yet — be the first</span>
-                    </div>
+                    </button>
                   ) : (
-                    <div className="flex gap-2">
-                      {/* Show up to 3 confirmed proofs */}
-                      {proofItems.slice(0, 3).map((proof) => {
-                        const initial = (proof.firstName || proof.email)?.charAt(0).toUpperCase() || '?';
-                        const src = proof.thumbnailUrl || proof.imageUrl;
-                        return (
-                          <button
-                            key={proof.id}
-                            onClick={() => setPhotoModal({
-                              imageUrl: proof.imageUrl,
-                              firstName: proof.firstName,
-                              email: proof.email,
-                              caption: proof.caption,
-                              createdAt: proof.createdAt,
-                              willTitle: will?.title || will?.sharedWhat || null,
-                            })}
-                            className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
-                            data-testid={`button-proof-thumb-${proof.id}`}
+                    <div className="border border-dashed border-gray-200 rounded-xl p-2">
+                      <div className="flex gap-2 flex-wrap">
+                        {/* Show up to 3 confirmed proofs */}
+                        {proofItems.slice(0, 3).map((proof) => {
+                          const initial = (proof.firstName || proof.email)?.charAt(0).toUpperCase() || '?';
+                          const src = proof.thumbnailUrl || proof.imageUrl;
+                          return (
+                            <button
+                              key={proof.id}
+                              onClick={() => setPhotoModal({
+                                imageUrl: proof.imageUrl,
+                                firstName: proof.firstName,
+                                email: proof.email,
+                                caption: proof.caption,
+                                createdAt: proof.createdAt,
+                                willTitle: will?.title || will?.sharedWhat || null,
+                              })}
+                              className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
+                              data-testid={`button-proof-thumb-${proof.id}`}
+                            >
+                              <img src={src} alt="Proof" className="w-full h-full object-cover" />
+                              <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
+                                {initial}
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                        {/* Pending optimistic uploads */}
+                        {pendingProofs.map((p) => (
+                          <div
+                            key={p.tempId}
+                            className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm"
                           >
-                            <img src={src} alt="Proof" className="w-full h-full object-cover" />
-                            <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
-                              {initial}
+                            <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* "+N more" tile */}
+                        {proofsData?.hasMore || proofItems.length > 3 ? (
+                          <button
+                            onClick={() => setLocation(`/circles/${circleId}/proof?willId=${will.id}`)}
+                            className="w-16 h-16 rounded-[10px] flex-shrink-0 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-300 transition-colors"
+                            data-testid="button-proof-more"
+                          >
+                            <Plus className="w-3.5 h-3.5 text-gray-400" />
+                            <span className="text-[10px] text-gray-400 font-medium">
+                              {proofsData?.hasMore ? `${proofItems.length - 3}+ more` : `${proofItems.length - 3} more`}
                             </span>
                           </button>
-                        );
-                      })}
-
-                      {/* Pending optimistic uploads */}
-                      {pendingProofs.map((p) => (
-                        <div
-                          key={p.tempId}
-                          className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm"
-                        >
-                          <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* "+N more" tile */}
-                      {proofsData?.hasMore || proofItems.length > 3 ? (
-                        <button
-                          onClick={() => setLocation(`/circles/${circleId}/proof?willId=${will.id}`)}
-                          className="w-16 h-16 rounded-[10px] flex-shrink-0 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-300 transition-colors"
-                          data-testid="button-proof-more"
-                        >
-                          <Plus className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-[10px] text-gray-400 font-medium">
-                            {proofsData?.hasMore ? `${proofItems.length - 3}+ more` : `${proofItems.length - 3} more`}
-                          </span>
-                        </button>
-                      ) : null}
+                        ) : null}
+                      </div>
                     </div>
                   )}
                 </CardContent>
