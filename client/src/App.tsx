@@ -375,7 +375,7 @@ function Router() {
             <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>
             <Route path="/shared/history">{() => <WillHistory mode="shared" />}</Route>
             <Route path="/public/history">{() => <WillHistory mode="public" />}</Route>
-            <Route path="/start-will">{() => <StartWill />}</Route>
+            <Route path="/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/will/:id/messages">{(params) => <WillMessagesPage willId={parseInt(params.id)} />}</Route>
             <Route path="/will/:id/invite" component={AcceptInvite} />
