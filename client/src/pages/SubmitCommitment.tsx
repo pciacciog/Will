@@ -310,7 +310,7 @@ export default function SubmitCommitment() {
               </div>
             )}
           
-          <div className="text-center mt-16">
+          <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
               {currentStep === 1 && "Proposed Will Timeline"}
               {currentStep === 2 && !isCumulative && "What would you like to do?"}

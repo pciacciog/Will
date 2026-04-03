@@ -779,7 +779,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
           
           {/* Current Step Title */}
-          <div className="text-center mt-16">
+          <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
               {showTypeSelection && "Choose your Will Type:"}
               {!showTypeSelection && currentStep === 1 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
