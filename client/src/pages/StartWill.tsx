@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -284,12 +284,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // For circle mode, fetch the specific circle by ID
-  // circleId is required for circle mode - if not provided, user will see "No Circle Found" message
-  const { data: circle } = useQuery<any>({
-    queryKey: [`/api/circles/${circleId}`],
-    enabled: !isSoloMode && !!circleId, // Only fetch for circle mode when circleId is provided
-  });
+  // Legacy circle query — disabled (circles removed; isSoloMode is always true from routing)
+  const circle = undefined;
 
   // Check if user should see instruction modal
   useEffect(() => {

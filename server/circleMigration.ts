@@ -92,6 +92,10 @@ export async function runCircleMigration(): Promise<void> {
     const members = await db.select().from(circleMembers).where(eq(circleMembers.circleId, circle.id));
     const msgs = await db.select().from(circleMessages).where(eq(circleMessages.circleId, circle.id));
 
+    if (qualifyingWills.length > 1) {
+      console.warn(`[Migration]   Circle ${circle.id} has ${qualifyingWills.length} qualifying wills — messages will be copied to each. Verify deduplication.`);
+    }
+
     for (const will of qualifyingWills) {
       console.log(`[Migration]   Migrating will ${will.id} (circle ${circle.id}, status: ${will.status})`);
 
