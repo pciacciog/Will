@@ -15,9 +15,6 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import NotFound from "@/pages/not-found";
 import Auth from "@/pages/Auth";
 import Home from "@/pages/Home";
-import InnerCircle from "@/pages/InnerCircle";
-import InnerCircleHub from "@/pages/InnerCircleHub";
-import CircleMessagesPage from "@/pages/CircleMessagesPage";
 import Explore from "@/pages/Explore";
 import JoinWill from "@/pages/JoinWill";
 import WillHistory from "@/pages/WillHistory";
@@ -51,14 +48,6 @@ if (import.meta.env.DEV) {
   setInterval(() => {
     console.log('🔍 PERIODIC DEBUG:', notificationService.getDebugInfo());
   }, 10000);
-}
-
-function LegacyHubRedirect() {
-  const [, setLocation] = useLocation();
-  useEffect(() => {
-    setLocation('/circles');
-  }, [setLocation]);
-  return null;
 }
 
 function CircleLobbyRedirect() {
@@ -184,10 +173,9 @@ function Router() {
             console.log('🔗 [DeepLink] Mapped review link to:', targetPath);
           }
           
-          if (targetPath.match(/^\/circle\/\d+$/)) {
-            const circleId = targetPath.split('/')[2];
-            targetPath = `/circles/${circleId}`;
-            console.log('🔗 [DeepLink] Mapped circle link to:', targetPath);
+          if (targetPath.match(/^\/circles(\/\d+)?$/)) {
+            targetPath = '/friends';
+            console.log('🔗 [DeepLink] Mapped legacy circle link to:', targetPath);
           }
           
           if (targetPath.includes('?tab=messages')) {
@@ -199,24 +187,23 @@ function Router() {
           const type = data?.type;
           const isSoloMode = data?.isSoloMode === 'true';
           const willId = data?.willId;
-          const circleId = data?.circleId;
           
           console.log('🔗 [DeepLink] Fallback info:', { type, isSoloMode, willId });
           
           if (willId) {
             targetPath = `/will/${willId}`;
           } else if (type === 'daily_reminder' || type === 'will_midpoint') {
-            targetPath = isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles');
+            targetPath = isSoloMode ? '/my-wills' : '/my-wills';
           } else if (type === 'will_started') {
-            targetPath = isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles');
+            targetPath = '/my-wills';
           } else if (type === 'end_room_now' || type === 'end_room_15_minutes' || type === 'end_room_24_hours') {
-            targetPath = circleId ? `/circles/${circleId}` : '/circles';
+            targetPath = '/my-wills';
           } else if (type === 'will_proposed' || type === 'circle_member_joined') {
-            targetPath = circleId ? `/circles/${circleId}` : '/circles';
+            targetPath = '/my-wills';
           } else if (type === 'ready_for_new_will') {
-            targetPath = circleId ? `/circles/${circleId}` : '/circles';
+            targetPath = '/my-wills';
           } else if (type === 'circle_message') {
-            targetPath = circleId ? `/circles/${circleId}/messages` : '/circles';
+            targetPath = '/my-wills';
           } else if (type === 'friend_request') {
             targetPath = '/friends';
           } else {
@@ -375,12 +362,8 @@ function Router() {
           <>
             <Route path="/" component={Home} />
             <Route path="/friends" component={FriendsPage} />
-            <Route path="/inner-circle" component={InnerCircle} />
             <Route path="/circles" component={CircleLobbyRedirect} />
-            <Route path="/circles/:circleId/messages">{(params) => <CircleMessagesPage circleId={parseInt(params.circleId)} />}</Route>
-            <Route path="/circles/:circleId/proof">{(params) => <ProofFeed circleId={parseInt(params.circleId)} />}</Route>
-            <Route path="/circles/:circleId">{(params) => <InnerCircleHub circleId={parseInt(params.circleId)} />}</Route>
-            <Route path="/hub" component={LegacyHubRedirect} />
+            <Route path="/circles/:circleId" component={CircleLobbyRedirect} />
             <Route path="/solo/hub" component={Home} />
             <Route path="/wills" component={MyWills} />
             <Route path="/today" component={Today} />
@@ -392,7 +375,6 @@ function Router() {
             <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>
             <Route path="/shared/history">{() => <WillHistory mode="shared" />}</Route>
             <Route path="/public/history">{() => <WillHistory mode="public" />}</Route>
-            <Route path="/circles/:circleId/start-will">{(params) => <StartWill circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/start-will">{() => <StartWill />}</Route>
             <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/will/:id/messages">{(params) => <WillMessagesPage willId={parseInt(params.id)} />}</Route>

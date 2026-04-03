@@ -345,30 +345,29 @@ class PushNotificationService {
   }
 
   // Predefined notification templates for the 4 key moments
-  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isSharedWill: boolean = false, circleId?: number, willTitle?: string): Promise<void> {
+  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isSharedWill: boolean = false, _circleId?: number, willTitle?: string): Promise<void> {
     const payload: PushNotificationPayload = {
       title: willTitle
         ? `${willTitle} — new Will proposed! 📝`
         : (isSharedWill ? "New Shared Will proposed! 📝" : "New Will proposed! 📝"),
-      body: isSharedWill 
-        ? `${creatorName} proposed a new Shared Will for your circle`
+      body: isSharedWill
+        ? `${creatorName} proposed a new Shared Will`
         : `${creatorName} has proposed starting a new Will`,
       category: 'will_proposed',
       data: {
         type: 'will_proposed',
         creatorName,
         willId: willId?.toString() || '',
-        circleId: circleId?.toString() || '',
         isSoloMode: 'false',
         isSharedWill: isSharedWill ? 'true' : 'false',
-        deepLink: willId ? `/will/${willId}/commit` : (circleId ? `/circles/${circleId}` : '/circles'),
+        deepLink: willId ? `/will/${willId}/commit` : '/my-wills',
       }
     };
 
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  async sendWillStartedNotification(willTitle: string, committedMembers: string[], willId?: number, isSoloMode: boolean = false, circleId?: number): Promise<void> {
+  async sendWillStartedNotification(willTitle: string, committedMembers: string[], willId?: number, isSoloMode: boolean = false, _circleId?: number): Promise<void> {
     const payload: PushNotificationPayload = {
       title: "Your Will has started! 🎯",
       body: `Time to begin your commitment: "${willTitle}"`,
@@ -377,16 +376,15 @@ class PushNotificationService {
         type: 'will_started',
         willTitle,
         willId: willId?.toString() || '',
-        circleId: circleId?.toString() || '',
         isSoloMode: isSoloMode ? 'true' : 'false',
-        deepLink: willId ? `/will/${willId}` : (isSoloMode ? '/solo/hub' : (circleId ? `/circles/${circleId}` : '/circles')),
+        deepLink: willId ? `/will/${willId}` : (isSoloMode ? '/my-wills' : '/my-wills'),
       }
     };
 
     await this.sendToMultipleUsers(committedMembers, payload);
   }
 
-  async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string, circleMembers: string[], willId?: number, circleId?: number): Promise<void> {
+  async sendEndRoomNotification(type: '24_hours' | '15_minutes' | 'live', endRoomTime: string, circleMembers: string[], willId?: number, _circleId?: number): Promise<void> {
     const notifications = {
       '24_hours': {
         title: "End Room tomorrow 📅",
@@ -398,7 +396,7 @@ class PushNotificationService {
       },
       'live': {
         title: "End Room is live! 🎭",
-        body: "Join now for your circle's reflection ceremony",
+        body: "Join now for your Will's reflection ceremony",
       }
     };
 
@@ -410,32 +408,30 @@ class PushNotificationService {
         type: `end_room_${type}`,
         endRoomTime,
         willId: willId?.toString() || '',
-        circleId: circleId?.toString() || '',
         isSoloMode: 'false',
-        deepLink: willId ? `/will/${willId}` : (circleId ? `/circles/${circleId}` : '/circles'),
+        deepLink: willId ? `/will/${willId}` : '/my-wills',
       }
     };
 
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  async sendReadyForNewWillNotification(circleMembers: string[], circleId?: number): Promise<void> {
+  async sendReadyForNewWillNotification(circleMembers: string[], _circleId?: number): Promise<void> {
     const payload: PushNotificationPayload = {
       title: "Ready for new Will! 🚀",
       body: "All members acknowledged - you can start a new Will!",
       category: 'ready_for_new_will',
       data: {
         type: 'ready_for_new_will',
-        circleId: circleId?.toString() || '',
         isSoloMode: 'false',
-        deepLink: circleId ? `/circles/${circleId}` : '/circles',
+        deepLink: '/my-wills',
       }
     };
 
     await this.sendToMultipleUsers(circleMembers, payload);
   }
 
-  async sendTeamPushNotification(pusherName: string, willTitle: string, circleMembers: string[], willId?: number, circleId?: number): Promise<void> {
+  async sendTeamPushNotification(pusherName: string, willTitle: string, circleMembers: string[], willId?: number, _circleId?: number): Promise<void> {
     const payload: PushNotificationPayload = {
       title: `${pusherName} has pushed you! 🚀`,
       body: `Encouragement for your Will: "${willTitle}"`,
@@ -445,9 +441,8 @@ class PushNotificationService {
         pusherName,
         willTitle,
         willId: willId?.toString() || '',
-        circleId: circleId?.toString() || '',
         isSoloMode: 'false',
-        deepLink: willId ? `/will/${willId}` : (circleId ? `/circles/${circleId}` : '/circles'),
+        deepLink: willId ? `/will/${willId}` : '/my-wills',
       }
     };
 
@@ -521,22 +516,6 @@ class PushNotificationService {
     await this.sendToMultipleUsers(usersWithoutReview, payload);
   }
 
-  // NEW NOTIFICATION #4: Circle Member Joined
-  async sendCircleMemberJoinedNotification(memberName: string, circleId: number, existingMembers: string[]): Promise<void> {
-    const payload: PushNotificationPayload = {
-      title: "New Circle member! 👋",
-      body: `${memberName} joined your Circle.`,
-      category: 'circle_member_joined',
-      data: {
-        type: 'circle_member_joined',
-        memberName,
-        circleId: circleId.toString(),
-        deepLink: `/circles/${circleId}`
-      }
-    };
-
-    await this.sendToMultipleUsers(existingMembers, payload);
-  }
 
   // NEW NOTIFICATION #5: Member Review Submitted
   async sendMemberReviewSubmittedNotification(reviewerName: string, willId: number, otherMembers: string[]): Promise<void> {
@@ -714,23 +693,7 @@ class PushNotificationService {
     await this.sendToMultipleUsers(otherParticipants, payload);
   }
 
-  async sendCircleMessageNotification(senderName: string, circleId: number, messagePreview: string, otherMembers: string[]): Promise<void> {
-    const truncatedPreview = messagePreview.length > 100 ? messagePreview.substring(0, 97) + '...' : messagePreview;
-
-    const payload: PushNotificationPayload = {
-      title: `${senderName} sent a message`,
-      body: truncatedPreview,
-      category: 'circle_message',
-      data: {
-        type: 'circle_message',
-        circleId: circleId.toString(),
-        senderName,
-        deepLink: `/circles/${circleId}/messages`,
-      }
-    };
-
-    await this.sendToMultipleUsers(otherMembers, payload);
-  }
 }
+
 
 export const pushNotificationService = new PushNotificationService();

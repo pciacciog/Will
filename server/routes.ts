@@ -837,287 +837,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Circle routes
-  app.post('/api/circles', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      
-      // Check if user has reached maximum circles (3)
-      const circleCount = await storage.getUserCircleCount(userId);
-      if (circleCount >= 3) {
-        return res.status(400).json({ message: "You've reached the maximum of 3 circles. Leave a circle to create another." });
-      }
-
-      // Generate unique invite code
-      let inviteCode: string;
-      let isUnique = false;
-      do {
-        inviteCode = generateInviteCode();
-        const existingCircle = await storage.getCircleByInviteCode(inviteCode);
-        isUnique = !existingCircle;
-      } while (!isUnique);
-
-      // Create circle
-      const circle = await storage.createCircle({
-        inviteCode,
-        createdBy: userId,
-      });
-
-      // Add creator as first member
-      await storage.addCircleMember({
-        circleId: circle.id,
-        userId,
-      });
-
-      const circleWithMembers = await storage.getCircleWithMembers(circle.id);
-      res.json(circleWithMembers);
-    } catch (error) {
-      console.error("Error creating circle:", error);
-      res.status(500).json({ message: "Failed to create circle" });
-    }
-  });
-
-  app.post('/api/circles/join', isAuthenticated, async (req: any, res) => {
-    console.log(`\n🚨🚨🚨 [JOIN CIRCLE API] REQUEST RECEIVED 🚨🚨🚨`);
-    console.log(`[JOIN CIRCLE API] Timestamp: ${new Date().toISOString()}`);
-    console.log(`[JOIN CIRCLE API] Request body:`, req.body);
-    try {
-      const userId = req.user.id;
-      const { inviteCode } = req.body;
-      console.log(`[JOIN CIRCLE API] User ${userId} attempting to join with code: ${inviteCode}`);
-
-      if (!inviteCode) {
-        return res.status(400).json({ message: "Invite code is required" });
-      }
-
-      // Check if user has reached maximum circles (3)
-      const userCircleCount = await storage.getUserCircleCount(userId);
-      if (userCircleCount >= 3) {
-        return res.status(400).json({ message: "You've reached the maximum of 3 circles. Leave a circle to join another." });
-      }
-
-      // Find circle by invite code
-      const circle = await storage.getCircleByInviteCode(inviteCode.toUpperCase());
-      if (!circle) {
-        return res.status(404).json({ message: "No circle found with that code" });
-      }
-
-      // Check if circle is full (max 4 members per circle)
-      const memberCount = await storage.getCircleMemberCount(circle.id);
-      if (memberCount >= 4) {
-        return res.status(400).json({ message: "This Circle is full (maximum 4 members)" });
-      }
-
-      // Check if user is already in this circle
-      const isAlreadyMember = await storage.isUserInCircle(userId, circle.id);
-      if (isAlreadyMember) {
-        return res.status(400).json({ message: "You're already a member of this circle" });
-      }
-
-      // Get existing members BEFORE adding the new user (for notification)
-      const existingMembersBefore = await storage.getCircleMembers(circle.id);
-      const existingMemberIds = existingMembersBefore.map(m => m.userId);
-      console.log(`[Join Circle] 📋 Circle ${circle.id} has ${existingMemberIds.length} existing members: ${existingMemberIds.join(', ')}`);
-
-      // Add user to circle
-      await storage.addCircleMember({
-        circleId: circle.id,
-        userId,
-      });
-      console.log(`[Join Circle] ✅ User ${userId} added to circle ${circle.id}`);
-
-      // NEW: Send circle_member_joined notification to existing members
-      try {
-        const joiner = await storage.getUser(userId);
-        const joinerName = joiner?.firstName || 'Someone';
-        console.log(`[Join Circle] 📣 Attempting to notify existing members that ${joinerName} joined`);
-        
-        if (existingMemberIds.length > 0) {
-          console.log(`[Join Circle] 🔔 Sending notification to ${existingMemberIds.length} members...`);
-          await pushNotificationService.sendCircleMemberJoinedNotification(joinerName, circle.id, existingMemberIds);
-          console.log(`[Join Circle] ✅ Sent member joined notification to ${existingMemberIds.length} existing members`);
-        } else {
-          console.log(`[Join Circle] ⚠️ No existing members to notify (first member in circle)`);
-        }
-      } catch (notificationError) {
-        console.error("[Join Circle] ❌ Failed to send member joined notification:", notificationError);
-      }
-
-      // ISSUE FIX: Recalculate will status when new member joins
-      // When a new member joins, a "scheduled" will (all previous members committed) should revert to "pending"
-      // Only recalculate for pending/scheduled wills - never for active/completed/archived wills
-      const activeWill = await storage.getCircleActiveWill(circle.id);
-      if (activeWill && (activeWill.status === 'pending' || activeWill.status === 'scheduled')) {
-        // Get will with commitments to calculate correct status
-        const willWithCommitments = await storage.getWillWithCommitments(activeWill.id);
-        if (willWithCommitments) {
-          // Get NEW member count (after adding the user)
-          const newMemberCount = await storage.getCircleMemberCount(circle.id);
-          
-          // Calculate what the status SHOULD be based on current state
-          const calculatedStatus = getWillStatus(willWithCommitments, newMemberCount);
-          
-          // Only update if the calculated status differs from database status
-          if (calculatedStatus !== activeWill.status) {
-            await storage.updateWillStatus(activeWill.id, calculatedStatus);
-            console.log(`[Join Circle] Will ${activeWill.id} status updated: ${activeWill.status} → ${calculatedStatus} (new member joined, ${newMemberCount} members total)`);
-          }
-        }
-      }
-
-      const circleWithMembers = await storage.getCircleWithMembers(circle.id);
-      res.json(circleWithMembers);
-    } catch (error) {
-      console.error("Error joining circle:", error);
-      res.status(500).json({ message: "Failed to join circle" });
-    }
-  });
-
-  // Get all circles user is a member of (for My Circles lobby)
-  app.get('/api/circles/mine', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const circles = await storage.getUserCircles(userId);
-      res.json(circles);
-    } catch (error) {
-      console.error("Error fetching user circles:", error);
-      res.status(500).json({ message: "Failed to fetch circles" });
-    }
-  });
-
-  // Get specific circle by ID (for Circle Hub)
-  app.get('/api/circles/:circleId', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const circleId = parseInt(req.params.circleId);
-      
-      if (isNaN(circleId)) {
-        return res.status(400).json({ message: "Invalid circle ID" });
-      }
-      
-      // Verify user is a member of this circle
-      const isMember = await storage.isUserInCircle(userId, circleId);
-      if (!isMember) {
-        return res.status(403).json({ message: "You're not a member of this circle" });
-      }
-      
-      const circle = await storage.getCircleWithMembers(circleId);
-      if (!circle) {
-        return res.status(404).json({ message: "Circle not found" });
-      }
-      
-      res.json(circle);
-    } catch (error) {
-      console.error("Error fetching circle:", error);
-      res.status(500).json({ message: "Failed to fetch circle" });
-    }
-  });
-
-  app.post('/api/circles/:circleId/leave', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const circleId = parseInt(req.params.circleId);
-      
-      if (isNaN(circleId)) {
-        return res.status(400).json({ message: "Invalid circle ID" });
-      }
-      
-      // Verify user is a member of this circle
-      const isMember = await storage.isUserInCircle(userId, circleId);
-      if (!isMember) {
-        return res.status(404).json({ message: "You are not a member of this circle" });
-      }
-
-      // Check if there are active wills in this circle
-      const activeWill = await storage.getCircleActiveWill(circleId);
-      if (activeWill && (activeWill.status === 'active' || activeWill.status === 'scheduled')) {
-        return res.status(400).json({ message: "Cannot leave circle while there is an active or scheduled will" });
-      }
-
-      // Remove user from circle
-      await storage.removeCircleMember(userId, circleId);
-
-      res.json({ message: "Successfully left the circle" });
-    } catch (error) {
-      console.error("Error leaving circle:", error);
-      res.status(500).json({ message: "Failed to leave circle" });
-    }
-  });
-
-  app.get('/api/circles/:circleId/messages', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const circleId = parseInt(req.params.circleId);
-
-      if (isNaN(circleId)) {
-        return res.status(400).json({ message: "Invalid circle ID" });
-      }
-
-      const isMember = await storage.isUserInCircle(userId, circleId);
-      if (!isMember) {
-        return res.status(403).json({ message: "You are not a member of this circle" });
-      }
-
-      const messages = await storage.getCircleMessages(circleId, 50);
-      res.json(messages);
-    } catch (error) {
-      console.error("Error fetching circle messages:", error);
-      res.status(500).json({ message: "Failed to fetch messages" });
-    }
-  });
-
-  app.post('/api/circles/:circleId/messages', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const circleId = parseInt(req.params.circleId);
-
-      if (isNaN(circleId)) {
-        return res.status(400).json({ message: "Invalid circle ID" });
-      }
-
-      const text = (req.body.text || '').trim();
-      if (!text) {
-        return res.status(400).json({ message: "Message text is required" });
-      }
-      if (text.length > 500) {
-        return res.status(400).json({ message: "Message must be 500 characters or less" });
-      }
-
-      const isMember = await storage.isUserInCircle(userId, circleId);
-      if (!isMember) {
-        return res.status(403).json({ message: "You are not a member of this circle" });
-      }
-
-      const message = await storage.createCircleMessage({
-        circleId,
-        userId,
-        text,
-      });
-
-      const sender = await storage.getUser(userId);
-      const senderName = sender?.firstName || 'Someone';
-
-      const members = await storage.getCircleMembers(circleId);
-      const otherMemberIds = members
-        .map(m => m.userId)
-        .filter(id => id !== userId);
-
-      if (otherMemberIds.length > 0) {
-        await pushNotificationService.sendCircleMessageNotification(
-          senderName,
-          circleId,
-          text,
-          otherMemberIds,
-        );
-      }
-
-      res.json({ ...message, user: { firstName: senderName } });
-    } catch (error) {
-      console.error("Error sending circle message:", error);
-      res.status(500).json({ message: "Failed to send message" });
-    }
-  });
-
   // Will messages routes (for public wills)
   app.get('/api/wills/:willId/messages', isAuthenticated, async (req: any, res) => {
     try {
@@ -1475,157 +1194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[Routes] Created Shared Will ${will.id} with ${filteredInviteIds.length} invites`);
         res.json(will);
       } else {
-        // CIRCLE MODE: Multi-circle support - use circleId from request
-        
-        // Get circle ID from request body
-        const circleId = req.body.circleId;
-        console.log('=== WILL CREATION DEBUG ===');
-        console.log('User ID:', userId);
-        console.log('Circle ID from request body:', circleId);
-        console.log('Full request body:', JSON.stringify(req.body, null, 2));
-        
-        if (!circleId) {
-          console.log('ERROR: No circleId provided in request');
-          return res.status(400).json({ message: "Circle ID is required for circle mode Wills" });
-        }
-        
-        // Verify user is a member of this specific circle
-        const isMember = await storage.isUserInCircle(userId, circleId);
-        console.log('Is user member of circle', circleId, '?', isMember);
-        if (!isMember) {
-          return res.status(403).json({ message: "You must be a member of this circle to create a Will" });
-        }
-        
-        // Get circle details
-        const circle = await storage.getCircleWithMembers(circleId);
-        if (!circle) {
-          return res.status(404).json({ message: "Circle not found" });
-        }
-
-        // Check if THIS SPECIFIC circle already has an active will
-        console.log('Checking for active Will in circleId:', circleId);
-        const existingWill = await storage.getCircleActiveWill(circleId);
-        console.log('Existing Will found:', existingWill ? `ID=${existingWill.id}, status=${existingWill.status}, circleId=${existingWill.circleId}` : 'NONE');
-        if (existingWill) {
-          // If will is completed, check if all committed members have acknowledged
-          if (existingWill.status === 'completed') {
-            const existingWillWithCommitments = await storage.getWillWithCommitments(existingWill.id);
-            const commitmentCount = existingWillWithCommitments?.commitments?.length || 0;
-            const acknowledgedCount = await storage.getWillAcknowledgmentCount(existingWill.id);
-            
-            if (acknowledgedCount < commitmentCount) {
-              return res.status(400).json({ 
-                message: "Cannot create new Will until all committed members acknowledge completion of the current one",
-                requiresAcknowledgment: true,
-                acknowledgedCount,
-                commitmentCount
-              });
-            }
-          } else {
-            return res.status(400).json({ message: "Your circle already has an active Will" });
-          }
-        }
-
-        // Handle circle will type (classic or cumulative)
-        const willType = req.body.willType || 'classic';
-        willDataWithDefaults.willType = willType;
-        
-        // For cumulative wills, store the shared commitment
-        if (willType === 'cumulative') {
-          if (!req.body.sharedWhat) {
-            return res.status(400).json({ message: "Cumulative wills require a shared commitment (sharedWhat)" });
-          }
-          willDataWithDefaults.sharedWhat = req.body.sharedWhat;
-        }
-
-        // Set circle ID and validate
-        willDataWithDefaults.circleId = circle.id;
-        const willData = insertWillSchema.parse(willDataWithDefaults);
-        
-        // Create will
-        const will = await storage.createWill(willData);
-
-        // Calculate and set midpointAt for milestone notification
-        const circleStartTime = new Date(req.body.startDate).getTime();
-        const circleEndTime = new Date(req.body.endDate).getTime();
-        const circleMidpointTime = new Date((circleStartTime + circleEndTime) / 2);
-        await db.update(wills).set({ midpointAt: circleMidpointTime }).where(eq(wills.id, will.id));
-        console.log(`Created circle Will ${will.id}, midpoint: ${circleMidpointTime.toISOString()}`);
-
-        // Create End Room if scheduled
-        if (req.body.endRoomScheduledAt) {
-          try {
-            const endRoomTime = new Date(req.body.endRoomScheduledAt);
-            const willEndDate = new Date(req.body.endDate);
-            
-            // Validate End Room scheduling rules
-            if (!dailyService.isValidEndRoomTime(willEndDate, endRoomTime)) {
-              return res.status(400).json({ 
-                error: 'End Room must be scheduled between the Will end time and 48 hours afterward' 
-              });
-            }
-            
-            const endRoom = await dailyService.createEndRoom({
-              willId: will.id,
-              scheduledStart: endRoomTime,
-            });
-            
-            // Update will with End Room details
-            await storage.updateWillEndRoom(will.id, {
-              endRoomScheduledAt: endRoomTime,
-              endRoomUrl: endRoom.url,
-              endRoomStatus: 'pending',
-            });
-            
-            console.log(`Created End Room for Will ${will.id}: ${endRoom.url}`);
-          } catch (error) {
-            console.error('Error creating End Room:', error);
-            // Continue without End Room - will creation should still succeed
-          }
-        }
-
-        // Send push notifications to other circle members
-        try {
-          console.log("Attempting to send push notifications...");
-          const members = await storage.getCircleMembers(circle.id);
-          console.log("Circle members found:", members?.length);
-          
-          const otherMembers = members
-            .filter(member => member.userId !== userId)
-            .map(member => member.userId);
-          
-          console.log("Other members to notify:", otherMembers.length);
-          
-          if (otherMembers.length > 0) {
-            const creator = await storage.getUser(userId);
-            console.log("Creator found:", creator?.firstName, creator?.lastName);
-            
-            const creatorName = creator ? creator.firstName : 'Someone';
-            const isSharedWill = willType === 'cumulative';
-            // Full displayTitle fallback: title ?? commitment.what (from creator's request) ?? sharedWhat ?? undefined
-            const proposedTitle = will.title || (req.body.what as string | undefined) || will.sharedWhat || undefined;
-            await pushNotificationService.sendWillProposedNotification(creatorName, otherMembers, will.id, isSharedWill, circle.id, proposedTitle);
-            console.log(`Sent Will proposed notifications to ${otherMembers.length} members (isSharedWill: ${isSharedWill})`);
-
-            for (const memberId of otherMembers) {
-              await storage.createUserNotification({
-                userId: memberId,
-                type: 'will_proposed',
-                willId: will.id,
-                circleId: circle.id,
-                isRead: false,
-              });
-            }
-          } else {
-            console.log("No other members to notify");
-          }
-        } catch (notificationError) {
-          console.error("Error sending will proposed notifications:", notificationError);
-          console.error("Notification error stack:", (notificationError as Error).stack);
-          // Don't fail the will creation if notifications fail
-        }
-
-        res.json(will);
+        return res.status(400).json({ message: "Invalid mode. Use 'solo', 'personal', 'shared', or 'public'." });
       }
     } catch (error) {
       console.error("Error creating will:", error);
@@ -1708,20 +1277,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (will.mode === 'shared') {
         res.json(commitment);
         return;
-      }
-
-      // Circle mode - check if all members have committed
-      const circle = await storage.getCircleById(will.circleId!);
-      if (!circle) {
-        return res.status(404).json({ message: "Circle not found" });
-      }
-
-      const memberCount = await storage.getCircleMemberCount(will.circleId!);
-      const commitmentCount = await storage.getWillCommitmentCount(willId);
-
-      // If all members have committed, mark as scheduled
-      if (commitmentCount >= memberCount) {
-        await storage.updateWillStatus(willId, 'scheduled');
       }
 
       res.json(commitment);
@@ -2345,58 +1900,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/wills/circle/:circleId', isAuthenticated, async (req: any, res) => {
-    try {
-      const circleId = parseInt(req.params.circleId);
-      const will = await storage.getCircleActiveWill(circleId);
-      
-      if (!will) {
-        return res.json(null);
-      }
-
-      // Get will with commitments for accurate status
-      const willWithCommitments = await storage.getWillWithCommitments(will.id);
-      const memberCount = await storage.getCircleMemberCount(circleId);
-      const commitmentCount = willWithCommitments?.commitments?.length || 0;
-      const acknowledgedCount = await storage.getWillAcknowledgmentCount(will.id);
-      
-      const status = getWillStatus(willWithCommitments, memberCount);
-      
-      // JIT (Just-In-Time) state checks: Update will status immediately when requested
-      // This ensures correct state even if scheduler hasn't run (dev restarts, deployment sleep, etc.)
-      if (willWithCommitments && status !== willWithCommitments.status) {
-        console.log(`[JIT] Transitioning Will ${will.id}: ${willWithCommitments.status} → ${status}`);
-        await storage.updateWillStatus(will.id, status);
-        
-        // Update the object to reflect the new status
-        willWithCommitments.status = status;
-      }
-      
-      // NOTE: Do NOT auto-archive here! Frontend getWillStatus() handles showing 'no_will'
-      // when local user has acknowledged AND all members have acknowledged.
-      // Auto-archiving here would return null before frontend sees hasUserAcknowledged.
-      
-      // Add user acknowledgment status
-      const hasUserAcknowledged = await storage.hasUserAcknowledged(will.id, req.user.id);
-      
-      // Get per-member acknowledgment data for UI badges
-      const acknowledgments = await storage.getWillAcknowledgments(will.id);
-      
-      res.json({
-        ...willWithCommitments,
-        status,
-        memberCount,
-        commitmentCount,
-        acknowledgedCount,
-        hasUserAcknowledged,
-        acknowledgments,
-      });
-    } catch (error) {
-      console.error("Error fetching circle will:", error);
-      res.status(500).json({ message: "Failed to fetch will" });
-    }
-  });
-
   app.get('/api/wills/:id/details', isAuthenticated, async (req: any, res) => {
     try {
       const willId = parseInt(req.params.id);
@@ -2406,7 +1909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const memberCount = willWithCommitments.circleId ? await storage.getCircleMemberCount(willWithCommitments.circleId) : 1;
+      const memberCount = willWithCommitments.commitments?.length || 1;
       const acknowledgedCount = await storage.getWillAcknowledgmentCount(willId);
       
       const status = getWillStatus(willWithCommitments, memberCount);
@@ -2512,15 +2015,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[ACKNOWLEDGE] 🎉 All members acknowledged - archiving Will ${willId}`);
         await storage.updateWillStatus(willId, 'archived');
         
-        // ISSUE #2 FIX: Send Ready for New Will notification ONLY to CURRENT circle members
+        // Send Ready for New Will notification to all committed members
         try {
-          const circleMembers = await storage.getCircleMembers(willWithCommitments.circleId);
-          const memberIds = circleMembers.map(member => member.userId);
-          
-          console.log(`[Routes] ISSUE #2 FIX: Sending Ready for New Will notification to ${memberIds.length} CURRENT members of circle ${willWithCommitments.circleId}`);
-          console.log(`[Routes] Circle members:`, memberIds);
-          
-          await pushNotificationService.sendReadyForNewWillNotification(memberIds, willWithCommitments.circleId);
+          const memberIds = (willWithCommitments.commitments || []).map(c => c.userId);
+          await pushNotificationService.sendReadyForNewWillNotification(memberIds, undefined);
           console.log(`[Routes] ✅ Ready for New Will notification sent for Will ${willId}`);
         } catch (error) {
           console.error(`[Routes] ❌ Failed to send Ready for New Will notification:`, error);
@@ -2605,19 +2103,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.markNotificationsReadByTypeAndWill(userId, 'review_required', willId);
       } catch (e) { /* non-critical */ }
 
-      // NEW: Send member_review_submitted notification to other members (CIRCLE MODE ONLY)
+      // Send member_review_submitted notification to other members of shared wills
       try {
         const will = await storage.getWillById(willId);
-        
-        // Only send notification for circle mode wills (solo mode has no other members)
-        if (will && will.circleId && will.mode === 'circle') {
+        if (will && will.mode === 'shared') {
           const reviewer = await storage.getUser(userId);
           const reviewerName = reviewer?.firstName || 'Someone';
-          const circleMembers = await storage.getCircleMembers(will.circleId);
-          const otherMemberIds = circleMembers
-            .filter(m => m.userId !== userId)
-            .map(m => m.userId);
-          
+          const willWithComms = await storage.getWillWithCommitments(willId);
+          const otherMemberIds = (willWithComms?.commitments || [])
+            .filter(c => c.userId !== userId)
+            .map(c => c.userId);
           if (otherMemberIds.length > 0) {
             await pushNotificationService.sendMemberReviewSubmittedNotification(reviewerName, willId, otherMemberIds);
             console.log(`[REVIEW] Sent review submitted notification to ${otherMemberIds.length} other members`);
@@ -2943,10 +2438,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "You are not a participant of this Will" });
         }
         memberIds = await getOtherPublicWillParticipants(userId, parentId);
-      } else if (will.circleId) {
-        const circleMembers = await storage.getCircleMembers(will.circleId);
-        const membersToNotify = circleMembers.filter(member => member.userId !== userId);
-        memberIds = membersToNotify.map(member => member.userId);
+      } else if (will.mode === 'shared') {
+        const willWithCommsForPush = await storage.getWillWithCommitments(willId);
+        memberIds = (willWithCommsForPush?.commitments || [])
+          .filter(c => c.userId !== userId)
+          .map(c => c.userId);
       }
 
       // Record the push (normalized to parent for public wills)
@@ -2963,7 +2459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const pusherCommitment = willWithCommitmentsForPush?.commitments?.find(c => c.userId === userId);
         const willTitle = will.title || pusherCommitment?.what || will.sharedWhat || 'Your Will';
         const notificationWillId = isPublicWill ? pushDedupeId : willId;
-        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, notificationWillId, will.circleId);
+        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, notificationWillId);
         console.log(`[Push] Sent encouragement notification from ${pusherName} to ${memberIds.length} members for Will: ${willTitle}`);
       }
       
@@ -3013,17 +2509,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/notifications/circle/:circleId/read', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const circleId = parseInt(req.params.circleId);
-      await storage.markNotificationsReadByCircle(userId, circleId);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error marking circle notifications as read:", error);
-      res.status(500).json({ message: "Failed to mark notifications as read" });
-    }
-  });
 
   app.patch('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
     try {
@@ -3708,15 +3193,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
       
-      // Check if user is part of this will's circle
-      const circle = await storage.getCircleById(will.circleId);
-      if (!circle) {
-        return res.status(404).json({ message: "Circle not found" });
-      }
-      
-      const isInCircle = await storage.isUserInCircle(userId, circle.id);
-      if (!isInCircle) {
-        return res.status(403).json({ message: "You must be in the circle to access the End Room" });
+      // Check if user is a committed participant of this will
+      const endRoomWillWithComms = await storage.getWillWithCommitments(willId);
+      const isParticipant = (endRoomWillWithComms?.commitments || []).some(c => c.userId === userId);
+      if (!isParticipant) {
+        return res.status(403).json({ message: "You must be a participant to access the End Room" });
       }
       
       // If End Room is open but URL is missing or invalid, try to create the room
@@ -4436,63 +3917,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  app.post('/api/notifications/will-started', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { willTitle } = req.body;
-      
-      // Get user's circle and active will
-      const userCircle = await storage.getUserCircle(userId);
-      if (!userCircle) {
-        return res.status(404).json({ message: "User not in a circle" });
-      }
-      
-      // Get active will from circle
-      const activeWill = await storage.getCircleActiveWill(userCircle.id);
-      
-      if (activeWill) {
-        const willWithCommitments = await storage.getWillWithCommitments(activeWill.id);
-        if (willWithCommitments?.commitments) {
-          for (const commitment of willWithCommitments.commitments) {
-            const userWillTitle = willWithCommitments.title || commitment.what || willWithCommitments.sharedWhat || willTitle || "Your Will";
-            await pushNotificationService.sendWillStartedNotification(userWillTitle, [commitment.userId], activeWill.id, false, userCircle.id);
-          }
-        }
-      }
-      
-      res.json({ success: true, message: "Will started notifications sent" });
-    } catch (error) {
-      console.error("Error sending will started notifications:", error);
-      res.status(500).json({ message: "Failed to send notifications" });
-    }
-  });
-
-  app.post('/api/notifications/end-room', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { type, endRoomTime } = req.body;
-      
-      // Get user's circle members
-      const userCircle = await storage.getUserCircle(userId);
-      if (!userCircle) {
-        return res.status(404).json({ message: "User not in a circle" });
-      }
-      
-      const members = await storage.getCircleMembers(userCircle.id);
-      const memberIds = members.map(member => member.userId);
-      
-      // Get active will for the circle
-      const activeWill = await storage.getCircleActiveWill(userCircle.id);
-      
-      // Send push notifications for End Room timing
-      await pushNotificationService.sendEndRoomNotification(type, endRoomTime, memberIds, activeWill?.id, userCircle.id);
-      
-      res.json({ success: true, message: "End room notifications sent" });
-    } catch (error) {
-      console.error("Error sending end room notifications:", error);
-      res.status(500).json({ message: "Failed to send notifications" });
-    }
-  });
 
 
   // Test push notification endpoint (temporarily bypass auth for debugging)
@@ -4775,34 +4199,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /api/circles/:circleId/proofs — create a new proof drop
-  app.post('/api/circles/:circleId/proofs', isAuthenticated, async (req: any, res) => {
+  // POST /api/wills/:willId/proofs — create a new proof drop
+  app.post('/api/wills/:willId/proofs', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const circleId = parseInt(req.params.circleId);
-      if (isNaN(circleId)) return res.status(400).json({ message: 'Invalid circle ID.' });
+      const willId = parseInt(req.params.willId);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID.' });
 
       // Rate limit
       if (!checkProofRateLimit(userId)) {
         return res.status(429).json({ message: 'Too many drops. Try again later.' });
       }
 
-      // Validate circle membership
-      const members = await storage.getCircleMembers(circleId);
-      const isMember = members.some((m: any) => m.userId === userId);
-      if (!isMember) return res.status(403).json({ message: 'You are not a member of this circle.' });
+      // Validate will participation (user must have a commitment or be creator)
+      const proofWill = await storage.getWillWithCommitments(willId);
+      if (!proofWill) return res.status(404).json({ message: 'Will not found.' });
+      const isParticipant = (proofWill.commitments || []).some((c: any) => c.userId === userId);
+      if (!isParticipant) return res.status(403).json({ message: 'You are not a participant of this will.' });
 
-      const { imageUrl, thumbnailUrl, cloudinaryPublicId, caption, willId } = req.body;
-
-      // willId is required
-      if (!willId || typeof willId !== 'number') {
-        return res.status(400).json({ message: 'willId is required.' });
-      }
-
-      // Validate willId belongs to this circle
-      const [willCheck] = await db.select({ id: wills.id }).from(wills)
-        .where(and(eq(wills.id, willId), eq(wills.circleId, circleId))).limit(1);
-      if (!willCheck) return res.status(400).json({ message: 'Will does not belong to this circle.' });
+      const { imageUrl, thumbnailUrl, cloudinaryPublicId, caption } = req.body;
 
       // Validate that cloudinaryPublicId is scoped to our upload folder
       if (!cloudinaryPublicId || typeof cloudinaryPublicId !== 'string' || !cloudinaryPublicId.startsWith('will_proofs/')) {
@@ -4844,7 +4259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const [proof] = await db.insert(circleProofs).values({
-        circleId,
+        circleId: null,
         willId,
         userId,
         imageUrl,
@@ -4912,26 +4327,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET /api/circles/:circleId/proofs?willId=&cursor=&limit= — paginated confirmed proofs
-  app.get('/api/circles/:circleId/proofs', isAuthenticated, async (req: any, res) => {
+  // GET /api/wills/:willId/proofs?cursor=&limit= — paginated confirmed proofs for a will
+  app.get('/api/wills/:willId/proofs', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const circleId = parseInt(req.params.circleId);
-      if (isNaN(circleId)) return res.status(400).json({ message: 'Invalid circle ID.' });
+      const willId = parseInt(req.params.willId);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID.' });
 
-      if (!req.query.willId) return res.status(400).json({ message: 'willId is required.' });
-      const willId = parseInt(req.query.willId as string);
-      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid willId.' });
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 200);
       const cursor = req.query.cursor ? new Date(req.query.cursor as string) : null;
 
-      // Validate membership
-      const members = await storage.getCircleMembers(circleId);
-      const isMember = members.some((m: any) => m.userId === userId);
-      if (!isMember) return res.status(403).json({ message: 'Not a circle member.' });
+      // Validate will participation
+      const proofFeedWill = await storage.getWillWithCommitments(willId);
+      if (!proofFeedWill) return res.status(404).json({ message: 'Will not found.' });
+      const isParticipant = (proofFeedWill.commitments || []).some((c: any) => c.userId === userId);
+      if (!isParticipant) return res.status(403).json({ message: 'Not a participant of this will.' });
 
       const conditions = [
-        eq(circleProofs.circleId, circleId),
         eq(circleProofs.willId, willId),
         eq(circleProofs.status, 'confirmed'),
         ...(cursor ? [lt(circleProofs.createdAt, cursor)] : []),
@@ -4940,7 +4352,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rows = await db
         .select({
           id: circleProofs.id,
-          circleId: circleProofs.circleId,
           willId: circleProofs.willId,
           userId: circleProofs.userId,
           imageUrl: circleProofs.imageUrl,
