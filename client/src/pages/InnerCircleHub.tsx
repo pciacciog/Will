@@ -725,7 +725,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
           </div>
 
           {/* Circle Icon with Glow + Tagline + Chat Bubble */}
-          <div className="relative text-center mb-4 mt-2">
+          <div className="relative text-center mb-3 mt-1">
             <div className="inline-flex items-center justify-center mb-1.5">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 blur-2xl opacity-40 animate-pulse"></div>
@@ -749,7 +749,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
           </div>
 
           {/* Members Section - More Breathing Room */}
-          <div className="relative mb-4">
+          <div className="relative mb-3">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
             <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
               <CardContent className="p-4">
@@ -1128,10 +1128,10 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
 
           {/* Proof Card — only visible for the active will */}
           {will && willStatus === 'active' && (
-            <div className="relative mt-3">
+            <div className="relative mt-2">
               <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl blur opacity-20"></div>
               <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-                <CardContent className="p-3">
+                <CardContent className="px-3.5 py-2.5">
                   {/* Header */}
                   <div className="flex items-center justify-between mb-2.5">
                     <button
@@ -1158,7 +1158,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading}
-                      className="w-full border border-dashed border-gray-300 rounded-xl py-4 flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50/40 transition-colors disabled:pointer-events-none"
+                      className="w-full border border-dashed border-gray-300 rounded-xl py-3 flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50/40 transition-colors disabled:pointer-events-none"
                       data-testid="button-empty-drop-zone"
                     >
                       <Camera className="w-5 h-5 opacity-60" />
@@ -1182,7 +1182,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                                 createdAt: proof.createdAt,
                                 willTitle: will?.title || will?.sharedWhat || null,
                               })}
-                              className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
+                              className="relative w-14 h-14 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
                               data-testid={`button-proof-thumb-${proof.id}`}
                             >
                               <img src={src} alt="Proof" className="w-full h-full object-cover" />
@@ -1197,7 +1197,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                         {pendingProofs.map((p) => (
                           <div
                             key={p.tempId}
-                            className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm"
+                            className="relative w-14 h-14 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm"
                           >
                             <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -1210,7 +1210,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
                         {proofsData?.hasMore || proofItems.length > 3 ? (
                           <button
                             onClick={() => setLocation(`/circles/${circleId}/proof?willId=${will.id}`)}
-                            className="w-16 h-16 rounded-[10px] flex-shrink-0 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-300 transition-colors"
+                            className="w-14 h-14 rounded-[10px] flex-shrink-0 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-0.5 hover:border-emerald-300 transition-colors"
                             data-testid="button-proof-more"
                           >
                             <Plus className="w-3.5 h-3.5 text-gray-400" />
@@ -1228,7 +1228,7 @@ export default function InnerCircleHub({ circleId }: InnerCircleHubProps) {
           )}
 
           {/* History Link - Compact */}
-          <div className="mt-4 text-center">
+          <div className="mt-2 text-center">
             <button
               onClick={() => setLocation('/circle/history')}
               className="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 text-xs font-medium transition-colors"
