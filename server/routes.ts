@@ -1472,11 +1472,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Parent Will has no commitment" });
       }
       
-      // Use joiner's own check-in time if provided, otherwise fall back to parent's
-      const userCheckInTime = req.body.checkInTime || parentWill.checkInTime || null;
-      
-      let joinCheckInType = parentWill.checkInType || 'final_review';
+      // Use joiner's own tracking choices if provided, otherwise fall back to parent's
+      let joinCheckInType: string = req.body.checkInType || parentWill.checkInType || 'final_review';
       if (joinCheckInType === 'one-time') joinCheckInType = 'final_review';
+      const joinerActiveDays: string = req.body.activeDays || parentWill.activeDays || 'every_day';
+      const joinerCustomDays: string | null = req.body.customDays || parentWill.customDays || null;
+      const userCheckInTime: string | null = joinCheckInType !== 'final_review'
+        ? (req.body.checkInTime || parentWill.checkInTime || null)
+        : null;
 
       // Create a new will instance for this user
       // Start date is when the user joins, not when the parent will started
@@ -1493,8 +1496,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate: parentWill.endDate,
         checkInType: joinCheckInType,
         checkInTime: userCheckInTime,
-        activeDays: parentWill.activeDays || 'every_day',
-        customDays: parentWill.customDays || null,
+        activeDays: joinerActiveDays,
+        customDays: joinerCustomDays,
       });
       
       // Update status to match parent if it's active
@@ -1511,8 +1514,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         why: userWhy,
         checkInType: joinCheckInType,
         checkInTime: userCheckInTime,
-        activeDays: parentWill.activeDays || 'every_day',
-        customDays: parentWill.customDays || null,
+        activeDays: joinerActiveDays,
+        customDays: joinerCustomDays,
       });
 
       const joiningUser = await db

@@ -69,6 +69,8 @@ export default function JoinWill() {
   const [currentStep, setCurrentStep] = useState(1);
   const [why, setWhy] = useState('');
   const [charCount, setCharCount] = useState(0);
+  const [checkInType, setCheckInType] = useState<'daily' | 'specific_days' | 'final_review'>('daily');
+  const [customDays, setCustomDays] = useState<number[]>([]);
   const [checkInTime, setCheckInTime] = useState<string>('19:00');
   const whyRef = useRef<HTMLTextAreaElement>(null);
 
@@ -77,22 +79,17 @@ export default function JoinWill() {
     enabled: willId > 0,
   });
 
-  const isShortDuration = useMemo(() => {
-    if (!will?.startDate || !will?.endDate || will?.isIndefinite) return false;
-    const diffMs = new Date(will.endDate).getTime() - new Date(will.startDate).getTime();
-    return diffMs <= 24 * 60 * 60 * 1000;
-  }, [will]);
-
-  const needsCheckInTime = will?.checkInType === 'daily' && !isShortDuration;
-
   const joinMutation = useMutation({
     mutationFn: async () => {
       return apiRequest(`/api/wills/${willId}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           why,
-          checkInTime: needsCheckInTime ? checkInTime : undefined,
+          checkInType,
+          activeDays: checkInType === 'specific_days' ? 'custom' : checkInType === 'daily' ? 'every_day' : undefined,
+          customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
+          checkInTime: checkInType !== 'final_review' ? checkInTime : undefined,
         }),
       });
     },
@@ -132,18 +129,10 @@ export default function JoinWill() {
     }
   };
 
-  const ladderSteps = needsCheckInTime 
-    ? ['What', 'Why', 'When'] 
-    : ['What', 'Why'];
-
-  const totalInternalSteps = needsCheckInTime ? 4 : 3;
-  const confirmStep = totalInternalSteps;
-
+  const ladderSteps = ['What', 'Why', 'Tracking'];
+  const confirmStep = 4;
   const ladderIndex = currentStep >= confirmStep ? ladderSteps.length : currentStep - 1;
-
-  const pageTitles: Record<number, string> = needsCheckInTime
-    ? { 1: 'What', 2: 'Why', 3: 'When', 4: 'Confirm' }
-    : { 1: 'What', 2: 'Why', 3: 'Confirm' };
+  const pageTitles: Record<number, string> = { 1: 'What', 2: 'Why', 3: 'Tracking', 4: 'Confirm' };
 
   if (isLoading) {
     return (
@@ -170,7 +159,10 @@ export default function JoinWill() {
   }
 
   const isOngoing = will.isIndefinite;
-  const checkInLabel = will.checkInType === 'daily' ? 'Habit check-ins' : 'Review at the end';
+  const checkInLabel =
+    checkInType === 'daily' ? 'Every Day' :
+    checkInType === 'specific_days' ? 'Specific Days' :
+    'Final Review Only';
 
   return (
     <MobileLayout>
@@ -341,38 +333,145 @@ export default function JoinWill() {
             </div>
           )}
 
-          {needsCheckInTime && currentStep === 3 && (
+          {currentStep === 3 && (
             <div className="flex flex-col animate-in fade-in duration-500">
-              <div className="flex-1 flex flex-col items-center justify-center py-8">
-                <div className="text-center mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">Daily Check-In</p>
-                  <p className="text-2xl font-bold text-gray-900 mb-2">When should we check in?</p>
-                  <p className="text-sm text-gray-500 max-w-xs mx-auto">
-                    Pick a time each day when you'd like to be reminded to log your progress.
-                  </p>
+              <div className="flex-1 flex flex-col py-4 px-4">
+                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <button
+                    type="button"
+                    onClick={() => setCheckInType('daily')}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+                      checkInType === 'daily'
+                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    data-testid="button-join-checkin-daily"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        checkInType === 'daily' ? 'border-blue-500' : 'border-gray-300'
+                      }`}>
+                        {checkInType === 'daily' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Every Day</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Check in every day at a chosen time</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCheckInType('specific_days')}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+                      checkInType === 'specific_days'
+                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    data-testid="button-join-checkin-specific-days"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        checkInType === 'specific_days' ? 'border-blue-500' : 'border-gray-300'
+                      }`}>
+                        {checkInType === 'specific_days' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Specific Days</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Pick which days of the week to check in</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCheckInType('final_review')}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+                      checkInType === 'final_review'
+                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                    data-testid="button-join-checkin-final-review"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        checkInType === 'final_review' ? 'border-blue-500' : 'border-gray-300'
+                      }`}>
+                        {checkInType === 'final_review' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Final Review Only</p>
+                        <p className="text-xs text-gray-500 mt-0.5">No daily check-ins — just review at the end</p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
 
-                <div className="flex justify-center animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
-                  <TimeChipPicker
-                    value={checkInTime}
-                    onChange={setCheckInTime}
-                    testId="input-join-check-in-time"
-                  />
-                </div>
+                {checkInType === 'specific_days' && (
+                  <div className="mt-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Select Days</p>
+                    <div className="flex justify-center gap-1.5">
+                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setCustomDays(prev =>
+                              prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
+                            );
+                          }}
+                          className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
+                            customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                          data-testid={`button-join-day-${i}`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {checkInType !== 'final_review' && (
+                  <div className="mt-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Check-In Time</p>
+                    <div className="flex justify-center">
+                      <TimeChipPicker
+                        value={checkInTime}
+                        onChange={setCheckInTime}
+                        testId="input-join-check-in-time"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" data-testid="text-join-checkin-confirm">
+                  {checkInType === 'daily' && "We'll check in with you daily at this time"}
+                  {checkInType === 'specific_days' && (() => {
+                    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const selected = customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ');
+                    return selected ? `We'll check in on ${selected} at this time` : 'Select at least one day';
+                  })()}
+                  {checkInType === 'final_review' && "No daily check-ins — just review at the end"}
+                </p>
               </div>
 
               <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '200ms' }}>
                 <Button type="button" variant="ghost" onClick={() => setCurrentStep(2)} className="text-gray-500" data-testid="button-back-to-why">
                   Back
                 </Button>
-                <PrimaryButton onClick={() => setCurrentStep(4)} data-testid="button-next-to-confirm-from-checkin">
+                <PrimaryButton
+                  onClick={() => setCurrentStep(4)}
+                  disabled={checkInType === 'specific_days' && customDays.length === 0}
+                  data-testid="button-next-to-confirm-from-tracking"
+                >
                   Next <ArrowRight className="w-4 h-4 ml-2" />
                 </PrimaryButton>
               </div>
             </div>
           )}
 
-          {currentStep === (needsCheckInTime ? 4 : 3) && (
+          {currentStep === 4 && (
             <div className="flex flex-col animate-in fade-in duration-500">
               <div className="flex-1 flex flex-col py-4 px-4">
                 <div className="space-y-4">
@@ -426,13 +525,13 @@ export default function JoinWill() {
                       </div>
                     </div>
 
-                    {needsCheckInTime && (
+                    {checkInType !== 'final_review' && (
                     <>
                       <div className="border-t border-gray-200"></div>
                       <div className="flex items-start gap-3">
                         <Clock className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Daily Check-In</p>
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Check-In Time</p>
                           <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-checkin-time">
                             {formatTimeForDisplay(checkInTime)}
                           </p>
@@ -445,7 +544,7 @@ export default function JoinWill() {
               </div>
 
               <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <Button type="button" variant="ghost" onClick={() => setCurrentStep(needsCheckInTime ? 3 : 2)} className="text-gray-500" data-testid="button-back-from-confirm">
+                <Button type="button" variant="ghost" onClick={() => setCurrentStep(3)} className="text-gray-500" data-testid="button-back-from-confirm">
                   Back
                 </Button>
                 <button
