@@ -32,6 +32,7 @@ import {
   willCommitments,
   sharedWillInvites,
   willMessages,
+  userNotifications,
 } from "../shared/schema";
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -71,26 +72,25 @@ async function main() {
 
     if (qualifyingWills.length === 0) {
       // No qualifying wills — check if any will (any status) still references this circle
-      const anyWillCheck = await db
+      const anyWillsForCircle = await db
         .select({ id: wills.id })
         .from(wills)
-        .where(eq(wills.circleId, circle.id))
-        .limit(1);
+        .where(eq(wills.circleId, circle.id));
 
-      if (anyWillCheck.length > 0) {
-        // Historical wills (completed/terminated) still reference this circle via FK.
-        // Preserve for Stage B (when circleId column drops).
-        console.log(`  ↩ Circle ${circle.id} skipped — has non-qualifying wills (FK constraint).`);
-        skipped++;
-        continue;
+      if (anyWillsForCircle.length > 0) {
+        // Non-qualifying wills (completed/terminated/etc.) still reference this circle.
+        // Null their circleId to release the FK constraint, then delete the circle.
+        await db.update(wills).set({ circleId: null }).where(eq(wills.circleId, circle.id));
+        console.log(`  Nulled circleId on ${anyWillsForCircle.length} non-qualifying will(s) for circle ${circle.id}.`);
       }
 
-      // Truly orphaned: no wills ever referenced this circle — safe to delete
+      // Clear all FK references to this circle, then delete it
       try {
+        await db.update(userNotifications).set({ circleId: null }).where(eq(userNotifications.circleId, circle.id));
         await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
         await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
         await db.delete(circles).where(eq(circles.id, circle.id));
-        console.log(`  ✓ Deleted orphaned circle ${circle.id}.`);
+        console.log(`  ✓ Deleted circle ${circle.id}.`);
         circlesDeleted++;
       } catch (e) {
         console.warn(`  ⚠ Could not delete circle ${circle.id}:`, e);

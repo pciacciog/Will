@@ -718,7 +718,7 @@ export default function WillDetails() {
   }
 
   const userHasCommitted = will.commitments?.some((c: any) => c.userId === user?.id);
-  const totalMembers = (will as any).memberCount || will.commitments?.length || 0;
+  const totalMembers = will.memberCount || will.commitments?.length || 0;
   const submittedCount = will.commitments?.length || 0;
 
   return (

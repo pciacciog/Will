@@ -36,6 +36,7 @@ import {
   willCommitments,
   sharedWillInvites,
   willMessages,
+  userNotifications,
 } from "@shared/schema";
 
 export async function runCircleMigration(): Promise<void> {
@@ -73,17 +74,17 @@ export async function runCircleMigration(): Promise<void> {
         .limit(1);
 
       if (anyWillCheck.length > 0) {
-        // FK constraint: wills still reference this circle — cannot delete.
-        // Preserved until Stage B (when circleId column drops).
-        circlesWithNoWork++;
-        continue;
+        // Non-qualifying wills (completed/terminated/etc.) still reference this circle.
+        // Null their circleId to release the FK constraint, then delete the circle.
+        await db.update(wills).set({ circleId: null }).where(eq(wills.circleId, circle.id));
       }
 
-      // Truly orphaned: no wills reference this circle — safe to delete now
+      // Clear all FK references to this circle, then delete it
+      await db.update(userNotifications).set({ circleId: null }).where(eq(userNotifications.circleId, circle.id));
       await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
       await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
       await db.delete(circles).where(eq(circles.id, circle.id));
-      console.log(`[Migration]   Deleted orphaned circle ${circle.id}.`);
+      console.log(`[Migration]   Deleted circle ${circle.id} (${anyWillCheck.length > 0 ? 'had non-qualifying wills, circleId nulled' : 'orphaned'}).`);
       circlesDeleted++;
       continue;
     }
