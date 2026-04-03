@@ -27,7 +27,8 @@
  */
 
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { neon } from "@neondatabase/serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 import { eq, and, sql } from "drizzle-orm";
 import {
   circles,
@@ -45,8 +46,9 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const client = neon(DATABASE_URL);
-const db = drizzle(client);
+neonConfig.webSocketConstructor = ws;
+const pool = new Pool({ connectionString: DATABASE_URL });
+const db = drizzle({ client: pool });
 
 const QUALIFYING_STATUSES = ["active", "scheduled", "pending", "paused", "will_review"];
 
@@ -224,9 +226,9 @@ async function main() {
         invitesCreated++;
       }
 
-      // Step 3: Migrate circle_messages into will_messages (all-or-nothing per will)
+      // Step 3: Migrate circle_messages → will_messages inside a transaction (all-or-nothing)
       // Idempotency: if will_messages already has any entries for this will, skip entirely.
-      // This avoids any duplication risk including same-second duplicate messages.
+      // Transaction guarantees: partial failures leave zero rows inserted, so safe full retry.
       if (msgs.length > 0) {
         const [existingCount] = await db
           .select({ count: sql<number>`count(*)` })
@@ -234,15 +236,17 @@ async function main() {
           .where(eq(willMessages.willId, will.id));
         const alreadyHasMessages = Number(existingCount?.count || 0) > 0;
         if (!alreadyHasMessages) {
-          for (const msg of msgs) {
-            await db.insert(willMessages).values({
-              willId: will.id,
-              userId: msg.userId,
-              text: msg.text,
-              createdAt: msg.createdAt ?? new Date(),
-            });
-            messagesMigrated++;
-          }
+          await db.transaction(async (tx) => {
+            for (const msg of msgs) {
+              await tx.insert(willMessages).values({
+                willId: will.id,
+                userId: msg.userId,
+                text: msg.text,
+                createdAt: msg.createdAt ?? new Date(),
+              });
+            }
+          });
+          messagesMigrated += msgs.length;
         }
       }
 

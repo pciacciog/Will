@@ -173,25 +173,28 @@ export async function runCircleMigration(): Promise<void> {
         invitesCreated++;
       }
 
-      // Step 3: Migrate circle_messages → will_messages (all-or-nothing per will)
-      // Idempotency: if will_messages already has any entries for this will, messages were
-      // already migrated in a prior run — skip entirely to avoid any duplication.
+      // Step 3: Migrate circle_messages → will_messages inside a transaction (all-or-nothing)
+      // Idempotency check first: if any messages already exist for this will, skip entirely.
+      // The INSERT is wrapped in a transaction so partial failures leave zero rows inserted,
+      // allowing a safe full retry on the next run.
       if (msgs.length > 0) {
-        const existingCount = await db
+        const [existingCount] = await db
           .select({ count: sql<number>`count(*)` })
           .from(willMessages)
           .where(eq(willMessages.willId, will.id));
-        const alreadyHasMessages = Number(existingCount[0]?.count || 0) > 0;
+        const alreadyHasMessages = Number(existingCount?.count || 0) > 0;
         if (!alreadyHasMessages) {
-          for (const msg of msgs) {
-            await db.insert(willMessages).values({
-              willId: will.id,
-              userId: msg.userId,
-              text: msg.text,
-              createdAt: msg.createdAt ?? new Date(),
-            });
-            messagesMigrated++;
-          }
+          await db.transaction(async (tx) => {
+            for (const msg of msgs) {
+              await tx.insert(willMessages).values({
+                willId: will.id,
+                userId: msg.userId,
+                text: msg.text,
+                createdAt: msg.createdAt ?? new Date(),
+              });
+            }
+          });
+          messagesMigrated += msgs.length;
         }
       }
 

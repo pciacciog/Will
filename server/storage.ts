@@ -146,7 +146,7 @@ export interface IStorage {
   // Admin operations
   getAllUsers(limit?: number, offset?: number): Promise<User[]>;
   getAllCircles(limit?: number, offset?: number): Promise<(Circle & { memberCount: number })[]>;
-  getAllWills(limit?: number, offset?: number): Promise<(Will & { circle: Circle; creator: User; memberCount: number })[]>;
+  getAllWills(limit?: number, offset?: number): Promise<(Will & { circle: Circle | null; creator: User; memberCount: number })[]>;
   updateUserRole(userId: string, role: string): Promise<void>;
   deactivateUser(userId: string): Promise<void>;
   activateUser(userId: string): Promise<void>;
@@ -1135,7 +1135,7 @@ export class DatabaseStorage implements IStorage {
     return circlesWithMemberCount;
   }
 
-  async getAllWills(limit = 50, offset = 0): Promise<(Will & { circle: Circle; creator: User; memberCount: number })[]> {
+  async getAllWills(limit = 50, offset = 0): Promise<(Will & { circle: Circle | null; creator: User; memberCount: number })[]> {
     const willsData = await db
       .select({
         will: wills,
@@ -1143,7 +1143,7 @@ export class DatabaseStorage implements IStorage {
         creator: users,
       })
       .from(wills)
-      .innerJoin(circles, eq(wills.circleId, circles.id))
+      .leftJoin(circles, eq(wills.circleId, circles.id))
       .innerJoin(users, eq(wills.createdBy, users.id))
       .limit(limit)
       .offset(offset)
