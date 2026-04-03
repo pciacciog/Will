@@ -136,63 +136,69 @@ app.get("/privacy-policy", (req, res) => {
   res.send(privacyPolicyHtml);
 });
 
-// Register all API routes (includes enhanced /api/health endpoint)
-// Run circle → shared will migration on startup (idempotent, safe to re-run)
-import("./circleMigration").then(({ runCircleMigration }) => runCircleMigration().catch(
-  (err) => console.error("[Startup] Circle migration failed (non-fatal):", err)
-));
-
-registerRoutes(app);
-
-// Start End Room scheduler
-endRoomScheduler.start();
-console.log('[EndRoomScheduler] Scheduler started');
-
-// Serve icon generator before catch-all routes
-app.get('/icon-generator.html', (req: Request, res: Response) => {
-  res.sendFile(path.join(process.cwd(), 'dist', 'icon-generator.html'));
-});
-
-// In production, serve static files from dist/public
-if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(process.cwd(), 'dist', 'public');
-  app.use(express.static(distPath));
-  
-  // Serve index.html for all non-API routes (SPA routing)
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api/')) {
-      const indexPath = path.join(distPath, 'index.html');
-      if (require('fs').existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(404).send('Frontend not found - check dist/public/index.html');
-      }
-    }
-  });
-} else {
-  // In development, serve static files from dist/public as well
-  const distPath = path.join(process.cwd(), 'dist', 'public');
-  app.use(express.static(distPath));
-  
-  // Serve index.html for all non-API routes (SPA routing)
-  app.get('*', async (req, res) => {
-    if (!req.path.startsWith('/api/')) {
-      const indexPath = path.join(distPath, 'index.html');
-      const fs = await import('fs');
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(404).send('Frontend not found - run build first');
-      }
-    }
-  });
-  
-  console.log('Development mode: Serving frontend from dist/public/');
-}
-
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+// Run migration, register routes, and start server — all sequenced to ensure
+// migration completes before traffic is accepted.
+(async () => {
+  // Run circle → shared will migration before serving (idempotent, safe to re-run)
+  try {
+    const { runCircleMigration } = await import("./circleMigration");
+    await runCircleMigration();
+  } catch (err) {
+    console.error("[Startup] Circle migration failed (non-fatal):", err);
+  }
+
+  // Register all API routes after migration completes
+  registerRoutes(app);
+
+  // Start End Room scheduler
+  endRoomScheduler.start();
+  console.log('[EndRoomScheduler] Scheduler started');
+
+  // Serve icon generator before catch-all routes
+  app.get('/icon-generator.html', (req: Request, res: Response) => {
+    res.sendFile(path.join(process.cwd(), 'dist', 'icon-generator.html'));
+  });
+
+  // In production, serve static files from dist/public
+  if (process.env.NODE_ENV === 'production') {
+    const distPath = path.join(process.cwd(), 'dist', 'public');
+    app.use(express.static(distPath));
+
+    // Serve index.html for all non-API routes (SPA routing)
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api/')) {
+        const indexPath = path.join(distPath, 'index.html');
+        if (require('fs').existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send('Frontend not found - check dist/public/index.html');
+        }
+      }
+    });
+  } else {
+    // In development, serve static files from dist/public as well
+    const distPath = path.join(process.cwd(), 'dist', 'public');
+    app.use(express.static(distPath));
+
+    // Serve index.html for all non-API routes (SPA routing)
+    app.get('*', async (req, res) => {
+      if (!req.path.startsWith('/api/')) {
+        const indexPath = path.join(distPath, 'index.html');
+        const fs = await import('fs');
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send('Frontend not found - run build first');
+        }
+      }
+    });
+
+    console.log('Development mode: Serving frontend from dist/public/');
+  }
+
+  const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
   
@@ -211,4 +217,5 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.log('ℹ️  Running in simulation mode - notifications logged to console');
   }
-});
+  });
+})();
