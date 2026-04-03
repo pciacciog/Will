@@ -141,7 +141,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
 
 export default function MyWills() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<'solo' | 'circle' | 'public'>('solo');
+  const [activeTab, setActiveTab] = useState<'solo' | 'circle' | 'public' | 'shared'>('solo');
 
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
@@ -161,11 +161,11 @@ export default function MyWills() {
   ) || [];
 
   const isPublicWill = (w: Will) => w.visibility === 'public' || !!w.parentWillId;
-  const soloWills = activeWills.filter(w => w.mode !== 'circle' && !isPublicWill(w));
-  const circleWills = activeWills.filter(w => w.mode === 'circle');
+  const soloWills = activeWills.filter(w => w.mode !== 'circle' && w.mode !== 'shared' && !isPublicWill(w));
+  const sharedWills = activeWills.filter(w => w.mode === 'shared');
   const publicWills = activeWills.filter(w => isPublicWill(w));
 
-  const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'circle' ? circleWills : publicWills;
+  const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'circle' ? sharedWills : publicWills;
 
   const handleViewWill = (will: Will) => {
     sessionStorage.setItem('willBackUrl', '/wills');
@@ -192,7 +192,7 @@ export default function MyWills() {
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
             {([
               { key: 'solo' as const, label: 'Solo', count: soloWills.length },
-              { key: 'circle' as const, label: 'Circle', count: circleWills.length },
+              { key: 'circle' as const, label: 'Shared', count: sharedWills.length },
               { key: 'public' as const, label: 'Public', count: publicWills.length },
             ]).map(tab => (
               <button

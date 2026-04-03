@@ -37,6 +37,9 @@ import ResetPassword from "@/pages/ResetPassword";
 import MyWills from "@/pages/MyWills";
 import Today from "@/pages/Today";
 import ProofFeed from "@/pages/ProofFeed";
+import AcceptInvite from "@/pages/AcceptInvite";
+import CreateSharedWill from "@/pages/CreateSharedWill";
+import WillPage from "@/pages/WillPage";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -392,7 +395,9 @@ function Router() {
             <Route path="/start-will">{() => <StartWill />}</Route>
             <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/will/:id/messages">{(params) => <WillMessagesPage willId={parseInt(params.id)} />}</Route>
-            <Route path="/will/:id" component={WillDetails} />
+            <Route path="/will/:id/invite" component={AcceptInvite} />
+            <Route path="/create-shared-will" component={CreateSharedWill} />
+            <Route path="/will/:id" component={WillPage} />
             <Route path="/will/:id/commit" component={SubmitCommitment} />
             <Route path="/will/:id/edit" component={EditWill} />
             <Route path="/will/:id/edit-commitment/:commitmentId" component={EditCommitment} />

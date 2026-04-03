@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Compass, Settings, LogOut, ChevronRight, Flame, Sun } from "lucide-react";
+import { WhoModal } from "@/components/WhoModal";
 import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { queryClient } from "@/lib/queryClient";
@@ -27,6 +28,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [showSplash, setShowSplash] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showWhoModal, setShowWhoModal] = useState(false);
   const [activeCard, setActiveCard] = useState<'explore' | 'friends' | null>(null);
   const { toast } = useToast();
 
@@ -125,7 +127,7 @@ export default function Home() {
   ) || [];
 
   const handleCreateWill = () => {
-    setLocation('/create-will');
+    setShowWhoModal(true);
   };
 
   const handleExplore = () => {
@@ -359,6 +361,10 @@ export default function Home() {
       <AccountSettingsModal
         isOpen={showAccountSettings}
         onClose={() => setShowAccountSettings(false)}
+      />
+      <WhoModal
+        isOpen={showWhoModal}
+        onClose={() => setShowWhoModal(false)}
       />
     </div>
   );

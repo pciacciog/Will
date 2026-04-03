@@ -239,7 +239,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   
   // Visibility: 'private' (default) or 'public' (discoverable in Explore)
-  const [visibility, setVisibility] = useState<'private' | 'public'>('private');
+  // Pre-set to 'public' if ?visibility=public is in the URL (from WhoModal "Everyone" choice)
+  const [visibility, setVisibility] = useState<'private' | 'public'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('visibility') === 'public' ? 'public' : 'private';
+  });
   
   // For Circle mode, we show type selection before step 1
   const showTypeSelection = !isSoloMode && willType === null;
