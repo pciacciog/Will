@@ -74,9 +74,6 @@ export interface IStorage {
   updateUserLastDailyReminderSent(userId: string): Promise<void>;
   deleteUser(userId: string): Promise<void>;
   
-  // Circle operations (admin-only; preserved for 30-day Stage A window before Stage B drops tables)
-  getCircleMembers(circleId: number): Promise<(CircleMember & { user: User })[]>;
-  
   // Will operations
   createWill(will: InsertWill): Promise<Will>;
   getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
@@ -145,12 +142,10 @@ export interface IStorage {
   
   // Admin operations
   getAllUsers(limit?: number, offset?: number): Promise<User[]>;
-  getAllCircles(limit?: number, offset?: number): Promise<(Circle & { memberCount: number })[]>;
   getAllWills(limit?: number, offset?: number): Promise<(Will & { circle: Circle | null; creator: User; memberCount: number })[]>;
   updateUserRole(userId: string, role: string): Promise<void>;
   deactivateUser(userId: string): Promise<void>;
   activateUser(userId: string): Promise<void>;
-  deleteCircle(circleId: number): Promise<void>;
   deleteWill(willId: number): Promise<void>;
   getAdminStats(): Promise<{
     totalUsers: number;
@@ -430,21 +425,6 @@ export class DatabaseStorage implements IStorage {
     
     // 9. Finally, delete the user account
     await db.delete(users).where(eq(users.id, userId));
-  }
-
-  // Circle operations
-  // Circle member read (admin/migration use only during Stage A window)
-  async getCircleMembers(circleId: number): Promise<(CircleMember & { user: User })[]> {
-    const result = await db
-      .select({
-        member: circleMembers,
-        user: users,
-      })
-      .from(circleMembers)
-      .innerJoin(users, eq(circleMembers.userId, users.id))
-      .where(eq(circleMembers.circleId, circleId));
-
-    return result.map(r => ({ ...r.member, user: r.user }));
   }
 
   // Will operations
@@ -1122,19 +1102,6 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).limit(limit).offset(offset).orderBy(desc(users.createdAt));
   }
 
-  async getAllCircles(limit = 50, offset = 0): Promise<(Circle & { memberCount: number })[]> {
-    const circlesList = await db.select().from(circles).limit(limit).offset(offset).orderBy(desc(circles.createdAt));
-    
-    const circlesWithMemberCount = await Promise.all(
-      circlesList.map(async (circle) => {
-        const [result] = await db.select({ count: sql<number>`count(*)` }).from(circleMembers).where(eq(circleMembers.circleId, circle.id));
-        return { ...circle, memberCount: Number(result?.count || 0) };
-      })
-    );
-    
-    return circlesWithMemberCount;
-  }
-
   async getAllWills(limit = 50, offset = 0): Promise<(Will & { circle: Circle | null; creator: User; memberCount: number })[]> {
     const willsData = await db
       .select({
@@ -1178,12 +1145,6 @@ export class DatabaseStorage implements IStorage {
 
   async activateUser(userId: string): Promise<void> {
     await db.update(users).set({ isActive: true }).where(eq(users.id, userId));
-  }
-
-  async deleteCircle(circleId: number): Promise<void> {
-    await db.delete(circleMessages).where(eq(circleMessages.circleId, circleId));
-    await db.delete(circleMembers).where(eq(circleMembers.circleId, circleId));
-    await db.delete(circles).where(eq(circles.id, circleId));
   }
 
   async deleteWill(willId: number): Promise<void> {

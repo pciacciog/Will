@@ -16,7 +16,9 @@ import {
   insertTodayItemSchema,
   circleProofs,
   cloudinaryCleanupLog,
+  circles,
   circleMembers,
+  circleMessages,
   willCommitments,
   deviceTokens,
   users,
@@ -2659,9 +2661,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/circles', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const { limit = 50, offset = 0 } = req.query;
-      const circles = await storage.getAllCircles(parseInt(limit), parseInt(offset));
-      res.json(circles);
+      const { limit = '50', offset = '0' } = req.query;
+      const limitNum = parseInt(limit as string);
+      const offsetNum = parseInt(offset as string);
+      const allCircles = await db.select().from(circles).limit(limitNum).offset(offsetNum).orderBy(desc(circles.createdAt));
+      const result = await Promise.all(allCircles.map(async (circle) => {
+        const [memberCount] = await db.select({ count: sql<number>`count(*)` }).from(circleMembers).where(eq(circleMembers.circleId, circle.id));
+        return { ...circle, memberCount: Number(memberCount?.count || 0) };
+      }));
+      res.json(result);
     } catch (error) {
       console.error("Error fetching circles:", error);
       res.status(500).json({ message: "Failed to fetch circles" });
@@ -2670,8 +2678,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/admin/circles/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const { id } = req.params;
-      await storage.deleteCircle(parseInt(id));
+      const circleId = parseInt(req.params.id);
+      await db.delete(circleMembers).where(eq(circleMembers.circleId, circleId));
+      await db.delete(circleMessages).where(eq(circleMessages.circleId, circleId));
+      await db.delete(circles).where(eq(circles.id, circleId));
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting circle:", error);
