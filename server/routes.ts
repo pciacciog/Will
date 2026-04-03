@@ -120,6 +120,31 @@ async function getOtherPublicWillParticipants(userId: string, parentWillId: numb
   return participantIds.filter(id => id !== userId);
 }
 
+async function getSharedWillParticipantIds(willId: number): Promise<string[]> {
+  const will = await storage.getWillById(willId);
+  if (!will) return [];
+  const participantIds = new Set<string>();
+  participantIds.add(will.createdBy);
+  const invites = await db.select().from(sharedWillInvites).where(and(
+    eq(sharedWillInvites.willId, willId),
+    eq(sharedWillInvites.status, 'accepted')
+  ));
+  invites.forEach(invite => participantIds.add(invite.invitedUserId));
+  const commitments = await storage.getWillCommitments(willId);
+  commitments.forEach(c => participantIds.add(c.userId));
+  return Array.from(participantIds);
+}
+
+async function isUserSharedWillParticipant(userId: string, willId: number): Promise<boolean> {
+  const participantIds = await getSharedWillParticipantIds(willId);
+  return participantIds.includes(userId);
+}
+
+async function getOtherSharedWillParticipants(userId: string, willId: number): Promise<string[]> {
+  const participantIds = await getSharedWillParticipantIds(willId);
+  return participantIds.filter(id => id !== userId);
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Use local authentication only - bypass Replit auth
   setupAuth(app);
@@ -837,7 +862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Will messages routes (for public wills)
+  // Will messages routes (for public and shared wills)
   app.get('/api/wills/:willId/messages', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -853,18 +878,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
-      if (!isPublic) {
-        return res.status(400).json({ message: "Messages are only available for public wills" });
+      const isShared = (will as any).mode === 'shared';
+
+      if (!isPublic && !isShared) {
+        return res.status(400).json({ message: "Messages are only available for public or shared wills" });
       }
 
-      const parentId = (will as any).parentWillId || willId;
+      let isParticipant: boolean;
+      let messageThreadId: number;
 
-      const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+      if (isPublic) {
+        const parentId = (will as any).parentWillId || willId;
+        isParticipant = await isUserPublicWillParticipant(userId, parentId);
+        messageThreadId = parentId;
+      } else {
+        isParticipant = await isUserSharedWillParticipant(userId, willId);
+        messageThreadId = willId;
+      }
+
       if (!isParticipant) {
         return res.status(403).json({ message: "You are not a participant of this Will" });
       }
 
-      const messages = await storage.getWillMessages(parentId, 50);
+      const messages = await storage.getWillMessages(messageThreadId, 50);
       res.json(messages);
     } catch (error) {
       console.error("Error fetching will messages:", error);
@@ -895,19 +931,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
-      if (!isPublic) {
-        return res.status(400).json({ message: "Messages are only available for public wills" });
+      const isShared = (will as any).mode === 'shared';
+
+      if (!isPublic && !isShared) {
+        return res.status(400).json({ message: "Messages are only available for public or shared wills" });
       }
 
-      const parentId = (will as any).parentWillId || willId;
+      let isParticipant: boolean;
+      let messageThreadId: number;
+      let otherParticipantIds: string[];
 
-      const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+      if (isPublic) {
+        const parentId = (will as any).parentWillId || willId;
+        isParticipant = await isUserPublicWillParticipant(userId, parentId);
+        messageThreadId = parentId;
+        otherParticipantIds = await getOtherPublicWillParticipants(userId, parentId);
+      } else {
+        isParticipant = await isUserSharedWillParticipant(userId, willId);
+        messageThreadId = willId;
+        otherParticipantIds = await getOtherSharedWillParticipants(userId, willId);
+      }
+
       if (!isParticipant) {
         return res.status(403).json({ message: "You are not a participant of this Will" });
       }
 
       const message = await storage.createWillMessage({
-        willId: parentId,
+        willId: messageThreadId,
         userId,
         text,
       });
@@ -915,13 +965,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sender = await storage.getUser(userId);
       const senderName = sender?.firstName || 'Someone';
 
-      const otherParticipantIds = await getOtherPublicWillParticipants(userId, parentId);
-
       if (otherParticipantIds.length > 0) {
         const { pushNotificationService } = await import('./pushNotificationService');
         await pushNotificationService.sendWillMessageNotification(
           senderName,
-          parentId,
+          messageThreadId,
           text,
           otherParticipantIds,
         );
@@ -934,7 +982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET unread message count for a public will thread (per current user)
+  // GET unread message count for a public/shared will thread (per current user)
   app.get('/api/wills/:willId/messages/unread-count', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -945,14 +993,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!will) return res.status(404).json({ message: "Will not found" });
 
       const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
-      if (!isPublic) return res.status(400).json({ message: "Messages are only available for public wills" });
+      const isShared = (will as any).mode === 'shared';
 
-      const parentId = (will as any).parentWillId || willId;
+      if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or shared wills" });
 
-      const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+      let messageThreadId: number;
+      let isParticipant: boolean;
+
+      if (isPublic) {
+        const parentId = (will as any).parentWillId || willId;
+        isParticipant = await isUserPublicWillParticipant(userId, parentId);
+        messageThreadId = parentId;
+      } else {
+        isParticipant = await isUserSharedWillParticipant(userId, willId);
+        messageThreadId = willId;
+      }
+
       if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
 
-      const unreadCount = await storage.getWillMessageUnreadCount(userId, parentId);
+      const unreadCount = await storage.getWillMessageUnreadCount(userId, messageThreadId);
       res.json({ unreadCount });
     } catch (error) {
       console.error("Error fetching unread message count:", error);
@@ -960,7 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST mark all messages in a public will thread as read
+  // POST mark all messages in a public/shared will thread as read
   app.post('/api/wills/:willId/messages/mark-read', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -971,14 +1030,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!will) return res.status(404).json({ message: "Will not found" });
 
       const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
-      if (!isPublic) return res.status(400).json({ message: "Messages are only available for public wills" });
+      const isShared = (will as any).mode === 'shared';
 
-      const parentId = (will as any).parentWillId || willId;
+      if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or shared wills" });
 
-      const isParticipant = await isUserPublicWillParticipant(userId, parentId);
+      let messageThreadId: number;
+      let isParticipant: boolean;
+
+      if (isPublic) {
+        const parentId = (will as any).parentWillId || willId;
+        isParticipant = await isUserPublicWillParticipant(userId, parentId);
+        messageThreadId = parentId;
+      } else {
+        isParticipant = await isUserSharedWillParticipant(userId, willId);
+        messageThreadId = willId;
+      }
+
       if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
 
-      await storage.markWillMessagesRead(userId, parentId);
+      await storage.markWillMessagesRead(userId, messageThreadId);
       res.json({ success: true });
     } catch (error) {
       console.error("Error marking messages as read:", error);
