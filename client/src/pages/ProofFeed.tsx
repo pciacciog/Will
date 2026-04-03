@@ -213,7 +213,10 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
           className="fixed inset-0 z-50 bg-black/90 flex flex-col"
           onClick={() => setPhotoModal(null)}
         >
-          <div className="flex items-center justify-between px-4 py-3 text-white">
+          <div
+            className="flex items-center justify-between px-4 py-3 text-white"
+            style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+          >
             <div className="min-w-0">
               <p className="font-semibold text-sm truncate">
                 {photoModal.firstName || photoModal.email?.split('@')[0]}
@@ -224,10 +227,10 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
             </div>
             <button
               onClick={() => setPhotoModal(null)}
-              className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-colors flex-shrink-0"
+              className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-colors flex-shrink-0"
               data-testid="button-close-photo-modal"
             >
-              <X className="w-4 h-4 text-white" />
+              <X className="w-5 h-5 text-white" />
             </button>
           </div>
           <div
@@ -240,8 +243,15 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
               className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
             />
           </div>
-          {photoModal.caption && (
-            <p className="text-white/80 text-sm px-4 pb-6 text-center">{photoModal.caption}</p>
+          {photoModal.caption ? (
+            <p
+              className="text-white/80 text-sm px-4 text-center"
+              style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+            >
+              {photoModal.caption}
+            </p>
+          ) : (
+            <div style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
           )}
         </div>
       )}
