@@ -173,23 +173,26 @@ export async function runCircleMigration(): Promise<void> {
         invitesCreated++;
       }
 
-      // Step 3: Migrate circle_messages → will_messages (per-message dedupe)
-      for (const msg of msgs) {
-        const msgCreatedAt = msg.createdAt ?? new Date();
-        const existing = await db
-          .select({ id: willMessages.id })
+      // Step 3: Migrate circle_messages → will_messages (all-or-nothing per will)
+      // Idempotency: if will_messages already has any entries for this will, messages were
+      // already migrated in a prior run — skip entirely to avoid any duplication.
+      if (msgs.length > 0) {
+        const existingCount = await db
+          .select({ count: sql<number>`count(*)` })
           .from(willMessages)
-          .where(
-            and(
-              eq(willMessages.willId, will.id),
-              eq(willMessages.userId, msg.userId),
-              eq(willMessages.text, msg.text),
-              sql`date_trunc('second', ${willMessages.createdAt}) = date_trunc('second', ${msgCreatedAt}::timestamptz)`
-            )
-          );
-        if (existing.length > 0) continue;
-        await db.insert(willMessages).values({ willId: will.id, userId: msg.userId, text: msg.text, createdAt: msgCreatedAt });
-        messagesMigrated++;
+          .where(eq(willMessages.willId, will.id));
+        const alreadyHasMessages = Number(existingCount[0]?.count || 0) > 0;
+        if (!alreadyHasMessages) {
+          for (const msg of msgs) {
+            await db.insert(willMessages).values({
+              willId: will.id,
+              userId: msg.userId,
+              text: msg.text,
+              createdAt: msg.createdAt ?? new Date(),
+            });
+            messagesMigrated++;
+          }
+        }
       }
 
       // Step 4: Null out circleId — final completion marker

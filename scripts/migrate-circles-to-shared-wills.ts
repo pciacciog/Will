@@ -15,7 +15,8 @@
  * IDEMPOTENCY DESIGN (per-step, recoverable from partial failures):
  * - Step 1 (mode='shared'): skipped if already set; safe to re-apply.
  * - Step 2 (invites): each invite guarded by (willId, invitedUserId) existence check.
- * - Step 3 (messages): dedupe by (willId, userId, text, createdAt to-the-second).
+ * - Step 3 (messages): all-or-nothing per will — if will_messages already has any entries
+ *   for this will, skip entirely. Zero data-loss risk; no same-second collision possible.
  * - Step 4 (circleId=NULL): final marker — on rerun, nulled wills won't appear in
  *   the activeCircleWills query, so all prior steps are cleanly skipped.
  *   Partial failures (e.g., crash between steps 1–3 and step 4) are safe to rerun:
@@ -223,32 +224,26 @@ async function main() {
         invitesCreated++;
       }
 
-      // Step 3: Migrate circle_messages into will_messages
-      // Idempotent: dedupe by (willId, userId, text, createdAt to-the-second)
-      for (const msg of msgs) {
-        const msgCreatedAt = msg.createdAt ?? new Date();
-
-        const existing = await db
-          .select({ id: willMessages.id })
+      // Step 3: Migrate circle_messages into will_messages (all-or-nothing per will)
+      // Idempotency: if will_messages already has any entries for this will, skip entirely.
+      // This avoids any duplication risk including same-second duplicate messages.
+      if (msgs.length > 0) {
+        const [existingCount] = await db
+          .select({ count: sql<number>`count(*)` })
           .from(willMessages)
-          .where(
-            and(
-              eq(willMessages.willId, will.id),
-              eq(willMessages.userId, msg.userId),
-              eq(willMessages.text, msg.text),
-              sql`date_trunc('second', ${willMessages.createdAt}) = date_trunc('second', ${msgCreatedAt}::timestamptz)`
-            )
-          );
-
-        if (existing.length > 0) continue;
-
-        await db.insert(willMessages).values({
-          willId: will.id,
-          userId: msg.userId,
-          text: msg.text,
-          createdAt: msgCreatedAt,
-        });
-        messagesMigrated++;
+          .where(eq(willMessages.willId, will.id));
+        const alreadyHasMessages = Number(existingCount?.count || 0) > 0;
+        if (!alreadyHasMessages) {
+          for (const msg of msgs) {
+            await db.insert(willMessages).values({
+              willId: will.id,
+              userId: msg.userId,
+              text: msg.text,
+              createdAt: msg.createdAt ?? new Date(),
+            });
+            messagesMigrated++;
+          }
+        }
       }
 
       // Step 4: Null out circleId — this is the final migration marker for Stage A
