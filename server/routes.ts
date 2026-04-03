@@ -1671,6 +1671,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You have already committed to this Will" });
       }
 
+      // For shared wills: authorize BEFORE writing to DB
+      if (will.mode === 'shared') {
+        const isCreator = will.createdBy === userId;
+        if (!isCreator) {
+          const [acceptedInvite] = await db
+            .select({ id: sharedWillInvites.id })
+            .from(sharedWillInvites)
+            .where(and(
+              eq(sharedWillInvites.willId, willId),
+              eq(sharedWillInvites.invitedUserId, userId),
+              eq(sharedWillInvites.status, 'accepted')
+            ))
+            .limit(1);
+          if (!acceptedInvite) {
+            return res.status(403).json({ message: "You must accept the invite before committing to this Will" });
+          }
+        }
+      }
+
       // Add commitment
       const commitment = await storage.addWillCommitment(commitmentData);
 
@@ -1685,25 +1704,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
 
-      // For shared wills, commitment is accepted — will activates at startDate via scheduler
+      // For shared wills — will activates at startDate via scheduler; just return commitment
       if (will.mode === 'shared') {
-        // Validate caller is the creator or has an accepted invite
-        const isCreator = will.createdBy === userId;
-        if (!isCreator) {
-          const [acceptedInvite] = await db
-            .select({ id: sharedWillInvites.id })
-            .from(sharedWillInvites)
-            .where(and(
-              eq(sharedWillInvites.willId, willId),
-              eq(sharedWillInvites.invitedUserId, userId),
-              eq(sharedWillInvites.status, 'accepted')
-            ))
-            .limit(1);
-          if (!acceptedInvite) {
-            // Dedupe: already caught hasCommitted above; but for clarity, return error if no accepted invite
-            return res.status(403).json({ message: "You must accept the invite before committing to this Will" });
-          }
-        }
         res.json(commitment);
         return;
       }
