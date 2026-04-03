@@ -1808,12 +1808,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (invite.status === 'accepted') return res.status(409).json({ message: 'Invite already accepted' });
       if (invite.status === 'declined') return res.status(409).json({ message: 'Invite was declined — cannot accept' });
 
+      // Reject acceptance if the will's startDate has already passed
+      const will = await storage.getWillById(willId);
+      if (will && will.startDate <= new Date()) {
+        return res.status(410).json({ message: 'This invite has expired — the Will has already started' });
+      }
+
       await db
         .update(sharedWillInvites)
         .set({ status: 'accepted', respondedAt: new Date() })
         .where(eq(sharedWillInvites.id, invite.id));
 
-      const will = await storage.getWillById(willId);
       res.json({ message: 'Invite accepted', willId, will });
     } catch (err) {
       console.error('[Invites] Failed to accept invite:', err);
