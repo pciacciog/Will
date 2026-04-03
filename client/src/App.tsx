@@ -198,11 +198,9 @@ function Router() {
             targetPath = '/my-wills';
           } else if (type === 'end_room_now' || type === 'end_room_15_minutes' || type === 'end_room_24_hours') {
             targetPath = '/my-wills';
-          } else if (type === 'will_proposed' || type === 'circle_member_joined') {
+          } else if (type === 'will_proposed') {
             targetPath = '/my-wills';
           } else if (type === 'ready_for_new_will') {
-            targetPath = '/my-wills';
-          } else if (type === 'circle_message') {
             targetPath = '/my-wills';
           } else if (type === 'friend_request') {
             targetPath = '/friends';
