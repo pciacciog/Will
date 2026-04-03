@@ -1,0 +1,193 @@
+Hey! Big concept to share — wanted to lay out the full picture before any technical planning begins. Please read through, evaluate feasibility, and come back with a technical plan we can review together before writing a single line of code.
+
+---
+
+## The Big Idea
+
+We are replacing Circles with a Friends-based Shared Will system. This simplifies the app's architecture, removes friction around who you can make Wills with, and creates a more fluid social experience.
+
+The three Will types going forward are:
+- **Solo** — private, just you
+- **Shared** — with specific friends you invite
+- **Public** — posted to Explore, anyone can join
+
+Circles as a concept go away entirely.
+
+---
+
+## Part 1 — Friends (Social Graph)
+
+Users need a persistent friends list — people they're connected to regardless of any specific Will.
+
+**How it works:**
+- You search for someone by username
+- You send them a friend request
+- They accept or decline
+- Once accepted, you're friends — they appear in your friends list and you appear in theirs
+- You can remove a friend at any time
+
+**What the Friends section needs to show:**
+- Your current friends list (avatar initial + username)
+- Pending incoming friend requests with Accept / Decline
+- Username search to find and add new friends
+
+Friends are the social graph that powers Shared Wills. You can only invite friends into a Shared Will — not arbitrary users.
+
+### Where Friends lives on the home screen
+
+The "My Circles" card on the home screen is replaced directly by a **Friends** card. Same position, same slot. No home screen redesign needed.
+
+The Friends card reads:
+- Title: **Friends**
+- Subtitle: **Your people**
+
+Tapping it opens the Friends screen showing your friends list, pending requests, and username search.
+
+---
+
+## Part 2 — New Will Creation Flow
+
+### The Who Modal
+
+When the user taps "Create a Will" from the home screen, the very first thing that appears is an elegant modal — distinct from and before the What/Why/When flow. This modal asks:
+
+> Who is this Will for?
+> ○ Just me — private, only you see it
+> ○ With friends — invite specific people from your friends list
+> ○ Everyone — posted publicly to Explore
+
+The user makes their selection, the modal dismisses, and then the creation flow begins. The Who modal is a gateway — not a step inside the flow.
+
+---
+
+### Route A — Just me (Solo)
+
+```
+[Who modal] → What → Why → When → Tracking → Review
+```
+
+No changes to this flow. Behaves exactly as Solo Will creation does today.
+
+---
+
+### Route B — With friends (Shared)
+
+```
+[Who modal] → Friend selection → I will / We will → What → Why → When → Tracking → Review
+```
+
+After the Who modal dismisses:
+
+**Friend selection screen:**
+User sees their friends list and selects one or more people to invite into this Will. This mirrors the current experience of tapping Create Will inside a Circle.
+
+**I will / We will prompt:**
+Immediately after friend selection, before drafting begins, the user is asked:
+- **I will...** — each participant sets their own commitment independently
+- **We will...** — everyone commits to the exact same thing
+
+This mirrors the current "Classic or Shared?" prompt that appears when creating a Will inside a Circle today. Same concept, updated language.
+
+Then the standard What → Why → When → Tracking → Review flow proceeds as normal.
+
+---
+
+### Route C — Everyone (Public)
+
+```
+[Who modal] → What → Why → When → Tracking → Review
+```
+
+No changes to this flow. Behaves exactly as Public Will creation does today. Posted to Explore at scheduled start time.
+
+---
+
+## Part 3 — Shared Will Activation Logic
+
+**Solo Will:**
+- Becomes active at scheduled start time, no dependencies
+
+**Public Will:**
+- Becomes active at scheduled start time, no dependencies
+- Posted to Explore immediately so others can join
+
+**Shared Will:**
+- Creator sets a start time when drafting
+- Invited friends receive a notification to accept or decline
+- Friends receive a reminder notification a few hours before scheduled start time
+- At the scheduled start time:
+  - If **at least one friend has accepted** → Will becomes active for the creator and all who accepted. Pending and declined invites expire automatically.
+  - If **zero friends have accepted** → Will fails. Creator receives a notification: "Your Will didn't start — no one accepted in time." Creator gets the option to reschedule or re-invite.
+- Friends who attempt to accept after start time → invite has expired, they cannot join
+
+---
+
+## Part 4 — Shared Will Detail Screen
+
+When a user taps into a Shared Will, the screen should feel very close to the current Circle detail screen. Reuse as much of that component as possible.
+
+**Remove:**
+- Circle name and tagline
+- Circle invite code
+- "Current Will" card (the Will is now the container — you're already inside it)
+
+**Keep and adapt:**
+- Participant avatars at the top (friends in this Will)
+- Will title as the page title
+- Will timeline and end date
+- Proof section
+- Chat
+- View Will Details CTA
+- View History
+
+**Add:**
+- Ability to invite an additional friend from your friends list into this Will (replaces invite-by-code)
+
+---
+
+## Part 5 — My Wills Screen
+
+Replace the Circles tab with a **Shared Wills** tab.
+
+Each Shared Will card shows:
+- Will title
+- Stacked avatars of participants
+- Active / Ended / Pending status
+- End date
+
+Pending = Will has been created and invites sent, waiting for at least one friend to accept before start time.
+
+---
+
+## Part 6 — Migration of Existing Circles
+
+- Any Circle that currently has an **active Will** → migrate to a Shared Will. Will data stays intact. Circle members become Shared Will participants. Circle is then deleted.
+- Any Circle with **no active Will** → delete it. No migration needed.
+- Migration should run as a script before any UI changes deploy so there is no moment where users see broken state.
+- After migration, clean up any Circle-specific DB tables and routes no longer needed. Anything reused in the Shared Will detail screen (chat, proof, member display) should be kept and repurposed.
+
+---
+
+## Part 7 — What Gets Deleted
+
+- My Circles home screen card (replaced by Friends card)
+- Circles navigation entry point
+- Circle creation flow
+- Circle invite-by-code flow
+- Circle detail screen (replaced by Shared Will detail screen)
+- Any Circle DB tables and routes not being reused
+
+---
+
+## Will Limits
+
+The existing limit on concurrent active Wills stays in place and applies across all Will types — Solo, Shared, and Public combined. No limit on number of friends or who you can make a Will with.
+
+---
+
+Please review all of the above and come back with:
+1. A technical plan breaking down what needs to be built, modified, and deleted
+2. Any conflicts or complications you see with the current codebase
+3. Your recommended build order and phases
+
+No code yet — just the plan.
