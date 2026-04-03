@@ -35,6 +35,7 @@ function getDisplayTitle(will: Will, userId?: string): string {
 function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; userId?: string }) {
   const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
   const isCircle = will.mode === 'circle';
+  const isShared = will.mode === 'shared';
   const isPublic = will.visibility === 'public' || !!will.parentWillId;
 
   const statusConfig: Record<string, { label: string; className: string; icon: typeof Flame }> = {
@@ -67,7 +68,9 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
       data-testid={`card-will-${will.id}`}
     >
       <Card className={`border shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98] ${
-        isCircle
+        isShared
+          ? 'bg-white border-violet-200 group-hover:border-violet-300'
+          : isCircle
           ? 'bg-white border-purple-200 group-hover:border-purple-300'
           : isPublic
           ? 'bg-gradient-to-br from-white to-blue-50/60 border-blue-200 group-hover:border-blue-300'
@@ -76,9 +79,11 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              isCircle ? 'bg-purple-50' : isPublic ? 'bg-blue-50' : 'bg-emerald-50'
+              isShared ? 'bg-violet-50' : isCircle ? 'bg-purple-50' : isPublic ? 'bg-blue-50' : 'bg-emerald-50'
             }`}>
-              {isCircle
+              {isShared
+                ? <Users className="w-5 h-5 text-violet-600" />
+                : isCircle
                 ? <Users className="w-5 h-5 text-purple-600" />
                 : isPublic
                 ? <Globe className="w-5 h-5 text-blue-600" />
@@ -89,6 +94,18 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
               <p className="text-sm font-medium text-gray-900 truncate" data-testid={`text-will-title-${will.id}`}>
                 {getDisplayTitle(will, userId)}
               </p>
+              {isShared && (
+                <div className="mt-0.5" data-testid={`text-shared-info-${will.id}`}>
+                  {will.commitments && will.commitments.length > 0 && (
+                    <p className="text-xs text-violet-600 font-medium truncate">
+                      {will.commitments.map(c => c.user?.firstName).filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  {will.status === 'pending' && (
+                    <p className="text-xs text-amber-600 mt-0.5">Waiting for friends to accept</p>
+                  )}
+                </div>
+              )}
               {isCircle && (
                 <p className="text-xs text-purple-600 font-medium mt-0.5 truncate" data-testid={`text-circle-info-${will.id}`}>
                   {will.circleCode && <span>{will.circleCode}</span>}
@@ -115,6 +132,11 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
                 </div>
               )}
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                {isShared && (
+                  <Badge className="text-xs bg-violet-100 text-violet-700 hover:bg-violet-100" data-testid={`badge-shared-${will.id}`}>
+                    Shared
+                  </Badge>
+                )}
                 {isPublic && (
                   <Badge className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-100" data-testid={`badge-public-${will.id}`}>
                     Public
@@ -126,7 +148,9 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
               </div>
             </div>
             <ChevronRight className={`w-5 h-5 mt-2.5 flex-shrink-0 ${
-              isCircle
+              isShared
+                ? 'text-gray-300 group-hover:text-violet-400'
+                : isCircle
                 ? 'text-gray-300 group-hover:text-purple-400'
                 : isPublic
                 ? 'text-gray-300 group-hover:text-blue-400'
