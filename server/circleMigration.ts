@@ -2,32 +2,34 @@
  * Circle → Shared Will Migration (Stage A)
  * Called on server startup — idempotent and safe to re-run.
  *
- * For each circle:
+ * MIGRATION CATEGORIES (evaluated per circle):
  *
- *   A) Has qualifying wills (status in active/scheduled/pending/paused/will_review with circleId set):
+ *   A) circle.migratedAt IS NOT NULL
+ *      Already migrated — skip entirely (Stage A 30-day preservation window).
+ *
+ *   B) circle.migratedAt IS NULL AND has qualifying wills (active/scheduled/pending/paused/will_review with circleId set):
  *      1. Set wills.mode = 'shared'
  *      2. Create shared_will_invites for committed members (per-invite idempotency)
  *      3. Migrate circle_messages → will_messages in a transaction (all-or-nothing per will)
- *      4. Set wills.circleId = NULL (final completion marker)
+ *      4. Set wills.circleId = NULL (unlinks the will from circle)
+ *      5. Set circles.migratedAt = NOW() — marks this circle as migrated; skipped on all future startups.
  *      Source circle rows are preserved (NOT deleted) for 30-day Stage A validation buffer.
  *
- *   B) No qualifying wills AND no wills (any status) reference this circle:
- *      Safe to delete now — no FK constraint prevents it. These are orphaned circles.
- *
- *   C) No qualifying wills BUT wills with other statuses still reference this circle:
- *      Cannot delete — FK constraint from wills.circleId → circles.id.
- *      These are preserved until Stage B when the circleId column is dropped.
+ *   C) circle.migratedAt IS NULL AND no qualifying wills:
+ *      These circles never had active wills to migrate.
+ *      Null any FK references (wills.circleId, userNotifications.circleId) and delete the circle.
  *
  * IDEMPOTENCY:
- * - Step 1: skipped if mode is already 'shared'.
- * - Step 2: per-invite existence check before inserting.
- * - Step 3: all-or-nothing transaction; if will_messages already has rows for this will, skipped.
- * - Step 4: once circleId is NULL, will no longer appears in qualifying query; fully skipped on rerun.
- * - On rerun, migrated circles (all wills have circleId=NULL) fall into case B or C, not A.
+ * - Category A: entire circle block skipped on rerun (migratedAt gate).
+ * - Category B, Step 1: skipped if mode is already 'shared'.
+ * - Category B, Step 2: per-invite existence check before inserting.
+ * - Category B, Step 3: skipped if will_messages already has rows for this will.
+ * - Category B, Step 4+5: once circleId is NULL and migratedAt is set, future reruns skip via category A.
+ * - Category C: safe to rerun (nulling already-null FKs and deleting already-deleted rows are no-ops).
  */
 
 import { db } from "./db";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import {
   circles,
   circleMembers,
@@ -49,11 +51,18 @@ export async function runCircleMigration(): Promise<void> {
 
   let willsMigrated = 0;
   let circlesDeleted = 0;
+  let circlesMigrated = 0;
+  let circlesSkipped = 0;
   let messagesMigrated = 0;
   let invitesCreated = 0;
-  let circlesWithNoWork = 0;
 
   for (const circle of allCircles) {
+    // Category A: already migrated — preserve for Stage A 30-day window
+    if (circle.migratedAt !== null) {
+      circlesSkipped++;
+      continue;
+    }
+
     // Find qualifying wills still referencing this circleId
     const qualifyingWills = await db
       .select()
@@ -66,30 +75,18 @@ export async function runCircleMigration(): Promise<void> {
       );
 
     if (qualifyingWills.length === 0) {
-      // No qualifying wills — check if any will (any status) still references this circle
-      const anyWillCheck = await db
-        .select({ id: wills.id })
-        .from(wills)
-        .where(eq(wills.circleId, circle.id))
-        .limit(1);
-
-      if (anyWillCheck.length > 0) {
-        // Non-qualifying wills (completed/terminated/etc.) still reference this circle.
-        // Null their circleId to release the FK constraint, then delete the circle.
-        await db.update(wills).set({ circleId: null }).where(eq(wills.circleId, circle.id));
-      }
-
-      // Clear all FK references to this circle, then delete it
+      // Category C: no qualifying wills — null FK refs and delete the circle
+      await db.update(wills).set({ circleId: null }).where(eq(wills.circleId, circle.id));
       await db.update(userNotifications).set({ circleId: null }).where(eq(userNotifications.circleId, circle.id));
       await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
       await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
       await db.delete(circles).where(eq(circles.id, circle.id));
-      console.log(`[Migration]   Deleted circle ${circle.id} (${anyWillCheck.length > 0 ? 'had non-qualifying wills, circleId nulled' : 'orphaned'}).`);
+      console.log(`[Migration]   Deleted circle ${circle.id} (no qualifying wills).`);
       circlesDeleted++;
       continue;
     }
 
-    // Process qualifying wills — migrate them to shared will format
+    // Category B: has qualifying wills — migrate then preserve
     const members = await db.select().from(circleMembers).where(eq(circleMembers.circleId, circle.id));
     const msgs = await db.select().from(circleMessages).where(eq(circleMessages.circleId, circle.id));
 
@@ -130,9 +127,8 @@ export async function runCircleMigration(): Promise<void> {
         invitesCreated++;
       }
 
-      // Step 3: Migrate circle_messages → will_messages inside a transaction (all-or-nothing)
+      // Step 3: Migrate circle_messages → will_messages in a transaction (all-or-nothing per will)
       // Idempotency: if will_messages already has any entries for this will, skip entirely.
-      // Transaction ensures partial failures leave zero rows, allowing safe full retry.
       if (msgs.length > 0) {
         const [existingCount] = await db
           .select({ count: sql<number>`count(*)` })
@@ -154,14 +150,18 @@ export async function runCircleMigration(): Promise<void> {
         }
       }
 
-      // Step 4: Null out circleId — final completion marker.
-      // Source circle rows are preserved (never deleted in startup migration).
+      // Step 4: Null out circleId on the will (unlinks from circle)
       await db.update(wills).set({ circleId: null }).where(eq(wills.id, will.id));
 
-      console.log(`[Migration]   ✓ Will ${will.id} migrated (circle ${circle.id} source data preserved).`);
+      console.log(`[Migration]   ✓ Will ${will.id} migrated.`);
       willsMigrated++;
     }
+
+    // Step 5: Mark circle as migrated — skips this circle on all future startups (Stage A preservation)
+    await db.update(circles).set({ migratedAt: new Date() }).where(eq(circles.id, circle.id));
+    console.log(`[Migration]   ✓ Circle ${circle.id} marked as migrated (preserved for Stage A window).`);
+    circlesMigrated++;
   }
 
-  console.log(`[Migration] Done. Wills migrated: ${willsMigrated}, invites: ${invitesCreated}, messages: ${messagesMigrated}, circles deleted: ${circlesDeleted}, preserved: ${circlesWithNoWork}`);
+  console.log(`[Migration] Done. Wills migrated: ${willsMigrated}, invites: ${invitesCreated}, messages: ${messagesMigrated}, circles migrated+preserved: ${circlesMigrated}, circles deleted: ${circlesDeleted}, already-done: ${circlesSkipped}`);
 }

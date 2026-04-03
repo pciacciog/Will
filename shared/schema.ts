@@ -53,6 +53,7 @@ export const circles = pgTable("circles", {
   inviteCode: varchar("invite_code", { length: 6 }).notNull().unique(),
   createdBy: varchar("created_by").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
+  migratedAt: timestamp("migrated_at"),
 });
 
 export const circleMembers = pgTable("circle_members", {

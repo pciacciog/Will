@@ -5,19 +5,20 @@
  * Same logic as server/circleMigration.ts but run from CLI.
  * Uses Pool (not neon HTTP) for transaction support.
  *
- * For each circle:
- *   A) Has qualifying wills (active/scheduled/pending/paused/will_review with circleId set):
+ * MIGRATION CATEGORIES (evaluated per circle):
+ *
+ *   A) circle.migratedAt IS NOT NULL
+ *      Already migrated — skip entirely (Stage A 30-day preservation window).
+ *
+ *   B) circle.migratedAt IS NULL AND has qualifying wills (active/scheduled/pending/paused/will_review):
  *      1. Set wills.mode = 'shared'
  *      2. Create shared_will_invites for committed members (per-invite idempotency)
  *      3. Migrate circle_messages → will_messages in a transaction (all-or-nothing per will)
- *      4. Set wills.circleId = NULL
- *      Source circle rows are PRESERVED for 30-day validation buffer. Stage B drops tables.
+ *      4. Set wills.circleId = NULL (unlinks the will from circle)
+ *      5. Set circles.migratedAt = NOW() — preserved for 30-day Stage A validation buffer.
  *
- *   B) No qualifying wills AND no wills reference this circle at all:
- *      Truly orphaned — delete immediately.
- *
- *   C) No qualifying wills BUT wills (any status) still reference this circle:
- *      Skipped — FK constraint; Stage B will handle when circleId column drops.
+ *   C) circle.migratedAt IS NULL AND no qualifying wills:
+ *      Null FK refs (wills.circleId, userNotifications.circleId) and delete the circle.
  */
 
 import { drizzle } from "drizzle-orm/neon-serverless";
@@ -51,14 +52,22 @@ async function main() {
 
   let willsMigrated = 0;
   let circlesDeleted = 0;
+  let circlesMigrated = 0;
+  let circlesSkipped = 0;
   let messagesMigrated = 0;
   let invitesCreated = 0;
-  let skipped = 0;
 
   const allCircles = await db.select().from(circles);
   console.log(`Found ${allCircles.length} total circles`);
 
   for (const circle of allCircles) {
+    // Category A: already migrated — preserve for Stage A 30-day window
+    if (circle.migratedAt !== null) {
+      console.log(`  Circle ${circle.id} already migrated (migratedAt: ${circle.migratedAt}) — skipping.`);
+      circlesSkipped++;
+      continue;
+    }
+
     // Find qualifying wills still referencing this circleId
     const qualifyingWills = await db
       .select()
@@ -71,26 +80,14 @@ async function main() {
       );
 
     if (qualifyingWills.length === 0) {
-      // No qualifying wills — check if any will (any status) still references this circle
-      const anyWillsForCircle = await db
-        .select({ id: wills.id })
-        .from(wills)
-        .where(eq(wills.circleId, circle.id));
-
-      if (anyWillsForCircle.length > 0) {
-        // Non-qualifying wills (completed/terminated/etc.) still reference this circle.
-        // Null their circleId to release the FK constraint, then delete the circle.
-        await db.update(wills).set({ circleId: null }).where(eq(wills.circleId, circle.id));
-        console.log(`  Nulled circleId on ${anyWillsForCircle.length} non-qualifying will(s) for circle ${circle.id}.`);
-      }
-
-      // Clear all FK references to this circle, then delete it
+      // Category C: no qualifying wills — null FK refs and delete the circle
+      await db.update(wills).set({ circleId: null }).where(eq(wills.circleId, circle.id));
+      await db.update(userNotifications).set({ circleId: null }).where(eq(userNotifications.circleId, circle.id));
       try {
-        await db.update(userNotifications).set({ circleId: null }).where(eq(userNotifications.circleId, circle.id));
         await db.delete(circleMembers).where(eq(circleMembers.circleId, circle.id));
         await db.delete(circleMessages).where(eq(circleMessages.circleId, circle.id));
         await db.delete(circles).where(eq(circles.id, circle.id));
-        console.log(`  ✓ Deleted circle ${circle.id}.`);
+        console.log(`  ✓ Deleted circle ${circle.id} (no qualifying wills).`);
         circlesDeleted++;
       } catch (e) {
         console.warn(`  ⚠ Could not delete circle ${circle.id}:`, e);
@@ -98,8 +95,13 @@ async function main() {
       continue;
     }
 
+    // Category B: has qualifying wills — migrate then preserve
     const members = await db.select().from(circleMembers).where(eq(circleMembers.circleId, circle.id));
     const msgs = await db.select().from(circleMessages).where(eq(circleMessages.circleId, circle.id));
+
+    if (qualifyingWills.length > 1) {
+      console.warn(`  Circle ${circle.id} has ${qualifyingWills.length} qualifying wills — messages will be copied to each. Verify deduplication.`);
+    }
 
     for (const will of qualifyingWills) {
       console.log(`  Migrating will ${will.id} (circle ${circle.id}, status: ${will.status})`);
@@ -134,9 +136,8 @@ async function main() {
         invitesCreated++;
       }
 
-      // Step 3: Migrate circle_messages → will_messages inside a transaction (all-or-nothing)
+      // Step 3: Migrate circle_messages → will_messages in a transaction (all-or-nothing per will)
       // Idempotency: if will_messages already has any entries for this will, skip entirely.
-      // Transaction ensures partial failures leave zero rows, allowing safe full retry.
       if (msgs.length > 0) {
         const [existingCount] = await db
           .select({ count: sql<number>`count(*)` })
@@ -158,23 +159,26 @@ async function main() {
         }
       }
 
-      // Step 4: Null out circleId — final completion marker.
-      // Source circle rows preserved for 30-day validation buffer (Stage A).
+      // Step 4: Null out circleId on the will (unlinks from circle)
       await db.update(wills).set({ circleId: null }).where(eq(wills.id, will.id));
 
-      console.log(`    ✓ Will ${will.id} migrated (source circle ${circle.id} preserved for Stage A).`);
+      console.log(`    ✓ Will ${will.id} migrated.`);
       willsMigrated++;
     }
 
-    skipped++;
+    // Step 5: Mark circle as migrated — skips on future reruns (Stage A preservation)
+    await db.update(circles).set({ migratedAt: new Date() }).where(eq(circles.id, circle.id));
+    console.log(`  ✓ Circle ${circle.id} marked as migrated (preserved for Stage A window).`);
+    circlesMigrated++;
   }
 
   console.log("\n=== Migration Complete ===");
-  console.log(`  Wills migrated:    ${willsMigrated}`);
-  console.log(`  Invites created:   ${invitesCreated}`);
-  console.log(`  Messages migrated: ${messagesMigrated}`);
-  console.log(`  Circles deleted:   ${circlesDeleted}`);
-  console.log(`  Preserved/skipped: ${skipped}`);
+  console.log(`  Wills migrated:         ${willsMigrated}`);
+  console.log(`  Invites created:        ${invitesCreated}`);
+  console.log(`  Messages migrated:      ${messagesMigrated}`);
+  console.log(`  Circles migrated+kept:  ${circlesMigrated}`);
+  console.log(`  Circles deleted:        ${circlesDeleted}`);
+  console.log(`  Already done (skipped): ${circlesSkipped}`);
   console.log("Finished at:", new Date().toISOString());
 
   await pool.end();
