@@ -13,17 +13,18 @@
  * This script is idempotent — safe to re-run without data loss.
  *
  * IDEMPOTENCY DESIGN:
- * - A circle is only considered for deletion if it has NO qualifying wills at all
- *   AND it has no corresponding shared_will_invites rows (indicating it was never migrated).
- *   This prevents re-runs from deleting source circle data during the Stage A window.
- * - Already-migrated wills (circleId=NULL, mode='shared') are found via originatingCircleId
- *   or by cross-referencing shared_will_invites created during a prior run.
+ * - Stage A intentionally keeps wills.circleId set (not nulled). Stage B drops the column.
+ * - Per-will idempotency: if will.mode is already 'shared', skip it — no duplicate work.
+ * - Per-circle cleanup idempotency: before deleting an inactive circle, check if any
+ *   will with mode='shared' AND circleId=this circle exists. If yes, the circle was
+ *   migrated in a prior run (will may have completed since) — preserve source data.
  * - Messages are deduped by (willId, userId, text, createdAt to-the-second).
+ * - All invite inserts are guarded by an existence check (willId + invitedUserId pair).
  */
 
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { neon } from "@neondatabase/serverless";
-import { eq, inArray, and, isNotNull, sql, or } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import {
   circles,
   circleMembers,
@@ -72,14 +73,8 @@ async function main() {
       );
 
     if (activeCircleWills.length === 0) {
-      // Check if there were previously wills in this circle that were already migrated
-      // (circleId nulled out after migration). We look for wills in 'shared' mode
-      // that were created by a member of this circle AND have invites — a reliable indicator
-      // of prior migration, since we set circleId=NULL on the will during migration.
-      //
-      // We use the circle's member list as proxy: if any member of this circle is an
-      // originator (createdBy) of a shared will that has accepted invites from other circle members,
-      // this circle was already migrated. This is circle-scoped because we check both creator AND invitees.
+      // No active wills reference this circle. Check whether it was already migrated
+      // in a prior run (wills may have completed since) before deciding to delete.
       const memberIds = await db
         .select({ userId: circleMembers.userId })
         .from(circleMembers)
@@ -98,24 +93,27 @@ async function main() {
         continue;
       }
 
-      const memberUserIdList = memberIds.map((m) => m.userId);
-
-      // Check if any shared_will_invite exists where BOTH invitedByUserId AND invitedUserId
-      // are members of this circle — indicating this circle's will was migrated in a prior run.
-      const priorMigrationCheck = await db
-        .select({ id: sharedWillInvites.id })
-        .from(sharedWillInvites)
+      // Deterministic prior-migration detection:
+      // Since Stage A keeps circleId set on migrated wills (Stage B will drop the column),
+      // we can check if any will with mode='shared' still references this circle.
+      // If so, the circle was migrated in a prior run but still has qualifying status somehow —
+      // this path also catches any wills that completed (status changed after migration) and
+      // are no longer returned by the activeCircleWills query above.
+      const migratedWillCheck = await db
+        .select({ id: wills.id })
+        .from(wills)
         .where(
           and(
-            sql`${sharedWillInvites.invitedByUserId} = ANY(ARRAY[${sql.join(memberUserIdList.map(id => sql`${id}`), sql`, `)}]::text[])`,
-            sql`${sharedWillInvites.invitedUserId} = ANY(ARRAY[${sql.join(memberUserIdList.map(id => sql`${id}`), sql`, `)}]::text[])`
+            eq(wills.circleId, circle.id),
+            eq(wills.mode, 'shared')
           )
         )
         .limit(1);
 
-      if (priorMigrationCheck.length > 0) {
-        // Circle was already migrated — preserve source data during Stage A window
-        console.log(`  ↩ Circle ${circle.id} already migrated (prior run detected), preserving source data`);
+      if (migratedWillCheck.length > 0) {
+        // A shared will referencing this circle exists (completed post-migration) —
+        // preserve source data during Stage A window.
+        console.log(`  ↩ Circle ${circle.id} already migrated (prior run detected via shared will), preserving source data`);
         skipped++;
         continue;
       }
@@ -146,9 +144,11 @@ async function main() {
       .where(eq(circleMessages.circleId, circle.id));
 
     for (const will of activeCircleWills) {
-      // Idempotent check: already fully migrated?
-      if (will.mode === "shared" && will.circleId === null) {
-        console.log(`  ↩ Will ${will.id} already migrated, skipping`);
+      // Idempotent check: already fully migrated for Stage A?
+      // We keep circleId set during Stage A (Stage B will drop the column).
+      // A will is considered migrated if its mode is already 'shared'.
+      if (will.mode === "shared") {
+        console.log(`  ↩ Will ${will.id} already migrated (mode=shared), skipping`);
         skipped++;
         continue;
       }
@@ -235,11 +235,8 @@ async function main() {
         messagesMigrated++;
       }
 
-      // 4. Set circleId = NULL (marks will as fully migrated)
-      await db
-        .update(wills)
-        .set({ circleId: null })
-        .where(eq(wills.id, will.id));
+      // NOTE: Stage A keeps circleId set — Stage B will drop the column.
+      // The mode='shared' field is the durable migration marker for idempotency.
 
       console.log(`    ✓ Will ${will.id} migrated (${invitesCreated} invites, ${messagesMigrated} messages so far)`);
       willsMigrated++;
