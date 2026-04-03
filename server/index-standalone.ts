@@ -137,6 +137,11 @@ app.get("/privacy-policy", (req, res) => {
 });
 
 // Register all API routes (includes enhanced /api/health endpoint)
+// Run circle → shared will migration on startup (idempotent, safe to re-run)
+import("./circleMigration").then(({ runCircleMigration }) => runCircleMigration().catch(
+  (err) => console.error("[Startup] Circle migration failed (non-fatal):", err)
+));
+
 registerRoutes(app);
 
 // Start End Room scheduler

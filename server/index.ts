@@ -168,6 +168,14 @@ app.get('/api/privacy-policy', (req, res) => {
 });
 
 (async () => {
+  // Run circle → shared will migration on startup (idempotent, safe to re-run)
+  try {
+    const { runCircleMigration } = await import("./circleMigration");
+    await runCircleMigration();
+  } catch (migrationErr) {
+    console.error("[Startup] Circle migration failed (non-fatal):", migrationErr);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
