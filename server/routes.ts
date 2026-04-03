@@ -2099,7 +2099,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Send Ready for New Will notification to all committed members
         try {
           const memberIds = (willWithCommitments.commitments || []).map(c => c.userId);
-          await pushNotificationService.sendReadyForNewWillNotification(memberIds, undefined);
+          await pushNotificationService.sendReadyForNewWillNotification(memberIds);
           console.log(`[Routes] ✅ Ready for New Will notification sent for Will ${willId}`);
         } catch (error) {
           console.error(`[Routes] ❌ Failed to send Ready for New Will notification:`, error);

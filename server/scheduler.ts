@@ -106,7 +106,7 @@ export class EndRoomScheduler {
       const willsToActivate = await db
         .select({
           id: wills.id,
-          circleId: wills.circleId,
+          mode: wills.mode,
           status: wills.status,
           startDate: wills.startDate,
           endDate: wills.endDate
@@ -133,7 +133,7 @@ export class EndRoomScheduler {
         try {
           const willWithCommitments = await storage.getWillWithCommitments(will.id);
           if (willWithCommitments && willWithCommitments.commitments) {
-            const isSoloMode = will.circleId === null;
+            const isSoloMode = will.mode !== 'shared';
             for (const commitment of willWithCommitments.commitments) {
               const displayTitle = willWithCommitments.title || commitment.what || willWithCommitments.sharedWhat || "Your Will";
               await pushNotificationService.sendWillStartedNotification(displayTitle, [commitment.userId], will.id, isSoloMode);
@@ -285,7 +285,7 @@ export class EndRoomScheduler {
           and(
             eq(wills.endRoomStatus, 'pending'),
             lt(wills.endRoomScheduledAt, now),
-            isNotNull(wills.circleId) // Solo wills don't have End Rooms
+            eq(wills.mode, 'shared') // End Rooms are for shared wills
           )
         )
         .limit(20); // Limit to prevent resource exhaustion
@@ -311,8 +311,8 @@ export class EndRoomScheduler {
               
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} with video URL: ${endRoom.url}`);
               try {
-                // circleId is guaranteed to be non-null here (filtered in query)
-                const circleMembers = await storage.getCircleMembers(will.circleId!);
+                
+                const circleMembers = await this.getSharedWillParticipants(will.id);
                 const memberIds = circleMembers.map(member => member.userId);
                 await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id);
                 console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -328,8 +328,8 @@ export class EndRoomScheduler {
               });
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} but without video room`);
               try {
-                // circleId is guaranteed to be non-null here (filtered in query)
-                const circleMembers = await storage.getCircleMembers(will.circleId!);
+                
+                const circleMembers = await this.getSharedWillParticipants(will.id);
                 const memberIds = circleMembers.map(member => member.userId);
                 await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id);
                 console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -345,8 +345,8 @@ export class EndRoomScheduler {
             });
             console.log(`[EndRoomScheduler] End Room opened for Will ${will.id}`);
             try {
-              // circleId is guaranteed to be non-null here (filtered in query)
-              const circleMembers = await storage.getCircleMembers(will.circleId!);
+              
+              const circleMembers = await this.getSharedWillParticipants(will.id);
               const memberIds = circleMembers.map(member => member.userId);
               await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id);
               console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -375,7 +375,7 @@ export class EndRoomScheduler {
           and(
             eq(wills.endRoomStatus, 'open'),
             lt(wills.endRoomOpenedAt, thirtyMinutesAgo),
-            isNotNull(wills.circleId) // Solo wills don't have End Rooms
+            eq(wills.mode, 'shared') // End Rooms are for shared wills
           )
         )
         .limit(20); // Limit to prevent resource exhaustion
@@ -440,7 +440,7 @@ export class EndRoomScheduler {
             eq(wills.endRoomStatus, 'pending'),
             gte(wills.endRoomScheduledAt, twentyFourHoursFromNow),
             lt(wills.endRoomScheduledAt, twentyFourHoursOneMinuteFromNow),
-            isNotNull(wills.circleId) // Solo wills don't have End Rooms
+            eq(wills.mode, 'shared') // End Rooms are for shared wills
           )
         )
         .limit(30); // Limit notification batch size
@@ -448,8 +448,8 @@ export class EndRoomScheduler {
       for (const will of endRooms24h) {
         console.log(`[EndRoomScheduler] Sending 24h End Room notification for Will ${will.id}`);
         try {
-          // circleId is guaranteed to be non-null here (filtered in query)
-          const circleMembers = await storage.getCircleMembers(will.circleId!);
+          
+          const circleMembers = await this.getSharedWillParticipants(will.id);
           
           // TIMEZONE FIX: Send personalized notifications per user with their timezone
           for (const member of circleMembers) {
@@ -495,7 +495,7 @@ export class EndRoomScheduler {
             eq(wills.endRoomStatus, 'pending'),
             gte(wills.endRoomScheduledAt, fifteenMinutesFromNow),
             lt(wills.endRoomScheduledAt, fifteenMinutesOneMinuteFromNow),
-            isNotNull(wills.circleId) // Solo wills don't have End Rooms
+            eq(wills.mode, 'shared') // End Rooms are for shared wills
           )
         )
         .limit(30); // Limit notification batch size
@@ -503,8 +503,8 @@ export class EndRoomScheduler {
       for (const will of endRooms15min) {
         console.log(`[EndRoomScheduler] Sending 15min End Room notification for Will ${will.id}`);
         try {
-          // circleId is guaranteed to be non-null here (filtered in query)
-          const circleMembers = await storage.getCircleMembers(will.circleId!);
+          
+          const circleMembers = await this.getSharedWillParticipants(will.id);
           
           // TIMEZONE FIX: Send personalized notifications per user with their timezone
           for (const member of circleMembers) {
@@ -552,6 +552,30 @@ export class EndRoomScheduler {
     }
   }
 
+  /**
+   * Returns all participants of a shared will: the creator plus all users with accepted invites.
+   * Returns objects with { userId, user: { firstName, timezone } } matching the old getCircleMembers shape.
+   */
+  private async getSharedWillParticipants(willId: number): Promise<Array<{ userId: string; user: { firstName: string; timezone: string | null } }>> {
+    const will = await db.select({ createdBy: wills.createdBy }).from(wills).where(eq(wills.id, willId)).limit(1);
+    if (!will.length) return [];
+
+    const acceptedInvites = await db
+      .select({ invitedUserId: sharedWillInvites.invitedUserId })
+      .from(sharedWillInvites)
+      .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.status, 'accepted')));
+
+    const participantIds = [will[0].createdBy, ...acceptedInvites.map(i => i.invitedUserId)];
+    const uniqueIds = [...new Set(participantIds)];
+
+    const participantUsers = await db
+      .select({ id: users.id, firstName: users.firstName, timezone: users.timezone })
+      .from(users)
+      .where(inArray(users.id, uniqueIds));
+
+    return participantUsers.map(u => ({ userId: u.id, user: { firstName: u.firstName, timezone: u.timezone } }));
+  }
+
   // NEW: Send 6-hour reminder notifications for commitment and acknowledgment
   private async sendReminderNotifications(now: Date) {
     try {
@@ -566,7 +590,7 @@ export class EndRoomScheduler {
           and(
             eq(wills.status, 'pending'),
             lt(wills.createdAt, sixHoursAgo),
-            isNotNull(wills.circleId) // Only circle mode
+            eq(wills.mode, 'shared') // Only shared wills have pending commitment reminders
           )
         )
         .limit(20);
@@ -574,7 +598,7 @@ export class EndRoomScheduler {
       for (const will of pendingWills) {
         try {
           // Get all circle members
-          const allCircleMembers = await storage.getCircleMembers(will.circleId!);
+          const allCircleMembers = await this.getSharedWillParticipants(will.id);
           
           // Get users who have already committed
           const existingCommitments = await db
