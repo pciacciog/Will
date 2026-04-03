@@ -65,10 +65,6 @@ export default function SubmitCommitment() {
     enabled: !!id,
   });
 
-  const { data: circle } = useQuery({
-    queryKey: ['/api/circles/mine'],
-  });
-
   const { data: user } = useQuery({
     queryKey: ['/api/user'],
   });
@@ -135,9 +131,8 @@ export default function SubmitCommitment() {
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${(circle as any)?.id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
       
       toast({
         title: "Commitment Submitted",

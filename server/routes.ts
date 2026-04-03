@@ -1430,8 +1430,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ─── Will-Scoped Proof Routes ───────────────────────────────────────────────
 
-  // GET /api/wills/:id/proofs — list proofs for a will (participants only)
-  app.get('/api/wills/:id/proofs', isAuthenticated, async (req: any, res) => {
+  // GET /api/wills/:id/will-proofs — list will_proofs table entries for a will (participants only)
+  app.get('/api/wills/:id/will-proofs', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const willId = parseInt(req.params.id);

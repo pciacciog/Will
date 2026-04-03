@@ -295,21 +295,12 @@ export default function WillDetails() {
     }
     if (will?.mode === 'personal' || will?.mode === 'solo') return '/';
     if (will?.mode === 'circle') {
-      if (will?.circleId) return `/circles/${will.circleId}`;
-      return '/circles';
+      return '/my-wills';
     }
     const lastMode = localStorage.getItem('lastWillMode');
     if (lastMode === 'solo' || lastMode === 'personal') return '/';
-    return '/circles';
+    return '/my-wills';
   };
-
-  // Only fetch circle data for circle mode wills
-  const { data: circle } = useQuery<any>({
-    queryKey: ['/api/circles/mine'],
-    enabled: !!user && !isSoloMode,
-    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
-    staleTime: 0, // Always consider data stale for immediate updates
-  });
 
   const isPublicWill = will?.visibility === 'public' || !!will?.parentWillId;
   const participantWillId = will?.parentWillId || will?.id;
@@ -472,9 +463,8 @@ export default function WillDetails() {
         queryClient.invalidateQueries({ queryKey: ['/api/wills/solo'] });
         queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'solo'] });
       } else {
-        queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'circle'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'shared'] });
       }
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       
@@ -511,10 +501,8 @@ export default function WillDetails() {
       });
     },
     onSuccess: () => {
-      // Invalidate all related queries to ensure UI updates everywhere
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       
       toast({
@@ -536,8 +524,7 @@ export default function WillDetails() {
     queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
     queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
     queryClient.invalidateQueries({ queryKey: ['/api/wills/personal'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
     queryClient.invalidateQueries({ queryKey: ['/api/wills/public'] });
   };
 
@@ -731,7 +718,7 @@ export default function WillDetails() {
   }
 
   const userHasCommitted = will.commitments?.some((c: any) => c.userId === user?.id);
-  const totalMembers = circle?.members?.length || 0;
+  const totalMembers = will.commitments?.length || 0;
   const submittedCount = will.commitments?.length || 0;
 
   return (

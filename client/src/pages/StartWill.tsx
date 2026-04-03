@@ -360,10 +360,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         setLocation('/solo/hub');
       } else {
         // Invalidate all related queries to ensure UI updates everywhere
-        queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
         queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-        queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
         
         // Send notification about WILL proposal to other members (circle mode only)
         if (willData.what && user?.firstName) {
@@ -410,18 +408,14 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       return response.json();
     },
     onSuccess: () => {
-      // This is only used for Circle Mode (Solo Mode handles success in createWillMutation)
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/circle'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles/mine'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/circles', circle?.id] });
-      queryClient.invalidateQueries({ queryKey: [`/api/wills/circle/${circle?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
       
       toast({
         title: "Will Created!",
         description: "Will has been created and is pending review from other members.",
       });
-      // Navigate to the specific circle hub
-      setLocation(circle?.id ? `/circles/${circle.id}` : '/circles');
+      setLocation('/my-wills');
     },
     onError: (error) => {
       toast({
@@ -530,15 +524,16 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         reminderTime: checkInType !== 'final_review' && !isShortDuration ? willReminderTime : undefined,
       });
     } else {
+      // Non-solo, non-circle: create as personal will
       createWillMutation.mutate({
         title: willData.willTitle.trim() || undefined,
         startDate: willData.startDate,
         endDate: isIndefinite ? null : willData.endDate,
         endRoomScheduledAt: null,
-        circleId: circle?.id,
-        mode: 'circle',
-        willType: willType || 'classic',
-        sharedWhat: willType === 'cumulative' ? willData.what : undefined,
+        circleId: null,
+        mode: 'personal',
+        what: willData.what,
+        because: willData.why,
         checkInType: checkInType,
         isIndefinite: isIndefinite,
         checkInTime: checkInType !== 'final_review' ? checkInTime : undefined,
@@ -687,7 +682,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   };
 
   const handleCancel = () => {
-    setLocation(isSoloMode ? '/' : (circle?.id ? `/circles/${circle.id}` : '/circles'));
+    setLocation(isSoloMode ? '/' : '/my-wills');
   };
 
   const handleModalStart = () => {
@@ -704,10 +699,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">No Circle Found</h2>
-          <p className="text-gray-600 mb-6">You need to be part of a Circle to create a Will.</p>
-          <Button onClick={() => setLocation('/circles')}>
-            Go to My Circles
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Create a Will</h2>
+          <p className="text-gray-600 mb-6">Start a personal will or create a shared will with friends.</p>
+          <Button onClick={() => setLocation('/my-wills')}>
+            Go to My Wills
           </Button>
         </div>
       </div>
@@ -735,13 +730,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             <div className="relative flex items-center mb-2 min-h-[44px]">
               <UnifiedBackButton 
                 onClick={() => {
-                  const circleHubPath = circle?.id ? `/circles/${circle.id}` : '/circles';
                   if (showTypeSelection) {
-                    setLocation(circleHubPath);
+                    setLocation('/my-wills');
                   } else if (currentStep === 1 && !isSoloMode && willType !== null) {
                     setWillType(null);
                   } else if (currentStep === 1) {
-                    setLocation(isSoloMode ? '/' : circleHubPath);
+                    setLocation(isSoloMode ? '/' : '/my-wills');
                   } else {
                     setCurrentStep(currentStep - 1);
                   }
