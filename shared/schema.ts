@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   password: varchar("password").notNull(),
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
+  username: varchar("username", { length: 30 }).unique(), // Unique handle for friend search; nullable for existing users
   profileImageUrl: varchar("profile_image_url"),
   timezone: varchar("timezone", { length: 50 }).notNull().default("America/New_York"),
   role: varchar("role", { length: 20 }).notNull().default("user"), // user, admin
@@ -60,6 +61,20 @@ export const circleMembers = pgTable("circle_members", {
   userId: varchar("user_id").notNull().references(() => users.id),
   joinedAt: timestamp("joined_at").defaultNow(),
 });
+
+// Friendships table for the Friends + Shared Will system
+export const friendships = pgTable("friendships", {
+  id: serial("id").primaryKey(),
+  requesterId: varchar("requester_id").notNull().references(() => users.id),
+  addresseeId: varchar("addressee_id").notNull().references(() => users.id),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // 'pending', 'accepted', 'declined'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_friendships_requester_id").on(table.requesterId),
+  index("IDX_friendships_addressee_id").on(table.addresseeId),
+  uniqueIndex("IDX_friendships_pair").on(table.requesterId, table.addresseeId),
+]);
 
 export const wills = pgTable("wills", {
   id: serial("id").primaryKey(),
@@ -100,6 +115,21 @@ export const wills = pgTable("wills", {
   index("IDX_wills_visibility").on(table.visibility),
   index("IDX_wills_parent_will_id").on(table.parentWillId),
   index("IDX_wills_public_discover").on(table.visibility, table.parentWillId, table.status),
+]);
+
+// Shared Will invites — tracks pending/accepted/declined state for Shared Will participants
+export const sharedWillInvites = pgTable("shared_will_invites", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  invitedUserId: varchar("invited_user_id").notNull().references(() => users.id),
+  invitedByUserId: varchar("invited_by_user_id").notNull().references(() => users.id),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // 'pending', 'accepted', 'declined', 'expired'
+  respondedAt: timestamp("responded_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_shared_will_invites_will_id").on(table.willId),
+  index("IDX_shared_will_invites_invited_user_id").on(table.invitedUserId),
 ]);
 
 export const willCommitments = pgTable("will_commitments", {
@@ -275,6 +305,38 @@ export const usersRelations = relations(users, ({ many }) => ({
   dailyProgress: many(dailyProgress),
   willPushes: many(willPushes),
   deviceTokens: many(deviceTokens),
+  sentFriendRequests: many(friendships, { relationName: "requester" }),
+  receivedFriendRequests: many(friendships, { relationName: "addressee" }),
+}));
+
+export const friendshipsRelations = relations(friendships, ({ one }) => ({
+  requester: one(users, {
+    fields: [friendships.requesterId],
+    references: [users.id],
+    relationName: "requester",
+  }),
+  addressee: one(users, {
+    fields: [friendships.addresseeId],
+    references: [users.id],
+    relationName: "addressee",
+  }),
+}));
+
+export const sharedWillInvitesRelations = relations(sharedWillInvites, ({ one }) => ({
+  will: one(wills, {
+    fields: [sharedWillInvites.willId],
+    references: [wills.id],
+  }),
+  invitedUser: one(users, {
+    fields: [sharedWillInvites.invitedUserId],
+    references: [users.id],
+    relationName: "invitedUser",
+  }),
+  invitedByUser: one(users, {
+    fields: [sharedWillInvites.invitedByUserId],
+    references: [users.id],
+    relationName: "invitedByUser",
+  }),
 }));
 
 export const circlesRelations = relations(circles, ({ one, many }) => ({
@@ -557,6 +619,21 @@ export const insertCommitmentReminderSchema = createInsertSchema(commitmentRemin
 });
 export type InsertCommitmentReminder = z.infer<typeof insertCommitmentReminderSchema>;
 export type CommitmentReminder = typeof commitmentReminders.$inferSelect;
+
+export const insertFriendshipSchema = createInsertSchema(friendships).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertFriendship = z.infer<typeof insertFriendshipSchema>;
+export type Friendship = typeof friendships.$inferSelect;
+
+export const insertSharedWillInviteSchema = createInsertSchema(sharedWillInvites).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertSharedWillInvite = z.infer<typeof insertSharedWillInviteSchema>;
+export type SharedWillInvite = typeof sharedWillInvites.$inferSelect;
 
 // Password reset tokens table
 export const passwordResetTokens = pgTable("password_reset_tokens", {

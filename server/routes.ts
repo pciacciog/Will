@@ -924,6 +924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const isPersonalMode = req.body.mode === 'solo' || req.body.mode === 'personal';
+      const isSharedMode = req.body.mode === 'shared';
       
       // Prepare will data with proper types
       const isIndefinite = req.body.isIndefinite === true;
@@ -938,7 +939,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: new Date(req.body.startDate),
         endDate: isIndefinite ? null : (req.body.endDate ? new Date(req.body.endDate) : null),
         createdBy: userId,
-        mode: isPersonalMode ? 'personal' : 'circle',
+        mode: isPersonalMode ? 'personal' : isSharedMode ? 'shared' : 'circle',
         visibility: req.body.visibility || 'private',
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
         checkInType: normalizedCheckInType,
@@ -1559,8 +1560,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const mode = req.query.mode as 'solo' | 'circle' | 'public' | undefined;
-      const validModes = ['solo', 'circle', 'public'];
+      const mode = req.query.mode as 'solo' | 'circle' | 'shared' | 'public' | undefined;
+      const validModes = ['solo', 'circle', 'shared', 'public'];
       const filteredMode = mode && validModes.includes(mode) ? mode : undefined;
       const stats = await storage.getUserWillStats(userId, filteredMode);
       res.json(stats);
@@ -1574,14 +1575,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/wills/history', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const mode = req.query.mode as 'solo' | 'circle' | 'public';
+      const mode = req.query.mode as 'solo' | 'circle' | 'shared' | 'public';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const enhanced = req.query.enhanced === 'true';
       
       console.log(`[HISTORY] Fetching ${mode} history for user ${userId} (enhanced: ${enhanced})`);
       
-      if (!mode || !['solo', 'circle', 'public'].includes(mode)) {
-        return res.status(400).json({ message: "Invalid mode. Must be 'solo', 'circle', or 'public'." });
+      if (!mode || !['solo', 'circle', 'shared', 'public'].includes(mode)) {
+        return res.status(400).json({ message: "Invalid mode. Must be 'solo', 'circle', 'shared', or 'public'." });
       }
       
       // Use enhanced version with check-in data if requested
@@ -2874,9 +2875,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "You left the Will. Your progress has been saved.", status: 'terminated' });
       }
 
-      // Handle circle will leave (original behavior — ends for ALL members)
-      if (will.mode !== 'circle') {
-        return res.status(400).json({ message: "Leave is only available for Circle or Public Wills" });
+      // Handle circle/shared will leave (original behavior — ends for ALL members)
+      if (will.mode !== 'circle' && will.mode !== 'shared') {
+        return res.status(400).json({ message: "Leave is only available for Circle, Shared, or Public Wills" });
       }
 
       const commitments = await db

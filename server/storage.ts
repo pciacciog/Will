@@ -128,7 +128,7 @@ export interface IStorage {
   getWillReviewCount(willId: number): Promise<number>;
   
   // Will history operations
-  getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'public', limit?: number): Promise<{
+  getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'shared' | 'public', limit?: number): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -212,7 +212,7 @@ export interface IStorage {
   getWillFinalReflection(willId: number, userId: string): Promise<WillFinalReflection | undefined>;
   
   // User stats operations
-  getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'public'): Promise<{
+  getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'shared' | 'public'): Promise<{
     totalWills: number;
     overallSuccessRate: number;
     dailyStats: { totalDays: number; successfulDays: number; successRate: number };
@@ -220,7 +220,7 @@ export interface IStorage {
   }>;
   
   // Enhanced history with check-in data
-  getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'public', limit?: number): Promise<{
+  getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'shared' | 'public', limit?: number): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -1036,7 +1036,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Will history operations
-  async getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'public', limit: number = 20): Promise<{
+  async getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'shared' | 'public', limit: number = 20): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -1110,7 +1110,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           inArray(wills.id, willIds),
-          eq(wills.mode, 'circle'),
+          inArray(wills.mode, mode === 'shared' ? ['shared'] : ['circle']),
           inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
@@ -1574,7 +1574,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'public'): Promise<{
+  async getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'shared' | 'public'): Promise<{
     totalWills: number;
     overallSuccessRate: number;
     dailyStats: { totalDays: number; successfulDays: number; successRate: number };
@@ -1639,14 +1639,14 @@ export class DatabaseStorage implements IStorage {
       publicWillsList = Array.from(uniqueMap.values());
     }
     
-    if (!mode || mode === 'circle') {
+    if (!mode || mode === 'circle' || mode === 'shared') {
       if (willIds.length > 0) {
         circleWillsList = await db
           .select()
           .from(wills)
           .where(and(
             inArray(wills.id, willIds),
-            eq(wills.mode, 'circle'),
+            mode === 'shared' ? eq(wills.mode, 'shared') : (mode === 'circle' ? eq(wills.mode, 'circle') : inArray(wills.mode, ['circle', 'shared'])),
             inArray(wills.status, ['completed', 'archived'])
           ));
       }
@@ -1731,7 +1731,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'public', limit: number = 20): Promise<{
+  async getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'shared' | 'public', limit: number = 20): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -1816,7 +1816,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           inArray(wills.id, willIds),
-          eq(wills.mode, 'circle'),
+          inArray(wills.mode, mode === 'shared' ? ['shared'] : ['circle']),
           inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
