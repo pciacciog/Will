@@ -32,6 +32,7 @@ import Admin from "@/pages/Admin";
 import NotificationTest from "@/pages/NotificationTest";
 import IconGenerator from "@/pages/IconGenerator";
 import CircleLobby from "@/pages/CircleLobby";
+import FriendsPage from "@/pages/FriendsPage";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import MyWills from "@/pages/MyWills";
@@ -54,6 +55,14 @@ function LegacyHubRedirect() {
   const [, setLocation] = useLocation();
   useEffect(() => {
     setLocation('/circles');
+  }, [setLocation]);
+  return null;
+}
+
+function CircleLobbyRedirect() {
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    setLocation('/friends');
   }, [setLocation]);
   return null;
 }
@@ -206,6 +215,8 @@ function Router() {
             targetPath = circleId ? `/circles/${circleId}` : '/circles';
           } else if (type === 'circle_message') {
             targetPath = circleId ? `/circles/${circleId}/messages` : '/circles';
+          } else if (type === 'friend_request') {
+            targetPath = '/friends';
           } else {
             targetPath = '/';
           }
@@ -361,8 +372,9 @@ function Router() {
         ) : (
           <>
             <Route path="/" component={Home} />
+            <Route path="/friends" component={FriendsPage} />
             <Route path="/inner-circle" component={InnerCircle} />
-            <Route path="/circles" component={CircleLobby} />
+            <Route path="/circles" component={CircleLobbyRedirect} />
             <Route path="/circles/:circleId/messages">{(params) => <CircleMessagesPage circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/circles/:circleId/proof">{(params) => <ProofFeed circleId={parseInt(params.circleId)} />}</Route>
             <Route path="/circles/:circleId">{(params) => <InnerCircleHub circleId={parseInt(params.circleId)} />}</Route>

@@ -27,7 +27,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [showSplash, setShowSplash] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
-  const [activeCard, setActiveCard] = useState<'explore' | 'circles' | null>(null);
+  const [activeCard, setActiveCard] = useState<'explore' | 'friends' | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -138,8 +138,8 @@ export default function Home() {
     setLocation('/explore');
   };
 
-  const handleCircles = () => {
-    setLocation('/circles');
+  const handleFriends = () => {
+    setLocation('/friends');
   };
 
   if (showSplash) {
@@ -299,33 +299,28 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => { setActiveCard('circles'); handleCircles(); }}
-              onPointerDown={() => setActiveCard('circles')}
+              onClick={() => { setActiveCard('friends'); handleFriends(); }}
+              onPointerDown={() => setActiveCard('friends')}
               className="group"
-              data-testid="button-circles"
+              data-testid="button-friends"
             >
               <div className={`h-full rounded-2xl transition-all duration-200 group-hover:-translate-y-0.5 ${
-                activeCard === 'circles'
+                activeCard === 'friends'
                   ? 'bg-white border-2 border-purple-300 shadow-md shadow-purple-100/50'
                   : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-purple-200'
               }`}>
                 <div className="p-3 flex flex-col items-center justify-center text-center">
                   <div className="relative">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1 transition-colors duration-200 ${
-                      activeCard === 'circles' ? 'bg-purple-100' : 'bg-purple-50'
+                      activeCard === 'friends' ? 'bg-purple-100' : 'bg-purple-50'
                     }`}>
                       <Users className={`w-5 h-5 transition-colors duration-200 ${
-                        activeCard === 'circles' ? 'text-purple-600' : 'text-purple-400'
+                        activeCard === 'friends' ? 'text-purple-600' : 'text-purple-400'
                       }`} />
                     </div>
-                    {(notificationsData?.count ?? 0) > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1" data-testid="badge-notification-count">
-                        {notificationsData!.count}
-                      </span>
-                    )}
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-900 leading-tight">My Circles</h3>
-                  <p className="text-[11px] text-gray-400 leading-tight">Shared Accountability</p>
+                  <h3 className="text-sm font-semibold text-gray-900 leading-tight">Friends</h3>
+                  <p className="text-[11px] text-gray-400 leading-tight">Your people</p>
                 </div>
               </div>
             </button>

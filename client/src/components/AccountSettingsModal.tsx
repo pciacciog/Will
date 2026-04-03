@@ -26,12 +26,18 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [username, setUsername] = useState(user?.username || '');
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameSaved, setUsernameSaved] = useState(false);
   
   useEffect(() => {
     if (isOpen && user) {
       setFirstName(user.firstName || '');
       setLastName(user.lastName || '');
       setEmail(user.email || '');
+      setUsername(user.username || '');
+      setUsernameError('');
+      setUsernameSaved(false);
     }
   }, [isOpen, user]);
 
@@ -63,6 +69,43 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
       });
     },
   });
+
+  const updateUsernameMutation = useMutation({
+    mutationFn: async (newUsername: string) => {
+      const res = await apiRequest('/api/user/username', {
+        method: 'PATCH',
+        body: JSON.stringify({ username: newUsername }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to update username');
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      setUsernameError('');
+      setUsernameSaved(true);
+      setTimeout(() => setUsernameSaved(false), 3000);
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    },
+    onError: (error: any) => {
+      setUsernameError(error.message || 'Username is unavailable');
+    },
+  });
+
+  const handleUpdateUsername = () => {
+    const trimmed = username.trim().toLowerCase();
+    if (!trimmed) {
+      setUsernameError('Username is required');
+      return;
+    }
+    if (!/^[a-z0-9_]{3,30}$/.test(trimmed)) {
+      setUsernameError('3–30 characters, letters, numbers, or underscores only');
+      return;
+    }
+    setUsernameError('');
+    updateUsernameMutation.mutate(trimmed);
+  };
 
   const changePasswordMutation = useMutation({
     mutationFn: async (passwordData: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
@@ -215,6 +258,7 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
         <div className="px-5 py-5 space-y-5">
           {/* Profile Tab */}
           {activeTab === 'profile' && (
+            <div className="space-y-5">
             <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-700 tracking-wide uppercase">Profile Information</h3>
@@ -270,6 +314,49 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
                   </Button>
                 </form>
               </div>
+            </div>
+
+            {/* Username Card */}
+            <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700 tracking-wide uppercase">Username</h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">Used to find you in friend search</p>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400 select-none">@</span>
+                    <Input
+                      value={username}
+                      onChange={(e) => {
+                        setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+                        setUsernameError('');
+                        setUsernameSaved(false);
+                      }}
+                      placeholder="your_username"
+                      maxLength={30}
+                      className="h-11 rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all"
+                      data-testid="input-username"
+                    />
+                  </div>
+                  {usernameError && (
+                    <p className="text-[11px] text-red-500 pl-6" data-testid="text-username-error">{usernameError}</p>
+                  )}
+                  {usernameSaved && (
+                    <p className="text-[11px] text-emerald-600 pl-6" data-testid="text-username-saved">Username saved!</p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleUpdateUsername}
+                  disabled={updateUsernameMutation.isPending}
+                  className="w-full h-10 rounded-lg bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white font-medium shadow-sm hover:shadow transition-all active:scale-[0.98]"
+                  data-testid="button-save-username"
+                >
+                  {updateUsernameMutation.isPending ? "Saving..." : "Save Username"}
+                </Button>
+              </div>
+            </div>
             </div>
           )}
 

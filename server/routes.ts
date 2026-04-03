@@ -21,11 +21,12 @@ import {
   deviceTokens,
   users,
   wills,
+  friendships,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db, pool } from "./db";
-import { eq, and, or, isNull, sql, inArray, lt, gte, desc, ne } from "drizzle-orm";
+import { eq, and, or, isNull, sql, inArray, lt, gte, desc, ne, ilike } from "drizzle-orm";
 import { cloudinary, cloudName, apiKey as cloudApiKey } from "./cloudinary";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
@@ -251,6 +252,333 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating profile:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // ─── USERNAME UPDATE ───────────────────────────────────────────────────────
+  app.patch('/api/user/username', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { username } = req.body;
+
+      if (!username || typeof username !== 'string') {
+        return res.status(400).json({ message: "Username is required" });
+      }
+
+      const trimmed = username.trim().toLowerCase();
+
+      if (!/^[a-z0-9_]{3,30}$/.test(trimmed)) {
+        return res.status(400).json({ message: "Username must be 3–30 characters, letters, numbers, or underscores only" });
+      }
+
+      // Check uniqueness
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.username, trimmed), ne(users.id, userId)));
+
+      if (existing) {
+        return res.status(409).json({ message: "Username is already taken" });
+      }
+
+      const [updated] = await db
+        .update(users)
+        .set({ username: trimmed, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      console.error("[USERNAME] Error updating username:", error);
+      res.status(500).json({ message: "Failed to update username" });
+    }
+  });
+
+  // ─── USER SEARCH ───────────────────────────────────────────────────────────
+  app.get('/api/users/search', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.id;
+      const q = (req.query.q as string || '').trim();
+
+      if (!q || q.length < 2) {
+        return res.json([]);
+      }
+
+      // Search by username (partial) or exact email, excluding self
+      const results = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          username: users.username,
+          email: users.email,
+        })
+        .from(users)
+        .where(
+          and(
+            ne(users.id, currentUserId),
+            or(
+              ilike(users.username, `%${q}%`),
+              eq(users.email, q.toLowerCase())
+            )
+          )
+        )
+        .limit(20);
+
+      if (results.length === 0) {
+        return res.json([]);
+      }
+
+      // Fetch friendship status for each result
+      const resultIds = results.map(u => u.id);
+      const existingFriendships = await db
+        .select()
+        .from(friendships)
+        .where(
+          or(
+            and(eq(friendships.requesterId, currentUserId), inArray(friendships.addresseeId, resultIds)),
+            and(eq(friendships.addresseeId, currentUserId), inArray(friendships.requesterId, resultIds))
+          )
+        );
+
+      const friendshipMap = new Map<string, { id: number; status: string; direction: 'sent' | 'received' }>();
+      for (const f of existingFriendships) {
+        const otherId = f.requesterId === currentUserId ? f.addresseeId : f.requesterId;
+        const direction = f.requesterId === currentUserId ? 'sent' : 'received';
+        friendshipMap.set(otherId, { id: f.id, status: f.status, direction });
+      }
+
+      const enriched = results.map(u => {
+        const fs = friendshipMap.get(u.id);
+        return {
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          username: u.username,
+          friendshipId: fs?.id ?? null,
+          friendshipStatus: fs?.status ?? null,
+          friendshipDirection: fs?.direction ?? null,
+        };
+      });
+
+      res.json(enriched);
+    } catch (error) {
+      console.error("[USER-SEARCH] Error:", error);
+      res.status(500).json({ message: "Search failed" });
+    }
+  });
+
+  // ─── FRIENDS API ───────────────────────────────────────────────────────────
+
+  // GET /api/friends — list accepted friends + pending incoming requests
+  app.get('/api/friends', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const allFriendships = await db
+        .select()
+        .from(friendships)
+        .where(
+          or(
+            eq(friendships.requesterId, userId),
+            eq(friendships.addresseeId, userId)
+          )
+        );
+
+      const accepted = allFriendships.filter(f => f.status === 'accepted');
+      const pendingIncoming = allFriendships.filter(f => f.status === 'pending' && f.addresseeId === userId);
+
+      // Collect all user IDs we need
+      const allUserIds = new Set<string>();
+      for (const f of [...accepted, ...pendingIncoming]) {
+        allUserIds.add(f.requesterId);
+        allUserIds.add(f.addresseeId);
+      }
+      allUserIds.delete(userId);
+
+      let userMap = new Map<string, { id: string; firstName: string | null; lastName: string | null; username: string | null }>();
+      if (allUserIds.size > 0) {
+        const userRows = await db
+          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username })
+          .from(users)
+          .where(inArray(users.id, Array.from(allUserIds)));
+        for (const u of userRows) {
+          userMap.set(u.id, u);
+        }
+      }
+
+      const friendsList = accepted.map(f => {
+        const otherId = f.requesterId === userId ? f.addresseeId : f.requesterId;
+        const other = userMap.get(otherId);
+        return {
+          friendshipId: f.id,
+          userId: otherId,
+          firstName: other?.firstName ?? null,
+          lastName: other?.lastName ?? null,
+          username: other?.username ?? null,
+        };
+      });
+
+      const pendingList = pendingIncoming.map(f => {
+        const other = userMap.get(f.requesterId);
+        return {
+          friendshipId: f.id,
+          userId: f.requesterId,
+          firstName: other?.firstName ?? null,
+          lastName: other?.lastName ?? null,
+          username: other?.username ?? null,
+        };
+      });
+
+      res.json({ friends: friendsList, pendingIncoming: pendingList });
+    } catch (error) {
+      console.error("[FRIENDS] Error fetching friends:", error);
+      res.status(500).json({ message: "Failed to fetch friends" });
+    }
+  });
+
+  // POST /api/friends/request — send a friend request
+  app.post('/api/friends/request', isAuthenticated, async (req: any, res) => {
+    try {
+      const requesterId = req.user.id;
+      const { userId: addresseeId } = req.body;
+
+      if (!addresseeId || typeof addresseeId !== 'string') {
+        return res.status(400).json({ message: "userId is required" });
+      }
+
+      if (requesterId === addresseeId) {
+        return res.status(400).json({ message: "You cannot send a friend request to yourself" });
+      }
+
+      // Check if addressee exists
+      const [addressee] = await db.select().from(users).where(eq(users.id, addresseeId));
+      if (!addressee) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check for existing friendship in either direction
+      const [existing] = await db
+        .select()
+        .from(friendships)
+        .where(
+          or(
+            and(eq(friendships.requesterId, requesterId), eq(friendships.addresseeId, addresseeId)),
+            and(eq(friendships.requesterId, addresseeId), eq(friendships.addresseeId, requesterId))
+          )
+        );
+
+      if (existing) {
+        if (existing.status === 'accepted') {
+          return res.status(409).json({ message: "You are already friends" });
+        }
+        if (existing.status === 'pending') {
+          return res.status(409).json({ message: "A friend request already exists" });
+        }
+        // If declined, update to pending (re-request)
+        const [updated] = await db
+          .update(friendships)
+          .set({ status: 'pending', requesterId, addresseeId, updatedAt: new Date() })
+          .where(eq(friendships.id, existing.id))
+          .returning();
+        return res.status(201).json(updated);
+      }
+
+      const [newFriendship] = await db
+        .insert(friendships)
+        .values({ requesterId, addresseeId, status: 'pending' })
+        .returning();
+
+      // Send push notification to recipient
+      try {
+        const [sender] = await db
+          .select({ firstName: users.firstName })
+          .from(users)
+          .where(eq(users.id, requesterId));
+        const senderName = sender?.firstName || 'Someone';
+        await pushNotificationService.sendToUser(addresseeId, {
+          title: 'New friend request 👋',
+          body: `${senderName} sent you a friend request`,
+          category: 'friend_request',
+          data: { type: 'friend_request', deepLink: '/friends' },
+        });
+      } catch (notifError) {
+        console.error('[FRIENDS] Push notification failed (non-fatal):', notifError);
+      }
+
+      res.status(201).json(newFriendship);
+    } catch (error) {
+      console.error("[FRIENDS] Error sending friend request:", error);
+      res.status(500).json({ message: "Failed to send friend request" });
+    }
+  });
+
+  // PATCH /api/friends/:id/accept
+  app.patch('/api/friends/:id/accept', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const friendshipId = parseInt(req.params.id);
+
+      const [fs] = await db.select().from(friendships).where(eq(friendships.id, friendshipId));
+      if (!fs) return res.status(404).json({ message: "Friend request not found" });
+      if (fs.addresseeId !== userId) return res.status(403).json({ message: "Not authorized" });
+      if (fs.status !== 'pending') return res.status(400).json({ message: "Request is not pending" });
+
+      const [updated] = await db
+        .update(friendships)
+        .set({ status: 'accepted', updatedAt: new Date() })
+        .where(eq(friendships.id, friendshipId))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      console.error("[FRIENDS] Error accepting friend request:", error);
+      res.status(500).json({ message: "Failed to accept request" });
+    }
+  });
+
+  // PATCH /api/friends/:id/decline
+  app.patch('/api/friends/:id/decline', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const friendshipId = parseInt(req.params.id);
+
+      const [fs] = await db.select().from(friendships).where(eq(friendships.id, friendshipId));
+      if (!fs) return res.status(404).json({ message: "Friend request not found" });
+      if (fs.addresseeId !== userId) return res.status(403).json({ message: "Not authorized" });
+      if (fs.status !== 'pending') return res.status(400).json({ message: "Request is not pending" });
+
+      const [updated] = await db
+        .update(friendships)
+        .set({ status: 'declined', updatedAt: new Date() })
+        .where(eq(friendships.id, friendshipId))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      console.error("[FRIENDS] Error declining friend request:", error);
+      res.status(500).json({ message: "Failed to decline request" });
+    }
+  });
+
+  // DELETE /api/friends/:id — remove a friend (either party)
+  app.delete('/api/friends/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const friendshipId = parseInt(req.params.id);
+
+      const [fs] = await db.select().from(friendships).where(eq(friendships.id, friendshipId));
+      if (!fs) return res.status(404).json({ message: "Friendship not found" });
+      if (fs.requesterId !== userId && fs.addresseeId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      await db.delete(friendships).where(eq(friendships.id, friendshipId));
+
+      res.json({ message: "Friend removed" });
+    } catch (error) {
+      console.error("[FRIENDS] Error removing friend:", error);
+      res.status(500).json({ message: "Failed to remove friend" });
     }
   });
 
