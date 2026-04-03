@@ -151,9 +151,14 @@ async function main() {
         invitesCreated++;
       }
 
-      // 3. Migrate circle_messages into will_messages (idempotent via content+timestamp match)
+      // 3. Migrate circle_messages into will_messages
+      // Idempotent: store original circle_message.id in a dedicated metadata column isn't available,
+      // so we dedupe by (willId, userId, text, createdAt truncated to the second) to avoid true duplicates
+      // while preserving legitimate repeated identical messages at different times.
       for (const msg of msgs) {
-        // Check if a matching will_message already exists (by userId + content + approximate time)
+        const msgCreatedAt = msg.createdAt ?? new Date();
+
+        // Idempotent check: exact match on willId + userId + text + createdAt (to the second)
         const existing = await db
           .select({ id: willMessages.id })
           .from(willMessages)
@@ -161,19 +166,20 @@ async function main() {
             and(
               eq(willMessages.willId, will.id),
               eq(willMessages.userId, msg.userId),
-              eq(willMessages.content, msg.content)
+              eq(willMessages.text, msg.text),
+              sql`date_trunc('second', ${willMessages.createdAt}) = date_trunc('second', ${msgCreatedAt}::timestamptz)`
             )
           );
 
         if (existing.length > 0) {
-          continue; // Already migrated
+          continue; // Already migrated this exact message
         }
 
         await db.insert(willMessages).values({
           willId: will.id,
           userId: msg.userId,
-          content: msg.content,
-          createdAt: msg.createdAt ?? new Date(),
+          text: msg.text,
+          createdAt: msgCreatedAt,
         });
         messagesMigrated++;
       }
