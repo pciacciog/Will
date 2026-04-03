@@ -364,6 +364,7 @@ function Router() {
             <Route path="/circles/:circleId" component={CircleLobbyRedirect} />
             <Route path="/solo/hub" component={Home} />
             <Route path="/wills" component={MyWills} />
+            <Route path="/my-wills" component={MyWills} />
             <Route path="/today" component={Today} />
             <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/explore" component={Explore} />
