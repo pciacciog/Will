@@ -1979,7 +1979,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const memberCount = willWithCommitments.commitments?.length || 1;
+      // For shared wills: memberCount = creator + accepted invitees (the true participant pool)
+      // For other wills: fall back to commitments length (original behavior)
+      let memberCount: number;
+      if ((willWithCommitments as any).mode === 'shared') {
+        const participantIds = await getSharedWillParticipantIds(willId);
+        memberCount = Math.max(participantIds.length, 1);
+      } else {
+        memberCount = willWithCommitments.commitments?.length || 1;
+      }
+
       const acknowledgedCount = await storage.getWillAcknowledgmentCount(willId);
       
       const status = getWillStatus(willWithCommitments, memberCount);
