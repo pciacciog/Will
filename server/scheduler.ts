@@ -1259,14 +1259,30 @@ export class EndRoomScheduler {
             await storage.updateWillStatus(will.id, 'active');
             console.log(`[SCHEDULER-SHARED] ✅ Activated Shared Will ${will.id} (${acceptedRows.length} accepted invites)`);
 
-            // Notify all participants (commitments)
+            // Notify all participants: creator + accepted invitees (union of commitments and accepted invites)
             try {
+              const willRecord = await storage.getWillById(will.id);
+              const displayTitle = willRecord?.title || willRecord?.sharedWhat || 'Your Will';
+
+              // Collect unique participant IDs: creator + all accepted invitees
+              const participantIds = new Set<string>([will.createdBy]);
+              for (const row of acceptedRows) {
+                participantIds.add(row.invitedUserId);
+              }
+              // Also include anyone with a commitment (covers edge cases)
               const willWithCommitments = await storage.getWillWithCommitments(will.id);
               if (willWithCommitments?.commitments) {
                 for (const c of willWithCommitments.commitments) {
-                  const displayTitle = willWithCommitments.title || c.what || willWithCommitments.sharedWhat || 'Your Will';
-                  await pushNotificationService.sendWillStartedNotification(displayTitle, [c.userId], will.id, false);
+                  participantIds.add(c.userId);
+                  const commitmentTitle = willWithCommitments.title || c.what || willWithCommitments.sharedWhat || 'Your Will';
+                  await pushNotificationService.sendWillStartedNotification(commitmentTitle, [c.userId], will.id, false);
+                  participantIds.delete(c.userId); // Already notified via commitment
                 }
+              }
+              // Notify remaining accepted invitees who haven't committed yet
+              for (const pid of participantIds) {
+                if (pid === will.createdBy) continue; // Creator should have a commitment
+                await pushNotificationService.sendWillStartedNotification(displayTitle, [pid], will.id, false);
               }
             } catch (notifErr) {
               console.error(`[SCHEDULER-SHARED] Failed to send started notifications for Will ${will.id}:`, notifErr);

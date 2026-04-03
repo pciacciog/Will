@@ -1383,6 +1383,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Cannot invite only yourself" });
         }
 
+        // Validate each invited user is an accepted friend
+        for (const friendId of filteredInviteIds) {
+          const [friendship] = await db
+            .select({ id: friendships.id })
+            .from(friendships)
+            .where(and(
+              eq(friendships.status, 'accepted'),
+              or(
+                and(eq(friendships.requesterId, userId), eq(friendships.addresseeId, friendId)),
+                and(eq(friendships.requesterId, friendId), eq(friendships.addresseeId, userId))
+              )
+            ))
+            .limit(1);
+          if (!friendship) {
+            return res.status(403).json({ message: `User ${friendId} is not your friend` });
+          }
+        }
+
         // Validate willType
         const willType = req.body.willType || 'classic';
         if (!['classic', 'cumulative'].includes(willType)) {

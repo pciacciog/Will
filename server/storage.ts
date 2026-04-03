@@ -794,6 +794,8 @@ export class DatabaseStorage implements IStorage {
 
         let publicParticipantCount: number | undefined = undefined;
         let creatorName: string | undefined = undefined;
+        let pendingInviteCount: number | undefined = undefined;
+        let sharedParticipants: { firstName: string }[] | undefined = undefined;
 
         const isPublicWill = will.visibility === 'public' || !!will.parentWillId;
         if (isPublicWill) {
@@ -818,11 +820,34 @@ export class DatabaseStorage implements IStorage {
           }
         }
 
+        // For shared wills, fetch pending invite count + accepted participant names
+        if (will.mode === 'shared') {
+          try {
+            const invites = await db
+              .select({
+                status: sharedWillInvites.status,
+                firstName: users.firstName,
+              })
+              .from(sharedWillInvites)
+              .innerJoin(users, eq(sharedWillInvites.invitedUserId, users.id))
+              .where(eq(sharedWillInvites.willId, will.id));
+
+            pendingInviteCount = invites.filter(i => i.status === 'pending').length;
+            sharedParticipants = invites
+              .filter(i => i.status === 'accepted')
+              .map(i => ({ firstName: i.firstName }));
+          } catch (e) {
+            console.warn('[STORAGE] Could not fetch shared will invite info for will:', will.id);
+          }
+        }
+
         willsWithCommitments.push({
           ...will,
           commitments: mappedCommitments,
           publicParticipantCount,
           creatorName,
+          pendingInviteCount,
+          sharedParticipants,
         });
       } catch (e: any) {
         console.error(`[STORAGE] Failed to fetch commitments for will ${will.id}:`, e.message);
