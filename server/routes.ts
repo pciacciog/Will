@@ -22,6 +22,8 @@ import {
   users,
   wills,
   friendships,
+  sharedWillInvites,
+  willProofs,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
@@ -1365,6 +1367,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Created solo Will ${will.id} for user ${userId}, status: pending, starts: ${req.body.startDate}, midpoint: ${midpointTime ? midpointTime.toISOString() : 'none (indefinite)'}`);
         
         res.json({ ...will, status: 'pending', midpointAt: midpointTime });
+      } else if (isSharedMode) {
+        // SHARED MODE: Friends-based will — invites friends, activates at startDate if ≥1 accepts
+
+        const invitedFriendIds: string[] = Array.isArray(req.body.invitedFriendIds) ? req.body.invitedFriendIds : [];
+        if (invitedFriendIds.length === 0) {
+          return res.status(400).json({ message: "At least one friend must be invited for a Shared Will" });
+        }
+        if (invitedFriendIds.length > 5) {
+          return res.status(400).json({ message: "You can invite up to 5 friends" });
+        }
+        // Remove self from list in case
+        const filteredInviteIds = invitedFriendIds.filter((id: string) => id !== userId);
+        if (filteredInviteIds.length === 0) {
+          return res.status(400).json({ message: "Cannot invite only yourself" });
+        }
+
+        // Validate willType
+        const willType = req.body.willType || 'classic';
+        if (!['classic', 'cumulative'].includes(willType)) {
+          return res.status(400).json({ message: "willType must be 'classic' or 'cumulative'" });
+        }
+        willDataWithDefaults.willType = willType;
+        if (willType === 'cumulative') {
+          if (!req.body.sharedWhat) {
+            return res.status(400).json({ message: "We Will requires a shared commitment (sharedWhat)" });
+          }
+          willDataWithDefaults.sharedWhat = req.body.sharedWhat;
+        }
+
+        // Shared wills have no circleId
+        willDataWithDefaults.circleId = null;
+
+        const willData = insertWillSchema.parse(willDataWithDefaults);
+        const will = await storage.createWill(willData);
+
+        // Calculate midpointAt if applicable
+        if (!isIndefinite && req.body.endDate) {
+          const startMs = new Date(req.body.startDate).getTime();
+          const endMs = new Date(req.body.endDate).getTime();
+          const midpoint = new Date((startMs + endMs) / 2);
+          await db.update(wills).set({ midpointAt: midpoint }).where(eq(wills.id, will.id));
+        }
+
+        // Auto-create creator's commitment
+        try {
+          const creatorCommitmentData: any = {
+            willId: will.id,
+            userId,
+            what: willType === 'cumulative' ? (req.body.sharedWhat || "Our shared goal") : (req.body.what || "My commitment"),
+            why: req.body.because || "",
+            checkInType: normalizedCheckInType,
+            checkInTime: willDataWithDefaults.checkInTime || null,
+            activeDays: willDataWithDefaults.activeDays || 'every_day',
+            customDays: willDataWithDefaults.customDays || null,
+          };
+          await storage.addWillCommitment(creatorCommitmentData);
+          console.log(`[Routes] Auto-created commitment for shared Will ${will.id} creator`);
+        } catch (commitError) {
+          console.error(`[Routes] Failed to create commitment for shared Will ${will.id}:`, commitError);
+        }
+
+        // Create invites and send push notifications
+        const creator = await storage.getUser(userId);
+        const creatorName = creator?.firstName || 'Someone';
+        const inviteDisplayTitle = will.title || req.body.what || will.sharedWhat || undefined;
+
+        for (const friendId of filteredInviteIds) {
+          try {
+            await db.insert(sharedWillInvites).values({
+              willId: will.id,
+              invitedUserId: friendId,
+              invitedByUserId: userId,
+              status: 'pending',
+              expiresAt: new Date(req.body.startDate),
+            });
+
+            await pushNotificationService.sendToUser(friendId, {
+              title: `${creatorName} invited you to a Shared Will 🤝`,
+              body: inviteDisplayTitle ? `"${inviteDisplayTitle}" — tap to accept or decline` : 'Tap to accept or decline the invitation',
+              category: 'shared_will_invite',
+              data: { type: 'shared_will_invite', willId: will.id, deepLink: `/will/${will.id}/invite` },
+            });
+          } catch (inviteErr) {
+            console.error(`[Routes] Failed to create invite or notify friend ${friendId} for Will ${will.id}:`, inviteErr);
+          }
+        }
+
+        console.log(`[Routes] Created Shared Will ${will.id} with ${filteredInviteIds.length} invites`);
+        res.json(will);
       } else {
         // CIRCLE MODE: Multi-circle support - use circleId from request
         
@@ -1597,6 +1688,265 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to add commitment" });
     }
   });
+
+  // ─── Shared Will Invite Routes ─────────────────────────────────────────────
+
+  // GET /api/wills/:id/invites — creator sees invite list with status
+  app.get('/api/wills/:id/invites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID' });
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: 'Will not found' });
+      if (will.createdBy !== userId) return res.status(403).json({ message: 'Only the creator can view invites' });
+
+      const invites = await db
+        .select({
+          id: sharedWillInvites.id,
+          willId: sharedWillInvites.willId,
+          invitedUserId: sharedWillInvites.invitedUserId,
+          status: sharedWillInvites.status,
+          respondedAt: sharedWillInvites.respondedAt,
+          expiresAt: sharedWillInvites.expiresAt,
+          createdAt: sharedWillInvites.createdAt,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        })
+        .from(sharedWillInvites)
+        .innerJoin(users, eq(sharedWillInvites.invitedUserId, users.id))
+        .where(eq(sharedWillInvites.willId, willId));
+
+      res.json(invites);
+    } catch (err) {
+      console.error('[Invites] Failed to list invites:', err);
+      res.status(500).json({ message: 'Failed to fetch invites' });
+    }
+  });
+
+  // GET /api/wills/:id/my-invite — invitee checks their own invite status
+  app.get('/api/wills/:id/my-invite', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID' });
+
+      const [invite] = await db
+        .select()
+        .from(sharedWillInvites)
+        .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.invitedUserId, userId)))
+        .limit(1);
+
+      if (!invite) return res.status(404).json({ message: 'No invite found' });
+
+      const will = await storage.getWillById(willId);
+      res.json({ invite, will });
+    } catch (err) {
+      console.error('[Invites] Failed to fetch my-invite:', err);
+      res.status(500).json({ message: 'Failed to fetch invite' });
+    }
+  });
+
+  // POST /api/wills/:id/accept-invite — invitee accepts; frontend routes to SubmitCommitment
+  app.post('/api/wills/:id/accept-invite', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID' });
+
+      const [invite] = await db
+        .select()
+        .from(sharedWillInvites)
+        .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.invitedUserId, userId)))
+        .limit(1);
+
+      if (!invite) return res.status(404).json({ message: 'Invite not found' });
+      if (invite.status === 'expired') return res.status(410).json({ message: 'This invite has expired' });
+      if (invite.status === 'accepted') return res.status(409).json({ message: 'Invite already accepted' });
+      if (invite.status === 'declined') return res.status(409).json({ message: 'Invite was declined — cannot accept' });
+
+      await db
+        .update(sharedWillInvites)
+        .set({ status: 'accepted', respondedAt: new Date() })
+        .where(eq(sharedWillInvites.id, invite.id));
+
+      const will = await storage.getWillById(willId);
+      res.json({ message: 'Invite accepted', willId, will });
+    } catch (err) {
+      console.error('[Invites] Failed to accept invite:', err);
+      res.status(500).json({ message: 'Failed to accept invite' });
+    }
+  });
+
+  // POST /api/wills/:id/decline-invite — invitee declines; notifies creator
+  app.post('/api/wills/:id/decline-invite', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID' });
+
+      const [invite] = await db
+        .select()
+        .from(sharedWillInvites)
+        .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.invitedUserId, userId)))
+        .limit(1);
+
+      if (!invite) return res.status(404).json({ message: 'Invite not found' });
+      if (invite.status === 'expired') return res.status(410).json({ message: 'This invite has expired' });
+      if (invite.status !== 'pending') return res.status(409).json({ message: `Cannot decline an invite with status: ${invite.status}` });
+
+      await db
+        .update(sharedWillInvites)
+        .set({ status: 'declined', respondedAt: new Date() })
+        .where(eq(sharedWillInvites.id, invite.id));
+
+      // Notify creator
+      const will = await storage.getWillById(willId);
+      if (will) {
+        try {
+          const [decliner] = await db.select({ firstName: users.firstName }).from(users).where(eq(users.id, userId));
+          const declinerName = decliner?.firstName || 'A friend';
+          const willTitle = will.title || will.sharedWhat || 'Your Will';
+          await pushNotificationService.sendToUser(will.createdBy, {
+            title: `${declinerName} declined your invite`,
+            body: `They won't be joining "${willTitle}"`,
+            category: 'invite_declined',
+            data: { type: 'invite_declined', willId, deepLink: `/will/${willId}/invites` },
+          });
+        } catch (notifErr) {
+          console.error('[Invites] Failed to notify creator of decline:', notifErr);
+        }
+      }
+
+      res.json({ message: 'Invite declined' });
+    } catch (err) {
+      console.error('[Invites] Failed to decline invite:', err);
+      res.status(500).json({ message: 'Failed to decline invite' });
+    }
+  });
+
+  // ─── Will-Scoped Proof Routes ───────────────────────────────────────────────
+
+  // GET /api/wills/:id/proofs — list proofs for a will (participants only)
+  app.get('/api/wills/:id/proofs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID' });
+
+      // Authorization: creator, committer, or accepted invitee
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: 'Will not found' });
+
+      const isCreator = will.createdBy === userId;
+      const [commitment] = await db.select({ id: willCommitments.id }).from(willCommitments)
+        .where(and(eq(willCommitments.willId, willId), eq(willCommitments.userId, userId))).limit(1);
+      const [acceptedInvite] = await db.select({ id: sharedWillInvites.id }).from(sharedWillInvites)
+        .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.invitedUserId, userId), eq(sharedWillInvites.status, 'accepted'))).limit(1);
+
+      if (!isCreator && !commitment && !acceptedInvite) {
+        return res.status(403).json({ message: 'Not a participant of this will' });
+      }
+
+      const proofs = await db
+        .select({
+          id: willProofs.id,
+          willId: willProofs.willId,
+          userId: willProofs.userId,
+          imageUrl: willProofs.imageUrl,
+          thumbnailUrl: willProofs.thumbnailUrl,
+          caption: willProofs.caption,
+          status: willProofs.status,
+          createdAt: willProofs.createdAt,
+          firstName: users.firstName,
+        })
+        .from(willProofs)
+        .innerJoin(users, eq(willProofs.userId, users.id))
+        .where(eq(willProofs.willId, willId))
+        .orderBy(desc(willProofs.createdAt));
+
+      res.json(proofs);
+    } catch (err) {
+      console.error('[WillProofs] Failed to list proofs:', err);
+      res.status(500).json({ message: 'Failed to fetch proofs' });
+    }
+  });
+
+  // POST /api/wills/:id/proof — upload a proof for a will (participants only)
+  app.post('/api/wills/:id/proof', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID' });
+
+      if (!checkProofRateLimit(userId)) {
+        return res.status(429).json({ message: 'Too many drops. Try again later.' });
+      }
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: 'Will not found' });
+
+      // Authorization: must be creator or have a commitment
+      const isCreator = will.createdBy === userId;
+      const [commitment] = await db.select({ id: willCommitments.id }).from(willCommitments)
+        .where(and(eq(willCommitments.willId, willId), eq(willCommitments.userId, userId))).limit(1);
+      if (!isCreator && !commitment) {
+        return res.status(403).json({ message: 'Not a participant of this will' });
+      }
+
+      const { imageUrl, thumbnailUrl, cloudinaryPublicId, caption } = req.body;
+
+      if (!cloudinaryPublicId || typeof cloudinaryPublicId !== 'string' || !cloudinaryPublicId.startsWith('will_proofs/')) {
+        return res.status(400).json({ message: 'Invalid cloudinaryPublicId. Must be in will_proofs/ folder.' });
+      }
+
+      const isValidCloudinaryUrl = (url: string) =>
+        typeof url === 'string' &&
+        url.startsWith('https://') &&
+        (url.includes('res.cloudinary.com') || url.includes('cloudinary.com')) &&
+        url.includes('/will_proofs/');
+
+      if (!imageUrl || !isValidCloudinaryUrl(imageUrl)) {
+        return res.status(400).json({ message: 'Invalid image URL. Must be a Cloudinary will_proofs URL.' });
+      }
+      if (thumbnailUrl && !isValidCloudinaryUrl(thumbnailUrl)) {
+        return res.status(400).json({ message: 'Invalid thumbnail URL. Must be a Cloudinary will_proofs URL.' });
+      }
+
+      // One drop per user per will per day
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const [existing] = await db
+        .select({ id: willProofs.id })
+        .from(willProofs)
+        .where(and(
+          eq(willProofs.userId, userId),
+          eq(willProofs.willId, willId),
+          gte(willProofs.createdAt, today),
+          ne(willProofs.status, 'failed')
+        ))
+        .limit(1);
+      if (existing) return res.status(429).json({ message: 'You already dropped a proof today for this Will.' });
+
+      const [proof] = await db.insert(willProofs).values({
+        willId,
+        userId,
+        imageUrl,
+        thumbnailUrl: thumbnailUrl || null,
+        cloudinaryPublicId: cloudinaryPublicId || null,
+        caption: caption || null,
+        status: 'pending',
+      }).returning();
+
+      res.status(201).json({ id: proof.id, status: proof.status, createdAt: proof.createdAt });
+    } catch (err) {
+      console.error('[WillProofs] Failed to create proof:', err);
+      res.status(500).json({ message: 'Failed to create proof drop.' });
+    }
+  });
+
+  // ─── All-Active Wills ───────────────────────────────────────────────────────
 
   app.get('/api/wills/all-active', isAuthenticated, async (req: any, res) => {
     console.log('═══════════════════════════════════');

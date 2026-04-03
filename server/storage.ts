@@ -56,6 +56,7 @@ import {
   type TodayEntry,
   todayItems,
   type TodayItem,
+  sharedWillInvites,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
@@ -726,9 +727,49 @@ export class DatabaseStorage implements IStorage {
     }
     console.log('[STORAGE] Circle wills processed:', circleWillsList.length);
 
+    // Fetch shared wills where user has a commitment
+    const sharedWillCommitments = await db
+      .select()
+      .from(willCommitments)
+      .innerJoin(wills, eq(willCommitments.willId, wills.id))
+      .where(and(
+        eq(willCommitments.userId, userId),
+        eq(wills.mode, 'shared'),
+        sql`${wills.status} NOT IN ('completed', 'archived', 'terminated')`
+      ))
+      .orderBy(desc(wills.createdAt));
+    console.log('[STORAGE] Shared will commitments found:', sharedWillCommitments.length);
+
+    // Also fetch shared wills created by the user (even if creator hasn't committed yet — shouldn't happen but just in case)
+    const createdSharedWills = await db
+      .select()
+      .from(wills)
+      .where(and(
+        eq(wills.createdBy, userId),
+        eq(wills.mode, 'shared'),
+        sql`${wills.status} NOT IN ('completed', 'archived', 'terminated')`
+      ))
+      .orderBy(desc(wills.createdAt));
+
+    const sharedWillsList: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [];
+    const seenSharedWillIds = new Set<number>();
+
+    for (const row of sharedWillCommitments) {
+      if (!row.wills || seenSharedWillIds.has(row.wills.id)) continue;
+      seenSharedWillIds.add(row.wills.id);
+      sharedWillsList.push({ ...row.wills, circleName: undefined as string | undefined, circleCode: undefined as string | undefined });
+    }
+    for (const w of createdSharedWills) {
+      if (seenSharedWillIds.has(w.id)) continue;
+      seenSharedWillIds.add(w.id);
+      sharedWillsList.push({ ...w, circleName: undefined as string | undefined, circleCode: undefined as string | undefined });
+    }
+    console.log('[STORAGE] Shared wills processed:', sharedWillsList.length);
+
     const allWills: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [
       ...personalWillsList.map(w => ({ ...w, circleName: undefined as string | undefined, circleCode: undefined as string | undefined })),
       ...circleWillsList,
+      ...sharedWillsList,
     ];
     console.log('[STORAGE] Combined wills:', allWills.length);
 

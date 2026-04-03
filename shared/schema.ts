@@ -126,6 +126,7 @@ export const sharedWillInvites = pgTable("shared_will_invites", {
   status: varchar("status", { length: 20 }).notNull().default("pending"), // 'pending', 'accepted', 'declined', 'expired'
   respondedAt: timestamp("responded_at"),
   expiresAt: timestamp("expires_at"),
+  reminderSentAt: timestamp("reminder_sent_at"), // When 24h-before reminder was sent
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("IDX_shared_will_invites_will_id").on(table.willId),
@@ -724,6 +725,30 @@ export const insertTodayItemSchema = createInsertSchema(todayItems).omit({
 });
 export type InsertTodayItem = z.infer<typeof insertTodayItemSchema>;
 export type TodayItem = typeof todayItems.$inferSelect;
+
+export const willProofs = pgTable("will_proofs", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  imageUrl: text("image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  cloudinaryPublicId: text("cloudinary_public_id"),
+  caption: text("caption"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_will_proofs_will_id").on(table.willId),
+  index("IDX_will_proofs_user_id").on(table.userId),
+]);
+
+export const insertWillProofSchema = createInsertSchema(willProofs).omit({ id: true, createdAt: true });
+export type InsertWillProof = z.infer<typeof insertWillProofSchema>;
+export type WillProof = typeof willProofs.$inferSelect;
+
+export const willProofsRelations = relations(willProofs, ({ one }) => ({
+  will: one(wills, { fields: [willProofs.willId], references: [wills.id] }),
+  user: one(users, { fields: [willProofs.userId], references: [users.id] }),
+}));
 
 export const circleProofs = pgTable("circle_proofs", {
   id: serial("id").primaryKey(),
