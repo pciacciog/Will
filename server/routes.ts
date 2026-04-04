@@ -1434,7 +1434,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!invite) return res.status(404).json({ message: 'No invite found' });
 
       const will = await storage.getWillById(willId);
-      res.json({ invite, will });
+      let creatorName = 'A friend';
+      if (will?.createdBy) {
+        const creator = await storage.getUser(will.createdBy);
+        if (creator) {
+          creatorName = `${creator.firstName || ''} ${creator.lastName || ''}`.trim() || 'A friend';
+        }
+      }
+      res.json({ invite, will: { ...will, creatorName } });
     } catch (err) {
       console.error('[Invites] Failed to fetch my-invite:', err);
       res.status(500).json({ message: 'Failed to fetch invite' });

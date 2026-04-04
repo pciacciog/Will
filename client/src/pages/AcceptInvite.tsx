@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
-import { Users, Target, Calendar, Clock, CheckCircle, X } from "lucide-react";
+import { Users, Calendar, CheckCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -116,8 +116,6 @@ export default function AcceptInvite() {
   const isAlreadyActioned = invite.status === "accepted" || invite.status === "declined";
   const isWill = will.willType === "cumulative";
 
-  const checkInLabel = will.checkInType === "daily" ? "Every day" : will.checkInType === "specific_days" ? "Specific days" : "Final review only";
-
   return (
     <MobileLayout>
       <div className="space-y-6">
@@ -166,15 +164,6 @@ export default function AcceptInvite() {
                   <p className="text-xs text-gray-400 mt-0.5">
                     {will.isIndefinite ? "Habit — no end date" : will.endDate ? `Duration: ${getDuration(will.startDate, will.endDate)}` : ""}
                   </p>
-                </div>
-              </div>
-
-              {/* Tracking */}
-              <div className="flex items-start gap-3">
-                <Clock className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Tracking</p>
-                  <p className="text-sm text-gray-700">{checkInLabel}</p>
                 </div>
               </div>
 

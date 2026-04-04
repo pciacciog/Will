@@ -27,7 +27,7 @@ export default function SubmitCommitment() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(2);
   const [showTransition, setShowTransition] = useState(false);
   const [what, setWhat] = useState("");
   const [why, setWhy] = useState("");
@@ -106,9 +106,10 @@ export default function SubmitCommitment() {
     }
   }, [will, isCumulative]);
   
-  // Classic flow: 1-Timeline, 2-What, 3-Why, [4-CheckIn], [5-Confirm] (5 total, ladder shows 3)
-  // Cumulative flow: 1-Timeline, 2-Why, [3-CheckIn], [4-Confirm] (4 total, ladder shows 2)
-  const ladderSteps = isCumulative ? 2 : 3;
+  // Classic flow (I Will): 2-What, 3-Why, [4-CheckIn], [5-Confirm] (step 1 Timeline eliminated)
+  // Cumulative flow (We Will): 2-Why, [3-CheckIn], [4-Confirm] (step 1 Timeline eliminated)
+  // Ladder shows user-facing steps (1-indexed without the eliminated When step)
+  const ladderSteps = isCumulative ? 1 : 2;
 
   useEffect(() => {
     const hasSeenInstruction = localStorage.getItem('willInstructionSeen');
@@ -235,19 +236,17 @@ export default function SubmitCommitment() {
   };
 
   const handleBack = () => {
-    if (currentStep === 1) {
-      setLocation(`/will/${id}`);
-    } else if (isCumulative) {
-      if (currentStep === 2) setCurrentStep(1);
+    if (isCumulative) {
+      if (currentStep === 2) window.history.back();
       else if (currentStep === 3) setCurrentStep(2);
       else if (currentStep === 4) setCurrentStep(isShortDuration ? 2 : 3);
-      else setLocation(`/will/${id}`);
+      else window.history.back();
     } else {
-      if (currentStep === 2) setCurrentStep(1);
+      if (currentStep === 2) window.history.back();
       else if (currentStep === 3) setCurrentStep(2);
       else if (currentStep === 4) setCurrentStep(3);
       else if (currentStep === 5) setCurrentStep(isShortDuration ? 3 : 4);
-      else setLocation(`/will/${id}`);
+      else window.history.back();
     }
   };
 
@@ -261,13 +260,16 @@ export default function SubmitCommitment() {
 
   const getStepLabel = (step: number): string => {
     if (isCumulative) {
-      const labels: Record<number, string> = { 1: 'When', 2: 'Why' };
+      const labels: Record<number, string> = { 1: 'Why' };
       return labels[step] || '';
     } else {
-      const labels: Record<number, string> = { 1: 'When', 2: 'What', 3: 'Why' };
+      const labels: Record<number, string> = { 1: 'What', 2: 'Why' };
       return labels[step] || '';
     }
   };
+
+  // Convert internal step (starting at 2) to visible step (starting at 1)
+  const visibleStep = currentStep - 1;
 
   const isWhyStep = (isCumulative && currentStep === 2) || (!isCumulative && currentStep === 3);
   const isCheckInStep = (isCumulative && currentStep === 3) || (!isCumulative && currentStep === 4);
@@ -287,17 +289,17 @@ export default function SubmitCommitment() {
               <div className="w-11 ml-auto"></div>
             </div>
             
-            {currentStep <= ladderSteps && (
+            {visibleStep <= ladderSteps && (
               <div className="flex items-center justify-center space-x-2 min-w-0 flex-1">
                 {Array.from({ length: ladderSteps }, (_, i) => i + 1).map((step) => (
                   <div key={step} className="flex items-center">
                     {step > 1 && (
-                      <div className={`w-4 h-0.5 mr-1 ${currentStep >= step ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
+                      <div className={`w-4 h-0.5 mr-1 ${visibleStep >= step ? 'bg-brandBlue' : 'bg-gray-300'}`}></div>
                     )}
-                    <div className={`w-7 h-7 ${currentStep >= step ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
+                    <div className={`w-7 h-7 ${visibleStep >= step ? 'bg-brandBlue text-white' : 'bg-gray-300 text-gray-600'} rounded-full flex items-center justify-center text-xs font-semibold`}>
                       {step}
                     </div>
-                    <span className={`ml-1 text-xs ${currentStep >= step ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>
+                    <span className={`ml-1 text-xs ${visibleStep >= step ? 'text-brandBlue' : 'text-gray-600'} font-medium tracking-tight`}>
                       {getStepLabel(step)}
                     </span>
                   </div>
@@ -307,7 +309,6 @@ export default function SubmitCommitment() {
           
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
-              {currentStep === 1 && "Proposed Will Timeline"}
               {currentStep === 2 && !isCumulative && "What would you like to do?"}
               {isWhyStep && "Why would you like to do this?"}
               {isCheckInStep && "Tracking"}
