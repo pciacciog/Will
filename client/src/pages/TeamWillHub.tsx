@@ -13,6 +13,7 @@ import { formatDisplayDateTime } from "@/lib/dateUtils";
 import ProgressView from "@/components/ProgressView";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
+import DailyCheckInModal from "@/components/DailyCheckInModal";
 import { Capacitor } from "@capacitor/core";
 import {
   ChevronLeft, ChevronRight, Camera, Plus, Clock, CheckCircle, X,
@@ -67,6 +68,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [showTerminateConfirm, setShowTerminateConfirm] = useState(false);
   const [showFullProgress, setShowFullProgress] = useState(false);
   const [showProofPicker, setShowProofPicker] = useState(false);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
 
   useAppRefresh();
 
@@ -78,6 +80,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     isIndefinite?: boolean;
     activeDays?: string;
     customDays?: string;
+    sharedWhat?: string | null;
   }>({
     queryKey: [`/api/wills/${willId}/details`],
     refetchInterval: 30000,
@@ -104,7 +107,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       if (!resp.ok) throw new Error("Failed to fetch proofs");
       return resp.json();
     },
-    enabled: !!user && will?.status === "active",
+    enabled: !!user && (will?.status === "active" || will?.status === "will_review"),
     refetchInterval: 30000,
     staleTime: 0,
   });
@@ -437,11 +440,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
   // Which cards are locked
   const isProgressLocked = will?.status === "pending" || will?.status === "scheduled";
-  const isProofLocked = will?.status !== "active";
+  const isProofLocked = will?.status !== "active" && will?.status !== "will_review";
   const proofLockMessage =
     will?.status === "pending" || will?.status === "scheduled" ? "Available once Will starts" :
     will?.status === "paused" ? "Resume Will to add drops" :
-    will?.status === "will_review" ? "Review period active" :
     "Will has ended";
 
   return (
@@ -662,7 +664,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   sessionStorage.setItem("willBackUrl", `/will/${willId}`);
                   setLocation(`/will/${willId}/messages`);
                 }}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-white transition-all active:scale-95"
+                style={{ backgroundColor: "#2D9D78" }}
                 data-testid="button-open-messages"
                 aria-label="Messages"
               >
@@ -675,7 +678,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               {canManage && (will.status === "active" || will.status === "paused" || will.status === "scheduled") && (
                 <button
                   onClick={() => setShowManageModal(true)}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                  className="w-9 h-9 flex items-center justify-center rounded-xl text-white transition-all active:scale-95"
+                  style={{ backgroundColor: "#2D9D78" }}
                   data-testid="button-manage-will"
                   aria-label="Manage Will"
                 >
@@ -690,7 +694,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
           {/* Badge row — type + status pills */}
           <div className="flex justify-center items-center gap-2 mb-4">
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${isWeWill ? "bg-purple-100 text-purple-700" : "bg-violet-100 text-violet-700"}`}>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: "#EDE7F9", color: "#9B5CE5" }}>
               {isWeWill ? "We Will" : "I Will"}
             </span>
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
@@ -747,14 +751,16 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           )}
 
           {will.status === "will_review" && (
-            <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 mb-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-amber-600" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-purple-900">Will Review</p>
-                  <p className="text-xs text-purple-600 mt-0.5">Time to reflect and complete your Will</p>
+                  <p className="text-sm font-semibold text-amber-900">Will ended — how'd it go?</p>
+                  <p className="text-xs text-amber-600 mt-0.5">Submit your final check-in</p>
                 </div>
               </div>
               {userCommitment && (
@@ -828,6 +834,11 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 </span>
               )}
             </div>
+            {isWeWill && will.sharedWhat && (
+              <div className="mb-3 px-3 py-2 rounded-xl" style={{ backgroundColor: "#F3EAFE" }}>
+                <p className="text-xs text-purple-700 text-center leading-snug italic">"{will.sharedWhat}"</p>
+              </div>
+            )}
             {commitments.length === 0 ? (
               <p className="text-xs text-gray-400 italic text-center py-2">
                 No commitments yet — waiting for friends to accept
@@ -852,10 +863,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       {c.user?.firstName || c.user?.email?.split("@")[0]}
                     </p>
                     {!isWeWill && c.what && (
-                      <p
-                        className="text-[10px] text-gray-500 mt-1 text-center leading-snug"
-                        style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}
-                      >
+                      <p className="text-[10px] text-gray-500 mt-1 text-center leading-snug">
                         {c.what}
                       </p>
                     )}
@@ -864,6 +872,21 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </div>
             )}
           </div>
+
+          {/* ── Daily Check-in button — I Will only ──────────────── */}
+          {!isWeWill && hasDailyCheckIns && will.status === "active" && (
+            <button
+              onClick={() => setShowCheckInModal(true)}
+              className="w-full mb-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
+              data-testid="button-daily-check-in"
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Daily Check-in
+            </button>
+          )}
 
           {/* ── Progress card — always shown ──────────────────────── */}
           <div className={`bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm${isProgressLocked ? " opacity-50 pointer-events-none select-none" : ""}`}>
@@ -890,32 +913,36 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   <p className="text-[13px] font-medium text-gray-500">Progress</p>
                   {hasDailyCheckIns && (
                     <ChevronRight
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${!isWeWill && showFullProgress ? "rotate-90" : ""}`}
                     />
                   )}
                 </button>
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div>
-                    <p className={`text-xl font-bold ${hasDailyCheckIns ? "text-emerald-500" : "text-gray-300"}`}>
-                      {hasDailyCheckIns ? (checkInProgress?.streak ?? 0) : "—"}
+                    <p className="text-xl font-bold text-emerald-500">
+                      {checkInProgress?.streak ?? 0}
                     </p>
                     <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-gray-700">
+                    <p className={`text-xl font-bold ${will.status === "will_review" ? "text-amber-500" : "text-gray-700"}`}>
                       {will.status === "completed" || will.status === "terminated"
-                        ? (checkInProgress?.checkedInDays ?? "—")
+                        ? (checkInProgress?.checkedInDays ?? 0)
+                        : will.status === "will_review"
+                        ? 0
                         : daysLeft !== null ? daysLeft : "∞"}
                     </p>
                     <p className="text-[10px] text-gray-400 mt-0.5">
-                      {will.status === "completed" || will.status === "terminated" ? "days done" : "days left"}
+                      {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "days left"}
                     </p>
                   </div>
                   <div>
-                    <p className={`text-xl font-bold ${hasDailyCheckIns ? "text-gray-700" : "text-gray-300"}`}>
-                      {hasDailyCheckIns ? `${checkInProgress?.successRate ?? 0}%` : "—"}
+                    <p className="text-xl font-bold text-gray-700">
+                      {`${checkInProgress?.successRate ?? 0}%`}
                     </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "on track"}
+                    </p>
                   </div>
                 </div>
                 {showFullProgress && hasDailyCheckIns && (
@@ -953,7 +980,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               /* Locked state */
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[13px] font-medium text-gray-500">Proof drops</p>
+                  <p className="text-[13px] font-medium text-gray-500">Proof</p>
                   <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -965,7 +992,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               /* Unlocked state (active only) */
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[13px] font-medium text-gray-500">Proof drops</p>
+                  <p className="text-[13px] font-medium text-gray-500">Proof</p>
                   <button
                     onClick={openPhotoPicker}
                     disabled={isUploading}
@@ -1021,6 +1048,20 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
         </div>
       </div>
+
+      {/* Daily Check-in Modal — I Will with daily tracking */}
+      {hasDailyCheckIns && (
+        <DailyCheckInModal
+          isOpen={showCheckInModal}
+          onClose={() => setShowCheckInModal(false)}
+          willId={willId}
+          startDate={will.startDate as unknown as string || ''}
+          endDate={will.endDate as unknown as string || ''}
+          checkInType={userCheckInType}
+          activeDays={(userCommitment as any)?.activeDays || will.activeDays || undefined}
+          customDays={(userCommitment as any)?.customDays || will.customDays || undefined}
+        />
+      )}
     </div>
   );
 }

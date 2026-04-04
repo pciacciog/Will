@@ -1,0 +1,64 @@
+Final comprehensive redesign of the Will detail screen — all types, active state, with progress.
+Context: This is the definitive spec for the Will detail screen. It covers Solo Will, Team Will I Will, and Team Will We Will. Apply all changes precisely and do not modify anything not mentioned here.
+
+Nav bar — all types:
+
+3-column grid: back button · centered title · action icons
+Title respects user's exact casing — never force uppercase or lowercase
+Title logic: Will Title if set → display as-is. No Will Title → display commitment text with small muted italic "commitment" sub-label beneath
+Right column: two icon buttons using the exact same rounded square component from the Circle screen. Both green (#2D9D78). Left = chat bubble icon. Right = gear icon
+
+
+Badge row — centered, directly under title:
+
+Left pill: Will type — "Solo Will" / "I Will" / "We Will" — always purple (#EDE7F9 bg, #9B5CE5 text)
+Right pill: Status — "Active" (green) / "Scheduled" (blue) / "In review" (amber)
+
+
+State banners:
+
+Scheduled → blue banner, clock icon, "Starts in X" + exact start time
+Active → no banner
+In review → amber banner, star icon, "Will ended — how'd it go?" + "Submit your final check-in"
+
+
+Team card — label "Team", muted sentence case:
+
+Solo Will → hide entirely
+I Will → show each member's avatar + name + individual commitment wrapped to two lines, never truncated
+We Will → show shared commitment in a small purple-tinted inset (#F3EAFE) above the avatar grid. Avatars show name only, no individual commitment beneath
+Avatar dot color: green = active, blue = scheduled, amber = in review
+
+
+Progress card:
+Solo Will and I Will — dropdown chevron, expands inline:
+Collapsed state shows three stat tiles: streak (green) · days left (neutral) · on track % (neutral)
+Expanded state shows, in order:
+
+Same three stat tiles
+Muted label "Daily breakdown"
+Done / Partial / Missed colored tiles
+Success rate line: "Success rate: X% (n/n days)" — never show "0 of 0 active days tracked", replace with "No days tracked yet"
+Calendar strip with colored day tiles (green = done, amber = partial, red = missed, gray = pending)
+Done / Partial / Missed / Pending legend
+
+We Will — › chevron, tappable, navigates to full tracking screen:
+Collapsed state shows three stat tiles only. Full detail on navigation.
+All types — data rules:
+
+Never render dashes — always show 0 as default
+In review state: days left shows 0 in amber, "on track" label changes to "completed"
+Scheduled state: Progress card locked — reduced opacity, lock icon, "Available once Will starts", not tappable
+
+
+Daily Check-in button:
+
+Solo Will and I Will only — green full-width button above the progress card
+Copy the exact component and behavior from the existing Solo Will tracking screen
+We Will → no check-in button on this screen (handled in navigation)
+
+
+Proof card — label "Proof", never "Proof drops":
+
+Active / In review → unlocked, green + Drop button, empty state: camera icon + "No drops yet — be the first"
+Scheduled → locked, reduced opacity, lock icon, "Available once Will starts"
