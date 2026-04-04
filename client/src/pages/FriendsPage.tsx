@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Search, UserPlus, Check, X, UserMinus, Users } from "lucide-react";
+import { ArrowLeft, Search, UserPlus, Check, X, UserMinus, Users, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -50,7 +49,6 @@ export default function FriendsPage() {
   const [debouncedQ, setDebouncedQ] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Optimistic pending state for search results (userId → true if we just sent a request)
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -148,35 +146,55 @@ export default function FriendsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/20">
-      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
         <div className="max-w-sm mx-auto px-5">
 
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-5">
-            <button
-              onClick={() => setLocation('/')}
-              className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-4 h-4 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-[17px] font-bold text-gray-900">Friends</h1>
-              <p className="text-[12px] text-gray-400">Your people</p>
-            </div>
+          {/* Minimal back nav — arrow only, no phantom square */}
+          <button
+            onClick={() => setLocation('/')}
+            className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 transition-colors mb-5"
+            data-testid="button-back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Back</span>
+          </button>
+
+          {/* Page title — large, breathing room */}
+          <div className="mb-6">
+            <h1 className="text-[28px] font-bold text-gray-900 leading-tight">Friends</h1>
+            <p className="text-[14px] text-gray-500 mt-0.5">Find people to grow with</p>
           </div>
 
           {/* Search */}
-          <div className="relative mb-5">
+          <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <Input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search by username or email..."
+              placeholder="Search by username or email"
               className="pl-9 h-11 rounded-xl border-gray-200 bg-white focus:border-purple-400 focus:ring-purple-400/20"
               data-testid="input-search-friends"
             />
           </div>
+
+          {/* Invite CTA — only visible when not actively searching */}
+          {!isSearching && (
+            <button
+              onClick={() => setLocation('/create-team-will')}
+              className="w-full mb-6 group"
+              data-testid="button-invite-someone"
+            >
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-5 py-4 flex items-center gap-4 shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98]">
+                <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-5 h-5 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="text-white font-bold text-[15px] leading-tight">Invite someone</p>
+                  <p className="text-white/75 text-[12px] leading-tight mt-0.5">Accountability is better together</p>
+                </div>
+              </div>
+            </button>
+          )}
 
           {/* Search Results */}
           {isSearching && (
@@ -233,7 +251,7 @@ export default function FriendsPage() {
                             data-testid={`button-add-friend-${result.id}`}
                           >
                             <UserPlus className="w-3 h-3" />
-                            Add Friend
+                            Add
                           </button>
                         )}
                       </div>
@@ -247,8 +265,8 @@ export default function FriendsPage() {
           {/* Pending Incoming Requests */}
           {!isSearching && pendingIncoming.length > 0 && (
             <div className="mb-5">
-              <h2 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Friend Requests ({pendingIncoming.length})
+              <h2 className="text-[13px] font-medium text-gray-500 mb-2">
+                Friend requests ({pendingIncoming.length})
               </h2>
               <div className="space-y-2">
                 {pendingIncoming.map(person => (
@@ -299,8 +317,8 @@ export default function FriendsPage() {
           {/* Friends List */}
           {!isSearching && (
             <div>
-              <h2 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Friends {friends.length > 0 ? `(${friends.length})` : ''}
+              <h2 className="text-[13px] font-medium text-gray-500 mb-2">
+                Your friends{friends.length > 0 ? ` (${friends.length})` : ''}
               </h2>
 
               {friendsLoading ? (
@@ -308,12 +326,14 @@ export default function FriendsPage() {
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600" />
                 </div>
               ) : friends.length === 0 ? (
-                <div className="text-center py-12">
+                <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-sm">
                   <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                     <Users className="w-7 h-7 text-purple-300" />
                   </div>
-                  <p className="text-sm font-medium text-gray-500">No friends yet</p>
-                  <p className="text-[12px] text-gray-400 mt-1">Search for people above to add them</p>
+                  <p className="text-sm font-medium text-gray-600">No friends yet</p>
+                  <p className="text-[12px] text-gray-400 mt-1 leading-relaxed">
+                    Search above or invite someone<br />who's ready to commit
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">
