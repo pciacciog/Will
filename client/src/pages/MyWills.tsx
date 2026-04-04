@@ -36,11 +36,10 @@ type PendingInvite = {
   invitedBy: { id: string; firstName: string };
 };
 
-function PendingInviteCard({ item, onAccept, onDecline, accepting, declining }: {
+function PendingInviteCard({ item, onView, onDecline, declining }: {
   item: PendingInvite;
-  onAccept: () => void;
+  onView: () => void;
   onDecline: () => void;
-  accepting: boolean;
   declining: boolean;
 }) {
   const willTitle = item.will.title || item.will.sharedWhat || 'a Team Will';
@@ -70,19 +69,18 @@ function PendingInviteCard({ item, onAccept, onDecline, accepting, declining }: 
         <div className="flex gap-2 mt-3">
           <button
             onClick={onDecline}
-            disabled={accepting || declining}
+            disabled={declining}
             className="flex-1 py-2 rounded-lg border border-gray-200 text-sm text-gray-500 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
             data-testid={`button-decline-invite-${item.invite.id}`}
           >
             {declining ? 'Declining…' : 'Decline'}
           </button>
           <button
-            onClick={onAccept}
-            disabled={accepting || declining}
-            className="flex-1 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-50"
-            data-testid={`button-accept-invite-${item.invite.id}`}
+            onClick={onView}
+            className="flex-1 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors"
+            data-testid={`button-view-invite-${item.invite.id}`}
           >
-            {accepting ? 'Accepting…' : 'Accept'}
+            View
           </button>
         </div>
       </CardContent>
@@ -253,17 +251,6 @@ export default function MyWills() {
     refetchOnMount: 'always',
   });
 
-  const acceptMutation = useMutation({
-    mutationFn: (willId: number) => apiRequest('POST', `/api/wills/${willId}/accept-invite`),
-    onSuccess: (_data, willId) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/my-pending-invites'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
-      setActioningInviteId(null);
-      setLocation(`/will/${willId}/commit`);
-    },
-    onError: () => setActioningInviteId(null),
-  });
-
   const declineMutation = useMutation({
     mutationFn: (willId: number) => apiRequest('POST', `/api/wills/${willId}/decline-invite`),
     onSuccess: () => {
@@ -379,12 +366,8 @@ export default function MyWills() {
                 <PendingInviteCard
                   key={item.invite.id}
                   item={item}
-                  accepting={actioningInviteId?.id === item.invite.id && actioningInviteId.action === 'accept'}
                   declining={actioningInviteId?.id === item.invite.id && actioningInviteId.action === 'decline'}
-                  onAccept={() => {
-                    setActioningInviteId({ id: item.invite.id, action: 'accept' });
-                    acceptMutation.mutate(item.will.id);
-                  }}
+                  onView={() => setLocation(`/will/${item.will.id}/invite`)}
                   onDecline={() => {
                     setActioningInviteId({ id: item.invite.id, action: 'decline' });
                     declineMutation.mutate(item.will.id);
