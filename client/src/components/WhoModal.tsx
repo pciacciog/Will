@@ -34,7 +34,7 @@ export function WhoModal({ isOpen, onClose }: WhoModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
-        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-10" />
 
         {/* Close button — text × avoids icon rendering issues on iOS */}
         <button
