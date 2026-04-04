@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Search, UserPlus, Check, X, UserMinus, Users, Plus } from "lucide-react";
+import { ArrowLeft, Search, UserPlus, Check, UserMinus, Users, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -167,12 +167,12 @@ export default function FriendsPage() {
 
           {/* Search */}
           <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <Input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search by username or email"
-              className="pl-9 h-11 rounded-xl border-gray-200 bg-white focus:border-purple-400 focus:ring-purple-400/20"
+              className="pl-10 h-11 rounded-xl border-gray-200 bg-white focus:border-purple-400 focus:ring-purple-400/20"
               data-testid="input-search-friends"
             />
           </div>
@@ -265,8 +265,11 @@ export default function FriendsPage() {
           {/* Pending Incoming Requests */}
           {!isSearching && pendingIncoming.length > 0 && (
             <div className="mb-5">
-              <h2 className="text-[13px] font-medium text-gray-500 mb-2">
-                Friend requests ({pendingIncoming.length})
+              <h2 className="text-[13px] font-medium text-gray-500 mb-2 flex items-center gap-2">
+                Friend requests
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-bold leading-none">
+                  {pendingIncoming.length}
+                </span>
               </h2>
               <div className="space-y-2">
                 {pendingIncoming.map(person => (
@@ -292,11 +295,11 @@ export default function FriendsPage() {
                       <button
                         onClick={() => declineMutation.mutate(person.friendshipId)}
                         disabled={declineMutation.isPending}
-                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors active:scale-95"
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors active:scale-95 text-gray-500 text-base leading-none"
                         data-testid={`button-decline-${person.friendshipId}`}
                         title="Decline"
                       >
-                        <X className="w-3.5 h-3.5 text-gray-500" />
+                        ×
                       </button>
                       <button
                         onClick={() => acceptMutation.mutate(person.friendshipId)}
@@ -332,7 +335,7 @@ export default function FriendsPage() {
                   </div>
                   <p className="text-sm font-medium text-gray-600">No friends yet</p>
                   <p className="text-[12px] text-gray-400 mt-1 leading-relaxed">
-                    Search above or invite someone<br />who's ready to commit
+                    Invite someone who's ready to commit
                   </p>
                 </div>
               ) : (
