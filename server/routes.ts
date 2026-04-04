@@ -1360,6 +1360,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ─── Shared Will Invite Routes ─────────────────────────────────────────────
 
+  // GET /api/wills/my-pending-invites — all pending invites for the current user
+  app.get('/api/wills/my-pending-invites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const rows = await db
+        .select({
+          invite: sharedWillInvites,
+          will: wills,
+          invitedBy: { id: users.id, firstName: users.firstName },
+        })
+        .from(sharedWillInvites)
+        .innerJoin(wills, eq(sharedWillInvites.willId, wills.id))
+        .innerJoin(users, eq(sharedWillInvites.invitedByUserId, users.id))
+        .where(and(
+          eq(sharedWillInvites.invitedUserId, userId),
+          eq(sharedWillInvites.status, 'pending'),
+        ));
+      res.json(rows);
+    } catch (err) {
+      console.error('[Invites] Failed to fetch pending invites:', err);
+      res.status(500).json({ message: 'Failed to fetch pending invites' });
+    }
+  });
+
   // GET /api/wills/:id/invites — creator sees invite list with status
   app.get('/api/wills/:id/invites', isAuthenticated, async (req: any, res) => {
     try {

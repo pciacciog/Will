@@ -1,11 +1,11 @@
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { getQueryFn } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { willDisplayTitle } from "@/lib/willUtils";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe, History } from "lucide-react";
+import { Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe, History, Mail } from "lucide-react";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 import { WhoModal } from "@/components/WhoModal";
 
@@ -29,6 +29,66 @@ type Will = {
   sharedWhat?: string | null;
   commitments?: { id: number; userId: string; what: string; why: string; user?: { firstName?: string } }[];
 };
+
+type PendingInvite = {
+  invite: { id: number; willId: number; status: string; createdAt: string };
+  will: { id: number; sharedWhat?: string | null; title?: string | null; startDate: string; endDate: string | null; isIndefinite?: boolean };
+  invitedBy: { id: string; firstName: string };
+};
+
+function PendingInviteCard({ item, onAccept, onDecline, accepting, declining }: {
+  item: PendingInvite;
+  onAccept: () => void;
+  onDecline: () => void;
+  accepting: boolean;
+  declining: boolean;
+}) {
+  const willTitle = item.will.title || item.will.sharedWhat || 'a Shared Will';
+  const start = new Date(item.will.startDate);
+  const end = item.will.endDate ? new Date(item.will.endDate) : null;
+  const dateLabel = end
+    ? `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+    : `Starts ${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+  return (
+    <Card className="border border-violet-200 bg-gradient-to-br from-violet-50/60 to-white shadow-sm" data-testid={`card-invite-${item.invite.id}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+            <Mail className="w-5 h-5 text-violet-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-violet-600 font-medium mb-0.5" data-testid={`text-invite-from-${item.invite.id}`}>
+              {item.invitedBy.firstName} invited you
+            </p>
+            <p className="text-sm font-semibold text-gray-900 truncate" data-testid={`text-invite-will-${item.invite.id}`}>
+              {willTitle}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">{dateLabel}</p>
+          </div>
+        </div>
+        <div className="flex gap-2 mt-3">
+          <button
+            onClick={onDecline}
+            disabled={accepting || declining}
+            className="flex-1 py-2 rounded-lg border border-gray-200 text-sm text-gray-500 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+            data-testid={`button-decline-invite-${item.invite.id}`}
+          >
+            {declining ? 'Declining…' : 'Decline'}
+          </button>
+          <button
+            onClick={onAccept}
+            disabled={accepting || declining}
+            className="flex-1 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-50"
+            data-testid={`button-accept-invite-${item.invite.id}`}
+          >
+            {accepting ? 'Accepting…' : 'Accept'}
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function getDisplayTitle(will: Will, userId?: string): string {
   return willDisplayTitle(will, userId);
@@ -171,6 +231,7 @@ export default function MyWills() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<'solo' | 'shared' | 'public'>('solo');
   const [showWhoModal, setShowWhoModal] = useState(false);
+  const [actioningInviteId, setActioningInviteId] = useState<{ id: number; action: 'accept' | 'decline' } | null>(null);
 
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
@@ -185,6 +246,33 @@ export default function MyWills() {
     refetchOnMount: 'always',
   });
 
+  const { data: pendingInvites = [] } = useQuery<PendingInvite[]>({
+    queryKey: ['/api/wills/my-pending-invites'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!user?.id,
+    refetchOnMount: 'always',
+  });
+
+  const acceptMutation = useMutation({
+    mutationFn: (willId: number) => apiRequest('POST', `/api/wills/${willId}/accept-invite`),
+    onSuccess: (_data, willId) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/my-pending-invites'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+      setActioningInviteId(null);
+      setLocation(`/will/${willId}/commit`);
+    },
+    onError: () => setActioningInviteId(null),
+  });
+
+  const declineMutation = useMutation({
+    mutationFn: (willId: number) => apiRequest('POST', `/api/wills/${willId}/decline-invite`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/my-pending-invites'] });
+      setActioningInviteId(null);
+    },
+    onError: () => setActioningInviteId(null),
+  });
+
   const activeWills = allActiveWills?.filter(w =>
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending' || w.status === 'paused'
   ) || [];
@@ -195,6 +283,7 @@ export default function MyWills() {
   const publicWills = activeWills.filter(w => isPublicWill(w));
 
   const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'shared' ? sharedWills : publicWills;
+  const sharedTabCount = sharedWills.length + pendingInvites.length;
 
   const handleViewWill = (will: Will) => {
     sessionStorage.setItem('willBackUrl', '/wills');
@@ -222,7 +311,7 @@ export default function MyWills() {
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
             {([
               { key: 'solo' as const, label: 'Solo', count: soloWills.length },
-              { key: 'shared' as const, label: 'Shared', count: sharedWills.length },
+              { key: 'shared' as const, label: 'Shared', count: sharedTabCount },
               { key: 'public' as const, label: 'Public', count: publicWills.length },
             ]).map(tab => (
               <button
@@ -238,7 +327,9 @@ export default function MyWills() {
                 {tab.label}
                 {tab.count > 0 && (
                   <span className={`ml-1.5 text-xs ${
-                    activeTab === tab.key ? 'text-emerald-600' : 'text-gray-400'
+                    activeTab === tab.key
+                      ? tab.key === 'shared' && pendingInvites.length > 0 ? 'text-violet-600' : 'text-emerald-600'
+                      : tab.key === 'shared' && pendingInvites.length > 0 ? 'text-violet-400' : 'text-gray-400'
                   }`}>
                     {tab.count}
                   </span>
@@ -281,7 +372,46 @@ export default function MyWills() {
             </div>
           )}
 
-          {!isLoading && !isError && displayWills.length === 0 && (
+          {/* Pending invitations — shown only in the Shared tab */}
+          {!isLoading && activeTab === 'shared' && pendingInvites.length > 0 && (
+            <div className="space-y-3">
+              {pendingInvites.map(item => (
+                <PendingInviteCard
+                  key={item.invite.id}
+                  item={item}
+                  accepting={actioningInviteId?.id === item.invite.id && actioningInviteId.action === 'accept'}
+                  declining={actioningInviteId?.id === item.invite.id && actioningInviteId.action === 'decline'}
+                  onAccept={() => {
+                    setActioningInviteId({ id: item.invite.id, action: 'accept' });
+                    acceptMutation.mutate(item.will.id);
+                  }}
+                  onDecline={() => {
+                    setActioningInviteId({ id: item.invite.id, action: 'decline' });
+                    declineMutation.mutate(item.will.id);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && !isError && activeTab === 'shared' && sharedWills.length === 0 && pendingInvites.length === 0 && (
+            <div className="text-center py-12">
+              <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-7 h-7 text-gray-400" />
+              </div>
+              <p className="text-gray-500 text-sm mb-1">No shared wills yet</p>
+              <p className="text-gray-400 text-xs mb-5">Create a will with a friend to get started</p>
+              <button
+                onClick={() => setShowWhoModal(true)}
+                className="text-sm text-emerald-600 font-medium hover:underline"
+                data-testid="button-create-will-empty"
+              >
+                Create a Will
+              </button>
+            </div>
+          )}
+
+          {!isLoading && !isError && activeTab !== 'shared' && displayWills.length === 0 && (
             <div className="text-center py-12">
               <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-gray-400" />
