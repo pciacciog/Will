@@ -11,7 +11,7 @@ import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { notificationService } from "@/services/NotificationService";
-import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Handshake, Clock } from "lucide-react";
+import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Clock } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 import type { Will } from "@shared/schema";
 
@@ -273,6 +273,21 @@ export default function SubmitCommitment() {
   const isCheckInStep = (isCumulative && currentStep === 3) || (!isCumulative && currentStep === 4);
   const isConfirmStep = (isCumulative && currentStep === 4) || (!isCumulative && currentStep === 5);
 
+  // Creator info for confirm hero card
+  const creatorFirstName = (will as any)?.creatorFirstName || '';
+  const creatorLastName = (will as any)?.creatorLastName || '';
+  const creatorFullName = [creatorFirstName, creatorLastName].filter(Boolean).join(' ') || 'Your team';
+  const creatorInitial = creatorFirstName ? creatorFirstName[0].toUpperCase() : 'T';
+  const creatorPossessive = creatorFullName.endsWith('s') ? `${creatorFullName}'` : `${creatorFullName}'s`;
+
+  // Tracking summary label for confirm card
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const trackingLabel = checkInType === 'daily'
+    ? `Every day at ${formatTimeForDisplay(checkInTime)}`
+    : checkInType === 'specific_days'
+    ? `${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')} at ${formatTimeForDisplay(checkInTime)}`
+    : 'Final review only';
+
   return (
     <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
       <MobileLayout>
@@ -305,12 +320,12 @@ export default function SubmitCommitment() {
               </div>
             )}
           
+          {!isConfirmStep && (
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
               {currentStep === 2 && !isCumulative && "What would you like to do?"}
               {isWhyStep && "Why would you like to do this?"}
               {isCheckInStep && "Tracking"}
-              {isConfirmStep && "Confirm Your Commitment"}
             </h1>
             {currentStep === 2 && !isCumulative && (
               <>
@@ -332,8 +347,8 @@ export default function SubmitCommitment() {
                 <p className="text-sm text-gray-500 mt-1">Remember this when it gets tough.</p>
               </>
             )}
-
           </div>
+          )}
         </div>
       </div>
 
@@ -762,174 +777,89 @@ export default function SubmitCommitment() {
           </div>
         )}
 
-        {/* Confirm Step: Cumulative */}
-        {isConfirmStep && isCumulative && !showTransition && (
-          <SectionCard>
-            <form onSubmit={handleFinalSubmit} className="space-y-3">
-              <div className="space-y-3 mt-2">
-                <div className="text-center">
-                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200 shadow-sm mx-auto max-w-sm">
-                    <div className="flex items-center justify-center mb-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                        <Handshake className="w-5 h-5 text-white" />
-                      </div>
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-2">Your Commitment</h3>
-                    <div className="text-sm text-gray-800 leading-relaxed">
-                      <div className="font-medium mb-2">
-                        <span className="text-purple-600">We Will</span> {sharedWhat}
-                      </div>
-                      <div className="font-medium">
-                        <span className="text-red-500">Because</span> <span className="text-xs text-gray-400">(Private)</span> {why}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {!isShortDuration && (
-                <div className="pt-2 border-t border-gray-100">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Clock className="w-3 h-3 text-amber-500" />
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                      Tracking
-                    </p>
-                  </div>
-                  <p className="text-sm font-medium text-gray-700 text-center" data-testid="text-confirm-tracking">
-                    {checkInType === 'daily' && `Every Day at ${formatTimeForDisplay(checkInTime)}`}
-                    {checkInType === 'specific_days' && (() => {
-                      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                      return `${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')} at ${formatTimeForDisplay(checkInTime)}`;
-                    })()}
-                    {checkInType === 'final_review' && 'Final Review Only'}
-                  </p>
-                </div>
-                )}
-              </div>
+        {/* Confirm Step — unified purple hero design */}
+        {isConfirmStep && !showTransition && (
+          <form onSubmit={handleFinalSubmit} className="space-y-4">
 
-              <div className="flex justify-between items-center pt-2">
-                <InlineBackButton 
-                  onClick={handleBack}
-                  testId="button-back-inline"
-                  className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                />
-                <button
-                  type="submit"
-                  disabled={commitmentMutation.isPending}
-                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50"
-                  data-testid="button-submit-commitment"
+            {/* Purple hero card */}
+            <div className="rounded-2xl p-5 space-y-3" style={{ backgroundColor: '#7B3FC4' }}>
+
+              {/* Team context row */}
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white font-semibold text-sm"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}
                 >
-                  {commitmentMutation.isPending ? (
-                    "Submitting..."
-                  ) : (
-                    <>
-                      <Handshake className="w-4 h-4 mr-2" />
-                      Let's do it
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </SectionCard>
-        )}
-
-        {/* Confirm Step: Classic */}
-        {isConfirmStep && !isCumulative && !showTransition && (
-          <SectionCard>
-            <form onSubmit={handleFinalSubmit} className="space-y-6">
-              <div className="space-y-6 mt-4">
-                <div className="text-center">
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-200 shadow-sm mx-auto max-w-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Commitment</h3>
-                    <div className="text-base text-gray-800 leading-relaxed">
-                      <div className="font-medium mb-2">
-                        <span className="text-blue-600">I Will</span> {what}
-                      </div>
-                      <div className="font-medium mb-1">
-                        <span className="text-red-500">Because</span> <span className="text-xs text-gray-400">(Private)</span>
-                      </div>
-                      <div className="font-medium mb-2">
-                        {why}
-                      </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-blue-100">
-                      <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 text-purple-500" />
-                        <span>
-                          {checkInType === 'daily' && 'Every Day check-ins'}
-                          {checkInType === 'specific_days' && (() => {
-                            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                            return `Check-ins: ${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')}`;
-                          })()}
-                          {checkInType === 'final_review' && 'Final review only'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  {creatorInitial}
                 </div>
-                
-                {(will as any)?.endRoomScheduledAt && (
-                  <div className="text-center">
-                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-5 border border-purple-200 shadow-sm mx-auto max-w-sm">
-                      <div className="flex items-center justify-center mb-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-2">End Room</h3>
-                      <div className="text-sm text-gray-800">
-                        {new Date((will as any).endRoomScheduledAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                        {' at '}
-                        {new Date((will as any).endRoomScheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {!isShortDuration && checkInType !== 'final_review' && (
-                <div className="pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Clock className="w-3 h-3 text-amber-500" />
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
-                      Check-In Time
-                    </p>
-                  </div>
-                  <p className="text-sm font-medium text-gray-700 text-center" data-testid="text-confirm-checkin-time-classic">
-                    {checkInType === 'specific_days' && (() => {
-                      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                      return `${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')} at `;
-                    })()}
-                    {formatTimeForDisplay(checkInTime)}
-                  </p>
-                </div>
-                )}
+                <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                  {creatorPossessive} Team Will
+                </span>
               </div>
 
-              <div className="flex justify-between items-center pt-2">
-                <InlineBackButton 
-                  onClick={handleBack}
-                  testId="button-back-inline"
-                  className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                />
-                <button
-                  type="submit"
-                  disabled={commitmentMutation.isPending}
-                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50"
-                  data-testid="button-submit-commitment"
-                >
-                  {commitmentMutation.isPending ? (
-                    "Submitting..."
-                  ) : (
-                    <>
-                      <Handshake className="w-4 h-4 mr-2" />
-                      Let's do it
-                    </>
-                  )}
-                </button>
+              {/* Commitment inset */}
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
+                <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                  {isCumulative ? 'The commitment' : 'Your commitment'}
+                </p>
+                <p className="text-base font-bold italic text-white leading-snug">
+                  "{isCumulative ? sharedWhat : what}"
+                </p>
               </div>
-            </form>
-          </SectionCard>
+
+              {/* Why inset */}
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
+                <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                  Your why · private
+                </p>
+                <p className="text-base italic text-white leading-snug">
+                  {why}
+                </p>
+              </div>
+            </div>
+
+            {/* Tracking row */}
+            <div className="bg-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-widest leading-none mb-0.5">Tracking</p>
+                <p className="text-sm font-semibold text-gray-800" data-testid="text-confirm-tracking">
+                  {trackingLabel}
+                </p>
+              </div>
+            </div>
+
+            {/* Primary CTA */}
+            <button
+              type="submit"
+              disabled={commitmentMutation.isPending}
+              className="w-full py-4 rounded-2xl text-base font-bold text-white flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
+              style={{ backgroundColor: '#2D9D78' }}
+              data-testid="button-submit-commitment"
+            >
+              {commitmentMutation.isPending ? (
+                "Joining..."
+              ) : (
+                <>
+                  <Heart className="w-5 h-5" />
+                  I'm in. Let's do it
+                </>
+              )}
+            </button>
+
+            {/* Secondary go-back */}
+            <button
+              type="button"
+              onClick={handleBack}
+              className="w-full py-3.5 rounded-2xl text-sm font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors duration-200"
+              data-testid="button-go-back-confirm"
+            >
+              Go back
+            </button>
+
+          </form>
         )}
 
         <WillInstructionModal
