@@ -720,7 +720,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       )}
       <MobileLayout>
         {/* Sticky Header with Progress Indicator */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
+        <div className={`sticky top-0 z-10 bg-white border-b border-gray-100 pt-[calc(env(safe-area-inset-top)+1rem)] ${currentStep === 5 ? "pb-2 mb-2" : "pb-4 mb-6"}`}>
           <div className="pt-4 space-y-3">
             {/* Back Button Row */}
             <div className="relative flex items-center mb-2 min-h-[44px]">
@@ -772,7 +772,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             )}
           </div>
           
-          {/* Current Step Title */}
+          {/* Current Step Title — hidden on review step to reclaim vertical space */}
+          {currentStep !== 5 && (
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
               {showTypeSelection && "Choose your Will Type:"}
@@ -780,7 +781,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               {!showTypeSelection && currentStep === 2 && "Why would you like to do this?"}
               {!showTypeSelection && currentStep === 3 && "Set Your Timeline"}
               {!showTypeSelection && currentStep === 4 && "Tracking"}
-              {!showTypeSelection && currentStep === 5 && "Review Your Will"}
             </h1>
             {!showTypeSelection && currentStep === 1 && (
               <>
@@ -810,12 +810,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                 When should we check in with you?
               </p>
             )}
-            {!showTypeSelection && currentStep === 5 && (
-              <p className="text-sm text-gray-500 mt-1">
-                Make sure everything looks right.
-              </p>
-            )}
           </div>
+          )}
         </div>
 
         <div className="flex-1 space-y-6">
@@ -1169,9 +1165,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         {/* Step 5: Confirmation / Review Page */}
         {currentStep === 5 && !showTransition && !showTypeSelection && (
           <div className="flex flex-col animate-in fade-in duration-500">
-            <div className="flex-1 flex flex-col py-4 px-4">
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+            <div className="flex-1 flex flex-col py-1 px-4">
+              <div className="space-y-2">
+                <div className="bg-gray-50 rounded-xl p-3 space-y-2">
                   {/* TITLE row — optional, tap-to-edit inline */}
                   <TitleEditRow
                     value={willData.willTitle}
@@ -1280,7 +1276,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               </div>
             </div>
 
-            <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex justify-between items-center pt-2 pb-1 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <Button type="button" variant="ghost" onClick={() => setCurrentStep(isShortDuration ? 3 : 4)} className="text-gray-500" data-testid="button-back-to-tracking">
                 Back
               </Button>
