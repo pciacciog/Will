@@ -793,7 +793,7 @@ export default function SubmitCommitment() {
                   {creatorInitial}
                 </div>
                 <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                  {creatorPossessive} {will?.title || 'Team Will'}
+                  {creatorPossessive} {will?.title || 'Will'}
                 </span>
               </div>
 

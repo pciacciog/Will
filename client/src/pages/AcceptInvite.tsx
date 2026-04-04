@@ -155,7 +155,7 @@ export default function AcceptInvite() {
                 {inviterName} invited you to{will.title ? ':' : ' a'}
               </p>
               <p className="text-xl font-bold text-white mb-3">
-                {will.title || 'Team Will'}
+                {will.title || 'Will'}
               </p>
 
               {/* We Will — shared commitment inset */}
