@@ -13,9 +13,10 @@ import { formatDisplayDateTime } from "@/lib/dateUtils";
 import ProgressView from "@/components/ProgressView";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
+import { Capacitor } from "@capacitor/core";
 import {
   ChevronLeft, ChevronRight, Camera, Plus, Clock, CheckCircle, X,
-  Pause, Play, Power, AlertTriangle,
+  Pause, Play, Power, AlertTriangle, ImageIcon,
 } from "lucide-react";
 import type { Will } from "@shared/schema";
 
@@ -65,6 +66,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [showManageModal, setShowManageModal] = useState(false);
   const [showTerminateConfirm, setShowTerminateConfirm] = useState(false);
   const [showFullProgress, setShowFullProgress] = useState(false);
+  const [showProofPicker, setShowProofPicker] = useState(false);
 
   useAppRefresh();
 
@@ -210,6 +212,66 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not load image")); };
       img.src = url;
     });
+
+  // Capacitor-native camera / photo-library capture.
+  // Uses the @capacitor/camera plugin so permissions are handled properly on iOS,
+  // avoiding the WKWebView crash that occurs when the raw file input triggers the camera.
+  const handleCapacitorCapture = async (source: "camera" | "library") => {
+    setShowProofPicker(false);
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
+
+      // Request only the relevant permission before opening the picker
+      const permKey = source === "camera" ? "camera" : "photos";
+      const perms = await Camera.requestPermissions({ permissions: [permKey] });
+      const granted = source === "camera" ? perms.camera === "granted" : perms.photos === "granted";
+      if (!granted) {
+        toast({
+          title: "Permission required",
+          description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in Settings.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const photo = await Camera.getPhoto({
+        resultType: CameraResultType.Base64,
+        source: source === "camera" ? CameraSource.Camera : CameraSource.Photos,
+        quality: 80,
+        correctOrientation: true,
+        allowEditing: false,
+      });
+
+      if (!photo.base64String) throw new Error("No image data returned from camera.");
+      console.log("[ProofDrop] Capacitor capture:", source, "format:", photo.format);
+
+      // Convert base64 → Blob → File and hand off to the existing upload pipeline
+      const byteStr = atob(photo.base64String);
+      const ab = new ArrayBuffer(byteStr.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+      const blob = new Blob([ab], { type: "image/jpeg" });
+      const file = new File([blob], "proof.jpg", { type: "image/jpeg" });
+      await handleDropPhoto(file);
+    } catch (err: any) {
+      // "User cancelled" is not a real error — swallow it silently
+      if (!err?.message?.toLowerCase().includes("cancel")) {
+        console.error("[ProofDrop] Capacitor capture error:", err);
+        toast({ title: "Camera error", description: err?.message || "Could not open camera.", variant: "destructive" });
+      }
+    }
+  };
+
+  // Opens the correct picker depending on platform:
+  // - Native iOS: Capacitor camera plugin (safe permission flow)
+  // - Web: native file input (browser handles permissions)
+  const openPhotoPicker = () => {
+    if (Capacitor.isNativePlatform()) {
+      setShowProofPicker(true);
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
 
   const handleDropPhoto = async (file: File) => {
     if (isUploading) return;
@@ -490,13 +552,70 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
         </div>
       )}
 
+      {/* Web-only hidden file input — used on non-native platforms as fallback */}
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/gif,image/webp"
         className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDropPhoto(f); }}
       />
+
+      {/* Native iOS proof-drop picker bottom sheet */}
+      {showProofPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowProofPicker(false)}
+        >
+          <div
+            className="w-full bg-white rounded-t-2xl pb-10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* drag handle */}
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-4" />
+            <p className="text-center text-sm font-semibold text-gray-800 mb-4 px-6">Add Proof Drop</p>
+
+            <button
+              onClick={() => handleCapacitorCapture("camera")}
+              className="w-full flex items-center gap-4 px-6 py-4 active:bg-gray-50 transition-colors"
+              data-testid="button-proof-camera"
+            >
+              <span className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                <Camera className="w-5 h-5 text-emerald-600" />
+              </span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">Take Photo</p>
+                <p className="text-xs text-gray-400">Open camera now</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleCapacitorCapture("library")}
+              className="w-full flex items-center gap-4 px-6 py-4 active:bg-gray-50 transition-colors"
+              data-testid="button-proof-library"
+            >
+              <span className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <ImageIcon className="w-5 h-5 text-blue-500" />
+              </span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">Choose from Library</p>
+                <p className="text-xs text-gray-400">Pick an existing photo</p>
+              </div>
+            </button>
+
+            <div className="mx-5 mt-2">
+              <button
+                onClick={() => setShowProofPicker(false)}
+                className="w-full py-3.5 rounded-2xl bg-gray-100 text-sm font-semibold text-gray-700 active:bg-gray-200 transition-colors"
+                data-testid="button-proof-picker-cancel"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="pt-[calc(env(safe-area-inset-top)+4rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
@@ -837,7 +956,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[13px] font-medium text-gray-500">Proof drops</p>
                   <button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={openPhotoPicker}
                     disabled={isUploading}
                     className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
                     data-testid="button-add-drop"
@@ -848,7 +967,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 </div>
                 {proofItems.length === 0 && pendingProofs.length === 0 ? (
                   <button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={openPhotoPicker}
                     disabled={isUploading}
                     className="w-full border border-dashed border-gray-200 rounded-xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50/30 transition-colors disabled:pointer-events-none"
                     data-testid="button-empty-drop-zone"
