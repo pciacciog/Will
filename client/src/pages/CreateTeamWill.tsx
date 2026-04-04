@@ -50,6 +50,11 @@ function formatDateForDisplay(dateStr: string) {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
+function formatDateShort(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function getDurationText(startStr: string, endStr: string) {
   const days = Math.ceil((new Date(endStr).getTime() - new Date(startStr).getTime()) / (1000 * 60 * 60 * 24));
   if (days === 1) return "1 day";
@@ -255,21 +260,19 @@ export default function CreateTeamWill() {
               </div>
             )}
           </div>
-          {step > 1 && (
+          {step > 1 && step < 6 && (
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
               {step === 2 && (willType === "cumulative" ? "What will you all do?" : "What will you do?")}
               {step === 3 && "Why does this matter?"}
               {step === 4 && "Set Your Timeline"}
               {step === 5 && "Tracking"}
-              {step === 6 && "Review Your Will"}
             </h1>
             <p className="text-sm text-gray-400 mt-1">
               {step === 2 && (willType === "cumulative" ? "This commitment is shared by everyone" : "Cause it's as simple as wanting.")}
               {step === 3 && "Remember this when it gets tough."}
               {step === 4 && "When will your Will begin and end?"}
               {step === 5 && "When should we check in with you?"}
-              {step === 6 && "Make sure everything looks right."}
             </p>
           </div>
           )}
@@ -612,92 +615,97 @@ export default function CreateTeamWill() {
           {/* Step 6: Review */}
           {step === 6 && (
             <div className="animate-in fade-in duration-500">
-              <div className="flex flex-col px-4">
-                <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-xl p-4 space-y-4">
-                    {/* Friends */}
-                    <div className="flex items-start gap-3">
-                      <Users className="w-5 h-5 text-violet-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Invited Friends</p>
-                        <p className="text-sm font-medium text-gray-900 mt-0.5" data-testid="text-confirm-friends">
-                          {selectedFriends.map(displayName).join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="border-t border-gray-200" />
-                    {/* What */}
-                    <div className="flex items-start gap-3">
-                      <ClipboardList className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">What</p>
-                        <p className="text-sm font-medium text-gray-900 mt-0.5" data-testid="text-confirm-what">
-                          {willType === "cumulative" ? "We Will" : "I Will"} {what}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="border-t border-gray-200" />
-                    {/* Why */}
-                    <div className="flex items-start gap-3">
-                      <MessageCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Why (private)</p>
-                        <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-why">{why}</p>
-                      </div>
-                    </div>
-                    <div className="border-t border-gray-200" />
-                    {/* Timeline */}
-                    <div className="flex items-start gap-3">
-                      <Calendar className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Timeline</p>
-                        {isIndefinite ? (
-                          <p className="text-sm text-gray-700 mt-0.5">Habit</p>
-                        ) : (
-                          <div className="mt-0.5">
-                            <p className="text-sm text-gray-700">{formatDateForDisplay(createDateTimeFromInputs(startDate, startTime))} — {formatDateForDisplay(createDateTimeFromInputs(endDate, endTime))}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">{getDurationText(createDateTimeFromInputs(startDate, startTime), createDateTimeFromInputs(endDate, endTime))}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="border-t border-gray-200" />
-                    {/* Tracking */}
-                    <div className="flex items-start gap-3">
-                      <CalendarDays className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Tracking</p>
-                        <p className="text-sm text-gray-700 mt-0.5">
-                          {isShortDuration ? "Final review only" : checkInType === "daily" ? "Every day" : checkInType === "specific_days" ? (() => { const names = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return customDays.sort((a,b)=>a-b).map(d=>names[d]).join(", "); })() : "Final review only"}
-                        </p>
-                      </div>
-                    </div>
-                    {/* Note about invites */}
-                    <div className="border-t border-gray-200" />
-                    <p className="text-xs text-gray-400 italic text-center">
-                      Friends will receive an invite notification. They have until the start date to accept.
+              {/* Page heading — matches "Build your team" / "Define your Will" pattern */}
+              <div className="mb-5">
+                <h1 className="text-[28px] font-bold text-gray-900 leading-tight">Review your Will</h1>
+                <p className="text-[14px] text-gray-500 mt-0.5">Make sure everything looks right.</p>
+              </div>
+
+              {/* Review rows */}
+              <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-100 shadow-sm">
+                {/* Team */}
+                <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Users className="w-4 h-4 text-violet-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-gray-400">Team</p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5" data-testid="text-confirm-friends">
+                      {selectedFriends.map(displayName).join(", ")}
                     </p>
                   </div>
                 </div>
-
-                <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 mt-4">
-                  <Button type="button" variant="ghost" onClick={() => setStep(isShortDuration ? 4 : 5)} className="text-gray-500" data-testid="button-back-to-tracking">
-                    Back
-                  </Button>
-                  <button
-                    onClick={handleConfirm}
-                    disabled={createWillMutation.isPending}
-                    className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center ${
-                      createWillMutation.isPending
-                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 shadow-sm"
-                    }`}
-                    data-testid="button-create-will"
-                  >
-                    {createWillMutation.isPending ? "Creating..." : "Create & Send Invites"}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </button>
+                {/* What */}
+                <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <ClipboardList className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-gray-400">What</p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5" data-testid="text-confirm-what">
+                      {willType === "cumulative" ? "We Will" : "I Will"} {what}
+                    </p>
+                  </div>
                 </div>
+                {/* Why */}
+                <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <MessageCircle className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-gray-400">Why · private</p>
+                    <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-why">{why}</p>
+                  </div>
+                </div>
+                {/* Timeline */}
+                <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Calendar className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-gray-400">Timeline</p>
+                    {isIndefinite ? (
+                      <p className="text-sm text-gray-700 mt-0.5">Habit (no end date)</p>
+                    ) : (
+                      <p className="text-sm text-gray-700 mt-0.5">
+                        {formatDateShort(createDateTimeFromInputs(startDate, startTime))} → {formatDateShort(createDateTimeFromInputs(endDate, endTime))}, {new Date(createDateTimeFromInputs(endDate, endTime)).getFullYear()} · {getDurationText(createDateTimeFromInputs(startDate, startTime), createDateTimeFromInputs(endDate, endTime))}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {/* Tracking */}
+                <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-gray-400">Tracking</p>
+                    <p className="text-sm text-gray-700 mt-0.5">
+                      {isShortDuration ? "Final review only" : checkInType === "daily" ? "Every day" : checkInType === "specific_days" ? (() => { const names = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return customDays.sort((a,b)=>a-b).map(d=>names[d]).join(", "); })() : "Final review only"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Disclaimer */}
+              <p className="text-[12px] text-gray-400 text-center mt-4 leading-relaxed px-2">
+                Your team will be notified and can accept until the start date.
+              </p>
+
+              {/* CTA */}
+              <div className="pt-4 pb-2 mt-1">
+                <button
+                  onClick={handleConfirm}
+                  disabled={createWillMutation.isPending}
+                  className={`w-full py-4 rounded-2xl text-[15px] font-semibold flex items-center justify-center transition-all ${
+                    createWillMutation.isPending
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm active:scale-[0.98]"
+                  }`}
+                  data-testid="button-create-will"
+                >
+                  {createWillMutation.isPending ? "Creating..." : "Create Will →"}
+                </button>
               </div>
             </div>
           )}
