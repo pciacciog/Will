@@ -39,6 +39,7 @@ export default function AcceptInvite() {
       mode: string;
       willType: string;
       sharedWhat: string | null;
+      title?: string | null;
       startDate: string;
       endDate: string | null;
       isIndefinite: boolean;
@@ -151,9 +152,11 @@ export default function AcceptInvite() {
                 <span className="text-white font-bold text-xl">{inviterInitial}</span>
               </div>
               <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.75)" }}>
-                {inviterName} invited you to a
+                {inviterName} invited you to{will.title ? ':' : ' a'}
               </p>
-              <p className="text-xl font-bold text-white mb-3">Team Will</p>
+              <p className="text-xl font-bold text-white mb-3">
+                {will.title || 'Team Will'}
+              </p>
 
               {/* We Will — shared commitment inset */}
               {isWeWill && will.sharedWhat && (
