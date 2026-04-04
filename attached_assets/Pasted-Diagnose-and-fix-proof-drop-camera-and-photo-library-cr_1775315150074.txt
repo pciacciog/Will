@@ -1,0 +1,40 @@
+Diagnose and fix proof drop camera and photo library crashes.
+Symptoms: Both options — "Take Photo" and "Choose from Library" — crash the app immediately when tapped. This is happening after @capacitor/camera was just installed and the build was synced. The crashes are likely all rooted in the same initialization or permission issue.
+Diagnose in this order:
+
+Check if @capacitor/camera is registered — after a fresh install, Capacitor plugins must be synced into the native Xcode project. Confirm npx cap sync ios completed successfully after the install. If the plugin is installed in node_modules but not synced into Xcode, any call to it crashes immediately
+Check permissions before any Camera call — the very first thing the camera handler must do is request and await permissions. If Camera.getPhoto() is called before permissions are granted, iOS kills the app silently. Add this before any camera or library call:
+
+typescriptconst permissions = await Camera.requestPermissions({ 
+  permissions: ['camera', 'photos'] 
+});
+if (permissions.camera !== 'granted' && permissions.photos !== 'granted') return;
+
+Check Info.plist — confirm both of these keys exist in ios/App/App/Info.plist:
+
+NSCameraUsageDescription — with a human-readable reason string
+NSPhotoLibraryUsageDescription — with a human-readable reason string
+
+If either is missing, iOS will crash the app the moment it tries to access that resource
+Check the Camera.getPhoto() call options — confirm the call includes explicit values for resultType, source, and quality. A missing or undefined option can cause an immediate crash:
+
+typescriptconst photo = await Camera.getPhoto({
+  resultType: CameraResultType.Base64,
+  source: CameraSource.Camera, // or CameraSource.Photos
+  quality: 80,
+});
+
+Wrap in try/catch — ensure the entire camera call is wrapped in a try/catch so crashes are caught and logged rather than killing the app silently:
+
+typescripttry {
+  const photo = await Camera.getPhoto({ ... });
+} catch (error) {
+  console.error('Camera error:', error);
+}
+
+Check for platform guard — ensure Camera.getPhoto() is only ever called when running natively. Calling it in a web context crashes immediately:
+
+typescriptimport { Capacitor } from '@capacitor/core';
+if (!Capacitor.isNativePlatform()) return;
+After diagnosing, fix and normalize both paths — camera and photo library — to produce a base64 JPEG before passing to the upload handler. Both should use CameraResultType.Base64 and compress to max quality 80 before upload.
+Do not change the proof drop UI or any other part of the app — this fix is isolated to the camera and photo library initialization and permission flow only.

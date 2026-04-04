@@ -218,17 +218,27 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   // avoiding the WKWebView crash that occurs when the raw file input triggers the camera.
   const handleCapacitorCapture = async (source: "camera" | "library") => {
     setShowProofPicker(false);
+
+    // Platform guard — should never be called on web, but belt-and-suspenders
+    if (!Capacitor.isNativePlatform()) return;
+
     try {
       const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
 
-      // Request only the relevant permission before opening the picker
-      const permKey = source === "camera" ? "camera" : "photos";
-      const perms = await Camera.requestPermissions({ permissions: [permKey] });
-      const granted = source === "camera" ? perms.camera === "granted" : perms.photos === "granted";
+      // Request BOTH permissions upfront in a single call.
+      // Requesting them separately (one per capture) can crash on iOS because
+      // the OS may not have finished processing the first grant before getPhoto() fires.
+      const perms = await Camera.requestPermissions({ permissions: ["camera", "photos"] });
+
+      // After the joint request, verify the specific permission we actually need
+      const granted = source === "camera"
+        ? perms.camera === "granted"
+        : perms.photos === "granted";
+
       if (!granted) {
         toast({
           title: "Permission required",
-          description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in Settings.`,
+          description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in iOS Settings > WILL.`,
           variant: "destructive",
         });
         return;
@@ -254,8 +264,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       const file = new File([blob], "proof.jpg", { type: "image/jpeg" });
       await handleDropPhoto(file);
     } catch (err: any) {
-      // "User cancelled" is not a real error — swallow it silently
-      if (!err?.message?.toLowerCase().includes("cancel")) {
+      // "User cancelled photos app" is not a real error — swallow silently
+      const msg = err?.message?.toLowerCase() ?? "";
+      if (!msg.includes("cancel") && !msg.includes("dismiss")) {
         console.error("[ProofDrop] Capacitor capture error:", err);
         toast({ title: "Camera error", description: err?.message || "Could not open camera.", variant: "destructive" });
       }
