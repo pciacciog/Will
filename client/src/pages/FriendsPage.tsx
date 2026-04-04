@@ -251,7 +251,7 @@ export default function FriendsPage() {
                             data-testid={`button-add-friend-${result.id}`}
                           >
                             <UserPlus className="w-3 h-3" />
-                            Add
+                            Add Friend
                           </button>
                         )}
                       </div>
