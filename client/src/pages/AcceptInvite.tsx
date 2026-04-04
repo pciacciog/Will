@@ -153,7 +153,22 @@ export default function AcceptInvite() {
               <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.75)" }}>
                 {inviterName} invited you to a
               </p>
-              <p className="text-xl font-bold text-white">Team Will</p>
+              <p className="text-xl font-bold text-white mb-3">Team Will</p>
+
+              {/* We Will — shared commitment inset */}
+              {isWeWill && will.sharedWhat && (
+                <div
+                  className="rounded-xl px-4 py-3 text-center"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+                >
+                  <p className="text-[10px] font-medium mb-1" style={{ color: "rgba(255,255,255,0.65)" }}>
+                    The commitment
+                  </p>
+                  <p className="text-sm font-bold italic text-white">
+                    "{will.sharedWhat}"
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -168,11 +183,22 @@ export default function AcceptInvite() {
                 className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: "#7B3FC4" }}
               >
-                <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <circle cx="12" cy="12" r="4" />
-                  <circle cx="12" cy="12" r="1" fill="currentColor" />
-                </svg>
+                {isWeWill ? (
+                  /* Group / people icon for We Will */
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                ) : (
+                  /* Target / circle icon for I Will */
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="12" cy="12" r="1" fill="currentColor" />
+                  </svg>
+                )}
               </div>
               <div>
                 <p className="font-bold text-gray-900 text-sm">{isWeWill ? "We Will" : "I Will"}</p>
