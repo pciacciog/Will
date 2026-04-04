@@ -3,25 +3,25 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
-import { Users, Calendar, CheckCircle, X } from "lucide-react";
+import { ChevronLeft, Calendar, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
-  });
+function formatStartsLine(startStr: string, endStr: string | null, isIndefinite: boolean): string {
+  const start = new Date(startStr);
+  const datePart = start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const timePart = start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  if (isIndefinite) return `${datePart} at ${timePart} · ongoing`;
+  if (!endStr) return `${datePart} at ${timePart}`;
+  const days = Math.ceil((new Date(endStr).getTime() - start.getTime()) / 86400000);
+  const dur = days === 1 ? "1 day" : days < 7 ? `${days} days` : days === 7 ? "1 week" : `${Math.floor(days / 7)}w ${days % 7 > 0 ? `${days % 7}d` : ""}`.trim();
+  return `${datePart} at ${timePart} · ${dur}`;
 }
 
-function getDuration(startStr: string, endStr: string | null) {
-  if (!endStr) return "Habit";
-  const days = Math.ceil((new Date(endStr).getTime() - new Date(startStr).getTime()) / (1000 * 60 * 60 * 24));
-  if (days === 1) return "1 day";
-  if (days < 7) return `${days} days`;
-  if (days === 7) return "1 week";
-  const weeks = Math.floor(days / 7), rem = days % 7;
-  return rem === 0 ? `${weeks} week${weeks > 1 ? "s" : ""}` : `${weeks}w ${rem}d`;
+function formatExpiryLine(expiresAt: string): string {
+  const d = new Date(expiresAt);
+  const datePart = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const timePart = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `Invite expires ${datePart} at ${timePart}`;
 }
 
 export default function AcceptInvite() {
@@ -56,7 +56,7 @@ export default function AcceptInvite() {
       const r = await apiRequest(`/api/wills/${willId}/accept-invite`, { method: "POST" });
       return r.json();
     },
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wills/all-active"] });
       toast({ title: "Invite accepted!", description: "Now set your commitment.", duration: 3000 });
       setLocation(`/will/${willId}/commit`);
@@ -102,154 +102,180 @@ export default function AcceptInvite() {
 
   if (isError || !data) {
     return (
-      <MobileLayout>
-        <div className="text-center py-16">
+      <div className="min-h-screen flex items-center justify-center px-5">
+        <div className="text-center">
           <p className="text-gray-500 mb-4">This invite could not be found or has expired.</p>
           <Button onClick={() => setLocation("/")} variant="outline">Go Home</Button>
         </div>
-      </MobileLayout>
+      </div>
     );
   }
 
   const { invite, will } = data;
   const isExpired = invite.status === "expired" || (invite.expiresAt && new Date(invite.expiresAt) <= new Date());
   const isAlreadyActioned = invite.status === "accepted" || invite.status === "declined";
-  const isWill = will.willType === "cumulative";
+  const isWeWill = will.willType === "cumulative";
+  const inviterName = will.creatorName || "A friend";
+  const inviterInitial = inviterName.charAt(0).toUpperCase();
 
   return (
-    <MobileLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="relative flex items-center justify-between mb-2 min-h-[44px]">
-          <UnifiedBackButton onClick={() => setLocation("/")} testId="button-back" />
-          <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">
-            Will Invite
-          </h1>
-          <span />
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div
+        className="pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
+        style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+      >
+        <div className="max-w-sm mx-auto px-5">
 
-        {/* Invite card */}
-        <div className="relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-violet-400 to-purple-400 rounded-2xl blur opacity-20" />
-          <div className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-5 text-white text-center">
-              <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Users className="w-7 h-7 text-white" strokeWidth={1.5} />
+          {/* 3-column nav */}
+          <div className="grid items-center mb-4" style={{ gridTemplateColumns: "40px 1fr 40px" }}>
+            <button
+              onClick={() => setLocation("/")}
+              className="w-10 h-10 flex items-center justify-center"
+              data-testid="button-back"
+            >
+              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition-all active:scale-95">
+                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+              </span>
+            </button>
+            <h1 className="text-center text-base font-semibold text-gray-900">Team Will Invite</h1>
+            <span />
+          </div>
+
+          {/* Hero card */}
+          <div className="rounded-2xl overflow-hidden mb-3" style={{ backgroundColor: "#7B3FC4" }}>
+            <div className="p-6 text-center">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
+              >
+                <span className="text-white font-bold text-xl">{inviterInitial}</span>
               </div>
-              <p className="text-sm font-medium text-white/80 mb-1">
-                {will.creatorName || "A friend"} invited you to a Team Will
+              <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.75)" }}>
+                {inviterName} invited you to a
               </p>
-              <p className="text-lg font-bold text-white">
-                {isWill ? "We Will" : "I Will"}
-              </p>
-              {will.sharedWhat && (
-                <p className="text-base text-white/90 mt-1 italic">"{will.sharedWhat}"</p>
-              )}
-            </div>
-
-            <div className="p-5 space-y-4">
-              {/* Will type badge */}
-              <div className="flex items-center justify-center gap-2">
-                <Badge className={isWill ? "bg-purple-100 text-purple-700" : "bg-violet-100 text-violet-700"}>
-                  {isWill ? "We Will — shared commitment" : "I Will — individual commitments"}
-                </Badge>
-              </div>
-
-              {/* Timeline */}
-              <div className="flex items-start gap-3">
-                <Calendar className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Starts</p>
-                  <p className="text-sm text-gray-700 font-medium">{formatDate(will.startDate)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {will.isIndefinite ? "Habit — no end date" : will.endDate ? `Duration: ${getDuration(will.startDate, will.endDate)}` : ""}
-                  </p>
-                </div>
-              </div>
-
-              {/* What happens when you accept */}
-              <div className="bg-violet-50 border border-violet-100 rounded-xl p-3">
-                <p className="text-xs text-violet-700 font-medium mb-1">
-                  {isWill ? "If you accept (We Will):" : "If you accept (I Will):"}
-                </p>
-                <p className="text-xs text-violet-600 leading-relaxed">
-                  {isWill
-                    ? `You'll commit to the same goal: "${will.sharedWhat}". You'll add your personal "Why" next.`
-                    : "You'll define your own personal commitment and why it matters to you."}
-                </p>
-              </div>
-
-              {/* Expiry note */}
-              {invite.expiresAt && !isAlreadyActioned && (
-                <p className="text-xs text-gray-400 text-center italic">
-                  Invite expires at {formatDate(invite.expiresAt)}
-                </p>
-              )}
+              <p className="text-xl font-bold text-white">Team Will</p>
             </div>
           </div>
-        </div>
 
-        {/* Status messages for expired / already actioned */}
-        {isExpired && (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-center">
-            <p className="text-sm text-red-600 font-medium">This invite has expired</p>
-            <p className="text-xs text-red-400 mt-1">The Will has already started or the invite deadline has passed.</p>
+          {/* Type of Will card */}
+          <div
+            className="rounded-2xl p-4 mb-3 border"
+            style={{ backgroundColor: "#F3EAFE", borderColor: "#D4B8F0" }}
+          >
+            <p className="text-[11px] font-medium text-purple-400 mb-2 uppercase tracking-wide">Type of Will</p>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: "#7B3FC4" }}
+              >
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="12" cy="12" r="1" fill="currentColor" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">{isWeWill ? "We Will" : "I Will"}</p>
+                <p className="text-xs mt-0.5 leading-snug" style={{ color: "#7B3FC4" }}>
+                  {isWeWill
+                    ? "Every member pursues a shared commitment"
+                    : "Each member pursues their own individual commitment"}
+                </p>
+              </div>
+            </div>
           </div>
-        )}
 
-        {invite.status === "accepted" && !isExpired && (
-          <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
-            <CheckCircle className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
-            <p className="text-sm text-emerald-700 font-medium">You already accepted this invite</p>
-            <Button onClick={() => setLocation(`/will/${willId}`)} className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm">
-              View Will
-            </Button>
+          {/* Starts row */}
+          <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 flex items-center gap-3 shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
+              <Calendar className="w-4 h-4 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Starts</p>
+              <p className="text-sm font-medium text-gray-800">
+                {formatStartsLine(will.startDate, will.endDate, will.isIndefinite)}
+              </p>
+            </div>
           </div>
-        )}
 
-        {invite.status === "declined" && (
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
-            <p className="text-sm text-gray-600">You declined this invite.</p>
-          </div>
-        )}
-
-        {/* Action buttons — only when pending and not expired */}
-        {invite.status === "pending" && !isExpired && (
-          <div className="space-y-3">
-            <button
-              onClick={() => acceptMutation.mutate()}
-              disabled={acceptMutation.isPending || declineMutation.isPending}
-              className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold text-base shadow-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
-              data-testid="button-accept-invite"
-            >
-              {acceptMutation.isPending ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-              ) : (
-                <CheckCircle className="w-5 h-5" />
-              )}
-              Accept Invite
-            </button>
-
-            <button
-              onClick={() => declineMutation.mutate()}
-              disabled={acceptMutation.isPending || declineMutation.isPending}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl border-2 border-gray-200 text-gray-600 font-medium text-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
-              data-testid="button-decline-invite"
-            >
-              {declineMutation.isPending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
-              ) : (
-                <X className="w-4 h-4" />
-              )}
-              Decline
-            </button>
-
-            <p className="text-xs text-gray-400 text-center">
-              You can decline if this doesn't work for you right now.
+          {/* Expiry line */}
+          {invite.expiresAt && !isAlreadyActioned && !isExpired && (
+            <p className="text-xs text-gray-400 text-center mb-4">
+              {formatExpiryLine(invite.expiresAt)}
             </p>
-          </div>
-        )}
+          )}
+
+          {/* Expired state */}
+          {isExpired && (
+            <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center mb-3">
+              <p className="text-sm text-red-600 font-medium">This invite has expired</p>
+              <p className="text-xs text-red-400 mt-1">The Will has already started or the invite deadline has passed.</p>
+            </div>
+          )}
+
+          {/* Already accepted */}
+          {invite.status === "accepted" && !isExpired && (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center mb-3">
+              <CheckCircle className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
+              <p className="text-sm text-emerald-700 font-medium">You already accepted this invite</p>
+              <Button
+                onClick={() => setLocation(`/will/${willId}`)}
+                className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
+              >
+                View Will
+              </Button>
+            </div>
+          )}
+
+          {/* Already declined */}
+          {invite.status === "declined" && (
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center mb-3">
+              <p className="text-sm text-gray-600">You declined this invite.</p>
+            </div>
+          )}
+
+          {/* Action buttons — pending and not expired */}
+          {invite.status === "pending" && !isExpired && (
+            <div className="space-y-3 mt-1">
+              {/* Accept */}
+              <button
+                onClick={() => acceptMutation.mutate()}
+                disabled={acceptMutation.isPending || declineMutation.isPending}
+                className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
+                style={{ backgroundColor: "#2D9D78" }}
+                data-testid="button-accept-invite"
+              >
+                {acceptMutation.isPending ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                ) : (
+                  <CheckCircle className="w-5 h-5" />
+                )}
+                Accept invite
+              </button>
+
+              {/* Decline */}
+              <button
+                onClick={() => declineMutation.mutate()}
+                disabled={acceptMutation.isPending || declineMutation.isPending}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-white border border-gray-200 text-gray-500 font-medium text-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
+                data-testid="button-decline-invite"
+              >
+                {declineMutation.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
+                ) : (
+                  <span className="text-base leading-none">×</span>
+                )}
+                Decline
+              </button>
+
+              <p className="text-xs text-gray-400 text-center">
+                You can decline if this doesn't work for you right now.
+              </p>
+            </div>
+          )}
+
+        </div>
       </div>
-    </MobileLayout>
+    </div>
   );
 }
