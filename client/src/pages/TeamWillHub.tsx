@@ -178,14 +178,58 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  // Normalise any image (including HEIC from iOS photo library) to a JPEG Blob
+  // capped at 1200px on the longest side, quality 0.8.
+  const normalizeToJpeg = (file: File): Promise<File> =>
+    new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("Canvas not available")); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { reject(new Error("Image conversion failed")); return; }
+            resolve(new File([blob], "proof.jpg", { type: "image/jpeg" }));
+          },
+          "image/jpeg",
+          0.8,
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not load image")); };
+      img.src = url;
+    });
+
   const handleDropPhoto = async (file: File) => {
     if (isUploading) return;
     const tempId = `tmp-${Date.now()}`;
+    // Use original file for the local preview thumbnail; convert for upload
     const blobUrl = URL.createObjectURL(file);
     setPendingProofs(prev => [...prev, { tempId, blobUrl }]);
     setIsUploading(true);
     let proofId: number | null = null;
     try {
+      // Normalise to JPEG before upload — handles HEIC/HEIF from iOS photo library
+      // and compresses large library photos (often 4–8 MB) down to a consistent size.
+      let uploadFile: File;
+      try {
+        uploadFile = await normalizeToJpeg(file);
+        console.log("[ProofDrop] normalised:", file.type, file.size, "→ image/jpeg", uploadFile.size);
+      } catch (convErr) {
+        console.warn("[ProofDrop] normalisation failed, using raw file:", convErr);
+        uploadFile = file;
+      }
       const token = await sessionPersistence.getToken();
       const authHeaders: Record<string, string> = {};
       if (token) authHeaders["Authorization"] = `Bearer ${token}`;
@@ -196,7 +240,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       }
       const { timestamp, signature, publicId: serverPublicId, apiKey: cApiKey, cloudName: cCloudName, eager: eagerTransform, uploadToken } = await signRes.json();
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", uploadFile);
       formData.append("timestamp", String(timestamp));
       formData.append("signature", signature);
       formData.append("api_key", cApiKey);
@@ -208,7 +252,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       const uploadData = await uploadRes.json();
       const imageUrl: string = uploadData.secure_url;
       const thumbnailUrl = imageUrl.replace("/upload/", "/upload/c_fill,w_200,h_200,q_auto/");
-      const createRes = await fetch(getApiPath(`/api/wills/${willId}/proof`), {
+      const createRes = await fetch(getApiPath(`/api/wills/${willId}/proofs`), {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ imageUrl, thumbnailUrl, cloudinaryPublicId: uploadData.public_id }),
