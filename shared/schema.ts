@@ -118,8 +118,8 @@ export const wills = pgTable("wills", {
   index("IDX_wills_public_discover").on(table.visibility, table.parentWillId, table.status),
 ]);
 
-// Shared Will invites — tracks pending/accepted/declined state for Shared Will participants
-export const sharedWillInvites = pgTable("shared_will_invites", {
+// Team Will invites — tracks pending/accepted/declined state for Team Will participants
+export const teamWillInvites = pgTable("shared_will_invites", {
   id: serial("id").primaryKey(),
   willId: integer("will_id").notNull().references(() => wills.id),
   invitedUserId: varchar("invited_user_id").notNull().references(() => users.id),
@@ -324,18 +324,18 @@ export const friendshipsRelations = relations(friendships, ({ one }) => ({
   }),
 }));
 
-export const sharedWillInvitesRelations = relations(sharedWillInvites, ({ one }) => ({
+export const teamWillInvitesRelations = relations(teamWillInvites, ({ one }) => ({
   will: one(wills, {
-    fields: [sharedWillInvites.willId],
+    fields: [teamWillInvites.willId],
     references: [wills.id],
   }),
   invitedUser: one(users, {
-    fields: [sharedWillInvites.invitedUserId],
+    fields: [teamWillInvites.invitedUserId],
     references: [users.id],
     relationName: "invitedUser",
   }),
   invitedByUser: one(users, {
-    fields: [sharedWillInvites.invitedByUserId],
+    fields: [teamWillInvites.invitedByUserId],
     references: [users.id],
     relationName: "invitedByUser",
   }),
@@ -630,12 +630,12 @@ export const insertFriendshipSchema = createInsertSchema(friendships).omit({
 export type InsertFriendship = z.infer<typeof insertFriendshipSchema>;
 export type Friendship = typeof friendships.$inferSelect;
 
-export const insertSharedWillInviteSchema = createInsertSchema(sharedWillInvites).omit({
+export const insertTeamWillInviteSchema = createInsertSchema(teamWillInvites).omit({
   id: true,
   createdAt: true,
 });
-export type InsertSharedWillInvite = z.infer<typeof insertSharedWillInviteSchema>;
-export type SharedWillInvite = typeof sharedWillInvites.$inferSelect;
+export type InsertTeamWillInvite = z.infer<typeof insertTeamWillInviteSchema>;
+export type TeamWillInvite = typeof teamWillInvites.$inferSelect;
 
 // Password reset tokens table
 export const passwordResetTokens = pgTable("password_reset_tokens", {

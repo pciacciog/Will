@@ -51,11 +51,11 @@ function formatTimeUntilStart(dateStr: string) {
   return `${mins}m`;
 }
 
-interface SharedWillHubProps {
+interface TeamWillHubProps {
   willId: number;
 }
 
-export default function SharedWillHub({ willId }: SharedWillHubProps) {
+export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();

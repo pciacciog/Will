@@ -696,7 +696,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Create a Will</h2>
-          <p className="text-gray-600 mb-6">Start a personal will or create a shared will with friends.</p>
+          <p className="text-gray-600 mb-6">Start a personal will or create a team will with friends.</p>
           <Button onClick={() => setLocation('/my-wills')}>
             Go to My Wills
           </Button>

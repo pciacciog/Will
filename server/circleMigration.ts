@@ -1,5 +1,5 @@
 /**
- * Circle → Shared Will Migration (Stage A)
+ * Circle → Team Will Migration (Stage A)
  * Called on server startup — idempotent and safe to re-run.
  *
  * MIGRATION CATEGORIES (evaluated per circle):
@@ -8,7 +8,7 @@
  *      Already migrated — skip entirely (Stage A 30-day preservation window).
  *
  *   B) circle.migratedAt IS NULL AND has qualifying wills (active/scheduled/pending/paused/will_review with circleId set):
- *      1. Set wills.mode = 'shared'
+ *      1. Set wills.mode = 'team'
  *      2. Create shared_will_invites for committed members (per-invite idempotency)
  *      3. Migrate circle_messages → will_messages in a transaction (all-or-nothing per will)
  *      4. Set wills.circleId = NULL (unlinks the will from circle)
@@ -21,7 +21,7 @@
  *
  * IDEMPOTENCY:
  * - Category A: entire circle block skipped on rerun (migratedAt gate).
- * - Category B, Step 1: skipped if mode is already 'shared'.
+ * - Category B, Step 1: skipped if mode is already 'team'.
  * - Category B, Step 2: per-invite existence check before inserting.
  * - Category B, Step 3: skipped if will_messages already has rows for this will.
  * - Category B, Step 4+5: once circleId is NULL and migratedAt is set, future reruns skip via category A.
@@ -36,7 +36,7 @@ import {
   circleMessages,
   wills,
   willCommitments,
-  sharedWillInvites,
+  teamWillInvites,
   willMessages,
   userNotifications,
 } from "@shared/schema";
@@ -47,7 +47,7 @@ export async function runCircleMigration(): Promise<void> {
     return;
   }
 
-  console.log(`[Migration] Starting circle → shared will migration. Found ${allCircles.length} circles.`);
+  console.log(`[Migration] Starting circle → team will migration. Found ${allCircles.length} circles.`);
 
   let willsMigrated = 0;
   let circlesDeleted = 0;
@@ -99,7 +99,7 @@ export async function runCircleMigration(): Promise<void> {
 
       // Step 1: Set mode = 'shared' (idempotent)
       if (will.mode !== "shared") {
-        await db.update(wills).set({ mode: "shared" }).where(eq(wills.id, will.id));
+        await db.update(wills).set({ mode: "team" }).where(eq(wills.id, will.id));
       }
 
       // Step 2: Create shared_will_invites for committed members (per-invite idempotency)
@@ -111,13 +111,13 @@ export async function runCircleMigration(): Promise<void> {
         if (member.userId === will.createdBy) continue;
 
         const existingInvite = await db
-          .select({ id: sharedWillInvites.id })
-          .from(sharedWillInvites)
-          .where(and(eq(sharedWillInvites.willId, will.id), eq(sharedWillInvites.invitedUserId, member.userId)));
+          .select({ id: teamWillInvites.id })
+          .from(teamWillInvites)
+          .where(and(eq(teamWillInvites.willId, will.id), eq(teamWillInvites.invitedUserId, member.userId)));
 
         if (existingInvite.length > 0) continue;
 
-        await db.insert(sharedWillInvites).values({
+        await db.insert(teamWillInvites).values({
           willId: will.id,
           invitedUserId: member.userId,
           invitedByUserId: will.createdBy,

@@ -24,7 +24,7 @@ import {
   users,
   wills,
   friendships,
-  sharedWillInvites,
+  teamWillInvites,
   willProofs,
 } from "@shared/schema";
 import { z } from "zod";
@@ -127,9 +127,9 @@ async function getSharedWillParticipantIds(willId: number): Promise<string[]> {
   if (!will) return [];
   const participantIds = new Set<string>();
   participantIds.add(will.createdBy);
-  const invites = await db.select().from(sharedWillInvites).where(and(
-    eq(sharedWillInvites.willId, willId),
-    eq(sharedWillInvites.status, 'accepted')
+  const invites = await db.select().from(teamWillInvites).where(and(
+    eq(teamWillInvites.willId, willId),
+    eq(teamWillInvites.status, 'accepted')
   ));
   invites.forEach(invite => participantIds.add(invite.invitedUserId));
   const commitments = await storage.getWillCommitments(willId);
@@ -864,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Will messages routes (for public and shared wills)
+  // Will messages routes (for public and team wills)
   app.get('/api/wills/:willId/messages', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -880,10 +880,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
-      const isShared = (will as any).mode === 'shared';
+      const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) {
-        return res.status(400).json({ message: "Messages are only available for public or shared wills" });
+        return res.status(400).json({ message: "Messages are only available for public or team wills" });
       }
 
       let isParticipant: boolean;
@@ -933,10 +933,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
-      const isShared = (will as any).mode === 'shared';
+      const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) {
-        return res.status(400).json({ message: "Messages are only available for public or shared wills" });
+        return res.status(400).json({ message: "Messages are only available for public or team wills" });
       }
 
       let isParticipant: boolean;
@@ -984,7 +984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET unread message count for a public/shared will thread (per current user)
+  // GET unread message count for a public/team will thread (per current user)
   app.get('/api/wills/:willId/messages/unread-count', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -995,9 +995,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!will) return res.status(404).json({ message: "Will not found" });
 
       const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
-      const isShared = (will as any).mode === 'shared';
+      const isShared = (will as any).mode === 'team';
 
-      if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or shared wills" });
+      if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or team wills" });
 
       let messageThreadId: number;
       let isParticipant: boolean;
@@ -1021,7 +1021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST mark all messages in a public/shared will thread as read
+  // POST mark all messages in a public/team will thread as read
   app.post('/api/wills/:willId/messages/mark-read', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1032,9 +1032,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!will) return res.status(404).json({ message: "Will not found" });
 
       const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
-      const isShared = (will as any).mode === 'shared';
+      const isShared = (will as any).mode === 'team';
 
-      if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or shared wills" });
+      if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or team wills" });
 
       let messageThreadId: number;
       let isParticipant: boolean;
@@ -1063,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const isPersonalMode = req.body.mode === 'solo' || req.body.mode === 'personal';
-      const isSharedMode = req.body.mode === 'shared';
+      const isTeamMode = req.body.mode === 'team';
       
       // Prepare will data with proper types
       const isIndefinite = req.body.isIndefinite === true;
@@ -1078,7 +1078,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: new Date(req.body.startDate),
         endDate: isIndefinite ? null : (req.body.endDate ? new Date(req.body.endDate) : null),
         createdBy: userId,
-        mode: isPersonalMode ? 'personal' : isSharedMode ? 'shared' : 'circle',
+        mode: isPersonalMode ? 'personal' : isTeamMode ? 'team' : 'circle',
         visibility: req.body.visibility || 'private',
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
         checkInType: normalizedCheckInType,
@@ -1158,12 +1158,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Created solo Will ${will.id} for user ${userId}, status: pending, starts: ${req.body.startDate}, midpoint: ${midpointTime ? midpointTime.toISOString() : 'none (indefinite)'}`);
         
         res.json({ ...will, status: 'pending', midpointAt: midpointTime });
-      } else if (isSharedMode) {
+      } else if (isTeamMode) {
         // SHARED MODE: Friends-based will — invites friends, activates at startDate if ≥1 accepts
 
         const invitedFriendIds: string[] = Array.isArray(req.body.invitedFriendIds) ? req.body.invitedFriendIds : [];
         if (invitedFriendIds.length === 0) {
-          return res.status(400).json({ message: "At least one friend must be invited for a Shared Will" });
+          return res.status(400).json({ message: "At least one friend must be invited for a Team Will" });
         }
         if (invitedFriendIds.length > 5) {
           return res.status(400).json({ message: "You can invite up to 5 friends" });
@@ -1244,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         for (const friendId of filteredInviteIds) {
           try {
-            await db.insert(sharedWillInvites).values({
+            await db.insert(teamWillInvites).values({
               willId: will.id,
               invitedUserId: friendId,
               invitedByUserId: userId,
@@ -1253,7 +1253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
 
             await pushNotificationService.sendToUser(friendId, {
-              title: `${creatorName} invited you to a Shared Will 🤝`,
+              title: `${creatorName} invited you to a Team Will 🤝`,
               body: inviteDisplayTitle ? `"${inviteDisplayTitle}" — tap to accept or decline` : 'Tap to accept or decline the invitation',
               category: 'shared_will_invite',
               data: { type: 'shared_will_invite', willId: will.id, deepLink: `/will/${will.id}/invite` },
@@ -1263,10 +1263,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        console.log(`[Routes] Created Shared Will ${will.id} with ${filteredInviteIds.length} invites`);
+        console.log(`[Routes] Created Team Will ${will.id} with ${filteredInviteIds.length} invites`);
         res.json(will);
       } else {
-        return res.status(400).json({ message: "Invalid mode. Use 'solo', 'personal', 'shared', or 'public'." });
+        return res.status(400).json({ message: "Invalid mode. Use 'solo', 'personal', 'team', or 'public'." });
       }
     } catch (error) {
       console.error("Error creating will:", error);
@@ -1312,17 +1312,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You have already committed to this Will" });
       }
 
-      // For shared wills: authorize BEFORE writing to DB
-      if (will.mode === 'shared') {
+      // For team wills: authorize BEFORE writing to DB
+      if (will.mode === 'team') {
         const isCreator = will.createdBy === userId;
         if (!isCreator) {
           const [acceptedInvite] = await db
-            .select({ id: sharedWillInvites.id })
-            .from(sharedWillInvites)
+            .select({ id: teamWillInvites.id })
+            .from(teamWillInvites)
             .where(and(
-              eq(sharedWillInvites.willId, willId),
-              eq(sharedWillInvites.invitedUserId, userId),
-              eq(sharedWillInvites.status, 'accepted')
+              eq(teamWillInvites.willId, willId),
+              eq(teamWillInvites.invitedUserId, userId),
+              eq(teamWillInvites.status, 'accepted')
             ))
             .limit(1);
           if (!acceptedInvite) {
@@ -1345,8 +1345,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
 
-      // For shared wills — will activates at startDate via scheduler; just return commitment
-      if (will.mode === 'shared') {
+      // For team wills — will activates at startDate via scheduler; just return commitment
+      if (will.mode === 'team') {
         res.json(commitment);
         return;
       }
@@ -1358,7 +1358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ─── Shared Will Invite Routes ─────────────────────────────────────────────
+  // ─── Team Will Invite Routes ─────────────────────────────────────────────
 
   // GET /api/wills/my-pending-invites — all pending invites for the current user
   app.get('/api/wills/my-pending-invites', isAuthenticated, async (req: any, res) => {
@@ -1366,16 +1366,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const rows = await db
         .select({
-          invite: sharedWillInvites,
+          invite: teamWillInvites,
           will: wills,
           invitedBy: { id: users.id, firstName: users.firstName },
         })
-        .from(sharedWillInvites)
-        .innerJoin(wills, eq(sharedWillInvites.willId, wills.id))
-        .innerJoin(users, eq(sharedWillInvites.invitedByUserId, users.id))
+        .from(teamWillInvites)
+        .innerJoin(wills, eq(teamWillInvites.willId, wills.id))
+        .innerJoin(users, eq(teamWillInvites.invitedByUserId, users.id))
         .where(and(
-          eq(sharedWillInvites.invitedUserId, userId),
-          eq(sharedWillInvites.status, 'pending'),
+          eq(teamWillInvites.invitedUserId, userId),
+          eq(teamWillInvites.status, 'pending'),
         ));
       res.json(rows);
     } catch (err) {
@@ -1397,19 +1397,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const invites = await db
         .select({
-          id: sharedWillInvites.id,
-          willId: sharedWillInvites.willId,
-          invitedUserId: sharedWillInvites.invitedUserId,
-          status: sharedWillInvites.status,
-          respondedAt: sharedWillInvites.respondedAt,
-          expiresAt: sharedWillInvites.expiresAt,
-          createdAt: sharedWillInvites.createdAt,
+          id: teamWillInvites.id,
+          willId: teamWillInvites.willId,
+          invitedUserId: teamWillInvites.invitedUserId,
+          status: teamWillInvites.status,
+          respondedAt: teamWillInvites.respondedAt,
+          expiresAt: teamWillInvites.expiresAt,
+          createdAt: teamWillInvites.createdAt,
           firstName: users.firstName,
           lastName: users.lastName,
         })
-        .from(sharedWillInvites)
-        .innerJoin(users, eq(sharedWillInvites.invitedUserId, users.id))
-        .where(eq(sharedWillInvites.willId, willId));
+        .from(teamWillInvites)
+        .innerJoin(users, eq(teamWillInvites.invitedUserId, users.id))
+        .where(eq(teamWillInvites.willId, willId));
 
       res.json(invites);
     } catch (err) {
@@ -1427,8 +1427,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const [invite] = await db
         .select()
-        .from(sharedWillInvites)
-        .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.invitedUserId, userId)))
+        .from(teamWillInvites)
+        .where(and(eq(teamWillInvites.willId, willId), eq(teamWillInvites.invitedUserId, userId)))
         .limit(1);
 
       if (!invite) return res.status(404).json({ message: 'No invite found' });
@@ -1457,8 +1457,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const [invite] = await db
         .select()
-        .from(sharedWillInvites)
-        .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.invitedUserId, userId)))
+        .from(teamWillInvites)
+        .where(and(eq(teamWillInvites.willId, willId), eq(teamWillInvites.invitedUserId, userId)))
         .limit(1);
 
       if (!invite) return res.status(404).json({ message: 'Invite not found' });
@@ -1473,9 +1473,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await db
-        .update(sharedWillInvites)
+        .update(teamWillInvites)
         .set({ status: 'accepted', respondedAt: new Date() })
-        .where(eq(sharedWillInvites.id, invite.id));
+        .where(eq(teamWillInvites.id, invite.id));
 
       res.json({ message: 'Invite accepted', willId, will });
     } catch (err) {
@@ -1493,8 +1493,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const [invite] = await db
         .select()
-        .from(sharedWillInvites)
-        .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.invitedUserId, userId)))
+        .from(teamWillInvites)
+        .where(and(eq(teamWillInvites.willId, willId), eq(teamWillInvites.invitedUserId, userId)))
         .limit(1);
 
       if (!invite) return res.status(404).json({ message: 'Invite not found' });
@@ -1502,9 +1502,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (invite.status !== 'pending') return res.status(409).json({ message: `Cannot decline an invite with status: ${invite.status}` });
 
       await db
-        .update(sharedWillInvites)
+        .update(teamWillInvites)
         .set({ status: 'declined', respondedAt: new Date() })
-        .where(eq(sharedWillInvites.id, invite.id));
+        .where(eq(teamWillInvites.id, invite.id));
 
       // Notify creator
       const will = await storage.getWillById(willId);
@@ -1547,8 +1547,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isCreator = will.createdBy === userId;
       const [commitment] = await db.select({ id: willCommitments.id }).from(willCommitments)
         .where(and(eq(willCommitments.willId, willId), eq(willCommitments.userId, userId))).limit(1);
-      const [acceptedInvite] = await db.select({ id: sharedWillInvites.id }).from(sharedWillInvites)
-        .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.invitedUserId, userId), eq(sharedWillInvites.status, 'accepted'))).limit(1);
+      const [acceptedInvite] = await db.select({ id: teamWillInvites.id }).from(teamWillInvites)
+        .where(and(eq(teamWillInvites.willId, willId), eq(teamWillInvites.invitedUserId, userId), eq(teamWillInvites.status, 'accepted'))).limit(1);
 
       if (!isCreator && !commitment && !acceptedInvite) {
         return res.status(403).json({ message: 'Not a participant of this will' });
@@ -1961,8 +1961,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const mode = req.query.mode as 'solo' | 'circle' | 'shared' | 'public' | undefined;
-      const validModes = ['solo', 'circle', 'shared', 'public'];
+      const mode = req.query.mode as 'solo' | 'circle' | 'team' | 'public' | undefined;
+      const validModes = ['solo', 'circle', 'team', 'public'];
       const filteredMode = mode && validModes.includes(mode) ? mode : undefined;
       const stats = await storage.getUserWillStats(userId, filteredMode);
       res.json(stats);
@@ -1976,14 +1976,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/wills/history', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const mode = req.query.mode as 'solo' | 'circle' | 'shared' | 'public';
+      const mode = req.query.mode as 'solo' | 'circle' | 'team' | 'public';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const enhanced = req.query.enhanced === 'true';
       
       console.log(`[HISTORY] Fetching ${mode} history for user ${userId} (enhanced: ${enhanced})`);
       
-      if (!mode || !['solo', 'circle', 'shared', 'public'].includes(mode)) {
-        return res.status(400).json({ message: "Invalid mode. Must be 'solo', 'circle', 'shared', or 'public'." });
+      if (!mode || !['solo', 'circle', 'team', 'public'].includes(mode)) {
+        return res.status(400).json({ message: "Invalid mode. Must be 'solo', 'circle', 'team', or 'public'." });
       }
       
       // Use enhanced version with check-in data if requested
@@ -2012,10 +2012,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      // For shared wills: memberCount = creator + accepted invitees (the true participant pool)
+      // For team wills: memberCount = creator + accepted invitees (the true participant pool)
       // For other wills: fall back to commitments length (original behavior)
       let memberCount: number;
-      if ((willWithCommitments as any).mode === 'shared') {
+      if ((willWithCommitments as any).mode === 'team') {
         const participantIds = await getSharedWillParticipantIds(willId);
         memberCount = Math.max(participantIds.length, 1);
       } else {
@@ -2215,10 +2215,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.markNotificationsReadByTypeAndWill(userId, 'review_required', willId);
       } catch (e) { /* non-critical */ }
 
-      // Send member_review_submitted notification to other members of shared wills
+      // Send member_review_submitted notification to other members of team wills
       try {
         const will = await storage.getWillById(willId);
-        if (will && will.mode === 'shared') {
+        if (will && will.mode === 'team') {
           const reviewer = await storage.getUser(userId);
           const reviewerName = reviewer?.firstName || 'Someone';
           const willWithComms = await storage.getWillWithCommitments(willId);
@@ -2550,7 +2550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "You are not a participant of this Will" });
         }
         memberIds = await getOtherPublicWillParticipants(userId, parentId);
-      } else if (will.mode === 'shared') {
+      } else if (will.mode === 'team') {
         const willWithCommsForPush = await storage.getWillWithCommitments(willId);
         memberIds = (willWithCommsForPush?.commitments || [])
           .filter(c => c.userId !== userId)
@@ -3223,8 +3223,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "You left the Will. Your progress has been saved.", status: 'terminated' });
       }
 
-      // Handle circle/shared will leave (original behavior — ends for ALL members)
-      if (will.mode !== 'circle' && will.mode !== 'shared') {
+      // Handle circle/team will leave (original behavior — ends for ALL members)
+      if (will.mode !== 'circle' && will.mode !== 'team') {
         return res.status(400).json({ message: "Leave is only available for Circle, Shared, or Public Wills" });
       }
 

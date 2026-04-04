@@ -1,6 +1,6 @@
 import * as cron from 'node-cron';
 import { db } from './db';
-import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders, willReviews, users, deviceTokens, circleProofs, cloudinaryCleanupLog, sharedWillInvites } from '@shared/schema';
+import { wills, willCommitments, circleMembers, willAcknowledgments, commitmentReminders, willReviews, users, deviceTokens, circleProofs, cloudinaryCleanupLog, teamWillInvites } from '@shared/schema';
 import { eq, and, or, lt, gte, isNull, isNotNull, ne, notInArray, inArray } from 'drizzle-orm';
 import { cloudinary } from './cloudinary';
 import { dailyService } from './daily';
@@ -84,9 +84,9 @@ export class EndRoomScheduler {
     // NEW: Send random motivational "because" notifications (once per day)
     await this.checkMotivationalNotifications(now);
 
-    // Shared Will: activate or terminate at startDate, send 24h reminder to pending invitees
-    await this.processSharedWillActivation(now);
-    await this.sendSharedWillInviteReminders(now);
+    // Team Will: activate or terminate at startDate, send 24h reminder to pending invitees
+    await this.processTeamWillActivation(now);
+    await this.sendTeamWillInviteReminders(now);
 
     console.log('[EndRoomScheduler] Heavy operations completed');
   }
@@ -102,7 +102,7 @@ export class EndRoomScheduler {
       console.log(`[SCHEDULER] Checking Will status transitions at ${now.toISOString()}`);
       
       // 1. Transition pending/scheduled wills to active (start time has passed)
-      // NOTE: Shared wills are handled separately by processSharedWillActivation
+      // NOTE: Shared wills are handled separately by processTeamWillActivation
       const willsToActivate = await db
         .select({
           id: wills.id,
@@ -116,7 +116,7 @@ export class EndRoomScheduler {
           and(
             or(eq(wills.status, 'pending'), eq(wills.status, 'scheduled')),
             lt(wills.startDate, now),
-            ne(wills.mode, 'shared')
+            ne(wills.mode, 'team')
           )
         )
         .limit(50); // Limit to prevent memory issues in large datasets
@@ -133,7 +133,7 @@ export class EndRoomScheduler {
         try {
           const willWithCommitments = await storage.getWillWithCommitments(will.id);
           if (willWithCommitments && willWithCommitments.commitments) {
-            const isSoloMode = will.mode !== 'shared';
+            const isSoloMode = will.mode !== 'team';
             for (const commitment of willWithCommitments.commitments) {
               const displayTitle = willWithCommitments.title || commitment.what || willWithCommitments.sharedWhat || "Your Will";
               await pushNotificationService.sendWillStartedNotification(displayTitle, [commitment.userId], will.id, isSoloMode);
@@ -285,7 +285,7 @@ export class EndRoomScheduler {
           and(
             eq(wills.endRoomStatus, 'pending'),
             lt(wills.endRoomScheduledAt, now),
-            eq(wills.mode, 'shared') // End Rooms are for shared wills
+            eq(wills.mode, 'team') // End Rooms are for team wills
           )
         )
         .limit(20); // Limit to prevent resource exhaustion
@@ -312,7 +312,7 @@ export class EndRoomScheduler {
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} with video URL: ${endRoom.url}`);
               try {
                 
-                const circleMembers = await this.getSharedWillParticipants(will.id);
+                const circleMembers = await this.getTeamWillParticipants(will.id);
                 const memberIds = circleMembers.map(member => member.userId);
                 await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id);
                 console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -329,7 +329,7 @@ export class EndRoomScheduler {
               console.log(`[EndRoomScheduler] End Room opened for Will ${will.id} but without video room`);
               try {
                 
-                const circleMembers = await this.getSharedWillParticipants(will.id);
+                const circleMembers = await this.getTeamWillParticipants(will.id);
                 const memberIds = circleMembers.map(member => member.userId);
                 await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id);
                 console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -346,7 +346,7 @@ export class EndRoomScheduler {
             console.log(`[EndRoomScheduler] End Room opened for Will ${will.id}`);
             try {
               
-              const circleMembers = await this.getSharedWillParticipants(will.id);
+              const circleMembers = await this.getTeamWillParticipants(will.id);
               const memberIds = circleMembers.map(member => member.userId);
               await pushNotificationService.sendEndRoomNotification('live', 'now', memberIds, will.id);
               console.log(`[EndRoomScheduler] End Room Live notification sent for Will ${will.id}`);
@@ -375,7 +375,7 @@ export class EndRoomScheduler {
           and(
             eq(wills.endRoomStatus, 'open'),
             lt(wills.endRoomOpenedAt, thirtyMinutesAgo),
-            eq(wills.mode, 'shared') // End Rooms are for shared wills
+            eq(wills.mode, 'team') // End Rooms are for team wills
           )
         )
         .limit(20); // Limit to prevent resource exhaustion
@@ -440,7 +440,7 @@ export class EndRoomScheduler {
             eq(wills.endRoomStatus, 'pending'),
             gte(wills.endRoomScheduledAt, twentyFourHoursFromNow),
             lt(wills.endRoomScheduledAt, twentyFourHoursOneMinuteFromNow),
-            eq(wills.mode, 'shared') // End Rooms are for shared wills
+            eq(wills.mode, 'team') // End Rooms are for team wills
           )
         )
         .limit(30); // Limit notification batch size
@@ -449,7 +449,7 @@ export class EndRoomScheduler {
         console.log(`[EndRoomScheduler] Sending 24h End Room notification for Will ${will.id}`);
         try {
           
-          const circleMembers = await this.getSharedWillParticipants(will.id);
+          const circleMembers = await this.getTeamWillParticipants(will.id);
           
           // TIMEZONE FIX: Send personalized notifications per user with their timezone
           for (const member of circleMembers) {
@@ -495,7 +495,7 @@ export class EndRoomScheduler {
             eq(wills.endRoomStatus, 'pending'),
             gte(wills.endRoomScheduledAt, fifteenMinutesFromNow),
             lt(wills.endRoomScheduledAt, fifteenMinutesOneMinuteFromNow),
-            eq(wills.mode, 'shared') // End Rooms are for shared wills
+            eq(wills.mode, 'team') // End Rooms are for team wills
           )
         )
         .limit(30); // Limit notification batch size
@@ -504,7 +504,7 @@ export class EndRoomScheduler {
         console.log(`[EndRoomScheduler] Sending 15min End Room notification for Will ${will.id}`);
         try {
           
-          const circleMembers = await this.getSharedWillParticipants(will.id);
+          const circleMembers = await this.getTeamWillParticipants(will.id);
           
           // TIMEZONE FIX: Send personalized notifications per user with their timezone
           for (const member of circleMembers) {
@@ -553,17 +553,17 @@ export class EndRoomScheduler {
   }
 
   /**
-   * Returns all participants of a shared will: the creator plus all users with accepted invites.
+   * Returns all participants of a team will: the creator plus all users with accepted invites.
    * Returns objects with { userId, user: { firstName, timezone } } matching the old getCircleMembers shape.
    */
-  private async getSharedWillParticipants(willId: number): Promise<Array<{ userId: string; user: { firstName: string; timezone: string | null } }>> {
+  private async getTeamWillParticipants(willId: number): Promise<Array<{ userId: string; user: { firstName: string; timezone: string | null } }>> {
     const will = await db.select({ createdBy: wills.createdBy }).from(wills).where(eq(wills.id, willId)).limit(1);
     if (!will.length) return [];
 
     const acceptedInvites = await db
-      .select({ invitedUserId: sharedWillInvites.invitedUserId })
-      .from(sharedWillInvites)
-      .where(and(eq(sharedWillInvites.willId, willId), eq(sharedWillInvites.status, 'accepted')));
+      .select({ invitedUserId: teamWillInvites.invitedUserId })
+      .from(teamWillInvites)
+      .where(and(eq(teamWillInvites.willId, willId), eq(teamWillInvites.status, 'accepted')));
 
     const participantIds = [will[0].createdBy, ...acceptedInvites.map(i => i.invitedUserId)];
     const uniqueIds = [...new Set(participantIds)];
@@ -590,7 +590,7 @@ export class EndRoomScheduler {
           and(
             eq(wills.status, 'pending'),
             lt(wills.createdAt, sixHoursAgo),
-            eq(wills.mode, 'shared') // Only shared wills have pending commitment reminders
+            eq(wills.mode, 'team') // Only team wills have pending commitment reminders
           )
         )
         .limit(20);
@@ -598,7 +598,7 @@ export class EndRoomScheduler {
       for (const will of pendingWills) {
         try {
           // Get all circle members
-          const allCircleMembers = await this.getSharedWillParticipants(will.id);
+          const allCircleMembers = await this.getTeamWillParticipants(will.id);
           
           // Get users who have already committed
           const existingCommitments = await db
@@ -1241,47 +1241,47 @@ export class EndRoomScheduler {
     }
   }
 
-  // ─── Shared Will: Activation at startDate ───────────────────────────────────
-  private async processSharedWillActivation(now: Date) {
+  // ─── Team Will: Activation at startDate ───────────────────────────────────
+  private async processTeamWillActivation(now: Date) {
     try {
-      const sharedWillsDue = await db
+      const teamWillsDue = await db
         .select()
         .from(wills)
         .where(and(
-          eq(wills.mode, 'shared'),
+          eq(wills.mode, 'team'),
           or(eq(wills.status, 'pending'), eq(wills.status, 'scheduled')),
           lt(wills.startDate, now)
         ))
         .limit(50);
 
-      if (sharedWillsDue.length > 0) {
-        console.log(`[SCHEDULER-SHARED] Found ${sharedWillsDue.length} shared will(s) at startDate`);
+      if (teamWillsDue.length > 0) {
+        console.log(`[SCHEDULER-TEAM] Found ${teamWillsDue.length} team will(s) at startDate`);
       }
 
-      for (const will of sharedWillsDue) {
+      for (const will of teamWillsDue) {
         try {
           // Check for accepted invites
           const acceptedRows = await db
             .select()
-            .from(sharedWillInvites)
+            .from(teamWillInvites)
             .where(and(
-              eq(sharedWillInvites.willId, will.id),
-              eq(sharedWillInvites.status, 'accepted')
+              eq(teamWillInvites.willId, will.id),
+              eq(teamWillInvites.status, 'accepted')
             ));
 
           // Expire all remaining pending invites
           await db
-            .update(sharedWillInvites)
+            .update(teamWillInvites)
             .set({ status: 'expired' })
             .where(and(
-              eq(sharedWillInvites.willId, will.id),
-              eq(sharedWillInvites.status, 'pending')
+              eq(teamWillInvites.willId, will.id),
+              eq(teamWillInvites.status, 'pending')
             ));
 
           if (acceptedRows.length >= 1) {
             // Activate the will
             await storage.updateWillStatus(will.id, 'active');
-            console.log(`[SCHEDULER-SHARED] ✅ Activated Shared Will ${will.id} (${acceptedRows.length} accepted invites)`);
+            console.log(`[SCHEDULER-TEAM] ✅ Activated Team Will ${will.id} (${acceptedRows.length} accepted invites)`);
 
             // Notify all participants: creator + accepted invitees (union of commitments and accepted invites)
             try {
@@ -1309,87 +1309,87 @@ export class EndRoomScheduler {
                 await pushNotificationService.sendWillStartedNotification(displayTitle, [pid], will.id, false);
               }
             } catch (notifErr) {
-              console.error(`[SCHEDULER-SHARED] Failed to send started notifications for Will ${will.id}:`, notifErr);
+              console.error(`[SCHEDULER-TEAM] Failed to send started notifications for Will ${will.id}:`, notifErr);
             }
           } else {
             // No accepted invites — terminate
             await storage.updateWillStatus(will.id, 'terminated');
-            console.log(`[SCHEDULER-SHARED] ❌ Terminated Shared Will ${will.id} (0 accepted invites)`);
+            console.log(`[SCHEDULER-TEAM] ❌ Terminated Team Will ${will.id} (0 accepted invites)`);
 
             // Notify creator
             try {
               const [creator] = await db.select({ firstName: users.firstName }).from(users).where(eq(users.id, will.createdBy));
               const willTitle = will.title || will.sharedWhat || 'Your Will';
               await pushNotificationService.sendToUser(will.createdBy, {
-                title: 'Shared Will could not start',
+                title: 'Team Will could not start',
                 body: `"${willTitle}" was cancelled — no friends accepted the invitation`,
                 category: 'will_terminated',
                 data: { type: 'will_terminated', willId: will.id, deepLink: `/will/${will.id}` },
               });
             } catch (notifErr) {
-              console.error(`[SCHEDULER-SHARED] Failed to notify creator of termination for Will ${will.id}:`, notifErr);
+              console.error(`[SCHEDULER-TEAM] Failed to notify creator of termination for Will ${will.id}:`, notifErr);
             }
           }
         } catch (willErr) {
-          console.error(`[SCHEDULER-SHARED] Error processing shared Will ${will.id}:`, willErr);
+          console.error(`[SCHEDULER-TEAM] Error processing shared Will ${will.id}:`, willErr);
         }
       }
     } catch (err) {
-      console.error('[SCHEDULER-SHARED] Error in processSharedWillActivation:', err);
+      console.error('[SCHEDULER-TEAM] Error in processTeamWillActivation:', err);
     }
   }
 
-  // ─── Shared Will: 24h reminder to pending invitees ──────────────────────────
-  private async sendSharedWillInviteReminders(now: Date) {
+  // ─── Team Will: 24h reminder to pending invitees ──────────────────────────
+  private async sendTeamWillInviteReminders(now: Date) {
     try {
       const windowStart = new Date(now.getTime() + 23 * 60 * 60 * 1000); // 23h from now
       const windowEnd   = new Date(now.getTime() + 25 * 60 * 60 * 1000); // 25h from now
 
-      // Find pending invites for shared wills whose startDate is ~24h away and reminder not yet sent
+      // Find pending invites for team wills whose startDate is ~24h away and reminder not yet sent
       const pendingInvites = await db
         .select({
-          invite: sharedWillInvites,
+          invite: teamWillInvites,
           willTitle: wills.title,
           willSharedWhat: wills.sharedWhat,
           willStartDate: wills.startDate,
           willId: wills.id,
           creatorId: wills.createdBy,
         })
-        .from(sharedWillInvites)
-        .innerJoin(wills, eq(sharedWillInvites.willId, wills.id))
+        .from(teamWillInvites)
+        .innerJoin(wills, eq(teamWillInvites.willId, wills.id))
         .where(and(
-          eq(sharedWillInvites.status, 'pending'),
-          isNull(sharedWillInvites.reminderSentAt),
-          eq(wills.mode, 'shared'),
+          eq(teamWillInvites.status, 'pending'),
+          isNull(teamWillInvites.reminderSentAt),
+          eq(wills.mode, 'team'),
           gte(wills.startDate, windowStart),
           lt(wills.startDate, windowEnd)
         ))
         .limit(100);
 
       if (pendingInvites.length > 0) {
-        console.log(`[SCHEDULER-SHARED] Sending 24h reminders to ${pendingInvites.length} pending invitees`);
+        console.log(`[SCHEDULER-TEAM] Sending 24h reminders to ${pendingInvites.length} pending invitees`);
       }
 
       for (const row of pendingInvites) {
         try {
           const inviteTitle = row.willTitle || row.willSharedWhat || 'a Will';
           await pushNotificationService.sendToUser(row.invite.invitedUserId, {
-            title: 'Shared Will starts in 24 hours ⏰',
+            title: 'Team Will starts in 24 hours ⏰',
             body: `Accept or decline the invite for "${inviteTitle}" before it begins`,
             category: 'shared_will_reminder',
             data: { type: 'shared_will_invite', willId: row.willId, deepLink: `/will/${row.willId}/invite` },
           });
 
           await db
-            .update(sharedWillInvites)
+            .update(teamWillInvites)
             .set({ reminderSentAt: now })
-            .where(eq(sharedWillInvites.id, row.invite.id));
+            .where(eq(teamWillInvites.id, row.invite.id));
         } catch (remindErr) {
-          console.error(`[SCHEDULER-SHARED] Failed to send reminder for invite ${row.invite.id}:`, remindErr);
+          console.error(`[SCHEDULER-TEAM] Failed to send reminder for invite ${row.invite.id}:`, remindErr);
         }
       }
     } catch (err) {
-      console.error('[SCHEDULER-SHARED] Error in sendSharedWillInviteReminders:', err);
+      console.error('[SCHEDULER-TEAM] Error in sendTeamWillInviteReminders:', err);
     }
   }
 }

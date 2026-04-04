@@ -35,7 +35,7 @@ import MyWills from "@/pages/MyWills";
 import Today from "@/pages/Today";
 import ProofFeed from "@/pages/ProofFeed";
 import AcceptInvite from "@/pages/AcceptInvite";
-import CreateSharedWill from "@/pages/CreateSharedWill";
+import CreateTeamWill from "@/pages/CreateTeamWill";
 import WillPage from "@/pages/WillPage";
 
 // Global debug helper for easy access
@@ -372,13 +372,13 @@ function Router() {
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/personal/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/circle/history">{() => <WillHistory mode="circle" />}</Route>
-            <Route path="/shared/history">{() => <WillHistory mode="shared" />}</Route>
+            <Route path="/team/history">{() => <WillHistory mode="team" />}</Route>
             <Route path="/public/history">{() => <WillHistory mode="public" />}</Route>
             <Route path="/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/solo/start-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/will/:id/messages">{(params) => <WillMessagesPage willId={parseInt(params.id)} />}</Route>
             <Route path="/will/:id/invite" component={AcceptInvite} />
-            <Route path="/create-shared-will" component={CreateSharedWill} />
+            <Route path="/create-team-will" component={CreateTeamWill} />
             <Route path="/will/:id" component={WillPage} />
             <Route path="/will/:id/commit" component={SubmitCommitment} />
             <Route path="/will/:id/edit" component={EditWill} />

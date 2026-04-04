@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import SharedWillHub from "./SharedWillHub";
+import TeamWillHub from "./TeamWillHub";
 import WillDetails from "./WillDetails";
 
 export default function WillPage() {
@@ -23,8 +23,8 @@ export default function WillPage() {
     );
   }
 
-  if (will?.mode === "shared") {
-    return <SharedWillHub willId={willId} />;
+  if (will?.mode === "team") {
+    return <TeamWillHub willId={willId} />;
   }
 
   return <WillDetails />;

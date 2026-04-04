@@ -43,7 +43,7 @@ function PendingInviteCard({ item, onAccept, onDecline, accepting, declining }: 
   accepting: boolean;
   declining: boolean;
 }) {
-  const willTitle = item.will.title || item.will.sharedWhat || 'a Shared Will';
+  const willTitle = item.will.title || item.will.sharedWhat || 'a Team Will';
   const start = new Date(item.will.startDate);
   const end = item.will.endDate ? new Date(item.will.endDate) : null;
   const dateLabel = end
@@ -97,7 +97,7 @@ function getDisplayTitle(will: Will, userId?: string): string {
 function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; userId?: string }) {
   const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
   const isCircle = will.mode === 'circle';
-  const isShared = will.mode === 'shared';
+  const isTeamWill = will.mode === 'team';
   const isPublic = will.visibility === 'public' || !!will.parentWillId;
 
   const statusConfig: Record<string, { label: string; className: string; icon: typeof Flame }> = {
@@ -130,7 +130,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
       data-testid={`card-will-${will.id}`}
     >
       <Card className={`border shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98] ${
-        isShared
+        isTeamWill
           ? 'bg-white border-violet-200 group-hover:border-violet-300'
           : isCircle
           ? 'bg-white border-purple-200 group-hover:border-purple-300'
@@ -141,9 +141,9 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              isShared ? 'bg-violet-50' : isCircle ? 'bg-purple-50' : isPublic ? 'bg-blue-50' : 'bg-emerald-50'
+              isTeamWill ? 'bg-violet-50' : isCircle ? 'bg-purple-50' : isPublic ? 'bg-blue-50' : 'bg-emerald-50'
             }`}>
-              {isShared
+              {isTeamWill
                 ? <Users className="w-5 h-5 text-violet-600" />
                 : isCircle
                 ? <Users className="w-5 h-5 text-purple-600" />
@@ -156,7 +156,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
               <p className="text-sm font-medium text-gray-900 truncate" data-testid={`text-will-title-${will.id}`}>
                 {getDisplayTitle(will, userId)}
               </p>
-              {isShared && (
+              {isTeamWill && (
                 <div className="mt-0.5" data-testid={`text-shared-info-${will.id}`}>
                   {will.commitments && will.commitments.length > 0 && (
                     <p className="text-xs text-violet-600 font-medium truncate">
@@ -196,7 +196,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
                 </div>
               )}
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                {isShared && (
+                {isTeamWill && (
                   <Badge className="text-xs bg-violet-100 text-violet-700 hover:bg-violet-100" data-testid={`badge-shared-${will.id}`}>
                     Shared
                   </Badge>
@@ -212,7 +212,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
               </div>
             </div>
             <ChevronRight className={`w-5 h-5 mt-2.5 flex-shrink-0 ${
-              isShared
+              isTeamWill
                 ? 'text-gray-300 group-hover:text-violet-400'
                 : isCircle
                 ? 'text-gray-300 group-hover:text-purple-400'
@@ -229,7 +229,7 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
 
 export default function MyWills() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<'solo' | 'shared' | 'public'>('solo');
+  const [activeTab, setActiveTab] = useState<'solo' | 'team' | 'public'>('solo');
   const [showWhoModal, setShowWhoModal] = useState(false);
   const [actioningInviteId, setActioningInviteId] = useState<{ id: number; action: 'accept' | 'decline' } | null>(null);
 
@@ -278,12 +278,12 @@ export default function MyWills() {
   ) || [];
 
   const isPublicWill = (w: Will) => w.visibility === 'public' || !!w.parentWillId;
-  const soloWills = activeWills.filter(w => w.mode !== 'circle' && w.mode !== 'shared' && !isPublicWill(w));
-  const sharedWills = activeWills.filter(w => w.mode === 'shared');
+  const soloWills = activeWills.filter(w => w.mode !== 'circle' && w.mode !== 'team' && !isPublicWill(w));
+  const teamWills = activeWills.filter(w => w.mode === 'team');
   const publicWills = activeWills.filter(w => isPublicWill(w));
 
-  const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'shared' ? sharedWills : publicWills;
-  const sharedTabCount = sharedWills.length + pendingInvites.length;
+  const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'team' ? teamWills : publicWills;
+  const sharedTabCount = teamWills.length + pendingInvites.length;
 
   const handleViewWill = (will: Will) => {
     sessionStorage.setItem('willBackUrl', '/wills');
@@ -311,7 +311,7 @@ export default function MyWills() {
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
             {([
               { key: 'solo' as const, label: 'Solo', count: soloWills.length },
-              { key: 'shared' as const, label: 'Shared', count: sharedTabCount },
+              { key: 'team' as const, label: 'Team', count: sharedTabCount },
               { key: 'public' as const, label: 'Public', count: publicWills.length },
             ]).map(tab => (
               <button
@@ -328,8 +328,8 @@ export default function MyWills() {
                 {tab.count > 0 && (
                   <span className={`ml-1.5 text-xs ${
                     activeTab === tab.key
-                      ? tab.key === 'shared' && pendingInvites.length > 0 ? 'text-violet-600' : 'text-emerald-600'
-                      : tab.key === 'shared' && pendingInvites.length > 0 ? 'text-violet-400' : 'text-gray-400'
+                      ? tab.key === 'team' && pendingInvites.length > 0 ? 'text-violet-600' : 'text-emerald-600'
+                      : tab.key === 'team' && pendingInvites.length > 0 ? 'text-violet-400' : 'text-gray-400'
                   }`}>
                     {tab.count}
                   </span>
@@ -373,7 +373,7 @@ export default function MyWills() {
           )}
 
           {/* Pending invitations — shown only in the Shared tab */}
-          {!isLoading && activeTab === 'shared' && pendingInvites.length > 0 && (
+          {!isLoading && activeTab === 'team' && pendingInvites.length > 0 && (
             <div className="space-y-3">
               {pendingInvites.map(item => (
                 <PendingInviteCard
@@ -394,12 +394,12 @@ export default function MyWills() {
             </div>
           )}
 
-          {!isLoading && !isError && activeTab === 'shared' && sharedWills.length === 0 && pendingInvites.length === 0 && (
+          {!isLoading && !isError && activeTab === 'team' && teamWills.length === 0 && pendingInvites.length === 0 && (
             <div className="text-center py-12">
               <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                 <Users className="w-7 h-7 text-gray-400" />
               </div>
-              <p className="text-gray-500 text-sm mb-1">No shared wills yet</p>
+              <p className="text-gray-500 text-sm mb-1">No team wills yet</p>
               <p className="text-gray-400 text-xs mb-5">Create a will with a friend to get started</p>
               <button
                 onClick={() => setShowWhoModal(true)}
@@ -411,7 +411,7 @@ export default function MyWills() {
             </div>
           )}
 
-          {!isLoading && !isError && activeTab !== 'shared' && displayWills.length === 0 && (
+          {!isLoading && !isError && activeTab !== 'team' && displayWills.length === 0 && (
             <div className="text-center py-12">
               <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-gray-400" />
@@ -445,7 +445,7 @@ export default function MyWills() {
 
           {!isLoading && !isError && allActiveWills !== null && (
             <button
-              onClick={() => setLocation(activeTab === 'shared' ? '/shared/history' : activeTab === 'public' ? '/public/history' : '/solo/history')}
+              onClick={() => setLocation(activeTab === 'team' ? '/team/history' : activeTab === 'public' ? '/public/history' : '/solo/history')}
               className="w-full mt-4 group"
               data-testid="button-will-history"
             >

@@ -345,13 +345,13 @@ class PushNotificationService {
   }
 
   // Predefined notification templates for the 4 key moments
-  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isSharedWill: boolean = false, willTitle?: string): Promise<void> {
+  async sendWillProposedNotification(creatorName: string, circleMembers: string[], willId?: number, isTeamWill: boolean = false, willTitle?: string): Promise<void> {
     const payload: PushNotificationPayload = {
       title: willTitle
         ? `${willTitle} — new Will proposed! 📝`
-        : (isSharedWill ? "New Shared Will proposed! 📝" : "New Will proposed! 📝"),
-      body: isSharedWill
-        ? `${creatorName} proposed a new Shared Will`
+        : (isTeamWill ? "New Team Will proposed! 📝" : "New Will proposed! 📝"),
+      body: isTeamWill
+        ? `${creatorName} proposed a new Team Will`
         : `${creatorName} has proposed starting a new Will`,
       category: 'will_proposed',
       data: {
@@ -359,7 +359,7 @@ class PushNotificationService {
         creatorName,
         willId: willId?.toString() || '',
         isSoloMode: 'false',
-        isSharedWill: isSharedWill ? 'true' : 'false',
+        isTeamWill: isTeamWill ? 'true' : 'false',
         deepLink: willId ? `/will/${willId}/commit` : '/my-wills',
       }
     };

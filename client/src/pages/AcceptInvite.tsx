@@ -137,7 +137,7 @@ export default function AcceptInvite() {
                 <Users className="w-7 h-7 text-white" strokeWidth={1.5} />
               </div>
               <p className="text-sm font-medium text-white/80 mb-1">
-                {will.creatorName || "A friend"} invited you to a Shared Will
+                {will.creatorName || "A friend"} invited you to a Team Will
               </p>
               <p className="text-lg font-bold text-white">
                 {isWill ? "We Will" : "I Will"}

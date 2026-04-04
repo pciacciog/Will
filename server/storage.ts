@@ -56,7 +56,7 @@ import {
   type TodayEntry,
   todayItems,
   type TodayItem,
-  sharedWillInvites,
+  teamWillInvites,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
@@ -112,7 +112,7 @@ export interface IStorage {
   getWillReviewCount(willId: number): Promise<number>;
   
   // Will history operations
-  getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'shared' | 'public', limit?: number): Promise<{
+  getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'team' | 'public', limit?: number): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -194,7 +194,7 @@ export interface IStorage {
   getWillFinalReflection(willId: number, userId: string): Promise<WillFinalReflection | undefined>;
   
   // User stats operations
-  getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'shared' | 'public'): Promise<{
+  getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'team' | 'public'): Promise<{
     totalWills: number;
     overallSuccessRate: number;
     dailyStats: { totalDays: number; successfulDays: number; successRate: number };
@@ -202,7 +202,7 @@ export interface IStorage {
   }>;
   
   // Enhanced history with check-in data
-  getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'shared' | 'public', limit?: number): Promise<{
+  getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'team' | 'public', limit?: number): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -529,49 +529,49 @@ export class DatabaseStorage implements IStorage {
     }
     console.log('[STORAGE] Circle wills processed:', circleWillsList.length);
 
-    // Fetch shared wills where user has a commitment
-    const sharedWillCommitments = await db
+    // Fetch team wills where user has a commitment
+    const teamWillCommitments = await db
       .select()
       .from(willCommitments)
       .innerJoin(wills, eq(willCommitments.willId, wills.id))
       .where(and(
         eq(willCommitments.userId, userId),
-        eq(wills.mode, 'shared'),
+        eq(wills.mode, 'team'),
         sql`${wills.status} NOT IN ('completed', 'archived', 'terminated')`
       ))
       .orderBy(desc(wills.createdAt));
-    console.log('[STORAGE] Shared will commitments found:', sharedWillCommitments.length);
+    console.log('[STORAGE] Team will commitments found:', teamWillCommitments.length);
 
-    // Also fetch shared wills created by the user (even if creator hasn't committed yet — shouldn't happen but just in case)
-    const createdSharedWills = await db
+    // Also fetch team wills created by the user (even if creator hasn't committed yet — shouldn't happen but just in case)
+    const createdTeamWills = await db
       .select()
       .from(wills)
       .where(and(
         eq(wills.createdBy, userId),
-        eq(wills.mode, 'shared'),
+        eq(wills.mode, 'team'),
         sql`${wills.status} NOT IN ('completed', 'archived', 'terminated')`
       ))
       .orderBy(desc(wills.createdAt));
 
-    const sharedWillsList: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [];
-    const seenSharedWillIds = new Set<number>();
+    const teamWillsList: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [];
+    const seenTeamWillIds = new Set<number>();
 
-    for (const row of sharedWillCommitments) {
-      if (!row.wills || seenSharedWillIds.has(row.wills.id)) continue;
-      seenSharedWillIds.add(row.wills.id);
-      sharedWillsList.push({ ...row.wills, circleName: undefined as string | undefined, circleCode: undefined as string | undefined });
+    for (const row of teamWillCommitments) {
+      if (!row.wills || seenTeamWillIds.has(row.wills.id)) continue;
+      seenTeamWillIds.add(row.wills.id);
+      teamWillsList.push({ ...row.wills, circleName: undefined as string | undefined, circleCode: undefined as string | undefined });
     }
-    for (const w of createdSharedWills) {
-      if (seenSharedWillIds.has(w.id)) continue;
-      seenSharedWillIds.add(w.id);
-      sharedWillsList.push({ ...w, circleName: undefined as string | undefined, circleCode: undefined as string | undefined });
+    for (const w of createdTeamWills) {
+      if (seenTeamWillIds.has(w.id)) continue;
+      seenTeamWillIds.add(w.id);
+      teamWillsList.push({ ...w, circleName: undefined as string | undefined, circleCode: undefined as string | undefined });
     }
-    console.log('[STORAGE] Shared wills processed:', sharedWillsList.length);
+    console.log('[STORAGE] Shared wills processed:', teamWillsList.length);
 
     const allWills: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [
       ...personalWillsList.map(w => ({ ...w, circleName: undefined as string | undefined, circleCode: undefined as string | undefined })),
       ...circleWillsList,
-      ...sharedWillsList,
+      ...teamWillsList,
     ];
     console.log('[STORAGE] Combined wills:', allWills.length);
 
@@ -622,24 +622,24 @@ export class DatabaseStorage implements IStorage {
           }
         }
 
-        // For shared wills, fetch pending invite count + accepted participant names
-        if (will.mode === 'shared') {
+        // For team wills, fetch pending invite count + accepted participant names
+        if (will.mode === 'team') {
           try {
             const invites = await db
               .select({
-                status: sharedWillInvites.status,
+                status: teamWillInvites.status,
                 firstName: users.firstName,
               })
-              .from(sharedWillInvites)
-              .innerJoin(users, eq(sharedWillInvites.invitedUserId, users.id))
-              .where(eq(sharedWillInvites.willId, will.id));
+              .from(teamWillInvites)
+              .innerJoin(users, eq(teamWillInvites.invitedUserId, users.id))
+              .where(eq(teamWillInvites.willId, will.id));
 
             pendingInviteCount = invites.filter(i => i.status === 'pending').length;
             sharedParticipants = invites
               .filter(i => i.status === 'accepted')
               .map(i => ({ firstName: i.firstName }));
           } catch (e) {
-            console.warn('[STORAGE] Could not fetch shared will invite info for will:', will.id);
+            console.warn('[STORAGE] Could not fetch team will invite info for will:', will.id);
           }
         }
 
@@ -904,7 +904,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Will history operations
-  async getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'shared' | 'public', limit: number = 20): Promise<{
+  async getUserWillHistory(userId: string, mode: 'solo' | 'circle' | 'team' | 'public', limit: number = 20): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -978,7 +978,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           inArray(wills.id, willIds),
-          inArray(wills.mode, mode === 'shared' ? ['shared'] : ['circle']),
+          inArray(wills.mode, mode === 'team' ? ['team'] : ['circle']),
           inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))
@@ -1427,7 +1427,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'shared' | 'public'): Promise<{
+  async getUserWillStats(userId: string, mode?: 'solo' | 'circle' | 'team' | 'public'): Promise<{
     totalWills: number;
     overallSuccessRate: number;
     dailyStats: { totalDays: number; successfulDays: number; successRate: number };
@@ -1492,14 +1492,14 @@ export class DatabaseStorage implements IStorage {
       publicWillsList = Array.from(uniqueMap.values());
     }
     
-    if (!mode || mode === 'circle' || mode === 'shared') {
+    if (!mode || mode === 'circle' || mode === 'team') {
       if (willIds.length > 0) {
         circleWillsList = await db
           .select()
           .from(wills)
           .where(and(
             inArray(wills.id, willIds),
-            mode === 'shared' ? eq(wills.mode, 'shared') : (mode === 'circle' ? eq(wills.mode, 'circle') : inArray(wills.mode, ['circle', 'shared'])),
+            mode === 'team' ? eq(wills.mode, 'team') : (mode === 'circle' ? eq(wills.mode, 'circle') : inArray(wills.mode, ['circle', 'team'])),
             inArray(wills.status, ['completed', 'archived'])
           ));
       }
@@ -1584,7 +1584,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'shared' | 'public', limit: number = 20): Promise<{
+  async getUserWillHistoryWithCheckIns(userId: string, mode: 'solo' | 'circle' | 'team' | 'public', limit: number = 20): Promise<{
     id: number;
     mode: string;
     startDate: Date;
@@ -1669,7 +1669,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           inArray(wills.id, willIds),
-          inArray(wills.mode, mode === 'shared' ? ['shared'] : ['circle']),
+          inArray(wills.mode, mode === 'team' ? ['team'] : ['circle']),
           inArray(wills.status, ['completed', 'archived'])
         ))
         .orderBy(desc(wills.endDate))

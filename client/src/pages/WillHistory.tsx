@@ -68,7 +68,7 @@ type WillCheckIn = {
 };
 
 interface WillHistoryProps {
-  mode: 'solo' | 'circle' | 'shared' | 'public';
+  mode: 'solo' | 'circle' | 'team' | 'public';
 }
 
 export default function WillHistory({ mode }: WillHistoryProps) {
@@ -226,7 +226,7 @@ export default function WillHistory({ mode }: WillHistoryProps) {
           </button>
           
           <h1 className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none">
-            {isPublic ? 'Public' : isSolo ? 'Solo' : mode === 'shared' ? 'Shared' : 'Circle'} Insights
+            {isPublic ? 'Public' : isSolo ? 'Solo' : mode === 'team' ? 'Shared' : 'Circle'} Insights
           </h1>
           
           <div className="w-9" />
@@ -411,7 +411,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
     enabled: isDailyTracked,
   });
 
-  // Fetch proof drops for circle/shared wills
+  // Fetch proof drops for circle/team wills
   const { data: proofsData } = useQuery<{ items: ProofDrop[] }>({
     queryKey: [`/api/wills/${will.id}/proofs`, 'history'],
     queryFn: async () => {
@@ -425,7 +425,7 @@ function WillDetailView({ will, mode, themeColors, onBack, formatSingleDate, get
       if (!resp.ok) throw new Error('Failed to fetch proofs');
       return resp.json();
     },
-    enabled: mode === 'circle' || mode === 'shared',
+    enabled: mode === 'circle' || mode === 'team',
   });
   // Show oldest-first in history view (chronological order)
   const proofDrops: ProofDrop[] = [...(proofsData?.items || [])].reverse();

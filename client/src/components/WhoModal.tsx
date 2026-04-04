@@ -16,7 +16,7 @@ export function WhoModal({ isOpen, onClose }: WhoModalProps) {
     if (choice === "solo") {
       setLocation("/create-will");
     } else if (choice === "friends") {
-      setLocation("/create-shared-will");
+      setLocation("/create-team-will");
     } else {
       setLocation("/create-will?visibility=public");
     }

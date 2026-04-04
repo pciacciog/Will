@@ -464,7 +464,7 @@ export default function WillDetails() {
         queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'solo'] });
       } else {
         queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'shared'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/wills/history', 'team'] });
       }
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       

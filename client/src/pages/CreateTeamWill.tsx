@@ -59,7 +59,7 @@ function getDurationText(startStr: string, endStr: string) {
   return rem === 0 ? `${weeks} week${weeks > 1 ? "s" : ""}` : `${weeks} week${weeks > 1 ? "s" : ""}, ${rem} day${rem > 1 ? "s" : ""}`;
 }
 
-export default function CreateSharedWill() {
+export default function CreateTeamWill() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -204,7 +204,7 @@ export default function CreateSharedWill() {
     const endDateTime = isIndefinite ? null : createDateTimeFromInputs(endDate, endTime);
 
     createWillMutation.mutate({
-      mode: "shared",
+      mode: "team",
       willType,
       invitedFriendIds: selectedFriendIds,
       startDate: startDateTime,
@@ -234,7 +234,7 @@ export default function CreateSharedWill() {
             <div className="relative flex items-center mb-2 min-h-[44px]">
               <UnifiedBackButton onClick={goBack} testId="button-back" />
               <span className="absolute left-0 right-0 text-center text-sm font-medium text-gray-500 pointer-events-none">
-                Create Shared Will
+                Create Team Will
               </span>
               <div className="w-11 ml-auto" />
             </div>
@@ -291,7 +291,7 @@ export default function CreateSharedWill() {
                     <Users className="w-7 h-7 text-violet-400" />
                   </div>
                   <p className="text-gray-600 font-medium mb-1">No friends yet</p>
-                  <p className="text-gray-400 text-sm mb-5">Add friends first to create a Shared Will</p>
+                  <p className="text-gray-400 text-sm mb-5">Add friends first to create a Team Will</p>
                   <Button onClick={() => setLocation("/friends")} className="bg-violet-600 hover:bg-violet-700 text-white">
                     Go to Friends
                   </Button>
