@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { MobileLayout, PrimaryButton, UnifiedBackButton } from "@/components/ui/design-system";
-import { ArrowRight, Check, Users, Target, Calendar, Clock, ClipboardList, MessageCircle, CalendarDays, CheckCircle, Heart, Search } from "lucide-react";
+import { ArrowRight, Check, Users, Target, Calendar, Clock, ClipboardList, MessageCircle, CalendarDays, CheckCircle, Heart, Search, Tag } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 
 type Friend = {
@@ -87,6 +87,7 @@ export default function CreateTeamWill() {
   const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [friendSearch, setFriendSearch] = useState("");
+  const [willTitle, setWillTitle] = useState("");
 
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
@@ -219,6 +220,7 @@ export default function CreateTeamWill() {
       what: willType === "cumulative" ? undefined : what,
       sharedWhat: willType === "cumulative" ? what : undefined,
       because: why,
+      title: willTitle.trim() || undefined,
       checkInType: isShortDuration ? "final_review" : checkInType,
       checkInTime: checkInType !== "final_review" && !isShortDuration ? checkInTime : undefined,
       activeDays: checkInType === "specific_days" ? "custom" : checkInType === "daily" ? "every_day" : undefined,
@@ -623,6 +625,24 @@ export default function CreateTeamWill() {
 
               {/* Review rows */}
               <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-100 shadow-sm">
+                {/* Title (optional) */}
+                <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Tag className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-gray-400">Title <span className="font-normal">(optional)</span></p>
+                    <input
+                      type="text"
+                      maxLength={40}
+                      value={willTitle}
+                      onChange={e => setWillTitle(e.target.value)}
+                      placeholder="Give your Will a name…"
+                      className="w-full text-sm text-gray-900 bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-gray-300 mt-0.5 p-0"
+                      data-testid="input-will-title"
+                    />
+                  </div>
+                </div>
                 {/* Team */}
                 <div className="flex items-start gap-3 px-4 py-3">
                   <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
