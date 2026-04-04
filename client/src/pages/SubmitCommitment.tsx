@@ -72,12 +72,10 @@ export default function SubmitCommitment() {
   const isCumulative = (will as any)?.willType === 'cumulative';
   const sharedWhat = (will as any)?.sharedWhat;
 
-  const isShortDuration = useMemo(() => {
-    const w = will as any;
-    if (!w?.startDate || !w?.endDate || w?.isIndefinite) return false;
-    const diffMs = new Date(w.endDate).getTime() - new Date(w.startDate).getTime();
-    return diffMs <= 24 * 60 * 60 * 1000;
-  }, [will]);
+  // SubmitCommitment is exclusively for Team Will invitees — every participant
+  // should always choose their own tracking preference regardless of duration.
+  // Short-duration skipping only applies to solo will creation (StartWill.tsx).
+  const isShortDuration = false;
   
   useEffect(() => {
     if ((will as any)?.checkInTime) {
