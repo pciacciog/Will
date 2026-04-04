@@ -1,0 +1,59 @@
+Exactly right on both — here's the updated prompt incorporating both fixes:
+
+Redesign the Team Will invite screen to handle both I Will and We Will types, with dynamic team status.
+Context: The invite screen is the first thing a user sees when invited to a Team Will. It must communicate who invited them, what they're joining, who else is on the team, and make accepting feel intentional. Everything must fit on one screen — no scrolling. Reduce the hero card padding if needed to achieve this.
+
+Structure (same for both types):
+
+Nav — 3-column grid, centered title "Team Will Invite", circular back button left, empty right column
+Hero card — purple (#7B3FC4), rounded:
+
+Inviter avatar (initial, translucent white circle)
+Sub-label: "[First Last] invited you to a" (muted white)
+If Will Title set → title in large bold white
+If no Will Title → "Will" in large bold white as fallback
+We Will only → translucent inset card below title showing "The commitment" label + shared commitment text in white bold italic
+I Will → no commitment in hero
+
+
+Who's in / Commitments card — only show this section if other users were also invited besides the current user. If the current user is the only invitee, skip this section entirely:
+
+I Will label: "Commitments"
+We Will label: "Who's in"
+Accepted members: full opacity, purple avatar, green dot, name on left
+
+I Will → show their individual commitment in italic below their name
+We Will → show "In" green pill on right, no individual commitment (already in hero)
+
+
+Pending members: muted/reduced opacity, gray avatar, "Pending" label on right
+Divider separates accepted from pending
+
+
+Type of Will card — purple tint (#F3EAFE), purple border:
+
+Label: "Type of Will"
+I Will → target icon · "I Will" · "Each member pursues their own individual commitment"
+We Will → group icon · "We Will" · "Every member pursues a shared commitment"
+
+
+Starts row — neutral gray card, amber calendar icon, "Starts" label. Format the date range as "Apr 4 – Apr 12, 2026" — never show duration in shorthand like "1w 2d". If the Will starts and ends in the same day show "Apr 4, 2026"
+Expiry line — small muted centered text
+Accept button — full width green, checkmark icon, "Accept invite"
+Decline button — full width neutral gray, × icon, "Decline"
+Decline sub-label — "You can decline if this doesn't work for you right now."
+
+
+Title logic:
+
+Will Title exists → "[Name] invited you to [Will Title]"
+No Will Title → "[Name] invited you to a Will"
+
+Commitment display rules:
+
+I Will accepted member → show their individual commitment in italic below their name
+I Will pending member → show name + "Pending" only, no commitment
+We Will accepted member → show name + "In" badge only, commitment already shown in hero
+We Will pending member → show name + "Pending" only
+
+One page rule: All content must fit without scrolling on a standard iPhone screen. Reduce hero padding, avatar size, and row padding as needed — prioritize fitting over visual breathing room.

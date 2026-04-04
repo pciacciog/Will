@@ -1435,13 +1435,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const will = await storage.getWillById(willId);
       let creatorName = 'A friend';
+      let creatorData: any = null;
       if (will?.createdBy) {
         const creator = await storage.getUser(will.createdBy);
         if (creator) {
           creatorName = `${creator.firstName || ''} ${creator.lastName || ''}`.trim() || 'A friend';
+          creatorData = creator;
         }
       }
-      res.json({ invite, will: { ...will, creatorName } });
+
+      // Build team members list: creator + all invitees (for "Who's in" display)
+      const allInvitees = await db
+        .select({
+          invitedUserId: teamWillInvites.invitedUserId,
+          status: teamWillInvites.status,
+          firstName: users.firstName,
+        })
+        .from(teamWillInvites)
+        .innerJoin(users, eq(teamWillInvites.invitedUserId, users.id))
+        .where(eq(teamWillInvites.willId, willId));
+
+      const commitmentRows = await db
+        .select({ userId: willCommitments.userId, what: willCommitments.what })
+        .from(willCommitments)
+        .where(eq(willCommitments.willId, willId));
+
+      const commitmentByUser: Record<string, string> = {};
+      for (const c of commitmentRows) {
+        commitmentByUser[c.userId] = c.what;
+      }
+
+      const teamMembers = [
+        {
+          userId: will!.createdBy,
+          firstName: creatorData?.firstName || 'Creator',
+          isCreator: true,
+          status: 'accepted' as const,
+          commitment: commitmentByUser[will!.createdBy] || null,
+        },
+        ...allInvitees.map(inv => ({
+          userId: inv.invitedUserId,
+          firstName: inv.firstName || 'Member',
+          isCreator: false,
+          status: inv.status as 'accepted' | 'pending' | 'declined',
+          commitment: commitmentByUser[inv.invitedUserId] || null,
+        })),
+      ];
+
+      res.json({ invite, will: { ...will, creatorName }, teamMembers });
     } catch (err) {
       console.error('[Invites] Failed to fetch my-invite:', err);
       res.status(500).json({ message: 'Failed to fetch invite' });

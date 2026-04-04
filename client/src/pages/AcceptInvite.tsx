@@ -6,15 +6,26 @@ import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, Calendar, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-function formatStartsLine(startStr: string, endStr: string | null, isIndefinite: boolean): string {
+type TeamMember = {
+  userId: string;
+  firstName: string;
+  isCreator: boolean;
+  status: "accepted" | "pending" | "declined";
+  commitment: string | null;
+};
+
+function formatDateRange(startStr: string, endStr: string | null, isIndefinite: boolean): string {
   const start = new Date(startStr);
-  const datePart = start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  const timePart = start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  if (isIndefinite) return `${datePart} at ${timePart} · ongoing`;
-  if (!endStr) return `${datePart} at ${timePart}`;
-  const days = Math.ceil((new Date(endStr).getTime() - start.getTime()) / 86400000);
-  const dur = days === 1 ? "1 day" : days < 7 ? `${days} days` : days === 7 ? "1 week" : `${Math.floor(days / 7)}w ${days % 7 > 0 ? `${days % 7}d` : ""}`.trim();
-  return `${datePart} at ${timePart} · ${dur}`;
+  const year = start.getFullYear();
+  const startPart = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (isIndefinite) return `${startPart}, ${year} · ongoing`;
+  if (!endStr) return `${startPart}, ${year}`;
+  const end = new Date(endStr);
+  if (start.toDateString() === end.toDateString()) return `${startPart}, ${year}`;
+  const endPart = end.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const endYear = end.getFullYear();
+  if (year === endYear) return `${startPart} – ${endPart}, ${year}`;
+  return `${startPart}, ${year} – ${endPart}, ${endYear}`;
 }
 
 function formatExpiryLine(expiresAt: string): string {
@@ -47,6 +58,7 @@ export default function AcceptInvite() {
       creatorName?: string;
       checkInType: string;
     };
+    teamMembers: TeamMember[];
   }>({
     queryKey: [`/api/wills/${willId}/my-invite`],
     enabled: !!user && !!willId,
@@ -59,6 +71,7 @@ export default function AcceptInvite() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wills/all-active"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/my-pending-invites'] });
       toast({ title: "Invite accepted!", description: "Now set your commitment.", duration: 3000 });
       setLocation(`/will/${willId}/commit`);
     },
@@ -74,6 +87,7 @@ export default function AcceptInvite() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wills/all-active"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/my-pending-invites'] });
       toast({ title: "Invite declined.", duration: 3000 });
       setLocation("/");
     },
@@ -112,56 +126,71 @@ export default function AcceptInvite() {
     );
   }
 
-  const { invite, will } = data;
+  const { invite, will, teamMembers = [] } = data;
   const isExpired = invite.status === "expired" || (invite.expiresAt && new Date(invite.expiresAt) <= new Date());
   const isAlreadyActioned = invite.status === "accepted" || invite.status === "declined";
   const isWeWill = will.willType === "cumulative";
   const inviterName = will.creatorName || "A friend";
   const inviterInitial = inviterName.charAt(0).toUpperCase();
 
+  // Team section logic — show if there are members besides the current user
+  const visibleMembers = teamMembers.filter(m => m.status !== "declined");
+  const otherMembers = visibleMembers.filter(m => m.userId !== user?.id);
+  const showTeamSection = otherMembers.length > 0;
+
+  // Sort: accepted first, then pending
+  const sortedMembers = [
+    ...visibleMembers.filter(m => m.isCreator || m.status === "accepted"),
+    ...visibleMembers.filter(m => !m.isCreator && m.status === "pending"),
+  ];
+
+  const isBusy = acceptMutation.isPending || declineMutation.isPending;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div
-        className="pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
-        style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+        style={{
+          paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
+        }}
       >
-        <div className="max-w-sm mx-auto px-5">
+        <div className="max-w-sm mx-auto px-4 space-y-2.5">
 
           {/* 3-column nav */}
-          <div className="grid items-center mb-4" style={{ gridTemplateColumns: "40px 1fr 40px" }}>
+          <div className="grid items-center mb-1" style={{ gridTemplateColumns: "40px 1fr 40px" }}>
             <button
               onClick={() => setLocation("/")}
               className="w-10 h-10 flex items-center justify-center"
               data-testid="button-back"
             >
-              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition-all active:scale-95">
-                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition-all active:scale-95">
+                <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
               </span>
             </button>
-            <h1 className="text-center text-base font-semibold text-gray-900">Team Will Invite</h1>
+            <h1 className="text-center text-sm font-semibold text-gray-900">Team Will Invite</h1>
             <span />
           </div>
 
           {/* Hero card */}
-          <div className="rounded-2xl overflow-hidden mb-3" style={{ backgroundColor: "#7B3FC4" }}>
-            <div className="p-6 text-center">
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#7B3FC4" }}>
+            <div className="px-5 py-4 text-center">
               <div
-                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+                className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-2"
                 style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
               >
-                <span className="text-white font-bold text-xl">{inviterInitial}</span>
+                <span className="text-white font-bold text-lg">{inviterInitial}</span>
               </div>
-              <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.75)" }}>
-                {inviterName} invited you to{will.title ? ':' : ' a'}
+              <p className="text-xs mb-0.5" style={{ color: "rgba(255,255,255,0.75)" }}>
+                {inviterName} invited you to{will.title ? "" : " a"}
               </p>
-              <p className="text-xl font-bold text-white mb-3">
-                {will.title || 'Will'}
+              <p className="text-lg font-bold text-white mb-2">
+                {will.title || "Will"}
               </p>
 
               {/* We Will — shared commitment inset */}
               {isWeWill && will.sharedWhat && (
                 <div
-                  className="rounded-xl px-4 py-3 text-center"
+                  className="rounded-xl px-3 py-2.5 text-left"
                   style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
                 >
                   <p className="text-[10px] font-medium mb-1" style={{ color: "rgba(255,255,255,0.65)" }}>
@@ -175,19 +204,70 @@ export default function AcceptInvite() {
             </div>
           </div>
 
-          {/* Type of Will card */}
+          {/* Who's in / Commitments — only if there are other members */}
+          {showTeamSection && (
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide px-4 pt-3 pb-1.5">
+                {isWeWill ? "Who's in" : "Commitments"}
+              </p>
+              {sortedMembers.map((member, idx) => {
+                const isAccepted = member.isCreator || member.status === "accepted";
+                const isCurrentUser = member.userId === user?.id;
+                const isLast = idx === sortedMembers.length - 1;
+                return (
+                  <div
+                    key={member.userId}
+                    className={`flex items-center gap-3 px-4 py-2.5 ${!isLast ? "border-b border-gray-50" : ""} ${!isAccepted ? "opacity-50" : ""}`}
+                  >
+                    {/* Avatar with status dot */}
+                    <div className="relative flex-shrink-0">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                        style={{ backgroundColor: isAccepted ? "#7B3FC4" : "#D1D5DB" }}
+                      >
+                        {member.firstName.charAt(0).toUpperCase()}
+                      </div>
+                      {isAccepted && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white" />
+                      )}
+                    </div>
+
+                    {/* Name + commitment (I Will only) */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 leading-tight">
+                        {member.firstName}{isCurrentUser ? " (You)" : ""}
+                      </p>
+                      {!isWeWill && isAccepted && member.commitment && (
+                        <p className="text-xs italic text-gray-400 truncate">"{member.commitment}"</p>
+                      )}
+                    </div>
+
+                    {/* Status label */}
+                    {isAccepted ? (
+                      isWeWill ? (
+                        <span className="text-xs font-semibold text-emerald-600 flex-shrink-0">In</span>
+                      ) : null
+                    ) : (
+                      <span className="text-xs text-gray-400 flex-shrink-0">Pending</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Type of Will */}
           <div
-            className="rounded-2xl p-4 mb-3 border"
+            className="rounded-2xl px-4 py-3 border"
             style={{ backgroundColor: "#F3EAFE", borderColor: "#D4B8F0" }}
           >
-            <p className="text-[11px] font-medium text-purple-400 mb-2 uppercase tracking-wide">Type of Will</p>
+            <p className="text-[10px] font-medium text-purple-400 mb-2 uppercase tracking-wide">Type of Will</p>
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: "#7B3FC4" }}
               >
                 {isWeWill ? (
-                  /* Group / people icon for We Will */
                   <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
@@ -195,7 +275,6 @@ export default function AcceptInvite() {
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
                 ) : (
-                  /* Target / circle icon for I Will */
                   <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="9" />
                     <circle cx="12" cy="12" r="4" />
@@ -207,7 +286,7 @@ export default function AcceptInvite() {
                 <p className="font-bold text-gray-900 text-sm">{isWeWill ? "We Will" : "I Will"}</p>
                 <p className="text-xs mt-0.5 leading-snug" style={{ color: "#7B3FC4" }}>
                   {isWeWill
-                    ? "Every member pursues the same commitment"
+                    ? "Every member pursues a shared commitment"
                     : "Each member pursues their own individual commitment"}
                 </p>
               </div>
@@ -215,28 +294,28 @@ export default function AcceptInvite() {
           </div>
 
           {/* Starts row */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 flex items-center gap-3 shadow-sm">
-            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
+          <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
               <Calendar className="w-4 h-4 text-amber-500" />
             </div>
             <div>
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Starts</p>
               <p className="text-sm font-medium text-gray-800">
-                {formatStartsLine(will.startDate, will.endDate, will.isIndefinite)}
+                {formatDateRange(will.startDate, will.endDate, will.isIndefinite)}
               </p>
             </div>
           </div>
 
-          {/* Expiry line */}
+          {/* Expiry */}
           {invite.expiresAt && !isAlreadyActioned && !isExpired && (
-            <p className="text-xs text-gray-400 text-center mb-4">
+            <p className="text-xs text-gray-400 text-center">
               {formatExpiryLine(invite.expiresAt)}
             </p>
           )}
 
           {/* Expired state */}
           {isExpired && (
-            <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center mb-3">
+            <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
               <p className="text-sm text-red-600 font-medium">This invite has expired</p>
               <p className="text-xs text-red-400 mt-1">The Will has already started or the invite deadline has passed.</p>
             </div>
@@ -244,7 +323,7 @@ export default function AcceptInvite() {
 
           {/* Already accepted */}
           {invite.status === "accepted" && !isExpired && (
-            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center mb-3">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
               <CheckCircle className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
               <p className="text-sm text-emerald-700 font-medium">You already accepted this invite</p>
               <Button
@@ -258,18 +337,17 @@ export default function AcceptInvite() {
 
           {/* Already declined */}
           {invite.status === "declined" && (
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center mb-3">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center">
               <p className="text-sm text-gray-600">You declined this invite.</p>
             </div>
           )}
 
-          {/* Action buttons — pending and not expired */}
+          {/* Action buttons */}
           {invite.status === "pending" && !isExpired && (
-            <div className="space-y-3 mt-1">
-              {/* Accept */}
+            <div className="space-y-2 pt-1">
               <button
                 onClick={() => acceptMutation.mutate()}
-                disabled={acceptMutation.isPending || declineMutation.isPending}
+                disabled={isBusy}
                 className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
                 style={{ backgroundColor: "#2D9D78" }}
                 data-testid="button-accept-invite"
@@ -282,10 +360,9 @@ export default function AcceptInvite() {
                 Accept invite
               </button>
 
-              {/* Decline */}
               <button
                 onClick={() => declineMutation.mutate()}
-                disabled={acceptMutation.isPending || declineMutation.isPending}
+                disabled={isBusy}
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-white border border-gray-200 text-gray-500 font-medium text-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
                 data-testid="button-decline-invite"
               >
