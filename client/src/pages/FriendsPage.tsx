@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ChevronLeft, UserPlus, Check, Users, Plus } from "lucide-react";
+import { ChevronLeft, UserPlus, Check, Users } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -183,25 +183,6 @@ export default function FriendsPage() {
               data-testid="input-search-friends"
             />
           </div>
-
-          {/* Invite CTA */}
-          {!isSearching && (
-            <button
-              onClick={() => setLocation('/create-team-will')}
-              className="w-full mb-6 group"
-              data-testid="button-invite-someone"
-            >
-              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-5 py-4 flex items-center gap-4 shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98]">
-                <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-bold text-[15px] leading-tight">Invite someone</p>
-                  <p className="text-white/75 text-[12px] leading-tight mt-0.5">Accountability is better together</p>
-                </div>
-              </div>
-            </button>
-          )}
 
           {/* Search Results */}
           {isSearching && (
