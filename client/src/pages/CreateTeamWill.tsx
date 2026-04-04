@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { MobileLayout, PrimaryButton, UnifiedBackButton } from "@/components/ui/design-system";
-import { ArrowRight, Check, Users, Target, Calendar, Clock, ClipboardList, MessageCircle, CalendarDays, CheckCircle, Heart } from "lucide-react";
+import { ArrowRight, Check, Users, Target, Calendar, Clock, ClipboardList, MessageCircle, CalendarDays, CheckCircle, Heart, Search } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 
 type Friend = {
@@ -81,6 +81,7 @@ export default function CreateTeamWill() {
   const [checkInTime, setCheckInTime] = useState("20:00");
   const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [whatCharCount, setWhatCharCount] = useState(0);
+  const [friendSearch, setFriendSearch] = useState("");
 
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
@@ -238,25 +239,25 @@ export default function CreateTeamWill() {
               </span>
               <div className="w-11 ml-auto" />
             </div>
-            {/* Progress */}
-            {step <= 4 && (
+            {/* Progress — only shown from step 1 onward */}
+            {step >= 1 && step <= 4 && (
               <div className="flex items-center justify-center gap-1.5 mt-2">
-                {["Friends", "Type", "What", "Why", "When"].map((label, i) => (
+                {["Type", "What", "Why", "When"].map((label, i) => (
                   <div key={i} className="flex items-center">
                     <div className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-semibold transition-colors ${
-                      i < step ? "bg-violet-600 text-white" : i === step ? "bg-violet-600 text-white" : "bg-gray-200 text-gray-500"
+                      i < step - 1 ? "bg-violet-600 text-white" : i === step - 1 ? "bg-violet-600 text-white" : "bg-gray-200 text-gray-500"
                     }`}>
-                      {i < step ? <Check className="w-3 h-3" /> : i + 1}
+                      {i < step - 1 ? <Check className="w-3 h-3" /> : i + 1}
                     </div>
-                    {i < 4 && <div className={`w-4 h-0.5 mx-0.5 ${i < step ? "bg-violet-600" : "bg-gray-200"}`} />}
+                    {i < 3 && <div className={`w-4 h-0.5 mx-0.5 ${i < step - 1 ? "bg-violet-600" : "bg-gray-200"}`} />}
                   </div>
                 ))}
               </div>
             )}
           </div>
+          {step > 0 && (
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
-              {step === 0 && "Invite Friends"}
               {step === 1 && "How will you commit?"}
               {step === 2 && (willType === "cumulative" ? "What will you all do?" : "What will you do?")}
               {step === 3 && "Why does this matter?"}
@@ -265,7 +266,6 @@ export default function CreateTeamWill() {
               {step === 6 && "Review Your Will"}
             </h1>
             <p className="text-sm text-gray-400 mt-1">
-              {step === 0 && "Select friends to invite to this Will"}
               {step === 1 && `"I Will" = each person's own goal  ·  "We Will" = one shared goal`}
               {step === 2 && (willType === "cumulative" ? "This commitment is shared by everyone" : "Cause it's as simple as wanting.")}
               {step === 3 && "Remember this when it gets tough."}
@@ -274,6 +274,7 @@ export default function CreateTeamWill() {
               {step === 6 && "Make sure everything looks right."}
             </p>
           </div>
+          )}
         </div>
 
         <div className="flex-1 space-y-6">
@@ -281,6 +282,12 @@ export default function CreateTeamWill() {
           {/* Step 0: Friend picker */}
           {step === 0 && (
             <div className="animate-in fade-in duration-300">
+              {/* Page heading — large, left-aligned, lives in page body not sticky header */}
+              <div className="mb-5">
+                <h1 className="text-[28px] font-bold text-gray-900 leading-tight">Build your team</h1>
+                <p className="text-[14px] text-gray-500 mt-0.5">Who's committing with you?</p>
+              </div>
+
               {friendsLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-violet-600" />
@@ -297,39 +304,84 @@ export default function CreateTeamWill() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2 px-1">
-                  {friends.map(friend => {
-                    const selected = selectedFriendIds.includes(friend.userId);
-                    return (
-                      <button
-                        key={friend.userId}
-                        onClick={() => handleFriendToggle(friend.userId)}
-                        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-150 ${
-                          selected
-                            ? "border-violet-500 bg-violet-50"
-                            : "border-gray-100 bg-white hover:border-gray-200"
-                        }`}
-                        data-testid={`button-friend-${friend.userId}`}
-                      >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 transition-colors ${
-                          selected ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-600"
-                        }`}>
-                          {getInitial(friend)}
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{displayName(friend)}</p>
-                          {friend.username && <p className="text-xs text-gray-400">@{friend.username}</p>}
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                          selected ? "border-violet-500 bg-violet-500" : "border-gray-300"
-                        }`}>
-                          {selected && <Check className="w-3 h-3 text-white" />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                <>
+                  {/* Search bar */}
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Input
+                      value={friendSearch}
+                      onChange={e => setFriendSearch(e.target.value)}
+                      placeholder="Search friends"
+                      className="pl-10 h-11 rounded-xl border-gray-200 bg-white focus:border-violet-400 focus:ring-violet-400/20"
+                      data-testid="input-search-friends-picker"
+                    />
+                  </div>
+
+                  {/* Selected chips row */}
+                  {selectedFriendIds.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide">
+                      {selectedFriends.map(f => (
+                        <button
+                          key={f.userId}
+                          onClick={() => handleFriendToggle(f.userId)}
+                          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 text-violet-700 rounded-full text-sm font-medium hover:bg-violet-200 transition-colors"
+                          data-testid={`chip-selected-${f.userId}`}
+                        >
+                          {(f.firstName || f.username || "?").split(" ")[0]}
+                          <span className="text-violet-500 text-xs leading-none">×</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Friends list */}
+                  <div className="space-y-2 px-1">
+                    {friends
+                      .filter(f => {
+                        if (!friendSearch.trim()) return true;
+                        const q = friendSearch.toLowerCase();
+                        return (
+                          (f.firstName?.toLowerCase().includes(q)) ||
+                          (f.lastName?.toLowerCase().includes(q)) ||
+                          (f.username?.toLowerCase().includes(q))
+                        );
+                      })
+                      .map(friend => {
+                        const selected = selectedFriendIds.includes(friend.userId);
+                        return (
+                          <button
+                            key={friend.userId}
+                            onClick={() => handleFriendToggle(friend.userId)}
+                            className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-150 ${
+                              selected
+                                ? "border-violet-400 bg-violet-50"
+                                : "border-gray-100 bg-white hover:border-gray-200"
+                            }`}
+                            data-testid={`button-friend-${friend.userId}`}
+                          >
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 transition-colors ${
+                              selected ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-500"
+                            }`}>
+                              {getInitial(friend)}
+                            </div>
+                            <div className="flex-1 text-left min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{displayName(friend)}</p>
+                              {friend.username && <p className="text-xs text-gray-400">@{friend.username}</p>}
+                            </div>
+                            {/* Square checkbox */}
+                            <div className={`w-5 h-5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                              selected ? "border-violet-500 bg-violet-500" : "border-gray-300 bg-white"
+                            }`}>
+                              {selected && <Check className="w-3 h-3 text-white" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </>
               )}
+
+              {/* Bottom bar */}
               {friends.length > 0 && (
                 <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 mt-4">
                   <span className="text-sm text-gray-500">
@@ -337,7 +389,12 @@ export default function CreateTeamWill() {
                   </span>
                   <button
                     onClick={handleStep0Next}
-                    className="px-6 py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 shadow-sm flex items-center"
+                    disabled={selectedFriendIds.length === 0}
+                    className={`px-6 py-3 rounded-xl text-sm font-semibold flex items-center transition-all ${
+                      selectedFriendIds.length === 0
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm active:scale-95"
+                    }`}
                     data-testid="button-next-friends"
                   >
                     Next <ArrowRight className="w-4 h-4 ml-2" />
