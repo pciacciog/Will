@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Search, UserPlus, Check, UserMinus, Users, Plus } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { ChevronLeft, UserPlus, Check, Users, Plus } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -48,7 +47,6 @@ export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -87,11 +85,7 @@ export default function FriendsPage() {
     },
     onError: (error: any, userId: string) => {
       setOptimisticPending(prev => { const next = new Set(prev); next.delete(userId); return next; });
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send friend request",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Failed to send friend request", variant: "destructive" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
@@ -118,9 +112,7 @@ export default function FriendsPage() {
       const res = await apiRequest(`/api/friends/${friendshipId}/decline`, { method: 'PATCH' });
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/friends'] }); },
     onError: () => {
       toast({ title: "Error", description: "Failed to decline request", variant: "destructive" });
     },
@@ -145,39 +137,54 @@ export default function FriendsPage() {
   const pendingIncoming = friendsData?.pendingIncoming ?? [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/20">
-      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
+    <div className="bg-gradient-to-br from-gray-50 via-white to-purple-50/20">
+      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
         <div className="max-w-sm mx-auto px-5">
 
-          {/* Minimal back nav — arrow only, no phantom square */}
-          <button
-            onClick={() => setLocation('/')}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 transition-colors mb-5"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Back</span>
-          </button>
+          {/* Back button — matches app-wide rounded-lg icon pattern */}
+          <div className="mb-5">
+            <button
+              onClick={() => setLocation('/')}
+              className="w-10 h-10 flex items-center justify-center"
+              data-testid="button-back"
+            >
+              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition-all active:scale-95">
+                <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+              </span>
+            </button>
+          </div>
 
-          {/* Page title — large, breathing room */}
+          {/* Page title */}
           <div className="mb-6">
             <h1 className="text-[28px] font-bold text-gray-900 leading-tight">Friends</h1>
             <p className="text-[14px] text-gray-500 mt-0.5">Find people to grow with</p>
           </div>
 
-          {/* Search */}
+          {/* Search — raw <input> so pl-10 applies without shadcn specificity conflict */}
           <div className="relative mb-3">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <Input
+            <svg
+              viewBox="0 0 24 24"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search by username or email"
-              className="pl-10 h-11 rounded-xl border-gray-200 bg-white focus:border-purple-400 focus:ring-purple-400/20"
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-colors"
               data-testid="input-search-friends"
             />
           </div>
 
-          {/* Invite CTA — only visible when not actively searching */}
+          {/* Invite CTA */}
           {!isSearching && (
             <button
               onClick={() => setLocation('/create-team-will')}
@@ -211,7 +218,6 @@ export default function FriendsPage() {
                     const isOptimisticPending = optimisticPending.has(result.id);
                     const effectiveStatus = isOptimisticPending ? 'pending' : result.friendshipStatus;
                     const effectiveDirection = isOptimisticPending ? 'sent' : result.friendshipDirection;
-
                     return (
                       <div
                         key={result.id}
@@ -251,7 +257,7 @@ export default function FriendsPage() {
                             data-testid={`button-add-friend-${result.id}`}
                           >
                             <UserPlus className="w-3 h-3" />
-                            Add Friend
+                            Add
                           </button>
                         )}
                       </div>
@@ -265,12 +271,12 @@ export default function FriendsPage() {
           {/* Pending Incoming Requests */}
           {!isSearching && pendingIncoming.length > 0 && (
             <div className="mb-5">
-              <h2 className="text-[13px] font-medium text-gray-500 mb-2 flex items-center gap-2">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-2">
                 Friend requests
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-bold leading-none">
+                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-purple-600 text-white text-[9px] font-bold leading-none">
                   {pendingIncoming.length}
                 </span>
-              </h2>
+              </p>
               <div className="space-y-2">
                 {pendingIncoming.map(person => (
                   <div
@@ -320,9 +326,10 @@ export default function FriendsPage() {
           {/* Friends List */}
           {!isSearching && (
             <div>
-              <h2 className="text-[13px] font-medium text-gray-500 mb-2">
+              {/* Section label — small muted uppercase, not a heading element */}
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-2">
                 Your friends{friends.length > 0 ? ` (${friends.length})` : ''}
-              </h2>
+              </p>
 
               {friendsLoading ? (
                 <div className="flex items-center justify-center py-10">
@@ -359,14 +366,27 @@ export default function FriendsPage() {
                           <p className="text-[11px] text-gray-400 truncate">@{friend.username}</p>
                         )}
                       </div>
+                      {/* Inline SVG remove icon — avoids lucide phantom square on iOS */}
                       <button
                         onClick={() => removeMutation.mutate(friend.friendshipId)}
                         disabled={removeMutation.isPending}
-                        className="w-8 h-8 rounded-full bg-gray-50 hover:bg-red-50 flex items-center justify-center transition-colors active:scale-95 group"
+                        className="w-8 h-8 rounded-full bg-gray-50 hover:bg-red-50 flex items-center justify-center transition-colors active:scale-95 group flex-shrink-0"
                         data-testid={`button-remove-friend-${friend.userId}`}
                         title="Remove friend"
                       >
-                        <UserMinus className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-400" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-400 transition-colors"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <line x1="23" y1="11" x2="17" y2="11" />
+                        </svg>
                       </button>
                     </div>
                   ))}
