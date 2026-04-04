@@ -300,11 +300,32 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     scheduled:  { label: "Scheduled", bg: "bg-blue-100",    text: "text-blue-700" },
     active:     { label: "Active",    bg: "bg-emerald-100", text: "text-emerald-700" },
     paused:     { label: "Paused",    bg: "bg-orange-100",  text: "text-orange-700" },
-    will_review:{ label: "Review",    bg: "bg-purple-100",  text: "text-purple-700" },
+    will_review:{ label: "In review", bg: "bg-purple-100",  text: "text-purple-700" },
     completed:  { label: "Completed", bg: "bg-emerald-100", text: "text-emerald-700" },
     terminated: { label: "Ended",     bg: "bg-gray-100",    text: "text-gray-600" },
   };
   const statusInfo = will ? (statusConfig[will.status] || statusConfig.terminated) : statusConfig.terminated;
+
+  // Avatar dot color per state
+  const avatarDotColors: Record<string, string> = {
+    pending:    "bg-amber-400",
+    scheduled:  "bg-blue-400",
+    active:     "bg-green-400",
+    paused:     "bg-orange-400",
+    will_review:"bg-purple-400",
+    completed:  "bg-emerald-400",
+    terminated: "bg-gray-400",
+  };
+  const avatarDotColor = will ? (avatarDotColors[will.status] || "bg-gray-400") : "bg-gray-400";
+
+  // Which cards are locked
+  const isProgressLocked = will?.status === "pending" || will?.status === "scheduled";
+  const isProofLocked = will?.status !== "active";
+  const proofLockMessage =
+    will?.status === "pending" || will?.status === "scheduled" ? "Available once Will starts" :
+    will?.status === "paused" ? "Resume Will to add drops" :
+    will?.status === "will_review" ? "Review period active" :
+    "Will has ended";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-violet-50/30">
@@ -503,7 +524,127 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             </span>
           </div>
 
-          {/* Team card */}
+          {/* ── State banner ─────────────────────────────────────── */}
+          {will.status === "pending" && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Clock className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Waiting for friends to accept</p>
+                <p className="text-xs text-amber-600 mt-0.5 leading-snug">Will activates at start date if at least one friend joins.</p>
+              </div>
+            </div>
+          )}
+
+          {will.status === "scheduled" && (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-3 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Clock className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-blue-700">Starts in {formatTimeUntilStart(will.startDate as unknown as string)}</p>
+                <p className="text-xs text-blue-500 mt-0.5">{formatDisplayDateTime(will.startDate as unknown as string)} — get ready</p>
+              </div>
+            </div>
+          )}
+
+          {will.status === "paused" && (
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-3 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <Pause className="w-4 h-4 text-orange-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-orange-800">Will paused</p>
+                <p className="text-xs text-orange-600 mt-0.5">Resume to continue tracking</p>
+              </div>
+              {canManage && (
+                <button
+                  onClick={() => resumeMutation.mutate()}
+                  disabled={resumeMutation.isPending}
+                  className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 flex-shrink-0"
+                  data-testid="button-resume-inline"
+                >
+                  <Play className="w-3 h-3" />
+                  {resumeMutation.isPending ? "Resuming…" : "Resume"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {will.status === "will_review" && (
+            <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 mb-3">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-purple-900">Will Review</p>
+                  <p className="text-xs text-purple-600 mt-0.5">Time to reflect and complete your Will</p>
+                </div>
+              </div>
+              {userCommitment && (
+                reviewStatus?.hasReviewed ? (
+                  <div className="bg-white border border-purple-200 rounded-xl p-4 text-center">
+                    <CheckCircle className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-gray-900">Review submitted</p>
+                    {reviewStatus.reviewCount < reviewStatus.totalMembers ? (
+                      <p className="text-xs text-gray-500 mt-1">Waiting for others… {reviewStatus.reviewCount}/{reviewStatus.totalMembers} reviewed</p>
+                    ) : (
+                      <p className="text-xs text-gray-500 mt-1">All members reviewed — finalizing…</p>
+                    )}
+                  </div>
+                ) : will.isIndefinite ? (
+                  <OngoingWillReviewFlow
+                    willId={willId}
+                    startDate={will.startDate}
+                    onComplete={() => {
+                      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
+                      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
+                    }}
+                  />
+                ) : (
+                  <WillReviewFlow
+                    willId={willId}
+                    mode="circle"
+                    checkInType={userCheckInType === "daily" || userCheckInType === "specific_days" ? "daily" : "one-time"}
+                    startDate={will.startDate}
+                    endDate={will.endDate ?? undefined}
+                    onComplete={() => {
+                      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
+                      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
+                    }}
+                  />
+                )
+              )}
+            </div>
+          )}
+
+          {will.status === "completed" && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-3 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-800">Will completed</p>
+                <p className="text-xs text-emerald-600 mt-0.5">Great work — this Will is done</p>
+              </div>
+            </div>
+          )}
+
+          {will.status === "terminated" && (
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 mb-3 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <Power className="w-4 h-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Will ended</p>
+                <p className="text-xs text-gray-500 mt-0.5">This Will was terminated early</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Team card ─────────────────────────────────────────── */}
           <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[13px] font-medium text-gray-500">Team</p>
@@ -531,7 +672,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white" />
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 ${avatarDotColor} rounded-full border-2 border-white`} />
                     </div>
                     <p className="font-medium text-gray-900 text-xs text-center leading-tight">
                       {c.user?.firstName || c.user?.email?.split("@")[0]}
@@ -550,226 +691,159 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             )}
           </div>
 
-          {/* Progress card — active or paused wills */}
-          {(will.status === "active" || will.status === "paused") && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
-              <button
-                onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
-                className="w-full flex items-center justify-between mb-3"
-                data-testid="button-toggle-progress"
-              >
-                <p className="text-[13px] font-medium text-gray-500">Progress</p>
-                {hasDailyCheckIns && (
-                  <ChevronRight
-                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
-                  />
-                )}
-              </button>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div>
-                  <p className={`text-xl font-bold ${hasDailyCheckIns ? "text-emerald-500" : "text-gray-300"}`}>
-                    {hasDailyCheckIns ? (checkInProgress?.streak ?? 0) : "—"}
-                  </p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
+          {/* ── Progress card — always shown ──────────────────────── */}
+          <div className={`bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm${isProgressLocked ? " opacity-50 pointer-events-none select-none" : ""}`}>
+            {isProgressLocked ? (
+              /* Locked state */
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[13px] font-medium text-gray-500">Progress</p>
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
                 </div>
-                <div>
-                  <p className="text-xl font-bold text-gray-700">
-                    {daysLeft !== null ? daysLeft : "∞"}
-                  </p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">days left</p>
-                </div>
-                <div>
-                  <p className={`text-xl font-bold ${hasDailyCheckIns ? "text-gray-700" : "text-gray-300"}`}>
-                    {hasDailyCheckIns ? `${checkInProgress?.successRate ?? 0}%` : "—"}
-                  </p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
-                </div>
-              </div>
-              {showFullProgress && hasDailyCheckIns && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <ProgressView
-                    willId={willId}
-                    startDate={will.startDate as unknown as string}
-                    endDate={will.endDate as unknown as string | null}
-                    checkInType={userCheckInType}
-                    activeDays={will.activeDays || undefined}
-                    customDays={will.customDays || undefined}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Progress summary for completed/terminated daily-tracking wills */}
-          {hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
-              <p className="text-[13px] font-medium text-gray-500 mb-3">Progress</p>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div>
-                  <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-gray-700">{checkInProgress?.checkedInDays ?? 0}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">days done</p>
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-gray-700">{checkInProgress?.successRate ?? 0}%</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <ProgressView
-                  willId={willId}
-                  startDate={will.startDate as unknown as string}
-                  endDate={will.endDate as unknown as string | null}
-                  checkInType={userCheckInType}
-                  activeDays={will.activeDays || undefined}
-                  customDays={will.customDays || undefined}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Status-specific content */}
-          {will.status === "pending" && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">
-              <div className="flex items-center gap-2 text-amber-700">
-                <Clock className="w-4 h-4 flex-shrink-0" />
-                <p className="text-sm font-medium">Waiting for friends to accept</p>
-              </div>
-              <p className="text-xs text-amber-600 mt-1 leading-snug">
-                Will activates at start date if at least one friend accepts.
-              </p>
-            </div>
-          )}
-
-          {will.status === "scheduled" && (
-            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-3 flex items-center gap-3">
-              <Clock className="w-5 h-5 text-blue-600 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Starts in {formatTimeUntilStart(will.startDate as unknown as string)}</p>
-                <p className="text-xs text-gray-500">{formatDisplayDateTime(will.startDate as unknown as string)}</p>
-              </div>
-            </div>
-          )}
-
-          {will.status === "paused" && canManage && (
-            <div className="mb-3">
-              <button
-                onClick={() => resumeMutation.mutate()}
-                disabled={resumeMutation.isPending}
-                className="w-full py-3 rounded-2xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-medium flex items-center justify-center gap-2 hover:bg-orange-100 transition-colors disabled:opacity-50"
-                data-testid="button-resume-inline"
-              >
-                <Play className="w-4 h-4" />
-                {resumeMutation.isPending ? "Resuming..." : "Resume Will"}
-              </button>
-            </div>
-          )}
-
-          {will.status === "will_review" && userCommitment && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm space-y-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-purple-600" />
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Will Review</p>
-                  <p className="text-xs text-gray-500">Time to reflect and review</p>
-                </div>
-              </div>
-              {reviewStatus?.hasReviewed ? (
-                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
-                  <CheckCircle className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-gray-900">Review submitted</p>
-                  {reviewStatus.reviewCount < reviewStatus.totalMembers ? (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Waiting for others… {reviewStatus.reviewCount}/{reviewStatus.totalMembers} reviewed
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-500 mt-1">All members reviewed — finalizing…</p>
+                <p className="text-xs text-gray-400 text-center py-2">Available once Will starts</p>
+              </>
+            ) : (
+              /* Unlocked state */
+              <>
+                <button
+                  onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
+                  className="w-full flex items-center justify-between mb-3"
+                  data-testid="button-toggle-progress"
+                >
+                  <p className="text-[13px] font-medium text-gray-500">Progress</p>
+                  {hasDailyCheckIns && (
+                    <ChevronRight
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
+                    />
                   )}
+                </button>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className={`text-xl font-bold ${hasDailyCheckIns ? "text-emerald-500" : "text-gray-300"}`}>
+                      {hasDailyCheckIns ? (checkInProgress?.streak ?? 0) : "—"}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-gray-700">
+                      {will.status === "completed" || will.status === "terminated"
+                        ? (checkInProgress?.checkedInDays ?? "—")
+                        : daysLeft !== null ? daysLeft : "∞"}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {will.status === "completed" || will.status === "terminated" ? "days done" : "days left"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className={`text-xl font-bold ${hasDailyCheckIns ? "text-gray-700" : "text-gray-300"}`}>
+                      {hasDailyCheckIns ? `${checkInProgress?.successRate ?? 0}%` : "—"}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
+                  </div>
                 </div>
-              ) : will.isIndefinite ? (
-                <OngoingWillReviewFlow
-                  willId={willId}
-                  startDate={will.startDate}
-                  onComplete={() => {
-                    queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
-                    queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
-                  }}
-                />
-              ) : (
-                <WillReviewFlow
-                  willId={willId}
-                  mode="circle"
-                  checkInType={userCheckInType === "daily" || userCheckInType === "specific_days" ? "daily" : "one-time"}
-                  startDate={will.startDate}
-                  endDate={will.endDate ?? undefined}
-                  onComplete={() => {
-                    queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
-                    queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
-                  }}
-                />
-              )}
-            </div>
-          )}
+                {showFullProgress && hasDailyCheckIns && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <ProgressView
+                      willId={willId}
+                      startDate={will.startDate as unknown as string}
+                      endDate={will.endDate as unknown as string | null}
+                      checkInType={userCheckInType}
+                      activeDays={will.activeDays || undefined}
+                      customDays={will.customDays || undefined}
+                    />
+                  </div>
+                )}
+                {/* Auto-show calendar for completed/terminated */}
+                {!showFullProgress && hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <ProgressView
+                      willId={willId}
+                      startDate={will.startDate as unknown as string}
+                      endDate={will.endDate as unknown as string | null}
+                      checkInType={userCheckInType}
+                      activeDays={will.activeDays || undefined}
+                      customDays={will.customDays || undefined}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
-          {/* Proof drops — active only */}
-          {will.status === "active" && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[13px] font-medium text-gray-500">Proof drops</p>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
-                  data-testid="button-add-drop"
-                >
-                  <Plus className="w-3 h-3" />
-                  Drop
-                </button>
-              </div>
-              {proofItems.length === 0 && pendingProofs.length === 0 ? (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="w-full border border-dashed border-gray-200 rounded-xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50/30 transition-colors disabled:pointer-events-none"
-                  data-testid="button-empty-drop-zone"
-                >
-                  <Camera className="w-5 h-5 opacity-60" />
-                  <span className="text-xs">No drops yet — be the first</span>
-                </button>
-              ) : (
-                <div className="flex gap-2 flex-wrap">
-                  {proofItems.map((proof) => {
-                    const initial = (proof.firstName || proof.email)?.charAt(0).toUpperCase() || "?";
-                    const src = proof.thumbnailUrl || proof.imageUrl;
-                    return (
-                      <button
-                        key={proof.id}
-                        onClick={() => setPhotoModal({ imageUrl: proof.imageUrl, firstName: proof.firstName, email: proof.email, caption: proof.caption, createdAt: proof.createdAt })}
-                        className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
-                        data-testid={`button-proof-thumb-${proof.id}`}
-                      >
-                        <img src={src} alt="Proof" className="w-full h-full object-cover" />
-                        <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
-                          {initial}
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {pendingProofs.map((p) => (
-                    <div key={p.tempId} className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
-                      <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    </div>
-                  ))}
+          {/* ── Proof card — always shown ──────────────────────────── */}
+          <div className={`bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm${isProofLocked ? " opacity-50 pointer-events-none select-none" : ""}`}>
+            {isProofLocked ? (
+              /* Locked state */
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[13px] font-medium text-gray-500">Proof drops</p>
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
                 </div>
-              )}
-            </div>
-          )}
+                <p className="text-xs text-gray-400 text-center py-2">{proofLockMessage}</p>
+              </>
+            ) : (
+              /* Unlocked state (active only) */
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[13px] font-medium text-gray-500">Proof drops</p>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                    data-testid="button-add-drop"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Drop
+                  </button>
+                </div>
+                {proofItems.length === 0 && pendingProofs.length === 0 ? (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="w-full border border-dashed border-gray-200 rounded-xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50/30 transition-colors disabled:pointer-events-none"
+                    data-testid="button-empty-drop-zone"
+                  >
+                    <Camera className="w-5 h-5 opacity-60" />
+                    <span className="text-xs">No drops yet — be the first</span>
+                  </button>
+                ) : (
+                  <div className="flex gap-2 flex-wrap">
+                    {proofItems.map((proof) => {
+                      const initial = (proof.firstName || proof.email)?.charAt(0).toUpperCase() || "?";
+                      const src = proof.thumbnailUrl || proof.imageUrl;
+                      return (
+                        <button
+                          key={proof.id}
+                          onClick={() => setPhotoModal({ imageUrl: proof.imageUrl, firstName: proof.firstName, email: proof.email, caption: proof.caption, createdAt: proof.createdAt })}
+                          className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
+                          data-testid={`button-proof-thumb-${proof.id}`}
+                        >
+                          <img src={src} alt="Proof" className="w-full h-full object-cover" />
+                          <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
+                            {initial}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    {pendingProofs.map((p) => (
+                      <div key={p.tempId} className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
+                        <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
         </div>
       </div>
