@@ -13,6 +13,8 @@ import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { willDisplayTitle } from "@/lib/willUtils";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import ProgressView from "@/components/ProgressView";
+import { WillReviewFlow } from "@/components/WillReviewFlow";
+import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import {
   ChevronLeft, Camera, Plus, Clock, CheckCircle, MessageCircle, X, Users,
   Target, Calendar, Settings, Pause, Play, Power, AlertTriangle, BarChart3,
@@ -117,6 +119,18 @@ export default function SharedWillHub({ willId }: SharedWillHubProps) {
   }>({
     queryKey: [`/api/wills/${willId}/check-in-progress`],
     enabled: !!user && hasDailyCheckIns,
+  });
+
+  const isInReview = will?.status === 'will_review';
+  const { data: reviewStatus } = useQuery<{
+    hasReviewed: boolean;
+    reviewCount: number;
+    totalMembers: number;
+  }>({
+    queryKey: [`/api/wills/${willId}/review-status`],
+    enabled: !!user && isInReview,
+    refetchInterval: isInReview ? 5000 : false,
+    staleTime: 0,
   });
 
   const proofItems: ProofDrop[] = proofsData?.items || [];
@@ -604,7 +618,7 @@ export default function SharedWillHub({ willId }: SharedWillHubProps) {
                   </div>
                 )}
 
-                {will.status === "will_review" && (
+                {will.status === "will_review" && userCommitment && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -618,16 +632,41 @@ export default function SharedWillHub({ willId }: SharedWillHubProps) {
                       </div>
                       <Badge className="bg-purple-100 text-purple-800 border border-purple-200 text-xs">Review</Badge>
                     </div>
-                    <Button
-                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                      onClick={() => {
-                        sessionStorage.setItem("willBackUrl", `/will/${willId}`);
-                        setLocation(`/will/${willId}`);
-                      }}
-                      data-testid="button-submit-review"
-                    >
-                      Submit Review
-                    </Button>
+
+                    {reviewStatus?.hasReviewed ? (
+                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+                        <CheckCircle className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-gray-900">Review submitted</p>
+                        {reviewStatus.reviewCount < reviewStatus.totalMembers ? (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Waiting for others… {reviewStatus.reviewCount}/{reviewStatus.totalMembers} reviewed
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-500 mt-1">All members reviewed — finalizing…</p>
+                        )}
+                      </div>
+                    ) : will.isIndefinite ? (
+                      <OngoingWillReviewFlow
+                        willId={willId}
+                        startDate={will.startDate}
+                        onComplete={() => {
+                          queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
+                          queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
+                        }}
+                      />
+                    ) : (
+                      <WillReviewFlow
+                        willId={willId}
+                        mode="circle"
+                        checkInType={userCheckInType === 'daily' || userCheckInType === 'specific_days' ? 'daily' : 'one-time'}
+                        startDate={will.startDate}
+                        endDate={will.endDate ?? undefined}
+                        onComplete={() => {
+                          queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
+                          queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
+                        }}
+                      />
+                    )}
                   </div>
                 )}
 
