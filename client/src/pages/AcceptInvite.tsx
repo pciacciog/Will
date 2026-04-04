@@ -204,7 +204,7 @@ export default function AcceptInvite() {
                 <p className="font-bold text-gray-900 text-sm">{isWeWill ? "We Will" : "I Will"}</p>
                 <p className="text-xs mt-0.5 leading-snug" style={{ color: "#7B3FC4" }}>
                   {isWeWill
-                    ? "Every member pursues a shared commitment"
+                    ? "Every member pursues the same commitment"
                     : "Each member pursues their own individual commitment"}
                 </p>
               </div>
