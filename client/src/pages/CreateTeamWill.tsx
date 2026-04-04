@@ -239,8 +239,8 @@ export default function CreateTeamWill() {
               </span>
               <div className="w-11 ml-auto" />
             </div>
-            {/* Progress — only shown from step 1 onward */}
-            {step >= 1 && step <= 4 && (
+            {/* Progress — only shown from step 2 onward (after Define your Will) */}
+            {step >= 2 && step <= 4 && (
               <div className="flex items-center justify-center gap-1.5 mt-2">
                 {["Type", "What", "Why", "When"].map((label, i) => (
                   <div key={i} className="flex items-center">
@@ -255,10 +255,9 @@ export default function CreateTeamWill() {
               </div>
             )}
           </div>
-          {step > 0 && (
+          {step > 1 && (
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
-              {step === 1 && "How will you commit?"}
               {step === 2 && (willType === "cumulative" ? "What will you all do?" : "What will you do?")}
               {step === 3 && "Why does this matter?"}
               {step === 4 && "Set Your Timeline"}
@@ -266,7 +265,6 @@ export default function CreateTeamWill() {
               {step === 6 && "Review Your Will"}
             </h1>
             <p className="text-sm text-gray-400 mt-1">
-              {step === 1 && `"I Will" = each person's own goal  ·  "We Will" = one shared goal`}
               {step === 2 && (willType === "cumulative" ? "This commitment is shared by everyone" : "Cause it's as simple as wanting.")}
               {step === 3 && "Remember this when it gets tough."}
               {step === 4 && "When will your Will begin and end?"}
@@ -404,58 +402,46 @@ export default function CreateTeamWill() {
             </div>
           )}
 
-          {/* Step 1: I Will / We Will */}
+          {/* Step 1: Define your Will */}
           {step === 1 && (
-            <div className="animate-in fade-in duration-300 px-1">
-              <div className="space-y-4 py-4">
+            <div className="animate-in fade-in duration-300">
+              {/* Page heading — matches "Build your team" style */}
+              <div className="mb-6">
+                <h1 className="text-[28px] font-bold text-gray-900 leading-tight">Define your Will</h1>
+                <p className="text-[14px] text-gray-500 mt-0.5">How will your team commit?</p>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {/* I Will card */}
                 <button
                   onClick={() => { setWillType("classic"); setStep(2); }}
-                  className="w-full text-left group"
+                  className="w-full text-left rounded-2xl p-6 transition-all duration-150 active:scale-[0.98]"
+                  style={{ background: "#E8F5F0", border: "2px solid #2D9D78" }}
                   data-testid="button-type-i-will"
                 >
-                  <div className="relative">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-violet-400 to-purple-400 rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity" />
-                    <div className="relative bg-white border-2 border-violet-100 group-hover:border-violet-300 rounded-2xl p-5 transition-all duration-200 group-hover:-translate-y-0.5">
-                      <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 bg-violet-50 rounded-xl border border-violet-100 flex items-center justify-center flex-shrink-0">
-                          <Target className="w-7 h-7 text-violet-600" strokeWidth={1.5} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900">I Will</h3>
-                            <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-violet-500 group-hover:translate-x-1 transition-all" />
-                          </div>
-                          <p className="text-violet-600 text-sm font-medium italic mt-0.5">"Each person's own commitment"</p>
-                          <p className="text-gray-500 text-sm mt-2 leading-relaxed">Everyone sets their own individual goal — your friend defines theirs, you define yours.</p>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "#2D9D78" }}>
+                    <Target className="w-6 h-6 text-white" strokeWidth={1.5} />
                   </div>
+                  <h3 className="text-2xl font-bold mb-2" style={{ color: "#1A6647" }}>I Will</h3>
+                  <p className="text-[15px] leading-snug" style={{ color: "#1A6647" }}>
+                    Each member pursues their own individual commitment.
+                  </p>
                 </button>
 
+                {/* We Will card */}
                 <button
                   onClick={() => { setWillType("cumulative"); setStep(2); }}
-                  className="w-full text-left group"
+                  className="w-full text-left rounded-2xl p-6 transition-all duration-150 active:scale-[0.98]"
+                  style={{ background: "#F3EAFE", border: "2px solid #9B5CE5" }}
                   data-testid="button-type-we-will"
                 >
-                  <div className="relative">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity" />
-                    <div className="relative bg-white border-2 border-purple-100 group-hover:border-purple-300 rounded-2xl p-5 transition-all duration-200 group-hover:-translate-y-0.5">
-                      <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-center flex-shrink-0">
-                          <Users className="w-7 h-7 text-purple-600" strokeWidth={1.5} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900">We Will</h3>
-                            <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
-                          </div>
-                          <p className="text-purple-600 text-sm font-medium italic mt-0.5">"One shared commitment"</p>
-                          <p className="text-gray-500 text-sm mt-2 leading-relaxed">Everyone commits to the exact same goal — your group does this together.</p>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "#9B5CE5" }}>
+                    <Users className="w-6 h-6 text-white" strokeWidth={1.5} />
                   </div>
+                  <h3 className="text-2xl font-bold mb-2" style={{ color: "#4A1D8C" }}>We Will</h3>
+                  <p className="text-[15px] leading-snug" style={{ color: "#4A1D8C" }}>
+                    Every member pursues the same commitment.
+                  </p>
                 </button>
               </div>
             </div>
