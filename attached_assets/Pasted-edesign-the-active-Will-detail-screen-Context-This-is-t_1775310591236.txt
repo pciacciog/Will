@@ -1,0 +1,22 @@
+edesign the active Will detail screen.
+Context: This is the main screen a user sees when viewing an active Will. It needs to work for both Team Wills and Solo Wills. The screen has two states depending on whether the user set a custom Will Title or not.
+Title behavior:
+
+If the user set a Will Title → display that as the page title, no sub-label
+If no Will Title was set → display the commitment text as the page title with a small muted "commitment" label beneath it so the user understands why that text is there
+
+Layout changes to implement:
+
+Nav bar — use a 3-column grid (back button · title · action icons) so the title is always truly centered regardless of how many icons are on the right. Fix the chat and settings icons — they are currently rendering as broken phantom squares. Replace with proper circular icon buttons (white background, subtle border) with visible stroke icons: a chat bubble for chat, a gear for settings
+Badge row — directly under the title, centered, show two pills inline: I Will (purple) and Active (green). This replaces the redundant Active state that was buried inside the Will Status card
+Team card — label: "Team" (sentence case, muted). Show each participant in a grid with their avatar, name, and their individual commitment text wrapped to two lines — never truncated with ellipsis
+Progress card — replaces the old "Will Status" card entirely. Label: "Progress" with a › chevron on the right to signal it is tappable. Tapping navigates to the full tracking detail screen with the calendar strip check-in view. Inside the card show three stat tiles in a row:
+
+Streak (days) — green
+Days left — neutral
+On track (%) — neutral
+All values pulled dynamically from the Will's tracking data. Do not repeat the Will title inside this card.
+
+
+Proof card — rename from "Proof Drops" to simply "Proof". Update the + Drop button to use the app's primary green instead of a purple outline. Empty state shows a camera icon with "No drops yet — be the first"
+Remove the old Will Status card — its content is now split between the badge row (Active status) and the new Progress card (tracking entry point). Do not keep both.

@@ -2,8 +2,6 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -16,8 +14,8 @@ import ProgressView from "@/components/ProgressView";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import {
-  ChevronLeft, Camera, Plus, Clock, CheckCircle, MessageCircle, X, Users,
-  Target, Calendar, Settings, Pause, Play, Power, AlertTriangle, BarChart3,
+  ChevronLeft, ChevronRight, Camera, Plus, Clock, CheckCircle, X,
+  Pause, Play, Power, AlertTriangle,
 } from "lucide-react";
 import type { Will } from "@shared/schema";
 
@@ -66,6 +64,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [photoModal, setPhotoModal] = useState<PhotoModal>(null);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showTerminateConfirm, setShowTerminateConfirm] = useState(false);
+  const [showFullProgress, setShowFullProgress] = useState(false);
 
   useAppRefresh();
 
@@ -290,6 +289,23 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
   const backUrl = sessionStorage.getItem("willBackUrl") || "/";
 
+  const hasCustomTitle = !!(will as any)?.title?.trim();
+  const endDateStr = will?.endDate as unknown as string | null;
+  const daysLeft = !(will as any)?.isIndefinite && endDateStr
+    ? Math.max(0, Math.ceil((new Date(endDateStr).getTime() - Date.now()) / 86400000))
+    : null;
+
+  const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
+    pending:    { label: "Pending",   bg: "bg-amber-100",   text: "text-amber-700" },
+    scheduled:  { label: "Scheduled", bg: "bg-blue-100",    text: "text-blue-700" },
+    active:     { label: "Active",    bg: "bg-emerald-100", text: "text-emerald-700" },
+    paused:     { label: "Paused",    bg: "bg-orange-100",  text: "text-orange-700" },
+    will_review:{ label: "Review",    bg: "bg-purple-100",  text: "text-purple-700" },
+    completed:  { label: "Completed", bg: "bg-emerald-100", text: "text-emerald-700" },
+    terminated: { label: "Ended",     bg: "bg-gray-100",    text: "text-gray-600" },
+  };
+  const statusInfo = will ? (statusConfig[will.status] || statusConfig.terminated) : statusConfig.terminated;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-violet-50/30">
       {/* Photo modal */}
@@ -420,385 +436,338 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       <div className="pt-[calc(env(safe-area-inset-top)+4rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
 
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3">
+          {/* Nav — 3-column grid so title is always centred */}
+          <div className="grid items-center gap-2 mb-2" style={{ gridTemplateColumns: "40px 1fr auto" }}>
+            {/* Back */}
             <button
               onClick={() => setLocation(backUrl)}
-              className="w-11 h-11 -ml-2 flex items-center justify-center"
+              className="w-10 h-10 flex items-center justify-center"
               data-testid="button-back-home"
             >
               <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition-all duration-200 active:scale-95">
                 <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
               </span>
             </button>
-            <div className="flex-1 text-center mx-2">
-              <h1 className="text-base font-semibold text-gray-900 truncate">{willTitle}</h1>
+
+            {/* Title */}
+            <div className="text-center overflow-hidden">
+              <h1 className="text-base font-semibold text-gray-900 truncate leading-tight">
+                {hasCustomTitle ? (will as any).title : willTitle}
+              </h1>
+              {!hasCustomTitle && (
+                <p className="text-[10px] text-gray-400 leading-none mt-0.5">commitment</p>
+              )}
             </div>
+
+            {/* Action icons */}
             <div className="flex items-center gap-1.5">
-              {/* Messages */}
+              {/* Chat / messages */}
               <button
                 onClick={() => {
                   sessionStorage.setItem("willBackUrl", `/will/${willId}`);
                   setLocation(`/will/${willId}/messages`);
                 }}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white transition-all active:scale-95 shadow-md"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
                 data-testid="button-open-messages"
                 aria-label="Messages"
               >
-                <MessageCircle className="w-4 h-4" strokeWidth={2} />
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
               </button>
-              {/* Manage */}
+
+              {/* Manage / settings */}
               {canManage && (will.status === "active" || will.status === "paused" || will.status === "scheduled") && (
                 <button
                   onClick={() => setShowManageModal(true)}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200 transition-all active:scale-95"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
                   data-testid="button-manage-will"
                   aria-label="Manage Will"
                 >
-                  <Settings className="w-4 h-4" />
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
                 </button>
               )}
             </div>
           </div>
 
-          {/* Mode badge */}
-          <div className="text-center mb-3">
-            <Badge className={isWeWill ? "bg-purple-100 text-purple-700" : "bg-violet-100 text-violet-700"}>
+          {/* Badge row — type + status pills */}
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${isWeWill ? "bg-purple-100 text-purple-700" : "bg-violet-100 text-violet-700"}`}>
               {isWeWill ? "We Will" : "I Will"}
-            </Badge>
-            {will.sharedWhat && (
-              <p className="text-sm text-gray-600 italic mt-1.5">"{will.sharedWhat}"</p>
+            </span>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
+              {statusInfo.label}
+            </span>
+          </div>
+
+          {/* Team card */}
+          <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[13px] font-medium text-gray-500">Team</p>
+              {isCreator && pendingInvites.length > 0 && (
+                <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" data-testid="badge-pending-invites">
+                  {pendingInvites.length} pending
+                </span>
+              )}
+            </div>
+            {commitments.length === 0 ? (
+              <p className="text-xs text-gray-400 italic text-center py-2">
+                No commitments yet — waiting for friends to accept
+              </p>
+            ) : (
+              <div className={`grid gap-3 ${commitments.length === 1 ? "grid-cols-1 max-w-[140px] mx-auto" : "grid-cols-2"}`}>
+                {commitments.map((c: any) => (
+                  <div
+                    key={c.id}
+                    className="flex flex-col items-center p-3 bg-gray-50 rounded-xl"
+                    data-testid={`participant-${c.userId}`}
+                  >
+                    <div className="relative mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
+                        <span className="text-white font-semibold text-sm">
+                          {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white" />
+                    </div>
+                    <p className="font-medium text-gray-900 text-xs text-center leading-tight">
+                      {c.user?.firstName || c.user?.email?.split("@")[0]}
+                    </p>
+                    {!isWeWill && c.what && (
+                      <p
+                        className="text-[10px] text-gray-500 mt-1 text-center leading-snug"
+                        style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}
+                      >
+                        {c.what}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
-          {/* Participants section */}
-          <div className="relative mb-3">
-            <div className="absolute -inset-1 bg-gradient-to-r from-violet-400 to-purple-500 rounded-2xl blur opacity-15" />
-            <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Users className="w-4 h-4 text-violet-600" />
-                  <h3 className="font-semibold text-gray-900 text-sm">Participants</h3>
-                  {isCreator && pendingInvites.length > 0 && (
-                    <Badge className="ml-auto bg-amber-100 text-amber-700 text-xs" data-testid="badge-pending-invites">
-                      {pendingInvites.length} pending
-                    </Badge>
-                  )}
-                </div>
-                {commitments.length === 0 ? (
-                  <p className="text-xs text-gray-400 italic text-center py-2">
-                    No commitments yet — waiting for friends to accept
+          {/* Progress card — active or paused wills */}
+          {(will.status === "active" || will.status === "paused") && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
+              <button
+                onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
+                className="w-full flex items-center justify-between mb-3"
+                data-testid="button-toggle-progress"
+              >
+                <p className="text-[13px] font-medium text-gray-500">Progress</p>
+                {hasDailyCheckIns && (
+                  <ChevronRight
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
+                  />
+                )}
+              </button>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className={`text-xl font-bold ${hasDailyCheckIns ? "text-emerald-500" : "text-gray-300"}`}>
+                    {hasDailyCheckIns ? (checkInProgress?.streak ?? 0) : "—"}
                   </p>
-                ) : (
-                  <div className={`grid gap-3 ${commitments.length === 1 ? "grid-cols-1 max-w-[120px] mx-auto" : commitments.length === 2 ? "grid-cols-2 max-w-[260px] mx-auto" : "grid-cols-3"}`}>
-                    {commitments.map((c: any) => (
-                      <div key={c.id} className="flex flex-col items-center p-2 bg-gradient-to-br from-gray-50 to-violet-50/30 rounded-xl border border-violet-100/50" data-testid={`participant-${c.userId}`}>
-                        <div className="relative mb-1">
-                          <div className="absolute inset-0 bg-violet-500/20 blur-sm rounded-full" />
-                          <div className="relative w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
-                            <span className="text-white font-semibold text-xs">
-                              {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white" />
-                        </div>
-                        <div className="text-center min-w-0 w-full">
-                          <div className="font-medium text-gray-900 truncate text-xs leading-tight">
-                            {c.user?.firstName || c.user?.email?.split("@")[0]}
-                          </div>
-                          {!isWeWill && c.what && (
-                            <p className="text-[10px] text-gray-400 mt-0.5 truncate italic">"{c.what}"</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Status card */}
-          <div className="relative mb-3">
-            <div className="absolute -inset-1 bg-gradient-to-r from-violet-400 to-purple-500 rounded-2xl blur opacity-15" />
-            <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <Target className="w-4 h-4 text-violet-600" />
-                  <h3 className="font-semibold text-gray-900 text-sm">Will Status</h3>
+                  <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
                 </div>
-
-                {will.status === "pending" && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center space-y-1.5">
-                    <div className="flex items-center justify-center gap-1.5 text-amber-600 text-xs font-semibold">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Waiting for friends to accept</span>
-                    </div>
-                    <p className="text-[10px] text-amber-600 leading-tight">
-                      Will activates at start date if at least one friend accepts.
-                    </p>
-                  </div>
-                )}
-
-                {will.status === "scheduled" && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
-                        <Clock className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 text-sm">Starts in {formatTimeUntilStart(will.startDate as unknown as string)}</h3>
-                        <p className="text-xs text-gray-500">{formatDisplayDateTime(will.startDate as unknown as string)}</p>
-                      </div>
-                    </div>
-                    <Badge className="bg-blue-100 text-blue-800 border border-blue-200 text-xs">Scheduled</Badge>
-                  </div>
-                )}
-
-                {will.status === "active" && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center border border-green-100">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-sm truncate">{willTitle}</h3>
-                          <p className="text-xs text-gray-500">
-                            {(will as any).isIndefinite ? "Habit — no end date" : will.endDate ? `Ends ${formatDisplayDateTime(will.endDate as unknown as string)}` : ""}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge className="bg-green-100 text-green-800 border border-green-200 text-xs">Active</Badge>
-                    </div>
-
-                    {/* Daily check-in button */}
-                    {hasDailyCheckIns && (
-                      <Button
-                        className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm py-2.5"
-                        onClick={() => {
-                          sessionStorage.setItem("willBackUrl", `/will/${willId}`);
-                          setLocation(`/will/${willId}`);
-                        }}
-                        data-testid="button-daily-check-in"
-                      >
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Daily Check-In
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-                {will.status === "paused" && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center border border-orange-100">
-                          <Pause className="w-4 h-4 text-orange-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-sm">Paused</h3>
-                          <p className="text-xs text-gray-500">Tap Manage to resume</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-orange-100 text-orange-800 border border-orange-200 text-xs">Paused</Badge>
-                    </div>
-                    {canManage && (
-                      <Button
-                        variant="outline"
-                        className="w-full border-orange-200 text-orange-700 hover:bg-orange-50 text-sm"
-                        onClick={() => resumeMutation.mutate()}
-                        disabled={resumeMutation.isPending}
-                        data-testid="button-resume-inline"
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        {resumeMutation.isPending ? "Resuming..." : "Resume Will"}
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-                {will.status === "will_review" && userCommitment && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center border border-purple-100">
-                          <CheckCircle className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-sm">Will Review</h3>
-                          <p className="text-xs text-gray-500">Time to reflect and review</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-purple-100 text-purple-800 border border-purple-200 text-xs">Review</Badge>
-                    </div>
-
-                    {reviewStatus?.hasReviewed ? (
-                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
-                        <CheckCircle className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                        <p className="text-sm font-semibold text-gray-900">Review submitted</p>
-                        {reviewStatus.reviewCount < reviewStatus.totalMembers ? (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Waiting for others… {reviewStatus.reviewCount}/{reviewStatus.totalMembers} reviewed
-                          </p>
-                        ) : (
-                          <p className="text-xs text-gray-500 mt-1">All members reviewed — finalizing…</p>
-                        )}
-                      </div>
-                    ) : will.isIndefinite ? (
-                      <OngoingWillReviewFlow
-                        willId={willId}
-                        startDate={will.startDate}
-                        onComplete={() => {
-                          queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
-                          queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
-                        }}
-                      />
-                    ) : (
-                      <WillReviewFlow
-                        willId={willId}
-                        mode="circle"
-                        checkInType={userCheckInType === 'daily' || userCheckInType === 'specific_days' ? 'daily' : 'one-time'}
-                        startDate={will.startDate}
-                        endDate={will.endDate ?? undefined}
-                        onComplete={() => {
-                          queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
-                          queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
-                        }}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {(will.status === "terminated" || will.status === "completed") && (
-                  <div className="text-center py-2">
-                    <Badge className={will.status === "completed" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}>
-                      {will.status === "completed" ? "Completed" : "Ended"}
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Daily progress — only for users with daily tracking and active/review will */}
-          {hasDailyCheckIns && (will.status === "active" || will.status === "will_review" || will.status === "completed" || will.status === "terminated") && (
-            <div className="relative mb-3">
-              <div className="absolute -inset-1 bg-gradient-to-r from-violet-400 to-purple-500 rounded-2xl blur opacity-15" />
-              <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <BarChart3 className="w-4 h-4 text-blue-500" />
-                    <h3 className="font-semibold text-gray-900 text-sm">Daily Progress</h3>
-                    {checkInProgress && (
-                      <span className="ml-auto text-xs text-gray-400">
-                        {checkInProgress.successRate}% success
-                      </span>
-                    )}
-                  </div>
-                  {checkInProgress && checkInProgress.totalDays > 0 ? (
-                    <div>
-                      <div className="grid grid-cols-3 gap-2 mb-3">
-                        <div className="text-center bg-emerald-50 rounded-lg p-2">
-                          <p className="text-lg font-bold text-emerald-600">{checkInProgress.yesCount}</p>
-                          <p className="text-xs text-gray-500">Yes</p>
-                        </div>
-                        <div className="text-center bg-amber-50 rounded-lg p-2">
-                          <p className="text-lg font-bold text-amber-600">{checkInProgress.partialCount}</p>
-                          <p className="text-xs text-gray-500">Partial</p>
-                        </div>
-                        <div className="text-center bg-red-50 rounded-lg p-2">
-                          <p className="text-lg font-bold text-red-500">{checkInProgress.noCount}</p>
-                          <p className="text-xs text-gray-500">Missed</p>
-                        </div>
-                      </div>
-                      <ProgressView
-                        willId={willId}
-                        startDate={will.startDate as unknown as string}
-                        endDate={will.endDate as unknown as string | null}
-                        checkInType={userCheckInType}
-                        activeDays={will.activeDays || undefined}
-                        customDays={will.customDays || undefined}
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400 text-center py-3">No check-ins yet</p>
-                  )}
-                </CardContent>
-              </Card>
+                <div>
+                  <p className="text-xl font-bold text-gray-700">
+                    {daysLeft !== null ? daysLeft : "∞"}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">days left</p>
+                </div>
+                <div>
+                  <p className={`text-xl font-bold ${hasDailyCheckIns ? "text-gray-700" : "text-gray-300"}`}>
+                    {hasDailyCheckIns ? `${checkInProgress?.successRate ?? 0}%` : "—"}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
+                </div>
+              </div>
+              {showFullProgress && hasDailyCheckIns && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <ProgressView
+                    willId={willId}
+                    startDate={will.startDate as unknown as string}
+                    endDate={will.endDate as unknown as string | null}
+                    checkInType={userCheckInType}
+                    activeDays={will.activeDays || undefined}
+                    customDays={will.customDays || undefined}
+                  />
+                </div>
+              )}
             </div>
           )}
 
-          {/* Proof Drops — active only */}
-          {will.status === "active" && (
-            <div className="relative mb-3">
-              <div className="absolute -inset-1 bg-gradient-to-r from-violet-400 to-purple-500 rounded-2xl blur opacity-15" />
-              <Card className="relative bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-                <CardContent className="px-3.5 py-3">
-                  <div className="flex items-center justify-between mb-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <Camera className="w-4 h-4 text-violet-600" />
-                      <h3 className="font-semibold text-gray-900 text-sm">Proof Drops</h3>
-                    </div>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="flex items-center gap-1 border border-violet-600 text-violet-600 hover:bg-violet-50 disabled:opacity-50 bg-transparent text-xs font-medium px-2.5 py-1 rounded-full transition-colors"
-                      data-testid="button-add-drop"
-                    >
-                      <Plus className="w-3 h-3" /> Drop
-                    </button>
-                  </div>
-                  {proofItems.length === 0 && pendingProofs.length === 0 ? (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="w-full border border-dashed border-gray-300 rounded-xl py-4 flex flex-col items-center gap-1.5 text-gray-400 hover:border-violet-400 hover:text-violet-500 hover:bg-violet-50/40 transition-colors disabled:pointer-events-none"
-                      data-testid="button-empty-drop-zone"
-                    >
-                      <Camera className="w-5 h-5 opacity-60" />
-                      <span className="text-xs">No drops yet — be the first</span>
-                    </button>
-                  ) : (
-                    <div className="flex gap-2 flex-wrap">
-                      {proofItems.map((proof) => {
-                        const initial = (proof.firstName || proof.email)?.charAt(0).toUpperCase() || "?";
-                        const src = proof.thumbnailUrl || proof.imageUrl;
-                        return (
-                          <button
-                            key={proof.id}
-                            onClick={() => setPhotoModal({ imageUrl: proof.imageUrl, firstName: proof.firstName, email: proof.email, caption: proof.caption, createdAt: proof.createdAt })}
-                            className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
-                            data-testid={`button-proof-thumb-${proof.id}`}
-                          >
-                            <img src={src} alt="Proof" className="w-full h-full object-cover" />
-                            <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
-                              {initial}
-                            </span>
-                          </button>
-                        );
-                      })}
-                      {pendingProofs.map((p) => (
-                        <div key={p.tempId} className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
-                          <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+          {/* Progress summary for completed/terminated daily-tracking wills */}
+          {hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
+              <p className="text-[13px] font-medium text-gray-500 mb-3">Progress</p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-gray-700">{checkInProgress?.checkedInDays ?? 0}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">days done</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-gray-700">{checkInProgress?.successRate ?? 0}%</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <ProgressView
+                  willId={willId}
+                  startDate={will.startDate as unknown as string}
+                  endDate={will.endDate as unknown as string | null}
+                  checkInType={userCheckInType}
+                  activeDays={will.activeDays || undefined}
+                  customDays={will.customDays || undefined}
+                />
+              </div>
             </div>
           )}
 
-          {/* Pending invite count for creator */}
-          {isCreator && pendingInvites.length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-              <p className="text-xs text-amber-700 font-medium">
-                {pendingInvites.length} friend{pendingInvites.length !== 1 ? "s" : ""} haven't responded yet
+          {/* Status-specific content */}
+          {will.status === "pending" && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">
+              <div className="flex items-center gap-2 text-amber-700">
+                <Clock className="w-4 h-4 flex-shrink-0" />
+                <p className="text-sm font-medium">Waiting for friends to accept</p>
+              </div>
+              <p className="text-xs text-amber-600 mt-1 leading-snug">
+                Will activates at start date if at least one friend accepts.
               </p>
+            </div>
+          )}
+
+          {will.status === "scheduled" && (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-3 flex items-center gap-3">
+              <Clock className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Starts in {formatTimeUntilStart(will.startDate as unknown as string)}</p>
+                <p className="text-xs text-gray-500">{formatDisplayDateTime(will.startDate as unknown as string)}</p>
+              </div>
+            </div>
+          )}
+
+          {will.status === "paused" && canManage && (
+            <div className="mb-3">
+              <button
+                onClick={() => resumeMutation.mutate()}
+                disabled={resumeMutation.isPending}
+                className="w-full py-3 rounded-2xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-medium flex items-center justify-center gap-2 hover:bg-orange-100 transition-colors disabled:opacity-50"
+                data-testid="button-resume-inline"
+              >
+                <Play className="w-4 h-4" />
+                {resumeMutation.isPending ? "Resuming..." : "Resume Will"}
+              </button>
+            </div>
+          )}
+
+          {will.status === "will_review" && userCommitment && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm space-y-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-purple-600" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Will Review</p>
+                  <p className="text-xs text-gray-500">Time to reflect and review</p>
+                </div>
+              </div>
+              {reviewStatus?.hasReviewed ? (
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+                  <CheckCircle className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-gray-900">Review submitted</p>
+                  {reviewStatus.reviewCount < reviewStatus.totalMembers ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Waiting for others… {reviewStatus.reviewCount}/{reviewStatus.totalMembers} reviewed
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">All members reviewed — finalizing…</p>
+                  )}
+                </div>
+              ) : will.isIndefinite ? (
+                <OngoingWillReviewFlow
+                  willId={willId}
+                  startDate={will.startDate}
+                  onComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
+                    queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
+                  }}
+                />
+              ) : (
+                <WillReviewFlow
+                  willId={willId}
+                  mode="circle"
+                  checkInType={userCheckInType === "daily" || userCheckInType === "specific_days" ? "daily" : "one-time"}
+                  startDate={will.startDate}
+                  endDate={will.endDate ?? undefined}
+                  onComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
+                    queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Proof drops — active only */}
+          {will.status === "active" && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[13px] font-medium text-gray-500">Proof drops</p>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                  data-testid="button-add-drop"
+                >
+                  <Plus className="w-3 h-3" />
+                  Drop
+                </button>
+              </div>
+              {proofItems.length === 0 && pendingProofs.length === 0 ? (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-full border border-dashed border-gray-200 rounded-xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50/30 transition-colors disabled:pointer-events-none"
+                  data-testid="button-empty-drop-zone"
+                >
+                  <Camera className="w-5 h-5 opacity-60" />
+                  <span className="text-xs">No drops yet — be the first</span>
+                </button>
+              ) : (
+                <div className="flex gap-2 flex-wrap">
+                  {proofItems.map((proof) => {
+                    const initial = (proof.firstName || proof.email)?.charAt(0).toUpperCase() || "?";
+                    const src = proof.thumbnailUrl || proof.imageUrl;
+                    return (
+                      <button
+                        key={proof.id}
+                        onClick={() => setPhotoModal({ imageUrl: proof.imageUrl, firstName: proof.firstName, email: proof.email, caption: proof.caption, createdAt: proof.createdAt })}
+                        className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
+                        data-testid={`button-proof-thumb-${proof.id}`}
+                      >
+                        <img src={src} alt="Proof" className="w-full h-full object-cover" />
+                        <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
+                          {initial}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {pendingProofs.map((p) => (
+                    <div key={p.tempId} className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
+                      <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
