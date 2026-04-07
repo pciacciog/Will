@@ -431,6 +431,23 @@ export default function CreateTeamWill() {
                   <p className="text-[15px] leading-snug" style={{ color: "#1A6647" }}>
                     Each member pursues their own individual commitment.
                   </p>
+                  {/* Illustrative example — non-interactive */}
+                  <div className="mt-3 rounded-xl p-3 space-y-2 pointer-events-none" style={{ background: "rgba(255,255,255,0.6)" }}>
+                    {[
+                      { initial: "J", name: "Jack", commitment: "run 3x this week" },
+                      { initial: "J", name: "Joe",  commitment: "read 20 pages daily" },
+                      { initial: "A", name: "Alex", commitment: "no phone after 9pm" },
+                    ].map((row, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#2D9D78" }}>
+                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 600 }}>{row.initial}</span>
+                        </div>
+                        <span style={{ fontSize: 11, color: "#1A6647", fontWeight: 500 }}>{row.name}</span>
+                        <span style={{ fontSize: 11, color: "#2D9D78" }}>—</span>
+                        <span style={{ fontSize: 11, color: "#4B7A6A", fontWeight: 400 }}>{row.commitment}</span>
+                      </div>
+                    ))}
+                  </div>
                 </button>
 
                 {/* We Will card */}
@@ -447,6 +464,27 @@ export default function CreateTeamWill() {
                   <p className="text-[15px] leading-snug" style={{ color: "#4A1D8C" }}>
                     Every member pursues the same commitment.
                   </p>
+                  {/* Illustrative example — non-interactive */}
+                  <div className="mt-3 rounded-xl p-3 space-y-2 pointer-events-none" style={{ background: "rgba(255,255,255,0.6)" }}>
+                    <div className="flex justify-center mb-1">
+                      <span className="px-3 py-1 rounded-full italic" style={{ background: "rgba(155,92,229,0.12)", color: "#4A1D8C", fontSize: 11, fontWeight: 500 }}>
+                        "Go phone free for 24 hours"
+                      </span>
+                    </div>
+                    {[
+                      { initial: "J", name: "Jack" },
+                      { initial: "J", name: "Joe" },
+                      { initial: "A", name: "Alex" },
+                    ].map((row, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#9B5CE5" }}>
+                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 600 }}>{row.initial}</span>
+                        </div>
+                        <span className="flex-1" style={{ fontSize: 11, color: "#4A1D8C", fontWeight: 500 }}>{row.name}</span>
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#2D9D78" }} />
+                      </div>
+                    ))}
+                  </div>
                 </button>
               </div>
             </div>
