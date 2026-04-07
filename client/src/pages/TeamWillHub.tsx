@@ -217,8 +217,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     });
 
   // Capacitor-native camera / photo-library capture.
-  // Uses the @capacitor/camera plugin so permissions are handled properly on iOS,
-  // avoiding the WKWebView crash that occurs when the raw file input triggers the camera.
+  // KEY FIX: request ONLY the permission relevant to the source — requesting
+  // camera permission when the user chose "library" triggers AVCaptureSession
+  // access internally, which crashes if NSCameraUsageDescription is absent
+  // from the compiled binary (stale build) or was previously denied.
   const handleCapacitorCapture = async (source: "camera" | "library") => {
     setShowProofPicker(false);
 
@@ -228,17 +230,22 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     try {
       const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
 
-      // Request BOTH permissions upfront in a single call.
-      // Requesting them separately (one per capture) can crash on iOS because
-      // the OS may not have finished processing the first grant before getPhoto() fires.
-      const perms = await Camera.requestPermissions({ permissions: ["camera", "photos"] });
+      // Request ONLY the permission we need for this specific source.
+      // Requesting both simultaneously is the primary crash trigger:
+      // - "library" path must NEVER touch AVCaptureSession (camera hardware)
+      // - "camera" path must NEVER request PHPhotoLibrary access unnecessarily
+      const permissionNeeded = source === "camera" ? "camera" : "photos";
+      console.log(`[ProofDrop] Requesting permission: ${permissionNeeded}`);
 
-      // After the joint request, verify the specific permission we actually need
-      const granted = source === "camera"
-        ? perms.camera === "granted"
-        : perms.photos === "granted";
+      const perms = await Camera.requestPermissions({ permissions: [permissionNeeded] });
+      console.log(`[ProofDrop] Permission status:`, JSON.stringify(perms));
+
+      // "limited" counts as granted — iOS 14+ users may grant limited photo access
+      const status = source === "camera" ? perms.camera : perms.photos;
+      const granted = status === "granted" || status === "limited";
 
       if (!granted) {
+        console.warn(`[ProofDrop] Permission denied for ${permissionNeeded}: ${status}`);
         toast({
           title: "Permission required",
           description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in iOS Settings > WILL.`,
@@ -247,16 +254,18 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
         return;
       }
 
+      console.log(`[ProofDrop] Permission granted — opening ${source}`);
       const photo = await Camera.getPhoto({
         resultType: CameraResultType.Base64,
         source: source === "camera" ? CameraSource.Camera : CameraSource.Photos,
-        quality: 80,
+        quality: 70,      // Reduced from 80 — prevents memory crash on large library images
+        width: 1200,      // Cap resolution — large photos can OOM-kill on main thread
         correctOrientation: true,
         allowEditing: false,
       });
 
       if (!photo.base64String) throw new Error("No image data returned from camera.");
-      console.log("[ProofDrop] Capacitor capture:", source, "format:", photo.format);
+      console.log(`[ProofDrop] Captured — format: ${photo.format}, base64 length: ${photo.base64String.length}`);
 
       // Convert base64 → Blob → File and hand off to the existing upload pipeline
       const byteStr = atob(photo.base64String);
@@ -269,8 +278,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     } catch (err: any) {
       // "User cancelled photos app" is not a real error — swallow silently
       const msg = err?.message?.toLowerCase() ?? "";
+      console.error("[ProofDrop] Capture error:", JSON.stringify(err));
       if (!msg.includes("cancel") && !msg.includes("dismiss")) {
-        console.error("[ProofDrop] Capacitor capture error:", err);
         toast({ title: "Camera error", description: err?.message || "Could not open camera.", variant: "destructive" });
       }
     }
