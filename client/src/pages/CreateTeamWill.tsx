@@ -499,6 +499,17 @@ export default function CreateTeamWill() {
                     <p className="text-3xl font-bold text-gray-900 text-center tracking-tight">
                       {willType === "cumulative" ? "We Will" : "I Will"}
                     </p>
+                    <div className="flex justify-center">
+                      {willType === "cumulative" ? (
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#9B5CE5" }}>
+                          <Users className="w-6 h-6 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                          <CheckCircle className="w-6 h-6 text-white" />
+                        </div>
+                      )}
+                    </div>
                     <div className="relative px-2">
                       <Textarea
                         ref={whatRef}
