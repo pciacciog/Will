@@ -11,7 +11,7 @@ import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { notificationService } from "@/services/NotificationService";
-import { HelpCircle, ArrowRight, CheckCircle, Heart, Calendar, Clock } from "lucide-react";
+import { HelpCircle, ArrowRight, CheckCircle, Heart, Handshake, Calendar, Clock } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 import type { Will } from "@shared/schema";
 
@@ -843,7 +843,7 @@ export default function SubmitCommitment() {
                 "Joining..."
               ) : (
                 <>
-                  <Heart className="w-5 h-5" />
+                  <Handshake className="w-5 h-5" />
                   I'm in. Let's do it
                 </>
               )}
