@@ -720,9 +720,17 @@ export default function CreateTeamWill() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-medium text-gray-400">Team</p>
-                    <p className="text-sm font-medium text-gray-900 mt-0.5" data-testid="text-confirm-friends">
-                      {selectedFriends.map(displayName).join(", ")}
-                    </p>
+                    <div className="mt-0.5 space-y-0.5" data-testid="text-confirm-friends">
+                      <p className="text-sm font-medium text-gray-900">
+                        {user
+                          ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "You"
+                          : "You"}{" "}
+                        <span className="text-xs text-gray-400 font-normal">(you)</span>
+                      </p>
+                      {selectedFriends.map(f => (
+                        <p key={f.userId} className="text-sm font-medium text-gray-900">{displayName(f)}</p>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 {/* What */}
