@@ -310,12 +310,25 @@ export default function CreateTeamWill() {
                 <>
                   {/* Search bar */}
                   <div className="relative mb-3">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                      style={{ left: 13 }}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
                     <Input
                       value={friendSearch}
                       onChange={e => setFriendSearch(e.target.value)}
                       placeholder="Search friends"
-                      className="pl-10 h-11 rounded-xl border-gray-200 bg-white focus:border-violet-400 focus:ring-violet-400/20"
+                      className="h-11 rounded-xl border-gray-200 bg-white focus:border-violet-400 focus:ring-violet-400/20"
+                      style={{ paddingLeft: 38 }}
                       data-testid="input-search-friends-picker"
                     />
                   </div>
@@ -355,16 +368,20 @@ export default function CreateTeamWill() {
                           <button
                             key={friend.userId}
                             onClick={() => handleFriendToggle(friend.userId)}
-                            className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-150 ${
-                              selected
-                                ? "border-violet-400 bg-violet-50"
-                                : "border-gray-100 bg-white hover:border-gray-200"
-                            }`}
+                            className="w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-150"
+                            style={selected
+                              ? { background: "#F3EAFE", border: "1.5px solid #9B5CE5" }
+                              : { background: "#fff", border: "1.5px solid #C7C7CC" }
+                            }
                             data-testid={`button-friend-${friend.userId}`}
                           >
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 transition-colors ${
-                              selected ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-500"
-                            }`}>
+                            <div
+                              className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 transition-colors"
+                              style={selected
+                                ? { background: "#9B5CE5", color: "#fff" }
+                                : { background: "#F3F4F6", color: "#6B7280" }
+                              }
+                            >
                               {getInitial(friend)}
                             </div>
                             <div className="flex-1 text-left min-w-0">
@@ -372,9 +389,13 @@ export default function CreateTeamWill() {
                               {friend.username && <p className="text-xs text-gray-400">@{friend.username}</p>}
                             </div>
                             {/* Square checkbox */}
-                            <div className={`w-5 h-5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                              selected ? "border-violet-500 bg-violet-500" : "border-gray-300 bg-white"
-                            }`}>
+                            <div
+                              className="w-5 h-5 flex items-center justify-center flex-shrink-0 transition-all"
+                              style={selected
+                                ? { background: "#9B5CE5", borderRadius: 5, border: "1.5px solid #9B5CE5" }
+                                : { background: "transparent", borderRadius: 5, border: "1.5px solid #C7C7CC" }
+                              }
+                            >
                               {selected && <Check className="w-3 h-3 text-white" />}
                             </div>
                           </button>
@@ -393,11 +414,11 @@ export default function CreateTeamWill() {
                   <button
                     onClick={handleStep0Next}
                     disabled={selectedFriendIds.length === 0}
-                    className={`px-6 py-3 rounded-xl text-sm font-semibold flex items-center transition-all ${
-                      selectedFriendIds.length === 0
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm active:scale-95"
-                    }`}
+                    className="px-6 py-3 rounded-xl text-sm font-semibold flex items-center transition-all active:scale-95"
+                    style={selectedFriendIds.length === 0
+                      ? { background: "#F3F4F6", color: "#9CA3AF", cursor: "not-allowed" }
+                      : { background: "#2D9D78", color: "#fff" }
+                    }
                     data-testid="button-next-friends"
                   >
                     Next <ArrowRight className="w-4 h-4 ml-2" />
