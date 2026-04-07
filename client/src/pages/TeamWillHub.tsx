@@ -648,12 +648,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
             {/* Title */}
             <div className="text-center overflow-hidden">
-              <h1 className="text-base font-semibold text-gray-900 truncate leading-tight">
-                {hasCustomTitle ? (will as any).title : willTitle}
+              <h1 className="text-base font-semibold text-gray-900 leading-tight">
+                {hasCustomTitle ? (will as any).title : "Will"}
               </h1>
-              {!hasCustomTitle && (
-                <p className="text-[10px] text-gray-400 leading-none mt-0.5">commitment</p>
-              )}
             </div>
 
             {/* Action icons */}
@@ -669,7 +666,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 data-testid="button-open-messages"
                 aria-label="Messages"
               >
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
               </button>
@@ -683,7 +680,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   data-testid="button-manage-will"
                   aria-label="Manage Will"
                 >
-                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="3" />
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                   </svg>
@@ -692,11 +689,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             </div>
           </div>
 
-          {/* Badge row — type + status pills */}
-          <div className="flex justify-center items-center gap-2 mb-4">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: "#EDE7F9", color: "#9B5CE5" }}>
-              {isWeWill ? "We Will" : "I Will"}
-            </span>
+          {/* Badge row — status only */}
+          <div className="flex justify-center items-center mb-4">
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
               {statusInfo.label}
             </span>
@@ -827,7 +821,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           {/* ── Team card ─────────────────────────────────────────── */}
           <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-medium text-gray-500">Team</p>
+              <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Team</p>
               {isCreator && pendingInvites.length > 0 && (
                 <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" data-testid="badge-pending-invites">
                   {pendingInvites.length} pending
@@ -852,7 +846,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     data-testid={`participant-${c.userId}`}
                   >
                     <div className="relative mb-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
+                      <div
+                        className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center"
+                        style={{ border: "3px solid #fff", boxShadow: "0 0 0 2px #9B5CE5" }}
+                      >
                         <span className="text-white font-semibold text-sm">
                           {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
                         </span>
@@ -873,28 +870,13 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             )}
           </div>
 
-          {/* ── Daily Check-in button — I Will only ──────────────── */}
-          {!isWeWill && hasDailyCheckIns && will.status === "active" && (
-            <button
-              onClick={() => setShowCheckInModal(true)}
-              className="w-full mb-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-              style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
-              data-testid="button-daily-check-in"
-            >
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Daily Check-in
-            </button>
-          )}
-
           {/* ── Progress card — always shown ──────────────────────── */}
           <div className={`bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm${isProgressLocked ? " opacity-50 pointer-events-none select-none" : ""}`}>
             {isProgressLocked ? (
               /* Locked state */
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[13px] font-medium text-gray-500">Progress</p>
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Progress</p>
                   <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -910,7 +892,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   className="w-full flex items-center justify-between mb-3"
                   data-testid="button-toggle-progress"
                 >
-                  <p className="text-[13px] font-medium text-gray-500">Progress</p>
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Progress</p>
                   {hasDailyCheckIns && (
                     <ChevronRight
                       className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${!isWeWill && showFullProgress ? "rotate-90" : ""}`}
@@ -945,6 +927,20 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     </p>
                   </div>
                 </div>
+                {/* Daily Check-in button — I Will only, inside Progress card */}
+                {!isWeWill && hasDailyCheckIns && will.status === "active" && (
+                  <button
+                    onClick={() => setShowCheckInModal(true)}
+                    className="w-full mt-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
+                    data-testid="button-daily-check-in"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Daily Check-in
+                  </button>
+                )}
                 {showFullProgress && hasDailyCheckIns && (
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <ProgressView
@@ -980,7 +976,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               /* Locked state */
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[13px] font-medium text-gray-500">Proof</p>
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Proof</p>
                   <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -992,7 +988,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               /* Unlocked state (active only) */
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[13px] font-medium text-gray-500">Proof</p>
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Proof</p>
                   <button
                     onClick={openPhotoPicker}
                     disabled={isUploading}

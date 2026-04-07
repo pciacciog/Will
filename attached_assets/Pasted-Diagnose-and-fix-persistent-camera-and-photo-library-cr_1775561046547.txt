@@ -1,0 +1,43 @@
+Diagnose and fix persistent camera and photo library crashes on the Proof drop screen.
+Context: Both "Take Photo" and "Choose from Library" options continue to crash the app despite previous fix attempts. The crashes are happening on a physical iOS device. Need full end-to-end diagnosis.
+Step 1 — Verify the plugin is actually registered in Xcode:
+Open ios/App/App.xcworkspace in Xcode. Check that @capacitor/camera appears under Pods. If it's missing, npx cap sync ios did not complete correctly. Run it again and confirm no errors before rebuilding.
+Step 2 — Check Info.plist for both required keys:
+Open ios/App/App/Info.plist and confirm BOTH of these keys exist with non-empty string values:
+
+NSCameraUsageDescription
+NSPhotoLibraryUsageDescription
+
+If either is missing or empty iOS will silently kill the app the moment the permission dialog would appear.
+Step 3 — Check where Camera is being imported:
+Search the entire codebase for import { Camera } and @capacitor/camera. Confirm the import only runs inside a native platform check:
+typescriptimport { Capacitor } from '@capacitor/core';
+if (!Capacitor.isNativePlatform()) return;
+const { Camera } = await import('@capacitor/camera');
+A top-level static import of @capacitor/camera in a component that loads on web will crash immediately.
+Step 4 — Wrap the entire camera call in try/catch and log everything:
+typescripttry {
+  const permissions = await Camera.requestPermissions({ 
+    permissions: ['camera', 'photos'] 
+  });
+  console.log('Permissions:', JSON.stringify(permissions));
+  
+  const photo = await Camera.getPhoto({
+    resultType: CameraResultType.Base64,
+    source: CameraSource.Camera, // or Photos
+    quality: 80,
+  });
+  console.log('Photo captured successfully');
+} catch (err) {
+  console.error('Camera error:', JSON.stringify(err));
+}
+Check Xcode's console output for the exact error message when it crashes.
+Step 5 — Check if the crash is a memory/thread issue:
+Large photo library images can cause memory crashes on the main thread. Add compression:
+typescriptconst photo = await Camera.getPhoto({
+  resultType: CameraResultType.Base64,
+  source: CameraSource.Photos,
+  quality: 60,
+  width: 1200,
+  correctOrientation: true,
+});
