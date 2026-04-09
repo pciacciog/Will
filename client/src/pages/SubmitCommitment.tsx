@@ -86,22 +86,9 @@ export default function SubmitCommitment() {
     } else {
       setCheckInType('final_review');
     }
-    if (isCumulative && (will as any)?.checkInType) {
-      const willCIT = (will as any).checkInType;
-      if (willCIT === 'daily' || willCIT === 'specific_days' || willCIT === 'final_review') {
-        setCheckInType(willCIT);
-      } else if (willCIT === 'one-time') {
-        setCheckInType('final_review');
-      }
-    }
-    if (isCumulative && (will as any)?.activeDays) {
-      setActiveDays((will as any).activeDays === 'custom' ? 'custom' : 'every_day');
-    }
-    if (isCumulative && (will as any)?.customDays) {
-      try {
-        setCustomDays(JSON.parse((will as any).customDays));
-      } catch {}
-    }
+    // NOTE: Do NOT inherit tracking settings (checkInType, activeDays, customDays) from
+    // the Will creator for cumulative (We Will) wills. Tracking is personal — each member
+    // must choose their own schedule. Only shared fields (commitment text, duration) inherit.
   }, [will, isCumulative]);
   
   // Classic flow (I Will): 2-What, 3-Why, [4-CheckIn], [5-Confirm] (step 1 Timeline eliminated)
@@ -614,34 +601,8 @@ export default function SubmitCommitment() {
                   How would you like to track this?
                 </h2>
 
-                {isCumulative ? (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-400">
-                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
-                      <p className="text-xs text-purple-600 font-medium mb-1">Inherited from Will</p>
-                      <p className="text-sm font-semibold text-gray-800" data-testid="text-tracking-inherited">
-                        {checkInType === 'daily' && 'Every Day'}
-                        {checkInType === 'specific_days' && (() => {
-                          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                          return `Specific Days: ${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')}`;
-                        })()}
-                        {checkInType === 'final_review' && 'Final Review Only'}
-                      </p>
-                    </div>
-                    {checkInType !== 'final_review' && (
-                      <div className="animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
-                        <p className="text-sm font-medium text-gray-700 text-center mb-3">Check-In Time</p>
-                        <div className="flex justify-center">
-                          <TimeChipPicker
-                            value={checkInTime}
-                            onChange={setCheckInTime}
-                            testId="input-check-in-time"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-400">
+                {/* Tracking is always personal — the joiner picks their own schedule regardless of will type */}
+                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-400">
                     <button
                       type="button"
                       onClick={() => setCheckInType('daily')}
@@ -747,8 +708,7 @@ export default function SubmitCommitment() {
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
+                </div>
 
                 <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
                   {checkInType === 'daily' && "We'll check in with you daily at this time"}

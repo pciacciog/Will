@@ -133,10 +133,12 @@ export default function AcceptInvite() {
   const inviterName = will.creatorName || "A friend";
   const inviterInitial = inviterName.charAt(0).toUpperCase();
 
-  // Team section logic — show if there are members besides the current user
+  // Team section logic — show only when ≥ 2 confirmed non-current-user members exist
+  // (i.e. creator + at least one other confirmed invitee). Pending invitees do not count.
   const visibleMembers = teamMembers.filter(m => m.status !== "declined");
   const otherMembers = visibleMembers.filter(m => m.userId !== user?.id);
-  const showTeamSection = otherMembers.length > 0;
+  const confirmedOtherMembers = otherMembers.filter(m => m.isCreator || m.status === "accepted");
+  const showTeamSection = confirmedOtherMembers.length >= 2;
 
   // Sort: accepted first, then pending
   const sortedMembers = [
@@ -286,7 +288,7 @@ export default function AcceptInvite() {
                 <p className="font-bold text-gray-900 text-sm">{isWeWill ? "We Will" : "I Will"}</p>
                 <p className="text-xs mt-0.5 leading-snug" style={{ color: "#7B3FC4" }}>
                   {isWeWill
-                    ? "Every member pursues a shared commitment"
+                    ? "Every member pursues the same commitment"
                     : "Each member pursues their own individual commitment"}
                 </p>
               </div>
