@@ -885,7 +885,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               /* Locked state */
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Progress</p>
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
                   <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -901,10 +901,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   className="w-full flex items-center justify-between mb-3"
                   data-testid="button-toggle-progress"
                 >
-                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Progress</p>
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
                   {hasDailyCheckIns && (
                     <ChevronRight
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${!isWeWill && showFullProgress ? "rotate-90" : ""}`}
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
                     />
                   )}
                 </button>
@@ -936,8 +936,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     </p>
                   </div>
                 </div>
-                {/* Daily Check-in button — I Will only, inside Progress card */}
-                {!isWeWill && hasDailyCheckIns && will.status === "active" && (
+                {/* Daily Check-in button — shown for any member with daily tracking */}
+                {hasDailyCheckIns && will.status === "active" && (
                   <button
                     onClick={() => setShowCheckInModal(true)}
                     className="w-full mt-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
@@ -947,7 +947,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    Daily Check-in
+                    Check in for today
                   </button>
                 )}
                 {showFullProgress && hasDailyCheckIns && (
@@ -1001,7 +1001,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   <button
                     onClick={openPhotoPicker}
                     disabled={isUploading}
-                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                    className="flex items-center gap-1.5 text-white disabled:opacity-50 text-xs font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95"
+                    style={{ backgroundColor: "#2D9D78" }}
                     data-testid="button-add-drop"
                   >
                     <Plus className="w-3 h-3" />
