@@ -206,11 +206,11 @@ export default function AcceptInvite() {
             </div>
           </div>
 
-          {/* Who's in / Commitments — only if there are other members */}
+          {/* Team / Commitments — only shown when ≥ 2 confirmed non-current-user members */}
           {showTeamSection && (
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide px-4 pt-3 pb-1.5">
-                {isWeWill ? "Who's in" : "Commitments"}
+                {isWeWill ? "Team" : "Commitments"}
               </p>
               {sortedMembers.map((member, idx) => {
                 const isAccepted = member.isCreator || member.status === "accepted";

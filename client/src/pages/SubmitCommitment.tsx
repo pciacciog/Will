@@ -11,7 +11,7 @@ import { WillInstructionModal } from "@/components/WillInstructionModal";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { notificationService } from "@/services/NotificationService";
-import { HelpCircle, ArrowRight, CheckCircle, Heart, Handshake, Calendar, Clock } from "lucide-react";
+import { HelpCircle, ArrowRight, CheckCircle, Heart, Handshake, Calendar, Clock, Users } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 import type { Will } from "@shared/schema";
 
@@ -20,6 +20,20 @@ function formatTimeForDisplay(time: string): string {
   const period = h >= 12 ? 'PM' : 'AM';
   const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
   return `${displayHour}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+function formatDateRange(startStr: string, endStr: string | null, isIndefinite: boolean): string {
+  const start = new Date(startStr);
+  const year = start.getFullYear();
+  const startPart = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (isIndefinite) return `${startPart}, ${year} · ongoing`;
+  if (!endStr) return `${startPart}, ${year}`;
+  const end = new Date(endStr);
+  if (start.toDateString() === end.toDateString()) return `${startPart}, ${year}`;
+  const endPart = end.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const endYear = end.getFullYear();
+  if (year === endYear) return `${startPart} – ${endPart}, ${year}`;
+  return `${startPart}, ${year} – ${endPart}, ${endYear}`;
 }
 
 export default function SubmitCommitment() {
@@ -67,6 +81,16 @@ export default function SubmitCommitment() {
 
   const { data: user } = useQuery({
     queryKey: ['/api/user'],
+  });
+
+  // Fetch team members so the confirm step can show who's in
+  const { data: inviteData } = useQuery<{
+    invite: any;
+    will: any;
+    teamMembers: Array<{ userId: string; firstName: string; isCreator: boolean; status: string; commitment: string | null }>;
+  }>({
+    queryKey: [`/api/wills/${id}/my-invite`],
+    enabled: !!id,
   });
   
   const isCumulative = (will as any)?.willType === 'cumulative';
@@ -260,12 +284,17 @@ export default function SubmitCommitment() {
   const isCheckInStep = (isCumulative && currentStep === 3) || (!isCumulative && currentStep === 4);
   const isConfirmStep = (isCumulative && currentStep === 4) || (!isCumulative && currentStep === 5);
 
-  // Creator info for confirm hero card
-  const creatorFirstName = (will as any)?.creatorFirstName || '';
-  const creatorLastName = (will as any)?.creatorLastName || '';
-  const creatorFullName = [creatorFirstName, creatorLastName].filter(Boolean).join(' ') || 'Your team';
-  const creatorInitial = creatorFirstName ? creatorFirstName[0].toUpperCase() : 'T';
-  const creatorPossessive = creatorFullName.endsWith('s') ? `${creatorFullName}'` : `${creatorFullName}'s`;
+  // Team members for confirm hero card — accepted only, sorted creator-first
+  const allTeamMembers = inviteData?.teamMembers ?? [];
+  const confirmedTeamMembers = [
+    ...allTeamMembers.filter(m => m.isCreator),
+    ...allTeamMembers.filter(m => !m.isCreator && m.status === 'accepted'),
+  ];
+
+  // Date range label for the commitment inset
+  const dateRange = will
+    ? formatDateRange((will as any).startDate, (will as any).endDate ?? null, (will as any).isIndefinite ?? false)
+    : '';
 
   // Tracking summary label for confirm card
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -737,54 +766,87 @@ export default function SubmitCommitment() {
           </div>
         )}
 
-        {/* Confirm Step — unified purple hero design */}
+        {/* Confirm Step */}
         {isConfirmStep && !showTransition && (
           <form onSubmit={handleFinalSubmit} className="space-y-4">
 
             {/* Purple hero card */}
             <div className="rounded-2xl p-5 space-y-3" style={{ backgroundColor: '#7B3FC4' }}>
 
-              {/* Team context row */}
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white font-semibold text-sm"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}
-                >
-                  {creatorInitial}
-                </div>
-                <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                  {creatorPossessive} {will?.title || 'Will'}
-                </span>
+              {/* Will type header — no owner, just the type */}
+              <div className="flex items-center gap-2">
+                {isCumulative ? (
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-white opacity-80" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-white opacity-80" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="12" cy="12" r="1" fill="currentColor" />
+                  </svg>
+                )}
+                <span className="text-base font-bold text-white">{isCumulative ? 'We Will' : 'I Will'}</span>
               </div>
 
-              {/* Commitment inset */}
+              {/* Commitment inset — text + date range */}
               <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
-                <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <p className="text-[10px] font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
                   {isCumulative ? 'The commitment' : 'Your commitment'}
                 </p>
                 <p className="text-base font-bold italic text-white leading-snug">
                   "{isCumulative ? sharedWhat : what}"
                 </p>
+                {dateRange && (
+                  <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                    {dateRange}
+                  </p>
+                )}
               </div>
 
-              {/* Why inset */}
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
-                <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                  Your why · private
-                </p>
-                <p className="text-base italic text-white leading-snug">
-                  {why}
-                </p>
-              </div>
+              {/* Team inset — shown for We Will only */}
+              {isCumulative && confirmedTeamMembers.length > 0 && (
+                <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
+                  <p className="text-[10px] font-medium mb-2.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                    Team
+                  </p>
+                  <div className="space-y-2">
+                    {confirmedTeamMembers.map(m => (
+                      <div key={m.userId} className="flex items-center gap-2.5">
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
+                          style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}
+                        >
+                          {m.firstName.charAt(0).toUpperCase()}
+                        </div>
+                        <p className="text-sm font-medium text-white">
+                          {m.firstName}{m.userId === (user as any)?.id ? ' (you)' : ''}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Tracking row */}
-            <div className="bg-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+            {/* Your why — white card outside purple */}
+            <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">
+                Your why · private
+              </p>
+              <p className="text-sm italic text-gray-700 leading-snug">{why}</p>
+            </div>
+
+            {/* Tracking — white card outside purple */}
+            <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
                 <Clock className="w-5 h-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-widest leading-none mb-0.5">Tracking</p>
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-0.5">Tracking</p>
                 <p className="text-sm font-semibold text-gray-800" data-testid="text-confirm-tracking">
                   {trackingLabel}
                 </p>
