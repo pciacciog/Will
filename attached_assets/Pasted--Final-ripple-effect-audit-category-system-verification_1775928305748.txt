@@ -1,0 +1,53 @@
+
+Final ripple effect audit — category system verification
+Three remaining verification tasks before we close out the category system implementation. Do not change any code unless a bug is confirmed. Report findings for all three before making any fixes.
+
+1. checkInType derivation — confirm Abstain and Mission never show check-in button
+In TeamWillHub.tsx and WillDetails.tsx, the check-in button and DailyCheckInModal are gated behind hasDailyCheckIns. That flag is derived from checkInType. The expected derivation is:
+
+commitmentCategory = 'habit' → checkInType = 'daily' → hasDailyCheckIns = true → check-in button shows
+commitmentCategory = 'abstain' → checkInType = 'final_review' → hasDailyCheckIns = false → check-in button hidden
+commitmentCategory = 'mission' → checkInType = 'final_review' → hasDailyCheckIns = false → check-in button hidden
+
+Please confirm:
+
+Where exactly is hasDailyCheckIns defined in both WillDetails.tsx and TeamWillHub.tsx? Show the exact line and expression
+Where exactly is checkInType set when a Will is created via NotificationsSetup.tsx? Show the line in the POST /api/wills handler where it is written
+Is checkInType being correctly auto-derived from commitmentCategory before hitting the database — or is it being passed directly from the client? If passed from the client, confirm NotificationsSetup.tsx is sending the correct value for each category
+Create a test Will with commitmentCategory = 'abstain' and confirm checkInType in the database is 'final_review' and the check-in button does not appear in the dashboard
+Create a test Will with commitmentCategory = 'mission' and confirm the same
+
+Report the exact hasDailyCheckIns expression, the checkInType value in the database for each category, and whether the button appears or not.
+
+2. Home screen Will cards — category-aware display check
+The home screen shows active Will summary cards. Find the component that renders these cards (likely in Home.tsx or a dedicated card component) and document:
+
+What data fields does each card currently display? List every visible field
+For Solo Wills: does the card show streak, days left, percentage, or any progress metric?
+For Team Wills: same question
+Does any card currently reference commitmentCategory?
+
+Then evaluate whether the current card display makes sense for each category:
+
+Habit — streak + days left makes sense ✓
+Abstain — streak (day streak) makes sense ✓ but label should say "day streak" not "% on track"
+Mission — showing a streak or % makes no sense. Should show days until deadline instead
+
+If the home card is showing streak/% for all Will types regardless of category, flag this as a bug and propose the minimum change needed. If the card is already flexible or shows only neutral information (like Will title + days left), it may be fine as-is.
+Do not change anything yet — just report what the card currently shows and whether it needs updating.
+
+3. Will review flow — Mission Wills marked done early
+When a user taps "Mark as done" on a Mission Will and confirms, we send PATCH /api/wills/:id with { status: 'completed' }. Find this endpoint and document:
+
+What does the PATCH handler do when status is set to 'completed'? Does it trigger the will_review flow?
+In TeamWillHub.tsx and WillDetails.tsx, the will_review status triggers WillReviewFlow or OngoingWillReviewFlow. If a Mission Will is marked done early (before endDate), does it enter will_review status or completed status directly?
+Is there a difference between status = 'completed' and status = 'will_review'? Document both states and what triggers each
+If a Mission Will enters will_review after being marked done, does the review flow make sense for a Mission? The review flow was designed for daily check-in Wills — it asks about streaks and daily progress which is irrelevant for a Mission
+
+Then confirm:
+
+If commitmentCategory = 'mission' and the user taps "Mark as done," does the Will skip will_review entirely and go straight to completed? This is the correct behavior
+If it currently goes through will_review, flag this as a bug. The fix would be: in the PATCH handler, if commitmentCategory = 'mission' and status is being set to 'completed', skip will_review entirely and write status = 'completed' directly
+If commitmentCategory = 'habit' or 'abstain', the will_review flow should still trigger at endDate as normal — do not change this behavior
+
+Report the current status transition logic and whether Mission Wills need a bypass.
