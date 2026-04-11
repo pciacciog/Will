@@ -81,8 +81,15 @@ export class EndRoomScheduler {
     // NEW: Send daily reminder notifications (user-scheduled)
     await this.checkDailyReminders(now);
 
-    // NEW: Send random motivational "because" notifications (once per day)
+    // NEW: Send random motivational "because" notifications (once per day) — legacy Wills only
     await this.checkMotivationalNotifications(now);
+
+    // Category-aware notifications
+    await this.checkHabitReminders(now);
+    await this.checkAbstainReminder(now);
+    await this.checkMilestoneNotifications(now);
+    await this.checkDeadlineReminders(now);
+    await this.checkMissionDailyNudge(now);
 
     // Team Will: activate or terminate at startDate, send 24h reminder to pending invitees
     await this.processTeamWillActivation(now);
@@ -832,6 +839,7 @@ export class EndRoomScheduler {
           willCustomDays: wills.customDays,
           commitmentActiveDays: willCommitments.activeDays,
           commitmentCustomDays: willCommitments.customDays,
+          commitmentCategory: wills.commitmentCategory,
         })
         .from(wills)
         .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
@@ -847,6 +855,9 @@ export class EndRoomScheduler {
       for (const willData of willsWithReminders) {
         try {
           if (!willData.userTimezone) continue;
+
+          // Category-aware: Abstain and Mission never get check-in notifications
+          if (willData.commitmentCategory === 'abstain' || willData.commitmentCategory === 'mission') continue;
 
           const effectiveCheckInType = willData.commitmentCheckInType || willData.willCheckInType || 'daily';
           if (effectiveCheckInType === 'final_review' || effectiveCheckInType === 'one-time') continue;
@@ -904,6 +915,7 @@ export class EndRoomScheduler {
           willCustomDays: wills.customDays,
           commitmentActiveDays: willCommitments.activeDays,
           commitmentCustomDays: willCommitments.customDays,
+          commitmentCategory: wills.commitmentCategory,
         })
         .from(wills)
         .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
@@ -922,6 +934,9 @@ export class EndRoomScheduler {
       for (const willData of shortWills) {
         try {
           if (!willData.userTimezone || !willData.willEndDate) continue;
+
+          // Category-aware: Abstain and Mission never get check-in notifications
+          if (willData.commitmentCategory === 'abstain' || willData.commitmentCategory === 'mission') continue;
 
           const effectiveCheckInType = willData.commitmentCheckInType || willData.willCheckInType || 'daily';
           if (effectiveCheckInType === 'final_review' || effectiveCheckInType === 'one-time') continue;
@@ -971,6 +986,303 @@ export class EndRoomScheduler {
     }
   }
 
+  // ─── CATEGORY-AWARE NOTIFICATION FUNCTIONS ────────────────────────────────
+
+  // Habit: fires at wills.reminderTime — replaces random motivational for habit Wills
+  private async checkHabitReminders(now: Date) {
+    try {
+      const rows = await db
+        .select({
+          commitmentId: willCommitments.id,
+          willId: wills.id,
+          userId: willCommitments.userId,
+          userTimezone: users.timezone,
+          userWhat: willCommitments.what,
+          userWhy: willCommitments.why,
+          reminderTime: wills.reminderTime,
+          lastMotivationalSentAt: willCommitments.lastMotivationalSentAt,
+        })
+        .from(wills)
+        .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
+        .innerJoin(users, eq(willCommitments.userId, users.id))
+        .where(and(
+          eq(wills.status, 'active'),
+          eq(wills.commitmentCategory, 'habit'),
+          isNotNull(wills.reminderTime),
+        ))
+        .limit(200);
+
+      for (const row of rows) {
+        try {
+          if (!row.userTimezone || !row.reminderTime) continue;
+          if (this.alreadySentForScheduledOccurrence(row.lastMotivationalSentAt, row.userTimezone, row.reminderTime)) continue;
+          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+          if (hasToken.length === 0) continue;
+          const userLocalTime = this.getTimeInTimezone(now, row.userTimezone);
+          if (!this.isWithinReminderWindow(userLocalTime, row.reminderTime)) continue;
+          const success = await pushNotificationService.sendHabitReminderNotification(row.userId, row.userWhat || '', row.userWhy || undefined, row.willId);
+          if (success) {
+            await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
+            console.log(`[SCHEDULER] ✅ Habit reminder sent to user ${row.userId} for Will ${row.willId}`);
+          }
+        } catch (err) {
+          console.error(`[SCHEDULER] Habit reminder error for user ${row.userId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error('[SCHEDULER] Error in checkHabitReminders:', error);
+    }
+  }
+
+  // Abstain: daily reminder fires at wills.reminderTime
+  private async checkAbstainReminder(now: Date) {
+    try {
+      const rows = await db
+        .select({
+          commitmentId: willCommitments.id,
+          willId: wills.id,
+          userId: willCommitments.userId,
+          userTimezone: users.timezone,
+          userWhat: willCommitments.what,
+          userWhy: willCommitments.why,
+          reminderTime: wills.reminderTime,
+          lastMotivationalSentAt: willCommitments.lastMotivationalSentAt,
+        })
+        .from(wills)
+        .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
+        .innerJoin(users, eq(willCommitments.userId, users.id))
+        .where(and(
+          eq(wills.status, 'active'),
+          eq(wills.commitmentCategory, 'abstain'),
+          isNotNull(wills.reminderTime),
+        ))
+        .limit(200);
+
+      for (const row of rows) {
+        try {
+          if (!row.userTimezone || !row.reminderTime) continue;
+          if (this.alreadySentForScheduledOccurrence(row.lastMotivationalSentAt, row.userTimezone, row.reminderTime)) continue;
+          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+          if (hasToken.length === 0) continue;
+          const userLocalTime = this.getTimeInTimezone(now, row.userTimezone);
+          if (!this.isWithinReminderWindow(userLocalTime, row.reminderTime)) continue;
+          const success = await pushNotificationService.sendAbstainReminderNotification(row.userId, row.userWhat || '', row.userWhy || undefined, row.willId);
+          if (success) {
+            await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
+            console.log(`[SCHEDULER] ✅ Abstain reminder sent to user ${row.userId} for Will ${row.willId}`);
+          }
+        } catch (err) {
+          console.error(`[SCHEDULER] Abstain reminder error for user ${row.userId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error('[SCHEDULER] Error in checkAbstainReminder:', error);
+    }
+  }
+
+  // Abstain: milestone celebrations — fires when streak day matches a milestone day
+  private async checkMilestoneNotifications(now: Date) {
+    try {
+      const rows = await db
+        .select({
+          willId: wills.id,
+          userId: wills.createdBy,
+          userTimezone: users.timezone,
+          milestones: wills.milestones,
+          sentMilestones: wills.sentMilestones,
+          streakStartDate: wills.streakStartDate,
+          startDate: wills.startDate,
+        })
+        .from(wills)
+        .innerJoin(users, eq(wills.createdBy, users.id))
+        .where(and(
+          eq(wills.status, 'active'),
+          eq(wills.commitmentCategory, 'abstain'),
+          isNotNull(wills.milestones),
+        ))
+        .limit(200);
+
+      for (const row of rows) {
+        try {
+          if (!row.userTimezone) continue;
+          const milestonesRaw: { day: number; label: string }[] = (() => {
+            try { return JSON.parse(row.milestones || '[]'); } catch { return []; }
+          })();
+          if (milestonesRaw.length === 0) continue;
+
+          const sentDays: number[] = (() => {
+            try { return JSON.parse(row.sentMilestones || '[]'); } catch { return []; }
+          })();
+
+          const streakRef = row.streakStartDate || row.startDate;
+          const streakRefLocal = new Date(streakRef);
+          const nowLocalStr = new Intl.DateTimeFormat('en-CA', { timeZone: row.userTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+          const streakRefLocalStr = new Intl.DateTimeFormat('en-CA', { timeZone: row.userTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(streakRefLocal);
+          const msPerDay = 24 * 60 * 60 * 1000;
+          const nowDate = new Date(nowLocalStr);
+          const refDate = new Date(streakRefLocalStr);
+          const streakDay = Math.floor((nowDate.getTime() - refDate.getTime()) / msPerDay) + 1;
+
+          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+          if (hasToken.length === 0) continue;
+
+          let updatedSent = [...sentDays];
+          let fired = false;
+
+          for (const ms of milestonesRaw) {
+            if (sentDays.includes(ms.day)) continue;
+            if (streakDay !== ms.day) continue;
+            const success = await pushNotificationService.sendMilestoneNotification(row.userId, ms.label, ms.day, row.willId);
+            if (success) {
+              updatedSent.push(ms.day);
+              fired = true;
+              console.log(`[SCHEDULER] ✅ Milestone day ${ms.day} sent to user ${row.userId} for Will ${row.willId}`);
+            }
+          }
+
+          if (fired) {
+            await db.update(wills).set({ sentMilestones: JSON.stringify(updatedSent) }).where(eq(wills.id, row.willId));
+          }
+        } catch (err) {
+          console.error(`[SCHEDULER] Milestone error for Will ${row.willId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error('[SCHEDULER] Error in checkMilestoneNotifications:', error);
+    }
+  }
+
+  // Mission: fires deadline reminders at 3 days, 1 day, and day-of
+  private async checkDeadlineReminders(now: Date) {
+    try {
+      const rows = await db
+        .select({
+          willId: wills.id,
+          userId: wills.createdBy,
+          userTimezone: users.timezone,
+          userWhat: willCommitments.what,
+          userWhy: willCommitments.why,
+          endDate: wills.endDate,
+          deadlineReminders: wills.deadlineReminders,
+          sentDeadlineReminders: wills.sentDeadlineReminders,
+        })
+        .from(wills)
+        .innerJoin(users, eq(wills.createdBy, users.id))
+        .leftJoin(willCommitments, and(eq(willCommitments.willId, wills.id), eq(willCommitments.userId, wills.createdBy)))
+        .where(and(
+          eq(wills.status, 'active'),
+          eq(wills.commitmentCategory, 'mission'),
+          isNotNull(wills.deadlineReminders),
+          isNotNull(wills.endDate),
+        ))
+        .limit(200);
+
+      for (const row of rows) {
+        try {
+          if (!row.userTimezone || !row.endDate) continue;
+          const config: { threeDays?: boolean; oneDay?: boolean; dayOf?: boolean } = (() => {
+            try { return JSON.parse(row.deadlineReminders || '{}'); } catch { return {}; }
+          })();
+          const sentKeys: string[] = (() => {
+            try { return JSON.parse(row.sentDeadlineReminders || '[]'); } catch { return []; }
+          })();
+
+          const nowLocalStr = new Intl.DateTimeFormat('en-CA', { timeZone: row.userTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+          const endLocalStr = new Intl.DateTimeFormat('en-CA', { timeZone: row.userTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(row.endDate));
+          const msPerDay = 24 * 60 * 60 * 1000;
+          const daysLeft = Math.round((new Date(endLocalStr).getTime() - new Date(nowLocalStr).getTime()) / msPerDay);
+
+          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+          if (hasToken.length === 0) continue;
+
+          const what = row.userWhat || '';
+          const why = row.userWhy || undefined;
+          let updatedSent = [...sentKeys];
+          let fired = false;
+
+          const checks: { key: string; enabled: boolean | undefined; days: number; title: string }[] = [
+            { key: 'threeDays', enabled: config.threeDays, days: 3, title: `3 days left — ${what.slice(0, 40)}` },
+            { key: 'oneDay',    enabled: config.oneDay,    days: 1, title: `1 day left — ${what.slice(0, 40)}` },
+            { key: 'dayOf',     enabled: config.dayOf,     days: 0, title: `Today is the day — ${what.slice(0, 40)}` },
+          ];
+
+          for (const check of checks) {
+            if (!check.enabled) continue;
+            if (sentKeys.includes(check.key)) continue;
+            if (daysLeft !== check.days) continue;
+            const success = await pushNotificationService.sendDeadlineReminderNotification(row.userId, check.title, why, row.willId);
+            if (success) {
+              updatedSent.push(check.key);
+              fired = true;
+              console.log(`[SCHEDULER] ✅ Deadline reminder '${check.key}' sent to user ${row.userId} for Will ${row.willId}`);
+            }
+          }
+
+          if (fired) {
+            await db.update(wills).set({ sentDeadlineReminders: JSON.stringify(updatedSent) }).where(eq(wills.id, row.willId));
+          }
+        } catch (err) {
+          console.error(`[SCHEDULER] Deadline reminder error for Will ${row.willId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error('[SCHEDULER] Error in checkDeadlineReminders:', error);
+    }
+  }
+
+  // Mission: optional daily nudge at missionReminderTime
+  private async checkMissionDailyNudge(now: Date) {
+    try {
+      const rows = await db
+        .select({
+          commitmentId: willCommitments.id,
+          willId: wills.id,
+          userId: willCommitments.userId,
+          userTimezone: users.timezone,
+          userWhat: willCommitments.what,
+          userWhy: willCommitments.why,
+          missionReminderTime: wills.missionReminderTime,
+          lastMotivationalSentAt: willCommitments.lastMotivationalSentAt,
+        })
+        .from(wills)
+        .innerJoin(willCommitments, eq(wills.id, willCommitments.willId))
+        .innerJoin(users, eq(willCommitments.userId, users.id))
+        .where(and(
+          eq(wills.status, 'active'),
+          eq(wills.commitmentCategory, 'mission'),
+          isNotNull(wills.missionReminderTime),
+        ))
+        .limit(200);
+
+      for (const row of rows) {
+        try {
+          if (!row.userTimezone || !row.missionReminderTime) continue;
+          if (this.alreadySentForScheduledOccurrence(row.lastMotivationalSentAt, row.userTimezone, row.missionReminderTime)) continue;
+          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+          if (hasToken.length === 0) continue;
+          const userLocalTime = this.getTimeInTimezone(now, row.userTimezone);
+          if (!this.isWithinReminderWindow(userLocalTime, row.missionReminderTime)) continue;
+          const success = await pushNotificationService.sendMissionNudgeNotification(row.userId, row.userWhat || '', row.userWhy || undefined, row.willId);
+          if (success) {
+            await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
+            console.log(`[SCHEDULER] ✅ Mission nudge sent to user ${row.userId} for Will ${row.willId}`);
+          }
+        } catch (err) {
+          console.error(`[SCHEDULER] Mission nudge error for user ${row.userId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error('[SCHEDULER] Error in checkMissionDailyNudge:', error);
+    }
+  }
+
+  // ─── END CATEGORY-AWARE FUNCTIONS ─────────────────────────────────────────
+
   // Motivational "because" notification — random once per day across all active wills
   private async checkMotivationalNotifications(now: Date) {
     try {
@@ -997,6 +1309,7 @@ export class EndRoomScheduler {
           willCustomDays: wills.customDays,
           commitmentActiveDays: willCommitments.activeDays,
           commitmentCustomDays: willCommitments.customDays,
+          commitmentCategory: wills.commitmentCategory,
         })
         .from(willCommitments)
         .innerJoin(wills, eq(willCommitments.willId, wills.id))
@@ -1012,6 +1325,9 @@ export class EndRoomScheduler {
       for (const row of activeCommitments) {
         try {
           if (!row.userTimezone || !row.userWhy) continue;
+
+          // Category-aware: skip categorized Wills — handled by dedicated functions
+          if (row.commitmentCategory !== null) continue;
 
           const effectiveCheckInType = row.commitmentCheckInType || row.willCheckInType || 'daily';
           if (effectiveCheckInType === 'final_review' || effectiveCheckInType === 'one-time') continue;

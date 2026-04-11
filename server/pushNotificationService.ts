@@ -675,6 +675,80 @@ class PushNotificationService {
 
     return await this.sendToUser(userId, payload);
   }
+  // ─── CATEGORY-AWARE PUSH NOTIFICATIONS ───────────────────────────────────
+
+  async sendHabitReminderNotification(userId: string, what: string, why?: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: what || 'Time to honor your habit',
+      body: why ? `Because ${why}` : 'Tap to check in on your habit.',
+      category: 'habit_reminder',
+      data: {
+        type: 'habit_reminder',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}?action=checkin` : '/solo/hub',
+      }
+    };
+    return await this.sendToUser(userId, payload);
+  }
+
+  async sendAbstainReminderNotification(userId: string, what: string, why?: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: what || 'Stay strong today',
+      body: why ? `Because ${why}` : 'Tap to check in on your abstain will.',
+      category: 'abstain_reminder',
+      data: {
+        type: 'abstain_reminder',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub',
+      }
+    };
+    return await this.sendToUser(userId, payload);
+  }
+
+  async sendMilestoneNotification(userId: string, label: string, day: number, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: label || `Day ${day} milestone`,
+      body: `Day ${day} — keep going.`,
+      category: 'milestone',
+      data: {
+        type: 'milestone',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub',
+      }
+    };
+    return await this.sendToUser(userId, payload);
+  }
+
+  async sendDeadlineReminderNotification(userId: string, title: string, why?: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title,
+      body: why ? `Because ${why}` : 'Tap to check in on your mission.',
+      category: 'deadline_reminder',
+      data: {
+        type: 'deadline_reminder',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub',
+      }
+    };
+    return await this.sendToUser(userId, payload);
+  }
+
+  async sendMissionNudgeNotification(userId: string, what: string, why?: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: what || 'Mission check-in',
+      body: why ? `Because ${why}` : 'Tap to reflect on your mission.',
+      category: 'mission_nudge',
+      data: {
+        type: 'mission_nudge',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub',
+      }
+    };
+    return await this.sendToUser(userId, payload);
+  }
+
+  // ─── END CATEGORY-AWARE PUSH NOTIFICATIONS ────────────────────────────────
+
   async sendWillMessageNotification(senderName: string, willId: number, messagePreview: string, otherParticipants: string[]): Promise<void> {
     const truncatedPreview = messagePreview.length > 100 ? messagePreview.substring(0, 97) + '...' : messagePreview;
 

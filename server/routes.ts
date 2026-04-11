@@ -1089,6 +1089,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isIndefinite: isIndefinite,
         commitmentCategory: req.body.commitmentCategory || null,
         milestones: req.body.milestones || null,
+        deadlineReminders: req.body.deadlineReminders ? (typeof req.body.deadlineReminders === 'string' ? req.body.deadlineReminders : JSON.stringify(req.body.deadlineReminders)) : null,
+        missionReminderTime: req.body.missionReminderTime || null,
+        streakStartDate: new Date(req.body.startDate),
+        sentMilestones: null,
+        sentDeadlineReminders: null,
       };
       
       console.log("Will data before validation:", willDataWithDefaults, "isPersonalMode:", isPersonalMode);
@@ -3089,6 +3094,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating will notifications:", error);
       res.status(500).json({ message: "Failed to update notification settings" });
+    }
+  });
+
+  // Reset Abstain streak — called when user taps "I slipped"
+  // Resets streakStartDate to now and clears sentMilestones so milestones fire again from the new streak
+  app.post('/api/wills/:id/reset-streak', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+      if (will.commitmentCategory !== 'abstain') return res.status(400).json({ message: "Only Abstain Wills support streak reset" });
+
+      const isCreator = will.createdBy === userId;
+      if (!isCreator) {
+        const commitments = await storage.getWillCommitments(willId);
+        const isParticipant = commitments.some((c: any) => c.userId === userId);
+        if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const now = new Date();
+      await db.update(wills).set({ streakStartDate: now, sentMilestones: '[]' }).where(eq(wills.id, willId));
+
+      res.json({ success: true, streakStartDate: now.toISOString() });
+    } catch (error) {
+      console.error("Error resetting abstain streak:", error);
+      res.status(500).json({ message: "Failed to reset streak" });
     }
   });
 

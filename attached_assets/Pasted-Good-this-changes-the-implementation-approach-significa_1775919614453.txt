@@ -1,0 +1,233 @@
+Good — this changes the implementation approach significantly and actually makes things simpler. Since notifications are cron-based (not pre-scheduled), we don't need to cancel or reschedule anything. The cron job recalculates every minute from live data. Here's what this means before writing the prompt:
+The random motivational notification — getting replaced. For new categorized Wills, the cron will fire the reminder at the user-defined reminderTime instead of the seeded-random time. For legacy Wills (commitmentCategory null) — checkMotivationalNotifications() stays completely untouched.
+The check-in notification — stays for Habit only. For Abstain and Mission, the cron simply skips it. The existing skip logic already checks checkInType — since Abstain and Mission both resolve to final_review, this already works without changes. We just need to make sure the derivation is correct.
+Milestone notifications for Abstain — since it's cron-based, there's no pre-scheduling. Instead we add a new function checkMilestoneNotifications(now) that runs every minute, looks at active Abstain Wills, reads the milestones JSON, calculates which milestone day each Will is currently on relative to streak start, and fires if today matches a milestone day and it hasn't been sent yet. Dedup via a new sentMilestones JSON column.
+Deadline reminders for Mission — same cron approach. New function checkDeadlineReminders(now) that calculates days remaining to endDate and fires the appropriate one-time notification with dedup.
+The slip/reset problem — since milestones are calculated dynamically from streak start date, we just need a streakStartDate field on the Will or commitment. When user taps "I slipped," update streakStartDate to today. The cron recalculates everything from that date automatically. No cancellation needed.
+Here's the full prompt:
+
+Category-aware notification refactor — scheduler.ts and pushNotificationService.ts
+We are refactoring the notification system to be category-aware based on the new commitmentCategory field (habit, abstain, mission, or null for legacy). Everything is cron-based — no pre-scheduling. All changes live in server/scheduler.ts and server/pushNotificationService.ts.
+
+Schema additions — run these migrations first, confirm SQL before executing
+Add to wills table:
+sqlALTER TABLE wills ADD COLUMN deadline_reminders TEXT DEFAULT NULL;
+-- JSON: { "threeDays": boolean, "oneDay": boolean, "dayOf": boolean }
+
+ALTER TABLE wills ADD COLUMN mission_reminder_time VARCHAR(5) DEFAULT NULL;
+-- HH:MM — optional daily nudge for Mission Wills
+
+ALTER TABLE wills ADD COLUMN streak_start_date TIMESTAMP DEFAULT NULL;
+-- Set to startDate at Will creation. Reset to NOW() when user slips on Abstain Will.
+
+ALTER TABLE wills ADD COLUMN sent_milestones TEXT DEFAULT NULL;
+-- JSON array of day numbers already fired: [3, 7] — dedup for milestone notifications
+
+ALTER TABLE wills ADD COLUMN sent_deadline_reminders TEXT DEFAULT NULL;
+-- JSON array of keys already fired: ["threeDays", "oneDay", "dayOf"]
+At Will creation in POST /api/wills:
+
+Set streakStartDate = startDate for all new Wills
+Write deadlineReminders and missionReminderTime from request body
+sentMilestones and sentDeadlineReminders default to null (empty — nothing sent yet)
+
+
+Changes to checkMotivationalNotifications() — lines 974–1081
+This function currently fires the random "why" notification. Add a category check at the top of the loop where it processes each Will/commitment:
+typescriptif (commitment.will.commitmentCategory !== null) {
+  // Handled by new category-aware functions below
+  // Skip entirely — do not fire the random motivational for categorized Wills
+  continue;
+}
+// Legacy behavior continues unchanged below for null category Wills
+Do not change anything else in this function. Legacy Wills keep their exact existing behavior.
+
+Changes to checkDailyReminders() — lines 810–972
+This function fires "Have you honored your will today?" Add a category check:
+typescriptif (
+  commitment.will.commitmentCategory === 'abstain' ||
+  commitment.will.commitmentCategory === 'mission'
+) {
+  // Never fire check-in notification for these categories
+  continue;
+}
+// For 'habit' and null — existing behavior unchanged
+For commitmentCategory === 'habit' — the existing logic already uses wills.reminderTime and willCommitments.checkInTime. This works correctly without changes since the user now explicitly sets both times in the new notifications screen. The existing dedup via lastCheckInReminderSentAt stays.
+Do not change anything else in this function.
+
+New function 1 — scheduleHabitReminder(now)
+Add this new function to server/scheduler.ts. Call it from processHeavyOperations() alongside the existing functions.
+This replaces the random motivational for Habit Wills specifically:
+typescriptasync function checkHabitReminders(now: Date) {
+  // Find all active Wills where commitmentCategory = 'habit'
+  // AND reminderTime is not null
+  // AND status = 'active'
+  
+  // For each: check if current time falls within the 2-hour rolling window
+  // of wills.reminderTime — same window logic as existing checkDailyReminders()
+  
+  // Check dedup: lastMotivationalSentAt — skip if already sent today
+  
+  // Fire pushNotificationService.sendHabitReminderNotification():
+  //   Title: will_commitments.what (the Will statement)
+  //   Subtitle: will_commitments.why (the because)
+  //   APNs category: 'habit_reminder'
+  
+  // Update lastMotivationalSentAt = now after firing
+}
+Add sendHabitReminderNotification(deviceToken, what, why) to pushNotificationService.ts modeled after the existing sendMotivationalNotification().
+
+New function 2 — checkAbstainReminder(now)
+typescriptasync function checkAbstainReminder(now: Date) {
+  // Find all active Wills where commitmentCategory = 'abstain'
+  // AND reminderTime is not null
+  // AND status = 'active'
+  
+  // For each: check if current time is within 2-hour window of reminderTime
+  
+  // Dedup via lastMotivationalSentAt — skip if already sent today
+  
+  // Fire pushNotificationService.sendAbstainReminderNotification():
+  //   Title: will_commitments.what
+  //   Subtitle: will_commitments.why
+  //   APNs category: 'abstain_reminder'
+  
+  // Update lastMotivationalSentAt = now
+}
+Add sendAbstainReminderNotification(deviceToken, what, why) to pushNotificationService.ts.
+
+New function 3 — checkMilestoneNotifications(now)
+typescriptasync function checkMilestoneNotifications(now: Date) {
+  // Find all active Wills where commitmentCategory = 'abstain'
+  // AND milestones is not null
+  // AND status = 'active'
+  
+  for each will:
+    // Parse milestones JSON: [{ day: number, label: string }]
+    // Parse sentMilestones JSON: number[] (days already fired, default [])
+    
+    // Calculate current streak day:
+    // streakDay = differenceInDays(now, will.streakStartDate) + 1
+    
+    for each milestone in milestones:
+      // Skip if milestone.day is already in sentMilestones array
+      // Skip if streakDay !== milestone.day
+      
+      // Fire pushNotificationService.sendMilestoneNotification():
+      //   Title: milestone.label  (e.g. "One week strong")
+      //   Subtitle: "Day " + milestone.day + " — keep going."
+      //   APNs category: 'milestone'
+      
+      // Add milestone.day to sentMilestones array
+      // Write updated sentMilestones JSON back to wills table
+}
+Add sendMilestoneNotification(deviceToken, label, day) to pushNotificationService.ts.
+Important: When the user taps "I slipped" (handled later in dashboard logic), the server must:
+
+Set wills.streakStartDate = NOW()
+Set wills.sentMilestones = '[]' (reset — all milestones eligible to fire again from new streak start)
+
+Write a helper function resetAbstainStreak(willId) that does both of these in one DB update. Call it from the slip endpoint.
+
+New function 4 — checkDeadlineReminders(now)
+typescriptasync function checkDeadlineReminders(now: Date) {
+  // Find all active Wills where commitmentCategory = 'mission'
+  // AND deadlineReminders is not null
+  // AND endDate is not null
+  // AND status = 'active'
+  
+  for each will:
+    // Parse deadlineReminders: { threeDays, oneDay, dayOf }
+    // Parse sentDeadlineReminders: string[] (keys already fired, default [])
+    
+    const daysLeft = differenceInDays(will.endDate, now);
+    
+    // Check threeDays:
+    if (deadlineReminders.threeDays && daysLeft === 3 && !sentDeadlineReminders.includes('threeDays')):
+      // Fire: Title = "3 days left — " + truncate(what, 40)
+      //        Subtitle = why
+      // Add 'threeDays' to sentDeadlineReminders, write back to DB
+    
+    // Check oneDay:
+    if (deadlineReminders.oneDay && daysLeft === 1 && !sentDeadlineReminders.includes('oneDay')):
+      // Fire: Title = "1 day left — " + truncate(what, 40)
+      //        Subtitle = why
+      // Add 'oneDay' to sentDeadlineReminders, write back to DB
+    
+    // Check dayOf:
+    if (deadlineReminders.dayOf && daysLeft === 0 && !sentDeadlineReminders.includes('dayOf')):
+      // Fire: Title = "Today is the day — " + truncate(what, 40)
+      //        Subtitle = why
+      // Add 'dayOf' to sentDeadlineReminders, write back to DB
+}
+Add sendDeadlineReminderNotification(deviceToken, title, why) to pushNotificationService.ts.
+
+New function 5 — checkMissionDailyNudge(now)
+typescriptasync function checkMissionDailyNudge(now: Date) {
+  // Find all active Wills where commitmentCategory = 'mission'
+  // AND missionReminderTime is not null
+  // AND status = 'active'
+  
+  // For each: check if current time is within 2-hour window of missionReminderTime
+  
+  // Dedup via lastMotivationalSentAt — skip if already sent today
+  
+  // Fire pushNotificationService.sendMissionNudgeNotification():
+  //   Title: will_commitments.what
+  //   Subtitle: will_commitments.why
+  //   APNs category: 'mission_nudge'
+  
+  // Update lastMotivationalSentAt = now
+  
+  // Cancel immediately if Will status is 'completed' — skip and do not fire
+}
+Add sendMissionNudgeNotification(deviceToken, what, why) to pushNotificationService.ts.
+
+Wire all new functions into processHeavyOperations()
+typescriptasync function processHeavyOperations() {
+  const now = new Date();
+  
+  // Existing functions — unchanged:
+  await checkDailyReminders(now);       // now skips abstain + mission
+  await checkMotivationalNotifications(now); // now skips categorized Wills
+  
+  // New category-aware functions:
+  await checkHabitReminders(now);
+  await checkAbstainReminder(now);
+  await checkMilestoneNotifications(now);
+  await checkDeadlineReminders(now);
+  await checkMissionDailyNudge(now);
+}
+
+Update POST /api/wills
+Accept and write these fields from request body:
+
+deadlineReminders → wills.deadline_reminders (JSON string)
+missionReminderTime → wills.mission_reminder_time
+Set wills.streak_start_date = startDate for all new Wills regardless of category
+
+
+What to absolutely not change
+
+checkMotivationalNotifications() internal logic — only add the category skip at the top
+checkDailyReminders() internal logic — only add the category skip at the top
+sendMotivationalNotification() in pushNotificationService.ts
+sendDailyReminderNotification() in pushNotificationService.ts
+Any existing dedup columns except adding to sentMilestones and sentDeadlineReminders
+Any Will where commitmentCategory is null — full legacy behavior preserved
+
+
+Implementation order
+
+Confirm schema migration SQL — report before running
+Run migrations
+Update POST /api/wills to write new fields and streakStartDate
+Add category skips to checkMotivationalNotifications() and checkDailyReminders()
+Write and test checkHabitReminders() + sendHabitReminderNotification()
+Write and test checkAbstainReminder() + sendAbstainReminderNotification()
+Write and test checkMilestoneNotifications() + sendMilestoneNotification() + resetAbstainStreak()
+Write and test checkDeadlineReminders() + sendDeadlineReminderNotification()
+Write and test checkMissionDailyNudge() + sendMissionNudgeNotification()
+Wire all into processHeavyOperations()
+Test each category end to end on a real device
+
