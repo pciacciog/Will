@@ -1,0 +1,140 @@
+Team Will dashboard — category-aware UI (TeamWillHub.tsx)
+We are updating TeamWillHub.tsx to render dynamically based on commitmentCategory — the same field already implemented in the Solo Will dashboard and notification system. This is the final piece of that category-aware ripple effect.
+Before writing any code — confirm these two things:
+
+Does /api/wills/${willId}/details currently return commitmentCategory in its response? If not, add it now — it is on the wills table and must be included in the details query.
+Does /api/wills/${willId}/abstain-log exist yet? This was defined in the notifications prompt. If it does not exist, create it now before proceeding:
+
+POST /api/wills/:id/abstain-log
+Body: { honored: boolean }
+If honored: true: log entry with today's date, do not change streakStartDate
+If honored: false: call resetAbstainStreak(willId) — sets streakStartDate = NOW() and sentMilestones = '[]'
+
+
+
+Report both confirmations before writing any code.
+
+CHANGE 1 — Team card restructure (lines 882–932)
+For I Will (isWeWill === false):
+Keep the existing member grid but update the layout:
+
+Add section label "YOUR TEAM" in small caps muted text above the grid
+The logged-in user's member card gets a green border (1.5px solid #1D9E75)
+Keep individual commitment text (c.what) below each member's name — unchanged
+Remove nothing else
+
+For We Will (isWeWill === true):
+Replace the current purple-tinted quote pill + member grid with a new unified hero card:
+Section label: "OUR COMMITMENT" — small caps, muted, centered
+Commitment text: will.sharedWhat — large (20px bold), centered, wrapped in quotes
+Divider line
+Team avatars row — centered, horizontally, names below each avatar
+No status badges — just avatar + name, nothing else
+The commitment is the visual centerpiece. Avatars sit below it as context. No status indicators, no dynamic badges — keep it static and simple.
+
+CHANGE 2 — Progress and action section (lines 934–1032)
+This section currently renders a single unified experience for all Wills. Replace with a branch on commitmentCategory.
+Add this branch wrapping the entire progress card content:
+typescriptconst category = will.commitmentCategory;
+
+if (!category) {
+  // Render existing progress card exactly as today — no changes
+  return <LegacyProgressSection />;
+}
+Then render per category:
+
+commitmentCategory === 'habit'
+Behavior: identical to current, with one label change.
+
+Stats: day streak (green) · days left · on track %
+"Check in for today" green button — existing behavior unchanged
+DailyCheckInModal — existing behavior unchanged
+Change "success rate" label to "on track" throughout
+
+For I Will: show the current user's personal stats from /api/wills/${willId}/check-in-progress
+For We Will: same — each member's progress is personal, not collective
+
+commitmentCategory === 'abstain'
+Remove the "Check in for today" button and DailyCheckInModal entirely for this category.
+Replace with:
+Button 1 — "I honored my will today"
+- Full width
+- White background, green border (2px, #1D9E75), green text, green checkmark icon
+- On tap: call POST /api/wills/${willId}/abstain-log with { honored: true }
+- On success: both buttons dim to 0.3 opacity and become non-interactive for the rest of the day
+- Button text changes to "Logged for today" with checkmark
+Button 2 — "I didn't honor it today"
+- Full width, below button 1, 8px gap
+- White background, red border (2px, #E24B4A), red text, red X icon
+- On tap: show inline confirmation card (do not navigate away):
+    - Red tint background (#FCEBEB), red border
+    - Title: "Reset your streak?"
+    - Subtitle: "Honest and brave. You can start again right now."
+    - "Cancel" (ghost) + "Yes, reset" (red filled)
+    - On "Yes, reset": call POST /api/wills/${willId}/abstain-log with { honored: false }
+    - On success: both buttons lock, streak resets to 0 in displayed stats
+Stats row below buttons:
+day streak · days left · best streak
+
+day streak = differenceInDays(now, will.streakStartDate) + 1 — read from will details
+best streak = track separately or derive from abstain log history
+Both buttons lock for the rest of the day once either is tapped — reset at midnight
+
+
+commitmentCategory === 'mission'
+Remove the stats row, the "Check in for today" button, and DailyCheckInModal entirely.
+Replace with a single progress card:
+Circular countdown ring (SVG):
+- Outer track: light gray circle, stroke-width 6-7
+- Progress arc: green (#1D9E75), stroke-linecap round
+- Arc fill = daysRemaining / totalDays
+- daysRemaining = differenceInDays(will.endDate, now)
+- totalDays = differenceInDays(will.endDate, will.startDate)
+- Center: large number (daysRemaining) + "days left" below
+- Size: 88×88px centered in card
+"Mark as done" button:
+- Full width, green background, white text, checkmark icon
+- On tap: show inline confirmation card:
+    - Green tint (#E1F5EE), green border (#9FE1CB)
+    - Title: "You did it?"
+    - Subtitle: "This will complete your Will and celebrate the moment."
+    - "Not yet" (ghost, green border) + "Yes, done!" (green filled)
+    - On "Yes, done!": call PATCH /api/wills/${willId} with { status: 'completed' }
+    - On success: button changes to "Completed!" and locks — do not navigate away immediately
+
+CHANGE 3 — Section label for progress card
+Add a small caps muted label above the progress/action card for all categories:
+
+I Will: label = "YOUR PROGRESS"
+We Will: label = "YOUR PROGRESS"
+
+Same label for both — progress is always personal regardless of I Will or We Will.
+
+CHANGE 4 — commitmentCategory note for I Will multi-category
+In the current schema, commitmentCategory lives on the wills table and applies to all members of a team Will. This means all members of an I Will share the same category UI. Do not attempt to implement per-member categories — that is a future enhancement. The category set by the creator during the notification setup step applies to everyone on the team.
+
+What to absolutely not change
+
+The photo modal (lines 513–531) — untouched
+The manage modal (lines 533–627) — untouched
+The nav bar (lines 697–751) — untouched
+The status badge row and state banners (lines 753–880) — untouched
+WillReviewFlow, OngoingWillReviewFlow — untouched
+The proof card (lines 1034–1105) — untouched, stays for all Team Wills
+ProgressView sub-component — untouched
+All polling intervals — untouched
+Any Will where commitmentCategory is null — full legacy behavior, no regression
+
+
+Implementation order
+
+Confirm /api/wills/${willId}/details returns commitmentCategory — add if missing
+Confirm /api/wills/${willId}/abstain-log exists — create if missing
+Update Team card — I Will layout (YOUR TEAM label + current user green border)
+Update Team card — We Will layout (OUR COMMITMENT hero + avatars below)
+Add commitmentCategory branch to the progress section
+Build and wire Habit progress UI (minimal change — label only)
+Build and wire Abstain progress UI — two buttons + inline confirmation + lock behavior
+Build and wire Mission progress UI — countdown ring + mark as done + confirmation
+Add legacy null fallback — existing code wrapped as-is
+Test all six states on a real device: I Will × 3 categories, We Will × 3 categories
