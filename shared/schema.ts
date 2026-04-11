@@ -791,7 +791,7 @@ export const abstainLogs = pgTable("abstain_logs", {
   date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD in user's local date
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
-  index("IDX_abstain_logs_will_user_date").on(table.willId, table.userId, table.date),
+  uniqueIndex("abstain_logs_will_user_date_unique").on(table.willId, table.userId, table.date),
 ]);
 
 export const insertAbstainLogSchema = createInsertSchema(abstainLogs).omit({ id: true, createdAt: true });

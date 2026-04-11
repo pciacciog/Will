@@ -3052,10 +3052,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Allow mission wills to mark themselves completed
+      // Allow mission wills to mark themselves completed (only from active state)
       let statusUpdate: string | undefined;
       if (status !== undefined) {
-        if (status === 'completed' && will.commitmentCategory === 'mission') {
+        if (status === 'completed' && will.commitmentCategory === 'mission' && will.status === 'active') {
           statusUpdate = 'completed';
         } else {
           return res.status(400).json({ message: "Status update not allowed" });
@@ -3163,18 +3163,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
       }
 
-      // Dedup: only one entry per user per day
-      const existing = await db.select().from(abstainLogs)
-        .where(and(eq(abstainLogs.willId, willId), eq(abstainLogs.userId, userId), eq(abstainLogs.date, date)))
-        .limit(1);
-      if (existing.length > 0) return res.status(409).json({ message: "Already logged for today" });
-
-      const [entry] = await db.insert(abstainLogs).values({ willId, userId, honored, date }).returning();
-
-      // If not honored, also reset the streak
-      if (!honored) {
-        const now = new Date();
-        await db.update(wills).set({ streakStartDate: now, sentMilestones: '[]' }).where(eq(wills.id, willId));
+      // Atomically insert log + optionally reset streak within a transaction.
+      // The unique constraint on (will_id, user_id, date) is the authoritative dedup guard.
+      let entry;
+      try {
+        entry = await db.transaction(async (tx) => {
+          const [inserted] = await tx.insert(abstainLogs).values({ willId, userId, honored, date }).returning();
+          if (!honored) {
+            await tx.update(wills)
+              .set({ streakStartDate: new Date(), sentMilestones: '[]' })
+              .where(eq(wills.id, willId));
+          }
+          return inserted;
+        });
+      } catch (txErr: any) {
+        // Unique constraint violation — duplicate entry for today
+        if (txErr?.code === '23505') {
+          return res.status(409).json({ message: "Already logged for today" });
+        }
+        throw txErr;
       }
 
       res.json(entry);

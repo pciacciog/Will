@@ -24,7 +24,7 @@ import DailyGutCheckModal from "@/components/DailyGutCheckModal";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import ProgressView from "@/components/ProgressView";
 import DayStrip from "@/components/DayStrip";
-import type { WillCheckIn } from "@shared/schema";
+import type { WillCheckIn, AbstainLog } from "@shared/schema";
 
 
 function isActiveDay(date: Date, activeDays: string, customDays?: string): boolean {
@@ -213,7 +213,6 @@ export default function WillDetails() {
   const [showParticipants, setShowParticipants] = useState(false);
 
   // Category-aware UI state
-  const [habitCheckedInToday, setHabitCheckedInToday] = useState(false);
   const [habitProgressExpanded, setHabitProgressExpanded] = useState(false);
   const [abstainLoggedToday, setAbstainLoggedToday] = useState(false);
   const [abstainShowResetConfirm, setAbstainShowResetConfirm] = useState(false);
@@ -418,7 +417,7 @@ export default function WillDetails() {
   }, [checkIns, will?.commitmentCategory, todayLocalDate]);
 
   // Abstain: fetch log entries
-  const { data: abstainLogEntries = [] } = useQuery<any[]>({
+  const { data: abstainLogEntries = [] } = useQuery<AbstainLog[]>({
     queryKey: [`/api/wills/${id}/abstain-log`],
     enabled: !!id && !!user && will?.commitmentCategory === 'abstain',
     staleTime: 0,
@@ -426,7 +425,7 @@ export default function WillDetails() {
 
   // Abstain: detect if already logged today
   const abstainTodayEntry = useMemo(() => {
-    return abstainLogEntries.find((e: any) => e.date === todayLocalDate) || null;
+    return abstainLogEntries.find((e: AbstainLog) => e.date === todayLocalDate) || null;
   }, [abstainLogEntries, todayLocalDate]);
 
   // Abstain: compute current streak from streakStartDate
@@ -441,7 +440,7 @@ export default function WillDetails() {
   const abstainBestStreak = useMemo(() => {
     if (!abstainLogEntries.length) return abstainStreakDays;
     let best = 0, cur = 0;
-    const sorted = [...abstainLogEntries].sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = [...abstainLogEntries].sort((a: AbstainLog, b: AbstainLog) => a.date.localeCompare(b.date));
     for (const e of sorted) {
       if (e.honored) { cur++; best = Math.max(best, cur); } else { cur = 0; }
     }
@@ -1327,9 +1326,8 @@ export default function WillDetails() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold" style={{ color: '#1D9E75' }}>
                       {(() => {
-                        const ci = checkIns as WillCheckIn[];
-                        const yes = ci.filter(c => c.status === 'yes').length;
-                        const total = ci.length;
+                        const yes = checkIns.filter((c: WillCheckIn) => c.status === 'yes').length;
+                        const total = checkIns.length;
                         return total > 0 ? `${Math.round((yes / total) * 100)}%` : '—';
                       })()}
                     </span>
@@ -1478,7 +1476,7 @@ export default function WillDetails() {
                   {abstainLogEntries.length > 0 && (
                     <div className="space-y-1.5">
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Recent activity</p>
-                      {abstainLogEntries.slice(0, 5).map((entry: any) => (
+                      {abstainLogEntries.slice(0, 5).map((entry: AbstainLog) => (
                         <div key={entry.id} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className={`w-2 h-2 rounded-full ${entry.honored ? 'bg-emerald-500' : 'bg-red-400'}`} />
