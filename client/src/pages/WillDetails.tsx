@@ -722,10 +722,12 @@ export default function WillDetails() {
       return res.json();
     },
     onSuccess: () => {
+      setAbstainLoggedToday(true);
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/abstain-log`] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
     },
     onError: (error: any) => {
+      setAbstainLoggedToday(false);
       toast({ title: "Error", description: error.message || "Failed to log entry", variant: "destructive" });
     },
   });
@@ -1321,7 +1323,17 @@ export default function WillDetails() {
                       <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
                       <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />
                     </span>
-                    <span className="text-sm font-semibold text-gray-800">Your progress</span>
+                    <div>
+                      <span className="text-sm font-semibold text-gray-800">Your progress</span>
+                      {(() => {
+                        const yes = checkIns.filter((c: WillCheckIn) => c.status === 'yes').length;
+                        const partial = checkIns.filter((c: WillCheckIn) => c.status === 'partial').length;
+                        const no = checkIns.filter((c: WillCheckIn) => c.status === 'no').length;
+                        return checkIns.length > 0 ? (
+                          <p className="text-xs text-gray-400">{yes} done · {partial} partial · {no} missed</p>
+                        ) : null;
+                      })()}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold" style={{ color: '#1D9E75' }}>
@@ -1372,7 +1384,6 @@ export default function WillDetails() {
                     <button
                       onClick={() => {
                         abstainLogMutation.mutate({ honored: true });
-                        setAbstainLoggedToday(true);
                         setAbstainShowResetConfirm(false);
                       }}
                       disabled={abstainLogMutation.isPending}
@@ -1410,7 +1421,6 @@ export default function WillDetails() {
                           <button
                             onClick={() => {
                               abstainLogMutation.mutate({ honored: false });
-                              setAbstainLoggedToday(true);
                               setAbstainShowResetConfirm(false);
                             }}
                             className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
