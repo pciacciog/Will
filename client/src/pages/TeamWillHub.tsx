@@ -217,55 +217,107 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     });
 
   // Capacitor-native camera / photo-library capture.
-  // KEY FIX: request ONLY the permission relevant to the source — requesting
-  // camera permission when the user chose "library" triggers AVCaptureSession
-  // access internally, which crashes if NSCameraUsageDescription is absent
-  // from the compiled binary (stale build) or was previously denied.
+  //
+  // CRASH DIAGNOSIS (both camera + library crashing immediately on tap):
+  //
+  // Issue 1 — UIViewController presentation race:
+  //   setShowProofPicker(false) begins unmounting the bottom sheet DOM while iOS
+  //   simultaneously tries to present the system permission dialog from
+  //   bridge?.viewController. On iOS 17/18, presenting a UIViewController during
+  //   an active layout pass is fatal (unrecoverable exception, not caught by JS).
+  //   FIX: wait 400 ms for the sheet to fully dismiss before ANY native call.
+  //
+  // Issue 2 — Calling requestPermissions() when permission is already set:
+  //   requestPermissions() presents the system dialog. If the permission was
+  //   already granted/denied, this call is wasteful AND causes the bridge to
+  //   present a UIViewController unnecessarily during the transition window.
+  //   FIX: use checkPermissions() first (a pure read, no UI); only call
+  //   requestPermissions() when status is "prompt" (never been asked before).
+  //
+  // Issue 3 — Capacitor Camera v7 showPhotos() bug with .limited access:
+  //   The native showPhotos() uses the deprecated PHPhotoLibrary.authorizationStatus()
+  //   which returns .limited on iOS 14+, but the function only proceeds for
+  //   .authorized. For .limited users, getPhoto(Photos) always rejects with
+  //   "User denied access to photos". No JS-side workaround is possible.
+  //   FIX: detect "limited" status before calling getPhoto and tell the user
+  //   to grant full access in Settings instead of crashing/silent failure.
   const handleCapacitorCapture = async (source: "camera" | "library") => {
     setShowProofPicker(false);
 
     // Platform guard — should never be called on web, but belt-and-suspenders
     if (!Capacitor.isNativePlatform()) return;
 
+    // ─── CRITICAL: let the bottom sheet finish dismissing ───────────────────
+    // Presenting a native UIViewController while the WKWebView is mid-layout
+    // triggers an unrecoverable iOS exception. 400 ms > longest sheet animation.
+    await new Promise(resolve => setTimeout(resolve, 400));
+
     try {
       const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
 
-      // Request ONLY the permission we need for this specific source.
-      // Requesting both simultaneously is the primary crash trigger:
-      // - "library" path must NEVER touch AVCaptureSession (camera hardware)
-      // - "camera" path must NEVER request PHPhotoLibrary access unnecessarily
-      const permissionNeeded = source === "camera" ? "camera" : "photos";
-      console.log(`[ProofDrop] Requesting permission: ${permissionNeeded}`);
+      // Step 1: check current permission status (pure read — no system dialog,
+      // no UIViewController, no timing hazard).
+      const currentPerms = await Camera.checkPermissions();
+      const currentStatus = source === "camera" ? currentPerms.camera : currentPerms.photos;
+      console.log(`[ProofDrop] checkPermissions for ${source}:`, currentStatus);
 
-      const perms = await Camera.requestPermissions({ permissions: [permissionNeeded] });
-      console.log(`[ProofDrop] Permission status:`, JSON.stringify(perms));
-
-      // "limited" counts as granted — iOS 14+ users may grant limited photo access
-      const status = source === "camera" ? perms.camera : perms.photos;
-      const granted = status === "granted" || status === "limited";
-
-      if (!granted) {
-        console.warn(`[ProofDrop] Permission denied for ${permissionNeeded}: ${status}`);
+      if (currentStatus === "denied" || currentStatus === "restricted") {
+        // Permission was previously denied — direct user to Settings
         toast({
           title: "Permission required",
-          description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in iOS Settings > WILL.`,
+          description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in Settings → WILL.`,
           variant: "destructive",
         });
         return;
       }
 
-      console.log(`[ProofDrop] Permission granted — opening ${source}`);
+      if (source === "library" && currentStatus === "limited") {
+        // Capacitor Camera v7 showPhotos() bug: the native code uses the deprecated
+        // PHPhotoLibrary.authorizationStatus() which only accepts .authorized,
+        // causing getPhoto(Photos) to always reject for limited-access users.
+        // Until this is fixed upstream, prompt users to grant full access.
+        toast({
+          title: "Full photo access required",
+          description: "Please go to Settings → WILL → Photos and select 'All Photos'.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Step 2: if status is "prompt" (first time), request permission now.
+      // This is the only time a system dialog appears — the view hierarchy is
+      // fully stable because we waited 400 ms above.
+      if (currentStatus === "prompt") {
+        const permNeeded = source === "camera" ? "camera" : "photos";
+        console.log(`[ProofDrop] Requesting permission for ${permNeeded}`);
+        const requested = await Camera.requestPermissions({ permissions: [permNeeded] });
+        const newStatus = source === "camera" ? requested.camera : requested.photos;
+        console.log(`[ProofDrop] After request:`, newStatus);
+
+        if (newStatus === "denied" || newStatus === "restricted") {
+          toast({
+            title: "Permission required",
+            description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in Settings → WILL.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Step 3: permissions are granted — open the camera or photo library.
+      console.log(`[ProofDrop] Opening ${source}`);
       const photo = await Camera.getPhoto({
         resultType: CameraResultType.Base64,
         source: source === "camera" ? CameraSource.Camera : CameraSource.Photos,
-        quality: 70,      // Reduced from 80 — prevents memory crash on large library images
-        width: 1200,      // Cap resolution — large photos can OOM-kill on main thread
+        quality: 70,
+        width: 1200,
         correctOrientation: true,
         allowEditing: false,
+        saveToGallery: false,
       });
 
       if (!photo.base64String) throw new Error("No image data returned from camera.");
-      console.log(`[ProofDrop] Captured — format: ${photo.format}, base64 length: ${photo.base64String.length}`);
+      console.log(`[ProofDrop] Captured — format: ${photo.format}, size: ${photo.base64String.length}`);
 
       // Convert base64 → Blob → File and hand off to the existing upload pipeline
       const byteStr = atob(photo.base64String);
