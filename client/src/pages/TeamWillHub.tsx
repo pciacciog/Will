@@ -69,7 +69,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [showFullProgress, setShowFullProgress] = useState(false);
   const [showProofPicker, setShowProofPicker] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
-  const [abstainLoggedToday, setAbstainLoggedToday] = useState(false);
   const [abstainShowResetConfirm, setAbstainShowResetConfirm] = useState(false);
   const [missionShowConfirm, setMissionShowConfirm] = useState(false);
   const [missionCompleted, setMissionCompleted] = useState(false);
@@ -1104,6 +1103,19 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       />
                     )}
                   </button>
+                  {hasDailyCheckIns && will.status === "active" && (
+                    <button
+                      onClick={() => setShowCheckInModal(true)}
+                      className="w-full mb-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                      style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
+                      data-testid="button-daily-check-in"
+                    >
+                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Check in for today
+                    </button>
+                  )}
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
                       <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
@@ -1125,19 +1137,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
                     </div>
                   </div>
-                  {hasDailyCheckIns && will.status === "active" && (
-                    <button
-                      onClick={() => setShowCheckInModal(true)}
-                      className="w-full mt-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                      style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
-                      data-testid="button-daily-check-in"
-                    >
-                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Check in for today
-                    </button>
-                  )}
                   {showFullProgress && hasDailyCheckIns && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <ProgressView
