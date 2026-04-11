@@ -1,0 +1,65 @@
+Public Will — category inheritance audit and fix
+Public Wills share the same creation flow (StartWill.tsx) and dashboard (WillDetails.tsx) as Solo Wills. Both have already been updated with category-aware UI. However the join flow creates a child Will server-side and may not be inheriting all the category-related fields. Audit and fix the following.
+Do not change anything until you have reported findings for each item.
+
+1. Creation flow — confirm already works
+Public Wills are created via StartWill.tsx with visibility='public'. The NotificationsSetup.tsx screen is already in this flow. Confirm:
+
+Does commitmentCategory get written to the wills table when a public Will is created? Check the POST /api/wills handler and confirm the field is accepted and stored for visibility='public' Wills
+Does reminderTime, checkInTime, missionReminderTime, deadlineReminders, milestones all get stored correctly for public Wills the same as Solo Wills?
+
+Report yes or no for each field.
+
+2. Join flow — the critical gap
+Find the join endpoint: POST /api/wills/join/:parentWillId. This creates a child Will (parentWillId set to the original public Will's id). Document:
+
+What fields does it currently copy from the parent Will to the child Will?
+Does it currently copy commitmentCategory? If not this is the primary bug — the child Will gets commitmentCategory = null and falls back to legacy behavior
+Does it copy milestones, deadlineReminders, missionReminderTime?
+Does it copy checkInType, reminderTime, checkInTime, activeDays, customDays?
+Does it create a will_commitments row for the joining user? What fields does that row include?
+
+Then make the following fix:
+Add these fields to the child Will creation inside the join endpoint, copied directly from the parent Will:
+typescriptcommitmentCategory: parentWill.commitmentCategory,
+milestones: parentWill.milestones,
+deadlineReminders: parentWill.deadlineReminders,
+missionReminderTime: parentWill.missionReminderTime,
+streakStartDate: new Date(), // start fresh for the joining user
+sentMilestones: null,
+sentDeadlineReminders: null,
+checkInType: parentWill.checkInType,
+reminderTime: parentWill.reminderTime,
+checkInTime: parentWill.checkInTime,
+activeDays: parentWill.activeDays,
+customDays: parentWill.customDays,
+The joining user starts their own fresh streak — they do not inherit the creator's streak or notification history.
+
+3. Dashboard — confirm already works
+Public Will dashboard (both creator and joined instances) renders in WillDetails.tsx. Since we've already updated WillDetails.tsx to branch on commitmentCategory, this should work automatically for public Wills once the field is correctly stored.
+Confirm:
+
+Does GET /api/wills/:id (or the details endpoint used by WillDetails.tsx) return commitmentCategory for public Wills? Check both the creator's Will and a joined child Will
+Does WillDetails.tsx receive and use commitmentCategory correctly for public Wills?
+
+
+4. Notification scheduling — joined child Wills
+When a user joins a public Will and a child Will is created, the notification scheduler needs to pick up commitmentCategory from the child Will and schedule the right notifications.
+Confirm:
+
+Does the scheduler's category branch (scheduleHabitNotifications, scheduleAbstainNotifications, scheduleMissionNotifications) get triggered for child Wills when they become active?
+Is streakStartDate set on the child Will at join time? It must be — used by Abstain streak calculation
+
+
+5. Explore screen — public Will cards
+The explore screen shows public Wills as browseable cards before joining. Check:
+
+Do these cards currently show any category-related information?
+They don't need to — keep them as-is. But confirm commitmentCategory is not causing any rendering errors in the explore card component.
+
+
+6. What does NOT need to change
+
+StartWill.tsx creation flow for public Wills — already handles commitmentCategory via NotificationsSetup.tsx
+WillDetails.tsx dashboard — already category-aware
+The public Will's notification setup (creator side) — already handled
