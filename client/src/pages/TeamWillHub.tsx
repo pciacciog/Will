@@ -694,12 +694,12 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       <div className="pt-[calc(env(safe-area-inset-top)+4rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
 
-          {/* Nav — 3-column grid so title is always centred */}
-          <div className="grid items-center gap-2 mb-2" style={{ gridTemplateColumns: "40px 1fr auto" }}>
+          {/* Nav — back button left, action icons right, title absolutely centred */}
+          <div className="relative flex items-center mb-2" style={{ height: 40 }}>
             {/* Back */}
             <button
               onClick={() => setLocation(backUrl)}
-              className="w-10 h-10 flex items-center justify-center"
+              className="absolute left-0 w-10 h-10 flex items-center justify-center"
               data-testid="button-back-home"
             >
               <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition-all duration-200 active:scale-95">
@@ -707,15 +707,15 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </span>
             </button>
 
-            {/* Title */}
-            <div className="text-center overflow-hidden">
-              <h1 className="text-base font-semibold text-gray-900 leading-tight">
+            {/* Title — always truly centred relative to the full row */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-14">
+              <h1 className="text-base font-semibold text-gray-900 leading-tight truncate">
                 {hasCustomTitle ? (will as any).title : "Will"}
               </h1>
             </div>
 
             {/* Action icons */}
-            <div className="flex items-center gap-1.5">
+            <div className="absolute right-0 flex items-center gap-1.5">
               {/* Chat / messages */}
               <button
                 onClick={() => {
