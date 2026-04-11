@@ -1,18 +1,14 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { WillInstructionModal } from "@/components/WillInstructionModal";
-import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
+import { MobileLayout, SectionCard, UnifiedBackButton, InlineBackButton } from "@/components/ui/design-system";
 import { HelpIcon } from "@/components/ui/HelpIcon";
-import { notificationService } from "@/services/NotificationService";
-import { HelpCircle, ArrowRight, CheckCircle, Heart, Handshake, Calendar, Clock, Users } from "lucide-react";
-import TimeChipPicker from "@/components/TimeChipPicker";
+import { ArrowRight, CheckCircle, Heart, Handshake, Clock, Calendar } from "lucide-react";
+import NotificationsSetup, { type NotificationsData } from "@/components/NotificationsSetup";
 import type { Will } from "@shared/schema";
 
 function formatTimeForDisplay(time: string): string {
@@ -42,18 +38,13 @@ export default function SubmitCommitment() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(2);
-  const [showTransition, setShowTransition] = useState(false);
   const [what, setWhat] = useState("");
   const [why, setWhy] = useState("");
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [whyCharCount, setWhyCharCount] = useState(0);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [showHelpIcon, setShowHelpIcon] = useState(false);
-  
-  const [checkInType, setCheckInType] = useState<'daily' | 'specific_days' | 'final_review'>('final_review');
-  const [checkInTime, setCheckInTime] = useState<string>('19:00');
-  const [activeDays, setActiveDays] = useState<'every_day' | 'custom'>('every_day');
-  const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [notificationsData, setNotificationsData] = useState<NotificationsData | null>(null);
   
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
@@ -101,19 +92,7 @@ export default function SubmitCommitment() {
   // Short-duration skipping only applies to solo will creation (StartWill.tsx).
   const isShortDuration = false;
   
-  useEffect(() => {
-    if ((will as any)?.checkInTime) {
-      setCheckInTime((will as any).checkInTime);
-    }
-    if ((will as any)?.isIndefinite) {
-      setCheckInType('daily');
-    } else {
-      setCheckInType('final_review');
-    }
-    // NOTE: Do NOT inherit tracking settings (checkInType, activeDays, customDays) from
-    // the Will creator for cumulative (We Will) wills. Tracking is personal — each member
-    // must choose their own schedule. Only shared fields (commitment text, duration) inherit.
-  }, [will, isCumulative]);
+  // Tracking is personal — each member chooses their own via NotificationsSetup.
   
   // Classic flow (I Will): 2-What, 3-Why, [4-CheckIn], [5-Confirm] (step 1 Timeline eliminated)
   // Cumulative flow (We Will): 2-Why, [3-CheckIn], [4-Confirm] (step 1 Timeline eliminated)
@@ -132,7 +111,12 @@ export default function SubmitCommitment() {
   }, []);
 
   const commitmentMutation = useMutation({
-    mutationFn: async (data: { what: string; why: string; checkInType?: string; checkInTime?: string; activeDays?: string; customDays?: string }) => {
+    mutationFn: async (data: {
+      what: string; why: string;
+      checkInType?: string; checkInTime?: string; activeDays?: string; customDays?: string;
+      commitmentCategory?: string; reminderTime?: string | null;
+      milestones?: string | null; deadlineReminders?: string | null; missionReminderTime?: string | null;
+    }) => {
       const response = await apiRequest(`/api/wills/${id}/commitments`, {
         method: 'POST',
         body: JSON.stringify(data)
@@ -212,35 +196,32 @@ export default function SubmitCommitment() {
     }
   };
 
-  const handleCheckInTimeSubmit = () => {
-    setShowTransition(true);
-    setTimeout(() => {
-      setShowTransition(false);
-      if (isCumulative) {
-        setCurrentStep(4);
-      } else {
-        setCurrentStep(5);
-      }
-    }, 2500);
+  const handleNotificationsComplete = (data: NotificationsData) => {
+    setNotificationsData(data);
+    if (isCumulative) {
+      setCurrentStep(4);
+    } else {
+      setCurrentStep(5);
+    }
   };
 
   const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     const whatToSubmit = isCumulative ? (sharedWhat || what) : what.trim();
-    const effectiveCheckInType = isCumulative ? checkInType : checkInType;
-    const submitData: { what: string; why: string; checkInType?: string; checkInTime?: string; activeDays?: string; customDays?: string } = {
+    const nd = notificationsData;
+    const effectiveCheckInType = nd?.checkInType || 'final_review';
+    const submitData = {
       what: whatToSubmit,
       why: why.trim(),
       checkInType: effectiveCheckInType,
-      checkInTime: (effectiveCheckInType === 'final_review' || isShortDuration) ? undefined : checkInTime,
+      checkInTime: (effectiveCheckInType === 'final_review') ? undefined : (nd?.checkInTime || undefined),
+      activeDays: effectiveCheckInType === 'daily' ? 'every_day' : undefined,
+      commitmentCategory: nd?.commitmentCategory,
+      reminderTime: nd?.reminderTime,
+      milestones: nd?.milestones ? JSON.stringify(nd.milestones) : null,
+      deadlineReminders: nd?.deadlineReminders ? JSON.stringify(nd.deadlineReminders) : null,
+      missionReminderTime: nd?.missionReminderTime,
     };
-    if (effectiveCheckInType === 'specific_days') {
-      submitData.activeDays = 'custom';
-      submitData.customDays = JSON.stringify(customDays);
-    } else if (effectiveCheckInType === 'daily') {
-      submitData.activeDays = 'every_day';
-    }
     commitmentMutation.mutate(submitData);
   };
 
@@ -297,11 +278,12 @@ export default function SubmitCommitment() {
     : '';
 
   // Tracking summary label for confirm card
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const trackingLabel = checkInType === 'daily'
-    ? `Every day at ${formatTimeForDisplay(checkInTime)}`
-    : checkInType === 'specific_days'
-    ? `${customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')} at ${formatTimeForDisplay(checkInTime)}`
+  const trackingLabel = !notificationsData
+    ? 'Final review only'
+    : notificationsData.checkInType === 'daily'
+    ? `Every day${notificationsData.checkInTime ? ` at ${formatTimeForDisplay(notificationsData.checkInTime)}` : ''}`
+    : notificationsData.checkInType === 'specific_days'
+    ? 'Specific days'
     : 'Final review only';
 
   return (
@@ -336,12 +318,11 @@ export default function SubmitCommitment() {
               </div>
             )}
           
-          {!isConfirmStep && (
+          {!isConfirmStep && !isCheckInStep && (
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
               {currentStep === 2 && !isCumulative && "What would you like to do?"}
               {isWhyStep && "Why would you like to do this?"}
-              {isCheckInStep && "Tracking"}
             </h1>
             {currentStep === 2 && !isCumulative && (
               <>
@@ -370,21 +351,8 @@ export default function SubmitCommitment() {
 
       <div className="flex-1 space-y-6">
         
-        {showTransition && (
-          <div className="flex items-center justify-center py-16">
-            <div className="text-center space-y-6 animate-fade-in">
-              <div className="w-16 h-16 mx-auto bg-brandBlue rounded-full flex items-center justify-center animate-pulse">
-                <CheckCircle className="w-8 h-8 text-white" />
-              </div>
-              <p className="text-lg font-medium text-gray-900 animate-slide-up">
-                One last step before you submit your commitment...
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Step 1: Proposed Will Timeline */}
-        {currentStep === 1 && !showTransition && (
+        {currentStep === 1 && (
           <SectionCard>
             <form onSubmit={handleStep1Submit} className="space-y-6">
               <div className="space-y-6 mt-8">
@@ -482,7 +450,7 @@ export default function SubmitCommitment() {
         )}
 
         {/* Step 2: What - Classic wills only (Cumulative skips this) */}
-        {currentStep === 2 && !showTransition && !isCumulative && (
+        {currentStep === 2 && !isCumulative && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep2Submit} className="flex flex-col">
               <div className="flex flex-col pt-4 pb-6">
@@ -544,7 +512,7 @@ export default function SubmitCommitment() {
         )}
 
         {/* Why Step: Step 2 (Cumulative) or Step 3 (Classic) */}
-        {isWhyStep && !showTransition && (
+        {isWhyStep && (
           <div className="flex flex-col animate-in fade-in duration-500">
             <form onSubmit={handleStep3Submit} className="flex flex-col">
               <div className="flex flex-col pt-4 pb-6">
@@ -622,152 +590,17 @@ export default function SubmitCommitment() {
         )}
 
         {/* Check-In Tracking Step */}
-        {isCheckInStep && !showTransition && (
-          <div className="flex flex-col animate-in fade-in duration-500">
-            <div className="flex flex-col flex-1">
-              <div className="flex-1 flex flex-col py-6 px-4">
-                <h2 className="text-base font-medium text-gray-700 text-center mb-6" data-testid="text-checkin-subtitle">
-                  How would you like to track this?
-                </h2>
-
-                {/* Tracking is always personal — the joiner picks their own schedule regardless of will type */}
-                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-400">
-                    <button
-                      type="button"
-                      onClick={() => setCheckInType('daily')}
-                      className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                        checkInType === 'daily'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                      data-testid="option-daily"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          checkInType === 'daily' ? 'border-blue-500' : 'border-gray-300'
-                        }`}>
-                          {checkInType === 'daily' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">Every Day</p>
-                          <p className="text-xs text-gray-500">Check in every day at a chosen time</p>
-                        </div>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setCheckInType('specific_days')}
-                      className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                        checkInType === 'specific_days'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                      data-testid="option-specific-days"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          checkInType === 'specific_days' ? 'border-blue-500' : 'border-gray-300'
-                        }`}>
-                          {checkInType === 'specific_days' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">Specific Days</p>
-                          <p className="text-xs text-gray-500">Pick which days of the week + a time</p>
-                        </div>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setCheckInType('final_review')}
-                      className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                        checkInType === 'final_review'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                      data-testid="option-final-review"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          checkInType === 'final_review' ? 'border-blue-500' : 'border-gray-300'
-                        }`}>
-                          {checkInType === 'final_review' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">Final Review Only</p>
-                          <p className="text-xs text-gray-500">No daily check-ins — just review at the end</p>
-                        </div>
-                      </div>
-                    </button>
-
-                    {checkInType === 'specific_days' && (
-                      <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className="flex justify-center gap-2">
-                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((label, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => {
-                                setCustomDays(prev =>
-                                  prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i]
-                                );
-                              }}
-                              className={`w-9 h-9 rounded-full text-xs font-semibold transition-all duration-150 ${
-                                customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                              }`}
-                              data-testid={`day-${i}`}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {checkInType !== 'final_review' && (
-                      <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-400" style={{ animationDelay: '100ms' }}>
-                        <p className="text-sm font-medium text-gray-700 text-center mb-3">Check-In Time</p>
-                        <div className="flex justify-center">
-                          <TimeChipPicker
-                            value={checkInTime}
-                            onChange={setCheckInTime}
-                            testId="input-check-in-time"
-                          />
-                        </div>
-                      </div>
-                    )}
-                </div>
-
-                <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" style={{ animationDelay: '200ms' }} data-testid="text-checkin-confirm">
-                  {checkInType === 'daily' && "We'll check in with you daily at this time"}
-                  {checkInType === 'specific_days' && "We'll check in on your selected days"}
-                  {checkInType === 'final_review' && "No daily check-ins — just review at the end"}
-                </p>
-              </div>
-              
-              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
-                <InlineBackButton 
-                  onClick={handleBack}
-                  testId="button-back-inline"
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
-                />
-                <button
-                  type="button"
-                  onClick={handleCheckInTimeSubmit}
-                  disabled={checkInType === 'specific_days' && customDays.length === 0}
-                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm disabled:opacity-50"
-                  data-testid="button-continue-checkin"
-                >
-                  Continue <ArrowRight className="w-4 h-4 ml-2" />
-                </button>
-              </div>
-            </div>
-          </div>
+        {isCheckInStep && (
+          <NotificationsSetup
+            what={isCumulative ? (sharedWhat || '') : what}
+            because={why}
+            onComplete={handleNotificationsComplete}
+            onBack={handleBack}
+          />
         )}
 
         {/* Confirm Step */}
-        {isConfirmStep && !showTransition && (
+        {isConfirmStep && (
           <form onSubmit={handleFinalSubmit} className="space-y-4">
 
             {/* Purple hero card */}

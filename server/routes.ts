@@ -1312,6 +1312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         checkInType: commitCheckInType,
         activeDays: req.body.activeDays || will.activeDays || 'every_day',
         customDays: req.body.customDays || will.customDays || null,
+        commitmentCategory: req.body.commitmentCategory || null,
       });
 
       // Check if user already committed
@@ -1341,6 +1342,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Add commitment
       const commitment = await storage.addWillCommitment(commitmentData);
+
+      // Update will's notification fields from invitee's NotificationsSetup data (team wills only)
+      if (will.mode === 'team') {
+        const willUpdates: Record<string, any> = {};
+        if (req.body.reminderTime !== undefined) willUpdates.reminderTime = req.body.reminderTime;
+        if (req.body.missionReminderTime !== undefined) willUpdates.missionReminderTime = req.body.missionReminderTime;
+        if (req.body.milestones !== undefined) willUpdates.milestones = req.body.milestones;
+        if (req.body.deadlineReminders !== undefined) willUpdates.deadlineReminders = req.body.deadlineReminders;
+        // Only set wills.commitmentCategory if not already set by the creator
+        if (req.body.commitmentCategory && !will.commitmentCategory) {
+          willUpdates.commitmentCategory = req.body.commitmentCategory;
+        }
+        if (Object.keys(willUpdates).length > 0) {
+          await db.update(wills).set(willUpdates).where(eq(wills.id, willId));
+        }
+      }
 
       // Auto-clear any "will_proposed" in-app notification for this will
       try {
