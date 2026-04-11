@@ -430,82 +430,124 @@ export default function CreateTeamWill() {
 
           {/* Step 1: Define your Will */}
           {step === 1 && (
-            <div className="animate-in fade-in duration-300">
-              {/* Page heading — matches "Build your team" style */}
-              <div className="mb-6">
-                <h1 className="text-[28px] font-bold text-gray-900 leading-tight">Define your Will</h1>
+            <div className="animate-in fade-in duration-300 flex flex-col">
+              {/* Heading */}
+              <div className="mb-4">
+                <h1 className="text-[26px] font-bold text-gray-900 leading-tight">Define your Will</h1>
                 <p className="text-[14px] text-gray-500 mt-0.5">How will your team commit?</p>
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 {/* I Will card */}
                 <button
-                  onClick={() => { setWillType("classic"); setStep(2); }}
-                  className="w-full text-left rounded-2xl p-6 transition-all duration-150 active:scale-[0.98]"
-                  style={{ background: "#E8F5F0", border: "2px solid #2D9D78" }}
+                  onClick={() => setWillType("classic")}
+                  className="w-full text-left rounded-2xl p-4 transition-all duration-150 active:scale-[0.98]"
+                  style={willType === "classic"
+                    ? { background: "#E8F5F0", border: "2px solid #2D9D78" }
+                    : { background: "#F5F5F7", border: "2px solid #D1D5DB" }
+                  }
                   data-testid="button-type-i-will"
                 >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "#2D9D78" }}>
-                    <Target className="w-6 h-6 text-white" strokeWidth={1.5} />
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: willType === "classic" ? "#2D9D78" : "#D1D5DB" }}
+                    >
+                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold mb-0.5" style={{ color: willType === "classic" ? "#1A6647" : "#9CA3AF" }}>I Will</h3>
+                      <p className="text-sm leading-snug" style={{ color: willType === "classic" ? "#2D6B52" : "#9CA3AF" }}>
+                        Each member pursues their own individual commitment.
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-bold mb-2" style={{ color: "#1A6647" }}>I Will</h3>
-                  <p className="text-[15px] leading-snug" style={{ color: "#1A6647" }}>
-                    Each member pursues their own individual commitment.
-                  </p>
-                  {/* Illustrative example — non-interactive */}
-                  <div className="mt-3 rounded-xl p-3 space-y-2 pointer-events-none" style={{ background: "rgba(255,255,255,0.6)" }}>
-                    {[
-                      { initial: "J", name: "Jack", commitment: "run 3x this week" },
-                      { initial: "J", name: "Joe",  commitment: "read 20 pages daily" },
-                      { initial: "A", name: "Alex", commitment: "no phone after 9pm" },
-                    ].map((row, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#2D9D78" }}>
-                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 600 }}>{row.initial}</span>
+                  {willType === "classic" && (
+                    <div className="mt-3 rounded-xl p-2.5 space-y-1.5 pointer-events-none" style={{ background: "rgba(255,255,255,0.7)" }}>
+                      {[
+                        { initial: "J", name: "Jack", commitment: "run 3x this week" },
+                        { initial: "J", name: "Joe",  commitment: "read 20 pages daily" },
+                        { initial: "A", name: "Alex", commitment: "no phone after 9pm" },
+                      ].map((row, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#2D9D78" }}>
+                            <span style={{ color: "#fff", fontSize: 9, fontWeight: 700 }}>{row.initial}</span>
+                          </div>
+                          <span style={{ fontSize: 11, color: "#1A6647", fontWeight: 500 }}>{row.name}</span>
+                          <span style={{ fontSize: 11, color: "#2D9D78" }}>—</span>
+                          <span style={{ fontSize: 11, color: "#4B7A6A" }}>{row.commitment}</span>
                         </div>
-                        <span style={{ fontSize: 11, color: "#1A6647", fontWeight: 500 }}>{row.name}</span>
-                        <span style={{ fontSize: 11, color: "#2D9D78" }}>—</span>
-                        <span style={{ fontSize: 11, color: "#4B7A6A", fontWeight: 400 }}>{row.commitment}</span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </button>
 
                 {/* We Will card */}
                 <button
-                  onClick={() => { setWillType("cumulative"); setStep(2); }}
-                  className="w-full text-left rounded-2xl p-6 transition-all duration-150 active:scale-[0.98]"
-                  style={{ background: "#F3EAFE", border: "2px solid #9B5CE5" }}
+                  onClick={() => setWillType("cumulative")}
+                  className="w-full text-left rounded-2xl p-4 transition-all duration-150 active:scale-[0.98]"
+                  style={willType === "cumulative"
+                    ? { background: "#F3EAFE", border: "2px solid #9B5CE5" }
+                    : { background: "#F5F5F7", border: "2px solid #D1D5DB" }
+                  }
                   data-testid="button-type-we-will"
                 >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "#9B5CE5" }}>
-                    <Users className="w-6 h-6 text-white" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2" style={{ color: "#4A1D8C" }}>We Will</h3>
-                  <p className="text-[15px] leading-snug" style={{ color: "#4A1D8C" }}>
-                    Every member pursues the same commitment.
-                  </p>
-                  {/* Illustrative example — non-interactive */}
-                  <div className="mt-3 rounded-xl p-3 space-y-2 pointer-events-none" style={{ background: "rgba(255,255,255,0.6)" }}>
-                    <div className="flex justify-center mb-1">
-                      <span className="px-3 py-1 rounded-full italic" style={{ background: "rgba(155,92,229,0.12)", color: "#4A1D8C", fontSize: 11, fontWeight: 500 }}>
-                        "Go phone free for 24 hours"
-                      </span>
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: willType === "cumulative" ? "#9B5CE5" : "#D1D5DB" }}
+                    >
+                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
                     </div>
-                    {[
-                      { initial: "J", name: "Jack" },
-                      { initial: "J", name: "Joe" },
-                      { initial: "A", name: "Alex" },
-                    ].map((row, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#9B5CE5" }}>
-                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 600 }}>{row.initial}</span>
-                        </div>
-                        <span className="flex-1" style={{ fontSize: 11, color: "#4A1D8C", fontWeight: 500 }}>{row.name}</span>
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#2D9D78" }} />
-                      </div>
-                    ))}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold mb-0.5" style={{ color: willType === "cumulative" ? "#4A1D8C" : "#9CA3AF" }}>We Will</h3>
+                      <p className="text-sm leading-snug" style={{ color: willType === "cumulative" ? "#6B3FA8" : "#9CA3AF" }}>
+                        Every member pursues the same commitment.
+                      </p>
+                    </div>
                   </div>
+                  {willType === "cumulative" && (
+                    <div className="mt-3 rounded-xl p-2.5 space-y-1.5 pointer-events-none" style={{ background: "rgba(255,255,255,0.7)" }}>
+                      <div className="flex justify-center mb-1">
+                        <span className="px-2.5 py-0.5 rounded-full italic" style={{ background: "rgba(155,92,229,0.15)", color: "#4A1D8C", fontSize: 11, fontWeight: 500 }}>
+                          "Go phone free for 24 hours"
+                        </span>
+                      </div>
+                      {[
+                        { initial: "J", name: "Jack" },
+                        { initial: "J", name: "Joe" },
+                        { initial: "A", name: "Alex" },
+                      ].map((row, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#9B5CE5" }}>
+                            <span style={{ color: "#fff", fontSize: 9, fontWeight: 700 }}>{row.initial}</span>
+                          </div>
+                          <span className="flex-1" style={{ fontSize: 11, color: "#4A1D8C", fontWeight: 500 }}>{row.name}</span>
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#2D9D78" }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              {/* Continue button — adopts selection color */}
+              <div className="pt-4 pb-2 border-t border-gray-100 mt-4">
+                <button
+                  onClick={() => setStep(2)}
+                  className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center transition-all active:scale-95"
+                  style={{ background: willType === "classic" ? "#2D9D78" : "#9B5CE5" }}
+                  data-testid="button-continue-type"
+                >
+                  Continue
+                  <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, marginLeft: 8 }} fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                  </svg>
                 </button>
               </div>
             </div>
