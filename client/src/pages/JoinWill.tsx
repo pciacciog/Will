@@ -222,7 +222,7 @@ export default function JoinWill() {
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Timeline</p>
                     {isOngoing ? (
-                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-join-timeline">Habit</p>
+                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-join-timeline">Ongoing</p>
                     ) : (
                       <div className="mt-0.5" data-testid="text-join-timeline">
                         <p className="text-sm text-gray-700">
@@ -503,7 +503,7 @@ export default function JoinWill() {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Timeline</p>
                         {isOngoing ? (
-                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-timeline">Habit</p>
+                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-timeline">Ongoing</p>
                         ) : (
                           <div className="mt-0.5" data-testid="text-confirm-timeline">
                             <p className="text-sm text-gray-700">

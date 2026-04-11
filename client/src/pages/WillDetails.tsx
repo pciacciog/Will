@@ -126,7 +126,7 @@ function DailyProgressSection({ willId, startDate, endDate, checkInType, activeD
 function formatDateRange(startDate: string, endDate: string | null): string {
   const start = new Date(startDate);
   if (!endDate) {
-    return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - Habit`;
+    return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - Ongoing`;
   }
   const end = new Date(endDate);
   return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
@@ -886,7 +886,7 @@ export default function WillDetails() {
               </div>
             ) : (
               <div className="text-base text-gray-500 italic">
-                (Habit)
+                (Ongoing)
               </div>
             )}
           </div>

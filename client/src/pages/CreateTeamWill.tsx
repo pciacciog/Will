@@ -653,7 +653,7 @@ export default function CreateTeamWill() {
                 <div className="flex-1 flex flex-col justify-center py-2">
                   <div className="flex justify-center gap-2 mb-6">
                     <button type="button" onClick={() => setIsIndefinite(false)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${!isIndefinite ? "bg-blue-500 text-white shadow-md" : "bg-gray-100 text-gray-600"}`} data-testid="button-duration-defined">Set dates</button>
-                    <button type="button" onClick={() => setIsIndefinite(true)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isIndefinite ? "bg-blue-500 text-white shadow-md" : "bg-gray-100 text-gray-600"}`} data-testid="button-duration-indefinite">Habit</button>
+                    <button type="button" onClick={() => setIsIndefinite(true)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isIndefinite ? "bg-blue-500 text-white shadow-md" : "bg-gray-100 text-gray-600"}`} data-testid="button-duration-indefinite">Ongoing</button>
                   </div>
                   <div className="space-y-5 px-4">
                     <div>
@@ -780,7 +780,7 @@ export default function CreateTeamWill() {
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-medium text-gray-400">Timeline</p>
                     {isIndefinite ? (
-                      <p className="text-sm text-gray-700 mt-0.5">Habit (no end date)</p>
+                      <p className="text-sm text-gray-700 mt-0.5">Ongoing (no end date)</p>
                     ) : (
                       <p className="text-sm text-gray-700 mt-0.5">
                         {formatDateShort(createDateTimeFromInputs(startDate, startTime))} → {formatDateShort(createDateTimeFromInputs(endDate, endTime))}, {new Date(createDateTimeFromInputs(endDate, endTime)).getFullYear()} · {getDurationText(createDateTimeFromInputs(startDate, startTime), createDateTimeFromInputs(endDate, endTime))}

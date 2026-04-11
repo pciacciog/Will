@@ -28,8 +28,8 @@ export default function Explore() {
   });
 
   const getTimelineLabel = (will: PublicWill) => {
-    if (will.isIndefinite) return "Habit";
-    if (!will.startDate || !will.endDate) return "Habit";
+    if (will.isIndefinite) return "Ongoing";
+    if (!will.startDate || !will.endDate) return "Ongoing";
     const start = new Date(will.startDate);
     const end = new Date(will.endDate);
     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));

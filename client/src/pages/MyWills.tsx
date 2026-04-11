@@ -110,8 +110,8 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
   const status = statusConfig[will.status] || statusConfig.pending;
 
   const getDurationLabel = () => {
-    if (will.isIndefinite) return 'Habit';
-    if (!will.endDate) return 'Habit';
+    if (will.isIndefinite) return 'Ongoing';
+    if (!will.endDate) return 'Ongoing';
     const end = new Date(will.endDate);
     const now = new Date();
     const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));

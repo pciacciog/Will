@@ -424,16 +424,16 @@ export default function SubmitCommitment() {
                           <div className="text-sm text-gray-600 mb-3">
                             {(() => {
                               const ad = (will as any)?.activeDays;
-                              if (!ad || ad === 'every_day') return 'Habit · Every day';
-                              if (ad === 'weekdays') return 'Habit · Weekdays (Mon–Fri)';
+                              if (!ad || ad === 'every_day') return 'Ongoing · Every day';
+                              if (ad === 'weekdays') return 'Ongoing · Weekdays (Mon–Fri)';
                               if (ad === 'custom') {
                                 try {
                                   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                                   const days: number[] = JSON.parse((will as any)?.customDays || '[]');
-                                  return `Habit · ${days.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')}`;
-                                } catch { return 'Habit'; }
+                                  return `Ongoing · ${days.sort((a, b) => a - b).map(d => dayNames[d]).join(', ')}`;
+                                } catch { return 'Ongoing'; }
                               }
-                              return 'Habit';
+                              return 'Ongoing';
                             })()}
                           </div>
                         </>
