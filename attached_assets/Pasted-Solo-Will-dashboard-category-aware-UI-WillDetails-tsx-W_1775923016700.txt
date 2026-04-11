@@ -1,0 +1,171 @@
+Solo Will dashboard — category-aware UI (WillDetails.tsx)
+We are making the Solo Will dashboard render dynamically based on the commitmentCategory field established during Will creation. This field is already being written to the database via the notifications setup step we implemented previously. This prompt covers WillDetails.tsx only — Team Will UI comes separately.
+
+First — read and document before touching anything
+Find WillDetails.tsx and document:
+
+The exact component structure — what cards render and in what order
+Where the Daily Check-in button is rendered and what function it calls
+Where the Daily Progress section is rendered — what data it receives and what it displays
+How will.commitmentCategory is currently used — confirm it is being fetched as part of the Will query and available in the component. If it is not yet in the API response, add it.
+
+Report back before writing any code.
+
+Design reference — three UI states
+The Solo Will dashboard currently has this structure for all Wills:
+
+Nav bar + Active badge
+Timeline card
+Your Commitment card (what + why)
+Daily Check-in button (standalone, outside any card)
+Daily Progress card (completed/partial/missed stat boxes + calendar strip)
+
+The redesign keeps the Timeline card and Your Commitment card identical across all three categories. Only the commitment hero treatment, the action button, and the progress section change per category.
+
+SHARED CHANGES — apply to all three categories
+Commitment card — new hero treatment
+Replace the current "Your Commitment" card with a centered hero card:
+- Icon: 44×44px rounded square (border-radius 14px), green tint background (#E1F5EE)
+  - Habit: checkmark circle icon in green
+  - Abstain: X circle icon in green  
+  - Mission: star icon in green
+- Will statement: large centered text (18px bold), wrapped in quotes
+- Why statement: smaller italic muted text (12px) centered below
+- No "Your Commitment" label — the card IS the commitment
+This hero card replaces the existing commitment card. No label, no icon prefix. The commitment text is the centerpiece.
+Active badge
+Update the Active badge to show contextual info:
+
+Habit: "Active · X days left"
+Abstain: "Active · X days left"
+Mission: "Active · deadline [end date formatted as Mon DD]"
+
+
+HABIT — commitmentCategory = 'habit'
+Action button — keep exactly as today but label it "Check in for today":
+
+Full width, green background (#1D9E75), white text
+On tap: button dims to 70% opacity, text changes to "Checked in for today" with a checkmark, disabled for the rest of the day
+Reset at midnight (existing behavior unchanged)
+
+Progress section — collapsed by default, expandable:
+Collapsed state (always visible):
+Card with single tap target — entire card is tappable
+Left side: three colored dots (green, red, amber) + "Your progress" title + "X done · X partial · X missed" subtitle
+Right side: percentage in green + chevron arrow
+Chevron rotates 180° when expanded
+Expanded state (on tap):
+Three stat boxes in a row:
+- Completed (green tint bg, green number)
+- Partial (amber tint bg, amber number)
+- Missed (red tint bg, red number)
+
+Calendar strip below (existing component — no changes needed)
+Legend: Done · Partial · Missed · Pending dots
+Do NOT show the progress section collapsed with a "tap to expand" label — the chevron communicates this. Collapsed by default means the user lands on a clean screen.
+
+ABSTAIN — commitmentCategory = 'abstain'
+Replace the Daily Check-in button entirely with two buttons:
+Button 1 — "I honored my will today":
+- Full width
+- White background, green border (2px, #1D9E75), green text
+- Green checkmark circle icon on left
+- On tap: background shifts to green tint (#E1F5EE), text changes to "Logged for today" with checkmark, disabled for rest of day
+- Both buttons dim and lock after either is tapped
+Button 2 — "I didn't honor it today":
+- Full width, below button 1 with 8px gap
+- White background, red border (2px, #E24B4A), red text
+- Red X circle icon on left
+- On tap: show inline confirmation card below the button (do NOT navigate away):
+  - Red tint background (#FCEBEB), red border
+  - Title: "Reset your streak?"
+  - Subtitle: "Honest and brave. You can start again right now."
+  - Two buttons: "Cancel" (ghost) + "Yes, reset" (red filled)
+  - On "Yes, reset": call existing streak reset endpoint, lock both buttons, log the entry
+- Both buttons dim and become non-interactive after either is tapped
+Replace Daily Progress section with "Your streak" card — collapsed by default:
+Collapsed state:
+Left: lightning bolt icon in green tint square + "Your streak" title + "X days · best: X" subtitle (streak count in green)
+Right: "tap to expand" hint text + chevron
+Expanded state:
+Three stat boxes:
+- Day streak (green tint, green number) — recalculates from streakStartDate
+- Days left (gray tint, gray number)
+- Best streak (gray tint, gray number)
+
+Recent activity log below the stat boxes:
+- Section label: "RECENT" in small caps muted text
+- Each row: colored dot (green = Honored, red = Didn't honor) + label + date right-aligned
+- Show last 5 entries maximum
+- When user taps either button today, prepend today's entry to the top of the log immediately
+- If streak expanded is closed when user taps a button, auto-open it to show the new entry
+
+Next milestone hint at bottom of expanded section:
+- Green tint background, green border
+- "⭐ Next: [milestone label]" — read from wills.milestones JSON, find the next milestone.day that is greater than current streak day
+- If all milestones passed: show "🎉 All milestones reached"
+Backend requirement for "I honored" and "I didn't honor":
+Check if an endpoint already exists for logging abstain daily entries. If not, create:
+POST /api/wills/:id/abstain-log
+Body: { honored: boolean }
+
+If honored: true: log the entry with today's date, do not change streakStartDate
+If honored: false: call resetAbstainStreak(willId) which sets streakStartDate = NOW() and sentMilestones = '[]' (already defined in the notifications prompt)
+
+The streak day count displayed = differenceInDays(now, will.streakStartDate) + 1
+
+MISSION — commitmentCategory = 'mission'
+Replace the Daily Check-in button with nothing — no check-in button for Mission Wills.
+Replace the entire Daily Progress section with a single progress card:
+Circular countdown ring (SVG):
+- Outer track: light gray circle
+- Progress arc: green (#1D9E75), stroke-linecap round
+- Arc fill = daysRemaining / totalDays (startDate to endDate)
+- Center text: large number (days remaining) + "days left" label below
+- Size: 100×100px centered in card
+
+Below the ring:
+"Mark as done" button:
+- Full width, green background, white text, checkmark icon
+- On tap: show inline confirmation card:
+  - Green tint background (#E1F5EE), green border
+  - Title: "You did it?"
+  - Subtitle: "This will complete your Will and celebrate the moment."
+  - Two buttons: "Not yet" (ghost, green border) + "Yes, done!" (green filled)
+  - On "Yes, done!": call PATCH /api/wills/:id with { status: 'completed' }
+  - Button changes to "Completed!" and disables — do not navigate away immediately, let the user see the state change first
+
+NULL category — legacy behavior
+For any Will where commitmentCategory is null (all existing Wills created before this update):
+Do not change anything. Render the existing Daily Check-in button and Daily Progress section exactly as they work today. No regression.
+Add a single branch at the top of the progress/action section:
+typescriptif (!will.commitmentCategory) {
+  return <LegacyProgressSection will={will} />;  // existing code, unchanged
+}
+
+if (will.commitmentCategory === 'habit') { ... }
+if (will.commitmentCategory === 'abstain') { ... }
+if (will.commitmentCategory === 'mission') { ... }
+
+Proof section
+The proof/drop section is a Team Will feature only. Confirm it is not currently rendering in WillDetails.tsx. If it is, remove it. Solo Wills do not have proof drops.
+
+What to absolutely not change
+
+Timeline card — identical across all categories and legacy
+The API query that fetches Will data — only add commitmentCategory to the response if not already there
+The check-in calendar strip component — reused as-is inside the expanded Habit progress section
+All existing check-in logging endpoints for Habit Wills
+Any Will where commitmentCategory is null
+TeamWillHub.tsx — not in scope for this prompt
+
+
+Implementation order
+
+Confirm commitmentCategory is returned by the Will fetch API and available in the component — report before writing any code
+Confirm proof section is not in WillDetails.tsx — remove if present
+Build the shared commitment hero card component (used by all three)
+Build and wire the Habit UI — action button + collapsible progress section
+Build and wire the Abstain UI — two buttons + streak card + abstain log endpoint
+Build and wire the Mission UI — countdown ring + mark as done + PATCH endpoint
+Add the null category fallback preserving legacy behavior
