@@ -576,10 +576,19 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   }, [will?.streakStartDate]);
   const abstainBestStreak = useMemo(() => {
     if (!abstainLogEntries.length) return abstainStreakDays;
-    let best = 0, cur = 0;
+    // Only count consecutive calendar days — sort by date and check adjacency
     const sorted = [...abstainLogEntries].sort((a: AbstainLog, b: AbstainLog) => a.date.localeCompare(b.date));
+    let best = 0, cur = 0, prevDate: string | null = null;
     for (const e of sorted) {
-      if (e.honored) { cur++; best = Math.max(best, cur); } else { cur = 0; }
+      if (!e.honored) { cur = 0; prevDate = null; continue; }
+      if (prevDate) {
+        const prev = new Date(prevDate);
+        const curr = new Date(e.date);
+        const diffDays = Math.round((curr.getTime() - prev.getTime()) / 86400000);
+        if (diffDays === 1) { cur++; } else { cur = 1; }
+      } else { cur = 1; }
+      best = Math.max(best, cur);
+      prevDate = e.date;
     }
     return Math.max(best, abstainStreakDays);
   }, [abstainLogEntries, abstainStreakDays]);
@@ -995,8 +1004,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     <div className="flex items-start justify-center gap-6 flex-wrap">
                       {commitments.map((c: any) => (
                         <div key={c.id} className="flex flex-col items-center" data-testid={`participant-${c.userId}`}>
-                          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center mb-1.5"
-                               style={{ border: "3px solid #fff", boxShadow: "0 0 0 2px #9B5CE5" }}>
+                          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center mb-1.5">
                             <span className="text-white font-semibold text-sm">
                               {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
                             </span>
@@ -1085,19 +1093,18 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               ) : category === 'habit' ? (
                 /* ── Habit ── */
                 <>
-                  {hasDailyCheckIns && will.status === "active" && (
-                    <button
-                      onClick={() => setShowCheckInModal(true)}
-                      className="w-full mb-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                      style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
-                      data-testid="button-daily-check-in"
-                    >
-                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Check in for today
-                    </button>
-                  )}
+                  <button
+                    onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
+                    className="w-full flex items-center justify-between mb-3"
+                    data-testid="button-toggle-progress"
+                  >
+                    <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
+                    {hasDailyCheckIns && (
+                      <ChevronRight
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
+                      />
+                    )}
+                  </button>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
                       <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
@@ -1119,6 +1126,19 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
                     </div>
                   </div>
+                  {hasDailyCheckIns && will.status === "active" && (
+                    <button
+                      onClick={() => setShowCheckInModal(true)}
+                      className="w-full mt-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                      style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
+                      data-testid="button-daily-check-in"
+                    >
+                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Check in for today
+                    </button>
+                  )}
                   {showFullProgress && hasDailyCheckIns && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <ProgressView
@@ -1147,66 +1167,67 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               ) : category === 'abstain' ? (
                 /* ── Abstain ── */
                 <div className="space-y-2" data-testid="section-abstain-actions">
-                  {abstainTodayEntry || abstainLoggedToday ? (
-                    <div
-                      className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold"
-                      style={{ backgroundColor: abstainTodayEntry?.honored ?? true ? '#E1F5EE' : '#FCEBEB', color: abstainTodayEntry?.honored ?? true ? '#1D9E75' : '#E24B4A', border: `2px solid ${abstainTodayEntry?.honored ?? true ? '#1D9E75' : '#E24B4A'}` }}
-                      data-testid="abstain-logged-today"
-                    >
-                      {abstainTodayEntry?.honored ?? true
-                        ? <CheckCircle style={{ width: 20, height: 20 }} />
-                        : <XCircle style={{ width: 20, height: 20 }} />}
-                      {abstainTodayEntry?.honored ?? true ? 'Logged for today ✓' : 'Logged: reset streak'}
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => { abstainLogMutation.mutate({ honored: true }); setAbstainShowResetConfirm(false); }}
-                        disabled={abstainLogMutation.isPending}
-                        className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                        style={{ border: '2px solid #1D9E75', color: '#1D9E75' }}
-                        data-testid="button-abstain-honored"
-                      >
-                        <CheckCircle style={{ width: 20, height: 20 }} />
-                        I honored my will today
-                      </button>
-                      <button
-                        onClick={() => setAbstainShowResetConfirm(true)}
-                        disabled={abstainLogMutation.isPending}
-                        className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                        style={{ border: '2px solid #E24B4A', color: '#E24B4A' }}
-                        data-testid="button-abstain-didnt-honor"
-                      >
-                        <XCircle style={{ width: 20, height: 20 }} />
-                        I didn&apos;t honor it today
-                      </button>
-                      {abstainShowResetConfirm && (
-                        <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: '#FCEBEB', border: '1.5px solid #E24B4A' }}>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">Reset your streak?</p>
-                            <p className="text-xs text-gray-500 mt-0.5">Honest and brave. You can start again right now.</p>
+                  {(() => {
+                    const isLogged = !!(abstainTodayEntry || abstainLoggedToday);
+                    const honored = abstainTodayEntry?.honored ?? true;
+                    return (
+                      <>
+                        <button
+                          onClick={() => { if (!isLogged) { abstainLogMutation.mutate({ honored: true }); setAbstainShowResetConfirm(false); } }}
+                          disabled={isLogged || abstainLogMutation.isPending}
+                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                          style={{
+                            border: '2px solid #1D9E75',
+                            color: '#1D9E75',
+                            ...(isLogged && !honored ? { opacity: 0.3, pointerEvents: 'none' } : {}),
+                          }}
+                          data-testid="button-abstain-honored"
+                        >
+                          <CheckCircle style={{ width: 20, height: 20 }} />
+                          {isLogged && honored ? 'Logged for today ✓' : 'I honored my will today'}
+                        </button>
+                        <button
+                          onClick={() => { if (!isLogged) setAbstainShowResetConfirm(true); }}
+                          disabled={isLogged || abstainLogMutation.isPending}
+                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                          style={{
+                            border: '2px solid #E24B4A',
+                            color: '#E24B4A',
+                            ...(isLogged && honored ? { opacity: 0.3, pointerEvents: 'none' } : {}),
+                          }}
+                          data-testid="button-abstain-didnt-honor"
+                        >
+                          <XCircle style={{ width: 20, height: 20 }} />
+                          {isLogged && !honored ? 'Logged: reset streak' : "I didn't honor it today"}
+                        </button>
+                        {!isLogged && abstainShowResetConfirm && (
+                          <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: '#FCEBEB', border: '1.5px solid #E24B4A' }}>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">Reset your streak?</p>
+                              <p className="text-xs text-gray-500 mt-0.5">Honest and brave. You can start again right now.</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setAbstainShowResetConfirm(false)}
+                                className="flex-1 py-2 rounded-lg text-sm font-medium bg-white border"
+                                style={{ borderColor: '#E24B4A', color: '#E24B4A' }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => { abstainLogMutation.mutate({ honored: false }); setAbstainShowResetConfirm(false); }}
+                                className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
+                                style={{ backgroundColor: '#E24B4A' }}
+                                data-testid="button-abstain-confirm-reset"
+                              >
+                                Yes, reset
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => setAbstainShowResetConfirm(false)}
-                              className="flex-1 py-2 rounded-lg text-sm font-medium bg-white border"
-                              style={{ borderColor: '#E24B4A', color: '#E24B4A' }}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => { abstainLogMutation.mutate({ honored: false }); setAbstainShowResetConfirm(false); }}
-                              className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
-                              style={{ backgroundColor: '#E24B4A' }}
-                              data-testid="button-abstain-confirm-reset"
-                            >
-                              Yes, reset
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
+                        )}
+                      </>
+                    );
+                  })()}
                   {/* Stats row */}
                   <div className="grid grid-cols-3 gap-3 text-center pt-2">
                     <div>
