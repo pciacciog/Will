@@ -149,11 +149,12 @@ export default function AcceptInvite() {
   const isBusy = acceptMutation.isPending || declineMutation.isPending;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <div
+        className="flex-1 flex flex-col justify-center"
         style={{
-          paddingTop: "max(0.75rem, env(safe-area-inset-top))",
-          paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
+          paddingTop: "max(env(safe-area-inset-top), 1rem)",
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)",
         }}
       >
         <div className="max-w-sm mx-auto px-4 space-y-2.5">
