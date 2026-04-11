@@ -251,74 +251,135 @@ export default function NotificationsSetup({ what, because, onComplete, onBack }
     onComplete(data);
   };
 
-  const color = selected ? COLORS[selected] : null;
-
-  const pillStyle = (cat: Category) => {
-    const c = COLORS[cat];
-    if (selected === cat) {
-      return { background: c.pillBg, border: `2px solid ${c.pillBorder}`, color: c.pillText };
-    }
-    return { background: "#F3F4F6", border: "2px solid #D1D5DB", color: "#9CA3AF" };
-  };
+  const CARDS: {
+    category: Category;
+    title: string;
+    example: string;
+    iconBg: string;
+    iconColor: string;
+    selectedCardBg: string;
+    selectedBorder: string;
+    selectedTitle: string;
+    selectedExample: string;
+    icon: 'check-circle' | 'x-circle' | 'star';
+  }[] = [
+    {
+      category: 'habit',
+      title: 'Habit',
+      example: '"I will be in bed by 9:00 pm"',
+      iconBg: '#E1F5EE',
+      iconColor: '#1D9E75',
+      selectedCardBg: '#E8F7F1',
+      selectedBorder: '#1D9E75',
+      selectedTitle: '#085041',
+      selectedExample: '#0F6E56',
+      icon: 'check-circle',
+    },
+    {
+      category: 'abstain',
+      title: 'Abstain',
+      example: '"I will not use social media"',
+      iconBg: '#FAECE7',
+      iconColor: '#D85A30',
+      selectedCardBg: '#FBF0EB',
+      selectedBorder: '#D85A30',
+      selectedTitle: '#7A2913',
+      selectedExample: '#A0401A',
+      icon: 'x-circle',
+    },
+    {
+      category: 'mission',
+      title: 'Mission',
+      example: '"I will call my grandmother"',
+      iconBg: '#EEEDFE',
+      iconColor: '#534AB7',
+      selectedCardBg: '#EEEDF9',
+      selectedBorder: '#534AB7',
+      selectedTitle: '#2B2580',
+      selectedExample: '#403AA0',
+      icon: 'star',
+    },
+  ];
 
   return (
     <div className="flex flex-col min-h-0">
       <div className="flex-1 overflow-y-auto pb-32">
-        <div className="px-4 pt-2 pb-4">
+        <div className="px-4 pt-2 pb-5">
           <h1 className="text-[26px] font-bold text-gray-900 leading-tight">Notifications</h1>
           <p className="text-sm text-gray-500 mt-1">Which type best describes your Will?</p>
         </div>
 
-        {/* Type pills */}
-        <div className="flex gap-2 px-4 mb-5">
-          {(["habit", "abstain", "mission"] as Category[]).map(cat => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setSelected(cat)}
-              className="flex-1 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
-              style={pillStyle(cat)}
-              data-testid={`pill-${cat}`}
-            >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </button>
-          ))}
-        </div>
+        {/* Type selection cards */}
+        <div className="px-4 flex flex-col" style={{ gap: 10 }}>
+          {CARDS.map(card => {
+            const isSelected = selected === card.category;
+            return (
+              <button
+                key={card.category}
+                type="button"
+                onClick={() => setSelected(card.category)}
+                className="w-full text-left transition-all duration-150 active:scale-[0.98] rounded-2xl"
+                style={{
+                  background: isSelected ? card.selectedCardBg : '#fafafa',
+                  border: isSelected ? `2px solid ${card.selectedBorder}` : '1.5px solid #eee',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                }}
+                data-testid={`card-${card.category}`}
+              >
+                {/* Icon container */}
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: card.iconBg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {card.icon === 'check-circle' && (
+                    <svg viewBox="0 0 24 24" style={{ width: 24, height: 24 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="9 12 11 14 15 10" />
+                    </svg>
+                  )}
+                  {card.icon === 'x-circle' && (
+                    <svg viewBox="0 0 24 24" style={{ width: 24, height: 24 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="15" y1="9" x2="9" y2="15" />
+                      <line x1="9" y1="9" x2="15" y2="15" />
+                    </svg>
+                  )}
+                  {card.icon === 'star' && (
+                    <svg viewBox="0 0 24 24" style={{ width: 24, height: 24 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  )}
+                </div>
 
-        {/* Section content */}
-        <div className="px-4">
-          {selected === 'habit' && (
-            <HabitSectionControlled
-              what={what}
-              because={because}
-              color={COLORS.habit}
-              state={habitState}
-              onChange={setHabitState}
-            />
-          )}
-          {selected === 'abstain' && (
-            <AbstainSectionControlled
-              what={what}
-              because={because}
-              color={COLORS.abstain}
-              state={abstainState}
-              onChange={setAbstainState}
-            />
-          )}
-          {selected === 'mission' && (
-            <MissionSectionControlled
-              what={what}
-              because={because}
-              color={COLORS.mission}
-              state={missionState}
-              onChange={setMissionState}
-            />
-          )}
-          {!selected && (
-            <div className="text-center py-8 text-gray-400 text-sm">
-              Select a type above to set up your notifications.
-            </div>
-          )}
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="text-base font-bold leading-tight"
+                    style={{ color: isSelected ? card.selectedTitle : '#111' }}
+                  >
+                    {card.title}
+                  </p>
+                  <p
+                    className="text-sm italic mt-0.5 leading-snug"
+                    style={{ color: isSelected ? card.selectedExample : '#888' }}
+                  >
+                    {card.example}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
