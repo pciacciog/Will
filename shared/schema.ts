@@ -782,6 +782,22 @@ export const insertCircleProofSchema = createInsertSchema(circleProofs).omit({
 export type InsertCircleProof = z.infer<typeof insertCircleProofSchema>;
 export type CircleProof = typeof circleProofs.$inferSelect;
 
+// Abstain daily log — one entry per user per day recording whether they honored their abstain will
+export const abstainLogs = pgTable("abstain_logs", {
+  id: serial("id").primaryKey(),
+  willId: integer("will_id").notNull().references(() => wills.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  honored: boolean("honored").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD in user's local date
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_abstain_logs_will_user_date").on(table.willId, table.userId, table.date),
+]);
+
+export const insertAbstainLogSchema = createInsertSchema(abstainLogs).omit({ id: true, createdAt: true });
+export type InsertAbstainLog = z.infer<typeof insertAbstainLogSchema>;
+export type AbstainLog = typeof abstainLogs.$inferSelect;
+
 export const cloudinaryCleanupLog = pgTable("cloudinary_cleanup_log", {
   id: serial("id").primaryKey(),
   publicId: text("public_id").notNull(),

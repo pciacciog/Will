@@ -1,0 +1,54 @@
+I need to extract and fully document the current Team Will dashboard UI before we make any changes. Do not modify any code. Read only.
+The component I need documented is TeamWillHub.tsx. Additionally extract any sub-components it renders.
+Please find and document the following:
+1. Full component structure
+List every section that renders in TeamWillHub.tsx in order from top to bottom. For each section describe:
+
+What it shows
+What data it receives
+What component or JSX block renders it
+Whether it is conditional (only shows in certain states)
+
+2. All sub-components imported and used
+For every component imported into TeamWillHub.tsx, list:
+
+The component name
+The file path
+What props it receives
+What it renders
+Whether it differs between I Will and We Will mode
+
+3. How I Will vs We Will is handled
+Find every place in the code where willType or 'classic'/'cumulative' is used to branch behavior. List each branch — what renders for I Will and what renders for We Will.
+4. The member progress display
+Find where each team member's progress is shown. Document:
+
+What data drives each member's progress card
+How check-in status is determined per member
+What the action button looks like and what endpoint it calls
+Whether the current UI shows the same button to all members or only to the current user
+
+5. The proof drops section
+Find the proof drop component. Document:
+
+What component renders it
+What endpoint feeds it
+How it is structured
+
+6. All API endpoints consumed
+List every API call made from TeamWillHub.tsx and its sub-components:
+
+The endpoint URL
+What data it returns
+What part of the UI it drives
+
+7. The check-in flow
+Find exactly what happens when a team member taps the check-in button:
+
+What function is called
+What endpoint is hit
+What the payload looks like
+How the UI updates after
+
+8. Current commitmentCategory usage
+Search TeamWillHub.tsx and all its sub-components for any reference to commitmentCategory. If it exists, show how it is used. If it does not exist anywhere in the team UI code, confirm that explicitly — this tells us the category-aware UI has not been implemented here yet.

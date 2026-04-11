@@ -26,6 +26,7 @@ import {
   friendships,
   teamWillInvites,
   willProofs,
+  abstainLogs,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
@@ -3038,8 +3039,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!will) return res.status(404).json({ message: "Will not found" });
       if (will.createdBy !== userId) return res.status(403).json({ message: "Only the Will creator can update it" });
 
-      const updates: Partial<{ title: string | null }> = {};
-      const { title } = req.body;
+      const updates: Partial<{ title: string | null; status: string }> = {};
+      const { title, status } = req.body;
 
       if (title !== undefined) {
         if (title === null || title === '') {
@@ -3051,11 +3052,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      if (Object.keys(updates).length === 0) {
+      // Allow mission wills to mark themselves completed
+      let statusUpdate: string | undefined;
+      if (status !== undefined) {
+        if (status === 'completed' && will.commitmentCategory === 'mission') {
+          statusUpdate = 'completed';
+        } else {
+          return res.status(400).json({ message: "Status update not allowed" });
+        }
+      }
+
+      if (Object.keys(updates).length === 0 && !statusUpdate) {
         return res.status(400).json({ message: "No valid fields to update" });
       }
 
-      await storage.updateWill(willId, updates);
+      if (Object.keys(updates).length > 0) {
+        await storage.updateWill(willId, updates);
+      }
+      if (statusUpdate) {
+        await storage.updateWillStatus(willId, statusUpdate);
+      }
       res.json({ success: true });
     } catch (error) {
       console.error("Error updating will:", error);
@@ -3122,6 +3138,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error resetting abstain streak:", error);
       res.status(500).json({ message: "Failed to reset streak" });
+    }
+  });
+
+  // Log an abstain entry for today — one per user per day
+  app.post('/api/wills/:id/abstain-log', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+      const { honored, date } = req.body; // date: YYYY-MM-DD in user's local time
+
+      if (typeof honored !== 'boolean') return res.status(400).json({ message: "honored must be a boolean" });
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ message: "date must be YYYY-MM-DD" });
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+      if (will.commitmentCategory !== 'abstain') return res.status(400).json({ message: "Only Abstain Wills support this endpoint" });
+
+      // Check authorization
+      const isCreator = will.createdBy === userId;
+      if (!isCreator) {
+        const commitments = await storage.getWillCommitments(willId);
+        const isParticipant = commitments.some((c: any) => c.userId === userId);
+        if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Dedup: only one entry per user per day
+      const existing = await db.select().from(abstainLogs)
+        .where(and(eq(abstainLogs.willId, willId), eq(abstainLogs.userId, userId), eq(abstainLogs.date, date)))
+        .limit(1);
+      if (existing.length > 0) return res.status(409).json({ message: "Already logged for today" });
+
+      const [entry] = await db.insert(abstainLogs).values({ willId, userId, honored, date }).returning();
+
+      // If not honored, also reset the streak
+      if (!honored) {
+        const now = new Date();
+        await db.update(wills).set({ streakStartDate: now, sentMilestones: '[]' }).where(eq(wills.id, willId));
+      }
+
+      res.json(entry);
+    } catch (error) {
+      console.error("Error logging abstain entry:", error);
+      res.status(500).json({ message: "Failed to log abstain entry" });
+    }
+  });
+
+  // Get abstain log entries for a will (last 20 for the authenticated user)
+  app.get('/api/wills/:id/abstain-log', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+
+      // Check authorization
+      const isCreator = will.createdBy === userId;
+      if (!isCreator) {
+        const commitments = await storage.getWillCommitments(willId);
+        const isParticipant = commitments.some((c: any) => c.userId === userId);
+        if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const entries = await db.select().from(abstainLogs)
+        .where(and(eq(abstainLogs.willId, willId), eq(abstainLogs.userId, userId)))
+        .orderBy(desc(abstainLogs.date))
+        .limit(20);
+
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching abstain log:", error);
+      res.status(500).json({ message: "Failed to fetch abstain log" });
     }
   });
 
