@@ -1,0 +1,30 @@
+Codebase extraction — Will creation flow (all modes)
+I need you to extract and document the complete Will creation flow across every mode that currently exists in the app. Do not change any code. This is read-only analysis only.
+First — before anything else — tell me every Will mode or flow that currently exists in this codebase. Search for all Will types, modes, categories, or variants. I know of at least three (Solo Will, Team Will — I Will, Team Will — We Will) but there may be more. List all of them upfront before diving into the details.
+Then for each mode you find, document the following:
+1. Entry point
+Where does this mode's creation flow begin? What triggers it — a button, a navigation action, a route? What component or file handles this?
+2. Step-by-step flow
+List every screen or step in order for this mode. For each step include:
+
+The component or file name
+What the user sees and inputs
+Any validation that happens
+How the user advances to the next step
+
+Note explicitly where different modes share the same screens vs where they diverge into their own logic.
+3. The Will data model
+Find where a Will is defined as a data structure — database schema, TypeScript type, Drizzle/Prisma model, or equivalent. List every single field across all Will-related models: name, type, default value, and what it represents. Include Team, Member, and any related models if they exist separately.
+4. Where each mode gets saved
+Find the API route or server function that creates each Will mode. Show the full payload it receives and how it writes to the database. If multiple modes share an endpoint, show exactly how they branch.
+5. Current type or category system
+Does the app currently have any concept of Will "type" — such as daily habit, one-time, abstinence, or frequency-based? If so, where is it defined, what are the possible values, and how does it affect the flow or dashboard? If it does not exist yet, confirm that explicitly.
+6. The Will statement field
+Which specific component and field captures the user's commitment text — the actual "I will…" statement? What is this field called in the database across each mode? Is it the same field for all modes or does it differ?
+7. Frequency and duration fields
+Does the Will model currently store how often (daily, weekly, X times per week) or how long (7 days, 30 days, a specific deadline)? List every related field by name, type, and which modes currently use it.
+8. Team and membership logic
+For any team-based modes — how are members stored and linked to the Will? How does the app distinguish between I Will and We Will mode, or any other team variants? What field or flag controls this distinction?
+9. The dashboard per mode
+After a Will is created, what component renders the active Will dashboard? Is it the same component for all modes or do different modes render different dashboards? What data does it receive and how does it decide what to display?
+Please respond with file paths, field names, and short code snippets where relevant. The goal is a complete map of every Will creation flow in the codebase — from first tap to Will saved in the database — so we can design a smart feature on top of the existing structure without breaking anything.
