@@ -1945,10 +1945,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         parentWillId: parentWillId,
         startDate: effectiveStartDate,
         endDate: parentWill.endDate,
+        isIndefinite: parentWill.isIndefinite,
         checkInType: joinCheckInType,
+        reminderTime: parentWill.reminderTime,
         checkInTime: userCheckInTime,
         activeDays: joinerActiveDays,
         customDays: joinerCustomDays,
+        // Category inheritance — joiner gets the same category and notification settings
+        commitmentCategory: parentWill.commitmentCategory,
+        milestones: parentWill.milestones,
+        deadlineReminders: parentWill.deadlineReminders,
+        missionReminderTime: parentWill.missionReminderTime,
+        // Fresh streak for the joining user — they start their own journey
+        streakStartDate: new Date(),
+        sentMilestones: null,
+        sentDeadlineReminders: null,
       });
       
       // Update status to match parent if it's active
