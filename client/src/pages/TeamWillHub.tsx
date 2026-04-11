@@ -207,12 +207,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       return res.json();
     },
     onSuccess: () => {
-      setAbstainLoggedToday(true);
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/abstain-log`] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
     },
     onError: (err: any) => {
-      setAbstainLoggedToday(false);
       toast({ title: "Error", description: err.message || "Failed to log entry", variant: "destructive" });
     },
   });
@@ -561,10 +559,11 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
   // Category-aware computed values
   const category = will?.commitmentCategory ?? null;
-  const todayLocalDate = useMemo(() => {
+  // Recompute on every render so midnight unlock works without reload
+  const todayLocalDate = (() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  }, []);
+  })();
   const abstainTodayEntry = useMemo(() => {
     return abstainLogEntries.find((e: AbstainLog) => e.date === todayLocalDate) || null;
   }, [abstainLogEntries, todayLocalDate]);
@@ -1168,37 +1167,30 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 /* ── Abstain ── */
                 <div className="space-y-2" data-testid="section-abstain-actions">
                   {(() => {
-                    const isLogged = !!(abstainTodayEntry || abstainLoggedToday);
-                    const honored = abstainTodayEntry?.honored ?? true;
+                    // Lock derives from server truth only — no local state override
+                    const isLogged = !!abstainTodayEntry;
+                    const lockedStyle = isLogged ? { opacity: 0.3, pointerEvents: 'none' as const } : {};
                     return (
                       <>
                         <button
-                          onClick={() => { if (!isLogged) { abstainLogMutation.mutate({ honored: true }); setAbstainShowResetConfirm(false); } }}
+                          onClick={() => { abstainLogMutation.mutate({ honored: true }); setAbstainShowResetConfirm(false); }}
                           disabled={isLogged || abstainLogMutation.isPending}
-                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                          style={{
-                            border: '2px solid #1D9E75',
-                            color: '#1D9E75',
-                            ...(isLogged && !honored ? { opacity: 0.3, pointerEvents: 'none' } : {}),
-                          }}
+                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors"
+                          style={{ border: '2px solid #1D9E75', color: '#1D9E75', ...lockedStyle }}
                           data-testid="button-abstain-honored"
                         >
                           <CheckCircle style={{ width: 20, height: 20 }} />
-                          {isLogged && honored ? 'Logged for today ✓' : 'I honored my will today'}
+                          {isLogged ? 'Logged for today ✓' : 'I honored my will today'}
                         </button>
                         <button
                           onClick={() => { if (!isLogged) setAbstainShowResetConfirm(true); }}
                           disabled={isLogged || abstainLogMutation.isPending}
-                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                          style={{
-                            border: '2px solid #E24B4A',
-                            color: '#E24B4A',
-                            ...(isLogged && honored ? { opacity: 0.3, pointerEvents: 'none' } : {}),
-                          }}
+                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors"
+                          style={{ border: '2px solid #E24B4A', color: '#E24B4A', ...lockedStyle }}
                           data-testid="button-abstain-didnt-honor"
                         >
                           <XCircle style={{ width: 20, height: 20 }} />
-                          {isLogged && !honored ? 'Logged: reset streak' : "I didn't honor it today"}
+                          I didn&apos;t honor it today
                         </button>
                         {!isLogged && abstainShowResetConfirm && (
                           <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: '#FCEBEB', border: '1.5px solid #E24B4A' }}>
