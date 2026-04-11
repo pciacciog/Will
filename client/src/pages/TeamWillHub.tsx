@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,10 @@ import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import { Capacitor } from "@capacitor/core";
 import {
-  ChevronLeft, ChevronRight, Camera, Plus, Clock, CheckCircle, X,
+  ChevronLeft, ChevronRight, Camera, Plus, Clock, CheckCircle, XCircle, X,
   Pause, Play, Power, AlertTriangle, ImageIcon,
 } from "lucide-react";
-import type { Will } from "@shared/schema";
+import type { Will, AbstainLog } from "@shared/schema";
 
 type ProofDrop = {
   id: number;
@@ -69,6 +69,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [showFullProgress, setShowFullProgress] = useState(false);
   const [showProofPicker, setShowProofPicker] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [abstainLoggedToday, setAbstainLoggedToday] = useState(false);
+  const [abstainShowResetConfirm, setAbstainShowResetConfirm] = useState(false);
+  const [missionShowConfirm, setMissionShowConfirm] = useState(false);
+  const [missionCompleted, setMissionCompleted] = useState(false);
 
   useAppRefresh();
 
@@ -81,6 +85,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     activeDays?: string;
     customDays?: string;
     sharedWhat?: string | null;
+    commitmentCategory?: string | null;
+    streakStartDate?: string | null;
+    endDate?: string | null;
   }>({
     queryKey: [`/api/wills/${willId}/details`],
     refetchInterval: 30000,
@@ -181,6 +188,51 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       setLocation("/");
     },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  // Category-aware: abstain log query
+  const { data: abstainLogEntries = [] } = useQuery<AbstainLog[]>({
+    queryKey: [`/api/wills/${willId}/abstain-log`],
+    enabled: !!user && will?.commitmentCategory === 'abstain',
+    staleTime: 0,
+  });
+
+  // Category-aware: abstain log mutation
+  const abstainLogMutation = useMutation({
+    mutationFn: async ({ honored }: { honored: boolean }) => {
+      const res = await apiRequest(`/api/wills/${willId}/abstain-log`, {
+        method: 'POST',
+        body: JSON.stringify({ honored }),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      setAbstainLoggedToday(true);
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/abstain-log`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
+    },
+    onError: (err: any) => {
+      setAbstainLoggedToday(false);
+      toast({ title: "Error", description: err.message || "Failed to log entry", variant: "destructive" });
+    },
+  });
+
+  // Category-aware: mission complete mutation
+  const missionCompleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest(`/api/wills/${willId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'completed' }),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      setMissionCompleted(true);
+      setMissionShowConfirm(false);
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/wills/all-active"] });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message || "Failed to complete Will", variant: "destructive" }),
   });
 
   // Normalise any image (including HEIC from iOS photo library) to a JPEG Blob
@@ -507,6 +559,44 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     will?.status === "paused" ? "Resume Will to add drops" :
     "Will has ended";
 
+  // Category-aware computed values
+  const category = will?.commitmentCategory ?? null;
+  const todayLocalDate = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
+  const abstainTodayEntry = useMemo(() => {
+    return abstainLogEntries.find((e: AbstainLog) => e.date === todayLocalDate) || null;
+  }, [abstainLogEntries, todayLocalDate]);
+  const abstainStreakDays = useMemo(() => {
+    if (!will?.streakStartDate) return 0;
+    const start = new Date(will.streakStartDate);
+    const now = new Date();
+    return Math.max(0, Math.floor((now.getTime() - start.getTime()) / 86400000));
+  }, [will?.streakStartDate]);
+  const abstainBestStreak = useMemo(() => {
+    if (!abstainLogEntries.length) return abstainStreakDays;
+    let best = 0, cur = 0;
+    const sorted = [...abstainLogEntries].sort((a: AbstainLog, b: AbstainLog) => a.date.localeCompare(b.date));
+    for (const e of sorted) {
+      if (e.honored) { cur++; best = Math.max(best, cur); } else { cur = 0; }
+    }
+    return Math.max(best, abstainStreakDays);
+  }, [abstainLogEntries, abstainStreakDays]);
+  const missionDaysRemaining = useMemo(() => {
+    if (!will?.endDate) return 0;
+    return Math.max(0, Math.ceil((new Date(will.endDate as string).getTime() - Date.now()) / 86400000));
+  }, [will?.endDate]);
+  const missionTotalDays = useMemo(() => {
+    if (!will?.startDate || !will?.endDate) return 1;
+    return Math.max(1, Math.ceil((new Date(will.endDate as string).getTime() - new Date(will.startDate as unknown as string).getTime()) / 86400000));
+  }, [will?.startDate, will?.endDate]);
+  // Mission deadline label
+  const missionDeadlineLabel = useMemo(() => {
+    if (!will?.endDate) return '';
+    return new Date(will.endDate as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }, [will?.endDate]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-violet-50/30">
       {/* Photo modal */}
@@ -750,10 +840,14 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             </div>
           </div>
 
-          {/* Badge row — status only */}
+          {/* Badge row — status + optional category context */}
           <div className="flex justify-center items-center mb-4">
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
-              {statusInfo.label}
+              {will.status === 'active' && category === 'mission' && missionDeadlineLabel
+                ? `Active · deadline ${missionDeadlineLabel}`
+                : will.status === 'active' && daysLeft !== null && (category === 'habit' || category === 'abstain')
+                ? `Active · ${daysLeft} days left`
+                : statusInfo.label}
             </span>
           </div>
 
@@ -880,155 +974,413 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           )}
 
           {/* ── Team card ─────────────────────────────────────────── */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Team</p>
-              {isCreator && pendingInvites.length > 0 && (
-                <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" data-testid="badge-pending-invites">
-                  {pendingInvites.length} pending
-                </span>
+          {isWeWill ? (
+            /* We Will — OUR COMMITMENT hero card */
+            <div className="mb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">Our Commitment</p>
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                {will.sharedWhat ? (
+                  <p className="text-[20px] font-bold text-gray-900 text-center leading-snug mb-3">
+                    &ldquo;{will.sharedWhat}&rdquo;
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic text-center mb-3">No shared commitment set</p>
+                )}
+                <div className="border-t border-gray-100 pt-3">
+                  {commitments.length === 0 ? (
+                    <p className="text-xs text-gray-400 italic text-center py-1">
+                      No members yet — waiting for friends to accept
+                    </p>
+                  ) : (
+                    <div className="flex items-start justify-center gap-6 flex-wrap">
+                      {commitments.map((c: any) => (
+                        <div key={c.id} className="flex flex-col items-center" data-testid={`participant-${c.userId}`}>
+                          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center mb-1.5"
+                               style={{ border: "3px solid #fff", boxShadow: "0 0 0 2px #9B5CE5" }}>
+                            <span className="text-white font-semibold text-sm">
+                              {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium text-gray-800 text-center">
+                            {c.user?.firstName || c.user?.email?.split("@")[0]}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* I Will — YOUR TEAM label + member grid with current user green border */
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Your Team</p>
+                {isCreator && pendingInvites.length > 0 && (
+                  <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" data-testid="badge-pending-invites">
+                    {pendingInvites.length} pending
+                  </span>
+                )}
+              </div>
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                {commitments.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic text-center py-2">
+                    No commitments yet — waiting for friends to accept
+                  </p>
+                ) : (
+                  <div className={`grid gap-3 ${commitments.length === 1 ? "grid-cols-1 max-w-[140px] mx-auto" : "grid-cols-2"}`}>
+                    {commitments.map((c: any) => {
+                      const isMe = c.userId === user.id;
+                      return (
+                        <div
+                          key={c.id}
+                          className="flex flex-col items-center p-3 bg-gray-50 rounded-xl"
+                          style={isMe ? { border: "1.5px solid #1D9E75" } : {}}
+                          data-testid={`participant-${c.userId}`}
+                        >
+                          <div className="relative mb-2">
+                            <div
+                              className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center"
+                              style={{ border: "3px solid #fff", boxShadow: "0 0 0 2px #9B5CE5" }}
+                            >
+                              <span className="text-white font-semibold text-sm">
+                                {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 ${avatarDotColor} rounded-full border-2 border-white`} />
+                          </div>
+                          <p className="font-medium text-gray-900 text-xs text-center leading-tight">
+                            {c.user?.firstName || c.user?.email?.split("@")[0]}
+                          </p>
+                          {c.what && (
+                            <p className="text-[10px] text-gray-500 mt-1 text-center leading-snug">
+                              {c.what}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Progress section — YOUR PROGRESS label + category branch ── */}
+          <div className="mb-3">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Your Progress</p>
+            <div className={`bg-white border border-gray-100 rounded-2xl p-4 shadow-sm${isProgressLocked ? " opacity-50 pointer-events-none select-none" : ""}`}>
+              {isProgressLocked ? (
+                /* Locked state — same for all categories */
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-gray-400 text-center py-2">Available once Will starts</p>
+                </>
+              ) : category === 'habit' ? (
+                /* ── Habit ── */
+                <>
+                  {hasDailyCheckIns && will.status === "active" && (
+                    <button
+                      onClick={() => setShowCheckInModal(true)}
+                      className="w-full mb-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                      style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
+                      data-testid="button-daily-check-in"
+                    >
+                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Check in for today
+                    </button>
+                  )}
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
+                    </div>
+                    <div>
+                      <p className={`text-xl font-bold ${will.status === "will_review" ? "text-amber-500" : "text-gray-700"}`}>
+                        {will.status === "completed" || will.status === "terminated"
+                          ? (checkInProgress?.checkedInDays ?? 0)
+                          : will.status === "will_review" ? 0
+                          : daysLeft !== null ? daysLeft : "∞"}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "days left"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-gray-700">{`${checkInProgress?.successRate ?? 0}%`}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
+                    </div>
+                  </div>
+                  {showFullProgress && hasDailyCheckIns && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <ProgressView
+                        willId={willId}
+                        startDate={will.startDate as unknown as string}
+                        endDate={will.endDate as unknown as string | null}
+                        checkInType={userCheckInType}
+                        activeDays={will.activeDays || undefined}
+                        customDays={will.customDays || undefined}
+                      />
+                    </div>
+                  )}
+                  {!showFullProgress && hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <ProgressView
+                        willId={willId}
+                        startDate={will.startDate as unknown as string}
+                        endDate={will.endDate as unknown as string | null}
+                        checkInType={userCheckInType}
+                        activeDays={will.activeDays || undefined}
+                        customDays={will.customDays || undefined}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : category === 'abstain' ? (
+                /* ── Abstain ── */
+                <div className="space-y-2" data-testid="section-abstain-actions">
+                  {abstainTodayEntry || abstainLoggedToday ? (
+                    <div
+                      className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold"
+                      style={{ backgroundColor: abstainTodayEntry?.honored ?? true ? '#E1F5EE' : '#FCEBEB', color: abstainTodayEntry?.honored ?? true ? '#1D9E75' : '#E24B4A', border: `2px solid ${abstainTodayEntry?.honored ?? true ? '#1D9E75' : '#E24B4A'}` }}
+                      data-testid="abstain-logged-today"
+                    >
+                      {abstainTodayEntry?.honored ?? true
+                        ? <CheckCircle style={{ width: 20, height: 20 }} />
+                        : <XCircle style={{ width: 20, height: 20 }} />}
+                      {abstainTodayEntry?.honored ?? true ? 'Logged for today ✓' : 'Logged: reset streak'}
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { abstainLogMutation.mutate({ honored: true }); setAbstainShowResetConfirm(false); }}
+                        disabled={abstainLogMutation.isPending}
+                        className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                        style={{ border: '2px solid #1D9E75', color: '#1D9E75' }}
+                        data-testid="button-abstain-honored"
+                      >
+                        <CheckCircle style={{ width: 20, height: 20 }} />
+                        I honored my will today
+                      </button>
+                      <button
+                        onClick={() => setAbstainShowResetConfirm(true)}
+                        disabled={abstainLogMutation.isPending}
+                        className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                        style={{ border: '2px solid #E24B4A', color: '#E24B4A' }}
+                        data-testid="button-abstain-didnt-honor"
+                      >
+                        <XCircle style={{ width: 20, height: 20 }} />
+                        I didn&apos;t honor it today
+                      </button>
+                      {abstainShowResetConfirm && (
+                        <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: '#FCEBEB', border: '1.5px solid #E24B4A' }}>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">Reset your streak?</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Honest and brave. You can start again right now.</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setAbstainShowResetConfirm(false)}
+                              className="flex-1 py-2 rounded-lg text-sm font-medium bg-white border"
+                              style={{ borderColor: '#E24B4A', color: '#E24B4A' }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => { abstainLogMutation.mutate({ honored: false }); setAbstainShowResetConfirm(false); }}
+                              className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
+                              style={{ backgroundColor: '#E24B4A' }}
+                              data-testid="button-abstain-confirm-reset"
+                            >
+                              Yes, reset
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {/* Stats row */}
+                  <div className="grid grid-cols-3 gap-3 text-center pt-2">
+                    <div>
+                      <p className="text-xl font-bold text-emerald-500">{abstainStreakDays}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-gray-700">{daysLeft !== null ? daysLeft : "∞"}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">days left</p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-gray-700">{abstainBestStreak}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">best streak</p>
+                    </div>
+                  </div>
+                </div>
+              ) : category === 'mission' ? (
+                /* ── Mission ── */
+                <div className="flex flex-col items-center gap-4">
+                  {/* SVG Countdown ring */}
+                  {(() => {
+                    const size = 88;
+                    const strokeW = 7;
+                    const r = (size - strokeW) / 2;
+                    const circ = 2 * Math.PI * r;
+                    const fraction = missionTotalDays > 0 ? Math.max(0, Math.min(1, missionDaysRemaining / missionTotalDays)) : 0;
+                    const dashOffset = circ * (1 - fraction);
+                    return (
+                      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+                        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+                          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={strokeW} />
+                          <circle
+                            cx={size / 2} cy={size / 2} r={r} fill="none"
+                            stroke="#1D9E75" strokeWidth={strokeW}
+                            strokeLinecap="round"
+                            strokeDasharray={circ}
+                            strokeDashoffset={dashOffset}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-2xl font-bold text-gray-900 leading-none">{missionDaysRemaining}</span>
+                          <span className="text-[10px] text-gray-400 mt-0.5">days left</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* Mark as done button */}
+                  {missionCompleted || will.status === 'completed' ? (
+                    <div
+                      className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-base font-semibold"
+                      style={{ backgroundColor: '#E1F5EE', color: '#1D9E75', border: '2px solid #1D9E75' }}
+                    >
+                      <CheckCircle style={{ width: 20, height: 20 }} />
+                      Completed!
+                    </div>
+                  ) : missionShowConfirm ? (
+                    <div className="w-full rounded-xl p-4 space-y-3" style={{ backgroundColor: '#E1F5EE', border: '1.5px solid #9FE1CB' }}>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">You did it?</p>
+                        <p className="text-xs text-gray-500 mt-0.5">This will complete your Will and celebrate the moment.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setMissionShowConfirm(false)}
+                          className="flex-1 py-2 rounded-lg text-sm font-medium bg-white border"
+                          style={{ borderColor: '#1D9E75', color: '#1D9E75' }}
+                        >
+                          Not yet
+                        </button>
+                        <button
+                          onClick={() => missionCompleteMutation.mutate()}
+                          disabled={missionCompleteMutation.isPending}
+                          className="flex-1 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+                          style={{ backgroundColor: '#1D9E75' }}
+                          data-testid="button-mission-confirm-done"
+                        >
+                          {missionCompleteMutation.isPending ? 'Saving…' : 'Yes, done!'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    will.status === 'active' && (
+                      <button
+                        onClick={() => setMissionShowConfirm(true)}
+                        className="w-full py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                        style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
+                        data-testid="button-mission-mark-done"
+                      >
+                        <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Mark as done
+                      </button>
+                    )
+                  )}
+                </div>
+              ) : (
+                /* ── Null / legacy ── */
+                <>
+                  <button
+                    onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
+                    className="w-full flex items-center justify-between mb-3"
+                    data-testid="button-toggle-progress"
+                  >
+                    <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
+                    {hasDailyCheckIns && (
+                      <ChevronRight
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
+                      />
+                    )}
+                  </button>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
+                    </div>
+                    <div>
+                      <p className={`text-xl font-bold ${will.status === "will_review" ? "text-amber-500" : "text-gray-700"}`}>
+                        {will.status === "completed" || will.status === "terminated"
+                          ? (checkInProgress?.checkedInDays ?? 0)
+                          : will.status === "will_review" ? 0
+                          : daysLeft !== null ? daysLeft : "∞"}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "days left"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-gray-700">{`${checkInProgress?.successRate ?? 0}%`}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "on track"}
+                      </p>
+                    </div>
+                  </div>
+                  {hasDailyCheckIns && will.status === "active" && (
+                    <button
+                      onClick={() => setShowCheckInModal(true)}
+                      className="w-full mt-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                      style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
+                      data-testid="button-daily-check-in"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Check in for today
+                    </button>
+                  )}
+                  {showFullProgress && hasDailyCheckIns && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <ProgressView
+                        willId={willId}
+                        startDate={will.startDate as unknown as string}
+                        endDate={will.endDate as unknown as string | null}
+                        checkInType={userCheckInType}
+                        activeDays={will.activeDays || undefined}
+                        customDays={will.customDays || undefined}
+                      />
+                    </div>
+                  )}
+                  {!showFullProgress && hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <ProgressView
+                        willId={willId}
+                        startDate={will.startDate as unknown as string}
+                        endDate={will.endDate as unknown as string | null}
+                        checkInType={userCheckInType}
+                        activeDays={will.activeDays || undefined}
+                        customDays={will.customDays || undefined}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
-            {isWeWill && will.sharedWhat && (
-              <div className="mb-3 px-3 py-2 rounded-xl" style={{ backgroundColor: "#F3EAFE" }}>
-                <p className="text-xs text-purple-700 text-center leading-snug italic">"{will.sharedWhat}"</p>
-              </div>
-            )}
-            {commitments.length === 0 ? (
-              <p className="text-xs text-gray-400 italic text-center py-2">
-                No commitments yet — waiting for friends to accept
-              </p>
-            ) : (
-              <div className={`grid gap-3 ${commitments.length === 1 ? "grid-cols-1 max-w-[140px] mx-auto" : "grid-cols-2"}`}>
-                {commitments.map((c: any) => (
-                  <div
-                    key={c.id}
-                    className="flex flex-col items-center p-3 bg-gray-50 rounded-xl"
-                    data-testid={`participant-${c.userId}`}
-                  >
-                    <div className="relative mb-2">
-                      <div
-                        className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center"
-                        style={{ border: "3px solid #fff", boxShadow: "0 0 0 2px #9B5CE5" }}
-                      >
-                        <span className="text-white font-semibold text-sm">
-                          {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 ${avatarDotColor} rounded-full border-2 border-white`} />
-                    </div>
-                    <p className="font-medium text-gray-900 text-xs text-center leading-tight">
-                      {c.user?.firstName || c.user?.email?.split("@")[0]}
-                    </p>
-                    {!isWeWill && c.what && (
-                      <p className="text-[10px] text-gray-500 mt-1 text-center leading-snug">
-                        {c.what}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* ── Progress card — always shown ──────────────────────── */}
-          <div className={`bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm${isProgressLocked ? " opacity-50 pointer-events-none select-none" : ""}`}>
-            {isProgressLocked ? (
-              /* Locked state */
-              <>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                </div>
-                <p className="text-xs text-gray-400 text-center py-2">Available once Will starts</p>
-              </>
-            ) : (
-              /* Unlocked state */
-              <>
-                <button
-                  onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
-                  className="w-full flex items-center justify-between mb-3"
-                  data-testid="button-toggle-progress"
-                >
-                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
-                  {hasDailyCheckIns && (
-                    <ChevronRight
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
-                    />
-                  )}
-                </button>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <p className="text-xl font-bold text-emerald-500">
-                      {checkInProgress?.streak ?? 0}
-                    </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
-                  </div>
-                  <div>
-                    <p className={`text-xl font-bold ${will.status === "will_review" ? "text-amber-500" : "text-gray-700"}`}>
-                      {will.status === "completed" || will.status === "terminated"
-                        ? (checkInProgress?.checkedInDays ?? 0)
-                        : will.status === "will_review"
-                        ? 0
-                        : daysLeft !== null ? daysLeft : "∞"}
-                    </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "days left"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-gray-700">
-                      {`${checkInProgress?.successRate ?? 0}%`}
-                    </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "on track"}
-                    </p>
-                  </div>
-                </div>
-                {/* Daily Check-in button — shown for any member with daily tracking */}
-                {hasDailyCheckIns && will.status === "active" && (
-                  <button
-                    onClick={() => setShowCheckInModal(true)}
-                    className="w-full mt-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                    style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
-                    data-testid="button-daily-check-in"
-                  >
-                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Check in for today
-                  </button>
-                )}
-                {showFullProgress && hasDailyCheckIns && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <ProgressView
-                      willId={willId}
-                      startDate={will.startDate as unknown as string}
-                      endDate={will.endDate as unknown as string | null}
-                      checkInType={userCheckInType}
-                      activeDays={will.activeDays || undefined}
-                      customDays={will.customDays || undefined}
-                    />
-                  </div>
-                )}
-                {/* Auto-show calendar for completed/terminated */}
-                {!showFullProgress && hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <ProgressView
-                      willId={willId}
-                      startDate={will.startDate as unknown as string}
-                      endDate={will.endDate as unknown as string | null}
-                      checkInType={userCheckInType}
-                      activeDays={will.activeDays || undefined}
-                      customDays={will.customDays || undefined}
-                    />
-                  </div>
-                )}
-              </>
-            )}
           </div>
 
           {/* ── Proof card — always shown ──────────────────────────── */}
@@ -1107,8 +1459,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
         </div>
       </div>
 
-      {/* Daily Check-in Modal — I Will with daily tracking */}
-      {hasDailyCheckIns && (
+      {/* Daily Check-in Modal — habit and null-category wills with daily tracking */}
+      {hasDailyCheckIns && (!category || category === 'habit') && (
         <DailyCheckInModal
           isOpen={showCheckInModal}
           onClose={() => setShowCheckInModal(false)}
