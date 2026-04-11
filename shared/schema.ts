@@ -101,6 +101,8 @@ export const wills = pgTable("wills", {
   endRoomUrl: varchar("end_room_url", { length: 500 }),
   endRoomStatus: varchar("end_room_status", { length: 20 }).default("pending"), // pending, open, completed
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, will_review, waiting_for_end_room, completed
+  commitmentCategory: varchar("commitment_category", { length: 10 }), // 'habit', 'abstain', 'mission' — null for legacy wills
+  milestones: text("milestones"), // JSON array: [{ day: number, label: string }] — Abstain only
   createdAt: timestamp("created_at").defaultNow(),
   // Notification tracking fields
   midpointAt: timestamp("midpoint_at"), // Precomputed: (startDate + endDate) / 2

@@ -1,0 +1,188 @@
+eplace the tracking screen with a new notifications screen — all Will setup flows
+We are replacing the existing tracking screen entirely across all Will creation flows with a redesigned notifications screen. This affects StartWill.tsx (Solo and Public Will) and CreateTeamWill.tsx (Team Will — I Will and We Will). Do not touch any other screens or logic.
+
+Context on what is being replaced
+The current tracking screen asks the user to pick between three options: "Every Day," "Specific Days," and "Final Review Only." This maps to the checkInType field (daily, specific_days, final_review). This entire screen is being replaced. The new screen handles type selection AND notification setup in one unified step.
+
+Schema changes — run these migrations first
+In shared/schema.ts, add two new nullable fields to the wills table:
+commitmentCategory  varchar(10)   null   default null
+-- values: 'habit', 'abstain', 'mission'
+
+milestones  text   null   default null
+-- JSON array: [{ day: number, label: string }]
+These are both nullable. No existing rows break. No existing queries break. Confirm the migration is just two ALTER TABLE ADD COLUMN statements before running.
+
+The new screen — full specification
+Create a new component: client/src/components/NotificationsSetup.tsx
+This component receives the following props:
+typescriptinterface NotificationsSetupProps {
+  what: string        // the user's will statement — from the What step
+  because: string     // the user's why — from the Why step
+  onComplete: (data: NotificationsData) => void
+  onBack: () => void
+}
+
+interface NotificationsData {
+  commitmentCategory: 'habit' | 'abstain' | 'mission'
+  reminderTime: string | null        // HH:MM — reminder before the moment (Habit + Abstain)
+  checkInTime: string | null         // HH:MM — check-in after (Habit only)
+  checkInType: 'daily' | 'specific_days' | 'final_review'  // derived automatically
+  milestones: { day: number; label: string }[] | null       // Abstain only
+  missionReminderTime: string | null  // HH:MM — optional daily nudge (Mission only)
+  deadlineReminders: { threeDays: boolean; oneDay: boolean; dayOf: boolean }  // Mission only
+}
+The checkInType field is derived automatically based on commitmentCategory:
+
+habit → checkInType: 'daily'
+abstain → checkInType: 'final_review'
+mission → checkInType: 'final_review'
+
+
+Screen layout
+Header:
+
+Nav bar with back chevron on left, "Create Will" title centered
+Page title: "Notifications" (large, bold)
+Subtitle: "Which type best describes your Will?"
+
+Type selector — three pills in a horizontal row, full width:
+
+Habit (green: #1D9E75)
+Abstain (coral: #D85A30)
+Mission (purple: #534AB7)
+
+Selected pill: colored background tint, colored border, colored text. Unselected: gray background, gray border, gray text. Only one can be selected at a time. No default selected on load — user must tap one before Continue is enabled.
+Below the pills: the notification setup section changes completely based on which pill is selected.
+Continue button at the bottom: disabled and grayed out until a type is selected. Once selected, button color matches the selected type color.
+
+HABIT section
+Card 1 — "REMIND ME TO DO IT"
+
+Toggle: "Reminder" / "Fires before the moment" — on by default
+When on: show a tappable time chip (green tint, colored border)
+Time chip opens a dropdown with time options: 6:00 AM, 6:30 AM, 7:00 AM, 7:30 AM, 8:00 AM, 8:30 AM, 9:00 AM, 12:00 PM, 3:00 PM, 5:00 PM, 6:00 PM, 7:00 PM, 7:30 PM, 8:00 PM, 8:30 PM, 9:00 PM, 9:30 PM, 10:00 PM
+Default time: 8:00 PM
+Below time chip: preview card labeled "PREVIEW" showing props.what as the title and props.because as the subtitle
+
+Card 2 — "CHECK IN WITH ME AFTER"
+
+Toggle: "Check-in" / "Log how it went" — on by default
+When on: show tappable time chip (same time options as above)
+Default time: 8:00 AM
+Preview card:
+
+Title: "Did you honor your will?"
+Subtitle: "Tap to log your progress."
+
+
+
+
+ABSTAIN section
+Card 1 — "DAILY REMINDER"
+
+Toggle: "Remind me" / "A nudge to stay strong" — on by default
+When on: show tappable time chip
+Default time: 6:00 PM
+Preview card: props.what as title, props.because as subtitle
+
+Card 2 — "MILESTONE CELEBRATIONS"
+
+Subtitle text: "We celebrate these moments with you. Tap any milestone to customize it."
+Default milestones list (editable):
+
+Day 3 — "First hurdle cleared"
+Day 7 — "One week strong"
+Day 14 — "Two weeks"
+Day 30 — "A whole month"
+
+
+Each milestone row shows: colored check circle + "Day X — Label" text + "Edit" button on the right
+Tapping a milestone row (or Edit) expands an inline edit panel below it:
+
+"CELEBRATE ON DAY" label + grid of day number options: 1, 2, 3, 5, 7, 10, 14, 21, 30, 60, 90. Selected day highlighted in coral tint. Tapping a day updates the milestone and re-renders.
+"MESSAGE" label + text input pre-filled with current label. Editing updates the milestone label in real time.
+Preview card inside the edit panel: "Day X — Label" as title, "Keep going — you're doing great." as subtitle. Updates in real time as user edits.
+Only one edit panel open at a time. Tapping a different milestone closes the open one.
+
+
+"+ Add milestone" button at the bottom (dashed coral border). Tapping adds a new milestone with day 21 and label "Three weeks" and opens its edit panel immediately.
+No other text below the milestones list.
+
+
+MISSION section
+Card 1 — "DEADLINE REMINDERS"
+
+Static label: "Notify me when there is…"
+Three checkable rows (all checked by default, user can uncheck):
+
+"3 days left"
+"1 day left"
+"Day of deadline"
+
+
+Preview card: title "X days left — [props.what shortened]", subtitle from props.because
+
+Card 2 — "DAILY REMINDER"
+
+Toggle: "Remind me daily" / "Off by default" — OFF by default
+When toggled on: reveal tappable time chip (purple tint) + preview card
+Preview card: props.what as title, props.because as subtitle
+
+
+Wire into StartWill.tsx (Solo and Public Will)
+The existing tracking step is step 4 in the 5-step flow. Replace it entirely with <NotificationsSetup>.
+Pass:
+
+what={willData.what}
+because={willData.why}
+onComplete={(data) => { setWillData({...willData, ...data}); goToStep(5); }}
+onBack={() => goToStep(3)}
+
+In the final POST payload (handleConfirmSubmit), include:
+
+commitmentCategory: from notifications data
+reminderTime: from notifications data (HH:MM format)
+checkInTime: from notifications data (HH:MM format, null if check-in toggle is off)
+checkInType: derived from commitmentCategory as described above
+milestones: JSON stringified array (null unless abstain)
+activeDays: keep as 'every_day' for all types (do not change)
+
+
+Wire into CreateTeamWill.tsx (Team Will)
+The existing tracking step is step 5. Replace it entirely with <NotificationsSetup>.
+For I Will (willType === 'classic'): pass what from the creator's commitment text.
+For We Will (willType === 'cumulative'): pass what from sharedWhat.
+Pass because from the why step in both cases.
+Same onComplete and onBack wiring as Solo. Same payload additions.
+
+Update POST /api/wills endpoint
+In server/routes.ts, find the POST /api/wills handler. Add handling for:
+
+Accept commitmentCategory in request body → write to wills.commitmentCategory
+Accept milestones in request body (JSON string) → write to wills.milestones
+reminderTime, checkInTime, checkInType already exist in the handler — confirm they are being written correctly and do not need changes
+
+Both new fields are nullable. If not sent, default to null. Do not make them required. Do not break any existing Will creation paths.
+
+What to preserve — do not touch
+
+The What step
+The Why step
+The When step (date/duration)
+The Friends step in Team flow
+The I Will / We Will type picker in Team flow
+The Review/Confirm step
+All existing notification scheduling logic on the server
+All existing Will statuses, dashboard rendering, and check-in logic
+Any Will created before this change (commitmentCategory will be null — treat null as legacy, no behavior change)
+
+
+Implementation order
+
+Schema migration — confirm SQL before running
+Build NotificationsSetup.tsx component in isolation — test all three tabs, toggles, time pickers, milestone editing, and the Continue button enable/disable logic
+Wire into StartWill.tsx
+Wire into CreateTeamWill.tsx
+Update POST endpoint to accept and store the two new fields
+Test all three flows end to end: Solo, Team I Will, Team We Will

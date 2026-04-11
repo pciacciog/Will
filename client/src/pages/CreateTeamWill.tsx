@@ -11,6 +11,7 @@ import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { MobileLayout, PrimaryButton, UnifiedBackButton } from "@/components/ui/design-system";
 import { ArrowRight, Check, Users, Target, Calendar, Clock, ClipboardList, MessageCircle, CalendarDays, CheckCircle, Heart, Search, Tag } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
+import NotificationsSetup, { type NotificationsData } from "@/components/NotificationsSetup";
 
 type Friend = {
   friendshipId: number;
@@ -88,6 +89,7 @@ export default function CreateTeamWill() {
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [friendSearch, setFriendSearch] = useState("");
   const [willTitle, setWillTitle] = useState("");
+  const [notificationsData, setNotificationsData] = useState<NotificationsData | null>(null);
 
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
@@ -210,6 +212,11 @@ export default function CreateTeamWill() {
     const startDateTime = createDateTimeFromInputs(startDate, startTime);
     const endDateTime = isIndefinite ? null : createDateTimeFromInputs(endDate, endTime);
 
+    const resolvedCheckInType = isShortDuration ? "final_review" : (notificationsData?.checkInType ?? checkInType);
+    const resolvedCheckInTime = notificationsData
+      ? (notificationsData.checkInTime ?? undefined)
+      : (checkInType !== "final_review" && !isShortDuration ? checkInTime : undefined);
+
     createWillMutation.mutate({
       mode: "team",
       willType,
@@ -221,10 +228,12 @@ export default function CreateTeamWill() {
       sharedWhat: willType === "cumulative" ? what : undefined,
       because: why,
       title: willTitle.trim() || undefined,
-      checkInType: isShortDuration ? "final_review" : checkInType,
-      checkInTime: checkInType !== "final_review" && !isShortDuration ? checkInTime : undefined,
-      activeDays: checkInType === "specific_days" ? "custom" : checkInType === "daily" ? "every_day" : undefined,
-      customDays: checkInType === "specific_days" ? JSON.stringify(customDays) : undefined,
+      checkInType: resolvedCheckInType,
+      checkInTime: resolvedCheckInTime,
+      activeDays: "every_day",
+      commitmentCategory: notificationsData?.commitmentCategory ?? undefined,
+      milestones: notificationsData?.milestones ? JSON.stringify(notificationsData.milestones) : undefined,
+      reminderTime: notificationsData?.reminderTime ?? undefined,
     });
   };
 
@@ -268,13 +277,13 @@ export default function CreateTeamWill() {
               {step === 2 && "What would you like to do?"}
               {step === 3 && "Why would you like to do this?"}
               {step === 4 && "Set Your Timeline"}
-              {step === 5 && "Tracking"}
+              {step === 5 && "Notifications"}
             </h1>
             <p className="text-sm text-gray-400 mt-1">
               {step === 2 && (willType === "cumulative" ? "This commitment is shared by everyone" : "Cause it's as simple as wanting.")}
               {step === 3 && "Remember this when it gets tough."}
               {step === 4 && "When will your Will begin and end?"}
-              {step === 5 && "When should we check in with you?"}
+              {step === 5 && "Which type best describes your Will?"}
             </p>
           </div>
           )}
@@ -678,52 +687,18 @@ export default function CreateTeamWill() {
             </div>
           )}
 
-          {/* Step 5: Tracking */}
+          {/* Step 5: Notifications Setup */}
           {step === 5 && (
-            <div className="animate-in fade-in duration-500">
-              <form onSubmit={handleStep5Next} className="flex flex-col">
-                <div className="flex-1 flex flex-col py-4 px-4">
-                  <div className="space-y-3">
-                    {(["daily", "specific_days", "final_review"] as const).map((type) => (
-                      <button key={type} type="button" onClick={() => setCheckInType(type)} className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${checkInType === type ? "border-blue-500 bg-blue-50/50 shadow-sm" : "border-gray-200 bg-white hover:border-gray-300"}`} data-testid={`button-checkin-${type}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${checkInType === type ? "border-blue-500" : "border-gray-300"}`}>
-                            {checkInType === type && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">{type === "daily" ? "Every Day" : type === "specific_days" ? "Specific Days" : "Final Review Only"}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{type === "daily" ? "Check in every day at a chosen time" : type === "specific_days" ? "Pick which days of the week to check in" : "No daily check-ins — just review at the end"}</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  {checkInType === "specific_days" && (
-                    <div className="mt-5">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Select Days</p>
-                      <div className="flex justify-center gap-1.5">
-                        {["S","M","T","W","T","F","S"].map((day, i) => (
-                          <button key={i} type="button" onClick={() => setCustomDays(p => p.includes(i) ? p.filter(d => d !== i) : [...p, i].sort())} className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${customDays.includes(i) ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`} data-testid={`button-day-${i}`}>{day}</button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {checkInType !== "final_review" && (
-                    <div className="mt-5">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Check-In Time</p>
-                      <div className="flex justify-center">
-                        <TimeChipPicker value={checkInTime} onChange={setCheckInTime} testId="input-check-in-time" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex justify-end items-center pt-4 pb-2 border-t border-gray-100">
-                  <button type="submit" className="px-6 py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 shadow-sm flex items-center" data-testid="button-review-will">
-                    Review <ArrowRight className="w-4 h-4 ml-2" />
-                  </button>
-                </div>
-              </form>
-            </div>
+            <NotificationsSetup
+              what={willType === "cumulative" ? what : what}
+              because={why}
+              onComplete={(data) => {
+                setNotificationsData(data);
+                setCheckInType(data.checkInType);
+                setStep(6);
+              }}
+              onBack={() => setStep(4)}
+            />
           )}
 
           {/* Step 6: Review */}

@@ -1,0 +1,570 @@
+import { useState } from "react";
+
+export interface NotificationsData {
+  commitmentCategory: 'habit' | 'abstain' | 'mission';
+  reminderTime: string | null;
+  checkInTime: string | null;
+  checkInType: 'daily' | 'specific_days' | 'final_review';
+  milestones: { day: number; label: string }[] | null;
+  missionReminderTime: string | null;
+  deadlineReminders: { threeDays: boolean; oneDay: boolean; dayOf: boolean };
+}
+
+interface NotificationsSetupProps {
+  what: string;
+  because: string;
+  onComplete: (data: NotificationsData) => void;
+  onBack: () => void;
+}
+
+type Category = 'habit' | 'abstain' | 'mission';
+
+const TIME_OPTIONS = [
+  { label: "6:00 AM", value: "06:00" },
+  { label: "6:30 AM", value: "06:30" },
+  { label: "7:00 AM", value: "07:00" },
+  { label: "7:30 AM", value: "07:30" },
+  { label: "8:00 AM", value: "08:00" },
+  { label: "8:30 AM", value: "08:30" },
+  { label: "9:00 AM", value: "09:00" },
+  { label: "12:00 PM", value: "12:00" },
+  { label: "3:00 PM", value: "15:00" },
+  { label: "5:00 PM", value: "17:00" },
+  { label: "6:00 PM", value: "18:00" },
+  { label: "7:00 PM", value: "19:00" },
+  { label: "7:30 PM", value: "19:30" },
+  { label: "8:00 PM", value: "20:00" },
+  { label: "8:30 PM", value: "20:30" },
+  { label: "9:00 PM", value: "21:00" },
+  { label: "9:30 PM", value: "21:30" },
+  { label: "10:00 PM", value: "22:00" },
+];
+
+const MILESTONE_DAY_OPTIONS = [1, 2, 3, 5, 7, 10, 14, 21, 30, 60, 90];
+
+const DEFAULT_MILESTONES = [
+  { day: 3, label: "First hurdle cleared" },
+  { day: 7, label: "One week strong" },
+  { day: 14, label: "Two weeks" },
+  { day: 30, label: "A whole month" },
+];
+
+const COLORS: Record<Category, { bg: string; border: string; text: string; pillBg: string; pillBorder: string; pillText: string; tint: string; chipBg: string; chipBorder: string; chipText: string; toggleOn: string; checkBg: string }> = {
+  habit: {
+    bg: "#1D9E75",
+    border: "#1D9E75",
+    text: "#1D9E75",
+    pillBg: "#E8F7F1",
+    pillBorder: "#1D9E75",
+    pillText: "#1D9E75",
+    tint: "#E8F7F1",
+    chipBg: "#E8F7F1",
+    chipBorder: "#1D9E75",
+    chipText: "#1D9E75",
+    toggleOn: "#1D9E75",
+    checkBg: "#1D9E75",
+  },
+  abstain: {
+    bg: "#D85A30",
+    border: "#D85A30",
+    text: "#D85A30",
+    pillBg: "#FBF0EB",
+    pillBorder: "#D85A30",
+    pillText: "#D85A30",
+    tint: "#FBF0EB",
+    chipBg: "#FBF0EB",
+    chipBorder: "#D85A30",
+    chipText: "#D85A30",
+    toggleOn: "#D85A30",
+    checkBg: "#D85A30",
+  },
+  mission: {
+    bg: "#534AB7",
+    border: "#534AB7",
+    text: "#534AB7",
+    pillBg: "#EEEDF9",
+    pillBorder: "#534AB7",
+    pillText: "#534AB7",
+    tint: "#EEEDF9",
+    chipBg: "#EEEDF9",
+    chipBorder: "#534AB7",
+    chipText: "#534AB7",
+    toggleOn: "#534AB7",
+    checkBg: "#534AB7",
+  },
+};
+
+function formatTime(value: string): string {
+  const opt = TIME_OPTIONS.find(t => t.value === value);
+  if (opt) return opt.label;
+  const [h, m] = value.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const display = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${display}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+function Toggle({ on, onChange, color }: { on: boolean; onChange: (v: boolean) => void; color: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!on)}
+      className="relative flex-shrink-0 transition-all duration-200 active:scale-95"
+      style={{ width: 48, height: 28, borderRadius: 14, background: on ? color : "#E5E7EB" }}
+      data-testid="toggle-notification"
+      aria-label={on ? "Turn off" : "Turn on"}
+    >
+      <span
+        className="absolute top-1 transition-all duration-200"
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: "50%",
+          background: "#fff",
+          left: on ? 24 : 4,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+        }}
+      />
+    </button>
+  );
+}
+
+function TimeChip({ value, onChange, color }: { value: string; onChange: (v: string) => void; color: typeof COLORS.habit }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all active:scale-95"
+        style={{ background: color.chipBg, border: `1.5px solid ${color.chipBorder}`, color: color.chipText }}
+        data-testid="chip-time"
+      >
+        <svg viewBox="0 0 24 24" style={{ width: 14, height: 14, flexShrink: 0 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+        </svg>
+        {formatTime(value)}
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 z-20 mt-1 rounded-xl overflow-y-auto shadow-lg border border-gray-100 bg-white"
+          style={{ width: 160, maxHeight: 240 }}
+        >
+          {TIME_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className="w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-gray-50"
+              style={opt.value === value ? { color: color.chipText, fontWeight: 600, background: color.chipBg } : { color: "#374151" }}
+              data-testid={`option-time-${opt.value}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviewCard({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="rounded-xl p-3 mt-3" style={{ background: "#F3F4F6" }}>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">PREVIEW</p>
+      <p className="text-sm font-bold text-gray-900 leading-snug">{title || "Your will"}</p>
+      <p className="text-xs text-gray-500 mt-0.5 leading-snug">{subtitle || "Because…"}</p>
+    </div>
+  );
+}
+
+function NotifCard({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 mb-3">
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+interface MilestoneRow {
+  day: number;
+  label: string;
+}
+
+export default function NotificationsSetup({ what, because, onComplete, onBack }: NotificationsSetupProps) {
+  const [selected, setSelected] = useState<Category | null>(null);
+
+  const [habitState, setHabitState] = useState({
+    reminderOn: true, reminderTime: "20:30",
+    checkInOn: true, checkInTime: "08:00",
+  });
+  const [abstainState, setAbstainState] = useState({
+    reminderOn: true, reminderTime: "18:00",
+    milestones: [...DEFAULT_MILESTONES] as MilestoneRow[],
+  });
+  const [missionState, setMissionState] = useState({
+    threeDays: true, oneDay: true, dayOf: true,
+    dailyOn: false, dailyTime: "09:00",
+  });
+
+  const handleContinue = () => {
+    if (!selected) return;
+
+    let data: NotificationsData;
+
+    if (selected === 'habit') {
+      data = {
+        commitmentCategory: 'habit',
+        reminderTime: habitState.reminderOn ? habitState.reminderTime : null,
+        checkInTime: habitState.checkInOn ? habitState.checkInTime : null,
+        checkInType: 'daily',
+        milestones: null,
+        missionReminderTime: null,
+        deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
+      };
+    } else if (selected === 'abstain') {
+      data = {
+        commitmentCategory: 'abstain',
+        reminderTime: abstainState.reminderOn ? abstainState.reminderTime : null,
+        checkInTime: null,
+        checkInType: 'final_review',
+        milestones: abstainState.milestones,
+        missionReminderTime: null,
+        deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
+      };
+    } else {
+      data = {
+        commitmentCategory: 'mission',
+        reminderTime: null,
+        checkInTime: null,
+        checkInType: 'final_review',
+        milestones: null,
+        missionReminderTime: missionState.dailyOn ? missionState.dailyTime : null,
+        deadlineReminders: {
+          threeDays: missionState.threeDays,
+          oneDay: missionState.oneDay,
+          dayOf: missionState.dayOf,
+        },
+      };
+    }
+
+    onComplete(data);
+  };
+
+  const color = selected ? COLORS[selected] : null;
+
+  const pillStyle = (cat: Category) => {
+    const c = COLORS[cat];
+    if (selected === cat) {
+      return { background: c.pillBg, border: `2px solid ${c.pillBorder}`, color: c.pillText };
+    }
+    return { background: "#F3F4F6", border: "2px solid #D1D5DB", color: "#9CA3AF" };
+  };
+
+  return (
+    <div className="flex flex-col min-h-0">
+      <div className="flex-1 overflow-y-auto pb-32">
+        <div className="px-4 pt-2 pb-4">
+          <h1 className="text-[26px] font-bold text-gray-900 leading-tight">Notifications</h1>
+          <p className="text-sm text-gray-500 mt-1">Which type best describes your Will?</p>
+        </div>
+
+        {/* Type pills */}
+        <div className="flex gap-2 px-4 mb-5">
+          {(["habit", "abstain", "mission"] as Category[]).map(cat => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelected(cat)}
+              className="flex-1 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
+              style={pillStyle(cat)}
+              data-testid={`pill-${cat}`}
+            >
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Section content */}
+        <div className="px-4">
+          {selected === 'habit' && (
+            <HabitSectionControlled
+              what={what}
+              because={because}
+              color={COLORS.habit}
+              state={habitState}
+              onChange={setHabitState}
+            />
+          )}
+          {selected === 'abstain' && (
+            <AbstainSectionControlled
+              what={what}
+              because={because}
+              color={COLORS.abstain}
+              state={abstainState}
+              onChange={setAbstainState}
+            />
+          )}
+          {selected === 'mission' && (
+            <MissionSectionControlled
+              what={what}
+              because={because}
+              color={COLORS.mission}
+              state={missionState}
+              onChange={setMissionState}
+            />
+          )}
+          {!selected && (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              Select a type above to set up your notifications.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Continue button — fixed at bottom */}
+      <div
+        className="fixed bottom-0 left-0 right-0 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 bg-white border-t border-gray-100"
+        style={{ maxWidth: "640px", margin: "0 auto" }}
+      >
+        <button
+          type="button"
+          onClick={handleContinue}
+          disabled={!selected}
+          className="w-full py-4 rounded-2xl text-base font-semibold text-white transition-all active:scale-[0.98]"
+          style={selected
+            ? { background: COLORS[selected].bg }
+            : { background: "#E5E7EB", color: "#9CA3AF", cursor: "not-allowed" }
+          }
+          data-testid="button-notifications-continue"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Controlled wrappers so parent can read state ── */
+
+function HabitSectionControlled({
+  what, because, color, state, onChange,
+}: {
+  what: string; because: string; color: typeof COLORS.habit;
+  state: { reminderOn: boolean; reminderTime: string; checkInOn: boolean; checkInTime: string };
+  onChange: (s: typeof state) => void;
+}) {
+  const { reminderOn, reminderTime, checkInOn, checkInTime } = state;
+  return (
+    <div>
+      <NotifCard label="REMIND ME TO DO IT">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-base font-bold text-gray-900">Reminder</p>
+            <p className="text-xs text-gray-500 mt-0.5">Fires before the moment</p>
+          </div>
+          <Toggle on={reminderOn} onChange={v => onChange({ ...state, reminderOn: v })} color={color.toggleOn} />
+        </div>
+        {reminderOn && (
+          <div className="mt-3">
+            <TimeChip value={reminderTime} onChange={v => onChange({ ...state, reminderTime: v })} color={color} />
+            <PreviewCard title={what} subtitle={because} />
+          </div>
+        )}
+      </NotifCard>
+
+      <NotifCard label="CHECK IN WITH ME AFTER">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-base font-bold text-gray-900">Check-in</p>
+            <p className="text-xs text-gray-500 mt-0.5">Log how it went</p>
+          </div>
+          <Toggle on={checkInOn} onChange={v => onChange({ ...state, checkInOn: v })} color={color.toggleOn} />
+        </div>
+        {checkInOn && (
+          <div className="mt-3">
+            <TimeChip value={checkInTime} onChange={v => onChange({ ...state, checkInTime: v })} color={color} />
+            <PreviewCard title="Did you honor your will?" subtitle="Tap to log your progress." />
+          </div>
+        )}
+      </NotifCard>
+    </div>
+  );
+}
+
+function AbstainSectionControlled({
+  what, because, color, state, onChange,
+}: {
+  what: string; because: string; color: typeof COLORS.abstain;
+  state: { reminderOn: boolean; reminderTime: string; milestones: MilestoneRow[] };
+  onChange: (s: typeof state) => void;
+}) {
+  const { reminderOn, reminderTime, milestones } = state;
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  const handleToggleMilestone = (i: number) => setOpenIdx(prev => prev === i ? null : i);
+  const updateDay = (i: number, day: number) => onChange({ ...state, milestones: milestones.map((m, idx) => idx === i ? { ...m, day } : m) });
+  const updateLabel = (i: number, label: string) => onChange({ ...state, milestones: milestones.map((m, idx) => idx === i ? { ...m, label } : m) });
+  const addMilestone = () => {
+    const newMs = [...milestones, { day: 21, label: "Three weeks" }];
+    onChange({ ...state, milestones: newMs });
+    setOpenIdx(newMs.length - 1);
+  };
+
+  return (
+    <div>
+      <NotifCard label="DAILY REMINDER">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-base font-bold text-gray-900">Remind me</p>
+            <p className="text-xs text-gray-500 mt-0.5">A nudge to stay strong</p>
+          </div>
+          <Toggle on={reminderOn} onChange={v => onChange({ ...state, reminderOn: v })} color={color.toggleOn} />
+        </div>
+        {reminderOn && (
+          <div className="mt-3">
+            <TimeChip value={reminderTime} onChange={v => onChange({ ...state, reminderTime: v })} color={color} />
+            <PreviewCard title={what} subtitle={because} />
+          </div>
+        )}
+      </NotifCard>
+
+      <NotifCard label="MILESTONE CELEBRATIONS">
+        <p className="text-xs text-gray-500 mb-3 leading-snug">We celebrate these moments with you. Tap any milestone to customize it.</p>
+        <div className="space-y-0">
+          {milestones.map((m, i) => (
+            <div key={i}>
+              <button
+                type="button"
+                onClick={() => handleToggleMilestone(i)}
+                className="w-full flex items-center gap-3 py-2.5 transition-colors"
+                data-testid={`button-milestone-${i}`}
+              >
+                <span
+                  className="flex-shrink-0 flex items-center justify-center"
+                  style={{ width: 22, height: 22, borderRadius: "50%", background: color.checkBg }}
+                >
+                  <svg viewBox="0 0 24 24" style={{ width: 12, height: 12 }} fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </span>
+                <span className="flex-1 text-sm font-medium text-gray-900 text-left">
+                  Day {m.day} — {m.label}
+                </span>
+                <span className="text-xs font-semibold" style={{ color: color.text }}>Edit</span>
+              </button>
+
+              {openIdx === i && (
+                <div className="rounded-xl p-3 mb-2 border" style={{ background: color.tint, borderColor: color.border }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: color.text }}>CELEBRATE ON DAY</p>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {MILESTONE_DAY_OPTIONS.map(d => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => updateDay(i, d)}
+                        className="w-8 h-8 rounded-lg text-xs font-semibold transition-all active:scale-95"
+                        style={m.day === d
+                          ? { background: color.bg, color: "#fff" }
+                          : { background: "#fff", color: "#374151", border: "1.5px solid #E5E7EB" }
+                        }
+                        data-testid={`button-milestone-day-${d}`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: color.text }}>MESSAGE</p>
+                  <input
+                    type="text"
+                    value={m.label}
+                    onChange={e => updateLabel(i, e.target.value)}
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white border focus:outline-none"
+                    style={{ borderColor: color.border }}
+                    placeholder="Milestone label"
+                    data-testid="input-milestone-label"
+                  />
+                  <PreviewCard title={`Day ${m.day} — ${m.label}`} subtitle="Keep going — you're doing great." />
+                </div>
+              )}
+
+              {i < milestones.length - 1 && <div className="border-b border-gray-100" />}
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={addMilestone}
+          className="w-full mt-3 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95"
+          style={{ border: `1.5px dashed ${color.border}`, color: color.text, background: "transparent" }}
+          data-testid="button-add-milestone"
+        >
+          + Add milestone
+        </button>
+      </NotifCard>
+    </div>
+  );
+}
+
+function MissionSectionControlled({
+  what, because, color, state, onChange,
+}: {
+  what: string; because: string; color: typeof COLORS.mission;
+  state: { threeDays: boolean; oneDay: boolean; dayOf: boolean; dailyOn: boolean; dailyTime: string };
+  onChange: (s: typeof state) => void;
+}) {
+  const { threeDays, oneDay, dayOf, dailyOn, dailyTime } = state;
+  const previewWhat = what.length > 28 ? what.slice(0, 28).trimEnd() + "…" : what;
+
+  return (
+    <div>
+      <NotifCard label="DEADLINE REMINDERS">
+        <p className="text-sm text-gray-600 mb-3">Notify me when there is…</p>
+        <div className="space-y-2 mb-3">
+          {[
+            { label: "3 days left", value: threeDays, key: "threeDays" as const },
+            { label: "1 day left", value: oneDay, key: "oneDay" as const },
+            { label: "Day of deadline", value: dayOf, key: "dayOf" as const },
+          ].map(row => (
+            <button
+              key={row.label}
+              type="button"
+              onClick={() => onChange({ ...state, [row.key]: !row.value })}
+              className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 border border-gray-200 bg-gray-50 text-left transition-all active:scale-[0.98]"
+              data-testid={`check-${row.key}`}
+            >
+              <span
+                className="flex-shrink-0 flex items-center justify-center"
+                style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${row.value ? color.bg : "#D1D5DB"}`, background: row.value ? color.bg : "transparent" }}
+              >
+                {row.value && (
+                  <svg viewBox="0 0 24 24" style={{ width: 11, height: 11 }} fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </span>
+              <span className="text-sm font-medium text-gray-900">{row.label}</span>
+            </button>
+          ))}
+        </div>
+        <PreviewCard title={`1 day left — ${previewWhat}`} subtitle={because} />
+      </NotifCard>
+
+      <NotifCard label="DAILY REMINDER">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-base font-bold text-gray-900">Remind me daily</p>
+            <p className="text-xs text-gray-500 mt-0.5">Off by default</p>
+          </div>
+          <Toggle on={dailyOn} onChange={v => onChange({ ...state, dailyOn: v })} color={color.toggleOn} />
+        </div>
+        {dailyOn && (
+          <div className="mt-3">
+            <TimeChip value={dailyTime} onChange={v => onChange({ ...state, dailyTime: v })} color={color} />
+            <PreviewCard title={what} subtitle={because} />
+          </div>
+        )}
+      </NotifCard>
+    </div>
+  );
+}

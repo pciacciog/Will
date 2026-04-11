@@ -20,7 +20,7 @@ Authentication features a custom email/password system, Express sessions with Po
 - **Authentication**: Email/password sign-up/sign-in, secure password changes.
 - **Homepage & My Wills**: Dashboard summary, dedicated "My Wills" page with status filtering and public will visibility.
 - **Mode Selection**: Choice between Solo (personal) and Inner Circle (group) accountability.
-- **Solo Mode**: Personal will creation with immediate start, offering flexible tracking types: "Every Day," "Specific Days," and "Final Review Only."
+- **Solo Mode**: Personal will creation with immediate start. Tracking step replaced by Notifications setup (Habit/Abstain/Mission) that derives checkInType automatically.
 - **Progress Tracking**: DailyCheckInModal, ProgressView with calendar, success rate calculation, and streak tracking.
 - **Inner Circle Mode**: Multi-circle support, lobby view, circle hub, and distinct "Normal" and "Shared" will types (within circles).
 - **Team Will Mode**: Friends-based accountability wills (mode: 'team'). Up to 4 participants invited by link. Managed via `TeamWillHub` (route: `/will/:id`). Created via `CreateTeamWill` (route: `/create-team-will`). History at `/team/history`. DB table for invites: `shared_will_invites` (TypeScript: `teamWillInvites`). Push notifications: "New Team Will proposed!".

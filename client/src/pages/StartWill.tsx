@@ -17,6 +17,7 @@ import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
 import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users, Lock, Eye, ClipboardList, MessageCircle, CalendarDays, Pencil } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
+import NotificationsSetup, { type NotificationsData } from "@/components/NotificationsSetup";
 
 const ENABLE_END_ROOM = false;
 
@@ -255,6 +256,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [showEndRoomForm, setShowEndRoomForm] = useState(false);
   const [showSkipConfirmation, setShowSkipConfirmation] = useState(false);
   
+  // Notifications setup data — set when the user completes the NotificationsSetup step
+  const [notificationsData, setNotificationsData] = useState<NotificationsData | null>(null);
+
   // Daily reminder settings - track if user has made changes
   const [dailyReminderTime, setDailyReminderTime] = useState<string>('');
   const [skipDailyReminder, setSkipDailyReminder] = useState<boolean | null>(null);
@@ -499,6 +503,14 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   };
 
   const handleConfirmSubmit = () => {
+    const resolvedCheckInType = notificationsData?.checkInType ?? checkInType;
+    const resolvedCheckInTime = notificationsData
+      ? (notificationsData.checkInTime ?? undefined)
+      : (checkInType !== 'final_review' && !isShortDuration ? checkInTime : undefined);
+    const resolvedReminderTime = notificationsData
+      ? (notificationsData.reminderTime ?? undefined)
+      : (checkInType !== 'final_review' && !isShortDuration ? willReminderTime : undefined);
+
     if (ENABLE_END_ROOM && !isSoloMode) {
       setCurrentStep(6);
     } else if (isSoloMode) {
@@ -511,13 +523,14 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         mode: 'personal',
         what: willData.what,
         because: willData.why,
-        checkInType: checkInType,
+        checkInType: resolvedCheckInType,
         isIndefinite: isIndefinite,
         visibility: visibility,
-        checkInTime: checkInType !== 'final_review' && !isShortDuration ? checkInTime : undefined,
-        activeDays: checkInType === 'specific_days' ? 'custom' : (checkInType === 'daily' ? 'every_day' : undefined),
-        customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
-        reminderTime: checkInType !== 'final_review' && !isShortDuration ? willReminderTime : undefined,
+        checkInTime: resolvedCheckInTime,
+        activeDays: 'every_day',
+        reminderTime: resolvedReminderTime,
+        commitmentCategory: notificationsData?.commitmentCategory ?? undefined,
+        milestones: notificationsData?.milestones ? JSON.stringify(notificationsData.milestones) : undefined,
       });
     } else {
       // Non-solo, non-circle: create as personal will
@@ -530,12 +543,13 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         mode: 'personal',
         what: willData.what,
         because: willData.why,
-        checkInType: checkInType,
+        checkInType: resolvedCheckInType,
         isIndefinite: isIndefinite,
-        checkInTime: checkInType !== 'final_review' ? checkInTime : undefined,
-        activeDays: checkInType === 'specific_days' ? 'custom' : (checkInType === 'daily' ? 'every_day' : undefined),
-        customDays: checkInType === 'specific_days' ? JSON.stringify(customDays) : undefined,
-        reminderTime: checkInType !== 'final_review' ? willReminderTime : undefined,
+        checkInTime: resolvedCheckInTime,
+        activeDays: 'every_day',
+        reminderTime: resolvedReminderTime,
+        commitmentCategory: notificationsData?.commitmentCategory ?? undefined,
+        milestones: notificationsData?.milestones ? JSON.stringify(notificationsData.milestones) : undefined,
       });
     }
   };
@@ -772,15 +786,15 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             )}
           </div>
           
-          {/* Current Step Title — hidden on review step to reclaim vertical space */}
-          {currentStep !== 5 && (
+          {/* Current Step Title — hidden on review and notifications steps */}
+          {currentStep !== 5 && currentStep !== 4 && (
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
               {showTypeSelection && "Choose your Will Type:"}
               {!showTypeSelection && currentStep === 1 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
               {!showTypeSelection && currentStep === 2 && "Why would you like to do this?"}
               {!showTypeSelection && currentStep === 3 && "Set Your Timeline"}
-              {!showTypeSelection && currentStep === 4 && "Tracking"}
+              {!showTypeSelection && currentStep === 4 && "Notifications"}
             </h1>
             {!showTypeSelection && currentStep === 1 && (
               <>
@@ -807,7 +821,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             )}
             {!showTypeSelection && currentStep === 4 && (
               <p className="text-sm text-gray-500 mt-1">
-                When should we check in with you?
+                Which type best describes your Will?
               </p>
             )}
           </div>
@@ -1010,156 +1024,18 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
           </div>
         )}
 
-        {/* Step 4: Check-In Preferences - 3 Option Selector */}
+        {/* Step 4: Notifications Setup */}
         {currentStep === 4 && !showTransition && !showTypeSelection && (
-          <div className="flex flex-col animate-in fade-in duration-500">
-            <form onSubmit={handleStep4Submit} className="flex flex-col flex-1">
-              <div className="flex-1 flex flex-col py-4 px-4">
-
-                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <button
-                    type="button"
-                    onClick={() => setCheckInType('daily')}
-                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
-                      checkInType === 'daily'
-                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                    data-testid="button-checkin-daily"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        checkInType === 'daily' ? 'border-blue-500' : 'border-gray-300'
-                      }`}>
-                        {checkInType === 'daily' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900">Every Day</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Check in every day at a chosen time</p>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCheckInType('specific_days')}
-                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
-                      checkInType === 'specific_days'
-                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                    data-testid="button-checkin-specific-days"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        checkInType === 'specific_days' ? 'border-blue-500' : 'border-gray-300'
-                      }`}>
-                        {checkInType === 'specific_days' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900">Specific Days</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Pick which days of the week to check in</p>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCheckInType('final_review')}
-                    className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
-                      checkInType === 'final_review'
-                        ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                    data-testid="button-checkin-final-review"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        checkInType === 'final_review' ? 'border-blue-500' : 'border-gray-300'
-                      }`}>
-                        {checkInType === 'final_review' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900">Final Review Only</p>
-                        <p className="text-xs text-gray-500 mt-0.5">No daily check-ins — just review at the end</p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-
-                {checkInType === 'specific_days' && (
-                  <div className="mt-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Select Days</p>
-                    <div className="flex justify-center gap-1.5">
-                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => {
-                            setCustomDays(prev =>
-                              prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort()
-                            );
-                          }}
-                          className={`w-9 h-9 rounded-full text-xs font-medium transition-all flex items-center justify-center leading-none ${
-                            customDays.includes(i) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                          }`}
-                          data-testid={`button-day-${i}`}
-                        >
-                          {day}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {checkInType !== 'final_review' && (
-                  <div className="mt-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest text-center mb-3">Check-In Time</p>
-                    <div className="flex justify-center">
-                      <TimeChipPicker
-                        value={checkInTime}
-                        onChange={setCheckInTime}
-                        testId="input-check-in-time"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-xs text-gray-400 text-center mt-5 animate-in fade-in duration-300" data-testid="text-checkin-confirm">
-                  {checkInType === 'daily' && "We'll check in with you daily at this time"}
-                  {checkInType === 'specific_days' && (() => {
-                    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                    const selected = customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ');
-                    return selected ? `We'll check in on ${selected} at this time` : 'Select at least one day';
-                  })()}
-                  {checkInType === 'final_review' && "No daily check-ins — just review at the end"}
-                </p>
-
-              </div>
-              
-              <div className="flex justify-between items-center pt-4 pb-2 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: '300ms' }}>
-                <div className="flex items-center space-x-2">
-                  <Button type="button" variant="ghost" onClick={handleCancel} className="text-gray-500" data-testid="button-cancel">
-                    Cancel
-                  </Button>
-                  {showHelpIcon && (
-                    <HelpIcon
-                      onClick={() => setShowInstructionModal(true)}
-                      size="sm"
-                    />
-                  )}
-                </div>
-                <button
-                  type="submit"
-                  className="px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm"
-                  data-testid="button-review-will"
-                >
-                  Review
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </button>
-              </div>
-            </form>
-          </div>
+          <NotificationsSetup
+            what={willData.what}
+            because={willData.why}
+            onComplete={(data) => {
+              setNotificationsData(data);
+              setCheckInType(data.checkInType);
+              setCurrentStep(5);
+            }}
+            onBack={() => setCurrentStep(3)}
+          />
         )}
         
         {/* Step 5: Confirmation / Review Page */}

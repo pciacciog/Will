@@ -1087,6 +1087,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activeDays: normalizedCheckInType === 'specific_days' ? (req.body.activeDays || 'custom') : (req.body.activeDays || 'every_day'),
         customDays: req.body.customDays || null,
         isIndefinite: isIndefinite,
+        commitmentCategory: req.body.commitmentCategory || null,
+        milestones: req.body.milestones || null,
       };
       
       console.log("Will data before validation:", willDataWithDefaults, "isPersonalMode:", isPersonalMode);
