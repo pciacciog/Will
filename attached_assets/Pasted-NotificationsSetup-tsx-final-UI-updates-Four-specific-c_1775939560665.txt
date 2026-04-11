@@ -1,0 +1,68 @@
+NotificationsSetup.tsx — final UI updates
+Four specific changes. Do not touch anything else.
+
+1. Type selector — replace pills with example cards
+Replace the three horizontal pill buttons with three full-width tappable cards stacked vertically. Each card:
+
+Icon (38×38px rounded square with category tint background) + bold title + one complete italic example Will statement
+Unselected: light gray border (#eee), off-white background (#fafafa), gray text
+Selected: 2px colored border, category tint background, colored text
+Only one selectable at a time — Continue button disabled and gray until one is selected, then activates in the selected category color
+
+Card content:
+
+Habit — green checkmark circle icon · "Habit" · "I will be in bed by 9:00 pm"
+Abstain — coral X circle icon · "Abstain" · "I will not use social media"
+Mission — purple star icon · "Mission" · "I will call my grandmother"
+
+
+2. Replace example line with props.what
+Once a type is selected, the three cards collapse to compact pills (same layout as current pill row). Directly below the pills, show the user's actual Will statement from props.what in italic, in the selected category accent color, wrapped in quotes.
+Example: if user typed "Go to BJJ every day" and selected Habit, show:
+"Go to BJJ every day" in green (#1D9E75)
+This line replaces every hardcoded example string currently on the screen.
+
+3. Notification preview structure — all cards
+Every PREVIEW card across all three category types must pull from props — nothing hardcoded:
+
+Reminder previews (Habit + Abstain):
+
+Title: props.what
+Subtitle: props.because
+
+
+Check-in preview (Habit only):
+
+Title: "Did you honor your will?"
+Subtitle: props.what
+
+
+Milestone preview (Abstain):
+
+Title: "Day " + milestone.day + " — " + milestone.message (the user's typed message)
+Subtitle: props.what
+
+
+Deadline reminder preview (Mission):
+
+Title: "1 day left — " + props.what
+Subtitle: props.because
+
+
+
+
+4. Milestone edit panel — replace day grid with free number input
+Remove the preset day number grid (1, 2, 3, 5, 7, 10, 14, 21, 30, 60, 90). Replace with a single centered number input field where the user types any day number they want (min 1, max 365).
+Style the input: centered text, bold, large (15px), coral border (#F5C4B3), white background, rounded corners.
+The message field stays exactly as is — a text input for the milestone label.
+Both fields update the preview in real time as the user types.
+The preview inside the edit panel shows:
+
+Title: "Day " + day + " — " + message
+Subtitle: props.what
+
+No other changes to the milestone card — checkboxes, Edit/Done toggle, and "+ Add milestone" button all stay.
+
+5. Make all three screens non-scrollable
+Disable scroll on this screen. All content must fit on one screen for all three category types. Use fixed/flex layout — content fills naturally, Continue button pinned to bottom.
+If any content overflows on iPhone SE (smallest common screen), reduce card padding by 2px and section label margin by 2px until it fits. Test on small screen before closing.

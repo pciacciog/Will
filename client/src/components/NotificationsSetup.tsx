@@ -40,12 +40,9 @@ const TIME_OPTIONS = [
   { label: "10:00 PM", value: "22:00" },
 ];
 
-const MILESTONE_DAY_OPTIONS = [1, 2, 3, 5, 7, 10, 14, 21, 30, 60, 90];
-
 const DEFAULT_MILESTONES = [
   { day: 3, label: "First hurdle cleared" },
   { day: 7, label: "One week strong" },
-  { day: 14, label: "Two weeks" },
   { day: 30, label: "A whole month" },
 ];
 
@@ -303,85 +300,131 @@ export default function NotificationsSetup({ what, because, onComplete, onBack }
 
   return (
     <div className="flex flex-col min-h-0">
-      <div className="flex-1 overflow-y-auto pb-32">
-        <div className="px-4 pt-2 pb-5">
-          <h1 className="text-[26px] font-bold text-gray-900 leading-tight">Notifications</h1>
-          <p className="text-sm text-gray-500 mt-1">Which type best describes your Will?</p>
-        </div>
+      {/* ── Heading (always shown) ── */}
+      <div className="px-4 pt-2 pb-3 flex-shrink-0">
+        <h1 className="text-[26px] font-bold text-gray-900 leading-tight">Notifications</h1>
+        <p className="text-sm text-gray-500 mt-1">Which type best describes your Will?</p>
+      </div>
 
-        {/* Type selection cards */}
+      {/* ── No selection: three big tap cards ── */}
+      {!selected && (
         <div className="px-4 flex flex-col" style={{ gap: 10 }}>
-          {CARDS.map(card => {
-            const isSelected = selected === card.category;
-            return (
-              <button
-                key={card.category}
-                type="button"
-                onClick={() => setSelected(card.category)}
-                className="w-full text-left transition-all duration-150 active:scale-[0.98] rounded-2xl"
+          {CARDS.map(card => (
+            <button
+              key={card.category}
+              type="button"
+              onClick={() => setSelected(card.category)}
+              className="w-full text-left transition-all duration-150 active:scale-[0.98] rounded-2xl"
+              style={{
+                background: '#fafafa',
+                border: '1.5px solid #eee',
+                padding: '14px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+              }}
+              data-testid={`card-${card.category}`}
+            >
+              <div
                 style={{
-                  background: isSelected ? card.selectedCardBg : '#fafafa',
-                  border: isSelected ? `2px solid ${card.selectedBorder}` : '1.5px solid #eee',
-                  padding: '14px 16px',
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: card.iconBg,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 14,
+                  justifyContent: 'center',
+                  flexShrink: 0,
                 }}
-                data-testid={`card-${card.category}`}
               >
-                {/* Icon container */}
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
-                    background: card.iconBg,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  {card.icon === 'check-circle' && (
-                    <svg viewBox="0 0 24 24" style={{ width: 24, height: 24 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="9 12 11 14 15 10" />
-                    </svg>
-                  )}
-                  {card.icon === 'x-circle' && (
-                    <svg viewBox="0 0 24 24" style={{ width: 24, height: 24 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="15" y1="9" x2="9" y2="15" />
-                      <line x1="9" y1="9" x2="15" y2="15" />
-                    </svg>
-                  )}
-                  {card.icon === 'star' && (
-                    <svg viewBox="0 0 24 24" style={{ width: 24, height: 24 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
-                  )}
-                </div>
-
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                  <p
-                    className="text-base font-bold leading-tight"
-                    style={{ color: isSelected ? card.selectedTitle : '#111' }}
-                  >
-                    {card.title}
-                  </p>
-                  <p
-                    className="text-sm italic mt-0.5 leading-snug"
-                    style={{ color: isSelected ? card.selectedExample : '#888' }}
-                  >
-                    {card.example}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+                {card.icon === 'check-circle' && (
+                  <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" /><polyline points="9 12 11 14 15 10" />
+                  </svg>
+                )}
+                {card.icon === 'x-circle' && (
+                  <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
+                )}
+                {card.icon === 'star' && (
+                  <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-bold leading-tight" style={{ color: '#111' }}>{card.title}</p>
+                <p className="text-sm italic mt-0.5 leading-snug" style={{ color: '#888' }}>{card.example}</p>
+              </div>
+            </button>
+          ))}
         </div>
-      </div>
+      )}
+
+      {/* ── After selection: compact pills + will statement + section ── */}
+      {selected && (
+        <>
+          {/* Compact pill row */}
+          <div className="flex gap-2 px-4 mb-2 flex-shrink-0">
+            {(["habit", "abstain", "mission"] as Category[]).map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelected(cat)}
+                className="flex-1 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
+                style={selected === cat
+                  ? { background: COLORS[cat].pillBg, border: `2px solid ${COLORS[cat].pillBorder}`, color: COLORS[cat].pillText }
+                  : { background: "#fff", border: "1.5px solid #D1D5DB", color: "#9CA3AF" }
+                }
+                data-testid={`pill-${cat}`}
+              >
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* User's actual will statement */}
+          <p
+            className="px-4 mb-3 text-sm italic font-medium flex-shrink-0"
+            style={{ color: COLORS[selected].text }}
+          >
+            "{what}"
+          </p>
+
+          {/* Notification section */}
+          <div className="px-4 pb-24 flex-1 overflow-y-auto">
+            {selected === 'habit' && (
+              <HabitSectionControlled
+                what={what}
+                because={because}
+                color={COLORS.habit}
+                state={habitState}
+                onChange={setHabitState}
+              />
+            )}
+            {selected === 'abstain' && (
+              <AbstainSectionControlled
+                what={what}
+                because={because}
+                color={COLORS.abstain}
+                state={abstainState}
+                onChange={setAbstainState}
+              />
+            )}
+            {selected === 'mission' && (
+              <MissionSectionControlled
+                what={what}
+                because={because}
+                color={COLORS.mission}
+                state={missionState}
+                onChange={setMissionState}
+              />
+            )}
+          </div>
+        </>
+      )}
 
       {/* Continue button — fixed at bottom */}
       <div
@@ -445,7 +488,7 @@ function HabitSectionControlled({
         {checkInOn && (
           <div className="mt-3">
             <TimeChip value={checkInTime} onChange={v => onChange({ ...state, checkInTime: v })} color={color} />
-            <PreviewCard title="Did you honor your will?" subtitle="Tap to log your progress." />
+            <PreviewCard title="Did you honor your will?" subtitle={what} />
           </div>
         )}
       </NotifCard>
@@ -518,24 +561,20 @@ function AbstainSectionControlled({
               {openIdx === i && (
                 <div className="rounded-xl p-3 mb-2 border" style={{ background: color.tint, borderColor: color.border }}>
                   <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: color.text }}>CELEBRATE ON DAY</p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {MILESTONE_DAY_OPTIONS.map(d => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => updateDay(i, d)}
-                        className="w-8 h-8 rounded-lg text-xs font-semibold transition-all active:scale-95"
-                        style={m.day === d
-                          ? { background: color.bg, color: "#fff" }
-                          : { background: "#fff", color: "#374151", border: "1.5px solid #E5E7EB" }
-                        }
-                        data-testid={`button-milestone-day-${d}`}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: color.text }}>MESSAGE</p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={m.day}
+                    onChange={e => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val) && val >= 1 && val <= 365) updateDay(i, val);
+                    }}
+                    className="w-full rounded-lg px-3 py-2 bg-white border focus:outline-none text-center font-bold"
+                    style={{ fontSize: 15, borderColor: '#F5C4B3', color: '#111' }}
+                    data-testid="input-milestone-day"
+                  />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mt-3 mb-1.5" style={{ color: color.text }}>MESSAGE</p>
                   <input
                     type="text"
                     value={m.label}
@@ -545,7 +584,7 @@ function AbstainSectionControlled({
                     placeholder="Milestone label"
                     data-testid="input-milestone-label"
                   />
-                  <PreviewCard title={`Day ${m.day} — ${m.label}`} subtitle="Keep going — you're doing great." />
+                  <PreviewCard title={`Day ${m.day} — ${m.label}`} subtitle={what} />
                 </div>
               )}
 
@@ -575,7 +614,6 @@ function MissionSectionControlled({
   onChange: (s: typeof state) => void;
 }) {
   const { threeDays, oneDay, dayOf, dailyOn, dailyTime } = state;
-  const previewWhat = what.length > 28 ? what.slice(0, 28).trimEnd() + "…" : what;
 
   return (
     <div>
@@ -608,13 +646,13 @@ function MissionSectionControlled({
             </button>
           ))}
         </div>
-        <PreviewCard title={`1 day left — ${previewWhat}`} subtitle={because} />
+        <PreviewCard title={`1 day left — ${what}`} subtitle={because} />
       </NotifCard>
 
-      <NotifCard label="DAILY REMINDER">
+      <NotifCard label="OPTIONAL DAILY NUDGE">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-base font-bold text-gray-900">Remind me daily</p>
+            <p className="text-base font-bold text-gray-900">Daily reminder</p>
             <p className="text-xs text-gray-500 mt-0.5">Off by default</p>
           </div>
           <Toggle on={dailyOn} onChange={v => onChange({ ...state, dailyOn: v })} color={color.toggleOn} />

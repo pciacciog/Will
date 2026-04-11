@@ -1,0 +1,26 @@
+This is exactly the gap we missed. When someone creates a Team Will, they go through CreateTeamWill.tsx which has NotificationsSetup wired in. But when someone joins as an invitee, they go through SubmitCommitment.tsx — and that flow was never updated. It still hits the old tracking screen.
+
+SubmitCommitment.tsx — replace old tracking screen with NotificationsSetup
+When a user accepts a Team Will invite and submits their commitment, they currently hit an old tracking screen ("How would you like to track this?" with Every Day / Specific Days / Final Review Only). This screen must be replaced with the new NotificationsSetup component — the same one wired into StartWill.tsx and CreateTeamWill.tsx.
+Find SubmitCommitment.tsx and document its current step flow before changing anything — how many steps does it have, what order, and where does the old tracking screen appear. Report this before writing any code.
+Then make these changes:
+Remove the old tracking step entirely from SubmitCommitment.tsx.
+Insert NotificationsSetup in its place at the same position in the flow. Pass it:
+
+what — from the user's commitment text input in this flow
+because — from the user's why input in this flow
+onComplete — receives the notifications data object and advances to the next step
+onBack — goes back to the previous step
+
+On onComplete, store the returned notifications data (commitmentCategory, checkInType, reminderTime, checkInTime, milestones, deadlineReminders, missionReminderTime) and include it in the final submission payload when the invitee's commitment is saved.
+Find the endpoint that saves the invitee's commitment — likely POST /api/wills/:id/commitments. Confirm it currently accepts and stores checkInType, checkInTime, activeDays, customDays on the will_commitments row. Then add handling for:
+
+commitmentCategory → write to wills.commitmentCategory (the parent Will) if not already set, OR store on the commitment row if that's more appropriate given the I Will structure
+reminderTime, milestones, deadlineReminders, missionReminderTime → write to the wills row
+
+Important: For I Will teams, each member sets their own commitmentCategory at join time. The Will row should store the category from the creator. Each member's commitment row should store their own checkInType, checkInTime, activeDays, customDays — this already exists. Confirm whether commitmentCategory per member needs to live on the will_commitments row or the wills row, and store it accordingly.
+Do not change:
+
+The what/why input steps in SubmitCommitment.tsx
+The invite acceptance logic in AcceptInvite.tsx
+Any other flows
