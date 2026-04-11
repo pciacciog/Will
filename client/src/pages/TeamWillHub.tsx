@@ -519,7 +519,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
   const backUrl = sessionStorage.getItem("willBackUrl") || "/";
 
-  const hasCustomTitle = !!(will as any)?.title?.trim();
   const endDateStr = will?.endDate as unknown as string | null;
   const daysLeft = !(will as any)?.isIndefinite && endDateStr
     ? Math.max(0, Math.ceil((new Date(endDateStr).getTime() - Date.now()) / 86400000))
@@ -807,7 +806,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             {/* Title — always truly centred relative to the full row */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-14">
               <h1 className="text-base font-semibold text-gray-900 leading-tight truncate">
-                {hasCustomTitle ? (will as any).title : "Will"}
+                {willTitle}
               </h1>
             </div>
 
@@ -1000,18 +999,24 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     </p>
                   ) : (
                     <div className="flex items-start justify-center gap-6 flex-wrap">
-                      {commitments.map((c: any) => (
-                        <div key={c.id} className="flex flex-col items-center" data-testid={`participant-${c.userId}`}>
-                          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center mb-1.5">
-                            <span className="text-white font-semibold text-sm">
-                              {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
-                            </span>
+                      {commitments.map((c: any) => {
+                        const isMe = c.userId === user.id;
+                        return (
+                          <div key={c.id} className="flex flex-col items-center" data-testid={`participant-${c.userId}`}>
+                            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center mb-1.5">
+                              <span className="text-white font-semibold text-sm">
+                                {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <p className="text-xs font-medium text-gray-800 text-center">
+                              {c.user?.firstName || c.user?.email?.split("@")[0]}
+                            </p>
+                            {isMe && (
+                              <p style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>You</p>
+                            )}
                           </div>
-                          <p className="text-xs font-medium text-gray-800 text-center">
-                            {c.user?.firstName || c.user?.email?.split("@")[0]}
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1041,7 +1046,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         <div
                           key={c.id}
                           className="flex flex-col items-center p-3 bg-gray-50 rounded-xl"
-                          style={isMe ? { border: "1.5px solid #1D9E75" } : {}}
                           data-testid={`participant-${c.userId}`}
                         >
                           <div className="relative mb-2">
@@ -1058,6 +1062,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <p className="font-medium text-gray-900 text-xs text-center leading-tight">
                             {c.user?.firstName || c.user?.email?.split("@")[0]}
                           </p>
+                          {isMe && (
+                            <p style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>You</p>
+                          )}
                           {c.what && (
                             <p className="text-[10px] text-gray-500 mt-1 text-center leading-snug">
                               {c.what}

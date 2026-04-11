@@ -321,6 +321,7 @@ export default function DailyCheckInModal({
         key={key}
         type="button"
         onClick={() => handleDateSelect(d)}
+        onTouchEnd={(e) => { e.preventDefault(); if (!disabled) handleDateSelect(d); }}
         disabled={disabled}
         className={cn(
           "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-150",

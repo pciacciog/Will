@@ -1,0 +1,50 @@
+Fix 1 — Remove custom Will title, always show mode label
+Currently the Will dashboard nav bar shows a custom title if one was set during creation. Remove this entirely. The nav bar title should always display:
+
+"Team Will" when will.mode === 'team'
+"Solo Will" when will.mode === 'personal'
+"Public Will" when will.visibility === 'public'
+
+Find everywhere will.title is used as a display label in the nav bar across TeamWillHub.tsx and WillDetails.tsx and replace with the mode-based label above. Do not remove the title field from the database or the data model — just stop displaying it in the nav bar.
+Also find and remove the optional title input field from the Review/Confirm step in StartWill.tsx and CreateTeamWill.tsx — the step where the user could set a custom title before submitting. Remove the field from the UI and remove it from the POST payload. The title column can remain in the schema unused for now.
+
+Fix 2 — Check-in calendar is unresponsive
+In DailyCheckInModal.tsx, tapping a date on the calendar strip does nothing — the date does not get selected and the yes/partial/no options do not respond. This is a bug in the date selection handler.
+Find the onDateSelect or equivalent handler inside DailyCheckInModal.tsx. Document exactly what it currently does and why it is not updating state when a date is tapped.
+Common causes to check:
+
+The date object being passed to the handler is a different format than what the component is comparing against — e.g. a Date object vs a "YYYY-MM-DD" string causing equality checks to always fail
+The selected date state is being set but the component is not re-rendering because the reference is not changing
+The tap target is too small or the touch event is being swallowed by a parent scroll container
+
+Fix the handler so that:
+
+Tapping a date visually selects it (highlighted with the blue border as shown)
+The date label below updates to show the selected date ("Saturday, April 11")
+The three options (Yes I did it / Partially done / No not today) become active and tappable
+Selecting an option highlights it
+Tapping "Save Check-in" submits POST /api/wills/:id/check-ins with { date: "YYYY-MM-DD", status: "yes" | "partial" | "no" }
+On success the modal closes and progress stats refresh
+
+Test this on a real device after fixing — confirm that selecting a date, picking a status, and saving all work end to end.
+
+Fix 3 — Current user indicator on team member cards
+Currently Bebo's member card has a green border to indicate it is the logged-in user. This looks visually jarring and out of place. Remove the green border entirely.
+Replace it with a small subtle "You" label — a muted pill or tag — below the user's name on their own card only. Style it as:
+font-size: 10px
+color: muted gray (#aaa or equivalent)
+no background, no border
+just the word "You" in plain muted text below the name
+So the card reads:
+[Avatar]
+Bebo
+You          ← small muted text, only on current user's card
+Call my grandmother
+This communicates which card belongs to the user without the heavy green border treatment. Apply this change in TeamWillHub.tsx wherever the member card grid is rendered — both I Will and We Will layouts.
+
+Implementation order
+
+Remove title display from nav bar — replace with mode label in both TeamWillHub.tsx and WillDetails.tsx
+Remove title input from StartWill.tsx and CreateTeamWill.tsx review step
+Debug and fix the check-in calendar date selection in DailyCheckInModal.tsx — report the root cause before applying the fix
+Replace green border on current user's member card with subtle "You" text label
