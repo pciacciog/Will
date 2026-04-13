@@ -1103,8 +1103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // PERSONAL MODE: No circle required, respects user's scheduled start date
         
         const soloWillCount = await storage.getUserActiveSoloWillCount(userId);
-        if (soloWillCount >= 3) {
-          return res.status(400).json({ message: "You can have up to 3 active solo Wills" });
+        if (soloWillCount >= 5) {
+          return res.status(400).json({ message: "You can have up to 5 active solo Wills" });
         }
         
         // Solo wills don't have a circleId
