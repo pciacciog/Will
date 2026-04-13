@@ -59,7 +59,7 @@ import {
   teamWillInvites,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray, isNotNull } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -79,6 +79,7 @@ export interface IStorage {
   getUserPersonalWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserSoloWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[] })[]>;
   getUserActiveSoloWillCount(userId: string): Promise<number>;
+  getUserActiveTeamWillCount(userId: string): Promise<number>;
   getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string; circleCode?: string })[]>;
   getPublicWills(search?: string): Promise<{ id: number; title: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
   getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
@@ -486,6 +487,20 @@ export class DatabaseStorage implements IStorage {
     return Number(result[0]?.count || 0);
   }
 
+  async getUserActiveTeamWillCount(userId: string): Promise<number> {
+    // Count team wills the user is an active participant in (creator OR has a commitment)
+    const result = await db
+      .select({ count: sql<number>`count(distinct ${wills.id})` })
+      .from(wills)
+      .leftJoin(willCommitments, and(eq(willCommitments.willId, wills.id), eq(willCommitments.userId, userId)))
+      .where(and(
+        eq(wills.mode, 'team'),
+        or(eq(wills.createdBy, userId), isNotNull(willCommitments.id)),
+        sql`${wills.status} NOT IN ('completed', 'archived', 'terminated')`
+      ));
+    return Number(result[0]?.count || 0);
+  }
+
   async getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string })[]> {
     console.log('[STORAGE] getUserAllActiveWills called for userId:', userId);
     
@@ -500,34 +515,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(wills.createdAt));
     console.log('[STORAGE] Personal wills found:', personalWillsList.length);
 
-    const circleWillCommitments = await db
-      .select()
-      .from(willCommitments)
-      .innerJoin(wills, eq(willCommitments.willId, wills.id))
-      .where(and(
-        eq(willCommitments.userId, userId),
-        eq(wills.mode, 'circle'),
-        sql`${wills.status} NOT IN ('completed', 'archived', 'terminated')`
-      ))
-      .orderBy(desc(wills.createdAt));
-    console.log('[STORAGE] Circle will commitments found:', circleWillCommitments.length);
-
-    const circleWillsList: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [];
-    for (const row of circleWillCommitments) {
-      if (!row.wills) continue;
-      let circleName: string | undefined = undefined;
-      let circleCode: string | undefined = undefined;
-      if (row.wills.circleId) {
-        try {
-          const circleRows = await db.select({ inviteCode: circles.inviteCode }).from(circles).where(eq(circles.id, row.wills.circleId));
-          circleCode = circleRows[0]?.inviteCode || undefined;
-        } catch (e) {
-          console.warn('[STORAGE] Could not fetch circle info for circleId:', row.wills.circleId);
-        }
-      }
-      circleWillsList.push({ ...row.wills, circleName, circleCode });
-    }
-    console.log('[STORAGE] Circle wills processed:', circleWillsList.length);
+    // Circle mode wills have been fully migrated to team mode — no separate query needed.
 
     // Fetch team wills where user has a commitment
     const teamWillCommitments = await db
@@ -570,7 +558,6 @@ export class DatabaseStorage implements IStorage {
 
     const allWills: (typeof wills.$inferSelect & { circleName?: string; circleCode?: string })[] = [
       ...personalWillsList.map(w => ({ ...w, circleName: undefined as string | undefined, circleCode: undefined as string | undefined })),
-      ...circleWillsList,
       ...teamWillsList,
     ];
     console.log('[STORAGE] Combined wills:', allWills.length);

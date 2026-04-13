@@ -1103,8 +1103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // PERSONAL MODE: No circle required, respects user's scheduled start date
         
         const soloWillCount = await storage.getUserActiveSoloWillCount(userId);
-        if (soloWillCount >= 5) {
-          return res.status(400).json({ message: "You can have up to 5 active solo Wills" });
+        if (soloWillCount >= 3) {
+          return res.status(400).json({ message: "You can have up to 3 active solo Wills" });
         }
         
         // Solo wills don't have a circleId
@@ -1168,6 +1168,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ ...will, status: 'pending', midpointAt: midpointTime });
       } else if (isTeamMode) {
         // SHARED MODE: Friends-based will — invites friends, activates at startDate if ≥1 accepts
+
+        // Limit: max 5 active team wills per user (as creator or participant)
+        const teamWillCount = await storage.getUserActiveTeamWillCount(userId);
+        if (teamWillCount >= 5) {
+          return res.status(400).json({ message: "You can have up to 5 active Team Wills" });
+        }
 
         const invitedFriendIds: string[] = Array.isArray(req.body.invitedFriendIds) ? req.body.invitedFriendIds : [];
         if (invitedFriendIds.length === 0) {
@@ -3353,7 +3359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Leave a will — for circle wills ends for ALL members, for public wills ends only the user's child will
+  // Leave a will — for team wills ends for ALL members, for public wills ends only the user's child will
   app.post('/api/wills/:id/leave', isAuthenticated, async (req: any, res) => {
     try {
       const willId = parseInt(req.params.id);
@@ -3422,9 +3428,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "You left the Will. Your progress has been saved.", status: 'terminated' });
       }
 
-      // Handle circle/team will leave (original behavior — ends for ALL members)
-      if (will.mode !== 'circle' && will.mode !== 'team') {
-        return res.status(400).json({ message: "Leave is only available for Circle, Shared, or Public Wills" });
+      // Handle team will leave — ends for ALL members
+      if (will.mode !== 'team') {
+        return res.status(400).json({ message: "Leave is only available for Team or Public Wills" });
       }
 
       const commitments = await db
