@@ -484,11 +484,8 @@ export function WillReviewFlow({ willId, mode = 'circle', checkInType = 'one-tim
               
               {/* Header - centered title */}
               <div className="text-center -mt-2">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 2: Expand</h2>
-                <p className="text-gray-500 text-sm">
-                  You marked this Will as <span className={getFollowThroughColorClasses(followThroughValue || "")}>{getFollowThroughLabel(followThroughValue || "")}</span>. 
-                  {isSolo ? " Add a short note for yourself if you'd like." : " Add a short note for your circle if you'd like."}
-                </p>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Reflection</h2>
+                <p className="text-gray-500 text-sm">Add a short note for yourself if you'd like.</p>
               </div>
 
               <FormField
@@ -539,56 +536,12 @@ export function WillReviewFlow({ willId, mode = 'circle', checkInType = 'one-tim
             </div>
           )}
 
-          {/* Step 3: Share/Finalize */}
+          {/* Step 3: Submit */}
           {step === 3 && (
             <div className="space-y-6" data-testid="step-3-share">
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  {isSolo ? "Step 3: Finalize" : "Step 3: Share"}
-                </h2>
-                <p className="text-gray-500 text-sm">
-                  {isSolo
-                    ? (skippedExpand 
-                        ? "Confirm your response to complete this Will."
-                        : "Review your reflection before completing this Will.")
-                    : (skippedExpand 
-                        ? "Confirm your response to share with your circle."
-                        : "Review before sharing with your circle.")
-                  }
-                </p>
-              </div>
-
-              {/* Preview Card */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                {/* Follow-through Answer Section */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500 font-medium">Followed-Through?</span>
-                    <span className={`text-sm font-semibold px-3 py-1 rounded-full whitespace-nowrap ${
-                      followThroughValue === "yes" 
-                        ? "bg-emerald-100 text-emerald-700"
-                        : followThroughValue === "mostly"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-rose-100 text-rose-700"
-                    }`}>
-                      {getFollowThroughLabel(followThroughValue || "")}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Notes Section - only show if not skipped */}
-                {!skippedExpand && (
-                  <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <span className="text-sm text-gray-500 font-medium block mb-2">Notes</span>
-                    {reflectionValue ? (
-                      <p className="text-gray-700 text-sm leading-relaxed" data-testid="text-reflection-preview">
-                        {reflectionValue}
-                      </p>
-                    ) : (
-                      <p className="text-gray-400 text-sm italic">No additional note added.</p>
-                    )}
-                  </div>
-                )}
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">All done</h2>
+                <p className="text-gray-500 text-sm">Your Will is complete.</p>
               </div>
 
               <div className="flex gap-3">
@@ -611,10 +564,10 @@ export function WillReviewFlow({ willId, mode = 'circle', checkInType = 'one-tim
                   {submitReview.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {isSolo ? "Submitting..." : "Sharing..."}
+                      Submitting...
                     </>
                   ) : (
-                    isSolo ? "Submit Review" : "Share"
+                    "Submit Review"
                   )}
                 </Button>
               </div>
