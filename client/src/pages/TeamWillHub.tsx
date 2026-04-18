@@ -8,7 +8,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { getApiPath } from "@/config/api";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { useAppRefresh } from "@/hooks/useAppRefresh";
-import { willDisplayTitle } from "@/lib/willUtils";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import ProgressView from "@/components/ProgressView";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
@@ -510,7 +509,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const isCreator = will.createdBy === user.id;
   const userHasCommitted = !!will.commitments?.find((c: any) => c.userId === user.id);
   const canManage = isCreator || userHasCommitted;
-  const willTitle = willDisplayTitle(will as any, user.id);
   const isWeWill = will.willType === "cumulative";
   const commitments: any[] = will.commitments || [];
   const pendingInvites = invitesData?.invites?.filter(i => i.status === "pending") || [];
@@ -805,8 +803,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
             {/* Title — always truly centred relative to the full row */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-14">
-              <h1 className="text-base font-semibold text-gray-900 leading-tight truncate">
-                {willTitle}
+              <h1 className="text-base font-semibold text-gray-900 leading-tight">
+                Team Will
               </h1>
             </div>
 
