@@ -847,7 +847,7 @@ export default function WillDetails() {
 
   return (
     <MobileLayout>
-      <div className="space-y-3 pt-14">
+      <div className="space-y-1.5 pt-14">
         {/* Header with Back Button */}
         <div className="relative flex items-center justify-between mb-2 min-h-[44px]">
           <UnifiedBackButton 
@@ -1146,16 +1146,16 @@ export default function WillDetails() {
         {will.status !== 'will_review' && isSoloMode && will.commitments?.[0] && (
           will.commitmentCategory ? (
             /* Category-aware hero card */
-            <div className="bg-white rounded-xl border border-gray-200 p-6 text-center" data-testid="card-commitment-hero">
-              <div className="flex items-center justify-center mb-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-[14px] text-center" data-testid="card-commitment-hero">
+              <div className="flex items-center justify-center mb-2">
                 <div className="flex items-center justify-center rounded-2xl" style={{ width: 52, height: 52, backgroundColor: '#E1F5EE' }}>
                   {will.commitmentCategory === 'habit' && <CheckCircle style={{ width: 26, height: 26, color: '#1D9E75' }} strokeWidth={1.75} />}
                   {will.commitmentCategory === 'abstain' && <XCircle style={{ width: 26, height: 26, color: '#1D9E75' }} strokeWidth={1.75} />}
                   {will.commitmentCategory === 'mission' && <Star style={{ width: 26, height: 26, color: '#1D9E75' }} strokeWidth={1.75} />}
                 </div>
               </div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">My Commitment</p>
-              <div className="text-lg font-bold text-gray-900 leading-snug mb-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">My Commitment</p>
+              <div className="text-[15px] font-bold text-gray-900 leading-snug mb-1">
                 "{will.commitments[0].what?.toLowerCase().startsWith('i will')
                   ? will.commitments[0].what
                   : `I will ${will.commitments[0].what}`}"
@@ -1306,7 +1306,7 @@ export default function WillDetails() {
             {will.status === 'active' && (
               habitTodayCheckIn ? (
                 <div
-                  className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold"
+                  className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold"
                   style={{ backgroundColor: '#1D9E75', opacity: 0.7, color: '#fff' }}
                   data-testid="button-habit-checked-in"
                 >
@@ -1316,7 +1316,7 @@ export default function WillDetails() {
               ) : (
                 <button
                   onClick={() => setShowCheckInModal(true)}
-                  className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                  className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
                   style={{ backgroundColor: '#1D9E75' }}
                   data-testid="button-habit-check-in"
                 >
@@ -1429,7 +1429,7 @@ export default function WillDetails() {
                       <button
                         onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); setAbstainChanging(false); abstainLogMutation.mutate({ honored: true }); }}
                         disabled={abstainLogMutation.isPending}
-                        className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                        className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                         style={{ border: '2px solid #1D9E75', color: '#085041' }}
                         data-testid="button-abstain-honored"
                       >
@@ -1439,7 +1439,7 @@ export default function WillDetails() {
                       <button
                         onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); setAbstainChanging(false); abstainLogMutation.mutate({ honored: false }); }}
                         disabled={abstainLogMutation.isPending}
-                        className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                        className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                         style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
                         data-testid="button-abstain-didnt-honor"
                       >
@@ -1452,7 +1452,7 @@ export default function WillDetails() {
                   /* Step 1: Check in button */
                   <button
                     onClick={() => setAbstainCheckInOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                    className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
                     style={{ backgroundColor: '#1D9E75' }}
                     data-testid="button-abstain-check-in"
                   >
@@ -1552,23 +1552,23 @@ export default function WillDetails() {
           <>
             {/* Mission: countdown ring + check-in flow */}
             {(will.status === 'active' || will.status === 'completed') && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col items-center gap-4" data-testid="card-mission-progress">
-                {/* SVG Circular Countdown Ring — unchanged */}
-                <div className="relative flex items-center justify-center" style={{ width: 120, height: 120 }}>
-                  <svg width={120} height={120} style={{ transform: 'rotate(-90deg)' }}>
-                    <circle cx={60} cy={60} r={50} fill="none" stroke="#E5E7EB" strokeWidth={9} />
+              <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col items-center gap-2.5" data-testid="card-mission-progress">
+                {/* SVG Circular Countdown Ring */}
+                <div className="relative flex items-center justify-center" style={{ width: 80, height: 80 }}>
+                  <svg width={80} height={80} style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx={40} cy={40} r={34} fill="none" stroke="#E5E7EB" strokeWidth={6} />
                     <circle
-                      cx={60} cy={60} r={50} fill="none"
-                      stroke="#534AB7" strokeWidth={9}
+                      cx={40} cy={40} r={34} fill="none"
+                      stroke="#534AB7" strokeWidth={6}
                       strokeLinecap="round"
-                      strokeDasharray={2 * Math.PI * 50}
-                      strokeDashoffset={2 * Math.PI * 50 * (1 - (missionDaysRemaining / missionTotalDays))}
+                      strokeDasharray={2 * Math.PI * 34}
+                      strokeDashoffset={2 * Math.PI * 34 * (1 - (missionDaysRemaining / missionTotalDays))}
                       style={{ transition: 'stroke-dashoffset 0.5s ease' }}
                     />
                   </svg>
                   <div className="absolute flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-900">{missionDaysRemaining}</span>
-                    <span className="text-xs text-gray-400 leading-tight">days left</span>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{missionDaysRemaining}</span>
+                    <span style={{ fontSize: 10, color: '#9CA3AF' }}>days left</span>
                   </div>
                 </div>
 
@@ -1594,7 +1594,7 @@ export default function WillDetails() {
                         <button
                           onClick={() => missionCompleteMutation.mutate()}
                           disabled={missionCompleteMutation.isPending}
-                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                          className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                           style={{ border: '2px solid #534AB7', color: '#26215C' }}
                           data-testid="button-mission-confirm-done"
                         >
@@ -1607,7 +1607,7 @@ export default function WillDetails() {
                             setMissionKeptGoing(true);
                             setTimeout(() => setMissionKeptGoing(false), 2000);
                           }}
-                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                          className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                           style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
                           data-testid="button-mission-not-yet"
                         >
@@ -1619,7 +1619,7 @@ export default function WillDetails() {
                     /* Step 1: Check in button */
                     <button
                       onClick={() => setMissionCheckInOpen(true)}
-                      className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                      className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
                       style={{ backgroundColor: '#534AB7' }}
                       data-testid="button-mission-check-in"
                     >

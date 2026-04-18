@@ -1022,7 +1022,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           {/* ── Team card ─────────────────────────────────────────── */}
           {isWeWill ? (
             /* We Will — OUR COMMITMENT hero card */
-            <div className="mb-3">
+            <div className="mb-2">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">Our Commitment</p>
               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                 {will.sharedWhat ? (
@@ -1078,8 +1078,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             </div>
           ) : (
             /* I Will — YOUR TEAM label + member grid with current user green border */
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-2">
+            <div className="mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Your Team</p>
                 {isCreator && pendingInvites.length > 0 && (
                   <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" data-testid="badge-pending-invites">
@@ -1087,25 +1087,25 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   </span>
                 )}
               </div>
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+              <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
                 {commitments.length === 0 ? (
                   <p className="text-xs text-gray-400 italic text-center py-2">
                     No commitments yet — waiting for friends to accept
                   </p>
                 ) : (
-                  <div className={`grid gap-3 ${commitments.length === 1 ? "grid-cols-1 max-w-[140px] mx-auto" : "grid-cols-2"}`}>
+                  <div className={`grid gap-1.5 ${commitments.length === 1 ? "grid-cols-1 max-w-[140px] mx-auto" : "grid-cols-2"}`}>
                     {commitments.map((c: any) => {
                       const isMe = c.userId === user.id;
                       return (
                         <div
                           key={c.id}
-                          className="flex flex-col items-center p-3 bg-gray-50 rounded-xl"
+                          className="flex flex-col items-center py-2 px-1.5 bg-gray-50 rounded-xl"
                           data-testid={`participant-${c.userId}`}
                         >
-                          <div className="relative mb-2">
+                          <div className="relative mb-1">
                             <div
-                              className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center"
-                              style={{ border: "3px solid #fff", boxShadow: "0 0 0 2px #9B5CE5" }}
+                              className="bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center"
+                              style={{ width: 38, height: 38, border: "3px solid #fff", boxShadow: "0 0 0 2px #9B5CE5" }}
                             >
                               <span className="text-white font-semibold text-sm">
                                 {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
@@ -1131,7 +1131,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             <p style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>You</p>
                           )}
                           {c.what && (
-                            <p className="text-[10px] text-gray-500 mt-1 text-center leading-snug">
+                            <p className="text-[10px] text-gray-500 mt-1 text-center leading-snug truncate w-full">
                               {c.what}
                             </p>
                           )}
@@ -1145,8 +1145,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           )}
 
           {/* ── Progress section — YOUR PROGRESS label + category branch ── */}
-          <div className="mb-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Your Progress</p>
+          <div className="mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Your Progress</p>
 
             {isProgressLocked ? (
               /* Locked state — same for all categories */
@@ -1168,7 +1168,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 {will.status === 'active' && hasDailyCheckIns && (
                   habitTodayCheckIn ? (
                     <div
-                      className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold"
+                      className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold"
                       style={{ backgroundColor: '#1D9E75', opacity: 0.7, color: '#fff' }}
                       data-testid="button-habit-checked-in"
                     >
@@ -1178,7 +1178,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   ) : (
                     <button
                       onClick={() => setShowCheckInModal(true)}
-                      className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                      className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
                       style={{ backgroundColor: '#1D9E75' }}
                       data-testid="button-habit-check-in"
                     >
@@ -1271,7 +1271,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <button
                             onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true }); }}
                             disabled={abstainLogMutation.isPending}
-                            className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                             style={{ border: '2px solid #1D9E75', color: '#085041' }}
                             data-testid="button-abstain-honored"
                           >
@@ -1281,7 +1281,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <button
                             onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: false }); }}
                             disabled={abstainLogMutation.isPending}
-                            className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                             style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
                             data-testid="button-abstain-didnt-honor"
                           >
@@ -1294,7 +1294,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       /* Step 1: Check in button */
                       <button
                         onClick={() => setAbstainCheckInOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                        className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
                         style={{ backgroundColor: '#1D9E75' }}
                         data-testid="button-abstain-check-in"
                       >
@@ -1393,23 +1393,23 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               /* ── Mission ── */
               <div className="space-y-3">
                 {(will.status === 'active' || will.status === 'completed') && (
-                  <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col items-center gap-4" data-testid="card-mission-progress">
+                  <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col items-center gap-2.5" data-testid="card-mission-progress">
                     {/* SVG Circular Countdown Ring */}
-                    <div className="relative flex items-center justify-center" style={{ width: 120, height: 120 }}>
-                      <svg width={120} height={120} style={{ transform: 'rotate(-90deg)' }}>
-                        <circle cx={60} cy={60} r={50} fill="none" stroke="#E5E7EB" strokeWidth={9} />
+                    <div className="relative flex items-center justify-center" style={{ width: 80, height: 80 }}>
+                      <svg width={80} height={80} style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx={40} cy={40} r={34} fill="none" stroke="#E5E7EB" strokeWidth={6} />
                         <circle
-                          cx={60} cy={60} r={50} fill="none"
-                          stroke="#534AB7" strokeWidth={9}
+                          cx={40} cy={40} r={34} fill="none"
+                          stroke="#534AB7" strokeWidth={6}
                           strokeLinecap="round"
-                          strokeDasharray={2 * Math.PI * 50}
-                          strokeDashoffset={2 * Math.PI * 50 * (1 - (missionDaysRemaining / missionTotalDays))}
+                          strokeDasharray={2 * Math.PI * 34}
+                          strokeDashoffset={2 * Math.PI * 34 * (1 - (missionDaysRemaining / missionTotalDays))}
                           style={{ transition: 'stroke-dashoffset 0.5s ease' }}
                         />
                       </svg>
                       <div className="absolute flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-gray-900">{missionDaysRemaining}</span>
-                        <span className="text-xs text-gray-400 leading-tight">days left</span>
+                        <span style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{missionDaysRemaining}</span>
+                        <span style={{ fontSize: 10, color: '#9CA3AF' }}>days left</span>
                       </div>
                     </div>
                     {/* Check-in flow */}
@@ -1431,7 +1431,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             <button
                               onClick={() => missionCompleteMutation.mutate()}
                               disabled={missionCompleteMutation.isPending}
-                              className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                              className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                               style={{ border: '2px solid #534AB7', color: '#26215C' }}
                               data-testid="button-mission-confirm-done"
                             >
@@ -1444,7 +1444,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                                 setMissionKeptGoing(true);
                                 setTimeout(() => setMissionKeptGoing(false), 2000);
                               }}
-                              className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                              className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                               style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
                               data-testid="button-mission-not-yet"
                             >
@@ -1455,7 +1455,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       ) : (
                         <button
                           onClick={() => setMissionCheckInOpen(true)}
-                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                          className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
                           style={{ backgroundColor: '#534AB7' }}
                           data-testid="button-mission-check-in"
                         >
