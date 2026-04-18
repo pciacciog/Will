@@ -320,6 +320,20 @@ export default function NotificationsSetup({ what, because, onComplete, onBack }
 
   return (
     <div className="flex flex-col min-h-0">
+      {/* Subtitle — shown before a type is selected */}
+      {!selected && (
+        <p className="px-4 mb-4 text-center" style={{ fontSize: 13, color: '#9CA3AF' }}>
+          Which type best describes your Will?
+        </p>
+      )}
+
+      {/* Will statement — shown after a type is selected, above the pills */}
+      {selected && (
+        <p className="px-4 mb-3 text-center flex-shrink-0" style={{ fontSize: 13, fontStyle: 'italic', color: COLORS[selected].text }}>
+          {formattedWhat.toLowerCase().startsWith('i will') ? `"${formattedWhat}"` : `"I will ${formattedWhat}"`}
+        </p>
+      )}
+
       {/* ── No selection: three big tap cards ── */}
       {!selected && (
         <div className="px-4 flex flex-col" style={{ gap: 10 }}>
@@ -398,14 +412,6 @@ export default function NotificationsSetup({ what, because, onComplete, onBack }
               </button>
             ))}
           </div>
-
-          {/* User's actual will statement */}
-          <p
-            className="px-4 mb-3 text-sm italic font-medium flex-shrink-0"
-            style={{ color: COLORS[selected].text }}
-          >
-            "{formattedWhat}"
-          </p>
 
           {/* Notification section */}
           <div className="px-4 pb-24 flex-1 overflow-y-auto">

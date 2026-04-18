@@ -767,11 +767,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             {!showTypeSelection && currentStep === 3 && (
               <p className="text-sm text-gray-500 mt-1">When will your Will begin and end?</p>
             )}
-            {!showTypeSelection && currentStep === 4 && willData.what && (
-              <p className="text-sm text-gray-500 mt-1">
-                "{willData.what}"
-              </p>
-            )}
           </div>
           )}
         </div>
