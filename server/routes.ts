@@ -3323,25 +3323,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
       }
 
-      // Atomically insert log + optionally reset streak within a transaction.
-      // The unique constraint on (will_id, user_id, date) is the authoritative dedup guard.
+      // UPSERT: update if already logged today, insert otherwise.
       let entry;
-      try {
+      const [existing] = await db.select()
+        .from(abstainLogs)
+        .where(and(eq(abstainLogs.willId, willId), eq(abstainLogs.userId, userId), eq(abstainLogs.date, date)));
+
+      if (existing) {
+        if (existing.honored === honored) {
+          // No change — return as-is
+          return res.json(existing);
+        }
+        // Flip the existing entry
         entry = await db.transaction(async (tx) => {
-          const [inserted] = await tx.insert(abstainLogs).values({ willId, userId, honored, date }).returning();
+          const [updated] = await tx.update(abstainLogs)
+            .set({ honored })
+            .where(and(eq(abstainLogs.willId, willId), eq(abstainLogs.userId, userId), eq(abstainLogs.date, date)))
+            .returning();
+
           if (!honored) {
+            // Flipping to not-honored: reset streak
             await tx.update(wills)
               .set({ streakStartDate: new Date(), sentMilestones: '[]' })
               .where(eq(wills.id, willId));
+          } else {
+            // Flipping to honored: recompute streak start from log
+            const allEntries = await tx.select({ date: abstainLogs.date, honored: abstainLogs.honored })
+              .from(abstainLogs)
+              .where(and(eq(abstainLogs.willId, willId), eq(abstainLogs.userId, userId)));
+            // Find the most recent not-honored date strictly before today
+            const prevSlip = allEntries
+              .filter(e => !e.honored && e.date < date)
+              .sort((a, b) => b.date.localeCompare(a.date))[0];
+            let newStreakStart: Date;
+            if (prevSlip) {
+              // Streak started the day after the last slip
+              const d = new Date(prevSlip.date + 'T12:00:00Z');
+              d.setUTCDate(d.getUTCDate() + 1);
+              newStreakStart = d;
+            } else {
+              // No prior slips — streak runs from will start
+              newStreakStart = new Date(will.startDate as any);
+            }
+            await tx.update(wills)
+              .set({ streakStartDate: newStreakStart })
+              .where(eq(wills.id, willId));
           }
-          return inserted;
+          return updated;
         });
-      } catch (txErr: any) {
-        // Unique constraint violation — duplicate entry for today
-        if (txErr?.code === '23505') {
-          return res.status(409).json({ message: "Already logged for today" });
+      } else {
+        // Fresh insert
+        try {
+          entry = await db.transaction(async (tx) => {
+            const [inserted] = await tx.insert(abstainLogs).values({ willId, userId, honored, date }).returning();
+            if (!honored) {
+              await tx.update(wills)
+                .set({ streakStartDate: new Date(), sentMilestones: '[]' })
+                .where(eq(wills.id, willId));
+            }
+            return inserted;
+          });
+        } catch (txErr: any) {
+          if (txErr?.code === '23505') {
+            return res.status(409).json({ message: "Already logged for today" });
+          }
+          throw txErr;
         }
-        throw txErr;
       }
 
       res.json(entry);

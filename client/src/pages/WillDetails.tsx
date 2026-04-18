@@ -216,6 +216,7 @@ export default function WillDetails() {
   const [abstainLoggedToday, setAbstainLoggedToday] = useState(false);
   const [abstainCheckInOpen, setAbstainCheckInOpen] = useState(false);
   const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
+  const [abstainChanging, setAbstainChanging] = useState(false);
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
   const [missionCheckInOpen, setMissionCheckInOpen] = useState(false);
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
@@ -1386,8 +1387,8 @@ export default function WillDetails() {
             {/* Abstain: Check-in flow */}
             {will.status === 'active' && (
               <div data-testid="section-abstain-actions">
-                {(abstainTodayEntry || abstainJustLoggedHonored !== null) ? (
-                  /* Result card — locked for today */
+                {(abstainTodayEntry || abstainJustLoggedHonored !== null) && !abstainChanging ? (
+                  /* Result card — with Change option */
                   (() => {
                     const honored = abstainTodayEntry?.honored ?? (abstainJustLoggedHonored ?? true);
                     return honored ? (
@@ -1397,6 +1398,12 @@ export default function WillDetails() {
                         </div>
                         <p className="text-sm font-semibold mt-1" style={{ color: '#085041' }}>Will honored</p>
                         <p className="text-xs" style={{ color: '#2E7D63' }}>Logged for today.</p>
+                        <button
+                          onClick={() => setAbstainChanging(true)}
+                          className="mt-1 text-xs underline"
+                          style={{ color: '#2E7D63', background: 'none', border: 'none', cursor: 'pointer' }}
+                          data-testid="button-abstain-change"
+                        >Change</button>
                       </div>
                     ) : (
                       <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#FCEBEB', border: '2px solid #E24B4A' }} data-testid="abstain-result-not-honored">
@@ -1405,16 +1412,22 @@ export default function WillDetails() {
                         </div>
                         <p className="text-sm font-semibold mt-1" style={{ color: '#791F1F' }}>That's okay</p>
                         <p className="text-xs" style={{ color: '#A32D2D' }}>Tomorrow is a fresh start.</p>
+                        <button
+                          onClick={() => setAbstainChanging(true)}
+                          className="mt-1 text-xs underline"
+                          style={{ color: '#A32D2D', background: 'none', border: 'none', cursor: 'pointer' }}
+                          data-testid="button-abstain-change"
+                        >Change</button>
                       </div>
                     );
                   })()
-                ) : abstainCheckInOpen ? (
-                  /* Step 2: Options card */
+                ) : abstainCheckInOpen || abstainChanging ? (
+                  /* Options card — first check-in or changing answer */
                   <div className="bg-white rounded-xl border border-gray-200 p-4" data-testid="abstain-checkin-options">
                     <p className="text-xs text-gray-400 text-center mb-3">Did you honor your will today?</p>
                     <div className="space-y-2">
                       <button
-                        onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true }); }}
+                        onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); setAbstainChanging(false); abstainLogMutation.mutate({ honored: true }); }}
                         disabled={abstainLogMutation.isPending}
                         className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                         style={{ border: '2px solid #1D9E75', color: '#085041' }}
@@ -1424,7 +1437,7 @@ export default function WillDetails() {
                         I honored my will
                       </button>
                       <button
-                        onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: false }); }}
+                        onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); setAbstainChanging(false); abstainLogMutation.mutate({ honored: false }); }}
                         disabled={abstainLogMutation.isPending}
                         className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                         style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
