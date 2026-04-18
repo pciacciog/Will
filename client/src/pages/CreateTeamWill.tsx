@@ -284,7 +284,7 @@ export default function CreateTeamWill() {
               {step === 2 && "What would you like to do?"}
               {step === 3 && "Why would you like to do this?"}
               {step === 4 && "Set Your Timeline"}
-              {step === 5 && "Notifications"}
+              {step === 5 && "Notifications Setup"}
             </h1>
             <p className="text-sm text-gray-400 mt-1">
               {step === 2 && (willType === "cumulative" ? "This commitment is shared by everyone" : "Cause it's as simple as wanting.")}

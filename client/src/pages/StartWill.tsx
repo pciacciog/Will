@@ -742,7 +742,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               {!showTypeSelection && currentStep === 1 && (willType === 'cumulative' ? "What would your circle like to do?" : "What would you like to do?")}
               {!showTypeSelection && currentStep === 2 && "Why would you like to do this?"}
               {!showTypeSelection && currentStep === 3 && "Set Your Timeline"}
-              {!showTypeSelection && currentStep === 4 && "Notifications"}
+              {!showTypeSelection && currentStep === 4 && "Notifications Setup"}
             </h1>
             {!showTypeSelection && currentStep === 1 && (
               <>
