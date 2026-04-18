@@ -1,0 +1,17 @@
+To Native ->  Camera checkPermissions 112723206
+⚡️  TO JS {"camera":"prompt","photos":"prompt"}
+⚡️  [log] - [ProofDrop] checkPermissions for library: prompt
+⚡️  [log] - [ProofDrop] Status is prompt — proceeding to getPhoto
+⚡️  To Native ->  Camera getPhoto 112723207
+⚡️  [log] - [ProofDrop] Opening library
+⚡️  CAPCameraPlugin - You are missing NSPhotoLibraryAddUsageDescription in your Info.plist file. Camera will not function without it. Learn more: https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW73
+ERROR MESSAGE:  {"errorMessage":"You are missing NSPhotoLibraryAddUsageDescription in your Info.plist file. Camera will not function without it. Learn more: https:\/\/developer.apple.com\/library\/content\/documentation\/General\/Reference\/InfoPlistKeyReference\/Articles\/CocoaKeys.html#\/\/apple_ref\/doc\/uid\/TP40009251-SW73","message":"You are missing NSPhotoLibraryAddUsageDescription in your Info.plist file. Camera will not function without it. Learn more: https:\/\/developer.apple.com\/library\/content\/documentation
+⚡️  [error] - {"errorMessage":"You are missing NSPhotoLibraryAddUsageDescription in your Info.plist file. Camera will not function without it. Learn more: https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW73","message":"You are missing NSPhotoLibraryAddUsageDescription in your Info.plist file. Camera will not function without it. Learn more: https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW73"}
+⚡️  To Native ->  CapacitorHttp request 112723208
+⚡️  [error] - [ProofDrop] Capture error: {"errorMessage":"You are missing NSPhotoLibraryAddUsageDescription in your Info.plist file. Camera will not function without it. Learn more: https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW73"}
+⚡️  To Native ->  CapacitorHttp request 112723209
+⚡️  TO JS {"data":{"success":true},"status":200,"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","headers":{"access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","via":"1.1 google","content-type":"application\/json; charset=utf-8","eta
+⚡️  TO JS {"data":{"success":true},"status":200,"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/logs","headers":{"access-control-allow-methods":"GET, POST, PUT, DELETE, OPTIONS","via":"1.1 google","content-type":"application\/json; charset=utf-8","eta
+⚡️  TO JS {"isActive":false}
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP STATE CHANGED                                          ║
