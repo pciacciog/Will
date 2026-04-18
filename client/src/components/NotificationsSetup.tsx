@@ -475,7 +475,7 @@ function HabitSectionControlled({
   const { reminderOn, reminderTime, checkInOn, checkInTime } = state;
   return (
     <div>
-      <NotifCard label="REMIND ME TO DO IT">
+      <NotifCard label="Want a reminder before?">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-base font-bold text-gray-900">Reminder</p>
@@ -491,7 +491,7 @@ function HabitSectionControlled({
         )}
       </NotifCard>
 
-      <NotifCard label="CHECK IN WITH ME AFTER">
+      <NotifCard label="Want to check in after?">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-base font-bold text-gray-900">Check-in</p>
@@ -531,7 +531,7 @@ function AbstainSectionControlled({
 
   return (
     <div>
-      <NotifCard label="DAILY REMINDER">
+      <NotifCard label="Want a daily nudge?">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-base font-bold text-gray-900">Remind me</p>
@@ -547,7 +547,7 @@ function AbstainSectionControlled({
         )}
       </NotifCard>
 
-      <NotifCard label="MILESTONE CELEBRATIONS">
+      <NotifCard label="Celebrate your milestones?">
         <p className="text-xs text-gray-500 mb-3 leading-snug">We celebrate these moments with you. Tap any milestone to customize it.</p>
         <div className="space-y-0">
           {milestones.map((m, i) => (
@@ -631,13 +631,13 @@ function MissionSectionControlled({
 
   return (
     <div>
-      <NotifCard label="DEADLINE REMINDERS">
+      <NotifCard label="Notify me as I get closer?">
         <p className="text-sm text-gray-600 mb-3">Notify me when there are…</p>
         <div className="space-y-2 mb-3">
           {[
-            { label: "3 days left", value: threeDays, key: "threeDays" as const },
-            { label: "1 day left", value: oneDay, key: "oneDay" as const },
-            { label: "Day of deadline", value: dayOf, key: "dayOf" as const },
+            { label: "When I have 3 days left", value: threeDays, key: "threeDays" as const },
+            { label: "When I have 1 day left", value: oneDay, key: "oneDay" as const },
+            { label: "On the final day", value: dayOf, key: "dayOf" as const },
           ].map(row => (
             <button
               key={row.label}
@@ -665,7 +665,7 @@ function MissionSectionControlled({
         )}
       </NotifCard>
 
-      <NotifCard label="OPTIONAL DAILY NUDGE">
+      <NotifCard label="Want a daily nudge?">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-base font-bold text-gray-900">Daily reminder</p>
