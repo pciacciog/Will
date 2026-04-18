@@ -194,11 +194,6 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
                 </div>
               )}
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                {isTeamWill && (
-                  <Badge className="text-xs bg-violet-100 text-violet-700 hover:bg-violet-100" data-testid={`badge-shared-${will.id}`}>
-                    Shared
-                  </Badge>
-                )}
                 {isPublic && (
                   <Badge className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-100" data-testid={`badge-public-${will.id}`}>
                     Public
