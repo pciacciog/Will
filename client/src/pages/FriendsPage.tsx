@@ -28,6 +28,12 @@ type SearchResult = {
   friendshipDirection: 'sent' | 'received' | null;
 };
 
+type DiscoverUser = {
+  userId: string;
+  firstName: string | null;
+  email: string;
+};
+
 function getInitial(firstName: string | null, lastName: string | null, username: string | null) {
   if (firstName) return firstName[0].toUpperCase();
   if (username) return username[0].toUpperCase();
@@ -48,6 +54,7 @@ export default function FriendsPage() {
   const [debouncedQ, setDebouncedQ] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set());
+  const [discoverPending, setDiscoverPending] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -70,6 +77,12 @@ export default function FriendsPage() {
     },
     enabled: debouncedQ.length >= 2,
     staleTime: 30000,
+  });
+
+  const { data: discoverUsers } = useQuery<DiscoverUser[]>({
+    queryKey: ['/api/users/discover'],
+    refetchOnMount: true,
+    staleTime: 60000,
   });
 
   const sendRequestMutation = useMutation({
@@ -301,7 +314,7 @@ export default function FriendsPage() {
 
           {/* Friends List */}
           {!isSearching && (
-            <div>
+            <div className="mb-5">
               {/* Section label */}
               <div className="flex items-center gap-2 mb-2">
                 <p className="text-[12px] font-medium text-gray-500">Your friends</p>
@@ -356,6 +369,80 @@ export default function FriendsPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Also on Will — discovery section */}
+          {!isSearching && discoverUsers && discoverUsers.length > 0 && (
+            <div>
+              <p
+                className="mb-2"
+                style={{ fontSize: 11, fontWeight: 500, color: '#8E8E93', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+              >
+                Also on Will
+              </p>
+              <div className="space-y-2">
+                {discoverUsers.map(user => {
+                  const isPending = discoverPending.has(user.userId);
+                  const initial = user.firstName ? user.firstName[0].toUpperCase() : (user.email ? user.email[0].toUpperCase() : '?');
+                  const name = user.firstName || user.email;
+                  return (
+                    <div
+                      key={user.userId}
+                      className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3"
+                      data-testid={`card-discover-${user.userId}`}
+                    >
+                      <div
+                        className="rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #9B5CE5 0%, #7C3AED 100%)' }}
+                      >
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{initial}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{name}</p>
+                      </div>
+                      {isPending ? (
+                        <button
+                          disabled
+                          style={{
+                            padding: '5px 14px',
+                            border: '1.5px solid #C7C7CC',
+                            borderRadius: 20,
+                            color: '#8E8E93',
+                            background: 'transparent',
+                            fontSize: 11,
+                            fontWeight: 500,
+                            cursor: 'default',
+                          }}
+                          data-testid={`button-discover-pending-${user.userId}`}
+                        >
+                          Pending
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setDiscoverPending(prev => new Set([...prev, user.userId]));
+                            sendRequestMutation.mutate(user.userId);
+                          }}
+                          style={{
+                            padding: '5px 14px',
+                            border: '1.5px solid #1D9E75',
+                            borderRadius: 20,
+                            color: '#085041',
+                            background: 'transparent',
+                            fontSize: 11,
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                          }}
+                          data-testid={`button-discover-add-${user.userId}`}
+                        >
+                          + Add
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

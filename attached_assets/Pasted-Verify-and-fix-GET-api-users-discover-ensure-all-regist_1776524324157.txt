@@ -1,0 +1,51 @@
+Verify and fix GET /api/users/discover — ensure all registered users appear
+Find the GET /api/users/discover endpoint in server/routes.ts. Before changing anything, document exactly what query it currently runs:
+
+What table does it query?
+Is there any LIMIT clause?
+Is there any filter on isActive, isVerified, role, or any other status field?
+Is there any filter that excludes users who have never created a Will or haven't logged in recently?
+
+Report all of this before touching anything.
+
+The correct query — replace whatever exists with this:
+Return every registered user in the users table except:
+
+The current logged-in user
+Users already in their friends list
+Users with a pending friend request in either direction (sent or received)
+
+No other exclusions. No LIMIT. No status filters. Every registered user who is not already connected appears.
+typescriptconst existingFriendIds = await db
+  .select({ userId: friendships.friendId })
+  .from(friendships)
+  .where(eq(friendships.userId, currentUserId));
+
+const pendingRequestIds = await db
+  .select({ userId: friendRequests.toUserId })
+  .from(friendRequests)
+  .where(eq(friendRequests.fromUserId, currentUserId))
+  .union(
+    db.select({ userId: friendRequests.fromUserId })
+      .from(friendRequests)
+      .where(eq(friendRequests.toUserId, currentUserId))
+  );
+
+const excludeIds = [
+  currentUserId,
+  ...existingFriendIds.map(r => r.userId),
+  ...pendingRequestIds.map(r => r.userId)
+];
+
+const discoverUsers = await db
+  .select({
+    userId: users.id,
+    firstName: users.firstName,
+    email: users.email
+  })
+  .from(users)
+  .where(notInArray(users.id, excludeIds));
+
+Also confirm the Friends screen calls this endpoint on mount
+The "Also on Will" discover section must populate automatically when the Friends screen loads — no user input required. Confirm GET /api/users/discover is called in a useEffect on mount, not only triggered by search input.
+If it is currently only called on search input, add a separate useEffect that fetches the discover list on mount independently of the search query.

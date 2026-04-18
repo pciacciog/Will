@@ -32,7 +32,7 @@ import {
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db, pool } from "./db";
-import { eq, and, or, isNull, sql, inArray, lt, gte, desc, ne, ilike } from "drizzle-orm";
+import { eq, and, or, isNull, sql, inArray, notInArray, lt, gte, desc, ne, ilike } from "drizzle-orm";
 import { cloudinary, cloudName, apiKey as cloudApiKey } from "./cloudinary";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
@@ -396,6 +396,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("[USER-SEARCH] Error:", error);
       res.status(500).json({ message: "Search failed" });
+    }
+  });
+
+  // GET /api/users/discover — all registered users not yet connected to the current user
+  app.get('/api/users/discover', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      // Fetch all friendships involving the current user (any status, either direction)
+      const connectedFriendships = await db
+        .select({ requesterId: friendships.requesterId, addresseeId: friendships.addresseeId })
+        .from(friendships)
+        .where(or(eq(friendships.requesterId, userId), eq(friendships.addresseeId, userId)));
+
+      // Build the exclusion list: current user + everyone already connected
+      const excludeIds = Array.from(new Set([
+        userId,
+        ...connectedFriendships.map(f => f.requesterId),
+        ...connectedFriendships.map(f => f.addresseeId),
+      ]));
+
+      const discoverUsers = await db
+        .select({ userId: users.id, firstName: users.firstName, email: users.email })
+        .from(users)
+        .where(notInArray(users.id, excludeIds));
+
+      res.json(discoverUsers);
+    } catch (error) {
+      console.error('[DISCOVER] Error:', error);
+      res.status(500).json({ message: 'Failed to fetch discover users' });
     }
   });
 
