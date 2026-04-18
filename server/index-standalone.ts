@@ -136,7 +136,7 @@ app.get("/privacy-policy", (req, res) => {
   res.send(privacyPolicyHtml);
 });
 
-const PORT = parseInt(process.env.PORT || '5000', 10);
+const PORT = process.env.PORT || 5000;
 
 // Run migration, register routes, and start server — all sequenced to ensure
 // migration completes before traffic is accepted.
