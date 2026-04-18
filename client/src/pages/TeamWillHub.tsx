@@ -10,6 +10,7 @@ import { sessionPersistence } from "@/services/SessionPersistence";
 import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import ProgressView from "@/components/ProgressView";
+import DayStrip from "@/components/DayStrip";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
@@ -68,6 +69,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [showFullProgress, setShowFullProgress] = useState(false);
   const [showProofPicker, setShowProofPicker] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [checkInDate, setCheckInDate] = useState<string | null>(null);
+  const handleDayClick = (date: string) => { setCheckInDate(date); setShowCheckInModal(true); };
   const [habitProgressExpanded, setHabitProgressExpanded] = useState(false);
   const [abstainCheckInOpen, setAbstainCheckInOpen] = useState(false);
   const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
@@ -1222,33 +1225,11 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     </button>
                     {habitProgressExpanded && (
                       <div className="px-4 pb-4">
-                        <div className="grid grid-cols-3 gap-2 mb-3">
-                          <div className="text-center p-2 rounded-lg bg-emerald-50">
-                            <div className="text-lg font-bold text-emerald-700">{checkInProgress?.yesCount ?? 0}</div>
-                            <div className="text-xs text-emerald-600 flex items-center justify-center gap-0.5">
-                              <CheckCircle style={{ width: 10, height: 10 }} /> done
-                            </div>
-                          </div>
-                          <div className="text-center p-2 rounded-lg bg-amber-50">
-                            <div className="text-lg font-bold text-amber-700">{checkInProgress?.partialCount ?? 0}</div>
-                            <div className="text-xs text-amber-600 flex items-center justify-center gap-0.5">
-                              <MinusCircle style={{ width: 10, height: 10 }} /> partial
-                            </div>
-                          </div>
-                          <div className="text-center p-2 rounded-lg bg-red-50">
-                            <div className="text-lg font-bold text-red-600">{checkInProgress?.noCount ?? 0}</div>
-                            <div className="text-xs text-red-500 flex items-center justify-center gap-0.5">
-                              <XCircle style={{ width: 10, height: 10 }} /> missed
-                            </div>
-                          </div>
-                        </div>
-                        <ProgressView
-                          willId={willId}
+                        <DayStrip
                           startDate={will.startDate as unknown as string}
                           endDate={will.endDate as unknown as string | null}
-                          checkInType={userCheckInType}
-                          activeDays={will.activeDays || undefined}
-                          customDays={will.customDays || undefined}
+                          checkIns={checkIns}
+                          onDayClick={will.status === 'active' ? handleDayClick : undefined}
                         />
                       </div>
                     )}
@@ -1654,7 +1635,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       {hasDailyCheckIns && (!category || category === 'habit') && (
         <DailyCheckInModal
           isOpen={showCheckInModal}
-          onClose={() => setShowCheckInModal(false)}
+          onClose={() => { setShowCheckInModal(false); setCheckInDate(null); }}
           willId={willId}
           startDate={will.startDate as unknown as string || ''}
           endDate={will.endDate as unknown as string || ''}
@@ -1662,6 +1643,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           checkInType={userCheckInType}
           activeDays={(userCommitment as any)?.activeDays || will.activeDays || undefined}
           customDays={(userCommitment as any)?.customDays || will.customDays || undefined}
+          initialDate={checkInDate}
         />
       )}
     </div>

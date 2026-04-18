@@ -1,0 +1,35 @@
+Abstain milestones — fix editing, deletion, notification label, and actual notification scheduling
+Fix 1 — Day number input is locked/uneditable
+When the user taps Edit on a milestone row, the "CELEBRATE ON DAY" number input appears but the number cannot be changed — it behaves as read-only on iOS.
+Find the day number input in the milestone edit panel. Check:
+
+Is editable={false} or readOnly set anywhere on this input?
+Is it a Text component styled to look like an input instead of an actual TextInput?
+Is there a pointerEvents="none" on a parent container blocking touch?
+
+Fix so the field is a fully editable TextInput with keyboardType="number-pad", editable={true}, and no parent container blocking touches. The user should be able to clear the current number and type any number between 1 and 365. Update the milestone data and live preview as they type.
+
+Fix 2 — Add delete option to each milestone row
+Currently milestones can only be added, never removed. Add a delete affordance to each milestone row.
+When the edit panel is open for a milestone, add a "Delete milestone" button at the bottom of the edit panel:
+- Full width
+- Text only — no background, just red text (#E24B4A): "Delete milestone"
+- Font size 13px, centered
+- On tap: show a brief inline confirmation ("Remove this milestone?" with Yes/No)
+  then remove the row from the milestones array on confirm
+Do not show a delete option when there is only one milestone remaining — the list must always have at least one.
+
+Fix 3 — Rename "PREVIEW" to "NOTIFICATION PREVIEW"
+Inside the milestone edit panel, the preview card label says "PREVIEW". Change to "NOTIFICATION PREVIEW." Confirm the preview shows:
+
+Title: "Day " + day + " — " + message
+Subtitle: "I will " + props.what
+
+
+Fix 4 — Milestone notifications must actually fire on the correct day
+Confirm checkMilestoneNotifications() in scheduler.ts is correctly reading milestones and firing on the right day.
+Day calculation:
+typescriptconst streakDay = differenceInDays(now, will.streakStartDate) + 1;
+This must match — if user set Day 3, notification fires when streakDay === 3.
+Timing: Fire once per day at a random time between 9am and 8pm. Dedupe via sentMilestones — once a milestone day fires, its day number is added to sentMilestones JSON array and never fires again.
+If the Will slips: sentMilestones is cleared to [] and streakStartDate resets to NOW(). Confirm this happens correctly in resetAbstainStreak().
