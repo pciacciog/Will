@@ -281,7 +281,7 @@ export default function CreateTeamWill() {
               {step === 2 && (willType === "cumulative" ? "This commitment is shared by everyone" : "Cause it's as simple as wanting.")}
               {step === 3 && "Remember this when it gets tough."}
               {step === 4 && "When will your Will begin and end?"}
-              {step === 5 && "Which type best describes your Will?"}
+              {step === 5 && what && `"${what}"`}
             </p>
           </div>
           )}

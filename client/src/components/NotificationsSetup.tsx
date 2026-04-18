@@ -300,12 +300,6 @@ export default function NotificationsSetup({ what, because, onComplete, onBack }
 
   return (
     <div className="flex flex-col min-h-0">
-      {/* ── Heading (always shown) ── */}
-      <div className="px-4 pt-2 pb-3 flex-shrink-0">
-        <h1 className="text-[26px] font-bold text-gray-900 leading-tight">Notifications</h1>
-        <p className="text-sm text-gray-500 mt-1">Which type best describes your Will?</p>
-      </div>
-
       {/* ── No selection: three big tap cards ── */}
       {!selected && (
         <div className="px-4 flex flex-col" style={{ gap: 10 }}>
