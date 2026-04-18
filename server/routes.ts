@@ -27,6 +27,7 @@ import {
   teamWillInvites,
   willProofs,
   abstainLogs,
+  willCheckIns,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
@@ -2494,6 +2495,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(checkIn);
+
+      // Notify teammates (fire-and-forget, team wills only)
+      (async () => {
+        try {
+          const will = await storage.getWillById(willId);
+          if (!will || will.mode !== 'team') return;
+          const commitments = await storage.getWillCommitments(willId);
+          const checkerName = (req.user as any)?.firstName || (req.user as any)?.email?.split('@')[0] || 'Someone';
+          const otherIds = commitments.map((c: any) => c.userId).filter((id: string) => id !== userId);
+          if (otherIds.length > 0) {
+            await pushNotificationService.sendToMultipleUsers(otherIds, {
+              title: `${checkerName} checked in`,
+              body: 'See how they\'re doing on your Team Will.',
+              data: { willId, type: 'team_checkin' },
+            });
+          }
+        } catch (err) { console.error('[TeamCheckIn] habit notification failed (non-fatal):', err); }
+      })();
     } catch (error) {
       console.error("Error creating check-in:", error);
       res.status(500).json({ message: "Failed to create check-in" });
@@ -2510,6 +2529,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching check-ins:", error);
       res.status(500).json({ message: "Failed to fetch check-ins" });
+    }
+  });
+
+  // GET /api/wills/:id/team-checkins?date=YYYY-MM-DD — per-member check-in status for today badges
+  app.get('/api/wills/:id/team-checkins', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+      const { date } = req.query;
+
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date as string)) {
+        return res.status(400).json({ message: "date query param required (YYYY-MM-DD)" });
+      }
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+
+      const commitments = await storage.getWillCommitments(willId);
+      const isParticipant = commitments.some((c: any) => c.userId === userId) || will.createdBy === userId;
+      if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
+
+      const memberIds: string[] = commitments.map((c: any) => c.userId);
+      const statusMap: Record<string, string | null> = {};
+      memberIds.forEach((id) => { statusMap[id] = null; });
+
+      if (will.commitmentCategory === 'habit') {
+        if (memberIds.length > 0) {
+          const rows = await db.select({ userId: willCheckIns.userId, status: willCheckIns.status })
+            .from(willCheckIns)
+            .where(and(
+              eq(willCheckIns.willId, willId),
+              inArray(willCheckIns.userId, memberIds),
+              eq(willCheckIns.date, date as string)
+            ));
+          rows.forEach((r) => { statusMap[r.userId] = r.status; });
+        }
+      } else if (will.commitmentCategory === 'abstain') {
+        if (memberIds.length > 0) {
+          const rows = await db.select({ userId: abstainLogs.userId, honored: abstainLogs.honored })
+            .from(abstainLogs)
+            .where(and(
+              eq(abstainLogs.willId, willId),
+              inArray(abstainLogs.userId, memberIds),
+              eq(abstainLogs.date, date as string)
+            ));
+          rows.forEach((r) => { statusMap[r.userId] = r.honored ? 'honored' : 'not_honored'; });
+        }
+      } else if (will.commitmentCategory === 'mission') {
+        if (will.status === 'completed') {
+          memberIds.forEach((id) => { statusMap[id] = 'completed'; });
+        }
+      }
+
+      res.json(memberIds.map((id) => ({ userId: id, status: statusMap[id] })));
+    } catch (error) {
+      console.error("Error fetching team check-ins:", error);
+      res.status(500).json({ message: "Failed to fetch team check-ins" });
     }
   });
 
@@ -3097,6 +3173,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateWillStatus(willId, statusUpdate);
       }
       res.json({ success: true });
+
+      // Notify teammates on mission completion (fire-and-forget, team wills only)
+      if (statusUpdate === 'completed') {
+        (async () => {
+          try {
+            if (will.mode !== 'team') return;
+            const commitments = await storage.getWillCommitments(willId);
+            const checkerName = (req.user as any)?.firstName || (req.user as any)?.email?.split('@')[0] || 'Someone';
+            const otherIds = commitments.map((c: any) => c.userId).filter((id: string) => id !== userId);
+            if (otherIds.length > 0) {
+              await pushNotificationService.sendToMultipleUsers(otherIds, {
+                title: `${checkerName} checked in`,
+                body: 'See how they\'re doing on your Team Will.',
+                data: { willId, type: 'team_checkin' },
+              });
+            }
+          } catch (err) { console.error('[TeamCheckIn] mission notification failed (non-fatal):', err); }
+        })();
+      }
     } catch (error) {
       console.error("Error updating will:", error);
       res.status(500).json({ message: "Failed to update will" });
@@ -3209,6 +3304,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(entry);
+
+      // Notify teammates (fire-and-forget, team wills only)
+      (async () => {
+        try {
+          if (will.mode !== 'team') return;
+          const commitments = await storage.getWillCommitments(willId);
+          const checkerName = (req.user as any)?.firstName || (req.user as any)?.email?.split('@')[0] || 'Someone';
+          const otherIds = commitments.map((c: any) => c.userId).filter((id: string) => id !== userId);
+          if (otherIds.length > 0) {
+            await pushNotificationService.sendToMultipleUsers(otherIds, {
+              title: `${checkerName} checked in`,
+              body: 'See how they\'re doing on your Team Will.',
+              data: { willId, type: 'team_checkin' },
+            });
+          }
+        } catch (err) { console.error('[TeamCheckIn] abstain notification failed (non-fatal):', err); }
+      })();
     } catch (error) {
       console.error("Error logging abstain entry:", error);
       res.status(500).json({ message: "Failed to log abstain entry" });

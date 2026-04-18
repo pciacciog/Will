@@ -15,7 +15,7 @@ import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import { Capacitor } from "@capacitor/core";
 import {
-  ChevronLeft, ChevronRight, ChevronDown, Camera, Plus, Clock, CheckCircle, XCircle, X,
+  ChevronLeft, ChevronRight, ChevronDown, Camera, Plus, Clock, CheckCircle, XCircle, X, Check,
   Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle,
 } from "lucide-react";
 import type { Will, AbstainLog, WillCheckIn } from "@shared/schema";
@@ -139,6 +139,27 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     enabled: !!user && (will?.commitmentCategory === 'habit' || !will?.commitmentCategory) && hasDailyCheckIns,
     staleTime: 0,
   });
+
+  // Team check-in status badges — poll every 30s
+  const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local
+  const { data: teamCheckIns = [] } = useQuery<{ userId: string; status: string | null }[]>({
+    queryKey: [`/api/wills/${willId}/team-checkins`, todayStr],
+    queryFn: async () => {
+      const token = await sessionPersistence.getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const resp = await fetch(getApiPath(`/api/wills/${willId}/team-checkins?date=${todayStr}`), {
+        credentials: "include",
+        headers,
+      });
+      if (!resp.ok) throw new Error("Failed to fetch team check-ins");
+      return resp.json();
+    },
+    enabled: !!user && !!will && will.mode === 'team',
+    refetchInterval: 30000,
+    staleTime: 0,
+  });
+  const teamCheckInMap = Object.fromEntries(teamCheckIns.map((t) => [t.userId, t.status]));
 
   const isInReview = will?.status === 'will_review';
   const { data: reviewStatus } = useQuery<{
@@ -1020,10 +1041,24 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         const isMe = c.userId === user.id;
                         return (
                           <div key={c.id} className="flex flex-col items-center" data-testid={`participant-${c.userId}`}>
-                            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center mb-1.5">
-                              <span className="text-white font-semibold text-sm">
-                                {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
-                              </span>
+                            <div className="relative mb-1.5">
+                              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
+                                <span className="text-white font-semibold text-sm">
+                                  {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              {(() => {
+                                const s = teamCheckInMap[c.userId];
+                                const cat = will?.commitmentCategory;
+                                const isGreen = (cat === 'habit' && (s === 'yes' || s === 'partial')) || (cat === 'abstain' && s === 'honored') || (cat === 'mission' && s === 'completed');
+                                const isRed = (cat === 'habit' && s === 'no') || (cat === 'abstain' && s === 'not_honored');
+                                if (!isGreen && !isRed) return null;
+                                return (
+                                  <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: isGreen ? '#1D9E75' : '#E24B4A' }}>
+                                    {isGreen ? <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} /> : <X style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />}
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <p className="text-xs font-medium text-gray-800 text-center">
                               {c.user?.firstName || c.user?.email?.split("@")[0]}
@@ -1074,7 +1109,18 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                                 {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
                               </span>
                             </div>
-                            <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 ${avatarDotColor} rounded-full border-2 border-white`} />
+                            {(() => {
+                              const s = teamCheckInMap[c.userId];
+                              const cat = will?.commitmentCategory;
+                              const isGreen = (cat === 'habit' && (s === 'yes' || s === 'partial')) || (cat === 'abstain' && s === 'honored') || (cat === 'mission' && s === 'completed');
+                              const isRed = (cat === 'habit' && s === 'no') || (cat === 'abstain' && s === 'not_honored');
+                              if (!isGreen && !isRed) return null;
+                              return (
+                                <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: isGreen ? '#1D9E75' : '#E24B4A' }}>
+                                  {isGreen ? <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} /> : <X style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />}
+                                </div>
+                              );
+                            })()}
                           </div>
                           <p className="font-medium text-gray-900 text-xs text-center leading-tight">
                             {c.user?.firstName || c.user?.email?.split("@")[0]}

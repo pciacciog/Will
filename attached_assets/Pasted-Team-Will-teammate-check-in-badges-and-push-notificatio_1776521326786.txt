@@ -1,0 +1,64 @@
+Team Will — teammate check-in badges and push notifications
+When a team member checks in for the day, two things happen: their avatar in the team card gets a status badge visible to all teammates, and all other teammates receive a push notification.
+
+Part 1 — Avatar status badges
+Find the team member avatar cards in TeamWillHub.tsx — both the YOUR TEAM (I Will) and OUR COMMITMENT (We Will) sections.
+Badge rules:
+
+✅ Green checkmark badge — user logged yes / honored / completed
+❌ Red X badge — user logged no / didn't honor
+No badge — user has not checked in yet today (plain avatar, nothing added)
+
+Badge design:
+Small circle badge positioned bottom-right of the avatar, overlapping the edge slightly — same position as the existing online green dot:
+Checkmark badge:
+- 18×18px circle
+- Green background (#1D9E75)
+- White checkmark icon inside
+
+X badge:
+- 18×18px circle  
+- Red background (#E24B4A)
+- White X icon inside
+The existing online green dot is removed and replaced by the badge when a status exists. When no status exists for today, show nothing — not the online dot, not a pending indicator, just the plain avatar.
+Data source:
+Add a new endpoint: GET /api/wills/:id/team-checkins?date=YYYY-MM-DD
+Returns today's check-in status for every member of the Will:
+typescript[
+  { userId: 123, status: 'yes' | 'no' | null },
+  { userId: 456, status: 'yes' | 'no' | null },
+  ...
+]
+For Habit Wills: map yes → checkmark, no → X, null → nothing
+For Abstain Wills: map honored → checkmark, not honored → X, null → nothing
+For Mission Wills: map completed → checkmark, null → nothing (no X for mission — not yet is not a failure)
+Poll this endpoint every 30 seconds while the Team Will dashboard is open — same polling pattern already used for proofs. On midnight reset, the endpoint returns null for all members so badges clear automatically.
+
+Part 2 — Push notification to teammates on check-in
+When any team member successfully submits a check-in (any category), send a push notification to all other active members of that Will.
+Trigger points:
+
+Habit: after POST /api/wills/:id/check-ins succeeds
+Abstain: after POST /api/wills/:id/abstain-log succeeds
+Mission — yes: after PATCH /api/wills/:id with { status: 'completed' } succeeds
+Mission — not yet: no notification (not yet is not an action worth notifying)
+
+Notification content:
+Title: "[First name] checked in"
+Body: "See how they're doing on your Team Will."
+Example: "Bebo checked in" / "See how they're doing on your Team Will."
+Same for all categories — do not vary the copy by category type.
+Server-side implementation:
+In server/routes.ts, after each of the three trigger endpoints succeeds:
+
+Find all other active members of the Will: query will_commitments for all userId values on this willId excluding the user who just checked in
+For each teammate, find their device token from the device_tokens table
+Send a push notification via the existing pushNotificationService — same function already used by the scheduler
+Do not send to the user who just checked in — only to teammates
+Do not block the API response waiting for push delivery — fire notifications asynchronously after responding to the client
+
+Notification should be a standard push with sound — use the same APNs configuration already used for scheduled notifications. Do not set it as silent/background.
+
+Part 3 — No notification for solo Wills
+Confirm that the teammate notification logic only fires when will.mode === 'team'. Solo Wills and Public Wills should never trigger teammate notifications. Add an explicit guard at the top of each notification dispatch:
+typescriptif (will.mode !== 'team') return;
