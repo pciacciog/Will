@@ -1117,13 +1117,17 @@ export class EndRoomScheduler {
           })();
 
           const streakRef = row.streakStartDate || row.startDate;
-          const streakRefLocal = new Date(streakRef);
-          const nowLocalStr = new Intl.DateTimeFormat('en-CA', { timeZone: row.userTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-          const streakRefLocalStr = new Intl.DateTimeFormat('en-CA', { timeZone: row.userTimezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(streakRefLocal);
-          const msPerDay = 24 * 60 * 60 * 1000;
-          const nowDate = new Date(nowLocalStr);
-          const refDate = new Date(streakRefLocalStr);
-          const streakDay = Math.floor((nowDate.getTime() - refDate.getTime()) / msPerDay) + 1;
+          const streakRefDate = new Date(streakRef);
+
+          // Hours elapsed from the exact streak start timestamp (not calendar-based)
+          const msPerHour = 60 * 60 * 1000;
+          const hoursElapsed = (now.getTime() - streakRefDate.getTime()) / msPerHour;
+
+          // Current local hour in the user's timezone (for fire-window check)
+          const currentLocalHour = parseInt(
+            new Intl.DateTimeFormat('en-US', { timeZone: row.userTimezone, hour: 'numeric', hour12: false }).format(now),
+            10
+          );
 
           const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
             .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
@@ -1134,12 +1138,21 @@ export class EndRoomScheduler {
 
           for (const ms of milestonesRaw) {
             if (sentDays.includes(ms.day)) continue;
-            if (streakDay !== ms.day) continue;
+
+            // Must have completed the full number of days (e.g. Day 1 = 24h elapsed)
+            const hoursRequired = ms.day * 24;
+            if (hoursElapsed < hoursRequired) continue;
+
+            // Deterministic fire hour per (willId, milestoneDay): spreads 9am–7pm
+            // Uses a simple hash so the hour is stable across scheduler runs
+            const fireHour = ((row.willId * 17 + ms.day * 31) % 11) + 9;
+            if (currentLocalHour < fireHour) continue;
+
             const success = await pushNotificationService.sendMilestoneNotification(row.userId, ms.label, ms.day, row.willId);
             if (success) {
               updatedSent.push(ms.day);
               fired = true;
-              console.log(`[SCHEDULER] ✅ Milestone day ${ms.day} sent to user ${row.userId} for Will ${row.willId}`);
+              console.log(`[SCHEDULER] ✅ Milestone day ${ms.day} sent to user ${row.userId} for Will ${row.willId} (${hoursElapsed.toFixed(1)}h elapsed, fire hour ${fireHour})`);
             }
           }
 
