@@ -673,18 +673,23 @@ export default function SubmitCommitment() {
               <p className="text-sm italic text-gray-700 leading-snug">{why}</p>
             </div>
 
-            {/* Tracking — white card outside purple */}
-            <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
-                <Clock className="w-5 h-5 text-amber-500" />
+            {/* Notifications — white card outside purple */}
+            {notificationsData?.commitmentCategory && (
+              <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 border border-purple-100">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, color: '#7B3FC4' }}>
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-0.5">Notifications</p>
+                  <p className="text-sm font-semibold text-gray-800" data-testid="text-confirm-notifications">
+                    {notificationsData.commitmentCategory === 'habit' ? 'Habit' : notificationsData.commitmentCategory === 'abstain' ? 'Abstain' : 'Mission'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-0.5">Tracking</p>
-                <p className="text-sm font-semibold text-gray-800" data-testid="text-confirm-tracking">
-                  {trackingLabel}
-                </p>
-              </div>
-            </div>
+            )}
 
             {/* Primary CTA */}
             <button

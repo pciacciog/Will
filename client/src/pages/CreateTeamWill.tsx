@@ -768,18 +768,23 @@ export default function CreateTeamWill() {
                     )}
                   </div>
                 </div>
-                {/* Tracking */}
-                <div className="flex items-start gap-2.5 px-3 py-2">
-                  <div className="w-7 h-7 rounded-md bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <CheckCircle className="w-3.5 h-3.5 text-gray-400" />
+                {/* Notifications */}
+                {notificationsData?.commitmentCategory && (
+                  <div className="flex items-start gap-2.5 px-3 py-2">
+                    <div className="w-7 h-7 rounded-md bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, color: '#7B3FC4' }}>
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-medium text-gray-400">Notifications</p>
+                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-notifications">
+                        {notificationsData.commitmentCategory === 'habit' ? 'Habit' : notificationsData.commitmentCategory === 'abstain' ? 'Abstain' : 'Mission'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-gray-400">Tracking</p>
-                    <p className="text-sm text-gray-700 mt-0.5">
-                      {isShortDuration ? "Final review only" : checkInType === "daily" ? "Every day" : checkInType === "specific_days" ? (() => { const names = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return customDays.sort((a,b)=>a-b).map(d=>names[d]).join(", "); })() : "Final review only"}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Disclaimer */}

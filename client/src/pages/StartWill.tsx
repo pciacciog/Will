@@ -1035,21 +1035,23 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200"></div>
-                  <div className="flex items-start gap-3">
-                    <CalendarDays className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Tracking</p>
-                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-tracking">
-                        {checkInType === 'daily' && 'Every day'}
-                        {checkInType === 'specific_days' && (() => {
-                          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                          return customDays.sort((a, b) => a - b).map(d => dayNames[d]).join(', ');
-                        })()}
-                        {checkInType === 'final_review' && 'Final review only'}
-                      </p>
-                    </div>
-                  </div>
+                  {notificationsData?.commitmentCategory && (
+                    <>
+                      <div className="border-t border-gray-200"></div>
+                      <div className="flex items-start gap-3">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, color: '#7B3FC4', marginTop: 2, flexShrink: 0 }}>
+                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Notifications</p>
+                          <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-notifications">
+                            {notificationsData.commitmentCategory === 'habit' ? 'Habit' : notificationsData.commitmentCategory === 'abstain' ? 'Abstain' : 'Mission'}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {checkInType !== 'final_review' && !isShortDuration && (
                     <>
