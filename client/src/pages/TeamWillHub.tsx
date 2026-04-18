@@ -342,27 +342,15 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
         return;
       }
 
-      // Step 2: if status is "prompt" (first time), request permission now.
-      // This is the only time a system dialog appears — the view hierarchy is
-      // fully stable because we waited 400 ms above.
-      if (currentStatus === "prompt") {
-        const permNeeded = source === "camera" ? "camera" : "photos";
-        console.log(`[ProofDrop] Requesting permission for ${permNeeded}`);
-        const requested = await Camera.requestPermissions({ permissions: [permNeeded] });
-        const newStatus = source === "camera" ? requested.camera : requested.photos;
-        console.log(`[ProofDrop] After request:`, newStatus);
+      // Step 2: if status is "prompt" (first time), let getPhoto() trigger the
+      // system permission dialog internally. Calling requestPermissions() manually
+      // before getPhoto() causes iOS to crash when the plist key lookup fires
+      // during an active WKWebView layout pass. getPhoto() defers the dialog to
+      // a stable UIViewController presentation window — no crash.
+      console.log(`[ProofDrop] Status is ${currentStatus} — proceeding to getPhoto`);
 
-        if (newStatus === "denied" || newStatus === "restricted") {
-          toast({
-            title: "Permission required",
-            description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in Settings → WILL.`,
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Step 3: permissions are granted — open the camera or photo library.
+      // Step 3: open the camera or photo library (handles permission prompt for
+      // "prompt" status automatically on first launch).
       console.log(`[ProofDrop] Opening ${source}`);
       const photo = await Camera.getPhoto({
         resultType: CameraResultType.Base64,
