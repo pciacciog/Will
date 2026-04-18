@@ -1153,8 +1153,11 @@ export default function WillDetails() {
                   {will.commitmentCategory === 'mission' && <Star style={{ width: 26, height: 26, color: '#1D9E75' }} strokeWidth={1.75} />}
                 </div>
               </div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">My Commitment</p>
               <div className="text-lg font-bold text-gray-900 leading-snug mb-2">
-                "{will.commitments[0].what}"
+                "{will.commitments[0].what?.toLowerCase().startsWith('i will')
+                  ? will.commitments[0].what
+                  : `I will ${will.commitments[0].what}`}"
               </div>
               {will.commitments[0].why && (
                 <div className="text-sm text-gray-400 italic">
