@@ -399,6 +399,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/users/:userId — basic public profile (name + username) for a given user
+  app.get('/api/users/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const [profile] = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      if (!profile) return res.status(404).json({ message: 'User not found' });
+      res.json(profile);
+    } catch (error) {
+      console.error('[USER-PROFILE] Error:', error);
+      res.status(500).json({ message: 'Failed to fetch user profile' });
+    }
+  });
+
   // ─── FRIENDS API ───────────────────────────────────────────────────────────
 
   // GET /api/friends — list accepted friends + pending incoming requests

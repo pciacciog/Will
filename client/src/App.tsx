@@ -37,6 +37,7 @@ import ProofFeed from "@/pages/ProofFeed";
 import AcceptInvite from "@/pages/AcceptInvite";
 import CreateTeamWill from "@/pages/CreateTeamWill";
 import WillPage from "@/pages/WillPage";
+import FriendProfile from "@/pages/FriendProfile";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -360,6 +361,7 @@ function Router() {
           <>
             <Route path="/" component={Home} />
             <Route path="/friends" component={FriendsPage} />
+            <Route path="/profile/:userId" component={FriendProfile} />
             <Route path="/circles" component={CircleLobbyRedirect} />
             <Route path="/circles/:circleId" component={CircleLobbyRedirect} />
             <Route path="/solo/hub" component={Home} />

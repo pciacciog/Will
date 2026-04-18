@@ -103,6 +103,15 @@ export default function CreateTeamWill() {
   useEffect(() => { resizeTextarea(whatRef); }, [what, resizeTextarea]);
   useEffect(() => { resizeTextarea(whyRef); }, [why, resizeTextarea]);
 
+  // Pre-select a friend passed via URL param (e.g. from friend profile page)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const preId = params.get('preSelectedUserId');
+    if (preId) {
+      setSelectedFriendIds(prev => prev.includes(preId) ? prev : [...prev, preId]);
+    }
+  }, []);
+
   useEffect(() => {
     if (startDate && endDate) {
       const s = new Date(`${startDate}T${startTime || "00:00"}`);
@@ -316,26 +325,12 @@ export default function CreateTeamWill() {
               ) : (
                 <>
                   {/* Search bar */}
-                  <div className="relative mb-3">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                      style={{ left: 13, width: 16, height: 16, transform: 'translateY(-50%)' }}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
+                  <div className="mb-3">
                     <Input
                       value={friendSearch}
                       onChange={e => setFriendSearch(e.target.value)}
                       placeholder="Search friends"
-                      className="h-11 rounded-xl border-gray-200 bg-white focus:border-violet-400 focus:ring-violet-400/20"
-                      style={{ paddingLeft: 38 }}
+                      className="h-11 px-4 rounded-xl border-gray-200 bg-white focus:border-violet-400 focus:ring-violet-400/20"
                       data-testid="input-search-friends-picker"
                     />
                   </div>
