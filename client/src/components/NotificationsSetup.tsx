@@ -41,9 +41,9 @@ const TIME_OPTIONS = [
 ];
 
 const DEFAULT_MILESTONES = [
-  { day: 3, label: "First hurdle cleared" },
-  { day: 7, label: "One week strong" },
-  { day: 30, label: "A whole month" },
+  { day: 1, label: "First day done, hardest part over" },
+  { day: 3, label: "You're halfway there, keep going" },
+  { day: 6, label: "One last day, finish strong" },
 ];
 
 const COLORS: Record<Category, { bg: string; border: string; text: string; pillBg: string; pillBorder: string; pillText: string; tint: string; chipBg: string; chipBorder: string; chipText: string; toggleOn: string; checkBg: string }> = {

@@ -1,0 +1,45 @@
+Fix 1 — Day number input is locked/uneditable
+When the user taps Edit on a milestone row, the "CELEBRATE ON DAY" number input appears but the number cannot be changed — it behaves as read-only on iOS.
+Find the day number input in the milestone edit panel. Check:
+
+Is editable={false} or readOnly set anywhere on this input?
+Is it a Text component styled to look like an input instead of an actual TextInput?
+Is there a pointerEvents="none" on a parent container blocking touch?
+
+Fix so the field is a fully editable TextInput with keyboardType="number-pad", editable={true}, and no parent container blocking touches. The user should be able to clear the current number and type any number between 1 and 365. Update the milestone data and live preview as they type.
+
+Fix 2 — Add delete option to each milestone row
+Currently milestones can only be added, never removed. Add a delete affordance to each milestone row.
+When the edit panel is open for a milestone, add a "Delete milestone" button at the bottom of the edit panel:
+- Full width
+- Text only — no background, just red text (#E24B4A): "Delete milestone"
+- Font size 13px, centered
+- On tap: show a brief inline confirmation ("Remove this milestone?" with Yes/No) 
+  then remove the row from the milestones array on confirm
+Do not show a delete option when there is only one milestone remaining — the list must always have at least one.
+
+Fix 3 — Rename "PREVIEW" to "NOTIFICATION PREVIEW"
+Inside the milestone edit panel, the preview card label says "PREVIEW". Change to "NOTIFICATION PREVIEW" to be consistent with the rest of the notifications screen. Also confirm the preview shows:
+
+Title: "Day " + day + " — " + message
+Subtitle: "I will " + props.what (applying the same "I will" prepend fix already implemented)
+
+
+Fix 4 — Milestone notifications must actually fire on the correct day
+This is the most critical fix. The milestones are being stored in wills.milestones as a JSON array but confirm that checkMilestoneNotifications() in scheduler.ts is correctly reading them and firing on the right day.
+Find checkMilestoneNotifications() and verify:
+Day calculation:
+typescriptconst streakDay = differenceInDays(now, will.streakStartDate) + 1;
+This must match what the user configured — if user set Day 3, the notification fires when streakDay === 3.
+Timing: the scheduler runs every minute. Milestone notifications for a given day should fire once, at a random time during that day. Confirm dedup via sentMilestones is working — once a milestone day fires, its day number is added to sentMilestones JSON array and it never fires again.
+If the Will slips (streak resets): sentMilestones is cleared to [] and streakStartDate is reset to NOW(). This means all milestones become eligible again from the new streak start. Confirm this is happening correctly in resetAbstainStreak().
+Random time within the day: currently the scheduler fires as soon as it detects the streak day matches. Add a simple randomization — when a milestone day is first detected, store a random fire time for that day (between 9am and 8pm user local time) and only fire when now >= randomFireTime. This prevents all milestones from firing at midnight on their trigger day.
+If the random fire time approach is complex to implement, a simpler acceptable alternative is to fire the milestone notification between 9:00 AM and 9:30 AM on the trigger day — check if now.hour === 9 and streakDay === milestone.day and not yet in sentMilestones.
+Test: create an Abstain Will, set a milestone for Day 1, confirm the notification fires on day 1 of the active Will on a real device.
+
+Implementation order:
+
+Fix the locked day input (Fix 1) — report root cause before fixing
+Add delete button to edit panel (Fix 2)
+Rename preview label (Fix 3)
+Audit and fix checkMilestoneNotifications() scheduling logic (Fix 4) — report current implementation before changing
