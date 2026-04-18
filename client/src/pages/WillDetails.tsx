@@ -847,7 +847,7 @@ export default function WillDetails() {
 
   return (
     <MobileLayout>
-      <div className="space-y-3">
+      <div className="space-y-3 pt-14">
         {/* Header with Back Button */}
         <div className="relative flex items-center justify-between mb-2 min-h-[44px]">
           <UnifiedBackButton 

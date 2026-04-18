@@ -845,12 +845,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </span>
             </button>
 
-            {/* Title — always truly centred relative to the full row */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-14">
-              <h1 className="text-base font-semibold text-gray-900 leading-tight">
-                Team Will
-              </h1>
-            </div>
+            {/* Title — absolutely centred on the full row width, independent of button widths */}
+            <h1 className="absolute left-0 right-0 text-center text-base font-semibold text-gray-900 leading-tight pointer-events-none">
+              Team Will
+            </h1>
 
             {/* Action icons */}
             <div className="absolute right-0 flex items-center gap-1.5">
