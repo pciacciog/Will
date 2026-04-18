@@ -105,20 +105,36 @@ function Toggle({ on, onChange, color }: { on: boolean; onChange: (v: boolean) =
     <button
       type="button"
       onClick={() => onChange(!on)}
-      className="relative flex-shrink-0 transition-all duration-200 active:scale-95"
-      style={{ width: 48, height: 28, borderRadius: 14, background: on ? color : "#E5E7EB" }}
       data-testid="toggle-notification"
       aria-label={on ? "Turn off" : "Turn on"}
+      style={{
+        position: "relative",
+        flexShrink: 0,
+        width: 51,
+        height: 31,
+        borderRadius: 15.5,
+        background: on ? color : "#E5E7EB",
+        border: "none",
+        outline: "none",
+        cursor: "pointer",
+        overflow: "hidden",
+        transition: "background 0.2s",
+        padding: 0,
+        display: "inline-flex",
+        alignItems: "center",
+      }}
     >
       <span
-        className="absolute top-1 transition-all duration-200"
         style={{
-          width: 20,
-          height: 20,
+          position: "absolute",
+          width: 23,
+          height: 23,
           borderRadius: "50%",
           background: "#fff",
+          top: 4,
           left: on ? 24 : 4,
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+          transition: "left 0.2s",
         }}
       />
     </button>
@@ -167,7 +183,7 @@ function TimeChip({ value, onChange, color }: { value: string; onChange: (v: str
 function PreviewCard({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="rounded-xl p-3 mt-3" style={{ background: "#F3F4F6" }}>
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">PREVIEW</p>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">NOTIFICATION PREVIEW</p>
       <p className="text-sm font-bold text-gray-900 leading-snug">{title || "Your will"}</p>
       <p className="text-xs text-gray-500 mt-0.5 leading-snug">{subtitle || "Because…"}</p>
     </div>
@@ -612,7 +628,7 @@ function MissionSectionControlled({
   return (
     <div>
       <NotifCard label="DEADLINE REMINDERS">
-        <p className="text-sm text-gray-600 mb-3">Notify me when there is…</p>
+        <p className="text-sm text-gray-600 mb-3">Notify me when there are…</p>
         <div className="space-y-2 mb-3">
           {[
             { label: "3 days left", value: threeDays, key: "threeDays" as const },
@@ -640,7 +656,9 @@ function MissionSectionControlled({
             </button>
           ))}
         </div>
-        <PreviewCard title={`1 day left — ${what}`} subtitle={because} />
+        {(threeDays || oneDay || dayOf) && (
+          <PreviewCard title={`1 day left — ${what}`} subtitle={because} />
+        )}
       </NotifCard>
 
       <NotifCard label="OPTIONAL DAILY NUDGE">
