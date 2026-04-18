@@ -1,0 +1,54 @@
+Fix milestone notification timing — fire after full day elapsed, not at Will start
+The milestone scheduler is firing Day 1 immediately when the Will becomes active. This is wrong. A "Day 1" milestone means the user has completed their first full day — it should fire after 24 hours have elapsed from streakStartDate, not at the moment the Will starts.
+Find checkMilestoneNotifications() in scheduler.ts and fix the day calculation:
+Current logic is likely:
+typescriptconst streakDay = differenceInDays(now, will.streakStartDate) + 1;
+This returns 1 immediately on day 0 because differenceInDays rounds down and adding 1 makes it 1 instantly. This is the bug.
+Fix the calculation so a milestone only fires after the full number of days has actually elapsed:
+typescriptconst hoursElapsed = differenceInHours(now, will.streakStartDate);
+const streakDay = Math.floor(hoursElapsed / 24);
+This means:
+
+Day 1 milestone fires after exactly 24 hours have elapsed
+Day 3 milestone fires after exactly 72 hours have elapsed
+Day 6 milestone fires after exactly 144 hours have elapsed
+Day 30 milestone fires after exactly 720 hours have elapsed
+
+So the check becomes:
+typescriptfor (const milestone of milestones) {
+  const hoursRequired = milestone.day * 24;
+  const hoursElapsed = differenceInHours(now, will.streakStartDate);
+  
+  if (
+    hoursElapsed >= hoursRequired &&
+    !sentMilestones.includes(milestone.day)
+  ) {
+    // fire notification
+    // add milestone.day to sentMilestones
+  }
+}
+Also add a random fire window within the eligible day:
+Once a milestone becomes eligible (hours elapsed >= required), do not fire immediately at the exact hour boundary. Instead fire at a random time within a 9am–8pm window on the day it becomes eligible:
+typescriptconst eligibleDate = addHours(will.streakStartDate, milestone.day * 24);
+const fireHour = Math.floor(Math.random() * 11) + 9; // 9am to 8pm
+const fireTime = setHours(eligibleDate, fireHour);
+
+if (now >= fireTime && !sentMilestones.includes(milestone.day)) {
+  // fire notification
+}
+This prevents all milestones from firing at midnight or the exact moment the streak day ticks over.
+If the streak resets (resetAbstainStreak() is called):
+
+Set streakStartDate = NOW()
+Clear sentMilestones = []
+All milestones become eligible again from the new streak start time
+The same timing rules apply — Day 1 fires 24 hours after the reset, not immediately
+
+Test:
+
+Create an Abstain Will with a Day 1 milestone
+Confirm no notification fires within the first hour of the Will being active
+Confirm the notification fires approximately 24 hours after streakStartDate
+Confirm Day 3 fires approximately 72 hours after streakStartDate
+
+Report the current checkMilestoneNotifications() logic before making any changes.

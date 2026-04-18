@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export interface NotificationsData {
   commitmentCategory: 'habit' | 'abstain' | 'mission';
@@ -519,6 +519,15 @@ function AbstainSectionControlled({
 }) {
   const { reminderOn, reminderTime, milestones } = state;
   const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [localDayStr, setLocalDayStr] = useState<string>('');
+  const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (openIdx !== null && milestones[openIdx]) {
+      setLocalDayStr(String(milestones[openIdx].day));
+      setConfirmDeleteIdx(null);
+    }
+  }, [openIdx]);
 
   const handleToggleMilestone = (i: number) => setOpenIdx(prev => prev === i ? null : i);
   const updateDay = (i: number, day: number) => onChange({ ...state, milestones: milestones.map((m, idx) => idx === i ? { ...m, day } : m) });
@@ -527,6 +536,12 @@ function AbstainSectionControlled({
     const newMs = [...milestones, { day: 21, label: "Three weeks" }];
     onChange({ ...state, milestones: newMs });
     setOpenIdx(newMs.length - 1);
+  };
+  const deleteMilestone = (i: number) => {
+    const newMs = milestones.filter((_, idx) => idx !== i);
+    onChange({ ...state, milestones: newMs });
+    setOpenIdx(null);
+    setConfirmDeleteIdx(null);
   };
 
   return (
@@ -579,10 +594,15 @@ function AbstainSectionControlled({
                     type="number"
                     min={1}
                     max={365}
-                    value={m.day}
+                    value={localDayStr}
                     onChange={e => {
+                      setLocalDayStr(e.target.value);
                       const val = parseInt(e.target.value, 10);
                       if (!isNaN(val) && val >= 1 && val <= 365) updateDay(i, val);
+                    }}
+                    onBlur={() => {
+                      const val = parseInt(localDayStr, 10);
+                      if (isNaN(val) || val < 1 || val > 365) setLocalDayStr(String(m.day));
                     }}
                     className="w-full rounded-lg px-3 py-2 bg-white border focus:outline-none text-center font-bold"
                     style={{ fontSize: 15, borderColor: '#F5C4B3', color: '#111' }}
@@ -598,7 +618,28 @@ function AbstainSectionControlled({
                     placeholder="Milestone label"
                     data-testid="input-milestone-label"
                   />
-                  <PreviewCard title={`Day ${m.day} — ${m.label}`} subtitle={what} />
+                  <PreviewCard title={`Day ${m.day} — ${m.label}`} subtitle={`I will ${what}`} />
+                  {milestones.length > 1 && (
+                    confirmDeleteIdx === i ? (
+                      <div className="mt-3 text-center">
+                        <p className="text-xs text-gray-600 mb-2">Remove this milestone?</p>
+                        <div className="flex gap-4 justify-center">
+                          <button type="button" onClick={() => setConfirmDeleteIdx(null)} className="text-xs text-gray-500 px-3 py-1">No</button>
+                          <button type="button" onClick={() => deleteMilestone(i)} className="text-xs font-semibold px-3 py-1" style={{ color: '#E24B4A' }} data-testid={`button-confirm-delete-milestone-${i}`}>Yes</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteIdx(i)}
+                        className="w-full mt-3 text-center bg-transparent border-0"
+                        style={{ fontSize: 13, color: '#E24B4A' }}
+                        data-testid={`button-delete-milestone-${i}`}
+                      >
+                        Delete milestone
+                      </button>
+                    )
+                  )}
                 </div>
               )}
 
