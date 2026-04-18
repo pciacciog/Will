@@ -1,0 +1,87 @@
+2026-04-18T18:11:41Z info: Deployment: 15491de2-1f26-4fe3-963a-779e9cbf0c72
+2026-04-18T18:11:41Z info: Build: 86ee4858-e9be-4318-9173-8a41bb9f0253
+2026-04-18T18:11:42Z info: Running Security Scan
+2026-04-18T18:11:58Z info: Security Scan Complete
+2026-04-18T18:12:01Z info: Installing packages
+--> npm install
+
+
+up to date, audited 634 packages in 4s
+
+77 packages are looking for funding
+
+  run `npm fund` for details
+
+
+28 vulnerabilities (3 low, 9 moderate, 16 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
+
+2026-04-18T18:12:05Z info: Starting Build
+
+> rest-express@1.0.0 build
+> rm -rf dist && vite build && esbuild server/index-standalone.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js
+
+
+vite v5.4.19 building for production...
+
+transforming...
+
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+✓ 2628 modules transformed.
+
+rendering chunks...
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/services/SessionPersistence.ts is dynamically imported by /home/runner/workspace/client/src/pages/Home.tsx but also statically imported by /home/runner/workspace/client/src/App.tsx, /home/runner/workspace/client/src/lib/queryClient.ts, /home/runner/workspace/client/src/pages/Auth.tsx, /home/runner/workspace/client/src/pages/TeamWillHub.tsx, /home/runner/workspace/client/src/pages/WillHistory.tsx, dynamic import will not move module into another chunk.
+
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/lib/queryClient.ts is dynamically imported by /home/runner/workspace/client/src/services/NotificationService.ts, /home/runner/workspace/client/src/services/NotificationService.ts, /home/runner/workspace/client/src/services/NotificationService.ts, /home/runner/workspace/client/src/services/NotificationService.ts, /home/runner/workspace/client/src/services/NotificationService.ts, /home/runner/workspace/client/src/services/NotificationService.ts but also statically imported by /home/runner/workspace/client/src/App.tsx, /home/runner/workspace/client/src/components/AccountSettingsModal.tsx, /home/runner/workspace/client/src/components/DailyCheckInModal.tsx, /home/runner/workspace/client/src/components/DailyGutCheckModal.tsx, /home/runner/workspace/client/src/components/OngoingWillReviewFlow.tsx, /home/runner/workspace/client/src/components/WillMessages.tsx, /home/runner/workspace/client/src/components/WillReviewFlow.tsx, /home/runner/workspace/client/src/hooks/useAuth.ts, /home/runner/workspace/client/src/pages/AcceptInvite.tsx, /home/runner/workspace/client/src/pages/AdminDashboard.tsx, /home/runner/workspace/client/src/pages/Auth.tsx, /home/runner/workspace/client/src/pages/CreateTeamWill.tsx, /home/runner/workspace/client/src/pages/EditCommitment.tsx, /home/runner/workspace/client/src/pages/EditWill.tsx, /home/runner/workspace/client/src/pages/ForgotPassword.tsx, /home/runner/workspace/client/src/pages/FriendProfile.tsx, /home/runner/workspace/client/src/pages/FriendsPage.tsx, /home/runner/workspace/client/src/pages/Home.tsx, /home/runner/workspace/client/src/pages/JoinWill.tsx, /home/runner/workspace/client/src/pages/MyWills.tsx, /home/runner/workspace/client/src/pages/ResetPassword.tsx, /home/runner/workspace/client/src/pages/StartWill.tsx, /home/runner/workspace/client/src/pages/SubmitCommitment.tsx, /home/runner/workspace/client/src/pages/TeamWillHub.tsx, /home/runner/workspace/client/src/pages/Today.tsx, /home/runner/workspace/client/src/pages/WillDetails.tsx, /home/runner/workspace/client/src/pages/WillMessagesPage.tsx, dynamic import will not move module into another chunk.
+
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/node_modules/@capacitor/browser/dist/esm/index.js is dynamically imported by /home/runner/workspace/client/src/pages/WillDetails.tsx but also statically imported by /home/runner/workspace/client/src/components/EndRoom.tsx, dynamic import will not move module into another chunk.
+
+
+computing gzip size...
+
+../dist/public/index.html                                  0.92 kB │ gzip:   0.49 kB
+
+✓ built in 5.87s
+
+
+  dist/index.js  423.9kb
+
+⚡ Done in 26ms
+
+2026-04-18T18:12:14Z info: Pushing pid1 binary layer...
+2026-04-18T18:12:16Z info: Created pid1 binary layer
+2026-04-18T18:12:17Z info: Pushing Repl layer...
+2026-04-18T18:12:17Z info: Pushing hosting layer...
+2026-04-18T18:12:17Z info: Retrieved cached nix layer
+2026-04-18T18:12:17Z info: Created hosting layer
+2026-04-18T18:12:42Z info: Created Repl layer
+2026-04-18T18:12:45Z info: Pushed image manifest
+2026-04-18T18:12:47Z info: Pushed soci index manifest
+2026-04-18T18:12:52Z info: Creating virtual machine
+2026-04-18T18:13:07Z info: Virtual machine created
+2026-04-18T18:13:07Z info: Waiting for deployment to be ready
