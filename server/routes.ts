@@ -1691,21 +1691,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid thumbnail URL. Must be a Cloudinary will_proofs URL.' });
       }
 
-      // One drop per user per will per day
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const [existing] = await db
-        .select({ id: willProofs.id })
-        .from(willProofs)
-        .where(and(
-          eq(willProofs.userId, userId),
-          eq(willProofs.willId, willId),
-          gte(willProofs.createdAt, today),
-          ne(willProofs.status, 'failed')
-        ))
-        .limit(1);
-      if (existing) return res.status(429).json({ message: 'You already dropped a proof today for this Will.' });
-
       const [proof] = await db.insert(willProofs).values({
         willId,
         userId,
@@ -4567,27 +4552,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid thumbnail URL. Must be a Cloudinary will_proofs URL.' });
       }
 
-      // One drop per user per will per day
-      {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const existing = await db
-          .select({ id: willProofs.id })
-          .from(willProofs)
-          .where(
-            and(
-              eq(willProofs.userId, userId),
-              eq(willProofs.willId, willId),
-              gte(willProofs.createdAt, today),
-              ne(willProofs.status, 'failed')
-            )
-          )
-          .limit(1);
-        if (existing.length > 0) {
-          return res.status(429).json({ message: 'You already dropped a proof today for this Will.' });
-        }
-      }
-
       const [proof] = await db.insert(willProofs).values({
         willId,
         userId,
@@ -4599,6 +4563,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).returning();
 
       res.status(201).json({ id: proof.id, status: proof.status, createdAt: proof.createdAt });
+
+      // Send push notifications to all other participants (fire-and-forget)
+      try {
+        const dropperName = (req.user as any)?.firstName || (req.user as any)?.email?.split('@')[0] || 'Someone';
+        const willTitle = proofWill.title || proofWill.commitments?.find((c: any) => c.userId === userId)?.what || proofWill.sharedWhat || 'your Will';
+        const otherParticipantIds = (proofWill.commitments || [])
+          .map((c: any) => c.userId)
+          .filter((id: string) => id !== userId);
+        if (otherParticipantIds.length > 0) {
+          await pushNotificationService.sendToMultipleUsers(otherParticipantIds, {
+            title: '📸 New proof drop!',
+            body: `${dropperName} just dropped a proof for ${willTitle}`,
+            data: { willId, type: 'proof_drop' },
+          });
+          console.log(`[Proof] Sent drop notification from ${dropperName} to ${otherParticipantIds.length} participants`);
+        }
+      } catch (notifErr) {
+        console.error('[Proof] Failed to send drop notification (non-fatal):', notifErr);
+      }
     } catch (err) {
       console.error('[Proof] Failed to create proof:', err);
       res.status(500).json({ message: 'Failed to create proof drop.' });

@@ -630,8 +630,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               <p className="font-semibold text-sm truncate">{photoModal.firstName || photoModal.email?.split("@")[0]}</p>
               <p className="text-xs text-white/60">{new Date(photoModal.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
             </div>
-            <button onClick={() => setPhotoModal(null)} className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-colors" data-testid="button-close-photo-modal">
-              <X className="w-5 h-5 text-white" />
+            <button onClick={() => setPhotoModal(null)} className="w-14 h-14 flex items-center justify-center bg-white/30 rounded-full hover:bg-white/50 transition-colors" data-testid="button-close-photo-modal">
+              <X className="w-7 h-7 text-white" />
             </button>
           </div>
           <div className="flex-1 flex items-center justify-center px-4 pb-4" onClick={(e) => e.stopPropagation()}>
