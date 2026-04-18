@@ -1,0 +1,87 @@
+Solo Will dashboard — Abstain and Mission UI redesign
+Two category updates to WillDetails.tsx. Do not touch Habit — it stays exactly as is.
+
+ABSTAIN — replace current two-button layout with check-in flow
+Step 1 — Default state
+Remove the current "I honored my will today" and "I didn't honor it today" buttons that are always visible. Replace with a single green "Check in for today" button — identical in style to the Habit check-in button:
+Full width, green background (#1D9E75), white text, checkmark circle icon
+Label: "Check in for today"
+Step 2 — After tapping check-in
+When user taps "Check in for today", hide the button and reveal an inline card in its place:
+White background, same border radius as other cards
+Question label (centered, muted, 12px): "Did you honor your will today?"
+Gap: 12px
+Button 1 — "I honored my will"
+  - Green outline (2px solid #1D9E75), white background, green text (#085041)
+  - Green checkmark circle icon
+Button 2 — "I didn't honor it"  
+  - Red outline (2px solid #E24B4A), white background, red text (#A32D2D)
+  - Red X circle icon
+  - 8px gap below button 1
+Step 3 — After selecting honored
+Hide the options card. Replace with a result card:
+Background: #E1F5EE, border: 2px solid #1D9E75
+Centered green filled circle (44px) with white checkmark
+Title: "Will honored" — 14px, green (#085041)
+Subtitle: "Logged for today." — 11px, muted green
+Step 4 — After selecting didn't honor
+Hide the options card. Replace with a result card:
+Background: #FCEBEB, border: 2px solid #E24B4A
+Centered red filled circle (44px) with white X
+Title: "That's okay" — 14px, dark red (#791F1F)
+Subtitle: "Tomorrow is a fresh start." — 11px, muted red
+Both result cards lock for the rest of the day — reset at midnight same as Habit check-in. The API call on selection is POST /api/wills/:id/abstain-log with { honored: boolean } — already implemented.
+Step 5 — Progress card (same structure as Habit)
+Replace the current streak card with a collapsible progress card identical in structure to the Habit progress card. Collapsed state shows:
+Row of colored dots (green for honored, red for not honored)
+Label: "Your progress"
+Sublabel: "X honored · X not honored"
+Chevron to expand
+Expanded state shows:
+Three stat boxes: honored (green tint) · not honored (red tint) · days left (neutral)
+Day strip calendar — same format as Habit:
+  - Green for honored days
+  - Red for not honored days
+  - Neutral/pending for future days
+Legend: Honored · Not honored · Pending
+Data source: same /api/wills/:id/check-in-progress endpoint — honored maps to yesCount, not honored maps to noCount. Days left is calculated from endDate.
+
+MISSION — replace countdown card with check-in flow
+Step 1 — Default state
+Keep the circular countdown ring (SVG) exactly as is — days left, purple arc, centered in card.
+Below the ring, replace "Mark as done" / "Have you completed it?" with a single purple "Check in for today" button:
+Full width, purple background (#534AB7), white text, checkmark icon
+Label: "Check in for today"
+Step 2 — After tapping check-in
+Hide the button. Reveal inline below the ring:
+Question label (centered, muted, 12px): "Have you completed it?"
+Gap: 12px
+Button 1 — "Yes, I completed it"
+  - Purple outline (2px solid #534AB7), white background, dark purple text (#26215C)
+  - Purple checkmark circle icon
+Button 2 — "Not yet"
+  - Neutral outline (0.5px, border-tertiary), white background, muted text
+  - No icon needed
+  - 8px gap below button 1
+Step 3 — After selecting Yes
+Hide options. Show result card below the ring:
+Background: #E1F5EE, border: 2px solid #1D9E75
+Title: "Will completed!" — 14px, green (#085041)
+Subtitle: "You did it. This chapter is closed." — 11px, muted green
+Then call PATCH /api/wills/:id with { status: 'completed' } — already implemented.
+Step 4 — After selecting Not yet
+Hide options. Show result card below the ring:
+Background: var(--color-background-secondary), neutral border
+Title: "Keep going" — 13px
+Subtitle: "You still have time." — 11px, muted
+No API call needed — this is just a dismissal. The check-in button resets the next day so the user can check in again tomorrow.
+
+Lock behavior for both categories
+Both Abstain and Mission check-ins lock once answered for the rest of the calendar day — same midnight reset logic already used by Habit. Store the last check-in date in the same way and compare against today's date on mount to determine whether to show the button or the locked result card.
+
+Do not change:
+
+Habit category UI — untouched
+The proof section — untouched
+TeamWillHub.tsx — this prompt is WillDetails.tsx only
+Any API endpoints not mentioned above
