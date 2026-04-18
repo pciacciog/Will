@@ -1,0 +1,46 @@
+Mission Will fixes — Not yet behavior, creator guard, and permanent Yes lock
+Three fixes in one pass.
+
+Fix 1 — "Not yet" should never lock
+Remove all locking behavior from the "Not yet" path entirely. When the user taps Not yet:
+
+Dismiss the options card
+Show the neutral result card briefly ("Keep going / You still have time.")
+After 2 seconds automatically return to the default state showing the "Check in for today" button again
+
+The user can tap check in again immediately the same day. Not yet is a soft dismissal only — it logs nothing, calls no endpoint, and locks nothing. The check-in button is always available until the user taps Yes.
+Apply this to both WillDetails.tsx and TeamWillHub.tsx.
+
+Fix 2 — "Only the will creator can update it" error on Team Will
+The current PATCH /api/wills/:id endpoint has a guard that only allows the Will creator to update the Will status. This blocks non-creator team members from completing their Mission.
+Two fixes needed:
+First — for Solo Will: confirm the Will owner (creator) can always PATCH their own Will status to completed. This should already work but verify the guard is checking createdBy === userId correctly.
+Second — for Team Will: do not use PATCH /api/wills/:id for individual member mission completion. Instead use the new POST /api/wills/:id/mission-complete endpoint which updates the will_commitments row for that specific user — no Will-level permission guard needed since every member can update their own commitment row.
+Make sure POST /api/wills/:id/mission-complete:
+
+Accepts any authenticated member of the Will, not just the creator
+Sets mission_completed = true and mission_completed_at = NOW() on the will_commitments row for the calling user
+Returns 403 only if the calling user is not a member of the Will at all
+
+
+Fix 3 — Yes lock must persist across sessions
+The Yes lock must come from the server on mount, not from local React state. On every mount of the Mission progress section:
+For Solo Will:
+
+If will.status === 'completed' → show completed state, no check-in button
+
+For Team Will:
+
+Read userCommitment.missionCompleted from the Will details response
+If true → show locked green card ("You completed it!"), no check-in button ever again
+If false → show check-in button as normal
+
+This ensures navigating away and back does not reset the Yes state.
+
+Implementation order:
+
+Fix Not yet — remove all locking, auto-reset to check-in button after 2 seconds — apply to both Solo and Team
+Fix the creator guard — confirm Solo PATCH works for Will owner, create POST /api/wills/:id/mission-complete for Team with member-level access
+Fix Yes persistence — read from server on mount for both Solo and Team
+Test Solo: Yes → completes Will → goes to review. Not yet → button reappears after 2 seconds.
+Test Team: Yes → locked permanently for that member, other members unaffected, no creator error. Not yet → button reappears after 2 seconds.

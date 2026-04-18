@@ -74,7 +74,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
   const [missionCheckInOpen, setMissionCheckInOpen] = useState(false);
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
-  const [missionCompleted, setMissionCompleted] = useState(false);
+  // missionCompleted is derived from server data (persists across sessions)
 
   useAppRefresh();
 
@@ -244,23 +244,24 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     },
   });
 
-  // Category-aware: mission complete mutation
+  // Category-aware: mission complete mutation (team: per-member endpoint, no creator guard)
   const missionCompleteMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest(`/api/wills/${willId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'completed' }),
+      const res = await apiRequest(`/api/wills/${willId}/mission-complete`, {
+        method: 'POST',
       });
       return res.json();
     },
     onSuccess: () => {
-      setMissionCompleted(true);
       setMissionCheckInOpen(false);
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
       queryClient.invalidateQueries({ queryKey: ["/api/wills/all-active"] });
     },
     onError: (err: any) => toast({ title: "Error", description: err.message || "Failed to complete Will", variant: "destructive" }),
   });
+
+  // missionCompleted from server (persists across navigations)
+  const missionCompleted = userCommitment?.missionCompleted === true;
 
   // Normalise any image (including HEIC from iOS photo library) to a JPEG Blob
   // capped at 1200px on the longest side, quality 0.8.
@@ -1436,8 +1437,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     {will.status === 'active' && (
                       missionCompleted ? (
                         <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#E1F5EE', border: '2px solid #1D9E75' }} data-testid="mission-result-completed">
-                          <p className="text-sm font-semibold" style={{ color: '#085041' }}>Will completed!</p>
-                          <p className="text-xs" style={{ color: '#2E7D63' }}>You did it. This chapter is closed.</p>
+                          <p className="text-sm font-semibold" style={{ color: '#085041' }}>You completed it!</p>
+                          <p className="text-xs" style={{ color: '#2E7D63' }}>Your mission is done.</p>
                         </div>
                       ) : missionKeptGoing ? (
                         <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5 bg-gray-50 border border-gray-200" data-testid="mission-result-not-yet">
@@ -1459,7 +1460,11 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               {missionCompleteMutation.isPending ? 'Saving...' : 'Yes, I completed it'}
                             </button>
                             <button
-                              onClick={() => { setMissionCheckInOpen(false); setMissionKeptGoing(true); }}
+                              onClick={() => {
+                                setMissionCheckInOpen(false);
+                                setMissionKeptGoing(true);
+                                setTimeout(() => setMissionKeptGoing(false), 2000);
+                              }}
                               className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                               style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
                               data-testid="button-mission-not-yet"

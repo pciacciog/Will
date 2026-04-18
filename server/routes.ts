@@ -3124,6 +3124,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update will title (originator only, max 40 chars)
+  // POST /api/wills/:id/mission-complete — any team member can mark their own commitment done
+  app.post('/api/wills/:id/mission-complete', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const userId = req.user.id;
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+
+      const commitments = await storage.getWillCommitments(willId);
+      const myCommitment = commitments.find((c: any) => c.userId === userId);
+      if (!myCommitment) return res.status(403).json({ message: "You are not a member of this Will" });
+
+      await db.update(willCommitments)
+        .set({ missionCompleted: true, missionCompletedAt: new Date() })
+        .where(and(eq(willCommitments.willId, willId), eq(willCommitments.userId, userId)));
+
+      res.json({ success: true });
+
+      // Notify teammates (fire-and-forget, team wills only)
+      if (will.mode === 'team') {
+        (async () => {
+          try {
+            const checkerName = (req.user as any)?.firstName || (req.user as any)?.email?.split('@')[0] || 'Someone';
+            const otherIds = commitments.map((c: any) => c.userId).filter((id: string) => id !== userId);
+            if (otherIds.length > 0) {
+              await pushNotificationService.sendToMultipleUsers(otherIds, {
+                title: `${checkerName} checked in`,
+                body: 'See how they\'re doing on your Team Will.',
+                data: { willId, type: 'team_checkin' },
+              });
+            }
+          } catch (err) { console.error('[MissionComplete] notification failed (non-fatal):', err); }
+        })();
+      }
+    } catch (error) {
+      console.error("Error completing mission:", error);
+      res.status(500).json({ message: "Failed to complete mission" });
+    }
+  });
+
   // PATCH /api/wills/:id — originator-only update for title (and future fields)
   app.patch('/api/wills/:id', isAuthenticated, async (req: any, res) => {
     try {

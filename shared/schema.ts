@@ -152,6 +152,8 @@ export const willCommitments = pgTable("will_commitments", {
   activeDays: varchar("active_days", { length: 20 }).default("every_day"), // 'every_day', 'custom' — per-member active days for specific_days check-in type
   customDays: text("custom_days"), // JSON array of day numbers (0=Sun, 1=Mon, ..., 6=Sat) when activeDays='custom'
   commitmentCategory: varchar("commitment_category", { length: 10 }), // 'habit', 'abstain', 'mission' — per-member category for I Will teams
+  missionCompleted: boolean("mission_completed").default(false),
+  missionCompletedAt: timestamp("mission_completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   // Notification tracking field for acknowledgment reminder
   ackReminderSentAt: timestamp("ack_reminder_sent_at"), // For 6hr unacknowledged reminder

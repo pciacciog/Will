@@ -1,0 +1,30 @@
+Team Will Habit — fix duplicate progress section and make day strip tappable
+Fix 1 — Duplicate progress section
+The expanded progress card is showing two sets of stats — one from the collapsed row and one inside the expanded section. They are identical and redundant.
+Find the collapsible progress card in TeamWillHub.tsx for commitmentCategory === 'habit'. The collapsed header row already shows the dots + "X done · X partial · X missed" + percentage. The expanded section should only show content that is NOT already visible in the collapsed state.
+Remove the duplicate stat boxes (Completed / Partial / Missed) and the duplicate Success Rate / progress bar from the expanded section. The expanded section should only show:
+
+The day strip calendar
+The legend (Done / Partial / Missed / Pending)
+
+The three stat boxes and percentage stay in the collapsed header row only — they do not repeat inside the expanded section.
+
+Fix 2 — Day strip should be tappable and open check-in modal
+Currently the day strip looks interactive but tapping a day does nothing. The only way to check in is the green CTA button. This is confusing.
+Make every day tile in the day strip tappable. Tapping any day should open the same DailyCheckInModal that the green "Check in for today" button opens, with that specific day pre-selected.
+The behavior should be:
+
+Tap the green "Check in for today" button → opens DailyCheckInModal with today pre-selected — existing behavior unchanged
+Tap any day tile in the strip → opens the same DailyCheckInModal with that specific day pre-selected
+Days in the future (after today) are not tappable — no interaction, no visual affordance
+Days before the Will start date are not tappable
+
+This is consistent with how DailyCheckInModal already works — it accepts a date and the user selects yes/partial/no. The only difference is which date is pre-selected when the modal opens.
+Apply this to both TeamWillHub.tsx and WillDetails.tsx since both share the same day strip component and the same DailyCheckInModal.
+
+Do not change:
+
+The green CTA button behavior
+The modal itself
+The collapsed header row stats
+Anything outside the progress section

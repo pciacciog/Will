@@ -1589,7 +1589,11 @@ export default function WillDetails() {
                           {missionCompleteMutation.isPending ? 'Saving...' : 'Yes, I completed it'}
                         </button>
                         <button
-                          onClick={() => { setMissionCheckInOpen(false); setMissionKeptGoing(true); }}
+                          onClick={() => {
+                            setMissionCheckInOpen(false);
+                            setMissionKeptGoing(true);
+                            setTimeout(() => setMissionKeptGoing(false), 2000);
+                          }}
                           className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                           style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
                           data-testid="button-mission-not-yet"
