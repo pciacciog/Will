@@ -759,7 +759,7 @@ export default function WillDetails() {
     },
     onSuccess: () => {
       setMissionCompleted(true);
-      setMissionShowConfirm(false);
+      setMissionCheckInOpen(false);
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       toast({ title: "Well done!", description: "Your will has been marked as complete." });
     },
