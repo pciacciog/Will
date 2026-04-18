@@ -1607,6 +1607,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           willId={willId}
           startDate={will.startDate as unknown as string || ''}
           endDate={will.endDate as unknown as string || ''}
+          existingCheckIns={checkIns}
           checkInType={userCheckInType}
           activeDays={(userCommitment as any)?.activeDays || will.activeDays || undefined}
           customDays={(userCommitment as any)?.customDays || will.customDays || undefined}
