@@ -3071,12 +3071,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: "Will not found" });
-      if (will.createdBy !== userId) return res.status(403).json({ message: "Only the Will creator can update it" });
 
-      const updates: Partial<{ title: string | null; status: string }> = {};
       const { title, status } = req.body;
+      const updates: Partial<{ title: string | null; status: string }> = {};
 
       if (title !== undefined) {
+        // Title edits are creator-only
+        if (will.createdBy !== userId) return res.status(403).json({ message: "Only the Will creator can update it" });
         if (title === null || title === '') {
           updates.title = null;
         } else if (typeof title !== 'string' || title.trim().length > 40) {
@@ -3086,10 +3087,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Allow mission wills to mark themselves completed (only from active state)
+      // Mission completion — any participant may mark their own will done
       let statusUpdate: string | undefined;
       if (status !== undefined) {
         if (status === 'completed' && will.commitmentCategory === 'mission' && will.status === 'active') {
+          // Verify the user is a participant (has a commitment on this will)
+          const willWithCommitments = await storage.getWillWithCommitments(willId);
+          const isParticipant = (willWithCommitments?.commitments || []).some((c: any) => c.userId === userId);
+          if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
           statusUpdate = 'completed';
         } else {
           return res.status(400).json({ message: "Status update not allowed" });
