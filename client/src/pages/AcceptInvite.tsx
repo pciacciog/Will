@@ -133,12 +133,10 @@ export default function AcceptInvite() {
   const inviterName = will.creatorName || "A friend";
   const inviterInitial = inviterName.charAt(0).toUpperCase();
 
-  // Team section logic — show only when ≥ 2 confirmed non-current-user members exist
-  // (i.e. creator + at least one other confirmed invitee). Pending invitees do not count.
+  // Team section logic — show whenever at least one other person was invited (accepted or pending)
   const visibleMembers = teamMembers.filter(m => m.status !== "declined");
   const otherMembers = visibleMembers.filter(m => m.userId !== user?.id);
-  const confirmedOtherMembers = otherMembers.filter(m => m.isCreator || m.status === "accepted");
-  const showTeamSection = confirmedOtherMembers.length >= 2;
+  const showTeamSection = otherMembers.length >= 1;
 
   // Sort: accepted first, then pending
   const sortedMembers = [
