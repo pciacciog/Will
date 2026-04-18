@@ -205,6 +205,10 @@ interface MilestoneRow {
 }
 
 export default function NotificationsSetup({ what, because, onComplete, onBack }: NotificationsSetupProps) {
+  const formattedWhat = what?.toLowerCase().startsWith('i will')
+    ? what
+    : `I will ${what}`;
+
   const [selected, setSelected] = useState<Category | null>(null);
 
   const [habitState, setHabitState] = useState({
@@ -400,14 +404,14 @@ export default function NotificationsSetup({ what, because, onComplete, onBack }
             className="px-4 mb-3 text-sm italic font-medium flex-shrink-0"
             style={{ color: COLORS[selected].text }}
           >
-            "{what}"
+            "{formattedWhat}"
           </p>
 
           {/* Notification section */}
           <div className="px-4 pb-24 flex-1 overflow-y-auto">
             {selected === 'habit' && (
               <HabitSectionControlled
-                what={what}
+                what={formattedWhat}
                 because={because}
                 color={COLORS.habit}
                 state={habitState}
@@ -416,7 +420,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack }
             )}
             {selected === 'abstain' && (
               <AbstainSectionControlled
-                what={what}
+                what={formattedWhat}
                 because={because}
                 color={COLORS.abstain}
                 state={abstainState}
@@ -425,7 +429,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack }
             )}
             {selected === 'mission' && (
               <MissionSectionControlled
-                what={what}
+                what={formattedWhat}
                 because={because}
                 color={COLORS.mission}
                 state={missionState}
