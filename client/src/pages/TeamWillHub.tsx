@@ -222,6 +222,20 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  // Team today — per-member check-in status (only for team/circle wills with a category)
+  const willMode = will?.mode;
+  const willCategory = will?.commitmentCategory;
+  const { data: teamTodayData } = useQuery<{
+    category: string | null;
+    today: string;
+    members: { userId: string; firstName: string; profileImageUrl: string | null; status: string }[];
+  }>({
+    queryKey: [`/api/wills/${willId}/team-today`],
+    enabled: !!user && !!will && willMode === 'team' && !!willCategory && (will.status === 'active' || will.status === 'will_review'),
+    refetchInterval: 30000,
+    staleTime: 0,
+  });
+
   // Category-aware: abstain log query
   const { data: abstainLogEntries = [] } = useQuery<AbstainLog[]>({
     queryKey: [`/api/wills/${willId}/abstain-log`],
@@ -1552,6 +1566,82 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </div>
             )}
           </div>
+
+          {/* ── Team Today section ─────────────────────────────────── */}
+          {teamTodayData && teamTodayData.members.length > 1 && (
+            <div className="mb-3" data-testid="section-team-today">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Team Today</p>
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                <div className={`grid gap-3 ${teamTodayData.members.length === 1 ? "grid-cols-1 max-w-[120px] mx-auto" : teamTodayData.members.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                  {teamTodayData.members.map((m) => {
+                    const isMe = m.userId === user?.id;
+                    const cat = teamTodayData.category;
+
+                    // Determine dot color and label from status
+                    let dotClass = "bg-gray-300";
+                    let dotLabel = "Pending";
+                    if (cat === 'habit') {
+                      if (m.status === 'yes') { dotClass = "bg-emerald-500"; dotLabel = "Done"; }
+                      else if (m.status === 'partial') { dotClass = "bg-amber-400"; dotLabel = "Partial"; }
+                      else if (m.status === 'no') { dotClass = "bg-red-400"; dotLabel = "Missed"; }
+                    } else if (cat === 'abstain') {
+                      if (m.status === 'honored') { dotClass = "bg-emerald-500"; dotLabel = "Honored"; }
+                      else if (m.status === 'not-honored') { dotClass = "bg-red-400"; dotLabel = "Slipped"; }
+                    } else if (cat === 'mission') {
+                      if (m.status === 'completed') { dotClass = "bg-emerald-500"; dotLabel = "Completed"; }
+                    }
+
+                    return (
+                      <div key={m.userId} className="flex flex-col items-center" data-testid={`team-today-member-${m.userId}`}>
+                        <div className="relative mb-1.5">
+                          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">
+                              {m.firstName?.charAt(0)?.toUpperCase() || "?"}
+                            </span>
+                          </div>
+                          <div
+                            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${dotClass} rounded-full border-2 border-white`}
+                            title={dotLabel}
+                            data-testid={`team-today-dot-${m.userId}`}
+                          />
+                        </div>
+                        <p className="text-xs font-medium text-gray-800 text-center leading-tight">
+                          {m.firstName || "Member"}
+                        </p>
+                        {isMe && (
+                          <p style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>You</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Legend */}
+                <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-3 justify-center">
+                  {teamTodayData.category === 'habit' && (
+                    <>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Done</span>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />Partial</span>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Missed</span>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />Pending</span>
+                    </>
+                  )}
+                  {teamTodayData.category === 'abstain' && (
+                    <>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Honored</span>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Slipped</span>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />Pending</span>
+                    </>
+                  )}
+                  {teamTodayData.category === 'mission' && (
+                    <>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Completed</span>
+                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />In progress</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── Proof card — always shown ──────────────────────────── */}
           <div className={`bg-white border border-gray-100 rounded-2xl p-4 mb-3 shadow-sm${isProofLocked ? " opacity-50 pointer-events-none select-none" : ""}`}>

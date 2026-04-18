@@ -20,6 +20,8 @@ import {
   circleMembers,
   circleMessages,
   willCommitments,
+  willCheckIns,
+  willFinalReflections,
   deviceTokens,
   users,
   wills,
@@ -2646,6 +2648,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching check-in progress:", error);
       res.status(500).json({ message: "Failed to fetch check-in progress" });
+    }
+  });
+
+  // GET /api/wills/:id/team-today — per-member check-in status for today
+  app.get('/api/wills/:id/team-today', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+
+      // Only participants can see this
+      const isParticipant = await isUserSharedWillParticipant(userId, willId);
+      if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
+
+      const category = will.commitmentCategory;
+
+      // Today's date in ISO format (server-side; consistent with client YYYY-MM-DD)
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      // Get all participant IDs + their user info
+      const participantIds = await getSharedWillParticipantIds(willId);
+      const memberUsers = participantIds.length > 0
+        ? await db.select({ id: users.id, firstName: users.firstName, profileImageUrl: users.profileImageUrl })
+            .from(users)
+            .where(inArray(users.id, participantIds))
+        : [];
+
+      type MemberStatus =
+        | 'yes' | 'no' | 'partial' | 'pending'          // habit
+        | 'honored' | 'not-honored'                       // abstain
+        | 'completed';                                    // mission
+
+      let memberStatuses: Record<string, MemberStatus> = {};
+
+      if (category === 'habit') {
+        const todayCheckIns = await db.select({ userId: willCheckIns.userId, status: willCheckIns.status })
+          .from(willCheckIns)
+          .where(and(
+            eq(willCheckIns.willId, willId),
+            eq(willCheckIns.date, today),
+            inArray(willCheckIns.userId, participantIds)
+          ));
+        for (const ci of todayCheckIns) {
+          memberStatuses[ci.userId] = ci.status as MemberStatus;
+        }
+      } else if (category === 'abstain') {
+        const todayLogs = await db.select({ userId: abstainLogs.userId, honored: abstainLogs.honored })
+          .from(abstainLogs)
+          .where(and(
+            eq(abstainLogs.willId, willId),
+            eq(abstainLogs.date, today),
+            inArray(abstainLogs.userId, participantIds)
+          ));
+        for (const log of todayLogs) {
+          memberStatuses[log.userId] = log.honored ? 'honored' : 'not-honored';
+        }
+      } else if (category === 'mission') {
+        // Per-member mission completion: a member is "completed" when they've submitted
+        // a final reflection for this will (the per-user signal that they finished).
+        const reflections = participantIds.length > 0
+          ? await db.select({ userId: willFinalReflections.userId })
+              .from(willFinalReflections)
+              .where(and(
+                eq(willFinalReflections.willId, willId),
+                inArray(willFinalReflections.userId, participantIds)
+              ))
+          : [];
+        const completedUserIds = new Set(reflections.map(r => r.userId));
+        for (const id of participantIds) {
+          memberStatuses[id] = completedUserIds.has(id) ? 'completed' : 'pending';
+        }
+      }
+
+      const members = memberUsers.map(u => ({
+        userId: u.id,
+        firstName: u.firstName,
+        profileImageUrl: u.profileImageUrl,
+        status: memberStatuses[u.id] ?? 'pending',
+      }));
+
+      res.json({ category, today, members });
+    } catch (error) {
+      console.error("Error fetching team today:", error);
+      res.status(500).json({ message: "Failed to fetch team today" });
     }
   });
 
