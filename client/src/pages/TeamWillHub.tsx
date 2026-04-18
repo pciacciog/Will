@@ -15,10 +15,10 @@ import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import { Capacitor } from "@capacitor/core";
 import {
-  ChevronLeft, ChevronRight, Camera, Plus, Clock, CheckCircle, XCircle, X,
-  Pause, Play, Power, AlertTriangle, ImageIcon,
+  ChevronLeft, ChevronRight, ChevronDown, Camera, Plus, Clock, CheckCircle, XCircle, X,
+  Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle,
 } from "lucide-react";
-import type { Will, AbstainLog } from "@shared/schema";
+import type { Will, AbstainLog, WillCheckIn } from "@shared/schema";
 
 type ProofDrop = {
   id: number;
@@ -68,8 +68,12 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [showFullProgress, setShowFullProgress] = useState(false);
   const [showProofPicker, setShowProofPicker] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
-  const [abstainShowResetConfirm, setAbstainShowResetConfirm] = useState(false);
-  const [missionShowConfirm, setMissionShowConfirm] = useState(false);
+  const [habitProgressExpanded, setHabitProgressExpanded] = useState(false);
+  const [abstainCheckInOpen, setAbstainCheckInOpen] = useState(false);
+  const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
+  const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
+  const [missionCheckInOpen, setMissionCheckInOpen] = useState(false);
+  const [missionKeptGoing, setMissionKeptGoing] = useState(false);
   const [missionCompleted, setMissionCompleted] = useState(false);
 
   useAppRefresh();
@@ -128,6 +132,12 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   }>({
     queryKey: [`/api/wills/${willId}/check-in-progress`],
     enabled: !!user && hasDailyCheckIns,
+  });
+
+  const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
+    queryKey: [`/api/wills/${willId}/check-ins`],
+    enabled: !!user && (will?.commitmentCategory === 'habit' || !will?.commitmentCategory) && hasDailyCheckIns,
+    staleTime: 0,
   });
 
   const isInReview = will?.status === 'will_review';
@@ -224,7 +234,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     },
     onSuccess: () => {
       setMissionCompleted(true);
-      setMissionShowConfirm(false);
+      setMissionCheckInOpen(false);
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
       queryClient.invalidateQueries({ queryKey: ["/api/wills/all-active"] });
     },
@@ -587,6 +597,27 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     }
     return Math.max(best, abstainStreakDays);
   }, [abstainLogEntries, abstainStreakDays]);
+
+  // Habit: detect if already checked in today
+  const habitTodayCheckIn = useMemo(() => {
+    if (will?.commitmentCategory !== 'habit') return null;
+    return checkIns.find((c: WillCheckIn) => c.date === todayLocalDate) || null;
+  }, [checkIns, will?.commitmentCategory, todayLocalDate]);
+
+  // Abstain: calendar day strip (last 14 days)
+  const abstainCalendarDays = useMemo(() => {
+    if (!will?.startDate) return [];
+    const start = new Date(will.startDate as unknown as string);
+    const today = new Date();
+    const days: { date: string; status: 'honored' | 'not-honored' | 'pending' }[] = [];
+    for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = new Date(d).toLocaleDateString('en-CA');
+      const entry = abstainLogEntries.find((e: AbstainLog) => e.date === dateStr);
+      days.push({ date: dateStr, status: entry ? (entry.honored ? 'honored' : 'not-honored') : 'pending' });
+    }
+    return days.slice(-14);
+  }, [will?.startDate, abstainLogEntries]);
+
   const missionDaysRemaining = useMemo(() => {
     if (!will?.endDate) return 0;
     return Math.max(0, Math.ceil((new Date(will.endDate as string).getTime() - Date.now()) / 86400000));
@@ -1080,324 +1111,428 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           {/* ── Progress section — YOUR PROGRESS label + category branch ── */}
           <div className="mb-3">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Your Progress</p>
-            <div className={`bg-white border border-gray-100 rounded-2xl p-4 shadow-sm${isProgressLocked ? " opacity-50 pointer-events-none select-none" : ""}`}>
-              {isProgressLocked ? (
-                /* Locked state — same for all categories */
-                <>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                  </div>
-                  <p className="text-xs text-gray-400 text-center py-2">Available once Will starts</p>
-                </>
-              ) : category === 'habit' ? (
-                /* ── Habit ── */
-                <>
-                  <button
-                    onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
-                    className="w-full flex items-center justify-between mb-3"
-                    data-testid="button-toggle-progress"
-                  >
-                    <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
-                    {hasDailyCheckIns && (
-                      <ChevronRight
-                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
-                      />
-                    )}
-                  </button>
-                  {hasDailyCheckIns && will.status === "active" && (
+
+            {isProgressLocked ? (
+              /* Locked state — same for all categories */
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm opacity-50 pointer-events-none select-none">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <p className="text-xs text-gray-400 text-center py-2">Available once Will starts</p>
+              </div>
+
+            ) : category === 'habit' ? (
+              /* ── Habit ── */
+              <div className="space-y-3">
+                {/* Check-in button */}
+                {will.status === 'active' && hasDailyCheckIns && (
+                  habitTodayCheckIn ? (
+                    <div
+                      className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold"
+                      style={{ backgroundColor: '#1D9E75', opacity: 0.7, color: '#fff' }}
+                      data-testid="button-habit-checked-in"
+                    >
+                      <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
+                      Checked in for today ✓
+                    </div>
+                  ) : (
                     <button
                       onClick={() => setShowCheckInModal(true)}
-                      className="w-full mb-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                      style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
-                      data-testid="button-daily-check-in"
+                      className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                      style={{ backgroundColor: '#1D9E75' }}
+                      data-testid="button-habit-check-in"
                     >
-                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
+                      <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
                       Check in for today
                     </button>
-                  )}
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
-                    </div>
-                    <div>
-                      <p className={`text-xl font-bold ${will.status === "will_review" ? "text-amber-500" : "text-gray-700"}`}>
-                        {will.status === "completed" || will.status === "terminated"
-                          ? (checkInProgress?.checkedInDays ?? 0)
-                          : will.status === "will_review" ? 0
-                          : daysLeft !== null ? daysLeft : "∞"}
-                      </p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "days left"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xl font-bold text-gray-700">{`${checkInProgress?.successRate ?? 0}%`}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">on track</p>
-                    </div>
-                  </div>
-                  {showFullProgress && hasDailyCheckIns && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <ProgressView
-                        willId={willId}
-                        startDate={will.startDate as unknown as string}
-                        endDate={will.endDate as unknown as string | null}
-                        checkInType={userCheckInType}
-                        activeDays={will.activeDays || undefined}
-                        customDays={will.customDays || undefined}
-                      />
-                    </div>
-                  )}
-                  {!showFullProgress && hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <ProgressView
-                        willId={willId}
-                        startDate={will.startDate as unknown as string}
-                        endDate={will.endDate as unknown as string | null}
-                        checkInType={userCheckInType}
-                        activeDays={will.activeDays || undefined}
-                        customDays={will.customDays || undefined}
-                      />
-                    </div>
-                  )}
-                </>
-              ) : category === 'abstain' ? (
-                /* ── Abstain ── */
-                <div className="space-y-2" data-testid="section-abstain-actions">
-                  {(() => {
-                    // Lock derives from server truth only — no local state override
-                    const isLogged = !!abstainTodayEntry;
-                    const lockedStyle = isLogged ? { opacity: 0.3, pointerEvents: 'none' as const } : {};
-                    return (
-                      <>
-                        <button
-                          onClick={() => { abstainLogMutation.mutate({ honored: true }); setAbstainShowResetConfirm(false); }}
-                          disabled={isLogged || abstainLogMutation.isPending}
-                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors"
-                          style={{ border: '2px solid #1D9E75', color: '#1D9E75', ...lockedStyle }}
-                          data-testid="button-abstain-honored"
-                        >
-                          <CheckCircle style={{ width: 20, height: 20 }} />
-                          {isLogged ? 'Logged for today ✓' : 'I honored my will today'}
-                        </button>
-                        <button
-                          onClick={() => { if (!isLogged) setAbstainShowResetConfirm(true); }}
-                          disabled={isLogged || abstainLogMutation.isPending}
-                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors"
-                          style={{ border: '2px solid #E24B4A', color: '#E24B4A', ...lockedStyle }}
-                          data-testid="button-abstain-didnt-honor"
-                        >
-                          <XCircle style={{ width: 20, height: 20 }} />
-                          I didn&apos;t honor it today
-                        </button>
-                        {!isLogged && abstainShowResetConfirm && (
-                          <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: '#FCEBEB', border: '1.5px solid #E24B4A' }}>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">Reset your streak?</p>
-                              <p className="text-xs text-gray-500 mt-0.5">Honest and brave. You can start again right now.</p>
+                  )
+                )}
+                {/* Collapsible progress card */}
+                {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" data-testid="card-habit-progress">
+                    <button
+                      className="w-full flex items-center justify-between px-4 py-3"
+                      onClick={() => setHabitProgressExpanded(v => !v)}
+                      data-testid="button-habit-progress-toggle"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="flex gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />
+                        </span>
+                        <div>
+                          <span className="text-sm font-semibold text-gray-800">Your progress</span>
+                          {checkIns.length > 0 && (
+                            <p className="text-xs text-gray-400">
+                              {checkIns.filter((c: WillCheckIn) => c.status === 'yes').length} done · {checkIns.filter((c: WillCheckIn) => c.status === 'partial').length} partial · {checkIns.filter((c: WillCheckIn) => c.status === 'no').length} missed
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold" style={{ color: '#1D9E75' }}>
+                          {(() => {
+                            const yes = checkIns.filter((c: WillCheckIn) => c.status === 'yes').length;
+                            const total = checkIns.length;
+                            return total > 0 ? `${Math.round((yes / total) * 100)}%` : '—';
+                          })()}
+                        </span>
+                        <ChevronDown style={{ width: 16, height: 16, color: '#9ca3af', transform: habitProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                      </div>
+                    </button>
+                    {habitProgressExpanded && (
+                      <div className="px-4 pb-4">
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                          <div className="text-center p-2 rounded-lg bg-emerald-50">
+                            <div className="text-lg font-bold text-emerald-700">{checkInProgress?.yesCount ?? 0}</div>
+                            <div className="text-xs text-emerald-600 flex items-center justify-center gap-0.5">
+                              <CheckCircle style={{ width: 10, height: 10 }} /> done
                             </div>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => setAbstainShowResetConfirm(false)}
-                                className="flex-1 py-2 rounded-lg text-sm font-medium bg-white border"
-                                style={{ borderColor: '#E24B4A', color: '#E24B4A' }}
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => { abstainLogMutation.mutate({ honored: false }); setAbstainShowResetConfirm(false); }}
-                                className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
-                                style={{ backgroundColor: '#E24B4A' }}
-                                data-testid="button-abstain-confirm-reset"
-                              >
-                                Yes, reset
-                              </button>
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-amber-50">
+                            <div className="text-lg font-bold text-amber-700">{checkInProgress?.partialCount ?? 0}</div>
+                            <div className="text-xs text-amber-600 flex items-center justify-center gap-0.5">
+                              <MinusCircle style={{ width: 10, height: 10 }} /> partial
+                            </div>
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-red-50">
+                            <div className="text-lg font-bold text-red-600">{checkInProgress?.noCount ?? 0}</div>
+                            <div className="text-xs text-red-500 flex items-center justify-center gap-0.5">
+                              <XCircle style={{ width: 10, height: 10 }} /> missed
+                            </div>
+                          </div>
+                        </div>
+                        <ProgressView
+                          willId={willId}
+                          startDate={will.startDate as unknown as string}
+                          endDate={will.endDate as unknown as string | null}
+                          checkInType={userCheckInType}
+                          activeDays={will.activeDays || undefined}
+                          customDays={will.customDays || undefined}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+            ) : category === 'abstain' ? (
+              /* ── Abstain ── */
+              <div className="space-y-3">
+                {/* Check-in flow */}
+                {will.status === 'active' && (
+                  <div data-testid="section-abstain-actions">
+                    {(abstainTodayEntry || abstainJustLoggedHonored !== null) ? (
+                      /* Result card — locked for today */
+                      (() => {
+                        const honored = abstainTodayEntry?.honored ?? (abstainJustLoggedHonored ?? true);
+                        return honored ? (
+                          <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#E1F5EE', border: '2px solid #1D9E75' }} data-testid="abstain-result-honored">
+                            <div className="flex items-center justify-center rounded-full" style={{ width: 44, height: 44, backgroundColor: '#1D9E75' }}>
+                              <CheckCircle style={{ width: 22, height: 22, color: '#fff' }} />
+                            </div>
+                            <p className="text-sm font-semibold mt-1" style={{ color: '#085041' }}>Will honored</p>
+                            <p className="text-xs" style={{ color: '#2E7D63' }}>Logged for today.</p>
+                          </div>
+                        ) : (
+                          <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#FCEBEB', border: '2px solid #E24B4A' }} data-testid="abstain-result-not-honored">
+                            <div className="flex items-center justify-center rounded-full" style={{ width: 44, height: 44, backgroundColor: '#E24B4A' }}>
+                              <XCircle style={{ width: 22, height: 22, color: '#fff' }} />
+                            </div>
+                            <p className="text-sm font-semibold mt-1" style={{ color: '#791F1F' }}>That's okay</p>
+                            <p className="text-xs" style={{ color: '#A32D2D' }}>Tomorrow is a fresh start.</p>
+                          </div>
+                        );
+                      })()
+                    ) : abstainCheckInOpen ? (
+                      /* Step 2: Options card */
+                      <div className="bg-white rounded-xl border border-gray-200 p-4" data-testid="abstain-checkin-options">
+                        <p className="text-xs text-gray-400 text-center mb-3">Did you honor your will today?</p>
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true }); }}
+                            disabled={abstainLogMutation.isPending}
+                            className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                            style={{ border: '2px solid #1D9E75', color: '#085041' }}
+                            data-testid="button-abstain-honored"
+                          >
+                            <CheckCircle style={{ width: 20, height: 20, color: '#1D9E75' }} />
+                            I honored my will
+                          </button>
+                          <button
+                            onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: false }); }}
+                            disabled={abstainLogMutation.isPending}
+                            className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                            style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
+                            data-testid="button-abstain-didnt-honor"
+                          >
+                            <XCircle style={{ width: 20, height: 20, color: '#E24B4A' }} />
+                            I didn't honor it
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Step 1: Check in button */
+                      <button
+                        onClick={() => setAbstainCheckInOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                        style={{ backgroundColor: '#1D9E75' }}
+                        data-testid="button-abstain-check-in"
+                      >
+                        <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
+                        Check in for today
+                      </button>
+                    )}
+                  </div>
+                )}
+                {/* Collapsible progress card */}
+                {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" data-testid="card-abstain-progress">
+                    <button
+                      className="w-full flex items-center justify-between px-4 py-3"
+                      onClick={() => setAbstainProgressExpanded(v => !v)}
+                      data-testid="button-abstain-progress-toggle"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="flex gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />
+                        </span>
+                        <div>
+                          <span className="text-sm font-semibold text-gray-800">Your progress</span>
+                          {(() => {
+                            const honored = abstainLogEntries.filter((e: AbstainLog) => e.honored).length;
+                            const notHonored = abstainLogEntries.filter((e: AbstainLog) => !e.honored).length;
+                            return (honored + notHonored) > 0 ? (
+                              <p className="text-xs text-gray-400">{honored} honored · {notHonored} not honored</p>
+                            ) : null;
+                          })()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const honored = abstainLogEntries.filter((e: AbstainLog) => e.honored).length;
+                          const total = abstainLogEntries.length;
+                          return total > 0 ? (
+                            <span className="text-sm font-bold" style={{ color: '#1D9E75' }}>
+                              {Math.round((honored / total) * 100)}%
+                            </span>
+                          ) : null;
+                        })()}
+                        <ChevronDown style={{ width: 16, height: 16, color: '#9ca3af', transform: abstainProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                      </div>
+                    </button>
+                    {abstainProgressExpanded && (
+                      <div className="px-4 pb-4 space-y-3">
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="text-center p-2 rounded-lg" style={{ backgroundColor: '#E1F5EE' }}>
+                            <div className="text-lg font-bold" style={{ color: '#1D9E75' }}>{abstainLogEntries.filter((e: AbstainLog) => e.honored).length}</div>
+                            <div className="text-xs" style={{ color: '#1D9E75' }}>honored</div>
+                          </div>
+                          <div className="text-center p-2 rounded-lg" style={{ backgroundColor: '#FCEBEB' }}>
+                            <div className="text-lg font-bold" style={{ color: '#E24B4A' }}>{abstainLogEntries.filter((e: AbstainLog) => !e.honored).length}</div>
+                            <div className="text-xs" style={{ color: '#E24B4A' }}>not honored</div>
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-gray-50">
+                            <div className="text-lg font-bold text-gray-700">
+                              {will.endDate ? Math.max(0, Math.ceil((new Date(will.endDate as string).getTime() - Date.now()) / 86400000)) : '∞'}
+                            </div>
+                            <div className="text-xs text-gray-500">days left</div>
+                          </div>
+                        </div>
+                        {abstainCalendarDays.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex gap-1 flex-wrap">
+                              {abstainCalendarDays.map((d) => (
+                                <div key={d.date} className="flex flex-col items-center" style={{ minWidth: 30 }}>
+                                  <div
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium"
+                                    style={{
+                                      backgroundColor: d.status === 'honored' ? '#1D9E75' : d.status === 'not-honored' ? '#E24B4A' : '#F3F4F6',
+                                      color: d.status === 'pending' ? '#9CA3AF' : '#fff',
+                                    }}
+                                  >
+                                    {new Date(d.date + 'T00:00:00').getDate()}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /><span className="text-xs text-gray-500">Honored</span></div>
+                              <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" /><span className="text-xs text-gray-500">Not honored</span></div>
+                              <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-200 inline-block" /><span className="text-xs text-gray-500">Pending</span></div>
                             </div>
                           </div>
                         )}
-                      </>
-                    );
-                  })()}
-                  {/* Stats row */}
-                  <div className="grid grid-cols-3 gap-3 text-center pt-2">
-                    <div>
-                      <p className="text-xl font-bold text-emerald-500">{abstainStreakDays}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
-                    </div>
-                    <div>
-                      <p className="text-xl font-bold text-gray-700">{daysLeft !== null ? daysLeft : "∞"}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">days left</p>
-                    </div>
-                    <div>
-                      <p className="text-xl font-bold text-gray-700">{abstainBestStreak}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">best streak</p>
-                    </div>
-                  </div>
-                </div>
-              ) : category === 'mission' ? (
-                /* ── Mission ── */
-                <div className="flex flex-col items-center gap-4">
-                  {/* SVG Countdown ring */}
-                  {(() => {
-                    const size = 88;
-                    const strokeW = 7;
-                    const r = (size - strokeW) / 2;
-                    const circ = 2 * Math.PI * r;
-                    const fraction = missionTotalDays > 0 ? Math.max(0, Math.min(1, missionDaysRemaining / missionTotalDays)) : 0;
-                    const dashOffset = circ * (1 - fraction);
-                    return (
-                      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-                        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-                          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={strokeW} />
-                          <circle
-                            cx={size / 2} cy={size / 2} r={r} fill="none"
-                            stroke="#1D9E75" strokeWidth={strokeW}
-                            strokeLinecap="round"
-                            strokeDasharray={circ}
-                            strokeDashoffset={dashOffset}
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-2xl font-bold text-gray-900 leading-none">{missionDaysRemaining}</span>
-                          <span className="text-[10px] text-gray-400 mt-0.5">days left</span>
-                        </div>
                       </div>
-                    );
-                  })()}
-                  {/* Mark as done button */}
-                  {missionCompleted || will.status === 'completed' ? (
-                    <div
-                      className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-base font-semibold"
-                      style={{ backgroundColor: '#E1F5EE', color: '#1D9E75', border: '2px solid #1D9E75' }}
-                    >
-                      <CheckCircle style={{ width: 20, height: 20 }} />
-                      Completed!
-                    </div>
-                  ) : missionShowConfirm ? (
-                    <div className="w-full rounded-xl p-4 space-y-3" style={{ backgroundColor: '#E1F5EE', border: '1.5px solid #9FE1CB' }}>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">You did it?</p>
-                        <p className="text-xs text-gray-500 mt-0.5">This will complete your Will and celebrate the moment.</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setMissionShowConfirm(false)}
-                          className="flex-1 py-2 rounded-lg text-sm font-medium bg-white border"
-                          style={{ borderColor: '#1D9E75', color: '#1D9E75' }}
-                        >
-                          Not yet
-                        </button>
-                        <button
-                          onClick={() => missionCompleteMutation.mutate()}
-                          disabled={missionCompleteMutation.isPending}
-                          className="flex-1 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
-                          style={{ backgroundColor: '#1D9E75' }}
-                          data-testid="button-mission-confirm-done"
-                        >
-                          {missionCompleteMutation.isPending ? 'Saving…' : 'Yes, done!'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    will.status === 'active' && (
-                      <button
-                        onClick={() => setMissionShowConfirm(true)}
-                        className="w-full py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                        style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
-                        data-testid="button-mission-mark-done"
-                      >
-                        <svg viewBox="0 0 24 24" style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        Mark as done
-                      </button>
-                    )
-                  )}
-                </div>
-              ) : (
-                /* ── Null / legacy ── */
-                <>
-                  <button
-                    onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
-                    className="w-full flex items-center justify-between mb-3"
-                    data-testid="button-toggle-progress"
-                  >
-                    <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
-                    {hasDailyCheckIns && (
-                      <ChevronRight
-                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
-                      />
                     )}
-                  </button>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
-                    </div>
-                    <div>
-                      <p className={`text-xl font-bold ${will.status === "will_review" ? "text-amber-500" : "text-gray-700"}`}>
-                        {will.status === "completed" || will.status === "terminated"
-                          ? (checkInProgress?.checkedInDays ?? 0)
-                          : will.status === "will_review" ? 0
-                          : daysLeft !== null ? daysLeft : "∞"}
-                      </p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "days left"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xl font-bold text-gray-700">{`${checkInProgress?.successRate ?? 0}%`}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "on track"}
-                      </p>
-                    </div>
                   </div>
-                  {hasDailyCheckIns && will.status === "active" && (
-                    <button
-                      onClick={() => setShowCheckInModal(true)}
-                      className="w-full mt-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                      style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
-                      data-testid="button-daily-check-in"
-                    >
-                      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
+                )}
+              </div>
+
+            ) : category === 'mission' ? (
+              /* ── Mission ── */
+              <div className="space-y-3">
+                {(will.status === 'active' || will.status === 'completed') && (
+                  <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col items-center gap-4" data-testid="card-mission-progress">
+                    {/* SVG Circular Countdown Ring */}
+                    <div className="relative flex items-center justify-center" style={{ width: 120, height: 120 }}>
+                      <svg width={120} height={120} style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx={60} cy={60} r={50} fill="none" stroke="#E5E7EB" strokeWidth={9} />
+                        <circle
+                          cx={60} cy={60} r={50} fill="none"
+                          stroke="#534AB7" strokeWidth={9}
+                          strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 50}
+                          strokeDashoffset={2 * Math.PI * 50 * (1 - (missionDaysRemaining / missionTotalDays))}
+                          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                        />
                       </svg>
-                      Check in for today
-                    </button>
-                  )}
-                  {showFullProgress && hasDailyCheckIns && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <ProgressView
-                        willId={willId}
-                        startDate={will.startDate as unknown as string}
-                        endDate={will.endDate as unknown as string | null}
-                        checkInType={userCheckInType}
-                        activeDays={will.activeDays || undefined}
-                        customDays={will.customDays || undefined}
-                      />
+                      <div className="absolute flex flex-col items-center justify-center">
+                        <span className="text-2xl font-bold text-gray-900">{missionDaysRemaining}</span>
+                        <span className="text-xs text-gray-400 leading-tight">days left</span>
+                      </div>
                     </div>
+                    {/* Check-in flow */}
+                    {will.status === 'active' && (
+                      missionCompleted ? (
+                        <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#E1F5EE', border: '2px solid #1D9E75' }} data-testid="mission-result-completed">
+                          <p className="text-sm font-semibold" style={{ color: '#085041' }}>Will completed!</p>
+                          <p className="text-xs" style={{ color: '#2E7D63' }}>You did it. This chapter is closed.</p>
+                        </div>
+                      ) : missionKeptGoing ? (
+                        <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5 bg-gray-50 border border-gray-200" data-testid="mission-result-not-yet">
+                          <p className="text-sm font-semibold text-gray-700">Keep going</p>
+                          <p className="text-xs text-gray-400">You still have time.</p>
+                        </div>
+                      ) : missionCheckInOpen ? (
+                        <div className="w-full" data-testid="mission-checkin-options">
+                          <p className="text-xs text-gray-400 text-center mb-3">Have you completed it?</p>
+                          <div className="space-y-2">
+                            <button
+                              onClick={() => missionCompleteMutation.mutate()}
+                              disabled={missionCompleteMutation.isPending}
+                              className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                              style={{ border: '2px solid #534AB7', color: '#26215C' }}
+                              data-testid="button-mission-confirm-done"
+                            >
+                              <CheckCircle style={{ width: 20, height: 20, color: '#534AB7' }} />
+                              {missionCompleteMutation.isPending ? 'Saving...' : 'Yes, I completed it'}
+                            </button>
+                            <button
+                              onClick={() => { setMissionCheckInOpen(false); setMissionKeptGoing(true); }}
+                              className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                              style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
+                              data-testid="button-mission-not-yet"
+                            >
+                              Not yet
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setMissionCheckInOpen(true)}
+                          className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                          style={{ backgroundColor: '#534AB7' }}
+                          data-testid="button-mission-check-in"
+                        >
+                          <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
+                          Check in for today
+                        </button>
+                      )
+                    )}
+                    {will.status === 'completed' && (
+                      <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#E1F5EE', border: '2px solid #1D9E75' }} data-testid="mission-already-completed">
+                        <p className="text-sm font-semibold" style={{ color: '#085041' }}>Will completed!</p>
+                        <p className="text-xs" style={{ color: '#2E7D63' }}>You did it. This chapter is closed.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+            ) : (
+              /* ── Null / legacy — unchanged from before ── */
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                <button
+                  onClick={() => hasDailyCheckIns && setShowFullProgress(p => !p)}
+                  className="w-full flex items-center justify-between mb-3"
+                  data-testid="button-toggle-progress"
+                >
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Your Progress</p>
+                  {hasDailyCheckIns && (
+                    <ChevronRight
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showFullProgress ? "rotate-90" : ""}`}
+                    />
                   )}
-                  {!showFullProgress && hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <ProgressView
-                        willId={willId}
-                        startDate={will.startDate as unknown as string}
-                        endDate={will.endDate as unknown as string | null}
-                        checkInType={userCheckInType}
-                        activeDays={will.activeDays || undefined}
-                        customDays={will.customDays || undefined}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+                </button>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="text-xl font-bold text-emerald-500">{checkInProgress?.streak ?? 0}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">day streak</p>
+                  </div>
+                  <div>
+                    <p className={`text-xl font-bold ${will.status === "will_review" ? "text-amber-500" : "text-gray-700"}`}>
+                      {will.status === "completed" || will.status === "terminated"
+                        ? (checkInProgress?.checkedInDays ?? 0)
+                        : will.status === "will_review" ? 0
+                        : daysLeft !== null ? daysLeft : "∞"}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "days left"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-gray-700">{`${checkInProgress?.successRate ?? 0}%`}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {will.status === "will_review" || will.status === "completed" || will.status === "terminated" ? "completed" : "on track"}
+                    </p>
+                  </div>
+                </div>
+                {hasDailyCheckIns && will.status === "active" && (
+                  <button
+                    onClick={() => setShowCheckInModal(true)}
+                    className="w-full mt-3 py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, #2D9D78, #1e8a68)" }}
+                    data-testid="button-daily-check-in"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Check in for today
+                  </button>
+                )}
+                {showFullProgress && hasDailyCheckIns && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <ProgressView
+                      willId={willId}
+                      startDate={will.startDate as unknown as string}
+                      endDate={will.endDate as unknown as string | null}
+                      checkInType={userCheckInType}
+                      activeDays={will.activeDays || undefined}
+                      customDays={will.customDays || undefined}
+                    />
+                  </div>
+                )}
+                {!showFullProgress && hasDailyCheckIns && (will.status === "completed" || will.status === "terminated") && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <ProgressView
+                      willId={willId}
+                      startDate={will.startDate as unknown as string}
+                      endDate={will.endDate as unknown as string | null}
+                      checkInType={userCheckInType}
+                      activeDays={will.activeDays || undefined}
+                      customDays={will.customDays || undefined}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ── Proof card — always shown ──────────────────────────── */}

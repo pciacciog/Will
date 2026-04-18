@@ -1,0 +1,80 @@
+
+TeamWillHub.tsx — replace progress section with Solo Will progress code
+The only change in this prompt is the progress section in TeamWillHub.tsx. Everything else — nav bar, status badge, team card, avatars, proof section, manage modal, photo modal — stays completely untouched.
+
+The layout remains:
+1. Nav bar — unchanged
+2. Status badge — unchanged
+3. Team card (YOUR TEAM avatars for I Will / OUR COMMITMENT hero for We Will) — unchanged
+4. "YOUR PROGRESS" section label
+5. Progress section — THIS IS THE ONLY THING CHANGING
+6. Proof section — unchanged
+
+Before writing any code:
+Open WillDetails.tsx and find the complete progress section for all three commitmentCategory values — habit, abstain, and mission. Document every component, hook, state variable, and API call involved for each. Report all of this before writing a single line of code.
+
+HABIT
+Copy the Habit progress section from WillDetails.tsx into TeamWillHub.tsx for commitmentCategory === 'habit':
+
+Green "Check in for today" button — same style and behavior
+DailyCheckInModal mounted at the bottom of the component tree with the same props: willId, startDate, endDate, checkInType, activeDays, customDays
+On save: POST /api/wills/:id/check-ins with { date, status }
+Button locks after check-in for the rest of the day, resets at midnight
+Collapsible "Your progress" card below the button:
+
+Collapsed: colored dots + "X done · X partial · X missed" + on track % + chevron
+Expanded: three stat boxes (done / partial / missed) + day strip calendar (green/amber/red/pending) + legend
+Data from GET /api/wills/:id/check-in-progress
+
+
+
+
+ABSTAIN
+Copy the Abstain progress section from WillDetails.tsx into TeamWillHub.tsx for commitmentCategory === 'abstain':
+
+Green "Check in for today" button
+Tapping reveals inline card: "Did you honor your will today?" + two buttons
+Honored → green result card ("Will honored / Logged for today.")
+Didn't honor → red result card ("That's okay / Tomorrow is a fresh start.")
+Both options lock for the rest of the day, reset at midnight
+API call on selection: POST /api/wills/:id/abstain-log with { honored: boolean }
+Collapsible "Your progress" card below:
+
+Collapsed: colored dots + "X honored · X not honored" + chevron
+Expanded: stat boxes (honored / not honored / days left) + day strip (green for honored, red for not honored, pending for future) + legend
+Data from GET /api/wills/:id/check-in-progress mapping yesCount → honored, noCount → not honored
+
+
+
+
+MISSION
+Copy the Mission progress section from WillDetails.tsx into TeamWillHub.tsx for commitmentCategory === 'mission':
+
+Circular countdown ring (SVG) — purple arc (#534AB7), days left centered
+Green "Check in for today" button below the ring
+Tapping reveals: "Have you completed it?" + "Yes, I completed it" + "Not yet"
+Yes → green result card ("Will completed! / You did it. This chapter is closed.") + PATCH /api/wills/:id with { status: 'completed' }
+Not yet → neutral result card ("Keep going / You still have time.") — no API call, resets next day
+Both lock for the rest of the day
+
+
+Legacy null fallback
+For any Will where commitmentCategory is null, keep the existing progress section exactly as it was before this change. No regression for legacy Wills.
+
+What must not change:
+
+Team card — YOUR TEAM avatars and individual commitment text for I Will, OUR COMMITMENT hero and avatars for We Will
+Proof section — the entire proof card including + Drop button, thumbnail grid, empty state
+Nav bar, status badge, manage modal, photo modal, messages button
+All polling intervals and API endpoints not mentioned above
+WillDetails.tsx — do not touch Solo Will code at all
+
+
+Implementation order:
+
+Document the Solo Will progress section for all three categories — report before writing any code
+Copy Habit progress into TeamWillHub.tsx
+Copy Abstain progress into TeamWillHub.tsx
+Copy Mission progress into TeamWillHub.tsx
+Confirm legacy null fallback renders correctly
+Test all three category types on a real iOS device — confirm check-in, save, lock, and midnight reset all work correctly
