@@ -1,0 +1,25 @@
+NotificationsSetup — three copy and UI fixes across all will types
+Apply all three fixes across Habit, Abstain and Mission — Solo and Team flows.
+
+Fix 1 — Copy change: "there is" → "there are"
+Find every instance of "Notify me when there is…" in NotificationsSetup.tsx and replace with:
+"Notify me when there are…"
+This applies to the Mission deadline reminders section. Check if the same string appears anywhere else in the component and update all instances.
+
+Fix 2 — Preview card labeling
+The PREVIEW card currently just says "PREVIEW" in small caps which is vague. Replace the label with:
+"NOTIFICATION PREVIEW"
+This makes it immediately clear to the user that what they're seeing is exactly how the notification will appear on their lock screen. Apply this label change to every preview card in the component — Habit reminder preview, Habit check-in preview, Abstain reminder preview, Abstain milestone preview, Mission deadline preview, Mission daily nudge preview.
+Also remove the preview card entirely from the Mission deadline reminders section since the deadline options (3 days left, 1 day left, day of deadline) are not yet confirmed by the user — the preview only makes sense after at least one option is selected. Once the user selects at least one deadline option, show the preview card below the options. If nothing is selected, hide the preview card.
+
+Fix 3 — Toggle rendering broken on iOS
+The toggle switch in the Optional Daily Nudge card (Mission) is rendering as a large gray square instead of a proper pill-shaped toggle. This is an iOS rendering issue.
+Find the toggle component being used. If it is a custom component, check that it has explicit width, height, and borderRadius set:
+width: 51px
+height: 31px  
+borderRadius: 15.5px
+If it is using a native Switch component from React Native, confirm it is not wrapped in a container that is overriding its dimensions. Remove any transform: scale() or size overrides that could be distorting it.
+The toggle should look identical to the working toggles in the Habit and Abstain reminder cards — use the exact same toggle component and style as those.
+Test on a physical iOS device to confirm it renders as a proper pill-shaped toggle.
+
+Applies to: NotificationsSetup.tsx — all three category types, both Solo (StartWill.tsx) and Team (CreateTeamWill.tsx and SubmitCommitment.tsx) flows.
