@@ -1,0 +1,33 @@
+ TO JS {"exif":{"PixelXDimension":1170,"Orientation":1,"PixelYDimension":2532,"ColorSpace":1},"saved":false,"format":"jpeg","base64String":"\/9j\/4AAQSkZJRgABAQAA2ADYAAD\/4QCMRXhpZgAATU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAIdp
+⚡️  [log] - [ProofDrop] Captured — format: jpeg, size: 551756
+⚡️  [log] - [ProofDrop] normalised: image/jpeg 413815 → image/jpeg 164148
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...9JeGMgQwp8
+⚡️  To Native ->  CapacitorHttp request 43940819
+⚡️  TO JS {"data":{"version":1776518966,"placeholder":false,"api_key":"652228341345482","height":1200,"signature":"428acb0b27ddc1651c27a34a74c05f09d8468d48","resource_type":"image","tags":[],"asset_folder":"","display_name":"1768756059932eniavxoo6_1776518964_t1exb3"
+⚡️  To Native ->  CapacitorHttp request 43940820
+⚡️  TO JS {"data":{"message":"Failed to create proof drop."},"status":500,"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/wills\/119\/proofs","headers":{"content-length":"42","content-type":"application\/json; charset=utf-8","x-replit-public":"true","
+⚡️  To Native ->  CapacitorHttp request 43940821
+⚡️  TO JS {"url":"https:\/\/will-staging-porfirioaciacci.replit.app\/api\/cloudinary\/abandon","headers":{"content-length":"16","content-type":"application\/json; charset=utf-8","x-replit-public":"true","access-control-allow-headers":"Origin, X-Requested-With, Conte
+⚡️  TO JS {"isActive":false}
+⚡️  [log] - ╔════════════════════════════════════════════════════════════╗
+⚡️  [log] - ║ APP STATE CHANGED                                          ║
+⚡️  [log] - ╚════════════════════════════════════════════════════════════╝
+⚡️  [log] - 📱 [App] New state: 🔴 INACTIVE (Background)
+⚡️  [log] - 📱 [App] Change timestamp: 2026-04-18T13:29:32.075Z
+⚡️  [log] - 📱 [App] Time since last change: 14 seconds
+⚡️  [log] - 📱 [App] Time since app launch: 40 seconds
+⚡️  [log] - 🔽 [App] App GOING TO BACKGROUND
+⚡️  [log] - 🔽 [App] iOS may clear storage if backgrounded long enough
+⚡️  [log] - 🔽 [App] Current auth token will be verified on return
+⚡️  [log] - ════════════════════════════════════════════════════════════
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...9JeGMgQwp8
+⚡️  [log] - 🔍 [SessionPersistence] getToken() called
+⚡️  [log] - 🔍 [SessionPersistence] Memory cache: HAS TOKEN
+⚡️  [log] - ✅ [SessionPersistence] Returning token from MEMORY cache
+⚡️  [log] - ✅ [SessionPersistence] Token preview: eyJhbGciOiJIUzI1NiIs...9JeGMgQwp8

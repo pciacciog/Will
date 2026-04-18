@@ -4567,14 +4567,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const existing = await db
-          .select({ id: circleProofs.id })
-          .from(circleProofs)
+          .select({ id: willProofs.id })
+          .from(willProofs)
           .where(
             and(
-              eq(circleProofs.userId, userId),
-              eq(circleProofs.willId, willId),
-              gte(circleProofs.createdAt, today),
-              ne(circleProofs.status, 'failed')
+              eq(willProofs.userId, userId),
+              eq(willProofs.willId, willId),
+              gte(willProofs.createdAt, today),
+              ne(willProofs.status, 'failed')
             )
           )
           .limit(1);
@@ -4583,8 +4583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const [proof] = await db.insert(circleProofs).values({
-        circleId: null,
+      const [proof] = await db.insert(willProofs).values({
         willId,
         userId,
         imageUrl,
@@ -4608,11 +4607,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const proofId = parseInt(req.params.proofId);
       if (isNaN(proofId)) return res.status(400).json({ message: 'Invalid proof ID.' });
 
-      const [existing] = await db.select().from(circleProofs).where(eq(circleProofs.id, proofId)).limit(1);
+      const [existing] = await db.select().from(willProofs).where(eq(willProofs.id, proofId)).limit(1);
       if (!existing) return res.status(404).json({ message: 'Proof not found.' });
       if (existing.userId !== userId) return res.status(403).json({ message: 'Not your proof.' });
 
-      const [updated] = await db.update(circleProofs).set({ status: 'confirmed' }).where(eq(circleProofs.id, proofId)).returning();
+      const [updated] = await db.update(willProofs).set({ status: 'confirmed' }).where(eq(willProofs.id, proofId)).returning();
       res.json(updated);
     } catch (err) {
       console.error('[Proof] Failed to confirm proof:', err);
@@ -4627,11 +4626,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const proofId = parseInt(req.params.proofId);
       if (isNaN(proofId)) return res.status(400).json({ message: 'Invalid proof ID.' });
 
-      const [existing] = await db.select().from(circleProofs).where(eq(circleProofs.id, proofId)).limit(1);
+      const [existing] = await db.select().from(willProofs).where(eq(willProofs.id, proofId)).limit(1);
       if (!existing) return res.status(404).json({ message: 'Proof not found.' });
       if (existing.userId !== userId) return res.status(403).json({ message: 'Not your proof.' });
 
-      await db.update(circleProofs).set({ status: 'failed' }).where(eq(circleProofs.id, proofId));
+      await db.update(willProofs).set({ status: 'failed' }).where(eq(willProofs.id, proofId));
 
       if (existing.cloudinaryPublicId && process.env.CLOUDINARY_API_SECRET
           && existing.cloudinaryPublicId.startsWith('will_proofs/')) {
@@ -4669,28 +4668,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isParticipant) return res.status(403).json({ message: 'Not a participant of this will.' });
 
       const conditions = [
-        eq(circleProofs.willId, willId),
-        eq(circleProofs.status, 'confirmed'),
-        ...(cursor ? [lt(circleProofs.createdAt, cursor)] : []),
+        eq(willProofs.willId, willId),
+        eq(willProofs.status, 'confirmed'),
+        ...(cursor ? [lt(willProofs.createdAt, cursor)] : []),
       ];
 
       const rows = await db
         .select({
-          id: circleProofs.id,
-          willId: circleProofs.willId,
-          userId: circleProofs.userId,
-          imageUrl: circleProofs.imageUrl,
-          thumbnailUrl: circleProofs.thumbnailUrl,
-          caption: circleProofs.caption,
-          status: circleProofs.status,
-          createdAt: circleProofs.createdAt,
+          id: willProofs.id,
+          willId: willProofs.willId,
+          userId: willProofs.userId,
+          imageUrl: willProofs.imageUrl,
+          thumbnailUrl: willProofs.thumbnailUrl,
+          caption: willProofs.caption,
+          status: willProofs.status,
+          createdAt: willProofs.createdAt,
           firstName: users.firstName,
           email: users.email,
         })
-        .from(circleProofs)
-        .innerJoin(users, eq(circleProofs.userId, users.id))
+        .from(willProofs)
+        .innerJoin(users, eq(willProofs.userId, users.id))
         .where(and(...conditions))
-        .orderBy(desc(circleProofs.createdAt))
+        .orderBy(desc(willProofs.createdAt))
         .limit(limit + 1);
 
       const hasMore = rows.length > limit;
@@ -4763,7 +4762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const proofId = parseInt(req.params.proofId);
       if (isNaN(proofId)) return res.status(400).json({ message: 'Invalid proof ID.' });
 
-      const [existing] = await db.select().from(circleProofs).where(eq(circleProofs.id, proofId)).limit(1);
+      const [existing] = await db.select().from(willProofs).where(eq(willProofs.id, proofId)).limit(1);
       if (!existing) return res.status(404).json({ message: 'Proof not found.' });
       if (existing.userId !== userId) return res.status(403).json({ message: 'Not your proof.' });
 
@@ -4779,7 +4778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      await db.delete(circleProofs).where(eq(circleProofs.id, proofId));
+      await db.delete(willProofs).where(eq(willProofs.id, proofId));
       res.json({ success: true });
     } catch (err) {
       console.error('[Proof] Failed to delete proof:', err);
