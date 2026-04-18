@@ -673,8 +673,8 @@ export default function SubmitCommitment() {
               <p className="text-sm italic text-gray-700 leading-snug">{why}</p>
             </div>
 
-            {/* Notifications — white card outside purple */}
-            {notificationsData?.commitmentCategory && (
+            {/* Notifications — white card outside purple (I Will only) */}
+            {notificationsData?.commitmentCategory && !isCumulative && (
               <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 border border-purple-100">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, color: '#7B3FC4' }}>
