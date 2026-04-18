@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ChevronLeft, UserPlus, Check, Users } from "lucide-react";
+import { ChevronLeft, UserPlus, Users } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -164,8 +164,8 @@ export default function FriendsPage() {
           <div className="relative mb-3">
             <svg
               viewBox="0 0 24 24"
-              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-              style={{ left: 13 }}
+              className="absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              style={{ left: 13, width: 16, height: 16, transform: 'translateY(-50%)' }}
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -280,24 +280,31 @@ export default function FriendsPage() {
                         <p className="text-[11px] text-gray-400 truncate">@{person.username}</p>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <button
                         onClick={() => declineMutation.mutate(person.friendshipId)}
                         disabled={declineMutation.isPending}
-                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors active:scale-95 text-gray-500 text-base leading-none"
+                        className="rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors active:scale-95 text-gray-500"
+                        style={{ width: 44, height: 44, flexShrink: 0 }}
                         data-testid={`button-decline-${person.friendshipId}`}
                         title="Decline"
                       >
-                        ×
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => acceptMutation.mutate(person.friendshipId)}
                         disabled={acceptMutation.isPending}
-                        className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors active:scale-95"
+                        className="rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors active:scale-95"
+                        style={{ width: 44, height: 44, flexShrink: 0 }}
                         data-testid={`button-accept-${person.friendshipId}`}
                         title="Accept"
                       >
-                        <Check className="w-3.5 h-3.5 text-white" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
                       </button>
                     </div>
                   </div>

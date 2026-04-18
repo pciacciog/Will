@@ -319,8 +319,8 @@ export default function CreateTeamWill() {
                   <div className="relative mb-3">
                     <svg
                       viewBox="0 0 24 24"
-                      className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                      style={{ left: 13 }}
+                      className="absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                      style={{ left: 13, width: 16, height: 16, transform: 'translateY(-50%)' }}
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
