@@ -26,7 +26,7 @@ export default function FriendProfile() {
     username: string | null;
   }>({
     queryKey: ["/api/users", userId],
-    queryFn: () => apiRequest(`/api/users/${userId}`),
+    queryFn: () => apiRequest(`/api/users/${userId}`).then(r => r.json()),
     enabled: !!userId,
   });
 
