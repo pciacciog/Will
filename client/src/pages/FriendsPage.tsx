@@ -11,6 +11,7 @@ type Friend = {
   firstName: string | null;
   lastName: string | null;
   username: string | null;
+  email: string | null;
 };
 
 type FriendsData = {
@@ -23,6 +24,7 @@ type SearchResult = {
   firstName: string | null;
   lastName: string | null;
   username: string | null;
+  email: string | null;
   friendshipId: number | null;
   friendshipStatus: string | null;
   friendshipDirection: 'sent' | 'received' | null;
@@ -215,8 +217,10 @@ export default function FriendsPage() {
                           <p className="text-sm font-semibold text-gray-900 truncate">
                             {displayName(result.firstName, result.lastName, result.username)}
                           </p>
-                          {result.username && (
-                            <p className="text-[11px] text-gray-400 truncate">@{result.username}</p>
+                          {result.email && (
+                            <p className="text-[11px] text-gray-400 truncate" data-testid={`text-email-${result.id}`}>
+                              {result.email}
+                            </p>
                           )}
                         </div>
                         {effectiveStatus === 'accepted' ? (
@@ -275,8 +279,10 @@ export default function FriendsPage() {
                       <p className="text-sm font-semibold text-gray-900 truncate">
                         {displayName(person.firstName, person.lastName, person.username)}
                       </p>
-                      {person.username && (
-                        <p className="text-[11px] text-gray-400 truncate">@{person.username}</p>
+                      {person.email && (
+                        <p className="text-[11px] text-gray-400 truncate" data-testid={`text-email-${person.userId}`}>
+                          {person.email}
+                        </p>
                       )}
                     </div>
                     <div className="flex gap-3">
@@ -360,8 +366,10 @@ export default function FriendsPage() {
                         <p className="text-sm font-semibold text-gray-900 truncate">
                           {displayName(friend.firstName, friend.lastName, friend.username)}
                         </p>
-                        {friend.username && (
-                          <p className="text-[11px] text-gray-400 truncate">@{friend.username}</p>
+                        {friend.email && (
+                          <p className="text-[11px] text-gray-400 truncate" data-testid={`text-email-${friend.userId}`}>
+                            {friend.email}
+                          </p>
                         )}
                       </div>
                       <span className="flex-shrink-0" style={{ color: "#C7C7CC", fontSize: 18 }}>›</span>

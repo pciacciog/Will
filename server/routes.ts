@@ -412,6 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: u.firstName,
           lastName: u.lastName,
           username: u.username,
+          email: u.email,
           friendshipId: fs?.id ?? null,
           friendshipStatus: fs?.status ?? null,
           friendshipDirection: fs?.direction ?? null,
@@ -500,10 +501,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       allUserIds.delete(userId);
 
-      let userMap = new Map<string, { id: string; firstName: string | null; lastName: string | null; username: string | null }>();
+      let userMap = new Map<string, { id: string; firstName: string | null; lastName: string | null; username: string | null; email: string | null }>();
       if (allUserIds.size > 0) {
         const userRows = await db
-          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username })
+          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username, email: users.email })
           .from(users)
           .where(inArray(users.id, Array.from(allUserIds)));
         for (const u of userRows) {
@@ -520,6 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: other?.firstName ?? null,
           lastName: other?.lastName ?? null,
           username: other?.username ?? null,
+          email: other?.email ?? null,
         };
       });
 
@@ -531,6 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: other?.firstName ?? null,
           lastName: other?.lastName ?? null,
           username: other?.username ?? null,
+          email: other?.email ?? null,
         };
       });
 
