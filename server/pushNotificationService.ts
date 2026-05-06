@@ -654,13 +654,18 @@ class PushNotificationService {
   }
 
   // Motivational notification — displays the user's "because" statement
-  async sendMotivationalNotification(userId: string, userWhy: string, willId?: number, willTitle?: string): Promise<boolean> {
+  // Title is the user's Will statement (whatText) so they know which Will the
+  // notification is for; falls back to 🤍 when no statement is provided.
+  async sendMotivationalNotification(userId: string, userWhy: string, willId?: number, whatText?: string): Promise<boolean> {
     let notificationBody = `Because ${userWhy}`;
     if (notificationBody.length > 110) {
       notificationBody = notificationBody.substring(0, 107) + "...";
     }
 
-    const title = willTitle ? `${willTitle} \u{1F90D}` : "\u{1F90D}";
+    let title = whatText && whatText.trim().length > 0 ? whatText.trim() : "\u{1F90D}";
+    if (title.length > 80) {
+      title = title.substring(0, 77) + "...";
+    }
 
     const payload: PushNotificationPayload = {
       title,

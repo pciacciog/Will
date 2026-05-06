@@ -1390,8 +1390,10 @@ export class EndRoomScheduler {
 
           if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
 
-          const motivationalDisplayTitle = row.willTitle || row.userWhat || row.sharedWhat || undefined;
-          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId, motivationalDisplayTitle);
+          // Use the Will commitment statement so users know which Will this is for.
+          // sharedWhat (team "We will...") wins over the per-member what.
+          const motivationalWhatText = row.sharedWhat || row.userWhat || undefined;
+          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId, motivationalWhatText);
           if (success) {
             await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
             sent++;
