@@ -978,6 +978,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               setCurrentStep(5);
             }}
             onBack={() => setCurrentStep(3)}
+            willDurationDays={(() => {
+              if (isIndefinite || !willData.startDate || !willData.endDate) return undefined;
+              const diffMs = new Date(willData.endDate).getTime() - new Date(willData.startDate).getTime();
+              return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+            })()}
           />
         )}
         

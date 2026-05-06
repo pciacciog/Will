@@ -1,0 +1,18 @@
+
+Redesign: Milestones Setup Screen
+Why
+The current milestones screen pre-populates milestone days and messages based on a generic template that has no awareness of the actual will being created. A user who commits to a 2-day will sees milestones on Day 3 and Day 6 — days that don't exist. Beyond the logic error, the pre-written motivational copy ("First day done, hardest part over") puts words in the user's mouth and removes the personal meaning that makes a milestone worth having. Testers have flagged the screen as confusing and unintuitive. The whole paradigm needs to flip — from "here are your milestones, edit if you want" to "this is your blank canvas, add what feels meaningful to you."
+What we're going for
+A screen that communicates its purpose instantly with almost no words, feels like an open invitation rather than a form to fill out, and makes it obvious that the user is in full control — which day, what message, entirely theirs.
+The screen
+The page title is simply "Milestones" with a single short line of supporting copy — something like "Leave yourself a note for a specific day." Nothing more is needed.
+Below the title, show the user's commitment as a quiet reference point — just the title of the will, no type label, no duration, no extra metadata. It's there so the user has context while they think about what to write.
+The milestone area should show one grayed-out example — a "Day 1" pill with an italic placeholder message — clearly labeled as an example so the user doesn't confuse it for something they've already set. This is the only affordance needed to communicate what the feature does.
+Below the example, a single inviting "Add a milestone" entry point. When tapped, it should open a simple focused interface — the user picks a day number and writes their message. Nothing else. No suggestions, no pre-fills.
+The page should feel optional and low-pressure. A "skip" option or a note beneath the Continue button making clear this step is optional would go a long way. Milestones are a gift the user gives themselves, not a requirement.
+What to remove entirely
+Pre-populated milestone messages of any kind. Any reference to will duration or type on this screen. The "Edit" paradigm — users should feel like they're writing, not modifying. Day labels like "Tonight" or "Tomorrow" — relative time references add confusion, a simple day number is enough.
+How we'd know it's right
+A first-time user landing on this screen should immediately understand: this is optional, it's mine to fill, and I pick the day and write whatever I want. No hunting, no confusion about what's pre-set vs. what's theirs. The example does all the teaching — the rest is canvas.
+One additional requirement: day awareness
+The milestone day picker needs to be aware of the will's duration. If the user committed to a 5-day will, the picker should only allow selecting days 1 through 5 — day 6 and beyond should not be available. The valid range is always Day 1 through the last day of the will as set in the date selection step, and the milestone setup screen should have access to that value when rendering the picker.
