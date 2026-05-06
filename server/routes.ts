@@ -1644,7 +1644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // "accepted + committed" (real members) from "accepted but awaiting
       // commitment" (ghost-risk invitees).
       const commitments = await storage.getWillCommitments(willId);
-      const committedIds = new Set(commitments.map((c: any) => c.userId));
+      const committedIds = new Set(commitments.map(c => c.userId));
       const enriched = invites.map(i => ({
         ...i,
         hasCommitted: committedIds.has(i.invitedUserId),
