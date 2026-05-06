@@ -34,7 +34,7 @@ import {
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db, pool } from "./db";
-import { eq, and, or, isNull, sql, inArray, notInArray, lt, gt, gte, desc, ne, ilike } from "drizzle-orm";
+import { eq, and, or, isNull, isNotNull, sql, inArray, notInArray, lt, gt, gte, desc, ne, ilike } from "drizzle-orm";
 import { cloudinary, cloudName, apiKey as cloudApiKey } from "./cloudinary";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
@@ -1563,6 +1563,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error('[Invites] Failed to fetch awaiting-commitment list:', err);
       res.status(500).json({ message: 'Failed to fetch awaiting-commitment list' });
+    }
+  });
+
+  // GET /api/wills/my-missed-team-wills — Team Wills the user accepted but
+  // never finished committing to and which have since started (the invite
+  // was auto-expired by the scheduler). Surfaces a one-time "didn't commit
+  // in time" history entry per the Task #2 spec.
+  app.get('/api/wills/my-missed-team-wills', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const expiredRows = await db
+        .select({
+          invite: teamWillInvites,
+          will: wills,
+          invitedBy: { id: users.id, firstName: users.firstName },
+        })
+        .from(teamWillInvites)
+        .innerJoin(wills, eq(teamWillInvites.willId, wills.id))
+        .innerJoin(users, eq(teamWillInvites.invitedByUserId, users.id))
+        .where(and(
+          eq(teamWillInvites.invitedUserId, userId),
+          eq(teamWillInvites.status, 'expired'),
+          isNotNull(teamWillInvites.respondedAt),
+          eq(wills.mode, 'team'),
+        ))
+        .orderBy(desc(wills.startDate))
+        .limit(20);
+
+      if (expiredRows.length === 0) return res.json([]);
+
+      // Exclude any rows where the user actually has a commitment (defensive —
+      // shouldn't happen since accepted+committed invites aren't expired, but
+      // keep the contract explicit).
+      const willIds = expiredRows.map(r => r.will.id);
+      const commitments = await db
+        .select({ willId: willCommitments.willId })
+        .from(willCommitments)
+        .where(and(
+          eq(willCommitments.userId, userId),
+          inArray(willCommitments.willId, willIds),
+        ));
+      const committedSet = new Set(commitments.map(c => c.willId));
+
+      res.json(expiredRows.filter(r => !committedSet.has(r.will.id)));
+    } catch (err) {
+      console.error('[Invites] Failed to fetch missed-team-wills list:', err);
+      res.status(500).json({ message: 'Failed to fetch missed-team-wills list' });
     }
   });
 

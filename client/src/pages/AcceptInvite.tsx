@@ -44,7 +44,7 @@ export default function AcceptInvite() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery<{
-    invite: { id: number; status: string; expiresAt: string | null };
+    invite: { id: number; status: string; expiresAt: string | null; respondedAt: string | null };
     will: {
       id: number;
       mode: string;
@@ -128,19 +128,34 @@ export default function AcceptInvite() {
 
   const { invite, will, teamMembers = [] } = data;
   const willHasStarted = will?.startDate ? new Date(will.startDate) <= new Date() : false;
-  const isExpired = invite.status === "expired" || (invite.expiresAt && new Date(invite.expiresAt) <= new Date());
-  const isAlreadyActioned = invite.status === "accepted" || invite.status === "declined";
 
   // Did the current invitee already submit a commitment for this will?
   const myMember = teamMembers.find(m => m.userId === user?.id);
   const hasMyCommitment = !!myMember?.commitment;
+
+  // "Dropped out" = the invitee accepted (we know because respondedAt is set)
+  // but never submitted a commitment AND the will has now started. Once the
+  // scheduler runs at startDate it flips status to 'expired', so we have to
+  // detect this from BOTH `accepted` (race window before scheduler tick) and
+  // `expired` (post-scheduler) — anchored on respondedAt to distinguish from
+  // a vanilla "never opened the invite" expired case.
+  const acceptedDroppedOut =
+    !hasMyCommitment &&
+    willHasStarted &&
+    !!invite.respondedAt &&
+    (invite.status === "accepted" || invite.status === "expired");
+
   // Accepted but never submitted a commitment, and the will has not started
   // yet → invite is still actionable; route them to the commit step instead
   // of the dead-end "already accepted" card.
-  const acceptedButNotCommitted = invite.status === "accepted" && !hasMyCommitment && !willHasStarted;
-  // Accepted but never submitted a commitment AND the will has now started:
-  // the user has effectively dropped out — show a clear terminal state.
-  const acceptedDroppedOut = invite.status === "accepted" && !hasMyCommitment && willHasStarted;
+  const acceptedButNotCommitted =
+    invite.status === "accepted" && !hasMyCommitment && !willHasStarted;
+
+  // Generic expired card should NOT shadow the explicit dropped-out terminal
+  // state; that card is more informative.
+  const expiresAtPassed = invite.expiresAt && new Date(invite.expiresAt) <= new Date();
+  const isExpired = (invite.status === "expired" || expiresAtPassed) && !acceptedDroppedOut;
+  const isAlreadyActioned = invite.status === "accepted" || invite.status === "declined";
   const isWeWill = will.willType === "cumulative";
   const inviterName = will.creatorName || "A friend";
   const inviterInitial = inviterName.charAt(0).toUpperCase();

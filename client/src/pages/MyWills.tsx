@@ -290,6 +290,16 @@ export default function MyWills() {
     refetchOnMount: 'always',
   });
 
+  // Team Wills the user accepted but never finished committing to before
+  // the will started. Shown once as a history-style "didn't commit in time"
+  // card so the user has a clear record they were involved.
+  const { data: missedTeamWills = [] } = useQuery<AwaitingCommitment[]>({
+    queryKey: ['/api/wills/my-missed-team-wills'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!user?.id,
+    refetchOnMount: 'always',
+  });
+
   const declineMutation = useMutation({
     mutationFn: (willId: number) => apiRequest('POST', `/api/wills/${willId}/decline-invite`),
     onSuccess: () => {
@@ -426,6 +436,39 @@ export default function MyWills() {
                   onFinish={() => setLocation(`/will/${item.will.id}/commit`)}
                 />
               ))}
+            </div>
+          )}
+
+          {/* Accepted but never committed before the Will started — terminal
+              "didn't commit in time" history entry. */}
+          {!isLoading && activeTab === 'team' && missedTeamWills.length > 0 && (
+            <div className="space-y-3">
+              {missedTeamWills.map(item => {
+                const willTitle = item.will.title || item.will.sharedWhat || 'a Team Will';
+                const start = new Date(item.will.startDate);
+                return (
+                  <Card
+                    key={item.invite.id}
+                    className="border border-gray-200 bg-gray-50/60 shadow-sm"
+                    data-testid={`card-missed-${item.invite.id}`}
+                  >
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <History className="w-5 h-5 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-500 font-medium mb-0.5">Didn't commit in time</p>
+                        <p className="text-sm font-semibold text-gray-700 truncate" data-testid={`text-missed-will-${item.invite.id}`}>
+                          {willTitle}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Started {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — invite from {item.invitedBy.firstName}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
 

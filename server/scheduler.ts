@@ -1738,8 +1738,13 @@ export class EndRoomScheduler {
   // this is their last nudge to actually become a participant.
   private async sendTeamWillCommitReminders(now: Date) {
     try {
-      const windowStart = new Date(now.getTime() + 1.5 * 60 * 60 * 1000); // 1.5h from now
-      const windowEnd   = new Date(now.getTime() + 2.5 * 60 * 60 * 1000); // 2.5h from now
+      // Configurable lead time. Default 2h before startDate. Window is
+      // ±0.5h around the lead so a per-minute scheduler tick definitely hits.
+      const leadHoursRaw = parseFloat(process.env.TEAM_WILL_COMMIT_REMINDER_LEAD_HOURS || '');
+      const leadHours = Number.isFinite(leadHoursRaw) && leadHoursRaw > 0 ? leadHoursRaw : 2;
+      const leadMs = leadHours * 60 * 60 * 1000;
+      const windowStart = new Date(now.getTime() + leadMs - 30 * 60 * 1000);
+      const windowEnd   = new Date(now.getTime() + leadMs + 30 * 60 * 1000);
 
       // Accepted invites whose will starts in ~2h and whose commit reminder
       // hasn't been sent yet. We post-filter for "no commitment row" in JS.
