@@ -1,0 +1,22 @@
+Feature: In-App Alert Center + Home Page Notification Entry Point
+Why This Exists
+The app currently has no persistent in-app surface for user-relevant events. Every nudge depends entirely on push notifications — which are ephemeral, easily dismissed, and invisible to users who have push turned off. As the feature set has grown (Team Wills, Proof drops, Friends, invite flows), this gap has become a real usability failure.
+We hit this in production: a user (Bruno) received a Team Will invite, saw the push notification, opened the app, but didn't act immediately. When he returned later, the invite was completely invisible — not on My Wills, not on Explore, nowhere. He had no recovery path. The invite existed in the database but the app had no surface to show it to him.
+A tester independently reported the same root problem: "the only way to find anything is to keep clicking and guessing for 5 minutes." Features are growing but discoverability isn't. The home page shows what's already happening — it doesn't tell the user what needs their attention right now.
+This feature fixes that. It introduces a persistent, queryable alert feed that lives in the database and is always visible inside the app, independent of whether a push was delivered or acted on.
+
+What We're Looking For
+1. A notifications data layer
+We'd want something that stores per-user alerts persistently — each record probably carrying things like the alert type, title, body, a deep link to the relevant screen, read/unread status, and a reference to the related entity (a will, an invite, a friend, etc.). The exact schema is yours to decide based on what fits the existing data model best.
+Wherever the codebase currently fires a push notification, it would ideally also write one of these records for the target user — so push and in-app alerts are always generated together from the same event, never diverging.
+2. The API surface
+We'd probably need a way for the client to fetch a user's notifications (paginated, newest first), mark individual ones as read, and get a simple unread count. That count is what would power the badge on the home page. How you structure those endpoints is up to you.
+3. Alert types
+At minimum, we'd want alerts generated for: receiving a Team Will invite, a friend committing to a will, a will starting soon, a will going live, a friend dropping proof, a new friend joining the app, and a streak reminder. The exact copy and deep link destinations are flexible — use your judgment on what makes sense given the existing routing.
+4. Home page entry point
+The home page needs some kind of visible signal that alerts exist — a bell icon with a badge count feels like the natural fit based on the current design. Ideally the badge reflects live unread count (polling on app focus is probably fine for now, no need to over-engineer it).
+Just below the header, before the main navigation cards, we'd want a small inline preview — maybe the 2 most recent unread alerts — so the user sees pending items the moment they land. For Team Will invites specifically, it would be powerful if the user could commit or decline right from that surface without having to navigate away. If there are no unread alerts, the panel should simply not appear.
+5. Alert Center screen
+A full list view reachable from the bell icon. All notifications, grouped by recency, each one tappable and routed to the right place. Tapping marks it read. Some way to mark everything read at once would be nice. The design should match the existing app aesthetic — you know it better than anyone.
+6. How we'd know it's working
+The core test case: a user receives a Team Will invite, ignores the push, opens the app cold 2 hours later — and the invite is right there on the home screen, actionable, without any hunting. That's the failure mode we're solving for. If that scenario works cleanly, the feature is doing its job.

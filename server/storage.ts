@@ -256,8 +256,10 @@ export interface IStorage {
 
   createUserNotification(notification: InsertUserNotification): Promise<UserNotification>;
   getUserUnreadNotifications(userId: string): Promise<UserNotification[]>;
+  getAllNotifications(userId: string, limit?: number): Promise<UserNotification[]>;
   getUserUnreadNotificationCount(userId: string): Promise<number>;
   markNotificationRead(notificationId: number, userId: string): Promise<void>;
+  markAllNotificationsRead(userId: string): Promise<void>;
   markNotificationsReadByTypeAndWill(userId: string, type: string, willId: number): Promise<void>;
 }
 
@@ -1779,6 +1781,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(userNotifications.createdAt));
   }
 
+  async getAllNotifications(userId: string, limit: number = 50): Promise<UserNotification[]> {
+    return db.select().from(userNotifications)
+      .where(eq(userNotifications.userId, userId))
+      .orderBy(desc(userNotifications.createdAt))
+      .limit(limit);
+  }
+
   async getUserUnreadNotificationCount(userId: string): Promise<number> {
     const [result] = await db.select({ count: sql<number>`count(*)::int` })
       .from(userNotifications)
@@ -1790,6 +1799,12 @@ export class DatabaseStorage implements IStorage {
     await db.update(userNotifications)
       .set({ isRead: true })
       .where(and(eq(userNotifications.id, notificationId), eq(userNotifications.userId, userId)));
+  }
+
+  async markAllNotificationsRead(userId: string): Promise<void> {
+    await db.update(userNotifications)
+      .set({ isRead: true })
+      .where(and(eq(userNotifications.userId, userId), eq(userNotifications.isRead, false)));
   }
 
   async markNotificationsReadByTypeAndWill(userId: string, type: string, willId: number): Promise<void> {

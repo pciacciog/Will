@@ -40,6 +40,30 @@ import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
 import { getEnvironment, getDatabaseUrl, getBackendHost, isProduction } from "./config/environment";
 
+async function createInAppNotification(
+  userId: string,
+  type: string,
+  title: string,
+  body: string,
+  deepLink: string,
+  willId?: number | null,
+) {
+  try {
+    await storage.createUserNotification({
+      userId,
+      type,
+      title,
+      body,
+      deepLink,
+      willId: willId ?? null,
+      circleId: null,
+      isRead: false,
+    });
+  } catch (err) {
+    console.error('[InAppNotif] Failed to create in-app notification (non-fatal):', err);
+  }
+}
+
 function generateInviteCode(): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
@@ -562,7 +586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(eq(friendships.id, existing.id))
           .returning();
 
-        // Send push notification for re-request
+        // Send push + in-app notification for re-request
         try {
           const [sender] = await db
             .select({ firstName: users.firstName })
@@ -575,6 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             category: 'friend_request',
             data: { type: 'friend_request', deepLink: '/friends' },
           });
+          await createInAppNotification(addresseeId, 'friend_request', 'New friend request 👋', `${senderName} sent you a friend request`, '/friends');
         } catch (notifError) {
           console.error('[FRIENDS] Push notification failed (non-fatal):', notifError);
         }
@@ -587,7 +612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .values({ requesterId, addresseeId, status: 'pending' })
         .returning();
 
-      // Send push notification to recipient
+      // Send push + in-app notification to recipient
       try {
         const [sender] = await db
           .select({ firstName: users.firstName })
@@ -600,6 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: 'friend_request',
           data: { type: 'friend_request', deepLink: '/friends' },
         });
+        await createInAppNotification(addresseeId, 'friend_request', 'New friend request 👋', `${senderName} sent you a friend request`, '/friends');
       } catch (notifError) {
         console.error('[FRIENDS] Push notification failed (non-fatal):', notifError);
       }
@@ -1322,6 +1348,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               category: 'shared_will_invite',
               data: { type: 'shared_will_invite', willId: will.id, deepLink: `/will/${will.id}/invite` },
             });
+            await createInAppNotification(
+              friendId,
+              'team_will_invite',
+              `${creatorName} invited you to a Team Will 🤝`,
+              inviteDisplayTitle ? `"${inviteDisplayTitle}" — tap to accept or decline` : 'Tap to accept or decline',
+              `/will/${will.id}/invite`,
+              will.id,
+            );
           } catch (inviteErr) {
             console.error(`[Routes] Failed to create invite or notify friend ${friendId} for Will ${will.id}:`, inviteErr);
           }
@@ -1752,6 +1786,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).returning();
 
       res.status(201).json({ id: proof.id, status: proof.status, createdAt: proof.createdAt });
+
+      // Notify teammates about the proof drop (fire-and-forget)
+      (async () => {
+        try {
+          const dropperName = (req.user as any)?.firstName || 'Someone';
+          const willTitle = will.title || will.sharedWhat || 'your Team Will';
+          const commitments = await storage.getWillCommitments(willId);
+          const otherIds = commitments.map((c: any) => c.userId).filter((id: string) => id !== userId);
+          if (otherIds.length > 0) {
+            await pushNotificationService.sendToMultipleUsers(otherIds, {
+              title: `${dropperName} dropped proof 📸`,
+              body: `Check out their evidence on ${willTitle}`,
+              data: { type: 'proof_dropped', willId, deepLink: `/will/${willId}` },
+            });
+            for (const otherId of otherIds) {
+              await createInAppNotification(otherId, 'proof_dropped', `${dropperName} dropped proof 📸`, `Check out their evidence on ${willTitle}`, `/will/${willId}`, willId);
+            }
+          }
+        } catch (err) { console.error('[WillProofs] teammate notification failed (non-fatal):', err); }
+      })();
     } catch (err) {
       console.error('[WillProofs] Failed to create proof:', err);
       res.status(500).json({ message: 'Failed to create proof drop.' });
@@ -2346,6 +2400,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (otherMemberIds.length > 0) {
             await pushNotificationService.sendMemberReviewSubmittedNotification(reviewerName, willId, otherMemberIds);
             console.log(`[REVIEW] Sent review submitted notification to ${otherMemberIds.length} other members`);
+            for (const memberId of otherMemberIds) {
+              await createInAppNotification(memberId, 'review_submitted', `${reviewerName} submitted their review ✍️`, 'The Will review is in — check the results.', `/will/${willId}`, willId);
+            }
           }
         }
       } catch (notificationError) {
@@ -2889,18 +2946,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // In-app notification routes
+  app.get('/api/notifications/unread-count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const count = await storage.getUserUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
   app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const notifications = await storage.getUserUnreadNotifications(userId);
-      const count = notifications.length;
-      res.json({ notifications, count });
+      const notifications = await storage.getAllNotifications(userId, 50);
+      const unreadCount = notifications.filter(n => !n.isRead).length;
+      res.json({ notifications, unreadCount });
     } catch (error) {
       console.error("Error fetching notifications:", error);
       res.status(500).json({ message: "Failed to fetch notifications" });
     }
   });
-
 
   app.patch('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
     try {
@@ -2911,6 +2978,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking notification as read:", error);
       res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post('/api/notifications/read-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      await storage.markAllNotificationsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
     }
   });
 

@@ -38,6 +38,7 @@ import AcceptInvite from "@/pages/AcceptInvite";
 import CreateTeamWill from "@/pages/CreateTeamWill";
 import WillPage from "@/pages/WillPage";
 import FriendProfile from "@/pages/FriendProfile";
+import NotificationsPage from "@/pages/NotificationsPage";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -385,6 +386,7 @@ function Router() {
             <Route path="/will/:id/commit" component={SubmitCommitment} />
             <Route path="/will/:id/edit" component={EditWill} />
             <Route path="/will/:id/edit-commitment/:commitmentId" component={EditCommitment} />
+            <Route path="/notifications" component={NotificationsPage} />
             <Route path="/admin" component={Admin} />
             <Route path="/webadmin" component={AdminDashboard} />
           </>

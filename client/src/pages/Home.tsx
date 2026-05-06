@@ -1,14 +1,13 @@
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { getQueryFn } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Compass, Settings, LogOut, ChevronRight, Flame, Sun } from "lucide-react";
+import { Users, Compass, Settings, LogOut, ChevronRight, Flame, Sun, Bell } from "lucide-react";
 import { WhoModal } from "@/components/WhoModal";
 import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { getApiPath } from "@/config/api";
 
@@ -22,6 +21,22 @@ type Will = {
   circleId?: number;
   circleName?: string;
   commitments?: { id: number; userId: string; what: string; why: string }[];
+};
+
+type InAppNotification = {
+  id: number;
+  type: string;
+  title: string | null;
+  body: string | null;
+  deepLink: string | null;
+  willId: number | null;
+  isRead: boolean;
+  createdAt: string;
+};
+
+type NotifResponse = {
+  notifications: InAppNotification[];
+  unreadCount: number;
 };
 
 export default function Home() {
@@ -77,6 +92,46 @@ export default function Home() {
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
     queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const { data: notifData } = useQuery<NotifResponse>({
+    queryKey: ['/api/notifications'],
+    queryFn: getQueryFn({ on401: 'returnNull' }),
+    enabled: !!user,
+    staleTime: 0,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
+
+  const unreadCount = notifData?.unreadCount ?? 0;
+  const previewNotifs = (notifData?.notifications ?? []).filter(n => !n.isRead).slice(0, 2);
+
+  const acceptInviteMutation = useMutation({
+    mutationFn: async (willId: number) => {
+      await apiRequest(`/api/wills/${willId}/accept-invite`, { method: 'POST' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
+    },
+  });
+
+  const declineInviteMutation = useMutation({
+    mutationFn: async (willId: number) => {
+      await apiRequest(`/api/wills/${willId}/decline-invite`, { method: 'POST' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    },
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest(`/api/notifications/${id}/read`, { method: 'PATCH' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    },
   });
 
   const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError, failureCount, isLoading: willsLoading, isFetching: willsFetching, refetch: refetchWills, status: willsQueryStatus, fetchStatus: willsFetchStatus } = useQuery<Will[] | null>({
@@ -171,13 +226,98 @@ export default function Home() {
       <div className="pt-[calc(env(safe-area-inset-top)+5.5rem)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] min-h-screen flex flex-col">
         <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col">
 
-          {/* Header — greeting only, no settings gear */}
-          <div className="mb-6">
-            <h1 className="text-[17px] font-bold text-gray-900 leading-tight" data-testid="text-welcome">
-              Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
-            </h1>
-            <p className="text-[13px] text-gray-400 leading-tight">What will you commit to?</p>
+          {/* Header */}
+          <div className="mb-4 flex items-start justify-between">
+            <div>
+              <h1 className="text-[17px] font-bold text-gray-900 leading-tight" data-testid="text-welcome">
+                Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
+              </h1>
+              <p className="text-[13px] text-gray-400 leading-tight">What will you commit to?</p>
+            </div>
+            <button
+              onClick={() => setLocation('/notifications')}
+              className="relative mt-0.5 p-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+              data-testid="button-notifications"
+            >
+              <Bell className="w-5 h-5 text-gray-500" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none px-0.5">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
           </div>
+
+          {/* Unread alerts preview — top 2, shown when unread exist */}
+          {previewNotifs.length > 0 && (
+            <div className="mb-3 space-y-1.5">
+              {previewNotifs.map((n) => {
+                const isInvite = n.type === 'team_will_invite';
+                return (
+                  <div
+                    key={n.id}
+                    className="bg-white border border-emerald-100 rounded-2xl px-4 py-3 shadow-sm"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-lg leading-none mt-0.5 flex-shrink-0">
+                        {isInvite ? '🤝' : n.type === 'friend_request' ? '👋' : n.type === 'proof_dropped' ? '📸' : '🔔'}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-gray-900 leading-snug">{n.title}</p>
+                        {n.body && <p className="text-[12px] text-gray-500 leading-snug mt-0.5 line-clamp-1">{n.body}</p>}
+                      </div>
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />
+                    </div>
+                    {isInvite && n.willId && (
+                      <div className="flex gap-2 mt-2.5">
+                        <button
+                          onClick={() => {
+                            markReadMutation.mutate(n.id);
+                            acceptInviteMutation.mutate(n.willId!);
+                            setLocation(`/will/${n.willId}`);
+                          }}
+                          disabled={acceptInviteMutation.isPending}
+                          className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                          data-testid={`button-accept-invite-${n.willId}`}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => {
+                            markReadMutation.mutate(n.id);
+                            declineInviteMutation.mutate(n.willId!);
+                          }}
+                          disabled={declineInviteMutation.isPending}
+                          className="flex-1 py-1.5 rounded-xl bg-gray-100 text-gray-600 text-[12px] font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+                          data-testid={`button-decline-invite-${n.willId}`}
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    )}
+                    {!isInvite && n.deepLink && (
+                      <button
+                        onClick={() => { markReadMutation.mutate(n.id); setLocation(n.deepLink!); }}
+                        className="mt-2 text-[12px] text-emerald-600 font-medium hover:underline"
+                        data-testid={`button-view-notif-${n.id}`}
+                      >
+                        View →
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              {unreadCount > 2 && (
+                <button
+                  onClick={() => setLocation('/notifications')}
+                  className="w-full text-center text-[12px] text-gray-400 hover:text-gray-600 transition-colors py-1"
+                  data-testid="button-view-all-alerts"
+                >
+                  +{unreadCount - 2} more alert{unreadCount - 2 !== 1 ? 's' : ''} — view all
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Create Will Button */}
           <button
