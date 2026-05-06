@@ -36,6 +36,43 @@ type PendingInvite = {
   invitedBy: { id: string; firstName: string };
 };
 
+// "Awaiting commitment" — invitee already accepted, but never finished
+// submitting their commitment, and the will hasn't started yet. Surface as a
+// recovery card so the user can finish before they get auto-dropped.
+type AwaitingCommitment = PendingInvite;
+
+function AwaitingCommitmentCard({ item, onFinish }: { item: AwaitingCommitment; onFinish: () => void }) {
+  const willTitle = item.will.title || item.will.sharedWhat || 'a Team Will';
+  const start = new Date(item.will.startDate);
+  return (
+    <Card className="border border-amber-200 bg-gradient-to-br from-amber-50/70 to-white shadow-sm" data-testid={`card-awaiting-${item.invite.id}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <Clock className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-amber-700 font-medium mb-0.5">Finish committing</p>
+            <p className="text-sm font-semibold text-gray-900 truncate" data-testid={`text-awaiting-will-${item.invite.id}`}>
+              {willTitle}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Starts {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — set your commitment before then
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onFinish}
+          className="w-full mt-3 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors"
+          data-testid={`button-finish-committing-${item.invite.id}`}
+        >
+          Finish committing
+        </button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function PendingInviteCard({ item, onView, onDecline, declining }: {
   item: PendingInvite;
   onView: () => void;
@@ -246,6 +283,13 @@ export default function MyWills() {
     refetchOnMount: 'always',
   });
 
+  const { data: awaitingCommitment = [] } = useQuery<AwaitingCommitment[]>({
+    queryKey: ['/api/wills/my-awaiting-commitment'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!user?.id,
+    refetchOnMount: 'always',
+  });
+
   const declineMutation = useMutation({
     mutationFn: (willId: number) => apiRequest('POST', `/api/wills/${willId}/decline-invite`),
     onSuccess: () => {
@@ -265,7 +309,7 @@ export default function MyWills() {
   const publicWills = activeWills.filter(w => isPublicWill(w));
 
   const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'team' ? teamWills : publicWills;
-  const sharedTabCount = teamWills.length + pendingInvites.length;
+  const sharedTabCount = teamWills.length + pendingInvites.length + awaitingCommitment.length;
 
   const handleViewWill = (will: Will) => {
     sessionStorage.setItem('willBackUrl', '/wills');
@@ -372,7 +416,20 @@ export default function MyWills() {
             </div>
           )}
 
-          {!isLoading && !isError && activeTab === 'team' && teamWills.length === 0 && pendingInvites.length === 0 && (
+          {/* Accepted but never committed — surface as recovery cards */}
+          {!isLoading && activeTab === 'team' && awaitingCommitment.length > 0 && (
+            <div className="space-y-3">
+              {awaitingCommitment.map(item => (
+                <AwaitingCommitmentCard
+                  key={item.invite.id}
+                  item={item}
+                  onFinish={() => setLocation(`/will/${item.will.id}/commit`)}
+                />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && !isError && activeTab === 'team' && teamWills.length === 0 && pendingInvites.length === 0 && awaitingCommitment.length === 0 && (
             <div className="text-center py-12">
               <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                 <Users className="w-7 h-7 text-gray-400" />

@@ -100,11 +100,19 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     enabled: !!user,
   });
 
-  const { data: invitesData } = useQuery<{ invites: { id: number; status: string; invitedUserId: string; firstName?: string }[] }>({
+  const { data: invitesData } = useQuery<Array<{ id: number; status: string; invitedUserId: string; firstName?: string; hasCommitted?: boolean }>>({
     queryKey: [`/api/wills/${willId}/invites`],
     enabled: !!user && will?.createdBy === user?.id,
     refetchInterval: 60000,
   });
+
+  // Invitees who tapped Accept but never finished setting their commitment.
+  // Shown to the creator as a separate "awaiting commitment" group so they
+  // are visually distinct from real members and Team Today is not polluted
+  // with ghost participants.
+  const awaitingCommitInvitees = (invitesData || []).filter(
+    inv => inv.status === 'accepted' && !inv.hasCommitted
+  );
 
   const { data: proofsData, refetch: refetchProofs } = useQuery<{ items: ProofDrop[]; hasMore: boolean }>({
     queryKey: [`/api/wills/${willId}/proofs`],
@@ -548,7 +556,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const canManage = isCreator || userHasCommitted;
   const isWeWill = will.willType === "cumulative";
   const commitments: any[] = will.commitments || [];
-  const pendingInvites = invitesData?.invites?.filter(i => i.status === "pending") || [];
+  const pendingInvites = (invitesData || []).filter(i => i.status === "pending");
   const canPauseResume = canManage && (will.status === "active" || will.status === "paused");
   const canTerminate = canManage && (will.status === "active" || will.status === "paused" || will.status === "scheduled");
 
@@ -1566,6 +1574,41 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </div>
             )}
           </div>
+
+          {/* ── Awaiting commitment (creator-only) ─────────────────── */}
+          {will.createdBy === user?.id && awaitingCommitInvitees.length > 0 && (
+            <div className="mb-3" data-testid="section-awaiting-commitment">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
+                Awaiting commitment
+              </p>
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-3 shadow-sm space-y-2">
+                {awaitingCommitInvitees.map(inv => (
+                  <div
+                    key={inv.id}
+                    className="flex items-center gap-3"
+                    data-testid={`awaiting-commit-${inv.invitedUserId}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0">
+                      <span className="text-amber-800 text-xs font-semibold">
+                        {(inv.firstName || '?').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {inv.firstName || 'Member'}
+                      </p>
+                      <p className="text-[11px] text-amber-700">
+                        Accepted but hasn't set their commitment yet
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-[10px] text-amber-600/80 pt-1 border-t border-amber-100">
+                  They'll be dropped automatically if they don't commit before the Will starts.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* ── Team Today section ─────────────────────────────────── */}
           {teamTodayData && teamTodayData.members.length > 1 && (

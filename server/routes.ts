@@ -34,7 +34,7 @@ import {
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
 import { db, pool } from "./db";
-import { eq, and, or, isNull, sql, inArray, notInArray, lt, gte, desc, ne, ilike } from "drizzle-orm";
+import { eq, and, or, isNull, sql, inArray, notInArray, lt, gt, gte, desc, ne, ilike } from "drizzle-orm";
 import { cloudinary, cloudName, apiKey as cloudApiKey } from "./cloudinary";
 import { dailyService } from "./daily";
 import { pushNotificationService } from "./pushNotificationService";
@@ -150,19 +150,39 @@ async function getOtherPublicWillParticipants(userId: string, parentWillId: numb
   return participantIds.filter(id => id !== userId);
 }
 
+// Single source of truth for "real participants" of a Team / shared Will.
+//
+// A user counts as a participant ONLY when they have a `will_commitments` row
+// for the will. The creator is always included (they always have a commitment
+// in normal flow, but we guarantee inclusion for safety).
+//
+// Accepted-but-uncommitted invitees ("ghost" participants) are deliberately
+// EXCLUDED. They are surfaced separately via getAwaitingCommitmentInviteeIds.
 async function getSharedWillParticipantIds(willId: number): Promise<string[]> {
   const will = await storage.getWillById(willId);
   if (!will) return [];
   const participantIds = new Set<string>();
   participantIds.add(will.createdBy);
-  const invites = await db.select().from(teamWillInvites).where(and(
-    eq(teamWillInvites.willId, willId),
-    eq(teamWillInvites.status, 'accepted')
-  ));
-  invites.forEach(invite => participantIds.add(invite.invitedUserId));
   const commitments = await storage.getWillCommitments(willId);
   commitments.forEach(c => participantIds.add(c.userId));
   return Array.from(participantIds);
+}
+
+// Invitees who tapped Accept but haven't submitted a commitment yet.
+// Used to drive "awaiting commitment" UX for the creator and "Finish
+// committing" CTAs for the invitee, but they are NOT participants.
+async function getAwaitingCommitmentInviteeIds(willId: number): Promise<string[]> {
+  const accepted = await db
+    .select({ invitedUserId: teamWillInvites.invitedUserId })
+    .from(teamWillInvites)
+    .where(and(
+      eq(teamWillInvites.willId, willId),
+      eq(teamWillInvites.status, 'accepted')
+    ));
+  if (accepted.length === 0) return [];
+  const commitments = await storage.getWillCommitments(willId);
+  const committedIds = new Set(commitments.map(c => c.userId));
+  return accepted.map(a => a.invitedUserId).filter(id => !committedIds.has(id));
 }
 
 async function isUserSharedWillParticipant(userId: string, willId: number): Promise<boolean> {
@@ -1502,6 +1522,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/wills/my-awaiting-commitment — Team Wills the user accepted but
+  // never finished committing to. Drives the "Finish committing" recovery card
+  // in My Wills. Filters to wills that haven't started yet (so the user can
+  // still meaningfully act on them).
+  app.get('/api/wills/my-awaiting-commitment', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const now = new Date();
+      const acceptedRows = await db
+        .select({
+          invite: teamWillInvites,
+          will: wills,
+          invitedBy: { id: users.id, firstName: users.firstName },
+        })
+        .from(teamWillInvites)
+        .innerJoin(wills, eq(teamWillInvites.willId, wills.id))
+        .innerJoin(users, eq(teamWillInvites.invitedByUserId, users.id))
+        .where(and(
+          eq(teamWillInvites.invitedUserId, userId),
+          eq(teamWillInvites.status, 'accepted'),
+          eq(wills.mode, 'team'),
+          gt(wills.startDate, now),
+        ));
+
+      if (acceptedRows.length === 0) return res.json([]);
+
+      // Filter out rows where the user has already submitted a commitment.
+      const willIds = acceptedRows.map(r => r.will.id);
+      const existingCommitments = await db
+        .select({ willId: willCommitments.willId })
+        .from(willCommitments)
+        .where(and(
+          eq(willCommitments.userId, userId),
+          inArray(willCommitments.willId, willIds),
+        ));
+      const committedSet = new Set(existingCommitments.map(c => c.willId));
+
+      res.json(acceptedRows.filter(r => !committedSet.has(r.will.id)));
+    } catch (err) {
+      console.error('[Invites] Failed to fetch awaiting-commitment list:', err);
+      res.status(500).json({ message: 'Failed to fetch awaiting-commitment list' });
+    }
+  });
+
   // GET /api/wills/:id/invites — creator sees invite list with status
   app.get('/api/wills/:id/invites', isAuthenticated, async (req: any, res) => {
     try {
@@ -1529,7 +1593,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .innerJoin(users, eq(teamWillInvites.invitedUserId, users.id))
         .where(eq(teamWillInvites.willId, willId));
 
-      res.json(invites);
+      // Cross-reference commitments so the creator UI can distinguish
+      // "accepted + committed" (real members) from "accepted but awaiting
+      // commitment" (ghost-risk invitees).
+      const commitments = await storage.getWillCommitments(willId);
+      const committedIds = new Set(commitments.map((c: any) => c.userId));
+      const enriched = invites.map(i => ({
+        ...i,
+        hasCommitted: committedIds.has(i.invitedUserId),
+      }));
+
+      res.json(enriched);
     } catch (err) {
       console.error('[Invites] Failed to list invites:', err);
       res.status(500).json({ message: 'Failed to fetch invites' });

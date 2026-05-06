@@ -91,9 +91,11 @@ export class EndRoomScheduler {
     await this.checkDeadlineReminders(now);
     await this.checkMissionDailyNudge(now);
 
-    // Team Will: activate or terminate at startDate, send 24h reminder to pending invitees
+    // Team Will: activate or terminate at startDate, send 24h reminder to pending invitees,
+    // and ~2h-before "finish committing" reminder to accepted-but-uncommitted invitees.
     await this.processTeamWillActivation(now);
     await this.sendTeamWillInviteReminders(now);
+    await this.sendTeamWillCommitReminders(now);
 
     console.log('[EndRoomScheduler] Heavy operations completed');
   }
@@ -560,19 +562,25 @@ export class EndRoomScheduler {
   }
 
   /**
-   * Returns all participants of a team will: the creator plus all users with accepted invites.
-   * Returns objects with { userId, user: { firstName, timezone } } matching the old getCircleMembers shape.
+   * Returns the real participants of a team will: the creator plus every
+   * user who submitted a commitment (`will_commitments` row). Accepted-but-
+   * uncommitted invitees are deliberately EXCLUDED — see Task #2 ghost-
+   * invitee fix. Shape matches the old getCircleMembers helper.
    */
   private async getTeamWillParticipants(willId: number): Promise<Array<{ userId: string; user: { firstName: string; timezone: string | null } }>> {
     const will = await db.select({ createdBy: wills.createdBy }).from(wills).where(eq(wills.id, willId)).limit(1);
     if (!will.length) return [];
 
-    const acceptedInvites = await db
-      .select({ invitedUserId: teamWillInvites.invitedUserId })
-      .from(teamWillInvites)
-      .where(and(eq(teamWillInvites.willId, willId), eq(teamWillInvites.status, 'accepted')));
+    // Real participants = creator + users who actually submitted a commitment.
+    // Accepted-but-uncommitted invitees are NOT included (parity with the
+    // backend `getSharedWillParticipantIds` helper) — otherwise they'd still
+    // receive participant-only notifications as ghosts.
+    const committers = await db
+      .select({ userId: willCommitments.userId })
+      .from(willCommitments)
+      .where(eq(willCommitments.willId, willId));
 
-    const participantIds = [will[0].createdBy, ...acceptedInvites.map(i => i.invitedUserId)];
+    const participantIds = [will[0].createdBy, ...committers.map(c => c.userId)];
     const uniqueIds = [...new Set(participantIds)];
 
     const participantUsers = await db
@@ -1390,10 +1398,8 @@ export class EndRoomScheduler {
 
           if (!this.isWithinReminderWindow(userLocalTime, randomHour)) continue;
 
-          // Use the Will commitment statement so users know which Will this is for.
-          // sharedWhat (team "We will...") wins over the per-member what.
-          const motivationalWhatText = row.sharedWhat || row.userWhat || undefined;
-          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId, motivationalWhatText);
+          const motivationalDisplayTitle = row.willTitle || row.userWhat || row.sharedWhat || undefined;
+          const success = await pushNotificationService.sendMotivationalNotification(row.userId, row.userWhy, row.willId, motivationalDisplayTitle);
           if (success) {
             await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
             sent++;
@@ -1592,69 +1598,70 @@ export class EndRoomScheduler {
 
       for (const will of teamWillsDue) {
         try {
-          // Check for accepted invites
-          const acceptedRows = await db
-            .select()
+          // The "real" participant pool at startDate is people who have a
+          // will_commitments row. Accepted-but-uncommitted invitees no longer
+          // count — they're treated as having dropped out.
+          const committedRows = await db
+            .select({ userId: willCommitments.userId })
+            .from(willCommitments)
+            .where(eq(willCommitments.willId, will.id));
+          const committedIds = new Set(committedRows.map(r => r.userId));
+          const nonCreatorCommitterCount = Array.from(committedIds).filter(id => id !== will.createdBy).length;
+
+          // Expire any invite still in flight: pending (never opened) AND
+          // accepted-but-uncommitted (ghost) — once the will starts, both are
+          // dead. Doing this here makes the post-start state unambiguous: the
+          // only `accepted` invites that survive are those whose user also
+          // has a commitment.
+          const stillOpenInvites = await db
+            .select({ id: teamWillInvites.id, status: teamWillInvites.status, invitedUserId: teamWillInvites.invitedUserId })
             .from(teamWillInvites)
             .where(and(
               eq(teamWillInvites.willId, will.id),
-              eq(teamWillInvites.status, 'accepted')
+              or(
+                eq(teamWillInvites.status, 'pending'),
+                eq(teamWillInvites.status, 'accepted'),
+              ),
             ));
+          const ghostInviteIds = stillOpenInvites
+            .filter(inv => inv.status === 'pending' || !committedIds.has(inv.invitedUserId))
+            .map(inv => inv.id);
+          if (ghostInviteIds.length > 0) {
+            await db
+              .update(teamWillInvites)
+              .set({ status: 'expired' })
+              .where(inArray(teamWillInvites.id, ghostInviteIds));
+          }
 
-          // Expire all remaining pending invites
-          await db
-            .update(teamWillInvites)
-            .set({ status: 'expired' })
-            .where(and(
-              eq(teamWillInvites.willId, will.id),
-              eq(teamWillInvites.status, 'pending')
-            ));
-
-          if (acceptedRows.length >= 1) {
-            // Activate the will
+          if (nonCreatorCommitterCount >= 1) {
+            // Activate — at least one friend besides the creator actually
+            // committed.
             await storage.updateWillStatus(will.id, 'active');
-            console.log(`[SCHEDULER-TEAM] ✅ Activated Team Will ${will.id} (${acceptedRows.length} accepted invites)`);
+            console.log(`[SCHEDULER-TEAM] ✅ Activated Team Will ${will.id} (${nonCreatorCommitterCount} committed friend(s); expired ${ghostInviteIds.length} ghost invite(s))`);
 
-            // Notify all participants: creator + accepted invitees (union of commitments and accepted invites)
+            // Notify only real (committed) participants.
             try {
-              const willRecord = await storage.getWillById(will.id);
-              const displayTitle = willRecord?.title || willRecord?.sharedWhat || 'Your Will';
-
-              // Collect unique participant IDs: creator + all accepted invitees
-              const participantIds = new Set<string>([will.createdBy]);
-              for (const row of acceptedRows) {
-                participantIds.add(row.invitedUserId);
-              }
-              // Also include anyone with a commitment (covers edge cases)
               const willWithCommitments = await storage.getWillWithCommitments(will.id);
               if (willWithCommitments?.commitments) {
                 for (const c of willWithCommitments.commitments) {
-                  participantIds.add(c.userId);
                   const commitmentTitle = willWithCommitments.title || c.what || willWithCommitments.sharedWhat || 'Your Will';
                   await pushNotificationService.sendWillStartedNotification(commitmentTitle, [c.userId], will.id, false);
-                  participantIds.delete(c.userId); // Already notified via commitment
                 }
-              }
-              // Notify remaining accepted invitees who haven't committed yet
-              for (const pid of participantIds) {
-                if (pid === will.createdBy) continue; // Creator should have a commitment
-                await pushNotificationService.sendWillStartedNotification(displayTitle, [pid], will.id, false);
               }
             } catch (notifErr) {
               console.error(`[SCHEDULER-TEAM] Failed to send started notifications for Will ${will.id}:`, notifErr);
             }
           } else {
-            // No accepted invites — terminate
+            // Nobody besides the creator committed — terminate.
             await storage.updateWillStatus(will.id, 'terminated');
-            console.log(`[SCHEDULER-TEAM] ❌ Terminated Team Will ${will.id} (0 accepted invites)`);
+            console.log(`[SCHEDULER-TEAM] ❌ Terminated Team Will ${will.id} (0 committed friends; expired ${ghostInviteIds.length} ghost invite(s))`);
 
             // Notify creator
             try {
-              const [creator] = await db.select({ firstName: users.firstName }).from(users).where(eq(users.id, will.createdBy));
               const willTitle = will.title || will.sharedWhat || 'Your Will';
               await pushNotificationService.sendToUser(will.createdBy, {
                 title: 'Team Will could not start',
-                body: `"${willTitle}" was cancelled — no friends accepted the invitation`,
+                body: `"${willTitle}" was cancelled — no friends finished committing`,
                 category: 'will_terminated',
                 data: { type: 'will_terminated', willId: will.id, deepLink: `/will/${will.id}` },
               });
@@ -1722,6 +1729,77 @@ export class EndRoomScheduler {
       }
     } catch (err) {
       console.error('[SCHEDULER-TEAM] Error in sendTeamWillInviteReminders:', err);
+    }
+  }
+
+  // ─── Team Will: ~2h-before "finish committing" reminder ───────────────────
+  // For invitees who tapped Accept but never submitted a commitment. Once the
+  // will starts, processTeamWillActivation will expire them as ghosts, so
+  // this is their last nudge to actually become a participant.
+  private async sendTeamWillCommitReminders(now: Date) {
+    try {
+      const windowStart = new Date(now.getTime() + 1.5 * 60 * 60 * 1000); // 1.5h from now
+      const windowEnd   = new Date(now.getTime() + 2.5 * 60 * 60 * 1000); // 2.5h from now
+
+      // Accepted invites whose will starts in ~2h and whose commit reminder
+      // hasn't been sent yet. We post-filter for "no commitment row" in JS.
+      const candidates = await db
+        .select({
+          invite: teamWillInvites,
+          willTitle: wills.title,
+          willSharedWhat: wills.sharedWhat,
+          willStartDate: wills.startDate,
+          willId: wills.id,
+        })
+        .from(teamWillInvites)
+        .innerJoin(wills, eq(teamWillInvites.willId, wills.id))
+        .where(and(
+          eq(teamWillInvites.status, 'accepted'),
+          isNull(teamWillInvites.commitReminderSentAt),
+          eq(wills.mode, 'team'),
+          gte(wills.startDate, windowStart),
+          lt(wills.startDate, windowEnd),
+        ))
+        .limit(100);
+
+      if (candidates.length === 0) return;
+
+      // Pull commitments for all candidate wills in one shot
+      const willIds = Array.from(new Set(candidates.map(c => c.willId)));
+      const commitments = await db
+        .select({ willId: willCommitments.willId, userId: willCommitments.userId })
+        .from(willCommitments)
+        .where(inArray(willCommitments.willId, willIds));
+      const committedKey = new Set(commitments.map(c => `${c.willId}:${c.userId}`));
+
+      const needsReminder = candidates.filter(
+        c => !committedKey.has(`${c.willId}:${c.invite.invitedUserId}`)
+      );
+
+      if (needsReminder.length === 0) return;
+
+      console.log(`[SCHEDULER-TEAM] Sending finish-committing reminders to ${needsReminder.length} invitee(s)`);
+
+      for (const row of needsReminder) {
+        try {
+          const inviteTitle = row.willTitle || row.willSharedWhat || 'a Will';
+          await pushNotificationService.sendToUser(row.invite.invitedUserId, {
+            title: 'Finish committing — your Team Will starts soon',
+            body: `Tap to set your commitment for "${inviteTitle}" before it begins`,
+            category: 'shared_will_reminder',
+            data: { type: 'shared_will_commit', willId: row.willId, deepLink: `/will/${row.willId}/commit` },
+          });
+
+          await db
+            .update(teamWillInvites)
+            .set({ commitReminderSentAt: now })
+            .where(eq(teamWillInvites.id, row.invite.id));
+        } catch (remindErr) {
+          console.error(`[SCHEDULER-TEAM] Failed to send commit reminder for invite ${row.invite.id}:`, remindErr);
+        }
+      }
+    } catch (err) {
+      console.error('[SCHEDULER-TEAM] Error in sendTeamWillCommitReminders:', err);
     }
   }
 }

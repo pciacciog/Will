@@ -127,8 +127,20 @@ export default function AcceptInvite() {
   }
 
   const { invite, will, teamMembers = [] } = data;
+  const willHasStarted = will?.startDate ? new Date(will.startDate) <= new Date() : false;
   const isExpired = invite.status === "expired" || (invite.expiresAt && new Date(invite.expiresAt) <= new Date());
   const isAlreadyActioned = invite.status === "accepted" || invite.status === "declined";
+
+  // Did the current invitee already submit a commitment for this will?
+  const myMember = teamMembers.find(m => m.userId === user?.id);
+  const hasMyCommitment = !!myMember?.commitment;
+  // Accepted but never submitted a commitment, and the will has not started
+  // yet → invite is still actionable; route them to the commit step instead
+  // of the dead-end "already accepted" card.
+  const acceptedButNotCommitted = invite.status === "accepted" && !hasMyCommitment && !willHasStarted;
+  // Accepted but never submitted a commitment AND the will has now started:
+  // the user has effectively dropped out — show a clear terminal state.
+  const acceptedDroppedOut = invite.status === "accepted" && !hasMyCommitment && willHasStarted;
   const isWeWill = will.willType === "cumulative";
   const inviterName = will.creatorName || "A friend";
   const inviterInitial = inviterName.charAt(0).toUpperCase();
@@ -322,8 +334,40 @@ export default function AcceptInvite() {
             </div>
           )}
 
-          {/* Already accepted */}
-          {invite.status === "accepted" && !isExpired && (
+          {/* Accepted but never finished committing — still actionable */}
+          {acceptedButNotCommitted && !isExpired && (
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-center" data-testid="card-finish-committing">
+              <p className="text-sm text-amber-700 font-medium mb-1">You haven't finished committing yet</p>
+              <p className="text-xs text-amber-600/80">
+                You tapped Accept but never set your commitment. Finish before the Will starts so you don't drop out.
+              </p>
+              <Button
+                onClick={() => setLocation(`/will/${willId}/commit`)}
+                className="mt-3 bg-amber-600 hover:bg-amber-700 text-white text-sm"
+                data-testid="button-finish-committing"
+              >
+                Finish committing
+              </Button>
+            </div>
+          )}
+
+          {/* Accepted but ran out of time — terminal */}
+          {acceptedDroppedOut && (
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center" data-testid="card-dropped-out">
+              <p className="text-sm text-gray-700 font-medium">You didn't finish committing in time</p>
+              <p className="text-xs text-gray-500 mt-1">The Will has started without you. You can still join future Wills.</p>
+              <Button
+                onClick={() => setLocation("/")}
+                variant="outline"
+                className="mt-3 text-sm"
+              >
+                Go Home
+              </Button>
+            </div>
+          )}
+
+          {/* Already accepted AND committed — direct to the hub */}
+          {invite.status === "accepted" && hasMyCommitment && !isExpired && (
             <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
               <CheckCircle className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
               <p className="text-sm text-emerald-700 font-medium">You already accepted this invite</p>

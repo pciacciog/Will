@@ -134,7 +134,8 @@ export const teamWillInvites = pgTable("shared_will_invites", {
   status: varchar("status", { length: 20 }).notNull().default("pending"), // 'pending', 'accepted', 'declined', 'expired'
   respondedAt: timestamp("responded_at"),
   expiresAt: timestamp("expires_at"),
-  reminderSentAt: timestamp("reminder_sent_at"), // When 24h-before reminder was sent
+  reminderSentAt: timestamp("reminder_sent_at"), // When 24h-before reminder was sent (to PENDING invitees)
+  commitReminderSentAt: timestamp("commit_reminder_sent_at"), // When the ~2h-before "finish committing" reminder was sent (to ACCEPTED-but-uncommitted invitees)
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("IDX_shared_will_invites_will_id").on(table.willId),
