@@ -110,7 +110,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             apiUrl = "https://will-staging-porfirioaciacci.replit.app/api/device-token"
         } else {
             print("✅ iOS DIRECT: PRODUCTION app detected → Using PRODUCTION backend")
-            apiUrl = "https://will-1-porfirioaciacci.replit.app/api/device-token"
+            apiUrl = "https://will-production.replit.app/api/device-token"
         }
         
         // API endpoint URL
