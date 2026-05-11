@@ -1,0 +1,23 @@
+Hey, I need to add invite visibility and a ping feature to Team Wills. Right now when I create a Team Will and invite friends, I have no way of seeing who I invited or what their status is. I am completely blind to who has accepted and who is still pending. Here is exactly what needs to be built:
+Team Will card in the Hub — Members row
+Every Team Will card in the hub needs to display a Members row at the bottom of the card. Show every invited member as an avatar circle with their initial, their name below, and a status label beneath the name. Status logic is as follows:
+
+Creator — solid colored avatar, purple status dot, label "You"
+Accepted — solid colored avatar, green status dot, label "In ✓"
+Pending — faded avatar (reduced opacity), dashed border, amber status dot, label "Pending"
+
+Below the members row add a small hint line that reads: "Tap a pending member to ping them" with a tap icon. Only show this hint if at least one member is still pending.
+Tap interaction on a pending avatar
+When the creator taps a pending member's avatar, show a bottom sheet or modal with:
+
+The member's avatar and name at the top
+Subtitle: "Invited · still pending"
+Primary button: "Ping [name] to respond" — sends that user a push notification reminding them they have a pending Team Will invite
+Secondary button: "Remove from Will" — removes them from the invite list
+Cancel option to dismiss
+
+Only the creator of the Will should be able to see pending statuses and trigger pings. Other accepted members just see the avatars without the pending interaction.
+Push notification for the ping
+When the creator taps "Ping [name] to respond", send a push notification to that user that reads: "[Creator name] is waiting on you — you have a pending Team Will invite."
+Data requirements
+Make sure the backend tracks and returns the invite status for each member on a Team Will — at minimum: userId, name, and status (pending / accepted). This data needs to be available when loading the hub so the card can render correctly without an extra fetch.
