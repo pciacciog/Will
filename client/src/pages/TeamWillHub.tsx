@@ -289,6 +289,24 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   // missionCompleted from server (persists across navigations)
   const missionCompleted = userCommitment?.missionCompleted === true;
 
+  // Recurring: direct check-in mutation (bypasses modal)
+  const recurringCheckInMutation = useMutation({
+    mutationFn: async ({ status }: { status: 'yes' | 'no' }) => {
+      const res = await apiRequest(`/api/wills/${willId}/check-ins`, {
+        method: 'POST',
+        body: JSON.stringify({ date: todayLocalDate, status }),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/check-ins`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/check-in-progress`] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to log check-in", variant: "destructive" });
+    },
+  });
+
   // Normalise any image (including HEIC from iOS photo library) to a JPEG Blob
   // capped at 1200px on the longest side, quality 0.8.
   const normalizeToJpeg = (file: File): Promise<File> =>
@@ -639,6 +657,28 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     if (will?.commitmentCategory !== 'recurring') return null;
     return checkIns.find((c: WillCheckIn) => c.date === todayLocalDate) || null;
   }, [checkIns, will?.commitmentCategory, todayLocalDate]);
+
+  // Recurring: current week (Mon–Sun) for the week strip
+  const recurringWeekDays = useMemo(() => {
+    if (will?.commitmentCategory !== 'recurring') return [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dow = today.getDay();
+    const mondayOffset = dow === 0 ? -6 : 1 - dow;
+    const monday = new Date(today); monday.setDate(today.getDate() + mondayOffset);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const dateStr = d.toLocaleDateString('en-CA');
+      const ci = checkIns.find((c: WillCheckIn) => c.date === dateStr);
+      const isToday = d.getTime() === today.getTime();
+      const isFuture = d > today;
+      let status: 'yes' | 'partial' | 'no' | 'today' | 'future';
+      if (ci) { status = ci.status as 'yes' | 'partial' | 'no'; }
+      else if (isToday) { status = 'today'; }
+      else if (isFuture) { status = 'future'; }
+      else { status = 'no'; }
+      return { d, dateStr, dayNum: d.getDate(), status, isToday };
+    });
+  }, [will?.commitmentCategory, checkIns]);
 
   // Duration: total days in the will period
   const durTotalDays = useMemo(() => {
@@ -1239,75 +1279,104 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             ) : category === 'recurring' ? (
               /* ── Recurring ── */
               <div className="space-y-3">
-                {/* Check-in button */}
+                {/* Recurring: two side-by-side check-in buttons */}
                 {will.status === 'active' && hasDailyCheckIns && (
                   habitTodayCheckIn ? (
                     <div
                       className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold"
-                      style={{ backgroundColor: '#1D9E75', opacity: 0.7, color: '#fff' }}
+                      style={{ backgroundColor: '#E1F5EE', color: '#1D9E75', border: '2px solid #1D9E75' }}
                       data-testid="button-habit-checked-in"
                     >
-                      <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
+                      <CheckCircle style={{ width: 20, height: 20, color: '#1D9E75' }} />
                       Checked in for today ✓
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setShowCheckInModal(true)}
-                      className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
-                      style={{ backgroundColor: '#1D9E75' }}
-                      data-testid="button-habit-check-in"
-                    >
-                      <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
-                      Check in for today
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => recurringCheckInMutation.mutate({ status: 'yes' })}
+                        disabled={recurringCheckInMutation.isPending}
+                        className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80 disabled:opacity-60"
+                        style={{ backgroundColor: '#1D9E75' }}
+                        data-testid="button-recurring-did-it"
+                      >
+                        <Check style={{ width: 18, height: 18, color: '#fff' }} />
+                        Did it
+                      </button>
+                      <button
+                        onClick={() => recurringCheckInMutation.mutate({ status: 'no' })}
+                        disabled={recurringCheckInMutation.isPending}
+                        className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-opacity active:opacity-80 disabled:opacity-60"
+                        style={{ border: '2px solid #E24B4A', color: '#E24B4A' }}
+                        data-testid="button-recurring-did-not"
+                      >
+                        <X style={{ width: 18, height: 18, color: '#E24B4A' }} />
+                        Did not
+                      </button>
+                    </div>
                   )
                 )}
-                {/* Collapsible progress card */}
-                {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
-                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" data-testid="card-habit-progress">
-                    <button
-                      className="w-full flex items-center justify-between px-4 py-3"
-                      onClick={() => setHabitProgressExpanded(v => !v)}
-                      data-testid="button-habit-progress-toggle"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="flex gap-1">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
-                          <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />
-                        </span>
-                        <div>
-                          <span className="text-sm font-semibold text-gray-800">Your progress</span>
-                          {checkIns.length > 0 && (
-                            <p className="text-xs text-gray-400">
-                              {checkIns.filter((c: WillCheckIn) => c.status === 'yes').length} done · {checkIns.filter((c: WillCheckIn) => c.status === 'partial').length} partial · {checkIns.filter((c: WillCheckIn) => c.status === 'no').length} missed
-                            </p>
-                          )}
+                {/* Recurring: flat always-expanded progress card */}
+                {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (() => {
+                  const yesCount = checkIns.filter((c: WillCheckIn) => c.status === 'yes').length;
+                  const partialCount = checkIns.filter((c: WillCheckIn) => c.status === 'partial').length;
+                  const noCount = checkIns.filter((c: WillCheckIn) => c.status === 'no').length;
+                  const total = yesCount + partialCount + noCount;
+                  const successRate = total > 0 ? Math.round((yesCount / total) * 100) : 0;
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-4" data-testid="card-habit-progress">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 text-center mb-3">Your Progress</p>
+                      <div className="flex gap-2 mb-3">
+                        <div className="flex-1 rounded-xl py-2.5 text-center" style={{ backgroundColor: '#F0FAF5' }}>
+                          <p className="text-xl font-bold" style={{ color: '#1D9E75' }}>{yesCount}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">completed</p>
+                        </div>
+                        <div className="flex-1 rounded-xl py-2.5 text-center" style={{ backgroundColor: '#FFFBEB' }}>
+                          <p className="text-xl font-bold text-amber-400">{partialCount}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">partial</p>
+                        </div>
+                        <div className="flex-1 rounded-xl py-2.5 text-center" style={{ backgroundColor: '#FEF2F2' }}>
+                          <p className="text-xl font-bold text-red-400">{noCount}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">missed</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold" style={{ color: '#1D9E75' }}>
-                          {(() => {
-                            const yes = checkIns.filter((c: WillCheckIn) => c.status === 'yes').length;
-                            const total = checkIns.length;
-                            return total > 0 ? `${Math.round((yes / total) * 100)}%` : '—';
-                          })()}
-                        </span>
-                        <ChevronDown style={{ width: 16, height: 16, color: '#9ca3af', transform: habitProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                      <div className="border-t border-gray-100 mb-3" />
+                      <div className="mb-3">
+                        <div className="grid grid-cols-7 gap-1 mb-1.5">
+                          {['M','T','W','T','F','S','S'].map((l, i) => (
+                            <div key={i} className="text-center text-[10px] text-gray-400 font-medium">{l}</div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {recurringWeekDays.map((day) => {
+                            const filled = day.status === 'yes' || day.status === 'partial' || day.status === 'no';
+                            const bg = day.status === 'yes' ? '#1D9E75' : day.status === 'partial' ? '#F59E0B' : day.status === 'no' ? '#F87171' : 'transparent';
+                            const border = day.status === 'today' ? '2px solid #1D9E75' : day.status === 'future' ? '2px solid #D1D5DB' : 'none';
+                            const textColor = filled ? '#fff' : day.status === 'today' ? '#1D9E75' : '#9CA3AF';
+                            return (
+                              <div
+                                key={day.dateStr}
+                                className="flex items-center justify-center rounded-full"
+                                style={{ aspectRatio: '1', backgroundColor: bg, border, width: '100%' }}
+                              >
+                                <span className="text-xs font-semibold" style={{ color: textColor }}>{day.dayNum}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </button>
-                    {habitProgressExpanded && (
-                      <div className="px-4 pb-4">
-                        <DayStrip
-                          startDate={will.startDate as unknown as string}
-                          endDate={will.endDate as unknown as string | null}
-                          checkIns={checkIns}
-                          onDayClick={will.status === 'active' ? handleDayClick : undefined}
-                        />
+                      <div className="flex items-center justify-center gap-3 text-[10px] text-gray-500 mb-3">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: '#1D9E75' }} />Done</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: '#F59E0B' }} />Partial</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: '#F87171' }} />Missed</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block border-2 border-[#1D9E75]" style={{ backgroundColor: 'transparent' }} />Today</span>
                       </div>
-                    )}
-                  </div>
-                )}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                        <span className="text-xs text-gray-500">Success rate</span>
+                        <span className="text-xs font-semibold" style={{ color: '#1D9E75' }}>{successRate}% · {yesCount} of {total} days</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
             ) : category === 'duration' ? (
