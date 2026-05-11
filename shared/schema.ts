@@ -114,6 +114,7 @@ export const wills = pgTable("wills", {
   midpointNotificationSentAt: timestamp("midpoint_notification_sent_at"),
   kickoffNotificationSentAt: timestamp("kickoff_notification_sent_at"), // Day-1 kickoff for Duration wills
   completionNotificationSentAt: timestamp("completion_notification_sent_at"),
+  categoryCompletionPromptSentAt: timestamp("category_completion_prompt_sent_at"), // Duration/Event completion prompt (distinct from will-review notification)
 }, (table) => [
   index("IDX_wills_mode").on(table.mode),
   index("IDX_wills_status").on(table.status),

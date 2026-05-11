@@ -13,5 +13,6 @@ UPDATE will_commitments SET commitment_category = 'recurring' WHERE commitment_c
 UPDATE will_commitments SET commitment_category = 'duration'  WHERE commitment_category = 'abstain';
 UPDATE will_commitments SET commitment_category = 'event'     WHERE commitment_category = 'mission';
 
--- Add kickoff notification tracking column for Duration wills (day-1 notification)
+-- Add notification tracking columns for new category-aware scheduler behaviors
 ALTER TABLE wills ADD COLUMN IF NOT EXISTS kickoff_notification_sent_at TIMESTAMP;
+ALTER TABLE wills ADD COLUMN IF NOT EXISTS category_completion_prompt_sent_at TIMESTAMP;

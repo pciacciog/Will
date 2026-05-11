@@ -1304,18 +1304,20 @@ export class EndRoomScheduler {
     }
   }
 
-  // Duration: day-1 kickoff — fires once when a duration will first becomes active
+  // Duration: day-1 kickoff — fires once per participant within the first 24h of a duration will going active.
+  // Uses kickoffNotificationSentAt (will-level flag) for idempotency; notifies all participants.
   private async checkDurationKickoff(now: Date) {
     try {
       const rows = await db
         .select({
           willId: wills.id,
-          userId: wills.createdBy,
+          userId: willCommitments.userId,
+          commitmentId: willCommitments.id,
           userWhat: willCommitments.what,
           startDate: wills.startDate,
         })
         .from(wills)
-        .innerJoin(willCommitments, and(eq(willCommitments.willId, wills.id), eq(willCommitments.userId, wills.createdBy)))
+        .innerJoin(willCommitments, eq(willCommitments.willId, wills.id))
         .where(and(
           eq(wills.status, 'active'),
           eq(wills.commitmentCategory, 'duration'),
@@ -1323,25 +1325,34 @@ export class EndRoomScheduler {
           // Only fire within first 24h of will starting
           gte(wills.startDate, new Date(now.getTime() - 24 * 60 * 60 * 1000)),
         ))
-        .limit(50);
+        .limit(100);
 
+      // Group by willId — mark the will once, notify all participants
+      const willGroups = new Map<number, typeof rows>();
       for (const row of rows) {
-        try {
-          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
-            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
-          if (hasToken.length === 0) continue;
+        const existing = willGroups.get(row.willId) ?? [];
+        existing.push(row);
+        willGroups.set(row.willId, existing);
+      }
 
-          // Mark kickoff sent first (optimistic lock)
+      for (const [willId, participants] of willGroups) {
+        try {
+          // Mark kickoff sent at will level (optimistic lock prevents duplicates)
           const updated = await db.update(wills)
             .set({ kickoffNotificationSentAt: now })
-            .where(and(eq(wills.id, row.willId), isNull(wills.kickoffNotificationSentAt)))
+            .where(and(eq(wills.id, willId), isNull(wills.kickoffNotificationSentAt)))
             .returning({ id: wills.id });
           if (updated.length === 0) continue;
 
-          await pushNotificationService.sendDurationKickoffNotification(row.userId, row.userWhat || '', row.willId);
-          console.log(`[SCHEDULER] ✅ Duration kickoff sent to user ${row.userId} for Will ${row.willId}`);
+          for (const row of participants) {
+            const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+              .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+            if (hasToken.length === 0) continue;
+            await pushNotificationService.sendDurationKickoffNotification(row.userId, row.userWhat || '', willId);
+            console.log(`[SCHEDULER] ✅ Duration kickoff sent to user ${row.userId} for Will ${willId}`);
+          }
         } catch (err) {
-          console.error(`[SCHEDULER] Duration kickoff error for Will ${row.willId}:`, err);
+          console.error(`[SCHEDULER] Duration kickoff error for Will ${willId}:`, err);
         }
       }
     } catch (error) {
@@ -1349,46 +1360,61 @@ export class EndRoomScheduler {
     }
   }
 
-  // Duration + Event: completion-triggered prompt — fires once when will status becomes completed/will_review
+  // Duration + Event: completion-triggered prompt — fires once per participant when will enters will_review/completed.
+  // Uses categoryCompletionPromptSentAt (will-level) — distinct from completionNotificationSentAt
+  // which is already set by transitionWillStatuses() for the will-review notification.
   private async checkCompletionPrompts(now: Date) {
     try {
       const rows = await db
         .select({
           willId: wills.id,
-          userId: wills.createdBy,
+          commitmentId: willCommitments.id,
+          userId: willCommitments.userId,
           commitmentCategory: wills.commitmentCategory,
           userWhat: willCommitments.what,
         })
         .from(wills)
-        .innerJoin(willCommitments, and(eq(willCommitments.willId, wills.id), eq(willCommitments.userId, wills.createdBy)))
+        .innerJoin(willCommitments, eq(willCommitments.willId, wills.id))
         .where(and(
           or(eq(wills.status, 'will_review'), eq(wills.status, 'completed')),
           or(eq(wills.commitmentCategory, 'duration'), eq(wills.commitmentCategory, 'event')),
-          isNull(wills.completionNotificationSentAt),
+          isNull(wills.categoryCompletionPromptSentAt),
         ))
-        .limit(50);
+        .limit(100);
 
+      // Group by willId to mark the will once, then notify all participants
+      const willGroups = new Map<number, typeof rows>();
       for (const row of rows) {
-        try {
-          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
-            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
-          if (hasToken.length === 0) continue;
+        const existing = willGroups.get(row.willId) ?? [];
+        existing.push(row);
+        willGroups.set(row.willId, existing);
+      }
 
+      for (const [willId, participants] of willGroups) {
+        try {
+          const category = participants[0].commitmentCategory;
+          // Mark the will-level flag first (optimistic lock)
           const updated = await db.update(wills)
-            .set({ completionNotificationSentAt: now })
-            .where(and(eq(wills.id, row.willId), isNull(wills.completionNotificationSentAt)))
+            .set({ categoryCompletionPromptSentAt: now })
+            .where(and(eq(wills.id, willId), isNull(wills.categoryCompletionPromptSentAt)))
             .returning({ id: wills.id });
           if (updated.length === 0) continue;
 
-          if (row.commitmentCategory === 'duration') {
-            await pushNotificationService.sendDurationCompletionPromptNotification(row.userId, row.userWhat || '', row.willId);
-            console.log(`[SCHEDULER] ✅ Duration completion prompt sent to user ${row.userId} for Will ${row.willId}`);
-          } else if (row.commitmentCategory === 'event') {
-            await pushNotificationService.sendEventCompletionPromptNotification(row.userId, row.userWhat || '', row.willId);
-            console.log(`[SCHEDULER] ✅ Event completion prompt sent to user ${row.userId} for Will ${row.willId}`);
+          for (const row of participants) {
+            const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+              .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+            if (hasToken.length === 0) continue;
+
+            if (category === 'duration') {
+              await pushNotificationService.sendDurationCompletionPromptNotification(row.userId, row.userWhat || '', willId);
+              console.log(`[SCHEDULER] ✅ Duration completion prompt sent to user ${row.userId} for Will ${willId}`);
+            } else if (category === 'event') {
+              await pushNotificationService.sendEventCompletionPromptNotification(row.userId, row.userWhat || '', willId);
+              console.log(`[SCHEDULER] ✅ Event completion prompt sent to user ${row.userId} for Will ${willId}`);
+            }
           }
         } catch (err) {
-          console.error(`[SCHEDULER] Completion prompt error for Will ${row.willId}:`, err);
+          console.error(`[SCHEDULER] Completion prompt error for Will ${willId}:`, err);
         }
       }
     } catch (error) {
