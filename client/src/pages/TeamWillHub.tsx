@@ -640,7 +640,59 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     return checkIns.find((c: WillCheckIn) => c.date === todayLocalDate) || null;
   }, [checkIns, will?.commitmentCategory, todayLocalDate]);
 
-  // Abstain: calendar day strip (last 14 days)
+  // Duration: total days in the will period
+  const durTotalDays = useMemo(() => {
+    if (!will?.startDate || !will?.endDate) return 0;
+    return Math.max(1, Math.round((new Date(will.endDate as string).getTime() - new Date(will.startDate as unknown as string).getTime()) / 86400000));
+  }, [will?.startDate, will?.endDate]);
+
+  // Duration: days elapsed including today (capped at total)
+  const durDaysIn = useMemo(() => {
+    if (!will?.startDate || durTotalDays === 0) return 0;
+    const start = new Date(will.startDate as unknown as string); start.setHours(0, 0, 0, 0);
+    const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+    return Math.min(durTotalDays, Math.max(1, Math.floor((todayMidnight.getTime() - start.getTime()) / 86400000) + 1));
+  }, [will?.startDate, durTotalDays]);
+
+  const durDaysLeft = Math.max(0, durTotalDays - durDaysIn);
+
+  // Duration: missed = past days (before today) with no entry or not-honored entry
+  const durMissedDays = useMemo(() => {
+    if (!will?.startDate || durDaysIn === 0) return 0;
+    const start = new Date(will.startDate as unknown as string); start.setHours(0, 0, 0, 0);
+    let missed = 0;
+    for (let i = 0; i < durDaysIn - 1; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      const dateStr = d.toLocaleDateString('en-CA');
+      const entry = abstainLogEntries.find((e: AbstainLog) => e.date === dateStr);
+      if (!entry || !entry.honored) missed++;
+    }
+    return missed;
+  }, [will?.startDate, durDaysIn, abstainLogEntries]);
+
+  // Duration: calendar day array (all days from start to end)
+  const durCalendarDays = useMemo(() => {
+    if (!will?.startDate || durTotalDays === 0) return [] as { dayNum: number; date: string; status: 'checked-in' | 'missed' | 'today' | 'upcoming' }[];
+    const start = new Date(will.startDate as unknown as string); start.setHours(0, 0, 0, 0);
+    const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+    return Array.from({ length: durTotalDays }, (_, i) => {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      const dateStr = d.toLocaleDateString('en-CA');
+      const isToday = d.getTime() === todayMidnight.getTime();
+      const isPast = d < todayMidnight;
+      const entry = abstainLogEntries.find((e: AbstainLog) => e.date === dateStr);
+      const status = isToday ? 'today' : isPast ? (entry?.honored ? 'checked-in' : 'missed') : 'upcoming';
+      return { dayNum: i + 1, date: dateStr, status } as { dayNum: number; date: string; status: 'checked-in' | 'missed' | 'today' | 'upcoming' };
+    });
+  }, [will?.startDate, durTotalDays, abstainLogEntries]);
+
+  // Duration: Mon-first day-of-week offset for calendar grid start
+  const durStartDOW = useMemo(() => {
+    if (!will?.startDate) return 0;
+    return (new Date(will.startDate as unknown as string).getDay() + 6) % 7;
+  }, [will?.startDate]);
+
+  // Abstain: calendar day strip (last 14 days) — kept for any legacy usage
   const abstainCalendarDays = useMemo(() => {
     if (!will?.startDate) return [];
     const start = new Date(will.startDate as unknown as string);
@@ -1259,153 +1311,178 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </div>
 
             ) : category === 'duration' ? (
-              /* ── Duration ── */
+              /* ── Duration (flat progress card) ── */
               <div className="space-y-3">
-                {/* Check-in flow */}
-                {will.status === 'active' && (
-                  <div data-testid="section-abstain-actions">
-                    {(abstainTodayEntry || abstainJustLoggedHonored !== null) ? (
-                      /* Result card — locked for today */
-                      (() => {
-                        const honored = abstainTodayEntry?.honored ?? (abstainJustLoggedHonored ?? true);
-                        return honored ? (
-                          <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#E1F5EE', border: '2px solid #1D9E75' }} data-testid="abstain-result-honored">
-                            <div className="flex items-center justify-center rounded-full" style={{ width: 44, height: 44, backgroundColor: '#1D9E75' }}>
-                              <CheckCircle style={{ width: 22, height: 22, color: '#fff' }} />
-                            </div>
-                            <p className="text-sm font-semibold mt-1" style={{ color: '#085041' }}>Will honored</p>
-                            <p className="text-xs" style={{ color: '#2E7D63' }}>Logged for today.</p>
+                {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
+                  <div className="bg-white rounded-xl border border-gray-200 p-4" data-testid="card-duration-progress">
+                    {/* Section label */}
+                    <p className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase text-center mb-4">Your Progress</p>
+
+                    {/* Circular progress ring */}
+                    <div className="flex justify-center mb-4">
+                      <div className="relative" style={{ width: 144, height: 144 }}>
+                        <svg width="144" height="144" style={{ transform: 'rotate(-90deg)' }}>
+                          <circle cx="72" cy="72" r="56" fill="none" stroke="#E5E7EB" strokeWidth="10" />
+                          <circle
+                            cx="72" cy="72" r="56" fill="none"
+                            stroke="#1D6FBE" strokeWidth="10"
+                            strokeLinecap="round"
+                            strokeDasharray={`${2 * Math.PI * 56}`}
+                            strokeDashoffset={`${2 * Math.PI * 56 * (1 - durDaysIn / Math.max(1, durTotalDays))}`}
+                            style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                          />
+                        </svg>
+                        {/* Centered inner text — three lines */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ gap: 0 }}>
+                          <span className="text-[11px] text-gray-400" style={{ lineHeight: '1.2' }}>Day</span>
+                          <span className="font-bold" style={{ fontSize: 36, lineHeight: '1.05', color: '#1D6FBE' }}>{durDaysIn}</span>
+                          <span className="text-[11px] text-gray-400" style={{ lineHeight: '1.2' }}>of {durTotalDays}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stat boxes */}
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-lg font-bold text-gray-800">{durDaysIn}</div>
+                        <div className="text-[11px] text-gray-500">days in</div>
+                      </div>
+                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-lg font-bold text-gray-800">{durDaysLeft}</div>
+                        <div className="text-[11px] text-gray-500">days left</div>
+                      </div>
+                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-lg font-bold" style={{ color: durMissedDays > 0 ? '#E24B4A' : '#1F2937' }}>{durMissedDays}</div>
+                        <div className="text-[11px] text-gray-500">missed</div>
+                      </div>
+                    </div>
+
+                    {/* Check-in area (active only) */}
+                    {will.status === 'active' && (
+                      <div className="mb-4" data-testid="section-abstain-actions">
+                        {(abstainTodayEntry || abstainJustLoggedHonored !== null) ? (
+                          (() => {
+                            const honored = abstainTodayEntry?.honored ?? (abstainJustLoggedHonored ?? true);
+                            return honored ? (
+                              <div className="w-full rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#E1F5EE', border: '1.5px solid #1D9E75' }} data-testid="abstain-result-honored">
+                                <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 36, height: 36, backgroundColor: '#1D9E75' }}>
+                                  <CheckCircle style={{ width: 18, height: 18, color: '#fff' }} />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold" style={{ color: '#085041' }}>Will honored today</p>
+                                  <p className="text-xs" style={{ color: '#2E7D63' }}>Logged for today.</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-full rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#FCEBEB', border: '1.5px solid #E24B4A' }} data-testid="abstain-result-not-honored">
+                                <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 36, height: 36, backgroundColor: '#E24B4A' }}>
+                                  <XCircle style={{ width: 18, height: 18, color: '#fff' }} />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold" style={{ color: '#791F1F' }}>That's okay</p>
+                                  <p className="text-xs" style={{ color: '#A32D2D' }}>Tomorrow is a fresh start.</p>
+                                </div>
+                              </div>
+                            );
+                          })()
+                        ) : abstainCheckInOpen ? (
+                          <div className="space-y-2" data-testid="abstain-checkin-options">
+                            <p className="text-xs text-gray-400 text-center">Did you honor your will today?</p>
+                            <button
+                              onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true }); }}
+                              disabled={abstainLogMutation.isPending}
+                              className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                              style={{ border: '2px solid #1D6FBE', color: '#0A3870' }}
+                              data-testid="button-abstain-honored"
+                            >
+                              <CheckCircle style={{ width: 20, height: 20, color: '#1D6FBE' }} />
+                              I honored my will
+                            </button>
+                            <button
+                              onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: false }); }}
+                              disabled={abstainLogMutation.isPending}
+                              className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                              style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
+                              data-testid="button-abstain-didnt-honor"
+                            >
+                              <XCircle style={{ width: 20, height: 20, color: '#E24B4A' }} />
+                              I didn't honor it
+                            </button>
                           </div>
                         ) : (
-                          <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#FCEBEB', border: '2px solid #E24B4A' }} data-testid="abstain-result-not-honored">
-                            <div className="flex items-center justify-center rounded-full" style={{ width: 44, height: 44, backgroundColor: '#E24B4A' }}>
-                              <XCircle style={{ width: 22, height: 22, color: '#fff' }} />
-                            </div>
-                            <p className="text-sm font-semibold mt-1" style={{ color: '#791F1F' }}>That's okay</p>
-                            <p className="text-xs" style={{ color: '#A32D2D' }}>Tomorrow is a fresh start.</p>
-                          </div>
-                        );
-                      })()
-                    ) : abstainCheckInOpen ? (
-                      /* Step 2: Options card */
-                      <div className="bg-white rounded-xl border border-gray-200 p-4" data-testid="abstain-checkin-options">
-                        <p className="text-xs text-gray-400 text-center mb-3">Did you honor your will today?</p>
-                        <div className="space-y-2">
                           <button
-                            onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true }); }}
-                            disabled={abstainLogMutation.isPending}
-                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                            style={{ border: '2px solid #1D6FBE', color: '#0A3870' }}
-                            data-testid="button-abstain-honored"
+                            onClick={() => setAbstainCheckInOpen(true)}
+                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                            style={{ backgroundColor: '#1D6FBE' }}
+                            data-testid="button-abstain-check-in"
                           >
-                            <CheckCircle style={{ width: 20, height: 20, color: '#1D6FBE' }} />
-                            I honored my will
+                            <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
+                            Check in for today
                           </button>
-                          <button
-                            onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: false }); }}
-                            disabled={abstainLogMutation.isPending}
-                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                            style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
-                            data-testid="button-abstain-didnt-honor"
-                          >
-                            <XCircle style={{ width: 20, height: 20, color: '#E24B4A' }} />
-                            I didn't honor it
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Step 1: Check in button */
-                      <button
-                        onClick={() => setAbstainCheckInOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
-                        style={{ backgroundColor: '#1D6FBE' }}
-                        data-testid="button-abstain-check-in"
-                      >
-                        <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
-                        Check in for today
-                      </button>
-                    )}
-                  </div>
-                )}
-                {/* Collapsible progress card */}
-                {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
-                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" data-testid="card-abstain-progress">
-                    <button
-                      className="w-full flex items-center justify-between px-4 py-3"
-                      onClick={() => setAbstainProgressExpanded(v => !v)}
-                      data-testid="button-abstain-progress-toggle"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="flex gap-1">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                          <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />
-                        </span>
-                        <div>
-                          <span className="text-sm font-semibold text-gray-800">Your progress</span>
-                          {(() => {
-                            const honored = abstainLogEntries.filter((e: AbstainLog) => e.honored).length;
-                            const notHonored = abstainLogEntries.filter((e: AbstainLog) => !e.honored).length;
-                            return (honored + notHonored) > 0 ? (
-                              <p className="text-xs text-gray-400">{honored} honored · {notHonored} not honored</p>
-                            ) : null;
-                          })()}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const honored = abstainLogEntries.filter((e: AbstainLog) => e.honored).length;
-                          const total = abstainLogEntries.length;
-                          return total > 0 ? (
-                            <span className="text-sm font-bold" style={{ color: '#1D9E75' }}>
-                              {Math.round((honored / total) * 100)}%
-                            </span>
-                          ) : null;
-                        })()}
-                        <ChevronDown style={{ width: 16, height: 16, color: '#9ca3af', transform: abstainProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                      </div>
-                    </button>
-                    {abstainProgressExpanded && (
-                      <div className="px-4 pb-4 space-y-3">
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="text-center p-2 rounded-lg" style={{ backgroundColor: '#E1F5EE' }}>
-                            <div className="text-lg font-bold" style={{ color: '#1D9E75' }}>{abstainLogEntries.filter((e: AbstainLog) => e.honored).length}</div>
-                            <div className="text-xs" style={{ color: '#1D9E75' }}>honored</div>
-                          </div>
-                          <div className="text-center p-2 rounded-lg" style={{ backgroundColor: '#FCEBEB' }}>
-                            <div className="text-lg font-bold" style={{ color: '#E24B4A' }}>{abstainLogEntries.filter((e: AbstainLog) => !e.honored).length}</div>
-                            <div className="text-xs" style={{ color: '#E24B4A' }}>not honored</div>
-                          </div>
-                          <div className="text-center p-2 rounded-lg bg-gray-50">
-                            <div className="text-lg font-bold text-gray-700">
-                              {will.endDate ? Math.max(0, Math.ceil((new Date(will.endDate as string).getTime() - Date.now()) / 86400000)) : '∞'}
-                            </div>
-                            <div className="text-xs text-gray-500">days left</div>
-                          </div>
-                        </div>
-                        {abstainCalendarDays.length > 0 && (
-                          <div className="space-y-2">
-                            <div className="flex gap-1 flex-wrap">
-                              {abstainCalendarDays.map((d) => (
-                                <div key={d.date} className="flex flex-col items-center" style={{ minWidth: 30 }}>
-                                  <div
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium"
-                                    style={{
-                                      backgroundColor: d.status === 'honored' ? '#1D9E75' : d.status === 'not-honored' ? '#E24B4A' : '#F3F4F6',
-                                      color: d.status === 'pending' ? '#9CA3AF' : '#fff',
-                                    }}
-                                  >
-                                    {new Date(d.date + 'T00:00:00').getDate()}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /><span className="text-xs text-gray-500">Honored</span></div>
-                              <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" /><span className="text-xs text-gray-500">Not honored</span></div>
-                              <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-200 inline-block" /><span className="text-xs text-gray-500">Pending</span></div>
-                            </div>
-                          </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-100 mb-3" />
+
+                    {/* 7-column calendar grid */}
+                    {durCalendarDays.length > 0 && (
+                      <div>
+                        {/* Day-of-week headers */}
+                        <div className="grid grid-cols-7 mb-1.5">
+                          {['M','T','W','T','F','S','S'].map((h, i) => (
+                            <div key={i} className="text-center text-[10px] font-semibold text-gray-400">{h}</div>
+                          ))}
+                        </div>
+                        {/* Day cells */}
+                        <div className="grid grid-cols-7 gap-y-1.5">
+                          {Array.from({ length: durStartDOW }).map((_, i) => <div key={`pad-${i}`} />)}
+                          {durCalendarDays.map((d) => (
+                            <div key={d.dayNum} className="flex justify-center">
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                                style={{
+                                  backgroundColor:
+                                    d.status === 'checked-in' ? '#1D6FBE'
+                                    : d.status === 'missed' ? '#FECDD3'
+                                    : 'transparent',
+                                  border:
+                                    d.status === 'today' ? '2px solid #534AB7'
+                                    : d.status === 'upcoming' ? '1px solid #E5E7EB'
+                                    : 'none',
+                                  color:
+                                    d.status === 'checked-in' ? '#fff'
+                                    : d.status === 'missed' ? '#E24B4A'
+                                    : d.status === 'today' ? '#534AB7'
+                                    : '#9CA3AF',
+                                }}
+                                data-testid={`day-dot-${d.dayNum}`}
+                              >
+                                {d.dayNum}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Legend */}
+                        <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
+                          <div className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#1D6FBE' }} />
+                            <span className="text-[10px] text-gray-500">Checked in</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ border: '2px solid #534AB7' }} />
+                            <span className="text-[10px] text-gray-500">Today</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#FECDD3' }} />
+                            <span className="text-[10px] text-gray-500">Missed</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB' }} />
+                            <span className="text-[10px] text-gray-500">Upcoming</span>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
