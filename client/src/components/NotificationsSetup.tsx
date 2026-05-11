@@ -137,7 +137,7 @@ function Toggle({ on, onChange, color }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-function TimeChip({ value, onChange, color }: { value: string; onChange: (v: string) => void; color: typeof COLORS.habit }) {
+function TimeChip({ value, onChange, color }: { value: string; onChange: (v: string) => void; color: typeof COLORS.recurring }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">

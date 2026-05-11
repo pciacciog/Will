@@ -1,0 +1,18 @@
+Hey, I want to redesign the Duration will detail screen (previously called Abstain). Here's exactly what the new layout should look like, top to bottom:
+Header
+Same as current — back button, "Team Will" title, chat and settings icons. Badge below the header reads "Duration · X days left" in blue.
+Our Commitment card
+Same as current — quoted commitment text, avatars of team members below it.
+Your Progress card
+This is the main change. It contains:
+
+A circular progress ring in the center. The ring fills based on how many days have elapsed out of the total (e.g. Day 8 of 30 = ~27% filled). Inside the ring, display three lines of text stacked and vertically centered: "Day" (small, muted), the current day number (large, bold, blue), and "of 30" (small, muted). Make sure all three lines are truly vertically centered inside the ring — the day number especially should sit at the visual center, not drift up or down.
+Three stat boxes in a row below the ring: "days in" / "days left" / "missed". The missed count pulls from how many days the user did not check in. Show missed count in red if greater than 0.
+A full-width "Check in for today" button in blue.
+A divider line, then a calendar grid below it. The calendar is a 7-column grid (M T W T F S S headers) showing every day of the duration as a circular dot with its day number. Color coding: blue filled = checked in, light red = missed, purple outline = today, light gray = upcoming. Include a small legend below the grid.
+
+Important: There is no dropdown anywhere in the Progress section. Everything is flat and always visible — ring, stats, button, calendar. No expandable or collapsible elements.
+Team Today section
+Below the progress card. Shows each team member with their avatar, name, and a status pill: "Checked in" (blue) or "Not yet" (gray).
+Proof Drops section
+Keep the existing proof drops section exactly as it currently works. This stays intact below the Team Today section — users can still drop media evidence inside the Team Will as before.

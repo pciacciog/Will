@@ -17,7 +17,7 @@ import DailyCheckInModal from "@/components/DailyCheckInModal";
 import { Capacitor } from "@capacitor/core";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Camera, Plus, Clock, CheckCircle, XCircle, X, Check,
-  Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle,
+  Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle, Zap,
 } from "lucide-react";
 import type { Will, AbstainLog, WillCheckIn } from "@shared/schema";
 
