@@ -8,10 +8,10 @@ UPDATE wills SET commitment_category = 'recurring' WHERE commitment_category = '
 UPDATE wills SET commitment_category = 'duration'  WHERE commitment_category = 'abstain';
 UPDATE wills SET commitment_category = 'event'     WHERE commitment_category = 'mission';
 
--- Same rename in will_commitments (if the column is tracked there in future):
--- UPDATE will_commitments SET commitment_category = 'recurring' WHERE commitment_category = 'habit';
--- UPDATE will_commitments SET commitment_category = 'duration'  WHERE commitment_category = 'abstain';
--- UPDATE will_commitments SET commitment_category = 'event'     WHERE commitment_category = 'mission';
+-- Same rename in will_commitments (column confirmed present: commitment_category varchar(10))
+UPDATE will_commitments SET commitment_category = 'recurring' WHERE commitment_category = 'habit';
+UPDATE will_commitments SET commitment_category = 'duration'  WHERE commitment_category = 'abstain';
+UPDATE will_commitments SET commitment_category = 'event'     WHERE commitment_category = 'mission';
 
 -- Add kickoff notification tracking column for Duration wills (day-1 notification)
 ALTER TABLE wills ADD COLUMN IF NOT EXISTS kickoff_notification_sent_at TIMESTAMP;
