@@ -747,6 +747,48 @@ class PushNotificationService {
     return await this.sendToUser(userId, payload);
   }
 
+  async sendDurationKickoffNotification(userId: string, what: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: what || 'Duration will started',
+      body: 'Day 1 — your will is live. Check in to start your streak!',
+      category: 'duration_reminder',
+      data: {
+        type: 'duration_kickoff',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub',
+      }
+    };
+    return await this.sendToUser(userId, payload);
+  }
+
+  async sendDurationCompletionPromptNotification(userId: string, what: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: what || 'Duration will complete',
+      body: 'You made it to the end! Drop your proof and complete your will.',
+      category: 'duration_reminder',
+      data: {
+        type: 'duration_completion_prompt',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub',
+      }
+    };
+    return await this.sendToUser(userId, payload);
+  }
+
+  async sendEventCompletionPromptNotification(userId: string, what: string, willId?: number): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title: what || 'Event will complete',
+      body: 'Time\'s up — did you complete it? Mark it done and submit your proof.',
+      category: 'event_nudge',
+      data: {
+        type: 'event_completion_prompt',
+        willId: willId?.toString() || '',
+        deepLink: willId ? `/will/${willId}` : '/solo/hub',
+      }
+    };
+    return await this.sendToUser(userId, payload);
+  }
+
   // ─── END CATEGORY-AWARE PUSH NOTIFICATIONS ────────────────────────────────
 
   async sendWillMessageNotification(senderName: string, willId: number, messagePreview: string, otherParticipants: string[]): Promise<void> {

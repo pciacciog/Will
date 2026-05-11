@@ -90,6 +90,8 @@ export class EndRoomScheduler {
     await this.checkMilestoneNotifications(now);
     await this.checkDeadlineReminders(now);
     await this.checkMissionDailyNudge(now);
+    await this.checkDurationKickoff(now);
+    await this.checkCompletionPrompts(now);
 
     // Team Will: activate or terminate at startDate, send 24h reminder to pending invitees,
     // and ~2h-before "finish committing" reminder to accepted-but-uncommitted invitees.
@@ -1299,6 +1301,98 @@ export class EndRoomScheduler {
       }
     } catch (error) {
       console.error('[SCHEDULER] Error in checkMissionDailyNudge:', error);
+    }
+  }
+
+  // Duration: day-1 kickoff — fires once when a duration will first becomes active
+  private async checkDurationKickoff(now: Date) {
+    try {
+      const rows = await db
+        .select({
+          willId: wills.id,
+          userId: wills.createdBy,
+          userWhat: willCommitments.what,
+          startDate: wills.startDate,
+        })
+        .from(wills)
+        .innerJoin(willCommitments, and(eq(willCommitments.willId, wills.id), eq(willCommitments.userId, wills.createdBy)))
+        .where(and(
+          eq(wills.status, 'active'),
+          eq(wills.commitmentCategory, 'duration'),
+          isNull(wills.kickoffNotificationSentAt),
+          // Only fire within first 24h of will starting
+          gte(wills.startDate, new Date(now.getTime() - 24 * 60 * 60 * 1000)),
+        ))
+        .limit(50);
+
+      for (const row of rows) {
+        try {
+          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+          if (hasToken.length === 0) continue;
+
+          // Mark kickoff sent first (optimistic lock)
+          const updated = await db.update(wills)
+            .set({ kickoffNotificationSentAt: now })
+            .where(and(eq(wills.id, row.willId), isNull(wills.kickoffNotificationSentAt)))
+            .returning({ id: wills.id });
+          if (updated.length === 0) continue;
+
+          await pushNotificationService.sendDurationKickoffNotification(row.userId, row.userWhat || '', row.willId);
+          console.log(`[SCHEDULER] ✅ Duration kickoff sent to user ${row.userId} for Will ${row.willId}`);
+        } catch (err) {
+          console.error(`[SCHEDULER] Duration kickoff error for Will ${row.willId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error('[SCHEDULER] Error in checkDurationKickoff:', error);
+    }
+  }
+
+  // Duration + Event: completion-triggered prompt — fires once when will status becomes completed/will_review
+  private async checkCompletionPrompts(now: Date) {
+    try {
+      const rows = await db
+        .select({
+          willId: wills.id,
+          userId: wills.createdBy,
+          commitmentCategory: wills.commitmentCategory,
+          userWhat: willCommitments.what,
+        })
+        .from(wills)
+        .innerJoin(willCommitments, and(eq(willCommitments.willId, wills.id), eq(willCommitments.userId, wills.createdBy)))
+        .where(and(
+          or(eq(wills.status, 'will_review'), eq(wills.status, 'completed')),
+          or(eq(wills.commitmentCategory, 'duration'), eq(wills.commitmentCategory, 'event')),
+          isNull(wills.completionNotificationSentAt),
+        ))
+        .limit(50);
+
+      for (const row of rows) {
+        try {
+          const hasToken = await db.select({ id: deviceTokens.id }).from(deviceTokens)
+            .where(and(eq(deviceTokens.userId, row.userId), eq(deviceTokens.isActive, true))).limit(1);
+          if (hasToken.length === 0) continue;
+
+          const updated = await db.update(wills)
+            .set({ completionNotificationSentAt: now })
+            .where(and(eq(wills.id, row.willId), isNull(wills.completionNotificationSentAt)))
+            .returning({ id: wills.id });
+          if (updated.length === 0) continue;
+
+          if (row.commitmentCategory === 'duration') {
+            await pushNotificationService.sendDurationCompletionPromptNotification(row.userId, row.userWhat || '', row.willId);
+            console.log(`[SCHEDULER] ✅ Duration completion prompt sent to user ${row.userId} for Will ${row.willId}`);
+          } else if (row.commitmentCategory === 'event') {
+            await pushNotificationService.sendEventCompletionPromptNotification(row.userId, row.userWhat || '', row.willId);
+            console.log(`[SCHEDULER] ✅ Event completion prompt sent to user ${row.userId} for Will ${row.willId}`);
+          }
+        } catch (err) {
+          console.error(`[SCHEDULER] Completion prompt error for Will ${row.willId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error('[SCHEDULER] Error in checkCompletionPrompts:', error);
     }
   }
 

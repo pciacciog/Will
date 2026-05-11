@@ -112,6 +112,7 @@ export const wills = pgTable("wills", {
   // Notification tracking fields
   midpointAt: timestamp("midpoint_at"), // Precomputed: (startDate + endDate) / 2
   midpointNotificationSentAt: timestamp("midpoint_notification_sent_at"),
+  kickoffNotificationSentAt: timestamp("kickoff_notification_sent_at"), // Day-1 kickoff for Duration wills
   completionNotificationSentAt: timestamp("completion_notification_sent_at"),
 }, (table) => [
   index("IDX_wills_mode").on(table.mode),
