@@ -2784,7 +2784,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const statusMap: Record<string, string | null> = {};
       memberIds.forEach((id) => { statusMap[id] = null; });
 
-      if (will.commitmentCategory === 'habit') {
+      if (will.commitmentCategory === 'recurring') {
         if (memberIds.length > 0) {
           const rows = await db.select({ userId: willCheckIns.userId, status: willCheckIns.status })
             .from(willCheckIns)
@@ -2795,7 +2795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ));
           rows.forEach((r) => { statusMap[r.userId] = r.status; });
         }
-      } else if (will.commitmentCategory === 'abstain') {
+      } else if (will.commitmentCategory === 'duration') {
         if (memberIds.length > 0) {
           const rows = await db.select({ userId: abstainLogs.userId, honored: abstainLogs.honored })
             .from(abstainLogs)
@@ -2806,7 +2806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ));
           rows.forEach((r) => { statusMap[r.userId] = r.honored ? 'honored' : 'not_honored'; });
         }
-      } else if (will.commitmentCategory === 'mission') {
+      } else if (will.commitmentCategory === 'event') {
         if (will.status === 'completed') {
           memberIds.forEach((id) => { statusMap[id] = 'completed'; });
         }
@@ -2866,7 +2866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let memberStatuses: Record<string, MemberStatus> = {};
 
-      if (category === 'habit') {
+      if (category === 'recurring') {
         const todayCheckIns = await db.select({ userId: willCheckIns.userId, status: willCheckIns.status })
           .from(willCheckIns)
           .where(and(
@@ -2877,7 +2877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const ci of todayCheckIns) {
           memberStatuses[ci.userId] = ci.status as MemberStatus;
         }
-      } else if (category === 'abstain') {
+      } else if (category === 'duration') {
         const todayLogs = await db.select({ userId: abstainLogs.userId, honored: abstainLogs.honored })
           .from(abstainLogs)
           .where(and(
@@ -2888,7 +2888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const log of todayLogs) {
           memberStatuses[log.userId] = log.honored ? 'honored' : 'not-honored';
         }
-      } else if (category === 'mission') {
+      } else if (category === 'event') {
         // Per-member mission completion: a member is "completed" when they've submitted
         // a final reflection for this will (the per-user signal that they finished).
         const reflections = participantIds.length > 0
@@ -3530,7 +3530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Mission completion — any participant may mark their own will done
       let statusUpdate: string | undefined;
       if (status !== undefined) {
-        if (status === 'completed' && will.commitmentCategory === 'mission' && will.status === 'active') {
+        if (status === 'completed' && will.commitmentCategory === 'event' && will.status === 'active') {
           // Verify the user is a participant (has a commitment on this will)
           const willWithCommitments = await storage.getWillWithCommitments(willId);
           const isParticipant = (willWithCommitments?.commitments || []).some((c: any) => c.userId === userId);
@@ -3620,7 +3620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: "Will not found" });
-      if (will.commitmentCategory !== 'abstain') return res.status(400).json({ message: "Only Abstain Wills support streak reset" });
+      if (will.commitmentCategory !== 'duration') return res.status(400).json({ message: "Only Duration Wills support streak reset" });
 
       const isCreator = will.createdBy === userId;
       if (!isCreator) {
@@ -3651,7 +3651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: "Will not found" });
-      if (will.commitmentCategory !== 'abstain') return res.status(400).json({ message: "Only Abstain Wills support this endpoint" });
+      if (will.commitmentCategory !== 'duration') return res.status(400).json({ message: "Only Duration Wills support this endpoint" });
 
       // Check authorization
       const isCreator = will.createdBy === userId;

@@ -864,8 +864,8 @@ export class EndRoomScheduler {
         try {
           if (!willData.userTimezone) continue;
 
-          // Category-aware: Abstain and Mission never get check-in notifications
-          if (willData.commitmentCategory === 'abstain' || willData.commitmentCategory === 'mission') continue;
+          // Category-aware: Duration and Event never get check-in notifications
+          if (willData.commitmentCategory === 'duration' || willData.commitmentCategory === 'event') continue;
 
           const effectiveCheckInType = willData.commitmentCheckInType || willData.willCheckInType || 'daily';
           if (effectiveCheckInType === 'final_review' || effectiveCheckInType === 'one-time') continue;
@@ -943,8 +943,8 @@ export class EndRoomScheduler {
         try {
           if (!willData.userTimezone || !willData.willEndDate) continue;
 
-          // Category-aware: Abstain and Mission never get check-in notifications
-          if (willData.commitmentCategory === 'abstain' || willData.commitmentCategory === 'mission') continue;
+          // Category-aware: Duration and Event never get check-in notifications
+          if (willData.commitmentCategory === 'duration' || willData.commitmentCategory === 'event') continue;
 
           const effectiveCheckInType = willData.commitmentCheckInType || willData.willCheckInType || 'daily';
           if (effectiveCheckInType === 'final_review' || effectiveCheckInType === 'one-time') continue;
@@ -996,7 +996,7 @@ export class EndRoomScheduler {
 
   // ─── CATEGORY-AWARE NOTIFICATION FUNCTIONS ────────────────────────────────
 
-  // Habit: fires at wills.reminderTime — replaces random motivational for habit Wills
+  // Recurring: fires at wills.reminderTime — replaces random motivational for recurring Wills
   private async checkHabitReminders(now: Date) {
     try {
       const rows = await db
@@ -1015,7 +1015,7 @@ export class EndRoomScheduler {
         .innerJoin(users, eq(willCommitments.userId, users.id))
         .where(and(
           eq(wills.status, 'active'),
-          eq(wills.commitmentCategory, 'habit'),
+          eq(wills.commitmentCategory, 'recurring'),
           isNotNull(wills.reminderTime),
         ))
         .limit(200);
@@ -1032,10 +1032,10 @@ export class EndRoomScheduler {
           const success = await pushNotificationService.sendHabitReminderNotification(row.userId, row.userWhat || '', row.userWhy || undefined, row.willId);
           if (success) {
             await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
-            console.log(`[SCHEDULER] ✅ Habit reminder sent to user ${row.userId} for Will ${row.willId}`);
+            console.log(`[SCHEDULER] ✅ Recurring reminder sent to user ${row.userId} for Will ${row.willId}`);
           }
         } catch (err) {
-          console.error(`[SCHEDULER] Habit reminder error for user ${row.userId}:`, err);
+          console.error(`[SCHEDULER] Recurring reminder error for user ${row.userId}:`, err);
         }
       }
     } catch (error) {
@@ -1043,7 +1043,7 @@ export class EndRoomScheduler {
     }
   }
 
-  // Abstain: daily reminder fires at wills.reminderTime
+  // Duration: daily reminder fires at wills.reminderTime
   private async checkAbstainReminder(now: Date) {
     try {
       const rows = await db
@@ -1062,7 +1062,7 @@ export class EndRoomScheduler {
         .innerJoin(users, eq(willCommitments.userId, users.id))
         .where(and(
           eq(wills.status, 'active'),
-          eq(wills.commitmentCategory, 'abstain'),
+          eq(wills.commitmentCategory, 'duration'),
           isNotNull(wills.reminderTime),
         ))
         .limit(200);
@@ -1079,10 +1079,10 @@ export class EndRoomScheduler {
           const success = await pushNotificationService.sendAbstainReminderNotification(row.userId, row.userWhat || '', row.userWhy || undefined, row.willId);
           if (success) {
             await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
-            console.log(`[SCHEDULER] ✅ Abstain reminder sent to user ${row.userId} for Will ${row.willId}`);
+            console.log(`[SCHEDULER] ✅ Duration reminder sent to user ${row.userId} for Will ${row.willId}`);
           }
         } catch (err) {
-          console.error(`[SCHEDULER] Abstain reminder error for user ${row.userId}:`, err);
+          console.error(`[SCHEDULER] Duration reminder error for user ${row.userId}:`, err);
         }
       }
     } catch (error) {
@@ -1090,7 +1090,7 @@ export class EndRoomScheduler {
     }
   }
 
-  // Abstain: milestone celebrations — fires when streak day matches a milestone day
+  // Duration: milestone celebrations — fires when streak day matches a milestone day
   private async checkMilestoneNotifications(now: Date) {
     try {
       const rows = await db
@@ -1107,7 +1107,7 @@ export class EndRoomScheduler {
         .innerJoin(users, eq(wills.createdBy, users.id))
         .where(and(
           eq(wills.status, 'active'),
-          eq(wills.commitmentCategory, 'abstain'),
+          eq(wills.commitmentCategory, 'duration'),
           isNotNull(wills.milestones),
         ))
         .limit(200);
@@ -1176,7 +1176,7 @@ export class EndRoomScheduler {
     }
   }
 
-  // Mission: fires deadline reminders at 3 days, 1 day, and day-of
+  // Event: fires deadline reminders at 3 days, 1 day, and day-of
   private async checkDeadlineReminders(now: Date) {
     try {
       const rows = await db
@@ -1195,7 +1195,7 @@ export class EndRoomScheduler {
         .leftJoin(willCommitments, and(eq(willCommitments.willId, wills.id), eq(willCommitments.userId, wills.createdBy)))
         .where(and(
           eq(wills.status, 'active'),
-          eq(wills.commitmentCategory, 'mission'),
+          eq(wills.commitmentCategory, 'event'),
           isNotNull(wills.deadlineReminders),
           isNotNull(wills.endDate),
         ))
@@ -1255,7 +1255,7 @@ export class EndRoomScheduler {
     }
   }
 
-  // Mission: optional daily nudge at missionReminderTime
+  // Event: optional daily nudge at missionReminderTime
   private async checkMissionDailyNudge(now: Date) {
     try {
       const rows = await db
@@ -1274,7 +1274,7 @@ export class EndRoomScheduler {
         .innerJoin(users, eq(willCommitments.userId, users.id))
         .where(and(
           eq(wills.status, 'active'),
-          eq(wills.commitmentCategory, 'mission'),
+          eq(wills.commitmentCategory, 'event'),
           isNotNull(wills.missionReminderTime),
         ))
         .limit(200);
@@ -1291,10 +1291,10 @@ export class EndRoomScheduler {
           const success = await pushNotificationService.sendMissionNudgeNotification(row.userId, row.userWhat || '', row.userWhy || undefined, row.willId);
           if (success) {
             await db.update(willCommitments).set({ lastMotivationalSentAt: now }).where(eq(willCommitments.id, row.commitmentId));
-            console.log(`[SCHEDULER] ✅ Mission nudge sent to user ${row.userId} for Will ${row.willId}`);
+            console.log(`[SCHEDULER] ✅ Event nudge sent to user ${row.userId} for Will ${row.willId}`);
           }
         } catch (err) {
-          console.error(`[SCHEDULER] Mission nudge error for user ${row.userId}:`, err);
+          console.error(`[SCHEDULER] Event nudge error for user ${row.userId}:`, err);
         }
       }
     } catch (error) {

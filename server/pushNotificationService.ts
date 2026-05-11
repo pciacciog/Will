@@ -679,11 +679,11 @@ class PushNotificationService {
 
   async sendHabitReminderNotification(userId: string, what: string, why?: string, willId?: number): Promise<boolean> {
     const payload: PushNotificationPayload = {
-      title: what || 'Time to honor your habit',
-      body: why ? `Because ${why}` : 'Tap to check in on your habit.',
-      category: 'habit_reminder',
+      title: what || 'Time for your recurring will',
+      body: why ? `Because ${why}` : 'Tap to check in on your recurring will.',
+      category: 'recurring_reminder',
       data: {
-        type: 'habit_reminder',
+        type: 'recurring_reminder',
         willId: willId?.toString() || '',
         deepLink: willId ? `/will/${willId}?action=checkin` : '/solo/hub',
       }
@@ -694,10 +694,10 @@ class PushNotificationService {
   async sendAbstainReminderNotification(userId: string, what: string, why?: string, willId?: number): Promise<boolean> {
     const payload: PushNotificationPayload = {
       title: what || 'Stay strong today',
-      body: why ? `Because ${why}` : 'Tap to check in on your abstain will.',
-      category: 'abstain_reminder',
+      body: why ? `Because ${why}` : 'Tap to check in on your duration will.',
+      category: 'duration_reminder',
       data: {
-        type: 'abstain_reminder',
+        type: 'duration_reminder',
         willId: willId?.toString() || '',
         deepLink: willId ? `/will/${willId}` : '/solo/hub',
       }
@@ -735,11 +735,11 @@ class PushNotificationService {
 
   async sendMissionNudgeNotification(userId: string, what: string, why?: string, willId?: number): Promise<boolean> {
     const payload: PushNotificationPayload = {
-      title: what || 'Mission check-in',
-      body: why ? `Because ${why}` : 'Tap to reflect on your mission.',
-      category: 'mission_nudge',
+      title: what || 'Event check-in',
+      body: why ? `Because ${why}` : 'Have you completed it yet?',
+      category: 'event_nudge',
       data: {
-        type: 'mission_nudge',
+        type: 'event_nudge',
         willId: willId?.toString() || '',
         deepLink: willId ? `/will/${willId}` : '/solo/hub',
       }

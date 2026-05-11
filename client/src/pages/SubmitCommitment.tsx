@@ -685,7 +685,7 @@ export default function SubmitCommitment() {
                 <div>
                   <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-0.5">Notifications</p>
                   <p className="text-sm font-semibold text-gray-800" data-testid="text-confirm-notifications">
-                    {notificationsData.commitmentCategory === 'habit' ? 'Habit' : notificationsData.commitmentCategory === 'abstain' ? 'Abstain' : 'Mission'}
+                    {notificationsData.commitmentCategory === 'recurring' ? 'Recurring' : notificationsData.commitmentCategory === 'duration' ? 'Duration' : 'Event'}
                   </p>
                 </div>
               </div>

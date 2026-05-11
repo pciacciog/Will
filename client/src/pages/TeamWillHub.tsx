@@ -147,7 +147,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
   const { data: checkIns = [] } = useQuery<WillCheckIn[]>({
     queryKey: [`/api/wills/${willId}/check-ins`],
-    enabled: !!user && (will?.commitmentCategory === 'habit' || !will?.commitmentCategory) && hasDailyCheckIns,
+    enabled: !!user && (will?.commitmentCategory === 'recurring' || !will?.commitmentCategory) && hasDailyCheckIns,
     staleTime: 0,
   });
 
@@ -247,7 +247,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   // Category-aware: abstain log query
   const { data: abstainLogEntries = [] } = useQuery<AbstainLog[]>({
     queryKey: [`/api/wills/${willId}/abstain-log`],
-    enabled: !!user && will?.commitmentCategory === 'abstain',
+    enabled: !!user && will?.commitmentCategory === 'duration',
     staleTime: 0,
   });
 
@@ -635,7 +635,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
   // Habit: detect if already checked in today
   const habitTodayCheckIn = useMemo(() => {
-    if (will?.commitmentCategory !== 'habit') return null;
+    if (will?.commitmentCategory !== 'recurring') return null;
     return checkIns.find((c: WillCheckIn) => c.date === todayLocalDate) || null;
   }, [checkIns, will?.commitmentCategory, todayLocalDate]);
 
@@ -911,9 +911,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           {/* Badge row — status + optional category context */}
           <div className="flex justify-center items-center mb-4">
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
-              {will.status === 'active' && category === 'mission' && missionDeadlineLabel
+              {will.status === 'active' && category === 'event' && missionDeadlineLabel
                 ? `Active · deadline ${missionDeadlineLabel}`
-                : will.status === 'active' && daysLeft !== null && (category === 'habit' || category === 'abstain')
+                : will.status === 'active' && daysLeft !== null && (category === 'recurring' || category === 'duration')
                 ? `Active · ${daysLeft} days left`
                 : statusInfo.label}
             </span>
@@ -1074,8 +1074,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               {(() => {
                                 const s = teamCheckInMap[c.userId];
                                 const cat = will?.commitmentCategory;
-                                const isGreen = (cat === 'habit' && (s === 'yes' || s === 'partial')) || (cat === 'abstain' && s === 'honored') || (cat === 'mission' && s === 'completed');
-                                const isRed = (cat === 'habit' && s === 'no') || (cat === 'abstain' && s === 'not_honored');
+                                const isGreen = (cat === 'recurring' && (s === 'yes' || s === 'partial')) || (cat === 'duration' && s === 'honored') || (cat === 'event' && s === 'completed');
+                                const isRed = (cat === 'recurring' && s === 'no') || (cat === 'duration' && s === 'not_honored');
                                 if (!isGreen && !isRed) return null;
                                 return (
                                   <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: isGreen ? '#1D9E75' : '#E24B4A' }}>
@@ -1136,8 +1136,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             {(() => {
                               const s = teamCheckInMap[c.userId];
                               const cat = will?.commitmentCategory;
-                              const isGreen = (cat === 'habit' && (s === 'yes' || s === 'partial')) || (cat === 'abstain' && s === 'honored') || (cat === 'mission' && s === 'completed');
-                              const isRed = (cat === 'habit' && s === 'no') || (cat === 'abstain' && s === 'not_honored');
+                              const isGreen = (cat === 'recurring' && (s === 'yes' || s === 'partial')) || (cat === 'duration' && s === 'honored') || (cat === 'event' && s === 'completed');
+                              const isRed = (cat === 'recurring' && s === 'no') || (cat === 'duration' && s === 'not_honored');
                               if (!isGreen && !isRed) return null;
                               return (
                                 <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: isGreen ? '#1D9E75' : '#E24B4A' }}>
@@ -1183,8 +1183,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 <p className="text-xs text-gray-400 text-center py-2">Available once Will starts</p>
               </div>
 
-            ) : category === 'habit' ? (
-              /* ── Habit ── */
+            ) : category === 'recurring' ? (
+              /* ── Recurring ── */
               <div className="space-y-3">
                 {/* Check-in button */}
                 {will.status === 'active' && hasDailyCheckIns && (
@@ -1257,8 +1257,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 )}
               </div>
 
-            ) : category === 'abstain' ? (
-              /* ── Abstain ── */
+            ) : category === 'duration' ? (
+              /* ── Duration ── */
               <div className="space-y-3">
                 {/* Check-in flow */}
                 {will.status === 'active' && (
@@ -1411,35 +1411,17 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 )}
               </div>
 
-            ) : category === 'mission' ? (
-              /* ── Mission ── */
+            ) : category === 'event' ? (
+              /* ── Event ── */
               <div className="space-y-3">
                 {(will.status === 'active' || will.status === 'completed') && (
                   <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col items-center gap-2.5" data-testid="card-mission-progress">
-                    {/* SVG Circular Countdown Ring */}
-                    <div className="relative flex items-center justify-center" style={{ width: 80, height: 80 }}>
-                      <svg width={80} height={80} style={{ transform: 'rotate(-90deg)' }}>
-                        <circle cx={40} cy={40} r={34} fill="none" stroke="#E5E7EB" strokeWidth={6} />
-                        <circle
-                          cx={40} cy={40} r={34} fill="none"
-                          stroke="#534AB7" strokeWidth={6}
-                          strokeLinecap="round"
-                          strokeDasharray={2 * Math.PI * 34}
-                          strokeDashoffset={2 * Math.PI * 34 * (1 - (missionDaysRemaining / missionTotalDays))}
-                          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                        />
-                      </svg>
-                      <div className="absolute flex flex-col items-center justify-center">
-                        <span style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{missionDaysRemaining}</span>
-                        <span style={{ fontSize: 10, color: '#9CA3AF' }}>days left</span>
-                      </div>
-                    </div>
                     {/* Check-in flow */}
                     {will.status === 'active' && (
                       missionCompleted ? (
                         <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: '#E1F5EE', border: '2px solid #1D9E75' }} data-testid="mission-result-completed">
                           <p className="text-sm font-semibold" style={{ color: '#085041' }}>You completed it!</p>
-                          <p className="text-xs" style={{ color: '#2E7D63' }}>Your mission is done.</p>
+                          <p className="text-xs" style={{ color: '#2E7D63' }}>Your event is done.</p>
                         </div>
                       ) : missionKeptGoing ? (
                         <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5 bg-gray-50 border border-gray-200" data-testid="mission-result-not-yet">
@@ -1481,8 +1463,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           style={{ backgroundColor: '#534AB7' }}
                           data-testid="button-mission-check-in"
                         >
-                          <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
-                          Check in for today
+                          <Zap style={{ width: 20, height: 20, color: '#fff' }} />
+                          Mark as done
                         </button>
                       )
                     )}
@@ -1623,14 +1605,14 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     // Determine dot color and label from status
                     let dotClass = "bg-gray-300";
                     let dotLabel = "Pending";
-                    if (cat === 'habit') {
+                    if (cat === 'recurring') {
                       if (m.status === 'yes') { dotClass = "bg-emerald-500"; dotLabel = "Done"; }
                       else if (m.status === 'partial') { dotClass = "bg-amber-400"; dotLabel = "Partial"; }
                       else if (m.status === 'no') { dotClass = "bg-red-400"; dotLabel = "Missed"; }
-                    } else if (cat === 'abstain') {
+                    } else if (cat === 'duration') {
                       if (m.status === 'honored') { dotClass = "bg-emerald-500"; dotLabel = "Honored"; }
                       else if (m.status === 'not-honored') { dotClass = "bg-red-400"; dotLabel = "Slipped"; }
-                    } else if (cat === 'mission') {
+                    } else if (cat === 'event') {
                       if (m.status === 'completed') { dotClass = "bg-emerald-500"; dotLabel = "Completed"; }
                     }
 
@@ -1660,7 +1642,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 </div>
                 {/* Legend */}
                 <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-3 justify-center">
-                  {teamTodayData.category === 'habit' && (
+                  {teamTodayData.category === 'recurring' && (
                     <>
                       <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Done</span>
                       <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />Partial</span>
@@ -1668,14 +1650,14 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />Pending</span>
                     </>
                   )}
-                  {teamTodayData.category === 'abstain' && (
+                  {teamTodayData.category === 'duration' && (
                     <>
                       <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Honored</span>
                       <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Slipped</span>
                       <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />Pending</span>
                     </>
                   )}
-                  {teamTodayData.category === 'mission' && (
+                  {teamTodayData.category === 'event' && (
                     <>
                       <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Completed</span>
                       <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />In progress</span>
@@ -1763,7 +1745,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       </div>
 
       {/* Daily Check-in Modal — habit and null-category wills with daily tracking */}
-      {hasDailyCheckIns && (!category || category === 'habit') && (
+      {hasDailyCheckIns && (!category || category === 'recurring') && (
         <DailyCheckInModal
           isOpen={showCheckInModal}
           onClose={() => { setShowCheckInModal(false); setCheckInDate(null); }}

@@ -775,7 +775,7 @@ export default function CreateTeamWill() {
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-medium text-gray-400">Notifications</p>
                       <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-notifications">
-                        {notificationsData.commitmentCategory === 'habit' ? 'Habit' : notificationsData.commitmentCategory === 'abstain' ? 'Abstain' : 'Mission'}
+                        {notificationsData.commitmentCategory === 'recurring' ? 'Recurring' : notificationsData.commitmentCategory === 'duration' ? 'Duration' : 'Event'}
                       </p>
                     </div>
                   </div>

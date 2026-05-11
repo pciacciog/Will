@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 export interface NotificationsData {
-  commitmentCategory: 'habit' | 'abstain' | 'mission';
+  commitmentCategory: 'recurring' | 'duration' | 'event';
   reminderTime: string | null;
   checkInTime: string | null;
   checkInType: 'daily' | 'specific_days' | 'final_review';
@@ -18,7 +18,7 @@ interface NotificationsSetupProps {
   willDurationDays?: number;
 }
 
-type Category = 'habit' | 'abstain' | 'mission';
+type Category = 'recurring' | 'duration' | 'event';
 
 const TIME_OPTIONS = [
   { label: "6:00 AM", value: "06:00" },
@@ -43,7 +43,7 @@ const TIME_OPTIONS = [
 
 
 const COLORS: Record<Category, { bg: string; border: string; text: string; pillBg: string; pillBorder: string; pillText: string; tint: string; chipBg: string; chipBorder: string; chipText: string; toggleOn: string; checkBg: string }> = {
-  habit: {
+  recurring: {
     bg: "#1D9E75",
     border: "#1D9E75",
     text: "#1D9E75",
@@ -57,21 +57,21 @@ const COLORS: Record<Category, { bg: string; border: string; text: string; pillB
     toggleOn: "#1D9E75",
     checkBg: "#1D9E75",
   },
-  abstain: {
-    bg: "#D85A30",
-    border: "#D85A30",
-    text: "#D85A30",
-    pillBg: "#FBF0EB",
-    pillBorder: "#D85A30",
-    pillText: "#D85A30",
-    tint: "#FBF0EB",
-    chipBg: "#FBF0EB",
-    chipBorder: "#D85A30",
-    chipText: "#D85A30",
-    toggleOn: "#D85A30",
-    checkBg: "#D85A30",
+  duration: {
+    bg: "#1D6FBE",
+    border: "#1D6FBE",
+    text: "#1D6FBE",
+    pillBg: "#E0EDFA",
+    pillBorder: "#1D6FBE",
+    pillText: "#1D6FBE",
+    tint: "#E0EDFA",
+    chipBg: "#E0EDFA",
+    chipBorder: "#1D6FBE",
+    chipText: "#1D6FBE",
+    toggleOn: "#1D6FBE",
+    checkBg: "#1D6FBE",
   },
-  mission: {
+  event: {
     bg: "#534AB7",
     border: "#534AB7",
     text: "#534AB7",
@@ -207,15 +207,15 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
 
   const [selected, setSelected] = useState<Category | null>(null);
 
-  const [habitState, setHabitState] = useState({
+  const [recurringState, setRecurringState] = useState({
     reminderOn: true, reminderTime: "20:30",
     checkInOn: true, checkInTime: "08:00",
   });
-  const [abstainState, setAbstainState] = useState({
+  const [durationState, setDurationState] = useState({
     reminderOn: true, reminderTime: "18:00",
     milestones: [] as MilestoneRow[],
   });
-  const [missionState, setMissionState] = useState({
+  const [eventState, setEventState] = useState({
     threeDays: true, oneDay: true, dayOf: true,
     dailyOn: false, dailyTime: "09:00",
   });
@@ -225,38 +225,38 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
 
     let data: NotificationsData;
 
-    if (selected === 'habit') {
+    if (selected === 'recurring') {
       data = {
-        commitmentCategory: 'habit',
-        reminderTime: habitState.reminderOn ? habitState.reminderTime : null,
-        checkInTime: habitState.checkInOn ? habitState.checkInTime : null,
+        commitmentCategory: 'recurring',
+        reminderTime: recurringState.reminderOn ? recurringState.reminderTime : null,
+        checkInTime: recurringState.checkInOn ? recurringState.checkInTime : null,
         checkInType: 'daily',
         milestones: null,
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
       };
-    } else if (selected === 'abstain') {
+    } else if (selected === 'duration') {
       data = {
-        commitmentCategory: 'abstain',
-        reminderTime: abstainState.reminderOn ? abstainState.reminderTime : null,
+        commitmentCategory: 'duration',
+        reminderTime: durationState.reminderOn ? durationState.reminderTime : null,
         checkInTime: null,
         checkInType: 'final_review',
-        milestones: abstainState.milestones,
+        milestones: durationState.milestones,
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
       };
     } else {
       data = {
-        commitmentCategory: 'mission',
+        commitmentCategory: 'event',
         reminderTime: null,
         checkInTime: null,
         checkInType: 'final_review',
         milestones: null,
-        missionReminderTime: missionState.dailyOn ? missionState.dailyTime : null,
+        missionReminderTime: eventState.dailyOn ? eventState.dailyTime : null,
         deadlineReminders: {
-          threeDays: missionState.threeDays,
-          oneDay: missionState.oneDay,
-          dayOf: missionState.dayOf,
+          threeDays: eventState.threeDays,
+          oneDay: eventState.oneDay,
+          dayOf: eventState.dayOf,
         },
       };
     }
@@ -274,35 +274,35 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
     selectedBorder: string;
     selectedTitle: string;
     selectedExample: string;
-    icon: 'check-circle' | 'x-circle' | 'star';
+    icon: 'repeat' | 'hourglass' | 'bolt';
   }[] = [
     {
-      category: 'habit',
-      title: 'Habit',
-      example: '"I will be in bed by 9:00 pm"',
+      category: 'recurring',
+      title: 'Recurring',
+      example: '"I will go to the gym 3x a week"',
       iconBg: '#E1F5EE',
       iconColor: '#1D9E75',
       selectedCardBg: '#E8F7F1',
       selectedBorder: '#1D9E75',
       selectedTitle: '#085041',
       selectedExample: '#0F6E56',
-      icon: 'check-circle',
+      icon: 'repeat',
     },
     {
-      category: 'abstain',
-      title: 'Abstain',
+      category: 'duration',
+      title: 'Duration',
       example: '"I will not use social media"',
-      iconBg: '#FAECE7',
-      iconColor: '#D85A30',
-      selectedCardBg: '#FBF0EB',
-      selectedBorder: '#D85A30',
-      selectedTitle: '#7A2913',
-      selectedExample: '#A0401A',
-      icon: 'x-circle',
+      iconBg: '#E0EDFA',
+      iconColor: '#1D6FBE',
+      selectedCardBg: '#E0EDFA',
+      selectedBorder: '#1D6FBE',
+      selectedTitle: '#0D3D6E',
+      selectedExample: '#1A5490',
+      icon: 'hourglass',
     },
     {
-      category: 'mission',
-      title: 'Mission',
+      category: 'event',
+      title: 'Event',
       example: '"I will call my grandmother"',
       iconBg: '#EEEDFE',
       iconColor: '#534AB7',
@@ -310,7 +310,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
       selectedBorder: '#534AB7',
       selectedTitle: '#2B2580',
       selectedExample: '#403AA0',
-      icon: 'star',
+      icon: 'bolt',
     },
   ];
 
@@ -361,20 +361,25 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
                   flexShrink: 0,
                 }}
               >
-                {card.icon === 'check-circle' && (
+                {card.icon === 'repeat' && (
                   <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" /><polyline points="9 12 11 14 15 10" />
+                    <polyline points="17 1 21 5 17 9" />
+                    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                    <polyline points="7 23 3 19 7 15" />
+                    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
                   </svg>
                 )}
-                {card.icon === 'x-circle' && (
+                {card.icon === 'hourglass' && (
                   <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                    <path d="M5 22h14" />
+                    <path d="M5 2h14" />
+                    <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+                    <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
                   </svg>
                 )}
-                {card.icon === 'star' && (
+                {card.icon === 'bolt' && (
                   <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                   </svg>
                 )}
               </div>
@@ -411,32 +416,32 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
 
           {/* Notification section */}
           <div className="px-4 pb-24 flex-1 overflow-y-auto">
-            {selected === 'habit' && (
+            {selected === 'recurring' && (
               <HabitSectionControlled
                 what={formattedWhat}
                 because={because}
-                color={COLORS.habit}
-                state={habitState}
-                onChange={setHabitState}
+                color={COLORS.recurring}
+                state={recurringState}
+                onChange={setRecurringState}
               />
             )}
-            {selected === 'abstain' && (
+            {selected === 'duration' && (
               <AbstainSectionControlled
                 what={formattedWhat}
                 because={because}
-                color={COLORS.abstain}
-                state={abstainState}
-                onChange={setAbstainState}
+                color={COLORS.duration}
+                state={durationState}
+                onChange={setDurationState}
                 willDurationDays={willDurationDays}
               />
             )}
-            {selected === 'mission' && (
+            {selected === 'event' && (
               <MissionSectionControlled
                 what={formattedWhat}
                 because={because}
-                color={COLORS.mission}
-                state={missionState}
-                onChange={setMissionState}
+                color={COLORS.event}
+                state={eventState}
+                onChange={setEventState}
               />
             )}
           </div>
@@ -461,7 +466,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         >
           Continue
         </button>
-        {selected === 'abstain' && (
+        {selected === 'duration' && (
           <p className="text-center text-xs text-gray-400 mt-2">
             Milestones are optional — you can always skip them.
           </p>
@@ -476,7 +481,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
 function HabitSectionControlled({
   what, because, color, state, onChange,
 }: {
-  what: string; because: string; color: typeof COLORS.habit;
+  what: string; because: string; color: typeof COLORS.recurring;
   state: { reminderOn: boolean; reminderTime: string; checkInOn: boolean; checkInTime: string };
   onChange: (s: typeof state) => void;
 }) {
@@ -521,7 +526,7 @@ function HabitSectionControlled({
 function AbstainSectionControlled({
   what, because, color, state, onChange, willDurationDays,
 }: {
-  what: string; because: string; color: typeof COLORS.abstain;
+  what: string; because: string; color: typeof COLORS.duration;
   state: { reminderOn: boolean; reminderTime: string; milestones: MilestoneRow[] };
   onChange: (s: typeof state) => void;
   willDurationDays?: number;
@@ -731,7 +736,7 @@ function AbstainSectionControlled({
 function MissionSectionControlled({
   what, because, color, state, onChange,
 }: {
-  what: string; because: string; color: typeof COLORS.mission;
+  what: string; because: string; color: typeof COLORS.event;
   state: { threeDays: boolean; oneDay: boolean; dayOf: boolean; dailyOn: boolean; dailyTime: string };
   onChange: (s: typeof state) => void;
 }) {
