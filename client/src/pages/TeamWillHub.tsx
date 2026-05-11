@@ -16,7 +16,7 @@ import DailyCheckInModal from "@/components/DailyCheckInModal";
 import { Capacitor } from "@capacitor/core";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Camera, Plus, Clock, CheckCircle, XCircle, X, Check,
-  Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle, Zap,
+  Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle, Zap, Bell, Trash2,
 } from "lucide-react";
 import type { Will, AbstainLog, WillCheckIn } from "@shared/schema";
 
@@ -78,6 +78,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [missionConfirming, setMissionConfirming] = useState(false);
   // missionCompleted is derived from server data (persists across sessions)
 
+  // Ping modal state
+  const [pingTarget, setPingTarget] = useState<{ id: number; invitedUserId: string; firstName: string } | null>(null);
+  const [pingSent, setPingSent] = useState(false);
+
   useAppRefresh();
 
   const { data: will, isLoading } = useQuery<Will & {
@@ -99,7 +103,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     enabled: !!user,
   });
 
-  const { data: invitesData } = useQuery<Array<{ id: number; status: string; invitedUserId: string; firstName?: string; hasCommitted?: boolean }>>({
+  const { data: invitesData } = useQuery<Array<{ id: number; status: string; invitedUserId: string; firstName?: string; lastName?: string; hasCommitted?: boolean }>>({
     queryKey: [`/api/wills/${willId}/invites`],
     enabled: !!user && will?.createdBy === user?.id,
     refetchInterval: 60000,
@@ -302,6 +306,35 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message || "Failed to log check-in", variant: "destructive" });
+    },
+  });
+
+  const pingInviteeMutation = useMutation({
+    mutationFn: async ({ inviteId }: { inviteId: number }) => {
+      const res = await apiRequest(`/api/wills/${willId}/invites/${inviteId}/ping`, { method: 'POST' });
+      return res.json();
+    },
+    onSuccess: () => {
+      setPingSent(true);
+    },
+    onError: () => {
+      toast({ title: "Failed to send ping", variant: "destructive" });
+    },
+  });
+
+  const removeInviteeMutation = useMutation({
+    mutationFn: async ({ inviteId }: { inviteId: number }) => {
+      const res = await apiRequest(`/api/wills/${willId}/invites/${inviteId}`, { method: 'DELETE' });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/invites`] });
+      setPingTarget(null);
+      setPingSent(false);
+      toast({ title: "Member removed" });
+    },
+    onError: () => {
+      toast({ title: "Failed to remove member", variant: "destructive" });
     },
   });
 
@@ -606,6 +639,31 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     terminated: "bg-gray-400",
   };
   const avatarDotColor = will ? (avatarDotColors[will.status] || "bg-gray-400") : "bg-gray-400";
+
+  // Members row: for creator build from invitesData; for non-creator use commitments
+  const membersForRow = useMemo(() => {
+    if (!user) return [];
+    if (isCreator && invitesData) {
+      return [
+        { key: 'creator', userId: user.id, firstName: (user as any).firstName || user.email?.split('@')[0] || '?', status: 'creator', inviteId: null as number | null },
+        ...invitesData.map(inv => ({
+          key: String(inv.id),
+          userId: inv.invitedUserId,
+          firstName: inv.firstName || '?',
+          status: inv.status,
+          inviteId: inv.id,
+        })),
+      ];
+    }
+    // Non-creator: just show committed members
+    return commitments.map((c: any) => ({
+      key: String(c.id),
+      userId: c.userId,
+      firstName: c.user?.firstName || c.user?.email?.split('@')[0] || '?',
+      status: c.userId === will?.createdBy ? 'creator' : 'accepted',
+      inviteId: null as number | null,
+    }));
+  }, [isCreator, invitesData, commitments, user, will?.createdBy]);
 
   // Which cards are locked
   const isProgressLocked = will?.status === "pending" || will?.status === "scheduled";
@@ -942,6 +1000,76 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
         </div>
       )}
 
+      {/* ── Ping member bottom sheet ────────────────────────────────── */}
+      {pingTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => { setPingTarget(null); setPingSent(false); }}
+        >
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative w-full max-w-sm bg-white rounded-t-2xl px-5 pt-4 shadow-2xl"
+            style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+
+            {/* Member avatar + name */}
+            <div className="flex flex-col items-center mb-5">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-2"
+                style={{ border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7', opacity: 0.7 }}
+              >
+                <span style={{ color: '#92400E' }}>{pingTarget.firstName.charAt(0).toUpperCase()}</span>
+              </div>
+              <p className="text-base font-semibold text-gray-900">{pingTarget.firstName}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Invited · still pending</p>
+            </div>
+
+            <div className="space-y-2.5">
+              {/* Ping button */}
+              {pingSent ? (
+                <div className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-green-50 border border-green-200 text-green-700 text-sm font-semibold" data-testid="ping-sent-confirmation">
+                  <CheckCircle className="w-4 h-4" />
+                  Ping sent to {pingTarget.firstName}!
+                </div>
+              ) : (
+                <button
+                  onClick={() => pingInviteeMutation.mutate({ inviteId: pingTarget.id })}
+                  disabled={pingInviteeMutation.isPending}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: '#534AB7' }}
+                  data-testid="button-ping-member"
+                >
+                  <Bell className="w-4 h-4" />
+                  {pingInviteeMutation.isPending ? 'Sending…' : `Ping ${pingTarget.firstName} to respond`}
+                </button>
+              )}
+
+              {/* Remove from Will button */}
+              <button
+                onClick={() => removeInviteeMutation.mutate({ inviteId: pingTarget.id })}
+                disabled={removeInviteeMutation.isPending}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50"
+                data-testid="button-remove-member"
+              >
+                <Trash2 className="w-4 h-4" />
+                {removeInviteeMutation.isPending ? 'Removing…' : 'Remove from Will'}
+              </button>
+
+              {/* Cancel */}
+              <button
+                onClick={() => { setPingTarget(null); setPingSent(false); }}
+                className="w-full py-3 text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                data-testid="button-ping-cancel"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="pt-[calc(env(safe-area-inset-top)+4rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] min-h-screen">
         <div className="max-w-sm mx-auto px-5">
 
@@ -1187,6 +1315,60 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     </div>
                   )}
                 </div>
+
+                {/* ── Members row (WeWill) ───────────────── */}
+                {membersForRow.length > 0 && (
+                  <div className="border-t border-gray-100 mt-3 pt-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2.5">Members</p>
+                    <div className="flex gap-5 overflow-x-auto pb-1">
+                      {membersForRow.map(member => {
+                        const isPending = member.status === 'pending';
+                        const initial = member.firstName.charAt(0).toUpperCase();
+                        return (
+                          <button
+                            key={member.key}
+                            className={`flex flex-col items-center gap-1 flex-shrink-0 ${isCreator && isPending ? 'active:opacity-70' : 'cursor-default'}`}
+                            onClick={() => {
+                              if (isCreator && isPending && member.inviteId) {
+                                setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
+                                setPingSent(false);
+                              }
+                            }}
+                            data-testid={`member-avatar-${member.userId}`}
+                          >
+                            <div className="relative">
+                              <div
+                                className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold"
+                                style={isPending
+                                  ? { opacity: 0.45, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }
+                                  : { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }
+                                }
+                              >
+                                <span style={{ color: isPending ? '#92400E' : '#fff' }}>{initial}</span>
+                              </div>
+                              <div
+                                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+                                style={{ backgroundColor: member.status === 'creator' ? '#8B5CF6' : member.status === 'accepted' ? '#22C55E' : '#F59E0B' }}
+                              />
+                            </div>
+                            <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
+                              {member.firstName}
+                            </p>
+                            <p className="text-[10px] font-medium" style={{ color: member.status === 'creator' ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
+                              {member.status === 'creator' ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {isCreator && membersForRow.some(m => m.status === 'pending') && (
+                      <p className="text-center text-[11px] text-amber-600 mt-2.5 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
+                        <span>👆</span>
+                        Tap a pending member to ping them
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -1251,6 +1433,60 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* ── Members row (I-Will) ───────────────── */}
+                {membersForRow.length > 0 && (
+                  <div className="border-t border-gray-100 mt-3 pt-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2.5">Members</p>
+                    <div className="flex gap-5 overflow-x-auto pb-1">
+                      {membersForRow.map(member => {
+                        const isPending = member.status === 'pending';
+                        const initial = member.firstName.charAt(0).toUpperCase();
+                        return (
+                          <button
+                            key={member.key}
+                            className={`flex flex-col items-center gap-1 flex-shrink-0 ${isCreator && isPending ? 'active:opacity-70' : 'cursor-default'}`}
+                            onClick={() => {
+                              if (isCreator && isPending && member.inviteId) {
+                                setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
+                                setPingSent(false);
+                              }
+                            }}
+                            data-testid={`member-avatar-${member.userId}`}
+                          >
+                            <div className="relative">
+                              <div
+                                className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold"
+                                style={isPending
+                                  ? { opacity: 0.45, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }
+                                  : { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }
+                                }
+                              >
+                                <span style={{ color: isPending ? '#92400E' : '#fff' }}>{initial}</span>
+                              </div>
+                              <div
+                                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+                                style={{ backgroundColor: member.status === 'creator' ? '#8B5CF6' : member.status === 'accepted' ? '#22C55E' : '#F59E0B' }}
+                              />
+                            </div>
+                            <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
+                              {member.firstName}
+                            </p>
+                            <p className="text-[10px] font-medium" style={{ color: member.status === 'creator' ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
+                              {member.status === 'creator' ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {isCreator && membersForRow.some(m => m.status === 'pending') && (
+                      <p className="text-center text-[11px] text-amber-600 mt-2.5 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
+                        <span>👆</span>
+                        Tap a pending member to ping them
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

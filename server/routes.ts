@@ -1657,6 +1657,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/wills/:id/invites/:inviteId/ping — creator pings a pending invitee
+  app.post('/api/wills/:id/invites/:inviteId/ping', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const inviteId = parseInt(req.params.inviteId);
+      if (isNaN(willId) || isNaN(inviteId)) return res.status(400).json({ message: 'Invalid ID' });
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: 'Will not found' });
+      if (will.createdBy !== userId) return res.status(403).json({ message: 'Only the creator can ping invitees' });
+
+      const [invite] = await db
+        .select()
+        .from(teamWillInvites)
+        .where(and(eq(teamWillInvites.id, inviteId), eq(teamWillInvites.willId, willId)))
+        .limit(1);
+      if (!invite) return res.status(404).json({ message: 'Invite not found' });
+      if (invite.status !== 'pending') return res.status(400).json({ message: 'Can only ping pending invites' });
+
+      const creator = await storage.getUser(userId);
+      const creatorName = creator?.firstName || 'Someone';
+
+      await pushNotificationService.sendToUser(invite.invitedUserId, {
+        title: 'You have a pending Team Will invite',
+        body: `${creatorName} is waiting on you — you have a pending Team Will invite.`,
+        category: 'team_will_invite_ping',
+        data: {
+          type: 'team_will_invite_ping',
+          willId: willId.toString(),
+          deepLink: `/will/${willId}/commit`,
+        },
+      });
+
+      console.log(`[Invites] Ping sent from ${creatorName} to invitee ${invite.invitedUserId} for will ${willId}`);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[Invites] Failed to ping invitee:', err);
+      res.status(500).json({ message: 'Failed to send ping' });
+    }
+  });
+
+  // DELETE /api/wills/:id/invites/:inviteId — creator removes a pending invitee
+  app.delete('/api/wills/:id/invites/:inviteId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const inviteId = parseInt(req.params.inviteId);
+      if (isNaN(willId) || isNaN(inviteId)) return res.status(400).json({ message: 'Invalid ID' });
+
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: 'Will not found' });
+      if (will.createdBy !== userId) return res.status(403).json({ message: 'Only the creator can remove invitees' });
+
+      const [invite] = await db
+        .select()
+        .from(teamWillInvites)
+        .where(and(eq(teamWillInvites.id, inviteId), eq(teamWillInvites.willId, willId)))
+        .limit(1);
+      if (!invite) return res.status(404).json({ message: 'Invite not found' });
+      if (invite.status !== 'pending') return res.status(400).json({ message: 'Can only remove pending invites' });
+
+      await db.delete(teamWillInvites).where(eq(teamWillInvites.id, inviteId));
+
+      console.log(`[Invites] Creator ${userId} removed invite ${inviteId} from will ${willId}`);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[Invites] Failed to remove invitee:', err);
+      res.status(500).json({ message: 'Failed to remove invitee' });
+    }
+  });
+
   // GET /api/wills/:id/my-invite — invitee checks their own invite status
   app.get('/api/wills/:id/my-invite', isAuthenticated, async (req: any, res) => {
     try {
