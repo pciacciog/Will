@@ -646,13 +646,15 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     if (isCreator && invitesData) {
       return [
         { key: 'creator', userId: user.id, firstName: user.firstName || user.email?.split('@')[0] || '?', status: 'creator', inviteId: null as number | null },
-        ...invitesData.map(inv => ({
-          key: String(inv.id),
-          userId: inv.invitedUserId,
-          firstName: inv.firstName || '?',
-          status: inv.status,
-          inviteId: inv.id,
-        })),
+        ...invitesData
+          .filter(inv => inv.status === 'pending' || inv.status === 'accepted')
+          .map(inv => ({
+            key: String(inv.id),
+            userId: inv.invitedUserId,
+            firstName: inv.firstName || '?',
+            status: inv.status,
+            inviteId: inv.id,
+          })),
       ];
     }
     // Non-creator: just show committed members
