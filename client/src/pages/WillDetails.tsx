@@ -1628,7 +1628,7 @@ export default function WillDetails() {
                       </div>
                     </div>
                   ) : (
-                    /* Step 1: Mark as done CTA */
+                    /* Step 1: CTA */
                     <button
                       onClick={() => setMissionCheckInOpen(true)}
                       className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
@@ -1636,7 +1636,7 @@ export default function WillDetails() {
                       data-testid="button-mission-check-in"
                     >
                       <Zap style={{ width: 20, height: 20, color: '#fff' }} />
-                      Mark as done
+                      Did you complete this?
                     </button>
                   )
                 )}

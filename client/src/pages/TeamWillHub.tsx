@@ -1485,7 +1485,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           data-testid="button-mission-check-in"
                         >
                           <Zap style={{ width: 20, height: 20, color: '#fff' }} />
-                          Mark as done
+                          Did you complete this?
                         </button>
                       )
                     )}
