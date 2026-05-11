@@ -645,7 +645,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     if (!user) return [];
     if (isCreator && invitesData) {
       return [
-        { key: 'creator', userId: user.id, firstName: (user as any).firstName || user.email?.split('@')[0] || '?', status: 'creator', inviteId: null as number | null },
+        { key: 'creator', userId: user.id, firstName: user.firstName || user.email?.split('@')[0] || '?', status: 'creator', inviteId: null as number | null },
         ...invitesData.map(inv => ({
           key: String(inv.id),
           userId: inv.invitedUserId,
@@ -660,7 +660,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       key: String(c.id),
       userId: c.userId,
       firstName: c.user?.firstName || c.user?.email?.split('@')[0] || '?',
-      status: c.userId === will?.createdBy ? 'creator' : 'accepted',
+      status: c.userId === user.id ? 'self' : 'accepted',
       inviteId: null as number | null,
     }));
   }, [isCreator, invitesData, commitments, user, will?.createdBy]);
@@ -1348,14 +1348,14 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               </div>
                               <div
                                 className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
-                                style={{ backgroundColor: member.status === 'creator' ? '#8B5CF6' : member.status === 'accepted' ? '#22C55E' : '#F59E0B' }}
+                                style={{ backgroundColor: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#22C55E' : '#F59E0B' }}
                               />
                             </div>
                             <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
                               {member.firstName}
                             </p>
-                            <p className="text-[10px] font-medium" style={{ color: member.status === 'creator' ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
-                              {member.status === 'creator' ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
+                            <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
+                              {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
                             </p>
                           </button>
                         );
@@ -1468,14 +1468,14 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               </div>
                               <div
                                 className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
-                                style={{ backgroundColor: member.status === 'creator' ? '#8B5CF6' : member.status === 'accepted' ? '#22C55E' : '#F59E0B' }}
+                                style={{ backgroundColor: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#22C55E' : '#F59E0B' }}
                               />
                             </div>
                             <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
                               {member.firstName}
                             </p>
-                            <p className="text-[10px] font-medium" style={{ color: member.status === 'creator' ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
-                              {member.status === 'creator' ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
+                            <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
+                              {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
                             </p>
                           </button>
                         );
