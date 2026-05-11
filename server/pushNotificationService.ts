@@ -722,7 +722,7 @@ class PushNotificationService {
   async sendDeadlineReminderNotification(userId: string, title: string, why?: string, willId?: number): Promise<boolean> {
     const payload: PushNotificationPayload = {
       title,
-      body: why ? `Because ${why}` : 'Tap to check in on your mission.',
+      body: why ? `Because ${why}` : 'Tap to check in on your event.',
       category: 'deadline_reminder',
       data: {
         type: 'deadline_reminder',

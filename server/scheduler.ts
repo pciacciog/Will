@@ -1360,7 +1360,9 @@ export class EndRoomScheduler {
     }
   }
 
-  // Duration + Event: completion-triggered prompt — fires once per participant when will enters will_review/completed.
+  // Duration + Event: completion-triggered prompt.
+  // Duration: fires when status = 'completed' (proof already submitted, will is done).
+  // Event: fires when status = 'will_review' or 'completed' (prompt user to confirm at end).
   // Uses categoryCompletionPromptSentAt (will-level) — distinct from completionNotificationSentAt
   // which is already set by transitionWillStatuses() for the will-review notification.
   private async checkCompletionPrompts(now: Date) {
@@ -1376,8 +1378,11 @@ export class EndRoomScheduler {
         .from(wills)
         .innerJoin(willCommitments, eq(willCommitments.willId, wills.id))
         .where(and(
-          or(eq(wills.status, 'will_review'), eq(wills.status, 'completed')),
-          or(eq(wills.commitmentCategory, 'duration'), eq(wills.commitmentCategory, 'event')),
+          // Duration: completed only. Event: will_review or completed.
+          or(
+            and(eq(wills.commitmentCategory, 'duration'), eq(wills.status, 'completed')),
+            and(eq(wills.commitmentCategory, 'event'), or(eq(wills.status, 'will_review'), eq(wills.status, 'completed'))),
+          ),
           isNull(wills.categoryCompletionPromptSentAt),
         ))
         .limit(100);
