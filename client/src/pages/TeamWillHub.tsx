@@ -10,7 +10,6 @@ import { sessionPersistence } from "@/services/SessionPersistence";
 import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
 import ProgressView from "@/components/ProgressView";
-import DayStrip from "@/components/DayStrip";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
@@ -71,7 +70,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [checkInDate, setCheckInDate] = useState<string | null>(null);
   const handleDayClick = (date: string) => { setCheckInDate(date); setShowCheckInModal(true); };
-  const [habitProgressExpanded, setHabitProgressExpanded] = useState(false);
   const [abstainCheckInOpen, setAbstainCheckInOpen] = useState(false);
   const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);

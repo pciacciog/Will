@@ -212,7 +212,6 @@ export default function WillDetails() {
   const [showParticipants, setShowParticipants] = useState(false);
 
   // Category-aware UI state
-  const [habitProgressExpanded, setHabitProgressExpanded] = useState(false);
   const [abstainLoggedToday, setAbstainLoggedToday] = useState(false);
   const [abstainCheckInOpen, setAbstainCheckInOpen] = useState(false);
   const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
@@ -389,6 +388,8 @@ export default function WillDetails() {
 
   useEffect(() => {
     if (checkinAutoOpened || !will || will.status !== 'active') return;
+    // Recurring wills use the direct two-button check-in — skip modal auto-open
+    if (will.commitmentCategory === 'recurring') return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'checkin') {
       setCheckinAutoOpened(true);
