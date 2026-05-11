@@ -397,7 +397,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         <>
           {/* Compact pill row */}
           <div className="flex gap-2 px-4 mb-2 flex-shrink-0">
-            {(["habit", "abstain", "mission"] as Category[]).map(cat => (
+            {(["recurring", "duration", "event"] as Category[]).map(cat => (
               <button
                 key={cat}
                 type="button"

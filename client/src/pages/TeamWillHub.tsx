@@ -77,6 +77,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
   const [missionCheckInOpen, setMissionCheckInOpen] = useState(false);
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
+  const [missionConfirming, setMissionConfirming] = useState(false);
   // missionCompleted is derived from server data (persists across sessions)
 
   useAppRefresh();
@@ -1294,10 +1295,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true }); }}
                             disabled={abstainLogMutation.isPending}
                             className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                            style={{ border: '2px solid #1D9E75', color: '#085041' }}
+                            style={{ border: '2px solid #1D6FBE', color: '#0A3870' }}
                             data-testid="button-abstain-honored"
                           >
-                            <CheckCircle style={{ width: 20, height: 20, color: '#1D9E75' }} />
+                            <CheckCircle style={{ width: 20, height: 20, color: '#1D6FBE' }} />
                             I honored my will
                           </button>
                           <button
@@ -1317,7 +1318,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       <button
                         onClick={() => setAbstainCheckInOpen(true)}
                         className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
-                        style={{ backgroundColor: '#1D9E75' }}
+                        style={{ backgroundColor: '#1D6FBE' }}
                         data-testid="button-abstain-check-in"
                       >
                         <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
@@ -1428,19 +1429,39 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <p className="text-sm font-semibold text-gray-700">Keep going</p>
                           <p className="text-xs text-gray-400">You still have time.</p>
                         </div>
+                      ) : missionConfirming ? (
+                        <div className="w-full space-y-2" data-testid="mission-confirm-step">
+                          <button
+                            onClick={() => { missionCompleteMutation.mutate(); setMissionConfirming(false); }}
+                            disabled={missionCompleteMutation.isPending}
+                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                            style={{ backgroundColor: '#534AB7' }}
+                            data-testid="button-mission-confirm-done"
+                          >
+                            <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
+                            {missionCompleteMutation.isPending ? 'Saving...' : 'Confirm completion'}
+                          </button>
+                          <button
+                            onClick={() => setMissionConfirming(false)}
+                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                            style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
+                            data-testid="button-mission-confirm-cancel"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       ) : missionCheckInOpen ? (
                         <div className="w-full" data-testid="mission-checkin-options">
-                          <p className="text-xs text-gray-400 text-center mb-3">Have you completed it?</p>
+                          <p className="text-xs text-gray-400 text-center mb-3">Did you complete this?</p>
                           <div className="space-y-2">
                             <button
-                              onClick={() => missionCompleteMutation.mutate()}
-                              disabled={missionCompleteMutation.isPending}
+                              onClick={() => { setMissionCheckInOpen(false); setMissionConfirming(true); }}
                               className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                               style={{ border: '2px solid #534AB7', color: '#26215C' }}
-                              data-testid="button-mission-confirm-done"
+                              data-testid="button-mission-yes"
                             >
                               <CheckCircle style={{ width: 20, height: 20, color: '#534AB7' }} />
-                              {missionCompleteMutation.isPending ? 'Saving...' : 'Yes, I completed it'}
+                              Yes
                             </button>
                             <button
                               onClick={() => {
