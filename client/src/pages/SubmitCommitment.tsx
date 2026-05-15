@@ -766,6 +766,7 @@ export default function SubmitCommitment() {
           </form>
         )}
 
+      </div>
         </>
         )}
 
@@ -775,7 +776,6 @@ export default function SubmitCommitment() {
           onStart={handleModalStart}
           showDontShowAgain={true}
         />
-      </div>
     </MobileLayout>
     </div>
   );
