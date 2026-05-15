@@ -1262,238 +1262,201 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             </div>
           )}
 
-          {/* ── Team card ─────────────────────────────────────────── */}
+          {/* ── COMMITMENT ───────────────────────────────────────── */}
           {isWeWill ? (
-            /* We Will — OUR COMMITMENT hero card */
+            /* We Will — shared commitment text only */
             <div className="mb-2">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">Our Commitment</p>
               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                 {will.sharedWhat ? (
-                  <p className="text-[20px] font-bold text-gray-900 text-center leading-snug mb-3">
+                  <p className="text-[20px] font-bold text-gray-900 text-center leading-snug">
                     &ldquo;{will.sharedWhat}&rdquo;
                   </p>
                 ) : (
-                  <p className="text-sm text-gray-400 italic text-center mb-3">No shared commitment set</p>
-                )}
-                <div className="border-t border-gray-100 pt-3">
-                  {commitments.length === 0 ? (
-                    <p className="text-xs text-gray-400 italic text-center py-1">
-                      No members yet — waiting for friends to accept
-                    </p>
-                  ) : (
-                    <div className="flex items-start justify-center gap-6 flex-wrap">
-                      {commitments.map((c: any) => {
-                        const isMe = c.userId === user.id;
-                        return (
-                          <div key={c.id} className="flex flex-col items-center" data-testid={`participant-${c.userId}`}>
-                            <div className="relative mb-1.5">
-                              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
-                                <span className="text-white font-semibold text-sm">
-                                  {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              {(() => {
-                                const s = teamCheckInMap[c.userId];
-                                const cat = will?.commitmentCategory;
-                                const isGreen = (cat === 'recurring' && (s === 'yes' || s === 'partial')) || (cat === 'duration' && s === 'honored') || (cat === 'event' && s === 'completed');
-                                const isRed = (cat === 'recurring' && s === 'no') || (cat === 'duration' && s === 'not_honored');
-                                if (!isGreen && !isRed) return null;
-                                return (
-                                  <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: isGreen ? '#1D9E75' : '#E24B4A' }}>
-                                    {isGreen ? <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} /> : <X style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                            <p className="text-xs font-medium text-gray-800 text-center">
-                              {c.user?.firstName || c.user?.email?.split("@")[0]}
-                            </p>
-                            {isMe && (
-                              <p style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>You</p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* ── Members row (WeWill) ───────────────── */}
-                {membersForRow.length > 0 && (
-                  <div className="border-t border-gray-100 mt-3 pt-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2.5">Members</p>
-                    <div className="flex gap-5 overflow-x-auto pb-1">
-                      {membersForRow.map(member => {
-                        const isPending = member.status === 'pending';
-                        const initial = member.firstName.charAt(0).toUpperCase();
-                        return (
-                          <button
-                            key={member.key}
-                            className={`flex flex-col items-center gap-1 flex-shrink-0 ${isCreator && isPending ? 'active:opacity-70' : 'cursor-default'}`}
-                            onClick={() => {
-                              if (isCreator && isPending && member.inviteId) {
-                                setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
-                                setPingSent(false);
-                              }
-                            }}
-                            data-testid={`member-avatar-${member.userId}`}
-                          >
-                            <div className="relative">
-                              <div
-                                className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold"
-                                style={isPending
-                                  ? { opacity: 0.45, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }
-                                  : { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }
-                                }
-                              >
-                                <span style={{ color: isPending ? '#92400E' : '#fff' }}>{initial}</span>
-                              </div>
-                              <div
-                                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
-                                style={{ backgroundColor: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#22C55E' : '#F59E0B' }}
-                              />
-                            </div>
-                            <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
-                              {member.firstName}
-                            </p>
-                            <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
-                              {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
-                            </p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {isCreator && membersForRow.some(m => m.status === 'pending') && (
-                      <p className="text-center text-[11px] text-amber-600 mt-2.5 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
-                        <span>👆</span>
-                        Tap a pending member to ping them
-                      </p>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray-400 italic text-center">No shared commitment set</p>
                 )}
               </div>
             </div>
           ) : (
-            /* I Will — YOUR TEAM label + member grid with current user green border */
-            <div className="mb-2">
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Your Team</p>
-                {isCreator && pendingInvites.length > 0 && (
-                  <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" data-testid="badge-pending-invites">
-                    {pendingInvites.length} pending
-                  </span>
-                )}
-              </div>
-              <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
-                {commitments.length === 0 ? (
-                  <p className="text-xs text-gray-400 italic text-center py-2">
-                    No commitments yet — waiting for friends to accept
+            /* I Will — current user's own commitment text */
+            userCommitment?.what ? (
+              <div className="mb-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">Your Commitment</p>
+                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                  <p className="text-[18px] font-bold text-gray-900 text-center leading-snug">
+                    &ldquo;{userCommitment.what}&rdquo;
                   </p>
+                </div>
+              </div>
+            ) : null
+          )}
+
+          {/* ── MEMBERS ──────────────────────────────────────────── */}
+          <div className="mb-2">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Members</p>
+              {isCreator && pendingInvites.length > 0 && (
+                <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" data-testid="badge-pending-invites">
+                  {pendingInvites.length} pending
+                </span>
+              )}
+            </div>
+
+            {isWeWill ? (
+              /* We Will: horizontal avatar strip */
+              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                {membersForRow.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic text-center py-1">No members yet — waiting for friends to accept</p>
                 ) : (
-                  <div className={`grid gap-1.5 ${commitments.length === 1 ? "grid-cols-1 max-w-[140px] mx-auto" : "grid-cols-2"}`}>
-                    {commitments.map((c: any) => {
-                      const isMe = c.userId === user.id;
+                  <div className="flex gap-5 overflow-x-auto pb-1">
+                    {membersForRow.map(member => {
+                      const isPending = member.status === 'pending';
+                      const initial = member.firstName.charAt(0).toUpperCase();
+                      const s = teamCheckInMap[member.userId];
+                      const cat = will?.commitmentCategory;
+                      const isActive = will?.status === 'active' || will?.status === 'will_review' || will?.status === 'completed';
+                      const isCompleted = isActive && (
+                        (cat === 'recurring' && (s === 'yes' || s === 'partial')) ||
+                        (cat === 'duration' && s === 'honored') ||
+                        (cat === 'event' && s === 'completed')
+                      );
                       return (
-                        <div
-                          key={c.id}
-                          className="flex flex-col items-center py-2 px-1.5 bg-gray-50 rounded-xl"
-                          data-testid={`participant-${c.userId}`}
+                        <button
+                          key={member.key}
+                          className={`flex flex-col items-center gap-1 flex-shrink-0 ${isCreator && isPending ? 'active:opacity-70' : 'cursor-default'}`}
+                          onClick={() => {
+                            if (isCreator && isPending && member.inviteId) {
+                              setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
+                              setPingSent(false);
+                            }
+                          }}
+                          data-testid={`member-avatar-${member.userId}`}
                         >
-                          <div className="relative mb-1">
+                          <div className="relative">
                             <div
-                              className="bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center"
-                              style={{ width: 38, height: 38, border: "3px solid #fff", boxShadow: "0 0 0 2px #9B5CE5" }}
+                              className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold"
+                              style={isPending
+                                ? { opacity: 0.45, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }
+                                : isCompleted
+                                  ? { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', boxShadow: '0 0 0 2.5px #1D9E75' }
+                                  : { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }
+                              }
                             >
-                              <span className="text-white font-semibold text-sm">
-                                {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
-                              </span>
+                              <span style={{ color: isPending ? '#92400E' : '#fff' }}>{initial}</span>
                             </div>
-                            {(() => {
-                              const s = teamCheckInMap[c.userId];
-                              const cat = will?.commitmentCategory;
-                              const isGreen = (cat === 'recurring' && (s === 'yes' || s === 'partial')) || (cat === 'duration' && s === 'honored') || (cat === 'event' && s === 'completed');
-                              const isRed = (cat === 'recurring' && s === 'no') || (cat === 'duration' && s === 'not_honored');
-                              if (!isGreen && !isRed) return null;
-                              return (
-                                <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: isGreen ? '#1D9E75' : '#E24B4A' }}>
-                                  {isGreen ? <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} /> : <X style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />}
-                                </div>
-                              );
-                            })()}
+                            {isCompleted && (
+                              <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: '#1D9E75' }}>
+                                <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />
+                              </div>
+                            )}
+                            {!isCompleted && !isPending && (
+                              <div
+                                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+                                style={{ backgroundColor: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : '#22C55E' }}
+                              />
+                            )}
                           </div>
-                          <p className="font-medium text-gray-900 text-xs text-center leading-tight">
-                            {c.user?.firstName || c.user?.email?.split("@")[0]}
+                          <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
+                            {member.firstName}
                           </p>
-                          {isMe && (
-                            <p style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>You</p>
-                          )}
-                          {c.what && (
-                            <p className="text-[10px] text-gray-500 mt-1 text-center leading-snug truncate w-full">
-                              {c.what}
-                            </p>
-                          )}
-                        </div>
+                          <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
+                            {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
+                          </p>
+                        </button>
                       );
                     })}
                   </div>
                 )}
-
-                {/* ── Members row (I-Will) ───────────────── */}
-                {membersForRow.length > 0 && (
-                  <div className="border-t border-gray-100 mt-3 pt-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2.5">Members</p>
-                    <div className="flex gap-5 overflow-x-auto pb-1">
-                      {membersForRow.map(member => {
-                        const isPending = member.status === 'pending';
-                        const initial = member.firstName.charAt(0).toUpperCase();
-                        return (
-                          <button
-                            key={member.key}
-                            className={`flex flex-col items-center gap-1 flex-shrink-0 ${isCreator && isPending ? 'active:opacity-70' : 'cursor-default'}`}
-                            onClick={() => {
-                              if (isCreator && isPending && member.inviteId) {
-                                setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
-                                setPingSent(false);
-                              }
-                            }}
-                            data-testid={`member-avatar-${member.userId}`}
-                          >
-                            <div className="relative">
-                              <div
-                                className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold"
-                                style={isPending
-                                  ? { opacity: 0.45, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }
-                                  : { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }
-                                }
-                              >
-                                <span style={{ color: isPending ? '#92400E' : '#fff' }}>{initial}</span>
-                              </div>
-                              <div
-                                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
-                                style={{ backgroundColor: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#22C55E' : '#F59E0B' }}
-                              />
-                            </div>
-                            <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
-                              {member.firstName}
-                            </p>
-                            <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
-                              {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
-                            </p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {isCreator && membersForRow.some(m => m.status === 'pending') && (
-                      <p className="text-center text-[11px] text-amber-600 mt-2.5 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
-                        <span>👆</span>
-                        Tap a pending member to ping them
-                      </p>
-                    )}
-                  </div>
+                {isCreator && membersForRow.some(m => m.status === 'pending') && (
+                  <p className="text-center text-[11px] text-amber-600 mt-2.5 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
+                    <span>👆</span>
+                    Tap a pending member to ping them
+                  </p>
                 )}
               </div>
-            </div>
-          )}
+            ) : (
+              /* I Will: vertical rows with name + commitment text */
+              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                {membersForRow.length === 0 && commitments.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic text-center py-4">No members yet — waiting for friends to accept</p>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {commitments.map((c: any) => {
+                      const isMe = c.userId === user.id;
+                      const initial = (c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase() || '?';
+                      const firstName = c.user?.firstName || c.user?.email?.split('@')[0] || '?';
+                      const s = teamCheckInMap[c.userId];
+                      const cat = will?.commitmentCategory;
+                      const isActive = will?.status === 'active' || will?.status === 'will_review' || will?.status === 'completed';
+                      const isCompleted = isActive && (
+                        (cat === 'recurring' && (s === 'yes' || s === 'partial')) ||
+                        (cat === 'duration' && s === 'honored') ||
+                        (cat === 'event' && (s === 'completed' || c.missionCompleted === true))
+                      );
+                      return (
+                        <div key={c.id} className="flex items-center gap-3 px-4 py-3" data-testid={`member-row-${c.userId}`}>
+                          <div className="relative flex-shrink-0">
+                            <div
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gradient-to-br from-violet-500 to-purple-500"
+                              style={isCompleted ? { boxShadow: '0 0 0 2.5px #1D9E75' } : undefined}
+                            >
+                              <span className="text-white">{initial}</span>
+                            </div>
+                            {isCompleted && (
+                              <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: '#1D9E75' }}>
+                                <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{firstName}</p>
+                              {isMe && <span className="text-[10px] text-gray-400">You</span>}
+                            </div>
+                            {c.what && (
+                              <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{c.what}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {membersForRow.filter(m => m.status === 'pending').map(member => (
+                      <button
+                        key={member.key}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left ${isCreator ? 'active:bg-amber-50' : 'cursor-default'}`}
+                        onClick={() => {
+                          if (isCreator && member.inviteId) {
+                            setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
+                            setPingSent(false);
+                          }
+                        }}
+                        data-testid={`member-avatar-${member.userId}`}
+                      >
+                        <div className="flex-shrink-0">
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold"
+                            style={{ opacity: 0.5, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }}
+                          >
+                            <span style={{ color: '#92400E' }}>{member.firstName.charAt(0).toUpperCase()}</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-500 truncate">{member.firstName}</p>
+                          <p className="text-xs text-amber-600">Pending</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {isCreator && membersForRow.some(m => m.status === 'pending') && (
+                  <p className="text-center text-[11px] text-amber-600 py-2.5 border-t border-gray-50 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
+                    <span>👆</span>
+                    Tap a pending member to ping them
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* ── Progress section — YOUR PROGRESS label + category branch ── */}
           <div className="mb-2">
@@ -1877,6 +1840,35 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         <p className="text-xs" style={{ color: '#2E7D63' }}>You did it. This chapter is closed.</p>
                       </div>
                     )}
+                    {/* Completion log — who has finished the event */}
+                    {commitments.length > 0 && (() => {
+                      const completedMembers = commitments.filter((c: any) =>
+                        c.missionCompleted === true || teamCheckInMap[c.userId] === 'completed'
+                      );
+                      if (completedMembers.length === 0) return null;
+                      return (
+                        <div className="w-full rounded-xl border border-gray-100 p-3 mt-1" data-testid="card-event-completion-log">
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2.5">
+                            Completion Log · {completedMembers.length}/{commitments.length}
+                          </p>
+                          <div className="space-y-2">
+                            {completedMembers.map((c: any) => (
+                              <div key={c.id} className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white font-semibold text-xs">
+                                    {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <p className="text-xs font-medium text-gray-800 flex-1 truncate">
+                                  {c.user?.firstName || c.user?.email?.split('@')[0]}
+                                </p>
+                                <CheckCircle style={{ width: 14, height: 14, color: '#1D9E75', flexShrink: 0 }} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -1991,82 +1983,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 <p className="text-[10px] text-amber-600/80 pt-1 border-t border-amber-100">
                   They'll be dropped automatically if they don't commit before the Will starts.
                 </p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Team Today section ─────────────────────────────────── */}
-          {teamTodayData && teamTodayData.members.length > 1 && (
-            <div className="mb-3" data-testid="section-team-today">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Team Today</p>
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-                <div className={`grid gap-3 ${teamTodayData.members.length === 1 ? "grid-cols-1 max-w-[120px] mx-auto" : teamTodayData.members.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-                  {teamTodayData.members.map((m) => {
-                    const isMe = m.userId === user?.id;
-                    const cat = teamTodayData.category;
-
-                    // Determine dot color and label from status
-                    let dotClass = "bg-gray-300";
-                    let dotLabel = "Pending";
-                    if (cat === 'recurring') {
-                      if (m.status === 'yes') { dotClass = "bg-emerald-500"; dotLabel = "Done"; }
-                      else if (m.status === 'partial') { dotClass = "bg-amber-400"; dotLabel = "Partial"; }
-                      else if (m.status === 'no') { dotClass = "bg-red-400"; dotLabel = "Missed"; }
-                    } else if (cat === 'duration') {
-                      if (m.status === 'honored') { dotClass = "bg-emerald-500"; dotLabel = "Honored"; }
-                      else if (m.status === 'not-honored') { dotClass = "bg-red-400"; dotLabel = "Slipped"; }
-                    } else if (cat === 'event') {
-                      if (m.status === 'completed') { dotClass = "bg-emerald-500"; dotLabel = "Completed"; }
-                    }
-
-                    return (
-                      <div key={m.userId} className="flex flex-col items-center" data-testid={`team-today-member-${m.userId}`}>
-                        <div className="relative mb-1.5">
-                          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold text-sm">
-                              {m.firstName?.charAt(0)?.toUpperCase() || "?"}
-                            </span>
-                          </div>
-                          <div
-                            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${dotClass} rounded-full border-2 border-white`}
-                            title={dotLabel}
-                            data-testid={`team-today-dot-${m.userId}`}
-                          />
-                        </div>
-                        <p className="text-xs font-medium text-gray-800 text-center leading-tight">
-                          {m.firstName || "Member"}
-                        </p>
-                        {isMe && (
-                          <p style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>You</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Legend */}
-                <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-3 justify-center">
-                  {teamTodayData.category === 'recurring' && (
-                    <>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Done</span>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />Partial</span>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Missed</span>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />Pending</span>
-                    </>
-                  )}
-                  {teamTodayData.category === 'duration' && (
-                    <>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Honored</span>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Slipped</span>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />Pending</span>
-                    </>
-                  )}
-                  {teamTodayData.category === 'event' && (
-                    <>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />Completed</span>
-                      <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" />In progress</span>
-                    </>
-                  )}
-                </div>
               </div>
             </div>
           )}

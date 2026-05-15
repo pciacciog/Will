@@ -3569,9 +3569,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const otherIds = commitments.map((c: any) => c.userId).filter((id: string) => id !== userId);
             if (otherIds.length > 0) {
               await pushNotificationService.sendToMultipleUsers(otherIds, {
-                title: `${checkerName} checked in`,
-                body: 'See how they\'re doing on your Team Will.',
-                data: { willId, type: 'team_checkin' },
+                title: `${checkerName} completed the event!`,
+                body: 'Check out their progress on your Team Will.',
+                data: { willId, type: 'team_member_completed' },
               });
             }
           } catch (err) { console.error('[MissionComplete] notification failed (non-fatal):', err); }

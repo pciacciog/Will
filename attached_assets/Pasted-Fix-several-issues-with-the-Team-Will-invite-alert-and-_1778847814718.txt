@@ -1,0 +1,69 @@
+Fix several issues with the Team Will invite alert and commit flow.
+
+---
+
+CHANGE 1: Simplify the invite alert card
+
+Current: Alert card shows handshake emoji, commitment text, and two 
+buttons — "Accept" and "Decline".
+
+Fix:
+- Remove the handshake emoji entirely
+- Replace "Accept" and "Decline" buttons with a single "View" button
+- Tapping "View" navigates to the Team Will Invite detail page
+- The Team Will Invite detail page is where the user accepts or declines
+- The alert card itself should only serve as a notification entry point, 
+  not a decision point
+
+---
+
+CHANGE 2: No stacking alerts — one at a time
+
+Current: Multiple invite alerts stack on top of each other on the 
+home screen.
+
+Fix:
+- Only ever show ONE alert card on the home screen — the most recent one
+- Below the single alert card, if there are additional pending alerts, 
+  show a subtle text link:
+  "+X more alerts — view all"
+  where X is the count of remaining unaddressed alerts
+- Tapping "view all" navigates to the notifications / alerts screen
+- Never render more than one alert card stacked
+
+---
+
+CHANGE 3: Auto-dismiss alerts when already addressed
+
+Current: If a user addresses an invite through any path other than the 
+home screen alert (e.g. via My Wills → Team tab → accepts there), the 
+home screen alert remains visible even though it's no longer relevant.
+
+Fix:
+- The app must track invite status globally, not per-entry-point
+- Whenever an invite is resolved — accepted, declined, or expired — 
+  through ANY path in the app, the corresponding home screen alert 
+  must be dismissed immediately
+- Specifically: after a user completes the full commitment flow for a 
+  Team Will (reaches "I'm in"), check for any home screen alert tied 
+  to that same Team Will invite and remove it
+- This sync should happen on app foreground and on navigation back 
+  to the home screen at minimum, ideally in real time
+
+---
+
+CHANGE 4: Final commit screen shows all members including pending
+
+Current: The final screen of the commitment flow (the "I'm in" / 
+handshake screen) only shows members who have already fully committed.
+
+Fix:
+- Show ALL invited members on the final commit screen, not just 
+  committed ones
+- Members who have fully committed: show avatar + name normally
+- Members who are still pending: show avatar + name + a "Pending" 
+  label beneath (muted gray, same style as the pre-start MEMBERS 
+  section)
+- This gives the joining user full context of who is potentially 
+  in this Will with them, matching the experience of the first 
+  invite screen
