@@ -106,15 +106,15 @@ export default function Home() {
   const unreadCount = notifData?.unreadCount ?? 0;
   const previewNotifs = (notifData?.notifications ?? []).filter(n => !n.isRead).slice(0, 2);
 
-  const acceptInviteMutation = useMutation({
-    mutationFn: async (willId: number) => {
-      await apiRequest(`/api/wills/${willId}/accept-invite`, { method: 'POST' });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
-    },
+  const { data: awaitingCommitment = [] } = useQuery<{ invite: { willId: number }; will: { id: number; title?: string } }[]>({
+    queryKey: ['/api/wills/my-awaiting-commitment'],
+    queryFn: getQueryFn({ on401: 'returnNull' }),
+    enabled: !!user,
+    staleTime: 0,
+    refetchInterval: 30000,
   });
+
+  const awaitingWillIds = new Set((awaitingCommitment ?? []).map(r => r.invite.willId));
 
   const declineInviteMutation = useMutation({
     mutationFn: async (willId: number) => {
@@ -268,33 +268,36 @@ export default function Home() {
                       </div>
                       <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />
                     </div>
-                    {isInvite && n.willId && (
-                      <div className="flex gap-2 mt-2.5">
-                        <button
-                          onClick={() => {
-                            markReadMutation.mutate(n.id);
-                            acceptInviteMutation.mutate(n.willId!);
-                            setLocation(`/will/${n.willId}`);
-                          }}
-                          disabled={acceptInviteMutation.isPending}
-                          className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                          data-testid={`button-accept-invite-${n.willId}`}
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => {
-                            markReadMutation.mutate(n.id);
-                            declineInviteMutation.mutate(n.willId!);
-                          }}
-                          disabled={declineInviteMutation.isPending}
-                          className="flex-1 py-1.5 rounded-xl bg-gray-100 text-gray-600 text-[12px] font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
-                          data-testid={`button-decline-invite-${n.willId}`}
-                        >
-                          Decline
-                        </button>
-                      </div>
-                    )}
+                    {isInvite && n.willId && (() => {
+                      const isAwaitingCommit = awaitingWillIds.has(n.willId);
+                      return (
+                        <div className="mt-2.5">
+                          {isAwaitingCommit && (
+                            <p className="text-[11px] text-amber-700 font-medium mb-1.5">You haven't finished committing yet</p>
+                          )}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setLocation(`/will/${n.willId}/commit`)}
+                              className={`flex-1 py-1.5 rounded-xl text-white text-[12px] font-semibold transition-colors ${isAwaitingCommit ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                              data-testid={`button-accept-invite-${n.willId}`}
+                            >
+                              {isAwaitingCommit ? 'Finish committing' : 'Accept'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                markReadMutation.mutate(n.id);
+                                declineInviteMutation.mutate(n.willId!);
+                              }}
+                              disabled={declineInviteMutation.isPending}
+                              className="flex-1 py-1.5 rounded-xl bg-gray-100 text-gray-600 text-[12px] font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+                              data-testid={`button-decline-invite-${n.willId}`}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     {!isInvite && n.deepLink && (
                       <button
                         onClick={() => { markReadMutation.mutate(n.id); setLocation(n.deepLink!); }}

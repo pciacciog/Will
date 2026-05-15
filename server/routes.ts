@@ -1438,17 +1438,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (will.mode === 'team') {
         const isCreator = will.createdBy === userId;
         if (!isCreator) {
-          const [acceptedInvite] = await db
-            .select({ id: teamWillInvites.id })
+          const [inviteRow] = await db
+            .select()
             .from(teamWillInvites)
             .where(and(
               eq(teamWillInvites.willId, willId),
               eq(teamWillInvites.invitedUserId, userId),
-              eq(teamWillInvites.status, 'accepted')
+              inArray(teamWillInvites.status, ['pending', 'accepted'])
             ))
             .limit(1);
-          if (!acceptedInvite) {
-            return res.status(403).json({ message: "You must accept the invite before committing to this Will" });
+          if (!inviteRow) {
+            return res.status(403).json({ message: "You need a valid invite to commit to this Will" });
+          }
+          // Auto-accept if they came straight from the commit flow without calling accept-invite
+          if (inviteRow.status === 'pending') {
+            await db
+              .update(teamWillInvites)
+              .set({ status: 'accepted', respondedAt: new Date() })
+              .where(eq(teamWillInvites.id, inviteRow.id));
           }
         }
       }
@@ -1851,7 +1858,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!invite) return res.status(404).json({ message: 'Invite not found' });
       if (invite.status === 'expired') return res.status(410).json({ message: 'This invite has expired' });
-      if (invite.status !== 'pending') return res.status(409).json({ message: `Cannot decline an invite with status: ${invite.status}` });
+      if (invite.status === 'declined') return res.status(409).json({ message: 'Invite already declined' });
+      if (invite.status !== 'pending' && invite.status !== 'accepted') return res.status(409).json({ message: `Cannot decline an invite with status: ${invite.status}` });
 
       await db
         .update(teamWillInvites)

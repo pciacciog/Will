@@ -99,6 +99,21 @@ export default function SubmitCommitment() {
   // Ladder shows user-facing steps (1-indexed without the eliminated When step)
   const ladderSteps = isCumulative ? 1 : 2;
 
+  // Will-started check: if the will has already started, the window to join has closed
+  const willHasStarted = (will as any)?.startDate ? new Date((will as any).startDate) <= new Date() : false;
+
+  // Auto-accept: when the user enters the commit flow directly (Accept button navigates here
+  // without calling accept-invite first), mark the invite as accepted on first load so that
+  // if they back out, the home screen shows "Finish committing" rather than a fresh "Accept".
+  const autoAcceptedRef = useRef(false);
+  useEffect(() => {
+    if (autoAcceptedRef.current) return;
+    if (!id || !inviteData?.invite) return;
+    if (inviteData.invite.status !== 'pending') return;
+    autoAcceptedRef.current = true;
+    apiRequest(`/api/wills/${id}/accept-invite`, { method: 'POST' }).catch(() => {});
+  }, [id, inviteData?.invite?.status]);
+
   useEffect(() => {
     const hasSeenInstruction = localStorage.getItem('willInstructionSeen');
     const hasSubmittedCommitment = localStorage.getItem('hasSubmittedCommitment');
@@ -289,6 +304,24 @@ export default function SubmitCommitment() {
   return (
     <div className="w-full max-w-screen-sm mx-auto overflow-x-hidden">
       <MobileLayout>
+        {/* Will has already started — block the commit flow */}
+        {willHasStarted && inviteData?.invite && !inviteData?.invite?.commitment && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+            <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+              <Clock className="w-7 h-7 text-amber-500" />
+            </div>
+            <p className="text-[18px] font-bold text-gray-900 mb-2">This Will has already started</p>
+            <p className="text-sm text-gray-500 mb-6">The window to join has closed. You can no longer commit to this Will.</p>
+            <button
+              onClick={() => setLocation('/')}
+              className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm"
+            >
+              Go Home
+            </button>
+          </div>
+        )}
+        {!willHasStarted && (
+        <>
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pb-4 mb-6 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div className="pt-4 space-y-3">
             <div className="relative flex items-center mb-2 min-h-[44px]">
@@ -720,6 +753,9 @@ export default function SubmitCommitment() {
             </button>
 
           </form>
+        )}
+
+        </>
         )}
 
         <WillInstructionModal

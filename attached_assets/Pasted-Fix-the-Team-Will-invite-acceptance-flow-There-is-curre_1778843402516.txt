@@ -1,0 +1,78 @@
+Fix the Team Will invite acceptance flow. There is currently a broken two-step 
+process where a user can "Accept" an invite without going through the formal 
+commitment flow, leaving them in a limbo state (visible as accepted but not 
+shown as committed in the Team Will).
+
+---
+
+PROBLEM SUMMARY:
+
+When Jack taps "Accept" on the invite notification card on the home screen, he 
+gets brought into the Team Will but has not gone through the commitment flow 
+(entering his "because", setting notifications, tapping "I'm in"). His avatar 
+does not appear as a full participant. He then has to separately find "Finish 
+committing" in the Team tab to complete what "Accept" should have already started.
+
+---
+
+THE FIX: Make "Accept" and "Start committing" the same action.
+
+1. When the user taps "Accept" on an invite card (anywhere — home screen alert, 
+   notifications, Team Will tab):
+   - Do NOT silently mark them as "accepted" and drop them into the Team Will page
+   - Instead, immediately navigate them into the full commitment flow for that Team Will
+   - This is the same flow triggered by "Finish committing" — reuse it exactly
+
+2. The commitment flow should:
+   - Show the Team Will details (title, who invited them, the shared commitment text)
+   - Ask for their personal "because"
+   - Set up their notification preference
+   - End with the "I'm in" / handshake confirmation screen
+   - Only AFTER completing all steps does the user become a full committed member
+
+3. A user should only ever be in one of three states:
+   - Invited (pending)
+   - Committed (fully in)
+   - Declined
+   The intermediate "accepted but not committed" state should not exist.
+
+4. The "Decline" button behavior stays the same — dismiss the invite.
+
+5. Make sure this flow works from all entry points where an invite can be accepted:
+   - Home screen alert card
+   - Notifications panel
+   - Team Will tab invite card
+   All three should funnel into the same commitment flow.
+
+---
+
+EDGE CASE: User taps "Accept" but exits the commitment flow before finishing
+
+If a user taps "Accept" and starts the commitment flow but backs out (closes 
+the app, navigates away, or taps back) before reaching the final "I'm in" screen:
+
+1. The invite must NOT disappear. It stays as a pending action item.
+
+2. It should surface in every place invites normally appear:
+   - Home screen alert card — still shows, but now labeled 
+     "Finish joining [Will name]" with a single CTA button: 
+     "Finish committing" (amber/orange)
+   - Team Will tab — the invite card stays visible with the 
+     same "Finish committing" status
+   - Notifications badge count — still included in the unread count
+
+3. The card copy should change to signal they started but didn't finish:
+   - Before starting: "Bebo invited you to a Team Will — Accept / Decline"
+   - After partial entry: "You haven't finished committing yet — 
+     Finish committing / Decline"
+
+4. Tapping "Finish committing" resumes the flow — ideally from where they 
+   left off (e.g. pre-fill their "because" if already entered). If resuming 
+   mid-flow is too complex, restarting from the beginning is acceptable.
+
+5. The invite should only disappear from action items when one of these happens:
+   - User completes the full commitment flow ("I'm in")
+   - User taps "Decline" explicitly
+   - The Will's start date has passed and the window to join has closed — 
+     in this case show a one-time toast: "This Will has already started — 
+     you can no longer join"

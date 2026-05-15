@@ -64,21 +64,9 @@ export default function AcceptInvite() {
     enabled: !!user && !!willId,
   });
 
-  const acceptMutation = useMutation({
-    mutationFn: async () => {
-      const r = await apiRequest(`/api/wills/${willId}/accept-invite`, { method: "POST" });
-      return r.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/wills/all-active"] });
-      queryClient.invalidateQueries({ queryKey: ['/api/wills/my-pending-invites'] });
-      toast({ title: "Invite accepted!", description: "Now set your commitment.", duration: 3000 });
-      setLocation(`/will/${willId}/commit`);
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message || "Could not accept invite.", variant: "destructive" });
-    },
-  });
+  const handleAccept = () => {
+    setLocation(`/will/${willId}/commit`);
+  };
 
   const declineMutation = useMutation({
     mutationFn: async () => {
@@ -171,7 +159,7 @@ export default function AcceptInvite() {
     ...visibleMembers.filter(m => !m.isCreator && m.status === "pending"),
   ];
 
-  const isBusy = acceptMutation.isPending || declineMutation.isPending;
+  const isBusy = declineMutation.isPending;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -406,17 +394,13 @@ export default function AcceptInvite() {
           {invite.status === "pending" && !isExpired && (
             <div className="space-y-2 pt-1">
               <button
-                onClick={() => acceptMutation.mutate()}
+                onClick={handleAccept}
                 disabled={isBusy}
                 className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
                 style={{ backgroundColor: "#2D9D78" }}
                 data-testid="button-accept-invite"
               >
-                {acceptMutation.isPending ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-                ) : (
-                  <CheckCircle className="w-5 h-5" />
-                )}
+                <CheckCircle className="w-5 h-5" />
                 Accept invite
               </button>
 
