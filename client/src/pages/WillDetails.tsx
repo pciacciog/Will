@@ -221,8 +221,10 @@ export default function WillDetails() {
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
   const [missionCompleted, setMissionCompleted] = useState(false);
   const [missionConfirming, setMissionConfirming] = useState(false);
-  const [pendingCheckIn, setPendingCheckIn] = useState<'yes' | 'no' | null>(null);
+  const [pendingCheckIn, setPendingCheckIn] = useState<'yes' | 'no' | 'partial' | null>(null);
   const [checkInNote, setCheckInNote] = useState('');
+  const [editDate, setEditDate] = useState<string | null>(null);
+  const [editingDate, setEditingDate] = useState<string | null>(null);
 
   const todayLocalDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
 
@@ -426,6 +428,8 @@ export default function WillDetails() {
   const recurringWeekDays = useMemo(() => {
     if (will?.commitmentCategory !== 'recurring') return [];
     const today = new Date(); today.setHours(0, 0, 0, 0);
+    const willStart = will?.startDate ? new Date(will.startDate) : null;
+    if (willStart) willStart.setHours(0, 0, 0, 0);
     const dow = today.getDay();
     const mondayOffset = dow === 0 ? -6 : 1 - dow;
     const monday = new Date(today); monday.setDate(today.getDate() + mondayOffset);
@@ -435,14 +439,16 @@ export default function WillDetails() {
       const ci = checkIns.find((c: WillCheckIn) => c.date === dateStr);
       const isToday = d.getTime() === today.getTime();
       const isFuture = d > today;
-      let status: 'yes' | 'partial' | 'no' | 'today' | 'future';
-      if (ci) { status = ci.status as 'yes' | 'partial' | 'no'; }
+      const isBeforeStart = willStart ? d < willStart : false;
+      let status: 'yes' | 'partial' | 'no' | 'today' | 'future' | 'pre-start';
+      if (isBeforeStart) { status = 'pre-start'; }
+      else if (ci) { status = ci.status as 'yes' | 'partial' | 'no'; }
       else if (isToday) { status = 'today'; }
       else if (isFuture) { status = 'future'; }
       else { status = 'no'; }
       return { d, dateStr, dayNum: d.getDate(), status, isToday };
     });
-  }, [will?.commitmentCategory, checkIns]);
+  }, [will?.commitmentCategory, will?.startDate, checkIns]);
 
   // Abstain: fetch log entries
   const { data: abstainLogEntries = [] } = useQuery<AbstainLog[]>({
@@ -724,10 +730,10 @@ export default function WillDetails() {
 
   // Recurring: direct check-in mutation (bypasses modal)
   const recurringCheckInMutation = useMutation({
-    mutationFn: async ({ status, note }: { status: 'yes' | 'no'; note?: string }) => {
+    mutationFn: async ({ status, note, date }: { status: 'yes' | 'no' | 'partial'; note?: string; date?: string }) => {
       const res = await apiRequest(`/api/wills/${id}/check-ins`, {
         method: 'POST',
-        body: JSON.stringify({ date: todayLocalDate, status, note }),
+        body: JSON.stringify({ date: date ?? todayLocalDate, status, note }),
       });
       return res.json();
     },
@@ -736,6 +742,7 @@ export default function WillDetails() {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/check-in-progress`] });
       setPendingCheckIn(null);
       setCheckInNote('');
+      setEditingDate(null);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to log check-in", variant: "destructive" });
@@ -1415,10 +1422,18 @@ export default function WillDetails() {
 
             {/* Recurring: flat always-expanded progress card */}
             {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (() => {
+              const willStartMs = will.startDate ? new Date(will.startDate).setHours(0,0,0,0) : Date.now();
+              const todayMs = new Date().setHours(0,0,0,0);
               const yesCount = checkIns.filter((c: WillCheckIn) => c.status === 'yes').length;
               const partialCount = checkIns.filter((c: WillCheckIn) => c.status === 'partial').length;
-              const noCount = checkIns.filter((c: WillCheckIn) => c.status === 'no').length;
-              const total = yesCount + partialCount + noCount;
+              // Bug 1: missed = past days in Will period without a yes/partial check-in
+              const totalPastDays = Math.max(0, Math.floor((todayMs - willStartMs) / 86400000));
+              const successfulDays = checkIns.filter((c: WillCheckIn) => {
+                const dMs = new Date(c.date).setHours(0,0,0,0);
+                return (c.status === 'yes' || c.status === 'partial') && dMs >= willStartMs && dMs < todayMs;
+              }).length;
+              const missedCount = Math.max(0, totalPastDays - successfulDays);
+              const total = yesCount + partialCount + missedCount;
               const successRate = total > 0 ? Math.round((yesCount / total) * 100) : 0;
               return (
                 <div className="bg-white rounded-xl border border-gray-200 p-4" data-testid="card-habit-progress">
@@ -1433,7 +1448,7 @@ export default function WillDetails() {
                       <p className="text-xs text-gray-400 mt-0.5">partial</p>
                     </div>
                     <div className="flex-1 rounded-xl py-2.5 text-center" style={{ backgroundColor: '#FEF2F2' }}>
-                      <p className="text-xl font-bold text-red-400">{noCount}</p>
+                      <p className="text-xl font-bold text-red-400">{missedCount}</p>
                       <p className="text-xs text-gray-400 mt-0.5">missed</p>
                     </div>
                   </div>
@@ -1446,15 +1461,35 @@ export default function WillDetails() {
                     </div>
                     <div className="grid grid-cols-7 gap-1">
                       {recurringWeekDays.map((day) => {
+                        // Bug 3: pre-start days are muted gray, non-tappable
+                        if (day.status === 'pre-start') {
+                          return (
+                            <div
+                              key={day.dateStr}
+                              className="flex items-center justify-center rounded-full"
+                              style={{ aspectRatio: '1', width: '100%', opacity: 0.35 }}
+                            >
+                              <span className="text-xs font-semibold text-gray-400">{day.dayNum}</span>
+                            </div>
+                          );
+                        }
                         const filled = day.status === 'yes' || day.status === 'partial' || day.status === 'no';
                         const bg = day.status === 'yes' ? '#1D9E75' : day.status === 'partial' ? '#F59E0B' : day.status === 'no' ? '#F87171' : 'transparent';
                         const border = day.status === 'today' ? '2px solid #1D9E75' : day.status === 'future' ? '2px solid #D1D5DB' : 'none';
                         const textColor = filled ? '#fff' : day.status === 'today' ? '#1D9E75' : '#9CA3AF';
+                        // Bug 2: past days and today are tappable
+                        const isTappable = day.status !== 'future';
+                        const handleDayTap = () => {
+                          if (!isTappable) return;
+                          setEditDate(day.dateStr);
+                        };
                         return (
                           <div
                             key={day.dateStr}
+                            onClick={handleDayTap}
                             className="flex items-center justify-center rounded-full"
-                            style={{ aspectRatio: '1', backgroundColor: bg, border, width: '100%' }}
+                            style={{ aspectRatio: '1', backgroundColor: bg, border, width: '100%', cursor: isTappable ? 'pointer' : 'default' }}
+                            data-testid={`day-circle-${day.dateStr}`}
                           >
                             <span className="text-xs font-semibold" style={{ color: textColor }}>{day.dayNum}</span>
                           </div>
@@ -2339,13 +2374,81 @@ export default function WillDetails() {
           </div>
         </div>
       )}
+      {/* Edit-date choose-status bottom sheet (recurring wills) */}
+      {editDate !== null && pendingCheckIn === null && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" data-testid="modal-edit-date">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setEditDate(null)}
+          />
+          <div
+            className="relative w-full max-w-lg bg-white flex flex-col"
+            style={{
+              borderRadius: '20px 20px 0 0',
+              paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
+              animation: 'slideUpSheet 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+            data-testid="sheet-edit-date"
+          >
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
+            </div>
+            <div className="px-6 pt-3 pb-2">
+              <p className="text-[17px] font-bold text-gray-900 mb-0.5">
+                Update check-in for {editDate ? new Date(editDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : ''}
+              </p>
+              <p className="text-[13px] text-gray-400 mb-5">
+                {will?.commitments?.find((c: any) => c.userId === user?.id)?.what || ''}
+              </p>
+              <button
+                onClick={() => { setEditingDate(editDate); setPendingCheckIn('yes'); setEditDate(null); }}
+                className="w-full flex items-center gap-3 mb-3 font-semibold text-white text-base"
+                style={{ height: 52, borderRadius: 12, backgroundColor: '#1a7a4a', boxShadow: '0 4px 12px rgba(26,122,74,0.2)', paddingLeft: 20 }}
+                data-testid="button-edit-mark-done"
+              >
+                <Check style={{ width: 18, height: 18 }} /> Mark as Done
+              </button>
+              <button
+                onClick={() => { setEditingDate(editDate); setPendingCheckIn('no'); setEditDate(null); }}
+                className="w-full flex items-center gap-3 mb-3 font-semibold text-base bg-white"
+                style={{ height: 52, borderRadius: 12, border: '2px solid #e74c3c', color: '#e74c3c', boxShadow: '0 4px 12px rgba(231,76,60,0.15)', paddingLeft: 20 }}
+                data-testid="button-edit-mark-missed"
+              >
+                <X style={{ width: 18, height: 18 }} /> Mark as Missed
+              </button>
+              <button
+                onClick={() => { setEditingDate(editDate); setPendingCheckIn('partial'); setEditDate(null); }}
+                className="w-full flex items-center gap-3 mb-3 font-semibold text-base bg-white"
+                style={{ height: 52, borderRadius: 12, border: '2px solid #F59E0B', color: '#d97706', boxShadow: '0 4px 12px rgba(245,158,11,0.15)', paddingLeft: 20 }}
+                data-testid="button-edit-mark-partial"
+              >
+                <span style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>~</span> Mark as Partial
+              </button>
+              <button
+                onClick={() => setEditDate(null)}
+                className="w-full mt-1 text-center text-sm text-gray-400 py-2"
+                data-testid="button-edit-cancel"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes slideUpSheet {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* Check-in confirmation bottom sheet (recurring wills) */}
       {pendingCheckIn !== null && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" data-testid="modal-checkin-confirm">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => { setPendingCheckIn(null); setCheckInNote(''); }}
+            onClick={() => { setPendingCheckIn(null); setCheckInNote(''); setEditingDate(null); }}
           />
           {/* Sheet */}
           <div
@@ -2367,19 +2470,29 @@ export default function WillDetails() {
               <div className="flex items-center gap-3 mb-1">
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: pendingCheckIn === 'yes' ? '#E1F5EE' : '#FEF2F2' }}
+                  style={{
+                    backgroundColor: pendingCheckIn === 'yes' ? '#E1F5EE' : pendingCheckIn === 'partial' ? '#FFFBEB' : '#FEF2F2'
+                  }}
                 >
                   {pendingCheckIn === 'yes'
                     ? <Check style={{ width: 20, height: 20, color: '#1a7a4a' }} />
+                    : pendingCheckIn === 'partial'
+                    ? <span style={{ fontSize: 18, color: '#d97706', fontWeight: 700 }}>~</span>
                     : <X style={{ width: 20, height: 20, color: '#e74c3c' }} />
                   }
                 </div>
                 <div>
                   <p className="text-[17px] font-bold text-gray-900">
-                    {pendingCheckIn === 'yes' ? 'Marking tonight as Done' : 'Marking tonight as Missed'}
+                    {editingDate
+                      ? `Marking ${new Date(editingDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} as ${pendingCheckIn === 'yes' ? 'Done' : pendingCheckIn === 'partial' ? 'Partial' : 'Missed'}`
+                      : pendingCheckIn === 'yes' ? 'Marking tonight as Done' : pendingCheckIn === 'partial' ? 'Marking tonight as Partial' : 'Marking tonight as Missed'
+                    }
                   </p>
                   <p className="text-[13px] text-gray-400 mt-0.5">
-                    {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                    {editingDate
+                      ? new Date(editingDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+                      : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+                    }
                     {will?.commitments?.find((c: any) => c.userId === user?.id)?.what
                       ? ` · ${will.commitments.find((c: any) => c.userId === user?.id).what}`
                       : ''}
@@ -2400,15 +2513,17 @@ export default function WillDetails() {
 
               {/* Confirm button */}
               <button
-                onClick={() => recurringCheckInMutation.mutate({ status: pendingCheckIn, note: checkInNote || undefined })}
+                onClick={() => recurringCheckInMutation.mutate({ status: pendingCheckIn, note: checkInNote || undefined, date: editingDate ?? undefined })}
                 disabled={recurringCheckInMutation.isPending}
                 className="w-full mt-3 flex items-center justify-center text-base font-semibold text-white disabled:opacity-60"
                 style={{
                   height: 52,
                   borderRadius: 12,
-                  backgroundColor: pendingCheckIn === 'yes' ? '#1a7a4a' : '#e74c3c',
+                  backgroundColor: pendingCheckIn === 'yes' ? '#1a7a4a' : pendingCheckIn === 'partial' ? '#d97706' : '#e74c3c',
                   boxShadow: pendingCheckIn === 'yes'
                     ? '0 4px 12px rgba(26,122,74,0.3)'
+                    : pendingCheckIn === 'partial'
+                    ? '0 4px 12px rgba(217,119,6,0.25)'
                     : '0 4px 12px rgba(231,76,60,0.25)',
                 }}
                 data-testid="button-checkin-confirm"
@@ -2418,7 +2533,7 @@ export default function WillDetails() {
 
               {/* Cancel link */}
               <button
-                onClick={() => { setPendingCheckIn(null); setCheckInNote(''); }}
+                onClick={() => { setPendingCheckIn(null); setCheckInNote(''); setEditingDate(null); }}
                 className="w-full mt-3 text-center text-sm text-gray-400 py-1"
                 data-testid="button-checkin-cancel"
               >
