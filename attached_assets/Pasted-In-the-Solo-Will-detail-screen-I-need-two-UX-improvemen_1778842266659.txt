@@ -1,0 +1,47 @@
+In the Solo Will detail screen, I need two UX improvements to the check-in buttons:
+
+---
+
+**CHANGE 1: Improve button visual design**
+
+Currently there are two buttons: "Did it" (solid green) and "Did not" (outlined red). They don't feel obviously tappable.
+
+Replace the current button section with:
+
+1. Add a small prompt label above the buttons:
+   - Text: "How did tonight go?"
+   - Style: uppercase, muted gray, small font (like a section label)
+
+2. Redesign both buttons so they feel like clear, tappable actions:
+   - "Did it" button: solid green background (#1a7a4a), white text, white checkmark icon, subtle green drop shadow (box-shadow: 0 4px 12px rgba(26,122,74,0.3))
+   - "Did not" button: white background, red text (#e74c3c), X icon, strong red border (2px solid #e74c3c), subtle red drop shadow (box-shadow: 0 4px 12px rgba(231,76,60,0.15))
+   - Both buttons: same height (~52px), border-radius 12px, font-weight 600, flex with icon + label centered
+   - Add active press state: transform: scale(0.96) on :active for both
+
+---
+
+**CHANGE 2: Add confirmation bottom sheet after tapping either button**
+
+Currently tapping a button immediately logs the check-in. Instead:
+
+When user taps "Did it" OR "Did not":
+1. Do NOT log the check-in yet
+2. Slide up a bottom sheet (modal sheet from bottom) with:
+   - A drag handle bar at the top (short gray pill)
+   - An icon + heading row:
+     - For "Did it": green icon background, checkmark, heading = "Marking tonight as Done"
+     - For "Did not": red icon background, X mark, heading = "Marking tonight as Missed"
+     - Subtext below heading: today's date + commitment title (e.g. "May 15 · Be in bed by 9:00")
+   - An optional text input below: placeholder "Add a note… (optional)"
+   - A full-width "Confirm" button (green for Did it, red for Did not)
+   - A text-only "Cancel" link below it
+
+3. Tapping "Confirm" → THEN log the check-in (same logic as before, plus save the note if provided)
+4. Tapping "Cancel" or the backdrop → dismiss sheet, no action taken
+5. Sheet animation: slide up from bottom with a slight spring (like iOS native sheets)
+
+The backdrop behind the sheet should be a semi-transparent dark overlay covering the screen.
+
+---
+
+Make sure the note field value is passed through to whatever function currently handles logging the check-in result, even if the current handler doesn't use it yet (we'll wire it up later). Keep all existing check-in logic intact — this is purely a UX wrapper around it.

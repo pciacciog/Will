@@ -1,0 +1,47 @@
+Three bugs to fix in the Solo Will detail screen — specifically the weekly calendar view and check-in logic:
+
+---
+
+BUG 1: Missed count is wrong
+
+The "missed" stat box currently only counts days where the user explicitly tapped "Did not." 
+
+Fix: Recalculate missed as any day that meets ALL of these conditions:
+- day < today (it's in the past)
+- day >= Will start date (it falls within the active period)
+- status is not 'done' and not 'partial' (no successful check-in)
+
+This means unchecked past days within the Will's period count as missed automatically.
+Update the missed count display to use this new logic.
+
+---
+
+BUG 2: No way to edit a past check-in
+
+Users can't change a check-in after tapping. Fix: make past day circles tappable.
+
+When user taps a past day circle (day < today AND day >= Will start date):
+- Open the same confirmation bottom sheet used for check-ins
+- Set it to "Edit mode" — show heading: "Update check-in for [Day, Month Date]"
+- Show three options instead of the confirm button: "Mark as Done" (green), "Mark as Missed" (red), "Mark as Partial" (amber) — each as a full-width button
+- Below those, a text-only "Cancel" link
+- On selection → show a brief confirm step (same pattern as the check-in sheet) then save
+- Today's circle should also be tappable and open the normal check-in sheet if not yet checked in, or edit mode if already checked in
+
+---
+
+BUG 3: Days before Will start date are showing as red (missed)
+
+If the Will started May 15 and the week view shows May 11–17, days 11–14 appear red even though the Will wasn't active. This is misleading.
+
+Fix: Add a visual distinction for days outside the Will's active period:
+- Days before the Will's start date: render as a muted gray circle with reduced opacity (opacity: 0.35), no colored fill, show the date number in gray. These should NOT be red.
+- These days should be non-tappable (or if tapped, show no sheet — just ignore the tap)
+- The missed/done/partial coloring logic should only apply to days >= Will's start date
+- The "Your Progress" stats (completed, partial, missed) should also only count days within the Will's active period
+
+Do not hide pre-start days — keep them visible in the week row for calendar context, just visually inactive.
+
+---
+
+Keep all other existing behavior intact. These are isolated logic and display fixes.

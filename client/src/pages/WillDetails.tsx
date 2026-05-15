@@ -221,6 +221,8 @@ export default function WillDetails() {
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
   const [missionCompleted, setMissionCompleted] = useState(false);
   const [missionConfirming, setMissionConfirming] = useState(false);
+  const [pendingCheckIn, setPendingCheckIn] = useState<'yes' | 'no' | null>(null);
+  const [checkInNote, setCheckInNote] = useState('');
 
   const todayLocalDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
 
@@ -722,16 +724,18 @@ export default function WillDetails() {
 
   // Recurring: direct check-in mutation (bypasses modal)
   const recurringCheckInMutation = useMutation({
-    mutationFn: async ({ status }: { status: 'yes' | 'no' }) => {
+    mutationFn: async ({ status, note }: { status: 'yes' | 'no'; note?: string }) => {
       const res = await apiRequest(`/api/wills/${id}/check-ins`, {
         method: 'POST',
-        body: JSON.stringify({ date: todayLocalDate, status }),
+        body: JSON.stringify({ date: todayLocalDate, status, note }),
       });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/check-ins`] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/check-in-progress`] });
+      setPendingCheckIn(null);
+      setCheckInNote('');
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to log check-in", variant: "destructive" });
@@ -1373,27 +1377,38 @@ export default function WillDetails() {
                   Checked in for today ✓
                 </div>
               ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => recurringCheckInMutation.mutate({ status: 'yes' })}
-                    disabled={recurringCheckInMutation.isPending}
-                    className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80 disabled:opacity-60"
-                    style={{ backgroundColor: '#1D9E75' }}
-                    data-testid="button-recurring-did-it"
-                  >
-                    <Check style={{ width: 18, height: 18, color: '#fff' }} />
-                    Did it
-                  </button>
-                  <button
-                    onClick={() => recurringCheckInMutation.mutate({ status: 'no' })}
-                    disabled={recurringCheckInMutation.isPending}
-                    className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-opacity active:opacity-80 disabled:opacity-60"
-                    style={{ border: '2px solid #E24B4A', color: '#E24B4A' }}
-                    data-testid="button-recurring-did-not"
-                  >
-                    <X style={{ width: 18, height: 18, color: '#E24B4A' }} />
-                    Did not
-                  </button>
+                <div className="flex flex-col gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center">How did tonight go?</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setPendingCheckIn('yes'); setCheckInNote(''); }}
+                      disabled={recurringCheckInMutation.isPending}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 rounded-xl text-base font-semibold text-white disabled:opacity-60"
+                      style={{ backgroundColor: '#1a7a4a', height: 52, borderRadius: 12, boxShadow: '0 4px 12px rgba(26,122,74,0.3)', transition: 'transform 0.1s' }}
+                      onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.96)')}
+                      onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.96)')}
+                      onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      data-testid="button-recurring-did-it"
+                    >
+                      <Check style={{ width: 18, height: 18, color: '#fff', flexShrink: 0 }} />
+                      Did it
+                    </button>
+                    <button
+                      onClick={() => { setPendingCheckIn('no'); setCheckInNote(''); }}
+                      disabled={recurringCheckInMutation.isPending}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 rounded-xl text-base font-semibold bg-white disabled:opacity-60"
+                      style={{ border: '2px solid #e74c3c', color: '#e74c3c', height: 52, borderRadius: 12, boxShadow: '0 4px 12px rgba(231,76,60,0.15)', transition: 'transform 0.1s' }}
+                      onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.96)')}
+                      onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.96)')}
+                      onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      data-testid="button-recurring-did-not"
+                    >
+                      <X style={{ width: 18, height: 18, color: '#e74c3c', flexShrink: 0 }} />
+                      Did not
+                    </button>
+                  </div>
                 </div>
               )
             )}
@@ -2322,6 +2337,102 @@ export default function WillDetails() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+      {/* Check-in confirmation bottom sheet (recurring wills) */}
+      {pendingCheckIn !== null && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" data-testid="modal-checkin-confirm">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => { setPendingCheckIn(null); setCheckInNote(''); }}
+          />
+          {/* Sheet */}
+          <div
+            className="relative w-full max-w-lg bg-white flex flex-col"
+            style={{
+              borderRadius: '20px 20px 0 0',
+              paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
+              animation: 'slideUpSheet 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+            data-testid="sheet-checkin-confirm"
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
+            </div>
+
+            <div className="px-6 pt-3 pb-2">
+              {/* Icon + heading */}
+              <div className="flex items-center gap-3 mb-1">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: pendingCheckIn === 'yes' ? '#E1F5EE' : '#FEF2F2' }}
+                >
+                  {pendingCheckIn === 'yes'
+                    ? <Check style={{ width: 20, height: 20, color: '#1a7a4a' }} />
+                    : <X style={{ width: 20, height: 20, color: '#e74c3c' }} />
+                  }
+                </div>
+                <div>
+                  <p className="text-[17px] font-bold text-gray-900">
+                    {pendingCheckIn === 'yes' ? 'Marking tonight as Done' : 'Marking tonight as Missed'}
+                  </p>
+                  <p className="text-[13px] text-gray-400 mt-0.5">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                    {will?.commitments?.find((c: any) => c.userId === user?.id)?.what
+                      ? ` · ${will.commitments.find((c: any) => c.userId === user?.id).what}`
+                      : ''}
+                  </p>
+                </div>
+              </div>
+
+              {/* Note input */}
+              <textarea
+                value={checkInNote}
+                onChange={e => setCheckInNote(e.target.value)}
+                placeholder="Add a note… (optional)"
+                rows={2}
+                className="w-full mt-4 px-4 py-3 rounded-xl text-sm text-gray-700 resize-none focus:outline-none"
+                style={{ border: '1.5px solid #E5E7EB', backgroundColor: '#F9FAFB' }}
+                data-testid="input-checkin-note"
+              />
+
+              {/* Confirm button */}
+              <button
+                onClick={() => recurringCheckInMutation.mutate({ status: pendingCheckIn, note: checkInNote || undefined })}
+                disabled={recurringCheckInMutation.isPending}
+                className="w-full mt-3 flex items-center justify-center text-base font-semibold text-white disabled:opacity-60"
+                style={{
+                  height: 52,
+                  borderRadius: 12,
+                  backgroundColor: pendingCheckIn === 'yes' ? '#1a7a4a' : '#e74c3c',
+                  boxShadow: pendingCheckIn === 'yes'
+                    ? '0 4px 12px rgba(26,122,74,0.3)'
+                    : '0 4px 12px rgba(231,76,60,0.25)',
+                }}
+                data-testid="button-checkin-confirm"
+              >
+                {recurringCheckInMutation.isPending ? 'Saving…' : 'Confirm'}
+              </button>
+
+              {/* Cancel link */}
+              <button
+                onClick={() => { setPendingCheckIn(null); setCheckInNote(''); }}
+                className="w-full mt-3 text-center text-sm text-gray-400 py-1"
+                data-testid="button-checkin-cancel"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes slideUpSheet {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+          `}</style>
         </div>
       )}
     </MobileLayout>
