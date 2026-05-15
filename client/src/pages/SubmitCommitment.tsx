@@ -142,6 +142,8 @@ export default function SubmitCommitment() {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/my-wills'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wills/my-awaiting-commitment'] });
       
       toast({
         title: "Commitment Submitted",
@@ -280,11 +282,12 @@ export default function SubmitCommitment() {
   const isCheckInStep = (isCumulative && currentStep === 3) || (!isCumulative && currentStep === 4);
   const isConfirmStep = (isCumulative && currentStep === 4) || (!isCumulative && currentStep === 5);
 
-  // Team members for confirm hero card — accepted only, sorted creator-first
+  // Team members for confirm hero card — ALL members (committed + pending), creator first
   const allTeamMembers = inviteData?.teamMembers ?? [];
   const confirmedTeamMembers = [
     ...allTeamMembers.filter(m => m.isCreator),
     ...allTeamMembers.filter(m => !m.isCreator && m.status === 'accepted'),
+    ...allTeamMembers.filter(m => !m.isCreator && m.status === 'pending'),
   ];
 
   // Date range label for the commitment inset
@@ -673,26 +676,34 @@ export default function SubmitCommitment() {
                 )}
               </div>
 
-              {/* Team inset — shown for We Will only */}
+              {/* Team inset — shown for We Will only, includes pending members */}
               {isCumulative && confirmedTeamMembers.length > 0 && (
                 <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
                   <p className="text-[10px] font-medium mb-2.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
                     Team
                   </p>
                   <div className="space-y-2">
-                    {confirmedTeamMembers.map(m => (
-                      <div key={m.userId} className="flex items-center gap-2.5">
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}
-                        >
-                          {m.firstName.charAt(0).toUpperCase()}
+                    {confirmedTeamMembers.map(m => {
+                      const isPending = !m.isCreator && m.status === 'pending';
+                      return (
+                        <div key={m.userId} className="flex items-center gap-2.5">
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+                            style={{ backgroundColor: isPending ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.25)', color: isPending ? 'rgba(255,255,255,0.55)' : 'white' }}
+                          >
+                            {m.firstName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className={`text-sm font-medium leading-none ${isPending ? 'text-white/55' : 'text-white'}`}>
+                              {m.firstName}{m.userId === (user as any)?.id ? ' (you)' : ''}
+                            </p>
+                            {isPending && (
+                              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.40)' }}>Pending</p>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm font-medium text-white">
-                          {m.firstName}{m.userId === (user as any)?.id ? ' (you)' : ''}
-                        </p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

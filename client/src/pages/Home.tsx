@@ -104,7 +104,7 @@ export default function Home() {
   });
 
   const unreadCount = notifData?.unreadCount ?? 0;
-  const previewNotifs = (notifData?.notifications ?? []).filter(n => !n.isRead).slice(0, 2);
+  const previewNotifs = (notifData?.notifications ?? []).filter(n => !n.isRead).slice(0, 1);
 
   const { data: awaitingCommitment = [] } = useQuery<{ invite: { willId: number }; will: { id: number; title?: string } }[]>({
     queryKey: ['/api/wills/my-awaiting-commitment'],
@@ -248,11 +248,12 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Unread alerts preview — top 2, shown when unread exist */}
+          {/* Unread alerts preview — one at a time */}
           {previewNotifs.length > 0 && (
-            <div className="mb-3 space-y-1.5">
+            <div className="mb-3">
               {previewNotifs.map((n) => {
                 const isInvite = n.type === 'team_will_invite';
+                const isAwaitingCommit = isInvite && n.willId ? awaitingWillIds.has(n.willId) : false;
                 return (
                   <div
                     key={n.id}
@@ -260,7 +261,7 @@ export default function Home() {
                   >
                     <div className="flex items-start gap-2.5">
                       <span className="text-lg leading-none mt-0.5 flex-shrink-0">
-                        {isInvite ? '🤝' : n.type === 'friend_request' ? '👋' : n.type === 'proof_dropped' ? '📸' : '🔔'}
+                        {n.type === 'friend_request' ? '👋' : n.type === 'proof_dropped' ? '📸' : '🔔'}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-semibold text-gray-900 leading-snug">{n.title}</p>
@@ -268,36 +269,20 @@ export default function Home() {
                       </div>
                       <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />
                     </div>
-                    {isInvite && n.willId && (() => {
-                      const isAwaitingCommit = awaitingWillIds.has(n.willId);
-                      return (
-                        <div className="mt-2.5">
-                          {isAwaitingCommit && (
-                            <p className="text-[11px] text-amber-700 font-medium mb-1.5">You haven't finished committing yet</p>
-                          )}
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => setLocation(`/will/${n.willId}/commit`)}
-                              className={`flex-1 py-1.5 rounded-xl text-white text-[12px] font-semibold transition-colors ${isAwaitingCommit ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-                              data-testid={`button-accept-invite-${n.willId}`}
-                            >
-                              {isAwaitingCommit ? 'Finish committing' : 'Accept'}
-                            </button>
-                            <button
-                              onClick={() => {
-                                markReadMutation.mutate(n.id);
-                                declineInviteMutation.mutate(n.willId!);
-                              }}
-                              disabled={declineInviteMutation.isPending}
-                              className="flex-1 py-1.5 rounded-xl bg-gray-100 text-gray-600 text-[12px] font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
-                              data-testid={`button-decline-invite-${n.willId}`}
-                            >
-                              Decline
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    {isInvite && n.willId && (
+                      <div className="mt-2.5">
+                        {isAwaitingCommit && (
+                          <p className="text-[11px] text-amber-700 font-medium mb-1.5">You haven't finished committing yet</p>
+                        )}
+                        <button
+                          onClick={() => setLocation(`/will/${n.willId}/commit`)}
+                          className={`w-full py-1.5 rounded-xl text-white text-[12px] font-semibold transition-colors ${isAwaitingCommit ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                          data-testid={`button-view-invite-${n.willId}`}
+                        >
+                          View
+                        </button>
+                      </div>
+                    )}
                     {!isInvite && n.deepLink && (
                       <button
                         onClick={() => { markReadMutation.mutate(n.id); setLocation(n.deepLink!); }}
@@ -310,13 +295,13 @@ export default function Home() {
                   </div>
                 );
               })}
-              {unreadCount > 2 && (
+              {unreadCount > 1 && (
                 <button
                   onClick={() => setLocation('/notifications')}
-                  className="w-full text-center text-[12px] text-gray-400 hover:text-gray-600 transition-colors py-1"
+                  className="w-full text-center text-[12px] text-gray-400 hover:text-gray-600 transition-colors py-1 mt-1.5"
                   data-testid="button-view-all-alerts"
                 >
-                  +{unreadCount - 2} more alert{unreadCount - 2 !== 1 ? 's' : ''} — view all
+                  +{unreadCount - 1} more alert{unreadCount - 1 !== 1 ? 's' : ''} — view all
                 </button>
               )}
             </div>

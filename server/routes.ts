@@ -1479,9 +1479,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Auto-clear any "will_proposed" in-app notification for this will
+      // Auto-clear any "will_proposed" or "team_will_invite" in-app notification for this will
       try {
         await storage.markNotificationsReadByTypeAndWill(userId, 'will_proposed', willId);
+        await storage.markNotificationsReadByTypeAndWill(userId, 'team_will_invite', willId);
       } catch (e) { /* non-critical */ }
 
       // For solo/personal wills, status is already pending→active via scheduler - no circle check needed
