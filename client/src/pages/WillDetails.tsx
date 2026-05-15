@@ -390,10 +390,19 @@ export default function WillDetails() {
   const hasDailyCheckIns = userCheckInType === 'daily' || userCheckInType === 'specific_days';
   const isFinalReviewOnly = userCheckInType === 'final_review' || userCheckInType === 'one-time';
 
+  // For Team "I Will" wills each member sets their own commitmentCategory on their commitment
+  // record. Using will.commitmentCategory (the will-level field) would show the creator's
+  // choice to everyone. Instead, read the current user's own commitment's category.
+  const myOwnCommitment = will?.commitments?.find((c: any) => c.userId === user?.id);
+  const effectiveCategory: string | null =
+    (will?.mode === 'team' && will?.willType !== 'cumulative')
+      ? (myOwnCommitment?.commitmentCategory ?? will?.commitmentCategory ?? null)
+      : (will?.commitmentCategory ?? null);
+
   useEffect(() => {
     if (checkinAutoOpened || !will || will.status !== 'active') return;
     // Recurring wills use the direct two-button check-in — skip modal auto-open
-    if (will.commitmentCategory === 'recurring') return;
+    if (effectiveCategory === 'recurring') return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'checkin') {
       setCheckinAutoOpened(true);
@@ -420,13 +429,13 @@ export default function WillDetails() {
 
   // Recurring: detect if already checked in today (from existing check-ins data)
   const habitTodayCheckIn = useMemo(() => {
-    if (will?.commitmentCategory !== 'recurring') return null;
+    if (effectiveCategory !== 'recurring') return null;
     return checkIns.find((c: WillCheckIn) => c.date === todayLocalDate) || null;
-  }, [checkIns, will?.commitmentCategory, todayLocalDate]);
+  }, [checkIns, effectiveCategory, todayLocalDate]);
 
   // Recurring: current week (Mon–Sun) for the week strip
   const recurringWeekDays = useMemo(() => {
-    if (will?.commitmentCategory !== 'recurring') return [];
+    if (effectiveCategory !== 'recurring') return [];
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const willStart = will?.startDate ? new Date(will.startDate) : null;
     if (willStart) willStart.setHours(0, 0, 0, 0);
@@ -448,12 +457,12 @@ export default function WillDetails() {
       else { status = 'no'; }
       return { d, dateStr, dayNum: d.getDate(), status, isToday };
     });
-  }, [will?.commitmentCategory, will?.startDate, checkIns]);
+  }, [effectiveCategory, will?.startDate, checkIns]);
 
   // Abstain: fetch log entries
   const { data: abstainLogEntries = [] } = useQuery<AbstainLog[]>({
     queryKey: [`/api/wills/${id}/abstain-log`],
-    enabled: !!id && !!user && will?.commitmentCategory === 'duration',
+    enabled: !!id && !!user && effectiveCategory === 'duration',
     staleTime: 0,
   });
 
@@ -945,14 +954,14 @@ export default function WillDetails() {
             >
               {will.status === 'will_review' ? 'Review' :
                will.status === 'waiting_for_end_room' ? 'Pending End Room' : 
-               will.status === 'active' && will.commitmentCategory ? (() => {
-                 if (will.commitmentCategory === 'recurring') return 'Active';
-                 if (will.commitmentCategory === 'event' && will.endDate) {
+               will.status === 'active' && effectiveCategory ? (() => {
+                 if (effectiveCategory === 'recurring') return 'Active';
+                 if (effectiveCategory === 'event' && will.endDate) {
                    const d = new Date(will.endDate);
                    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                    return `Active · deadline ${label}`;
                  }
-                 if (will.commitmentCategory === 'duration' && will.endDate) {
+                 if (effectiveCategory === 'duration' && will.endDate) {
                    const daysLeft = Math.max(0, Math.ceil((new Date(will.endDate).getTime() - Date.now()) / 86400000));
                    return `Active · ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`;
                  }
@@ -965,7 +974,7 @@ export default function WillDetails() {
                will.status === 'terminated' ? 'Ended' :
                will.status.charAt(0).toUpperCase() + will.status.slice(1)}
             </Badge>
-            {will.commitmentCategory === 'recurring' && (
+            {effectiveCategory === 'recurring' && (
               <span className="text-xs text-gray-500">
                 · Started {new Date(will.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · Ongoing
               </span>
@@ -1054,7 +1063,7 @@ export default function WillDetails() {
         )}
 
         {/* Timeline Section — hidden for recurring wills (replaced by inline status line) */}
-        {will.commitmentCategory !== 'recurring' && (
+        {effectiveCategory !== 'recurring' && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center mb-3">
               <Calendar className="w-5 h-5 text-blue-600 mr-2" />
@@ -1205,23 +1214,23 @@ export default function WillDetails() {
 
         {/* Commitment Details - Solo Mode */}
         {will.status !== 'will_review' && isSoloMode && will.commitments?.[0] && (
-          will.commitmentCategory ? (
+          effectiveCategory ? (
             /* Category-aware hero card */
             <div className="bg-white rounded-xl border border-gray-200 p-[14px] text-center" data-testid="card-commitment-hero">
               <div className="flex items-center justify-center mb-2">
                 <div className="flex items-center justify-center rounded-2xl" style={{
                   width: 52, height: 52,
-                  backgroundColor: will.commitmentCategory === 'recurring' ? '#E1F5EE' : will.commitmentCategory === 'duration' ? '#E0EDFA' : '#EEEDF9'
+                  backgroundColor: effectiveCategory === 'recurring' ? '#E1F5EE' : effectiveCategory === 'duration' ? '#E0EDFA' : '#EEEDF9'
                 }}>
-                  {will.commitmentCategory === 'recurring' && <CheckCircle style={{ width: 26, height: 26, color: '#1D9E75' }} strokeWidth={1.75} />}
-                  {will.commitmentCategory === 'duration' && (
+                  {effectiveCategory === 'recurring' && <CheckCircle style={{ width: 26, height: 26, color: '#1D9E75' }} strokeWidth={1.75} />}
+                  {effectiveCategory === 'duration' && (
                     <svg viewBox="0 0 24 24" style={{ width: 26, height: 26 }} fill="none" stroke="#1D6FBE" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 22h14" /><path d="M5 2h14" />
                       <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
                       <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
                     </svg>
                   )}
-                  {will.commitmentCategory === 'event' && <Zap style={{ width: 26, height: 26, color: '#534AB7' }} strokeWidth={1.75} />}
+                  {effectiveCategory === 'event' && <Zap style={{ width: 26, height: 26, color: '#534AB7' }} strokeWidth={1.75} />}
                 </div>
               </div>
               <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">My Commitment</p>
@@ -1370,7 +1379,7 @@ export default function WillDetails() {
         )}
 
         {/* ── Category-aware action + progress ── */}
-        {will.commitmentCategory === 'recurring' ? (
+        {effectiveCategory === 'recurring' ? (
           <>
             {/* Recurring: two side-by-side check-in buttons */}
             {will.status === 'active' && (
@@ -1512,7 +1521,7 @@ export default function WillDetails() {
             })()}
           </>
 
-        ) : will.commitmentCategory === 'duration' ? (
+        ) : effectiveCategory === 'duration' ? (
           <>
             {/* Duration: Check-in flow */}
             {will.status === 'active' && (
@@ -1678,7 +1687,7 @@ export default function WillDetails() {
             )}
           </>
 
-        ) : will.commitmentCategory === 'event' ? (
+        ) : effectiveCategory === 'event' ? (
           <>
             {/* Event: mark-as-done flow */}
             {(will.status === 'active' || will.status === 'completed') && (
