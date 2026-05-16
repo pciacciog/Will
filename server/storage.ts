@@ -52,6 +52,9 @@ import {
   type WillMessage,
   type InsertWillMessage,
   willMessageReads,
+  directMessages,
+  type DirectMessage,
+  type InsertDirectMessage,
   todayEntries,
   type TodayEntry,
   todayItems,
@@ -59,7 +62,7 @@ import {
   teamWillInvites,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, inArray, isNotNull } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray, isNotNull, isNull } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -241,6 +244,8 @@ export interface IStorage {
   }[]>;
 
   getWillMessages(willId: number, limit?: number): Promise<(WillMessage & { user: { firstName: string } })[]>;
+  getDMThread(userId1: string, userId2: string): Promise<(DirectMessage & { user: { firstName: string } })[]>;
+  sendDM(fromUserId: string, toUserId: string, text: string): Promise<DirectMessage & { user: { firstName: string } }>;
   createWillMessage(data: InsertWillMessage): Promise<WillMessage>;
   getWillsByParentId(parentWillId: number): Promise<Will[]>;
   getWillMessageUnreadCount(userId: string, parentWillId: number): Promise<number>;
@@ -1837,6 +1842,34 @@ export class DatabaseStorage implements IStorage {
   async createWillMessage(data: InsertWillMessage): Promise<WillMessage> {
     const [message] = await db.insert(willMessages).values(data).returning();
     return message;
+  }
+
+  async getDMThread(userId1: string, userId2: string): Promise<(DirectMessage & { user: { firstName: string } })[]> {
+    const results = await db
+      .select({ dm: directMessages, firstName: users.firstName })
+      .from(directMessages)
+      .innerJoin(users, eq(directMessages.fromUserId, users.id))
+      .where(
+        or(
+          and(eq(directMessages.fromUserId, userId1), eq(directMessages.toUserId, userId2)),
+          and(eq(directMessages.fromUserId, userId2), eq(directMessages.toUserId, userId1))
+        )
+      )
+      .orderBy(directMessages.createdAt)
+      .limit(100);
+    return results.map(r => ({ ...r.dm, user: { firstName: r.firstName || 'User' } }));
+  }
+
+  async sendDM(fromUserId: string, toUserId: string, text: string): Promise<DirectMessage & { user: { firstName: string } }> {
+    const [dm] = await db
+      .insert(directMessages)
+      .values({ fromUserId, toUserId, text })
+      .returning();
+    const [sender] = await db
+      .select({ firstName: users.firstName })
+      .from(users)
+      .where(eq(users.id, fromUserId));
+    return { ...dm, user: { firstName: sender?.firstName || 'User' } };
   }
 
   async getWillsByParentId(parentWillId: number): Promise<Will[]> {

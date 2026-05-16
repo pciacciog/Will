@@ -311,6 +311,21 @@ export const willMessageReads = pgTable("will_message_reads", {
   uniqueIndex("IDX_will_message_reads_user_will").on(table.userId, table.parentWillId),
 ]);
 
+export const directMessages = pgTable("direct_messages", {
+  id: serial("id").primaryKey(),
+  fromUserId: varchar("from_user_id").notNull().references(() => users.id),
+  toUserId: varchar("to_user_id").notNull().references(() => users.id),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_direct_messages_from").on(table.fromUserId),
+  index("IDX_direct_messages_to").on(table.toUserId),
+]);
+
+export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({ id: true, createdAt: true });
+export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
+export type DirectMessage = typeof directMessages.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   circleMembers: many(circleMembers),

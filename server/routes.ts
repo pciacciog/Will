@@ -30,6 +30,7 @@ import {
   willProofs,
   abstainLogs,
   willCheckIns,
+  directMessages,
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
@@ -476,6 +477,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/users/:userId/wills-profile — friend's wills (active + past) with privacy enforcement
+  app.get('/api/users/:userId/wills-profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const viewerId = req.user.id;
+      const profileUserId = req.params.userId;
+
+      const userWills = await db
+        .select()
+        .from(wills)
+        .where(
+          and(
+            eq(wills.createdBy, profileUserId),
+            isNull(wills.parentWillId)
+          )
+        )
+        .orderBy(desc(wills.startDate));
+
+      const ACTIVE_STATUSES = ['active', 'pending', 'scheduled'];
+      const activeWills = userWills.filter(w => ACTIVE_STATUSES.includes(w.status || ''));
+      const pastWills = userWills.filter(w => w.status === 'completed');
+
+      const processWill = async (w: typeof wills.$inferSelect, isActive: boolean) => {
+        const isPublicVis = w.visibility === 'public';
+        let showTitle = isPublicVis || viewerId === profileUserId;
+        if (!showTitle) {
+          const [memberCommit] = await db
+            .select({ id: willCommitments.id })
+            .from(willCommitments)
+            .where(and(eq(willCommitments.willId, w.id), eq(willCommitments.userId, viewerId)));
+          showTitle = !!memberCommit;
+        }
+
+        let displayTitle: string | null = null;
+        if (showTitle) {
+          const commitments = await storage.getWillCommitments(w.id);
+          const creatorCommit = commitments.find(c => c.userId === profileUserId);
+          displayTitle = w.title || creatorCommit?.what || null;
+        }
+
+        let dayCount = 0;
+        let successRate = 0;
+        if (isActive) {
+          const start = new Date(w.startDate);
+          const now = new Date();
+          dayCount = Math.max(1, Math.ceil((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+          if (showTitle && (w.checkInType === 'daily' || w.checkInType === 'specific_days')) {
+            const progress = await storage.getWillCheckInProgress(w.id, profileUserId);
+            successRate = progress.successRate;
+          }
+        }
+
+        let duration: string | null = null;
+        if (!isActive && w.endDate) {
+          const days = Math.ceil((new Date(w.endDate).getTime() - new Date(w.startDate).getTime()) / (1000 * 60 * 60 * 24));
+          duration = `${days} day${days !== 1 ? 's' : ''}`;
+        }
+
+        const categoryLabel =
+          w.commitmentCategory === 'recurring' ? 'Recurring' :
+          w.commitmentCategory === 'duration' ? 'Duration' :
+          w.commitmentCategory === 'event' ? 'Event' :
+          w.mode === 'team' ? 'Team Will' : 'Personal';
+
+        return { id: w.id, isPublic: showTitle, title: displayTitle, category: categoryLabel, dayCount, successRate, duration };
+      };
+
+      const [activeResults, pastResults] = await Promise.all([
+        Promise.all(activeWills.map(w => processWill(w, true))),
+        Promise.all(pastWills.slice(0, 6).map(w => processWill(w, false))),
+      ]);
+
+      res.json({
+        activeWills: activeResults,
+        pastWills: pastResults.slice(0, 5),
+        completedCount: pastWills.length,
+        hasMorePast: pastWills.length > 5,
+      });
+    } catch (error) {
+      console.error('[WILLS-PROFILE] Error:', error);
+      res.status(500).json({ message: 'Failed to fetch wills profile' });
+    }
+  });
+
   // GET /api/users/:userId — basic public profile (name + username) for a given user
   app.get('/api/users/:userId', isAuthenticated, async (req: any, res) => {
     try {
@@ -490,6 +574,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('[USER-PROFILE] Error:', error);
       res.status(500).json({ message: 'Failed to fetch user profile' });
+    }
+  });
+
+  // ─── DIRECT MESSAGES API ────────────────────────────────────────────────────
+
+  app.get('/api/dm/:otherUserId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const otherUserId = req.params.otherUserId;
+      const messages = await storage.getDMThread(userId, otherUserId);
+      res.json(messages);
+    } catch (error) {
+      console.error('[DM] Error fetching thread:', error);
+      res.status(500).json({ message: 'Failed to fetch messages' });
+    }
+  });
+
+  app.post('/api/dm/:otherUserId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const otherUserId = req.params.otherUserId;
+      const text = (req.body.text || '').trim();
+      if (!text) return res.status(400).json({ message: 'Message text is required' });
+      if (text.length > 500) return res.status(400).json({ message: 'Message must be 500 characters or less' });
+
+      const message = await storage.sendDM(userId, otherUserId, text);
+
+      // Push notification to recipient
+      const sender = await storage.getUser(userId);
+      const senderName = sender?.firstName || 'Someone';
+      try {
+        const { pushNotificationService } = await import('./pushNotificationService');
+        await pushNotificationService.sendDirectMessageNotification(senderName, text, otherUserId, userId);
+      } catch {}
+
+      res.json(message);
+    } catch (error) {
+      console.error('[DM] Error sending message:', error);
+      res.status(500).json({ message: 'Failed to send message' });
     }
   });
 

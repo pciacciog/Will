@@ -809,6 +809,22 @@ class PushNotificationService {
     await this.sendToMultipleUsers(otherParticipants, payload);
   }
 
+  async sendDirectMessageNotification(senderName: string, messagePreview: string, recipientId: string, senderUserId: string): Promise<void> {
+    const truncated = messagePreview.length > 100 ? messagePreview.substring(0, 97) + '...' : messagePreview;
+    const payload: PushNotificationPayload = {
+      title: senderName,
+      body: truncated,
+      category: 'direct_message',
+      data: {
+        type: 'direct_message',
+        senderName,
+        senderUserId,
+        deepLink: `/dm/${senderUserId}`,
+      }
+    };
+    await this.sendToUser(recipientId, payload);
+  }
+
 }
 
 
