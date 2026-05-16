@@ -8,6 +8,7 @@ export interface NotificationsData {
   milestones: { day: number; label: string }[] | null;
   missionReminderTime: string | null;
   deadlineReminders: { threeDays: boolean; oneDay: boolean; dayOf: boolean };
+  customReminders: { date: string; note: string }[] | null;
 }
 
 interface NotificationsSetupProps {
@@ -200,6 +201,12 @@ interface MilestoneRow {
   label: string;
 }
 
+interface ReminderRow {
+  id: string;
+  date: string;
+  note: string;
+}
+
 export default function NotificationsSetup({ what, because, onComplete, onBack, willDurationDays }: NotificationsSetupProps) {
   const formattedWhat = what?.toLowerCase().startsWith('i will')
     ? what
@@ -215,9 +222,8 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
     reminderOn: true, reminderTime: "18:00",
     milestones: [] as MilestoneRow[],
   });
-  const [eventState, setEventState] = useState({
-    threeDays: true, oneDay: true, dayOf: true,
-    dailyOn: false, dailyTime: "09:00",
+  const [eventState, setEventState] = useState<{ reminders: ReminderRow[] }>({
+    reminders: [{ id: crypto.randomUUID(), date: '', note: '' }],
   });
 
   const handleContinue = () => {
@@ -234,6 +240,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         milestones: null,
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
+        customReminders: null,
       };
     } else if (selected === 'duration') {
       data = {
@@ -244,6 +251,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         milestones: durationState.milestones,
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
+        customReminders: null,
       };
     } else {
       data = {
@@ -252,12 +260,11 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         checkInTime: null,
         checkInType: 'final_review',
         milestones: null,
-        missionReminderTime: eventState.dailyOn ? eventState.dailyTime : null,
-        deadlineReminders: {
-          threeDays: eventState.threeDays,
-          oneDay: eventState.oneDay,
-          dayOf: eventState.dayOf,
-        },
+        missionReminderTime: null,
+        deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
+        customReminders: eventState.reminders
+          .filter(r => r.date || r.note)
+          .map(r => ({ date: r.date, note: r.note })),
       };
     }
 
@@ -438,7 +445,6 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
             {selected === 'event' && (
               <MissionSectionControlled
                 what={formattedWhat}
-                because={because}
                 color={COLORS.event}
                 state={eventState}
                 onChange={setEventState}
@@ -733,66 +739,147 @@ function AbstainSectionControlled({
   );
 }
 
+function formatReminderDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 function MissionSectionControlled({
-  what, because, color, state, onChange,
+  what, color, state, onChange,
 }: {
-  what: string; because: string; color: typeof COLORS.event;
-  state: { threeDays: boolean; oneDay: boolean; dayOf: boolean; dailyOn: boolean; dailyTime: string };
-  onChange: (s: typeof state) => void;
+  what: string; color: typeof COLORS.event;
+  state: { reminders: ReminderRow[] };
+  onChange: (s: { reminders: ReminderRow[] }) => void;
 }) {
-  const { threeDays, oneDay, dayOf, dailyOn, dailyTime } = state;
+  const { reminders } = state;
+
+  const addReminder = () => {
+    onChange({ reminders: [...reminders, { id: crypto.randomUUID(), date: '', note: '' }] });
+  };
+
+  const deleteReminder = (id: string) => {
+    onChange({ reminders: reminders.filter(r => r.id !== id) });
+  };
+
+  const updateReminder = (id: string, field: 'date' | 'note', value: string) => {
+    onChange({ reminders: reminders.map(r => r.id === id ? { ...r, [field]: value } : r) });
+  };
+
+  const previewReminder = reminders.find(r => r.date || r.note);
+
+  const getPreviewLine = () => {
+    if (!previewReminder) return { title: '', subtitle: '' };
+    const { date, note } = previewReminder;
+    const fd = date ? formatReminderDate(date) : null;
+    if (fd && note) return { title: `${fd} — ${note}`, subtitle: what };
+    if (note) return { title: `${note} — ${what}`, subtitle: '' };
+    if (fd) return { title: `${fd} — ${what}`, subtitle: '' };
+    return { title: '', subtitle: '' };
+  };
+
+  const preview = getPreviewLine();
 
   return (
     <div>
-      <NotifCard label="Notify me as I get closer?">
-        <p className="text-sm text-gray-600 mb-3">Notify me when there are…</p>
-        <div className="space-y-2 mb-3">
-          {[
-            { label: "When I have 3 days left", value: threeDays, key: "threeDays" as const },
-            { label: "When I have 1 day left", value: oneDay, key: "oneDay" as const },
-            { label: "On the final day", value: dayOf, key: "dayOf" as const },
-          ].map(row => (
-            <button
-              key={row.label}
-              type="button"
-              onClick={() => onChange({ ...state, [row.key]: !row.value })}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 border border-gray-200 bg-gray-50 text-left transition-all active:scale-[0.98]"
-              data-testid={`check-${row.key}`}
-            >
-              <span
-                className="flex-shrink-0 flex items-center justify-center"
-                style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${row.value ? color.bg : "#D1D5DB"}`, background: row.value ? color.bg : "transparent" }}
-              >
-                {row.value && (
-                  <svg viewBox="0 0 24 24" style={{ width: 11, height: 11 }} fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
-              </span>
-              <span className="text-sm font-medium text-gray-900">{row.label}</span>
-            </button>
-          ))}
-        </div>
-        {(threeDays || oneDay || dayOf) && (
-          <PreviewCard title={`1 day left — ${what}`} subtitle={because} />
-        )}
-      </NotifCard>
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">REMIND ME ON</p>
 
-      <NotifCard label="Want a daily nudge?">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-base font-bold text-gray-900">Daily reminder</p>
-            <p className="text-xs text-gray-500 mt-0.5">Off by default</p>
+      <div className="space-y-2 mb-3">
+        {reminders.map(reminder => (
+          <div
+            key={reminder.id}
+            className="rounded-2xl border border-gray-200 bg-white overflow-hidden"
+            data-testid={`reminder-row-${reminder.id}`}
+          >
+            {/* Date row */}
+            <div className="relative flex items-center px-4 py-3 min-h-[44px]">
+              <svg
+                viewBox="0 0 24 24"
+                style={{ width: 15, height: 15, marginRight: 8, flexShrink: 0 }}
+                fill="none"
+                stroke={reminder.date ? color.text : '#9CA3AF'}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              {reminder.date ? (
+                <span className="text-sm font-semibold" style={{ color: color.text }}>
+                  {formatReminderDate(reminder.date)}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400">Pick a date</span>
+              )}
+              {/* Transparent native date input covers the row to open picker on tap */}
+              <input
+                type="date"
+                value={reminder.date}
+                onChange={e => updateReminder(reminder.id, 'date', e.target.value)}
+                className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                style={{ fontSize: 16 }}
+                data-testid={`input-reminder-date-${reminder.id}`}
+              />
+            </div>
+
+            {/* Hairline divider */}
+            <div style={{ height: 1, background: '#F3F4F6', marginLeft: 16, marginRight: 16 }} />
+
+            {/* Note row */}
+            <div className="flex items-center px-4 py-3 gap-3">
+              <input
+                type="text"
+                value={reminder.note}
+                onChange={e => updateReminder(reminder.id, 'note', e.target.value)}
+                className="flex-1 text-sm text-gray-800 bg-transparent border-none outline-none"
+                style={{ fontSize: 14, minWidth: 0 }}
+                maxLength={100}
+                data-testid={`input-reminder-note-${reminder.id}`}
+              />
+              <button
+                type="button"
+                onClick={() => deleteReminder(reminder.id)}
+                className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-opacity active:opacity-60"
+                style={{ background: 'rgba(0,0,0,0.06)' }}
+                data-testid={`button-delete-reminder-${reminder.id}`}
+                aria-label="Remove reminder"
+              >
+                <svg viewBox="0 0 24 24" style={{ width: 13, height: 13 }} fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <Toggle on={dailyOn} onChange={v => onChange({ ...state, dailyOn: v })} color={color.toggleOn} />
+        ))}
+      </div>
+
+      {/* Add reminder */}
+      <button
+        type="button"
+        onClick={addReminder}
+        className="flex items-center gap-2 text-sm font-semibold py-1 transition-opacity active:opacity-60"
+        style={{ color: color.text }}
+        data-testid="button-add-reminder"
+      >
+        <svg viewBox="0 0 24 24" style={{ width: 15, height: 15 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add a reminder
+      </button>
+
+      {/* Preview — only once a row has any data */}
+      {previewReminder && preview.title && (
+        <div className="mt-4 rounded-xl p-3" style={{ background: '#F3F4F6' }}>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">PREVIEW</p>
+          <p className="text-sm font-bold text-gray-900 leading-snug">{preview.title}</p>
+          {preview.subtitle && (
+            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{preview.subtitle}</p>
+          )}
         </div>
-        {dailyOn && (
-          <div className="mt-3">
-            <TimeChip value={dailyTime} onChange={v => onChange({ ...state, dailyTime: v })} color={color} />
-            <PreviewCard title={what} subtitle={because} />
-          </div>
-        )}
-      </NotifCard>
+      )}
     </div>
   );
 }

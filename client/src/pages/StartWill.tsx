@@ -476,6 +476,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         reminderTime: resolvedReminderTime,
         commitmentCategory: notificationsData?.commitmentCategory ?? undefined,
         milestones: notificationsData?.milestones ? JSON.stringify(notificationsData.milestones) : undefined,
+        customReminders: notificationsData?.customReminders ? JSON.stringify(notificationsData.customReminders) : undefined,
       });
     } else {
       // Non-solo, non-circle: create as personal will
@@ -494,6 +495,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
         reminderTime: resolvedReminderTime,
         commitmentCategory: notificationsData?.commitmentCategory ?? undefined,
         milestones: notificationsData?.milestones ? JSON.stringify(notificationsData.milestones) : undefined,
+        customReminders: notificationsData?.customReminders ? JSON.stringify(notificationsData.customReminders) : undefined,
       });
     }
   };

@@ -131,6 +131,7 @@ export default function SubmitCommitment() {
       checkInType?: string; checkInTime?: string; activeDays?: string; customDays?: string;
       commitmentCategory?: string; reminderTime?: string | null;
       milestones?: string | null; deadlineReminders?: string | null; missionReminderTime?: string | null;
+      customReminders?: string | null;
     }) => {
       const response = await apiRequest(`/api/wills/${id}/commitments`, {
         method: 'POST',
@@ -238,6 +239,7 @@ export default function SubmitCommitment() {
       milestones: nd?.milestones ? JSON.stringify(nd.milestones) : null,
       deadlineReminders: nd?.deadlineReminders ? JSON.stringify(nd.deadlineReminders) : null,
       missionReminderTime: nd?.missionReminderTime,
+      customReminders: nd?.customReminders ? JSON.stringify(nd.customReminders) : null,
     };
     commitmentMutation.mutate(submitData);
   };

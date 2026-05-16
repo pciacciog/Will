@@ -103,7 +103,8 @@ export const wills = pgTable("wills", {
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, scheduled, active, will_review, waiting_for_end_room, completed
   commitmentCategory: varchar("commitment_category", { length: 10 }), // 'recurring', 'duration', 'event' — null for legacy wills
   milestones: text("milestones"), // JSON array: [{ day: number, label: string }] — Duration only
-  deadlineReminders: text("deadline_reminders"), // JSON: { "threeDays": boolean, "oneDay": boolean, "dayOf": boolean } — Event only
+  deadlineReminders: text("deadline_reminders"), // JSON: { "threeDays": boolean, "oneDay": boolean, "dayOf": boolean } — Event only (legacy)
+  customReminders: text("custom_reminders"), // JSON array: [{ date: string, note: string }] — Event only (new free-form)
   missionReminderTime: varchar("mission_reminder_time", { length: 5 }), // HH:MM — optional daily nudge for Event Wills
   streakStartDate: timestamp("streak_start_date"), // Set to startDate at creation. Reset on Abstain slip.
   sentMilestones: text("sent_milestones"), // JSON array of milestone day numbers already fired: [3, 7]

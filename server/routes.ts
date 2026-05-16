@@ -1190,6 +1190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         commitmentCategory: req.body.commitmentCategory || null,
         milestones: req.body.milestones || null,
         deadlineReminders: req.body.deadlineReminders ? (typeof req.body.deadlineReminders === 'string' ? req.body.deadlineReminders : JSON.stringify(req.body.deadlineReminders)) : null,
+        customReminders: req.body.customReminders || null,
         missionReminderTime: req.body.missionReminderTime || null,
         streakStartDate: new Date(req.body.startDate),
         sentMilestones: null,
@@ -1470,6 +1471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (req.body.missionReminderTime !== undefined) willUpdates.missionReminderTime = req.body.missionReminderTime;
         if (req.body.milestones !== undefined) willUpdates.milestones = req.body.milestones;
         if (req.body.deadlineReminders !== undefined) willUpdates.deadlineReminders = req.body.deadlineReminders;
+        if (req.body.customReminders !== undefined) willUpdates.customReminders = req.body.customReminders;
         // Only set wills.commitmentCategory if not already set by the creator
         if (req.body.commitmentCategory && !will.commitmentCategory) {
           willUpdates.commitmentCategory = req.body.commitmentCategory;
