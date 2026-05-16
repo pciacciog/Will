@@ -39,6 +39,7 @@ import CreateTeamWill from "@/pages/CreateTeamWill";
 import WillPage from "@/pages/WillPage";
 import FriendProfile from "@/pages/FriendProfile";
 import NotificationsPage from "@/pages/NotificationsPage";
+import PublicWillDetail from "@/pages/PublicWillDetail";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -371,6 +372,7 @@ function Router() {
             <Route path="/today" component={Today} />
             <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
             <Route path="/explore" component={Explore} />
+            <Route path="/public-will/:id" component={PublicWillDetail} />
             <Route path="/explore/join/:willId" component={JoinWill} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>
             <Route path="/personal/history">{() => <WillHistory mode="solo" />}</Route>

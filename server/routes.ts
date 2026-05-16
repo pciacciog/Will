@@ -2116,6 +2116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/wills/:id/public-details', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.id;
       const willId = parseInt(req.params.id);
       const will = await storage.getWillById(willId);
       if (!will || will.visibility !== 'public') {
@@ -2142,24 +2143,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(wills.parentWillId, willId),
           inArray(wills.status, ACTIVE_PARTICIPANT_STATUSES)
         ));
+
+      const isOwner = will.createdBy === userId;
+      const joinedWill = isOwner ? null : await storage.getUserJoinedWill(userId, willId);
+      const hasJoined = !!joinedWill;
+      const hasPushed = await storage.hasUserPushed(willId, userId);
       
       res.json({
         id: will.id,
         title: will.title ?? null,
         what: firstCommitment?.what || 'Untitled commitment',
+        why: firstCommitment?.why || null,
         checkInType: will.checkInType,
         startDate: will.startDate,
         endDate: will.endDate,
         isIndefinite: will.isIndefinite,
         activeDays: will.activeDays,
         customDays: will.customDays,
+        createdBy: will.createdBy,
         creatorName: creator?.firstName || 'Anonymous',
         memberCount: Number(memberCountResult?.count || 0) + 1,
         status: will.status,
+        isOwner,
+        hasJoined,
+        hasPushed,
       });
     } catch (error) {
       console.error("Error fetching public will details:", error);
       res.status(500).json({ message: "Failed to fetch Will details" });
+    }
+  });
+
+  app.get('/api/wills/:id/public-progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will || will.visibility !== 'public') {
+        return res.status(404).json({ message: "Public Will not found" });
+      }
+      const ownerId = will.createdBy;
+      const checkIns = await storage.getWillCheckIns(willId, ownerId);
+      const progress = await storage.getWillCheckInProgress(willId, ownerId);
+      res.json({ checkIns, progress });
+    } catch (error) {
+      console.error("Error fetching public will progress:", error);
+      res.status(500).json({ message: "Failed to fetch Will progress" });
     }
   });
 
@@ -3090,10 +3118,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isPublicWill) {
         const parentId = (will as any).parentWillId || willId;
         const isParticipant = await isUserPublicWillParticipant(userId, parentId);
-        if (!isParticipant) {
-          return res.status(403).json({ message: "You are not a participant of this Will" });
+        if (isParticipant) {
+          memberIds = await getOtherPublicWillParticipants(userId, parentId);
+        } else {
+          // Non-participant pushing: notify just the will owner
+          const rootWill = (will as any).parentWillId ? await storage.getWillById(parentId) : will;
+          if (rootWill && rootWill.createdBy !== userId) {
+            memberIds = [rootWill.createdBy];
+          }
         }
-        memberIds = await getOtherPublicWillParticipants(userId, parentId);
       } else if (will.mode === 'team') {
         const willWithCommsForPush = await storage.getWillWithCommitments(willId);
         memberIds = (willWithCommsForPush?.commitments || [])

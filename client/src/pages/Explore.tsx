@@ -96,21 +96,13 @@ export default function Explore() {
                     <CheckCircle className="w-3.5 h-3.5" />
                     Your Will
                   </div>
-                ) : will.hasJoined ? (
-                  <div
-                    className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center gap-1.5"
-                    data-testid={`label-joined-${will.id}`}
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    Joined
-                  </div>
                 ) : (
                   <button
-                    onClick={() => setLocation(`/explore/join/${will.id}`)}
+                    onClick={() => setLocation(`/public-will/${will.id}`)}
                     className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5"
-                    data-testid={`button-join-${will.id}`}
+                    data-testid={`button-view-${will.id}`}
                   >
-                    Join
+                    View
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 )}

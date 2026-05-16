@@ -1,0 +1,89 @@
+9:26 AMTwo changes to implement for Public Wills:
+
+---
+
+CHANGE 1: Explore page — replace Join with View
+
+On every card in the Explore Wills page, replace the "Join →" 
+button with a "View →" button.
+
+- Same styling, same size — just label and behavior change
+- Tapping "View →" navigates to the Public Will detail page
+- The "Your Will" state (for Wills the user already owns) stays 
+  unchanged
+- Do not launch the commitment flow from the Explore page anymore
+  — all actions happen inside the detail page
+
+---
+
+CHANGE 2: Public Will detail page (new screen)
+
+When a non-member taps "View →" on any public Will, take them to 
+a read-only Public Will detail page. This is a new screen.
+
+LAYOUT (top to bottom):
+
+Header:
+- Back button top left
+- Page title: "Will" centered
+- Active/status pill below (e.g. "Active · 8 days · Ongoing")
+
+Commitment card:
+- Avatar + name of the Will creator (e.g. "@porfirio")
+- "THEIR COMMITMENT" label in small uppercase muted style
+- Commitment text in bold (e.g. "Write a handwritten letter 
+  to mama for Mother's Day")
+- Their "because" below in italic muted text if available
+
+Members strip:
+- Small avatars of all current members with a member count
+- Label: "X people are in this Will"
+
+Progress section:
+- Their success rate and calendar strip (same visual as the 
+  Will detail page) — read only, no check-in buttons
+- This is the social proof — seeing their streak motivates 
+  the viewer
+
+---
+
+BOTTOM ENGAGEMENT BAR (fixed at bottom of screen):
+
+Three equal actions side by side:
+
+1. Push
+   - Icon: lightning bolt or fist
+   - Label: "Push"
+   - Tapping sends a push notification to the Will owner:
+     "[Your name] pushed you on your Will"
+   - Button gives a brief success animation after tapping
+   - Can only push once per day per Will
+
+2. Message
+   - Icon: chat bubble
+   - Label: "Message"
+   - Tapping opens a DM to the Will owner
+   - Pre-populate the message input with the Will context:
+     "[Commitment text]" — so the conversation starts with 
+     shared context
+
+3. Join
+   - Icon: checkmark or plus
+   - Label: "Join"
+   - Tapping launches the full commitment flow (same as before)
+   - If the user is already a member, this button is replaced 
+     with "You're in ✓" in green and is non-tappable
+
+---
+
+RULES:
+
+- If the viewer IS the Will owner, hide the engagement bar 
+  entirely and show "Your Will" state instead
+- If the viewer is already a member, show "You're in ✓" on the 
+  Join button and keep Push and Message available
+- Push notification for "Push" action must include the Will 
+  commitment text in the body so the owner knows which Will 
+  it refers to
+- The Public Will detail page is read-only — no check-in 
+  buttons, no manage options, no editing
