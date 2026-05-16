@@ -410,13 +410,9 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     setWillData(updatedWillData);
     setShowFinalStepLoading(true);
 
-    // Short-duration wills (< 24 hours) skip check-in step, go straight to confirm
-    const skipCheckIn = !isIndefinite && endDateTime &&
-      (new Date(endDateTime).getTime() - new Date(startDateTime).getTime()) < 24 * 60 * 60 * 1000;
-
     setTimeout(() => {
       setShowFinalStepLoading(false);
-      setCurrentStep(skipCheckIn ? 5 : 4);
+      setCurrentStep(4);
     }, 1500);
   };
 
@@ -1095,7 +1091,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             </div>
 
             <div className="flex justify-between items-center pt-2 pb-1 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <Button type="button" variant="ghost" onClick={() => setCurrentStep(isShortDuration ? 3 : 4)} className="text-gray-500" data-testid="button-back-to-tracking">
+              <Button type="button" variant="ghost" onClick={() => setCurrentStep(4)} className="text-gray-500" data-testid="button-back-to-tracking">
                 Back
               </Button>
               <button
