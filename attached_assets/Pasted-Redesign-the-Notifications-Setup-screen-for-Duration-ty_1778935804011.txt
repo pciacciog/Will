@@ -1,0 +1,76 @@
+Redesign the Notifications Setup screen for Duration type Wills.
+
+---
+
+CURRENT PROBLEMS:
+
+- Commitment text appears twice (remove the duplicate)
+- "Remind me" toggle and time picker are oversized and cluttered
+- "A nudge to stay strong" is redundant copy — remove it
+- Inconsistent text sizes and styles throughout
+- Milestones section feels disconnected and unintuitive
+- Too much going on with no clear visual hierarchy
+
+---
+
+NEW DESIGN: Two clean sections
+
+HEADER (unchanged):
+- Commitment text appears ONCE at top in italics in purple
+- Recurring / Duration / Event type selector below it
+
+---
+
+SECTION 1: Daily reminder (subtle, secondary)
+
+A single slim row — not a card, not a section header, just one clean row:
+- Left: "Daily reminder" in muted gray (12px)
+- Middle: time display in purple (e.g. "6:00 PM") — tapping opens 
+  native iOS time picker. Hidden when toggle is off.
+- Right: a small slim toggle (on/off)
+
+When toggled on: time is visible and tappable
+When toggled off: time disappears, row stays but is visually muted
+Default state: toggled on, 6:00 PM
+
+No additional copy, no labels, no subtext. Just that one row.
+
+---
+
+SECTION 2: Notes to self (primary, dominant)
+
+Section label: "NOTES TO SELF" in small uppercase muted style
+
+A dynamic list of milestone rows the user builds themselves.
+Each row is a card containing:
+- Top field: day selector — shows "Day X" in purple with a calendar icon.
+  Tapping opens a picker for Day 1 through the last day of the Will duration.
+  If no day selected yet, shows "Pick a day" in muted gray.
+- A hairline divider
+- Bottom field: a plain text input for a custom message. No placeholder text.
+- A × delete button on the right edge
+
+Below the list: a "+ Add a note" text button in purple.
+Tapping adds a new empty row.
+
+These notes fire as push notifications on their respective days of the Will.
+They are personal, enduring messages the user writes to themselves.
+
+Default state: start with two pre-populated example rows so the user 
+understands the pattern immediately. Examples:
+- Day 2 — "God deserves this, stay strong"  
+- Day 5 — "You're almost there"
+
+---
+
+FOOTER:
+
+- Continue button: full width, purple, unchanged
+- Below it: "Milestones are optional" in small muted gray — 
+  makes clear the user can skip this entirely
+
+---
+
+Remove the old "MILESTONES" card with the Day 1 / message input row 
+and "+ Add a milestone" dashed button. Replace entirely with the new 
+"Notes to self" section described above.

@@ -220,7 +220,10 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
   });
   const [durationState, setDurationState] = useState({
     reminderOn: true, reminderTime: "18:00",
-    milestones: [] as MilestoneRow[],
+    milestones: [
+      { day: 2, label: "God deserves this, stay strong" },
+      { day: 5, label: "You're almost there" },
+    ] as MilestoneRow[],
   });
   const [eventState, setEventState] = useState<{ reminders: ReminderRow[] }>({
     reminders: [{ id: crypto.randomUUID(), date: '', note: '' }],
@@ -529,6 +532,15 @@ function HabitSectionControlled({
   );
 }
 
+function formatDisplayTime(t: string): string {
+  const [hStr, mStr] = t.split(':');
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
+
 function AbstainSectionControlled({
   what, because, color, state, onChange, willDurationDays,
 }: {
@@ -538,203 +550,143 @@ function AbstainSectionControlled({
   willDurationDays?: number;
 }) {
   const { reminderOn, reminderTime, milestones } = state;
-  const maxDay = willDurationDays ?? 365;
+  const maxDay = Math.max(1, willDurationDays ?? 365);
 
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newDayStr, setNewDayStr] = useState('');
-  const [newLabel, setNewLabel] = useState('');
-  const [dayError, setDayError] = useState('');
-
-  const openAddForm = () => {
-    setNewDayStr('');
-    setNewLabel('');
-    setDayError('');
-    setShowAddForm(true);
+  const addNote = () => {
+    onChange({ ...state, milestones: [...milestones, { day: 0, label: '' }] });
   };
 
-  const cancelAdd = () => {
-    setShowAddForm(false);
-    setNewDayStr('');
-    setNewLabel('');
-    setDayError('');
-  };
-
-  const confirmAdd = () => {
-    const day = parseInt(newDayStr, 10);
-    if (isNaN(day) || day < 1) { setDayError('Enter a valid day number.'); return; }
-    if (day > maxDay) { setDayError(`Your will is ${maxDay} day${maxDay === 1 ? '' : 's'} long. Pick a day between 1 and ${maxDay}.`); return; }
-    if (!newLabel.trim()) { setDayError('Add a short message for this day.'); return; }
-    onChange({ ...state, milestones: [...milestones, { day, label: newLabel.trim() }] });
-    setShowAddForm(false);
-    setNewDayStr('');
-    setNewLabel('');
-    setDayError('');
-  };
-
-  const deleteMilestone = (i: number) => {
+  const deleteNote = (i: number) => {
     onChange({ ...state, milestones: milestones.filter((_, idx) => idx !== i) });
+  };
+
+  const updateNote = (i: number, field: 'day' | 'label', value: number | string) => {
+    onChange({
+      ...state,
+      milestones: milestones.map((m, idx) => idx === i ? { ...m, [field]: value } : m),
+    });
   };
 
   return (
     <div>
-      <NotifCard label="Want a daily nudge?">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-base font-bold text-gray-900">Remind me</p>
-            <p className="text-xs text-gray-500 mt-0.5">A nudge to stay strong</p>
-          </div>
-          <Toggle on={reminderOn} onChange={v => onChange({ ...state, reminderOn: v })} color={color.toggleOn} />
-        </div>
+      {/* Daily reminder — slim single row */}
+      <div className="flex items-center gap-3 mb-5 px-1">
+        <span className="text-xs text-gray-400 flex-1">Daily reminder</span>
         {reminderOn && (
-          <div className="mt-3">
-            <TimeChip value={reminderTime} onChange={v => onChange({ ...state, reminderTime: v })} color={color} />
-            <PreviewCard title={what} subtitle={because} />
+          <div className="relative flex items-center">
+            <span className="text-sm font-semibold mr-3" style={{ color: color.text }}>
+              {formatDisplayTime(reminderTime)}
+            </span>
+            <input
+              type="time"
+              value={reminderTime}
+              onChange={e => onChange({ ...state, reminderTime: e.target.value })}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              style={{ fontSize: 16 }}
+              data-testid="input-reminder-time"
+            />
           </div>
         )}
-      </NotifCard>
+        <Toggle
+          on={reminderOn}
+          onChange={v => onChange({ ...state, reminderOn: v })}
+          color={color.toggleOn}
+        />
+      </div>
 
-      <NotifCard label="Milestones">
-        <p className="text-xs text-gray-500 mb-3 leading-snug">Leave yourself a note for a specific day.</p>
+      {/* Notes to self */}
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">NOTES TO SELF</p>
 
-        {/* Quiet will context */}
-        <p
-          className="text-xs italic mb-4 truncate"
-          style={{ color: color.text, opacity: 0.7 }}
-        >
-          {what}
-        </p>
-
-        {/* Grayed example row */}
-        <div className="flex items-center gap-3 mb-4" style={{ opacity: 0.38 }}>
-          <span
-            className="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: '#F3F4F6', color: '#9CA3AF', border: '1px solid #E5E7EB' }}
-          >
-            Day 1
-          </span>
-          <span className="flex-1 text-sm italic text-gray-400 leading-snug">Your message here…</span>
-          <span
-            className="text-[9px] font-semibold uppercase tracking-widest flex-shrink-0"
-            style={{ color: '#C4C4C4' }}
-          >
-            example
-          </span>
-        </div>
-
-        {/* Added milestones */}
-        {milestones.length > 0 && (
-          <div className="mb-3 space-y-2">
-            {milestones.map((m, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 py-2 px-3 rounded-xl"
-                style={{ background: color.tint }}
-                data-testid={`milestone-row-${i}`}
-              >
-                <span
-                  className="flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-full"
-                  style={{ background: color.chipBg, color: color.chipText, border: `1px solid ${color.chipBorder}` }}
-                >
-                  Day {m.day}
-                </span>
-                <span className="flex-1 text-sm text-gray-800 leading-snug">{m.label}</span>
-                <button
-                  type="button"
-                  onClick={() => deleteMilestone(i)}
-                  className="flex-shrink-0 flex items-center justify-center rounded-full transition-opacity active:opacity-60"
-                  style={{ width: 24, height: 24, background: 'rgba(0,0,0,0.06)' }}
-                  data-testid={`button-delete-milestone-${i}`}
-                  aria-label="Remove milestone"
-                >
-                  <svg viewBox="0 0 24 24" style={{ width: 13, height: 13 }} fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Add form */}
-        {showAddForm ? (
+      <div className="space-y-2 mb-3">
+        {milestones.map((m, i) => (
           <div
-            className="rounded-2xl p-4 mt-1"
-            style={{ background: color.tint, border: `1.5px solid ${color.border}` }}
+            key={i}
+            className="rounded-2xl border border-gray-200 bg-white overflow-hidden"
+            data-testid={`milestone-row-${i}`}
           >
-            <p
-              className="text-[10px] font-semibold uppercase tracking-widest mb-2"
-              style={{ color: color.text }}
-            >
-              Which day?
-            </p>
-            <input
-              type="number"
-              min={1}
-              max={maxDay}
-              value={newDayStr}
-              onChange={e => { setNewDayStr(e.target.value); setDayError(''); }}
-              className="w-full rounded-xl px-3 py-2.5 bg-white border text-center font-bold focus:outline-none mb-3"
-              style={{ fontSize: 15, borderColor: color.border, color: '#111' }}
-              placeholder={willDurationDays ? `1 – ${maxDay}` : 'Day number'}
-              data-testid="input-milestone-day"
-              autoFocus
-            />
-            <p
-              className="text-[10px] font-semibold uppercase tracking-widest mb-2"
-              style={{ color: color.text }}
-            >
-              Your note
-            </p>
-            <input
-              type="text"
-              value={newLabel}
-              onChange={e => { setNewLabel(e.target.value); setDayError(''); }}
-              onKeyDown={e => { if (e.key === 'Enter') confirmAdd(); }}
-              className="w-full rounded-xl px-3 py-2.5 text-sm bg-white border focus:outline-none mb-1"
-              style={{ borderColor: color.border }}
-              placeholder="Write anything…"
-              maxLength={100}
-              data-testid="input-milestone-label"
-            />
-            {dayError && (
-              <p className="text-xs mb-2" style={{ color: '#E24B4A' }}>{dayError}</p>
-            )}
-            <div className="flex gap-2 mt-3">
+            {/* Day selector row */}
+            <div className="flex items-center px-4 py-3 min-h-[44px] gap-2">
+              {/* Tappable day picker — transparent select overlay */}
+              <div className="relative flex items-center flex-1 min-h-[44px]">
+                <svg
+                  viewBox="0 0 24 24"
+                  style={{ width: 15, height: 15, marginRight: 8, flexShrink: 0 }}
+                  fill="none"
+                  stroke={m.day ? color.text : '#9CA3AF'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                {m.day ? (
+                  <span className="text-sm font-semibold" style={{ color: color.text }}>Day {m.day}</span>
+                ) : (
+                  <span className="text-sm text-gray-400">Pick a day</span>
+                )}
+                <select
+                  value={m.day || ''}
+                  onChange={e => updateNote(i, 'day', parseInt(e.target.value, 10))}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                  style={{ fontSize: 16 }}
+                  data-testid={`select-milestone-day-${i}`}
+                >
+                  <option value="">Pick a day</option>
+                  {Array.from({ length: maxDay }, (_, d) => d + 1).map(d => (
+                    <option key={d} value={d}>Day {d}</option>
+                  ))}
+                </select>
+              </div>
+              {/* Delete button — outside the select overlay area */}
               <button
                 type="button"
-                onClick={confirmAdd}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95"
-                style={{ background: color.bg }}
-                data-testid="button-confirm-add-milestone"
+                onClick={() => deleteNote(i)}
+                className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-opacity active:opacity-60"
+                style={{ background: 'rgba(0,0,0,0.06)' }}
+                data-testid={`button-delete-milestone-${i}`}
+                aria-label="Remove note"
               >
-                Add
-              </button>
-              <button
-                type="button"
-                onClick={cancelAdd}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 transition-all active:scale-95"
-                style={{ background: '#F3F4F6' }}
-                data-testid="button-cancel-add-milestone"
-              >
-                Cancel
+                <svg viewBox="0 0 24 24" style={{ width: 13, height: 13 }} fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
             </div>
+
+            {/* Hairline divider */}
+            <div style={{ height: 1, background: '#F3F4F6', marginLeft: 16, marginRight: 16 }} />
+
+            {/* Note text input */}
+            <div className="flex items-center px-4 py-3">
+              <input
+                type="text"
+                value={m.label}
+                onChange={e => updateNote(i, 'label', e.target.value)}
+                className="flex-1 text-sm text-gray-800 bg-transparent border-none outline-none"
+                style={{ fontSize: 14, minWidth: 0 }}
+                maxLength={100}
+                data-testid={`input-milestone-label-${i}`}
+              />
+            </div>
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={openAddForm}
-            className="w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 flex items-center justify-center gap-2"
-            style={{ border: `1.5px dashed ${color.border}`, color: color.text, background: 'transparent' }}
-            data-testid="button-add-milestone"
-          >
-            <svg viewBox="0 0 24 24" style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add a milestone
-          </button>
-        )}
-      </NotifCard>
+        ))}
+      </div>
+
+      {/* Add a note */}
+      <button
+        type="button"
+        onClick={addNote}
+        className="flex items-center gap-2 text-sm font-semibold py-1 transition-opacity active:opacity-60"
+        style={{ color: color.text }}
+        data-testid="button-add-milestone"
+      >
+        <svg viewBox="0 0 24 24" style={{ width: 15, height: 15 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add a note
+      </button>
     </div>
   );
 }
