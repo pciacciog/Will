@@ -1,0 +1,75 @@
+Redesign the Notifications Setup screen for Recurring type Wills.
+
+---
+
+SECTION 1: Track on
+
+Section label: "TRACK ON" in small uppercase muted style
+
+A single card containing seven day pills in a row: M T W T F S S
+- Each pill is a circle, tappable to toggle on/off
+- Selected (on): green filled circle, white text
+- Deselected (off): light gray circle, muted text
+- Default: all 7 days selected
+- Minimum 1 day must remain selected at all times —
+  prevent deselecting the last active day
+
+Save the user's selected days to the Will record in the database
+as an array (e.g. [0,1,2,3,4] for Mon–Fri, 0=Monday, 6=Sunday).
+
+---
+
+SECTION 2: Notifications
+
+Section label: "NOTIFICATIONS" in small uppercase muted style
+
+A single card with two slim rows:
+
+Row 1 — Reminder
+- Label: "Reminder" with subtle subtext "Before the moment"
+- Tappable time in green (opens native iOS time picker)
+- Toggle on/off — when off, time disappears
+- Default: on, 8:30 PM
+
+Row 2 — Check-in
+- Label: "Check-in" with subtle subtext "How did it go?"
+- Tappable time in green (opens native iOS time picker)
+- Toggle on/off — when off, time disappears
+- Default: on, 8:00 AM next morning
+
+Subtext must always be generic — never say "tonight" or "this 
+morning" since commitment time varies per Will.
+
+---
+
+NOTIFICATION FIRING RULES (critical):
+
+Both the Reminder and Check-in notifications must ONLY fire on
+days the user has selected in the "Track on" section.
+
+Implementation:
+- When scheduling notifications, iterate over the user's saved
+  tracked days array
+- Only schedule Reminder and Check-in pushes for those specific
+  weekdays — skip all others entirely
+- If the Will spans multiple weeks, repeat this pattern each week
+  for the duration of the Will
+- When the user updates their tracked days after creation (via
+  Manage Will), cancel all existing scheduled notifications for
+  this Will and reschedule based on the updated days array
+
+---
+
+TRACKING LOGIC:
+
+Only tracked days count toward progress and can be marked as
+missed. Untracked days must:
+- Not appear as red (missed) in the calendar view
+- Not be counted in the missed stat
+- Not affect the success rate
+- Be visually muted in the calendar — same treatment as
+  pre-start days (grayed out, non-tappable)
+
+---
+
+Continue button: full width, green, unchanged.

@@ -58,8 +58,11 @@ export default function ProgressView({ willId, startDate, endDate, checkInType, 
     enabled: isTracking,
   });
 
+  const isCustomActiveDays = activeDays === 'custom' && !!customDays;
+  const needsAdjustment = isSpecificDays || isCustomActiveDays;
+
   const adjustedProgress = useMemo(() => {
-    if (!isSpecificDays || !progress) return progress;
+    if (!needsAdjustment || !progress) return progress;
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
     const end = endDate ? new Date(endDate) : new Date();
@@ -95,9 +98,9 @@ export default function ProgressView({ willId, startDate, endDate, checkInType, 
       noCount,
       streak: progress.streak,
     };
-  }, [isSpecificDays, progress, checkIns, startDate, endDate, activeDays, customDays]);
+  }, [needsAdjustment, progress, checkIns, startDate, endDate, activeDays, customDays]);
 
-  const displayProgress = isSpecificDays ? adjustedProgress : progress;
+  const displayProgress = needsAdjustment ? adjustedProgress : progress;
 
   if (checkInType === 'one-time' || checkInType === 'final_review') {
     return (

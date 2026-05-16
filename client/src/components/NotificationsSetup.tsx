@@ -9,6 +9,7 @@ export interface NotificationsData {
   missionReminderTime: string | null;
   deadlineReminders: { threeDays: boolean; oneDay: boolean; dayOf: boolean };
   customReminders: { date: string; note: string }[] | null;
+  trackedDays: number[] | null;
 }
 
 interface NotificationsSetupProps {
@@ -217,6 +218,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
   const [recurringState, setRecurringState] = useState({
     reminderOn: true, reminderTime: "20:30",
     checkInOn: true, checkInTime: "08:00",
+    trackedDays: [0, 1, 2, 3, 4, 5, 6] as number[],
   });
   const [durationState, setDurationState] = useState({
     reminderOn: true, reminderTime: "18:00",
@@ -244,6 +246,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
         customReminders: null,
+        trackedDays: recurringState.trackedDays,
       };
     } else if (selected === 'duration') {
       data = {
@@ -255,6 +258,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
         customReminders: null,
+        trackedDays: null,
       };
     } else {
       data = {
@@ -268,6 +272,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         customReminders: eventState.reminders
           .filter(r => r.date || r.note)
           .map(r => ({ date: r.date, note: r.note })),
+        trackedDays: null,
       };
     }
 
@@ -487,47 +492,113 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
 
 /* ── Controlled wrappers so parent can read state ── */
 
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const;
+const DAY_JS_VALUES = [1, 2, 3, 4, 5, 6, 0]; // Mon=1 … Sat=6, Sun=0 (JS getDay())
+
 function HabitSectionControlled({
   what, because, color, state, onChange,
 }: {
   what: string; because: string; color: typeof COLORS.recurring;
-  state: { reminderOn: boolean; reminderTime: string; checkInOn: boolean; checkInTime: string };
+  state: { reminderOn: boolean; reminderTime: string; checkInOn: boolean; checkInTime: string; trackedDays: number[] };
   onChange: (s: typeof state) => void;
 }) {
-  const { reminderOn, reminderTime, checkInOn, checkInTime } = state;
+  const { reminderOn, reminderTime, checkInOn, checkInTime, trackedDays } = state;
+
+  const toggleDay = (dayVal: number) => {
+    const isOn = trackedDays.includes(dayVal);
+    if (isOn && trackedDays.length === 1) return;
+    onChange({
+      ...state,
+      trackedDays: isOn ? trackedDays.filter(d => d !== dayVal) : [...trackedDays, dayVal],
+    });
+  };
+
   return (
     <div>
-      <NotifCard label="Want a reminder before?">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-base font-bold text-gray-900">Reminder</p>
-            <p className="text-xs text-gray-500 mt-0.5">Fires before the moment</p>
+      {/* TRACK ON */}
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">TRACK ON</p>
+
+      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden mb-5">
+        <div className="flex items-center justify-between px-4 py-3">
+          {DAY_LABELS.map((label, i) => {
+            const dayVal = DAY_JS_VALUES[i];
+            const isActive = trackedDays.includes(dayVal);
+            return (
+              <button
+                key={dayVal}
+                type="button"
+                onClick={() => toggleDay(dayVal)}
+                className="flex items-center justify-center rounded-full font-semibold transition-all active:scale-90"
+                style={{
+                  width: 36, height: 36, fontSize: 13,
+                  background: isActive ? color.bg : '#F3F4F6',
+                  color: isActive ? '#fff' : '#9CA3AF',
+                }}
+                data-testid={`day-pill-${dayVal}`}
+                aria-pressed={isActive}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* NOTIFICATIONS */}
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">NOTIFICATIONS</p>
+
+      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+        {/* Row 1 — Reminder */}
+        <div className="flex items-center px-4 py-3.5 gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900">Reminder</p>
+            <p className="text-xs text-gray-400 mt-0.5">Before the moment</p>
           </div>
+          {reminderOn && (
+            <div className="relative flex items-center">
+              <span className="text-sm font-semibold mr-3" style={{ color: color.text }}>
+                {formatDisplayTime(reminderTime)}
+              </span>
+              <input
+                type="time"
+                value={reminderTime}
+                onChange={e => onChange({ ...state, reminderTime: e.target.value })}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                style={{ fontSize: 16 }}
+                data-testid="input-reminder-time"
+              />
+            </div>
+          )}
           <Toggle on={reminderOn} onChange={v => onChange({ ...state, reminderOn: v })} color={color.toggleOn} />
         </div>
-        {reminderOn && (
-          <div className="mt-3">
-            <TimeChip value={reminderTime} onChange={v => onChange({ ...state, reminderTime: v })} color={color} />
-            <PreviewCard title={what} subtitle={because} />
-          </div>
-        )}
-      </NotifCard>
 
-      <NotifCard label="Want to check in after?">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-base font-bold text-gray-900">Check-in</p>
-            <p className="text-xs text-gray-500 mt-0.5">Log how it went</p>
+        {/* Hairline divider */}
+        <div style={{ height: 1, background: '#F3F4F6', marginLeft: 16, marginRight: 16 }} />
+
+        {/* Row 2 — Check-in */}
+        <div className="flex items-center px-4 py-3.5 gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900">Check-in</p>
+            <p className="text-xs text-gray-400 mt-0.5">How did it go?</p>
           </div>
+          {checkInOn && (
+            <div className="relative flex items-center">
+              <span className="text-sm font-semibold mr-3" style={{ color: color.text }}>
+                {formatDisplayTime(checkInTime)}
+              </span>
+              <input
+                type="time"
+                value={checkInTime}
+                onChange={e => onChange({ ...state, checkInTime: e.target.value })}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                style={{ fontSize: 16 }}
+                data-testid="input-checkin-time"
+              />
+            </div>
+          )}
           <Toggle on={checkInOn} onChange={v => onChange({ ...state, checkInOn: v })} color={color.toggleOn} />
         </div>
-        {checkInOn && (
-          <div className="mt-3">
-            <TimeChip value={checkInTime} onChange={v => onChange({ ...state, checkInTime: v })} color={color} />
-            <PreviewCard title="Did you honor your will?" subtitle={what} />
-          </div>
-        )}
-      </NotifCard>
+      </div>
     </div>
   );
 }
