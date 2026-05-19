@@ -106,16 +106,6 @@ export default function Home() {
   const unreadCount = notifData?.unreadCount ?? 0;
   const previewNotifs = (notifData?.notifications ?? []).filter(n => !n.isRead).slice(0, 1);
 
-  const { data: awaitingCommitment = [] } = useQuery<{ invite: { willId: number }; will: { id: number; title?: string } }[]>({
-    queryKey: ['/api/wills/my-awaiting-commitment'],
-    queryFn: getQueryFn({ on401: 'returnNull' }),
-    enabled: !!user,
-    staleTime: 0,
-    refetchInterval: 30000,
-  });
-
-  const awaitingWillIds = new Set((awaitingCommitment ?? []).map(r => r.invite.willId));
-
   const declineInviteMutation = useMutation({
     mutationFn: async (willId: number) => {
       await apiRequest(`/api/wills/${willId}/decline-invite`, { method: 'POST' });
@@ -253,7 +243,6 @@ export default function Home() {
             <div className="mb-3">
               {previewNotifs.map((n) => {
                 const isInvite = n.type === 'team_will_invite';
-                const isAwaitingCommit = isInvite && n.willId ? awaitingWillIds.has(n.willId) : false;
                 return (
                   <div
                     key={n.id}
@@ -271,15 +260,12 @@ export default function Home() {
                     </div>
                     {isInvite && n.willId && (
                       <div className="mt-2.5">
-                        {isAwaitingCommit && (
-                          <p className="text-[11px] text-amber-700 font-medium mb-1.5">You haven't finished committing yet</p>
-                        )}
                         <button
-                          onClick={() => setLocation(`/will/${n.willId}/commit`)}
-                          className={`w-full py-1.5 rounded-xl text-white text-[12px] font-semibold transition-colors ${isAwaitingCommit ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                          onClick={() => setLocation(`/will/${n.willId}/invite`)}
+                          className="w-full py-1.5 rounded-xl text-white text-[12px] font-semibold transition-colors bg-violet-600 hover:bg-violet-700"
                           data-testid={`button-view-invite-${n.willId}`}
                         >
-                          View
+                          View invite
                         </button>
                       </div>
                     )}
