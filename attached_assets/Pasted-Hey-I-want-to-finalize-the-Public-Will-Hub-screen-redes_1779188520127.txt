@@ -1,0 +1,17 @@
+Hey, I want to finalize the Public Will Hub screen redesign. Here is the complete spec:
+Header
+Title reads "Will Hub". Back button on the left. Two badges centered below: "Active · Day X" in green and the will type (Recurring / Duration / Event) in purple.
+Commitment card
+Creator's avatar with a 👑 crown indicator. Username and "Creator · X days in" as subtitle. "THE COMMITMENT" label and quoted commitment text below. The "because" / reason field is private — never shown publicly.
+3 stat boxes
+Days in / success rate in green / joined count with "→" arrow. Tapping joined count opens a list of who has joined with their avatar, username, and join date.
+Progress section
+Adapts based on will type. Recurring → 7-day week strip. Duration → circular ring (Day X of Y) with calendar. Event → simple Completed / Not yet status card. Label reads "[Creator]'s Week" for Recurring, "THEIR PROGRESS" for Duration, "STATUS" for Event.
+Push card
+Shows cumulative all-time total push count (e.g. "⚡ 24 people pushed @david") with stacked avatars of recent pushers on the right and subtitle "Cumulative pushes since day 1." Directly below that, a full-width inline CTA button that reads "⚡ Push @david" in purple. This is the Push action — it lives here inside the card, not in the bottom bar. Tapping it sends the creator a push notification and increments the count.
+Hub Chat card
+Shows a preview of the 3 most recent messages — each with avatar, username, and message text. Header shows "HUB CHAT" label and total message count. At the bottom of the card a tappable "See all X messages →" link that navigates to the full group chat screen. The group chat is open to anyone who can view the hub — you do not need to have joined the will to participate. There is no separate Chat button anywhere — this card and the "See all" link are the sole entry point to the chat.
+Bottom bar — Join Will only
+Single full-width purple button: "Join Will." This is the only action in the bottom bar. Push lives in the Push card. Chat entry lives in the Hub Chat card. Nothing else belongs in the bottom bar.
+What to remove:
+The old three-button bottom bar (Push / Message / Join). The standalone Message/Chat button. Any separate Push button outside the Push card.
