@@ -225,6 +225,7 @@ export default function WillDetails() {
   const [checkInNote, setCheckInNote] = useState('');
   const [editDate, setEditDate] = useState<string | null>(null);
   const [editingDate, setEditingDate] = useState<string | null>(null);
+  const [recurringWeekOffset, setRecurringWeekOffset] = useState(0);
 
   const todayLocalDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
 
@@ -433,15 +434,16 @@ export default function WillDetails() {
     return checkIns.find((c: WillCheckIn) => c.date === todayLocalDate) || null;
   }, [checkIns, effectiveCategory, todayLocalDate]);
 
-  // Recurring: current week (Mon–Sun) for the week strip
+  // Recurring: week strip — driven by recurringWeekOffset (0 = current week, 1 = one week back, etc.)
   const recurringWeekDays = useMemo(() => {
     if (effectiveCategory !== 'recurring') return [];
     const today = new Date(); today.setHours(0, 0, 0, 0);
+    const reference = new Date(today); reference.setDate(today.getDate() - recurringWeekOffset * 7);
     const willStart = will?.startDate ? new Date(will.startDate) : null;
     if (willStart) willStart.setHours(0, 0, 0, 0);
-    const dow = today.getDay();
+    const dow = reference.getDay();
     const mondayOffset = dow === 0 ? -6 : 1 - dow;
-    const monday = new Date(today); monday.setDate(today.getDate() + mondayOffset);
+    const monday = new Date(reference); monday.setDate(reference.getDate() + mondayOffset);
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(monday); d.setDate(monday.getDate() + i);
       const dateStr = d.toLocaleDateString('en-CA');
@@ -457,7 +459,25 @@ export default function WillDetails() {
       else { status = 'no'; }
       return { d, dateStr, dayNum: d.getDate(), status, isToday };
     });
-  }, [effectiveCategory, will?.startDate, checkIns]);
+  }, [effectiveCategory, will?.startDate, checkIns, recurringWeekOffset]);
+
+  const recurringWeekLabel = useMemo(() => {
+    if (!recurringWeekDays.length) return '';
+    const start = recurringWeekDays[0].d;
+    const end = recurringWeekDays[6].d;
+    const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
+    const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+    if (startMonth === endMonth) return `${startMonth} ${start.getDate()} \u2013 ${end.getDate()}`;
+    return `${startMonth} ${start.getDate()} \u2013 ${endMonth} ${end.getDate()}`;
+  }, [recurringWeekDays]);
+
+  const recurringCanGoBack = useMemo(() => {
+    if (!recurringWeekDays.length || !will?.startDate) return false;
+    const willStart = new Date(will.startDate); willStart.setHours(0, 0, 0, 0);
+    return willStart < recurringWeekDays[0].d;
+  }, [recurringWeekDays, will?.startDate]);
+
+  const recurringCanGoForward = recurringWeekOffset > 0;
 
   // Abstain: fetch log entries
   const { data: abstainLogEntries = [] } = useQuery<AbstainLog[]>({
@@ -1394,7 +1414,7 @@ export default function WillDetails() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center">How did tonight go?</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center">How did it go?</p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => { setPendingCheckIn('yes'); setCheckInNote(''); }}
@@ -1463,6 +1483,25 @@ export default function WillDetails() {
                   </div>
                   <div className="border-t border-gray-100 mb-3" />
                   <div className="mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <button
+                        onClick={() => setRecurringWeekOffset(o => o + 1)}
+                        disabled={!recurringCanGoBack}
+                        className="p-1 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                        data-testid="button-week-back"
+                      >
+                        <ChevronLeft className="w-4 h-4 text-gray-600" />
+                      </button>
+                      <span className="text-xs font-semibold text-gray-600" data-testid="text-week-label">{recurringWeekLabel}</span>
+                      <button
+                        onClick={() => setRecurringWeekOffset(o => o - 1)}
+                        disabled={!recurringCanGoForward}
+                        className="p-1 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                        data-testid="button-week-forward"
+                      >
+                        <ChevronRight className="w-4 h-4 text-gray-600" />
+                      </button>
+                    </div>
                     <div className="grid grid-cols-7 gap-1 mb-1.5">
                       {['M','T','W','T','F','S','S'].map((l, i) => (
                         <div key={i} className="text-center text-[10px] text-gray-400 font-medium">{l}</div>
@@ -1470,7 +1509,6 @@ export default function WillDetails() {
                     </div>
                     <div className="grid grid-cols-7 gap-1">
                       {recurringWeekDays.map((day) => {
-                        // Bug 3: pre-start days are muted gray, non-tappable
                         if (day.status === 'pre-start') {
                           return (
                             <div
@@ -1486,7 +1524,6 @@ export default function WillDetails() {
                         const bg = day.status === 'yes' ? '#1D9E75' : day.status === 'partial' ? '#F59E0B' : day.status === 'no' ? '#F87171' : 'transparent';
                         const border = day.status === 'today' ? '2px solid #1D9E75' : day.status === 'future' ? '2px solid #D1D5DB' : 'none';
                         const textColor = filled ? '#fff' : day.status === 'today' ? '#1D9E75' : '#9CA3AF';
-                        // Bug 2: past days and today are tappable
                         const isTappable = day.status !== 'future';
                         const handleDayTap = () => {
                           if (!isTappable) return;

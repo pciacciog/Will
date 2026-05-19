@@ -70,6 +70,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [checkInDate, setCheckInDate] = useState<string | null>(null);
   const handleDayClick = (date: string) => { setCheckInDate(date); setShowCheckInModal(true); };
+  const [recurringWeekOffset, setRecurringWeekOffset] = useState(0);
   const [abstainCheckInOpen, setAbstainCheckInOpen] = useState(false);
   const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
@@ -716,27 +717,50 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     return checkIns.find((c: WillCheckIn) => c.date === todayLocalDate) || null;
   }, [checkIns, will?.commitmentCategory, todayLocalDate]);
 
-  // Recurring: current week (Mon–Sun) for the week strip
+  // Recurring: week strip — driven by recurringWeekOffset (0 = current week, 1 = one week back, etc.)
   const recurringWeekDays = useMemo(() => {
     if (will?.commitmentCategory !== 'recurring') return [];
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const dow = today.getDay();
+    const reference = new Date(today); reference.setDate(today.getDate() - recurringWeekOffset * 7);
+    const willStart = will?.startDate ? new Date(will.startDate as string) : null;
+    if (willStart) willStart.setHours(0, 0, 0, 0);
+    const dow = reference.getDay();
     const mondayOffset = dow === 0 ? -6 : 1 - dow;
-    const monday = new Date(today); monday.setDate(today.getDate() + mondayOffset);
+    const monday = new Date(reference); monday.setDate(reference.getDate() + mondayOffset);
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(monday); d.setDate(monday.getDate() + i);
       const dateStr = d.toLocaleDateString('en-CA');
       const ci = checkIns.find((c: WillCheckIn) => c.date === dateStr);
       const isToday = d.getTime() === today.getTime();
       const isFuture = d > today;
-      let status: 'yes' | 'partial' | 'no' | 'today' | 'future';
-      if (ci) { status = ci.status as 'yes' | 'partial' | 'no'; }
+      const isBeforeStart = willStart ? d < willStart : false;
+      let status: 'yes' | 'partial' | 'no' | 'today' | 'future' | 'pre-start';
+      if (isBeforeStart) { status = 'pre-start'; }
+      else if (ci) { status = ci.status as 'yes' | 'partial' | 'no'; }
       else if (isToday) { status = 'today'; }
       else if (isFuture) { status = 'future'; }
       else { status = 'no'; }
       return { d, dateStr, dayNum: d.getDate(), status, isToday };
     });
-  }, [will?.commitmentCategory, checkIns]);
+  }, [will?.commitmentCategory, will?.startDate, checkIns, recurringWeekOffset]);
+
+  const recurringWeekLabel = useMemo(() => {
+    if (!recurringWeekDays.length) return '';
+    const start = recurringWeekDays[0].d;
+    const end = recurringWeekDays[6].d;
+    const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
+    const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+    if (startMonth === endMonth) return `${startMonth} ${start.getDate()} \u2013 ${end.getDate()}`;
+    return `${startMonth} ${start.getDate()} \u2013 ${endMonth} ${end.getDate()}`;
+  }, [recurringWeekDays]);
+
+  const recurringCanGoBack = useMemo(() => {
+    if (!recurringWeekDays.length || !will?.startDate) return false;
+    const willStart = new Date(will.startDate as string); willStart.setHours(0, 0, 0, 0);
+    return willStart < recurringWeekDays[0].d;
+  }, [recurringWeekDays, will?.startDate]);
+
+  const recurringCanGoForward = recurringWeekOffset > 0;
 
   // Duration: total days in the will period
   const durTotalDays = useMemo(() => {
@@ -1540,6 +1564,25 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       </div>
                       <div className="border-t border-gray-100 mb-3" />
                       <div className="mb-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <button
+                            onClick={() => setRecurringWeekOffset(o => o + 1)}
+                            disabled={!recurringCanGoBack}
+                            className="p-1 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                            data-testid="button-week-back"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-gray-600" />
+                          </button>
+                          <span className="text-xs font-semibold text-gray-600" data-testid="text-week-label">{recurringWeekLabel}</span>
+                          <button
+                            onClick={() => setRecurringWeekOffset(o => o - 1)}
+                            disabled={!recurringCanGoForward}
+                            className="p-1 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                            data-testid="button-week-forward"
+                          >
+                            <ChevronRight className="w-4 h-4 text-gray-600" />
+                          </button>
+                        </div>
                         <div className="grid grid-cols-7 gap-1 mb-1.5">
                           {['M','T','W','T','F','S','S'].map((l, i) => (
                             <div key={i} className="text-center text-[10px] text-gray-400 font-medium">{l}</div>
@@ -1547,15 +1590,25 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         </div>
                         <div className="grid grid-cols-7 gap-1">
                           {recurringWeekDays.map((day) => {
+                            if (day.status === 'pre-start') {
+                              return (
+                                <div key={day.dateStr} className="flex items-center justify-center rounded-full" style={{ aspectRatio: '1', width: '100%', opacity: 0.35 }}>
+                                  <span className="text-xs font-semibold text-gray-400">{day.dayNum}</span>
+                                </div>
+                              );
+                            }
                             const filled = day.status === 'yes' || day.status === 'partial' || day.status === 'no';
                             const bg = day.status === 'yes' ? '#1D9E75' : day.status === 'partial' ? '#F59E0B' : day.status === 'no' ? '#F87171' : 'transparent';
                             const border = day.status === 'today' ? '2px solid #1D9E75' : day.status === 'future' ? '2px solid #D1D5DB' : 'none';
                             const textColor = filled ? '#fff' : day.status === 'today' ? '#1D9E75' : '#9CA3AF';
+                            const isTappable = day.status !== 'future';
                             return (
                               <div
                                 key={day.dateStr}
+                                onClick={() => { if (isTappable) handleDayClick(day.dateStr); }}
                                 className="flex items-center justify-center rounded-full"
-                                style={{ aspectRatio: '1', backgroundColor: bg, border, width: '100%' }}
+                                style={{ aspectRatio: '1', backgroundColor: bg, border, width: '100%', cursor: isTappable ? 'pointer' : 'default' }}
+                                data-testid={`day-circle-${day.dateStr}`}
                               >
                                 <span className="text-xs font-semibold" style={{ color: textColor }}>{day.dayNum}</span>
                               </div>
