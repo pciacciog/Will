@@ -1290,7 +1290,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           {isWeWill ? (
             /* We Will — shared commitment text only */
             <div className="mb-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">Our Commitment</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-center mb-2" style={{ color: '#1D9E75' }}>We Will</p>
               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                 {will.sharedWhat ? (
                   <p className="text-[20px] font-bold text-gray-900 text-center leading-snug">
@@ -1305,7 +1305,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             /* I Will — current user's own commitment text */
             userCommitment?.what ? (
               <div className="mb-2">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">Your Commitment</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-center mb-2" style={{ color: '#1D9E75' }}>I Will</p>
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                   <p className="text-[18px] font-bold text-gray-900 text-center leading-snug">
                     &ldquo;{userCommitment.what}&rdquo;
