@@ -30,6 +30,7 @@ import {
   willProofs,
   abstainLogs,
   willCheckIns,
+  willMessages,
   directMessages,
 } from "@shared/schema";
 import { z } from "zod";
@@ -2272,12 +2273,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasJoined = !!joinedWill;
       const hasPushed = await storage.hasUserPushed(willId, userId);
       
+      const daysIn = will.startDate
+        ? Math.max(1, Math.floor((Date.now() - new Date(will.startDate as string).getTime()) / 86400000) + 1)
+        : 1;
+
       res.json({
         id: will.id,
         title: will.title ?? null,
         what: firstCommitment?.what || 'Untitled commitment',
-        why: firstCommitment?.why || null,
+        // why intentionally omitted — private per spec
         checkInType: will.checkInType,
+        commitmentCategory: will.commitmentCategory ?? null,
         startDate: will.startDate,
         endDate: will.endDate,
         isIndefinite: will.isIndefinite,
@@ -2290,6 +2296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isOwner,
         hasJoined,
         hasPushed,
+        daysIn,
       });
     } catch (error) {
       console.error("Error fetching public will details:", error);
@@ -2307,10 +2314,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ownerId = will.createdBy;
       const checkIns = await storage.getWillCheckIns(willId, ownerId);
       const progress = await storage.getWillCheckInProgress(willId, ownerId);
-      res.json({ checkIns, progress });
+      let abstainEntries: any[] = [];
+      if (will.commitmentCategory === 'duration') {
+        abstainEntries = await db.select().from(abstainLogs)
+          .where(and(eq(abstainLogs.willId, willId), eq(abstainLogs.userId, ownerId)))
+          .orderBy(desc(abstainLogs.date));
+      }
+      res.json({ checkIns, progress, abstainEntries, commitmentCategory: will.commitmentCategory ?? null });
     } catch (error) {
       console.error("Error fetching public will progress:", error);
       res.status(500).json({ message: "Failed to fetch Will progress" });
+    }
+  });
+
+  app.get('/api/wills/:id/public-messages-preview', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will || will.visibility !== 'public') {
+        return res.status(404).json({ message: "Public Will not found" });
+      }
+      const messages = await storage.getWillMessages(willId, 3);
+      const [countRow] = await db.select({ count: sql<number>`count(*)` })
+        .from(willMessages).where(eq(willMessages.willId, willId));
+      res.json({ messages: messages.slice().reverse(), totalCount: Number(countRow?.count ?? 0) });
+    } catch (error) {
+      console.error("Error fetching public messages preview:", error);
+      res.status(500).json({ message: "Failed to fetch messages preview" });
     }
   });
 
@@ -2330,13 +2360,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rootWill = will.parentWillId ? await storage.getWillById(rootWillId) : will;
 
       const childWills = await db
-        .select({ id: wills.id, createdBy: wills.createdBy, status: wills.status })
+        .select({ id: wills.id, createdBy: wills.createdBy, status: wills.status, startDate: wills.startDate })
         .from(wills)
         .where(eq(wills.parentWillId, rootWillId));
 
       const activeChildWills = childWills.filter(w => ACTIVE_PARTICIPANT_STATUSES.includes(w.status));
       const allParticipantIds = [rootWill!.createdBy, ...activeChildWills.map(w => w.createdBy)];
       const uniqueIds = Array.from(new Set(allParticipantIds));
+
+      // Build joinDate map: creator gets root will startDate, others get their child will startDate
+      const joinDateMap: Record<string, string | null> = {};
+      joinDateMap[rootWill!.createdBy] = rootWill!.startDate as string | null;
+      for (const cw of activeChildWills) {
+        joinDateMap[cw.createdBy] = cw.startDate as string | null;
+      }
 
       const participants = await db
         .select({ id: users.id, firstName: users.firstName })
@@ -2349,7 +2386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(users.id, rootWill!.createdBy));
 
       res.json({
-        participants: participants.map(p => ({ id: p.id, firstName: p.firstName })),
+        participants: participants.map(p => ({ id: p.id, firstName: p.firstName, joinDate: joinDateMap[p.id] ?? null })),
         totalCount: uniqueIds.length,
         creatorName: creator?.firstName || 'Anonymous',
       });
