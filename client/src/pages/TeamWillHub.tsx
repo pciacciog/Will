@@ -74,6 +74,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [abstainCheckInOpen, setAbstainCheckInOpen] = useState(false);
   const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
+  const [durPastEditDate, setDurPastEditDate] = useState<string | null>(null);
   const [missionCheckInOpen, setMissionCheckInOpen] = useState(false);
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
   const [missionConfirming, setMissionConfirming] = useState(false);
@@ -257,10 +258,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
   // Category-aware: abstain log mutation
   const abstainLogMutation = useMutation({
-    mutationFn: async ({ honored }: { honored: boolean }) => {
+    mutationFn: async ({ honored, date }: { honored: boolean; date: string }) => {
       const res = await apiRequest(`/api/wills/${willId}/abstain-log`, {
         method: 'POST',
-        body: JSON.stringify({ honored }),
+        body: JSON.stringify({ honored, date }),
       });
       return res.json();
     },
@@ -1158,8 +1159,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
               {will.status === 'active' && category === 'event' && missionDeadlineLabel
                 ? `Active · deadline ${missionDeadlineLabel}`
-                : will.status === 'active' && daysLeft !== null && (category === 'recurring' || category === 'duration')
-                ? `Active · ${daysLeft} days left`
+                : will.status === 'active' && (category === 'duration' || (category === 'recurring' && daysLeft !== null))
+                ? `Active · ${category === 'duration' ? durDaysLeft : daysLeft} days left`
                 : statusInfo.label}
             </span>
           </div>
@@ -1662,6 +1663,13 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       </div>
                     </div>
 
+                    {/* Date range */}
+                    {will.startDate && will.endDate && (
+                      <p className="text-sm text-gray-500 text-center -mt-2" data-testid="text-date-range">
+                        {new Date(String(will.startDate) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(String(will.endDate) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    )}
+
                     {/* Stat boxes */}
                     <div className="grid grid-cols-3 gap-2 mb-4">
                       <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
@@ -1710,7 +1718,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <div className="space-y-2" data-testid="abstain-checkin-options">
                             <p className="text-xs text-gray-400 text-center">Did you honor your will today?</p>
                             <button
-                              onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true }); }}
+                              onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true, date: todayLocalDate }); }}
                               disabled={abstainLogMutation.isPending}
                               className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                               style={{ border: '2px solid #1D6FBE', color: '#0A3870' }}
@@ -1720,7 +1728,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               I honored my will
                             </button>
                             <button
-                              onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: false }); }}
+                              onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: false, date: todayLocalDate }); }}
                               disabled={abstainLogMutation.isPending}
                               className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
                               style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
@@ -1761,47 +1769,77 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           {Array.from({ length: durStartDOW }).map((_, i) => <div key={`pad-${i}`} />)}
                           {durCalendarDays.map((d) => (
                             <div key={d.dayNum} className="flex justify-center">
-                              <div
+                              <button
+                                onClick={() => {
+                                  if (d.status === 'upcoming') return;
+                                  if (d.status === 'today') { setAbstainCheckInOpen(true); return; }
+                                  setDurPastEditDate(durPastEditDate === d.date ? null : d.date);
+                                }}
                                 className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
                                 style={{
                                   backgroundColor:
-                                    d.status === 'checked-in' ? '#1D6FBE'
+                                    d.status === 'checked-in' ? '#1D9E75'
                                     : d.status === 'missed' ? '#FECDD3'
-                                    : 'transparent',
+                                    : d.status === 'today' ? 'rgba(83,74,183,0.12)'
+                                    : '#F3F4F6',
                                   border:
-                                    d.status === 'today' ? '2px solid #534AB7'
-                                    : d.status === 'upcoming' ? '1px solid #E5E7EB'
+                                    d.status === 'missed' ? '2px solid #E24B4A'
+                                    : d.status === 'today' ? '2px solid #534AB7'
                                     : 'none',
                                   color:
                                     d.status === 'checked-in' ? '#fff'
                                     : d.status === 'missed' ? '#E24B4A'
                                     : d.status === 'today' ? '#534AB7'
                                     : '#9CA3AF',
+                                  cursor: d.status === 'upcoming' ? 'default' : 'pointer',
                                 }}
                                 data-testid={`day-dot-${d.dayNum}`}
                               >
                                 {d.dayNum}
-                              </div>
+                              </button>
                             </div>
                           ))}
                         </div>
+                        {/* Inline past-day edit panel */}
+                        {durPastEditDate && (() => {
+                          const displayDate = new Date(durPastEditDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                          return (
+                            <div className="mt-3 rounded-xl p-3 border border-gray-200 bg-gray-50 space-y-2" data-testid="dur-past-edit-panel">
+                              <p className="text-xs text-gray-500 text-center">Did you honor your will on {displayDate}?</p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => { abstainLogMutation.mutate({ honored: true, date: durPastEditDate }); setDurPastEditDate(null); }}
+                                  disabled={abstainLogMutation.isPending}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold bg-white transition-colors"
+                                  style={{ border: '2px solid #1D9E75', color: '#085041' }}
+                                  data-testid="button-dur-past-honored"
+                                >
+                                  <CheckCircle style={{ width: 16, height: 16, color: '#1D9E75' }} />
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => { abstainLogMutation.mutate({ honored: false, date: durPastEditDate }); setDurPastEditDate(null); }}
+                                  disabled={abstainLogMutation.isPending}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold bg-white transition-colors"
+                                  style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
+                                  data-testid="button-dur-past-missed"
+                                >
+                                  <XCircle style={{ width: 16, height: 16, color: '#E24B4A' }} />
+                                  No
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })()}
                         {/* Legend */}
-                        <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
+                        <div className="flex items-center justify-center gap-4 mt-3">
                           <div className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#1D6FBE' }} />
-                            <span className="text-[10px] text-gray-500">Checked in</span>
+                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#1D9E75' }} />
+                            <span className="text-[10px] text-gray-500">Done</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ border: '2px solid #534AB7' }} />
-                            <span className="text-[10px] text-gray-500">Today</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#FECDD3' }} />
+                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#FECDD3', border: '1.5px solid #E24B4A' }} />
                             <span className="text-[10px] text-gray-500">Missed</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB' }} />
-                            <span className="text-[10px] text-gray-500">Upcoming</span>
                           </div>
                         </div>
                       </div>

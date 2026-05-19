@@ -217,6 +217,7 @@ export default function WillDetails() {
   const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
   const [abstainChanging, setAbstainChanging] = useState(false);
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
+  const [durPastEditDate, setDurPastEditDate] = useState<string | null>(null);
   const [missionCheckInOpen, setMissionCheckInOpen] = useState(false);
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
   const [missionCompleted, setMissionCompleted] = useState(false);
@@ -534,6 +535,53 @@ export default function WillDetails() {
     return days.slice(-14);
   }, [will?.startDate, abstainLogEntries]);
 
+  // Duration: full grid calendar calculations
+  const durTotalDays = useMemo(() => {
+    if (effectiveCategory !== 'duration' || !will?.startDate || !will?.endDate) return 0;
+    return Math.max(1, Math.round((new Date(will.endDate).getTime() - new Date(will.startDate).getTime()) / 86400000));
+  }, [effectiveCategory, will?.startDate, will?.endDate]);
+
+  const durDaysIn = useMemo(() => {
+    if (effectiveCategory !== 'duration' || !will?.startDate || durTotalDays === 0) return 0;
+    const start = new Date(will.startDate); start.setHours(0, 0, 0, 0);
+    const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+    return Math.min(durTotalDays, Math.max(1, Math.floor((todayMidnight.getTime() - start.getTime()) / 86400000) + 1));
+  }, [effectiveCategory, will?.startDate, durTotalDays]);
+
+  const durDaysLeft = Math.max(0, durTotalDays - durDaysIn);
+
+  const durMissedDaysCount = useMemo(() => {
+    if (effectiveCategory !== 'duration' || !will?.startDate || durDaysIn === 0) return 0;
+    const start = new Date(will.startDate); start.setHours(0, 0, 0, 0);
+    let missed = 0;
+    for (let i = 0; i < durDaysIn - 1; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      const entry = abstainLogEntries.find((e: AbstainLog) => e.date === d.toLocaleDateString('en-CA'));
+      if (!entry || !entry.honored) missed++;
+    }
+    return missed;
+  }, [effectiveCategory, will?.startDate, durDaysIn, abstainLogEntries]);
+
+  const durCalendarDaysGrid = useMemo(() => {
+    if (effectiveCategory !== 'duration' || !will?.startDate || durTotalDays === 0) return [] as { dayNum: number; date: string; status: 'checked-in' | 'missed' | 'today' | 'upcoming' }[];
+    const start = new Date(will.startDate); start.setHours(0, 0, 0, 0);
+    const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+    return Array.from({ length: durTotalDays }, (_, i) => {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      const dateStr = d.toLocaleDateString('en-CA');
+      const isToday = d.getTime() === todayMidnight.getTime();
+      const isPast = d < todayMidnight;
+      const entry = abstainLogEntries.find((e: AbstainLog) => e.date === dateStr);
+      const status = isToday ? 'today' : isPast ? (entry?.honored ? 'checked-in' : 'missed') : 'upcoming';
+      return { dayNum: i + 1, date: dateStr, status } as { dayNum: number; date: string; status: 'checked-in' | 'missed' | 'today' | 'upcoming' };
+    });
+  }, [effectiveCategory, will?.startDate, durTotalDays, abstainLogEntries]);
+
+  const durStartDOWGrid = useMemo(() => {
+    if (effectiveCategory !== 'duration' || !will?.startDate) return 0;
+    return (new Date(will.startDate).getDay() + 6) % 7;
+  }, [effectiveCategory, will?.startDate]);
+
   // Mission: compute days remaining / total
   const missionDaysRemaining = useMemo(() => {
     if (!will?.endDate) return 0;
@@ -812,10 +860,10 @@ export default function WillDetails() {
 
   // Abstain log mutation
   const abstainLogMutation = useMutation({
-    mutationFn: async ({ honored }: { honored: boolean }) => {
+    mutationFn: async ({ honored, date }: { honored: boolean; date?: string }) => {
       const res = await apiRequest(`/api/wills/${id}/abstain-log`, {
         method: 'POST',
-        body: JSON.stringify({ honored, date: todayLocalDate }),
+        body: JSON.stringify({ honored, date: date ?? todayLocalDate }),
       });
       return res.json();
     },
@@ -982,8 +1030,7 @@ export default function WillDetails() {
                    return `Active · deadline ${label}`;
                  }
                  if (effectiveCategory === 'duration' && will.endDate) {
-                   const daysLeft = Math.max(0, Math.ceil((new Date(will.endDate).getTime() - Date.now()) / 86400000));
-                   return `Active · ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`;
+                   return `Active · ${durDaysLeft} day${durDaysLeft !== 1 ? 's' : ''} left`;
                  }
                  return 'Active';
                })() :
@@ -1647,74 +1694,141 @@ export default function WillDetails() {
                   onClick={() => setAbstainProgressExpanded(v => !v)}
                   data-testid="button-abstain-progress-toggle"
                 >
+                  <span className="text-sm font-semibold text-gray-800">Your progress</span>
                   <div className="flex items-center gap-2">
-                    <span className="flex gap-1">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />
-                    </span>
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800">Your progress</span>
-                      {(() => {
-                        const honored = abstainLogEntries.filter((e: AbstainLog) => e.honored).length;
-                        const notHonored = abstainLogEntries.filter((e: AbstainLog) => !e.honored).length;
-                        return (honored + notHonored) > 0 ? (
-                          <p className="text-xs text-gray-400">{honored} honored · {notHonored} not honored</p>
-                        ) : null;
-                      })()}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const honored = abstainLogEntries.filter((e: AbstainLog) => e.honored).length;
-                      const total = abstainLogEntries.length;
-                      return total > 0 ? (
-                        <span className="text-sm font-bold" style={{ color: '#1D9E75' }}>
-                          {Math.round((honored / total) * 100)}%
-                        </span>
-                      ) : null;
-                    })()}
+                    <span className="text-xs text-gray-500">Day {durDaysIn} of {durTotalDays}</span>
                     <ChevronDown style={{ width: 16, height: 16, color: '#9ca3af', transform: abstainProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
                   </div>
                 </button>
                 {abstainProgressExpanded && (
-                  <div className="px-4 pb-4 space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="text-center p-2 rounded-lg" style={{ backgroundColor: '#E1F5EE' }}>
-                        <div className="text-lg font-bold" style={{ color: '#1D9E75' }}>{abstainLogEntries.filter((e: AbstainLog) => e.honored).length}</div>
-                        <div className="text-xs" style={{ color: '#1D9E75' }}>honored</div>
-                      </div>
-                      <div className="text-center p-2 rounded-lg" style={{ backgroundColor: '#FCEBEB' }}>
-                        <div className="text-lg font-bold" style={{ color: '#E24B4A' }}>{abstainLogEntries.filter((e: AbstainLog) => !e.honored).length}</div>
-                        <div className="text-xs" style={{ color: '#E24B4A' }}>not honored</div>
-                      </div>
-                      <div className="text-center p-2 rounded-lg bg-gray-50">
-                        <div className="text-lg font-bold text-gray-700">
-                          {will.endDate ? Math.max(0, Math.ceil((new Date(will.endDate).getTime() - Date.now()) / 86400000)) : '∞'}
+                  <div className="px-4 pb-4 space-y-4">
+                    {/* Ring */}
+                    <div className="flex justify-center">
+                      <div className="relative" style={{ width: 144, height: 144 }}>
+                        <svg width="144" height="144" style={{ transform: 'rotate(-90deg)' }}>
+                          <circle cx="72" cy="72" r="56" fill="none" stroke="#E5E7EB" strokeWidth="10" />
+                          <circle
+                            cx="72" cy="72" r="56" fill="none"
+                            stroke="#1D6FBE" strokeWidth="10"
+                            strokeLinecap="round"
+                            strokeDasharray={`${2 * Math.PI * 56}`}
+                            strokeDashoffset={`${2 * Math.PI * 56 * (1 - durDaysIn / Math.max(1, durTotalDays))}`}
+                            style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ gap: 0 }}>
+                          <span className="text-[11px] text-gray-400" style={{ lineHeight: '1.2' }}>Day</span>
+                          <span className="font-bold" style={{ fontSize: 36, lineHeight: '1.05', color: '#1D6FBE' }}>{durDaysIn}</span>
+                          <span className="text-[11px] text-gray-400" style={{ lineHeight: '1.2' }}>of {durTotalDays}</span>
                         </div>
-                        <div className="text-xs text-gray-500">days left</div>
                       </div>
                     </div>
-                    {abstainCalendarDays.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex gap-1 flex-wrap">
-                          {abstainCalendarDays.map((d) => (
-                            <div key={d.date} className="flex flex-col items-center" style={{ minWidth: 30 }}>
-                              <div
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium"
-                                style={{
-                                  backgroundColor: d.status === 'honored' ? '#1D9E75' : d.status === 'not-honored' ? '#E24B4A' : '#F3F4F6',
-                                  color: d.status === 'pending' ? '#9CA3AF' : '#fff',
+                    {/* Date range */}
+                    {will.startDate && will.endDate && (
+                      <p className="text-sm text-gray-500 text-center -mt-2" data-testid="text-date-range">
+                        {new Date(String(will.startDate) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(String(will.endDate) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    )}
+                    {/* Stat boxes */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-lg font-bold text-gray-800">{durDaysIn}</div>
+                        <div className="text-[11px] text-gray-500">days in</div>
+                      </div>
+                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-lg font-bold text-gray-800">{durDaysLeft}</div>
+                        <div className="text-[11px] text-gray-500">days left</div>
+                      </div>
+                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-lg font-bold" style={{ color: durMissedDaysCount > 0 ? '#E24B4A' : '#1F2937' }}>{durMissedDaysCount}</div>
+                        <div className="text-[11px] text-gray-500">missed</div>
+                      </div>
+                    </div>
+                    {/* Divider */}
+                    <div className="border-t border-gray-100" />
+                    {/* 7-column grid calendar */}
+                    {durCalendarDaysGrid.length > 0 && (
+                      <div>
+                        <div className="grid grid-cols-7 mb-1.5">
+                          {['M','T','W','T','F','S','S'].map((h, i) => (
+                            <div key={i} className="text-center text-[10px] font-semibold text-gray-400">{h}</div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-y-1.5">
+                          {Array.from({ length: durStartDOWGrid }).map((_, i) => <div key={`pad-${i}`} />)}
+                          {durCalendarDaysGrid.map((d) => (
+                            <div key={d.dayNum} className="flex justify-center">
+                              <button
+                                onClick={() => {
+                                  if (d.status === 'upcoming') return;
+                                  setDurPastEditDate(durPastEditDate === d.date ? null : d.date);
                                 }}
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                                style={{
+                                  backgroundColor:
+                                    d.status === 'checked-in' ? '#1D9E75'
+                                    : d.status === 'missed' ? '#FECDD3'
+                                    : d.status === 'today' ? 'rgba(83,74,183,0.12)'
+                                    : '#F3F4F6',
+                                  border:
+                                    d.status === 'missed' ? '2px solid #E24B4A'
+                                    : d.status === 'today' ? '2px solid #534AB7'
+                                    : 'none',
+                                  color:
+                                    d.status === 'checked-in' ? '#fff'
+                                    : d.status === 'missed' ? '#E24B4A'
+                                    : d.status === 'today' ? '#534AB7'
+                                    : '#9CA3AF',
+                                  cursor: d.status === 'upcoming' ? 'default' : 'pointer',
+                                }}
+                                data-testid={`day-dot-${d.dayNum}`}
                               >
-                                {new Date(d.date + 'T00:00:00').getDate()}
-                              </div>
+                                {d.dayNum}
+                              </button>
                             </div>
                           ))}
                         </div>
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /><span className="text-xs text-gray-500">Honored</span></div>
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" /><span className="text-xs text-gray-500">Not honored</span></div>
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-200 inline-block" /><span className="text-xs text-gray-500">Pending</span></div>
+                        {/* Inline past-day edit panel */}
+                        {durPastEditDate && (() => {
+                          const displayDate = new Date(durPastEditDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                          return (
+                            <div className="mt-3 rounded-xl p-3 border border-gray-200 bg-gray-50 space-y-2" data-testid="dur-past-edit-panel">
+                              <p className="text-xs text-gray-500 text-center">Did you honor your will on {displayDate}?</p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => { abstainLogMutation.mutate({ honored: true, date: durPastEditDate }); setDurPastEditDate(null); }}
+                                  disabled={abstainLogMutation.isPending}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold bg-white transition-colors"
+                                  style={{ border: '2px solid #1D9E75', color: '#085041' }}
+                                  data-testid="button-dur-past-honored"
+                                >
+                                  <CheckCircle style={{ width: 16, height: 16, color: '#1D9E75' }} />
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => { abstainLogMutation.mutate({ honored: false, date: durPastEditDate }); setDurPastEditDate(null); }}
+                                  disabled={abstainLogMutation.isPending}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold bg-white transition-colors"
+                                  style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
+                                  data-testid="button-dur-past-missed"
+                                >
+                                  <XCircle style={{ width: 16, height: 16, color: '#E24B4A' }} />
+                                  No
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        {/* Legend */}
+                        <div className="flex items-center justify-center gap-4 mt-3">
+                          <div className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#1D9E75' }} />
+                            <span className="text-[10px] text-gray-500">Done</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#FECDD3', border: '1.5px solid #E24B4A' }} />
+                            <span className="text-[10px] text-gray-500">Missed</span>
+                          </div>
                         </div>
                       </div>
                     )}
