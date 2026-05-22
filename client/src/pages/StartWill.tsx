@@ -978,6 +978,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               setCurrentStep(5);
             }}
             onBack={() => setCurrentStep(3)}
+            defaultCategory={notificationsData?.commitmentCategory as Category | undefined}
             willDurationDays={(() => {
               if (isIndefinite || !willData.startDate || !willData.endDate) return undefined;
               const diffMs = new Date(willData.endDate).getTime() - new Date(willData.startDate).getTime();

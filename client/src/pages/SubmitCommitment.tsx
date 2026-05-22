@@ -635,6 +635,7 @@ export default function SubmitCommitment() {
             because={why}
             onComplete={handleNotificationsComplete}
             onBack={handleBack}
+            defaultCategory={notificationsData?.commitmentCategory as Category | undefined}
           />
         )}
 

@@ -20,6 +20,7 @@ interface NotificationsSetupProps {
   onComplete: (data: NotificationsData) => void;
   onBack: () => void;
   willDurationDays?: number;
+  defaultCategory?: Category;
 }
 
 type Category = 'recurring' | 'duration' | 'event';
@@ -488,11 +489,11 @@ function EventSection({ state, onChange, because }: { state: EvtState; onChange:
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 
-export default function NotificationsSetup({ what, because, onComplete, onBack, willDurationDays }: NotificationsSetupProps) {
+export default function NotificationsSetup({ what, because, onComplete, onBack, willDurationDays, defaultCategory }: NotificationsSetupProps) {
   const formattedWhat = what?.toLowerCase().startsWith('i will') ? what : `I will ${what}`;
   const willStatement = formattedWhat.startsWith('"') ? formattedWhat : `"${formattedWhat}"`;
 
-  const [selected, setSelected] = useState<Category>('recurring');
+  const [selected, setSelected] = useState<Category>(defaultCategory ?? 'recurring');
 
   const [recState, setRecState] = useState<RecState>({
     reminderOn: true, reminderTime: '20:30',
