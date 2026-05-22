@@ -679,7 +679,7 @@ export default function SubmitCommitment() {
                 )}
               </div>
 
-              {/* Team inset — shown for We Will only, includes pending members */}
+              {/* Team inset — We Will: names only (shared commitment) */}
               {isCumulative && confirmedTeamMembers.length > 0 && (
                 <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
                   <p className="text-[10px] font-medium mb-2.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
@@ -708,6 +708,91 @@ export default function SubmitCommitment() {
                       );
                     })}
                   </div>
+                </div>
+              )}
+
+              {/* Team inset — I Will: avatar + name + individual commitment per member */}
+              {!isCumulative && confirmedTeamMembers.length > 0 && (
+                <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
+                  <p className="text-[10px] font-medium px-4 pt-3 pb-2" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                    Team commitments
+                  </p>
+                  <div>
+                    {confirmedTeamMembers.map((m, idx) => {
+                      const isPending = !m.isCreator && m.status === 'pending';
+                      const isCurrentUser = m.userId === (user as any)?.id;
+                      const isLast = idx === confirmedTeamMembers.length - 1;
+                      return (
+                        <div key={m.userId}>
+                          <div
+                            className="flex items-center gap-2.5 px-4"
+                            style={{
+                              paddingTop: 8,
+                              paddingBottom: 8,
+                              ...(isCurrentUser ? {
+                                margin: '0 8px',
+                                borderRadius: 8,
+                                outline: '1px solid rgba(255,255,255,0.30)',
+                                paddingLeft: 8,
+                                paddingRight: 8,
+                              } : {}),
+                            }}
+                          >
+                            {/* Avatar */}
+                            <div
+                              className="rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+                              style={{
+                                width: 28, height: 28,
+                                backgroundColor: isPending ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.25)',
+                                color: isPending ? 'rgba(255,255,255,0.45)' : 'white',
+                              }}
+                            >
+                              {m.firstName.charAt(0).toUpperCase()}
+                            </div>
+
+                            {/* Name + commitment */}
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="text-sm font-medium leading-tight"
+                                style={{ color: isPending ? 'rgba(255,255,255,0.50)' : 'white' }}
+                              >
+                                {m.firstName}
+                              </p>
+                              {!isPending && m.commitment && (
+                                <p
+                                  className="text-xs italic leading-snug truncate mt-0.5"
+                                  style={{ color: 'rgba(255,255,255,0.65)' }}
+                                >
+                                  "{m.commitment}"
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Badge */}
+                            {isCurrentUser ? (
+                              <span
+                                className="text-[11px] font-semibold flex-shrink-0 px-2 py-0.5 rounded-full"
+                                style={{ background: '#1D9E75', color: 'white' }}
+                              >
+                                Joining
+                              </span>
+                            ) : isPending ? (
+                              <span
+                                className="text-[11px] flex-shrink-0 px-2 py-0.5 rounded-full"
+                                style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.50)' }}
+                              >
+                                Pending
+                              </span>
+                            ) : null}
+                          </div>
+                          {!isLast && (
+                            <div style={{ height: 0.5, background: 'rgba(255,255,255,0.12)', marginLeft: 16, marginRight: 16 }} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ height: 12 }} />
                 </div>
               )}
             </div>
