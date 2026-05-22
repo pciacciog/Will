@@ -612,7 +612,12 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const canPauseResume = canManage && (will.status === "active" || will.status === "paused");
   const canTerminate = canManage && (will.status === "active" || will.status === "paused" || will.status === "scheduled");
 
-  const backUrl = sessionStorage.getItem("willBackUrl") || "/";
+  const backUrl = (() => {
+    const stored = sessionStorage.getItem("willBackUrl");
+    // Guard: if stored URL points back to this same page it would loop — ignore it
+    if (stored && stored !== `/will/${willId}`) return stored;
+    return "/";
+  })();
 
   const endDateStr = will?.endDate as unknown as string | null;
   const daysLeft = !(will as any)?.isIndefinite && endDateStr
@@ -1123,7 +1128,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               {/* Chat / messages */}
               <button
                 onClick={() => {
-                  sessionStorage.setItem("willBackUrl", `/will/${willId}`);
                   setLocation(`/will/${willId}/messages`);
                 }}
                 className="w-9 h-9 flex items-center justify-center rounded-xl text-white transition-all active:scale-95"
