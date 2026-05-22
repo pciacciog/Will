@@ -1821,7 +1821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: {
           type: 'team_will_invite_ping',
           willId: willId.toString(),
-          deepLink: `/will/${willId}/commit`,
+          deepLink: `/will/${willId}/invite`,
         },
       });
 

@@ -1,0 +1,19 @@
+Team Will Invite — Bug Fix + UI Redesign
+Bug fix: Invite acceptance flow must always run first
+Every entry point that can lead to a Team Will invitation — the "View" button, push notifications, deep links, or any other trigger — must route the user through the invite acceptance screen before anything else. The user should never land directly in the commitment flow (What, Why, etc.) without first seeing and acting on the invitation. Audit all entry points and enforce this without exception.
+
+UI Redesign: Team Will Invite screen
+Apply the following changes to every instance of the Team Will Invite screen across the app. The current layout starts too high and feels overwhelming — the goal is a tighter, more breathable screen that fits without scrolling on a standard iPhone.
+Layout changes (top to bottom):
+
+Nav row: small circular back button on the left, "Team Will Invite" title inline next to it. Do not center the title in isolation above everything — keep it in the same row as the back button and closer to the content below.
+Hero section: replace the tall centered purple card with a compact horizontal banner (border-radius 16px). Left side: circular avatar with inviter's initial. Right side: two lines of text — a small muted line ("Jack Dlugos invited you to a") and a bold line ("Team Will"). Same purple background (#7F77DD), but the height should be roughly half of what it currently is.
+Commitments card: white card, border-radius 14px. Section label "COMMITMENTS" in 10px uppercase gray. Member rows are compact (padding 7px top/bottom), 34px avatars, 0.5px dividers between rows. Members who have committed show their will statement in small italic gray text below their name. Pending members show a small muted gray pill badge ("Pending") on the right.
+Type of Will card: light purple background (#eeedfe), border-radius 14px, horizontal layout with a small purple icon square on the left and title + subtitle on the right. Keep it to one line of subtitle text.
+Dates card: white card, border-radius 14px, horizontal layout with a small amber calendar icon on the left, "STARTS" label in 10px uppercase gray above the date range value.
+Expires note: small 11px centered gray text below the dates card.
+Accept button: full width, green (#1D9E75), border-radius 14px, checkmark icon + "Accept invite" label.
+Decline button: full width, white with light gray border, border-radius 14px, X icon + "Decline" label.
+Below decline: 11px centered gray caption — "You can decline if this doesn't work for you right now."
+
+General: reduce vertical padding throughout. No element should feel like it is taking up disproportionate space. The entire screen should be viewable without scrolling on a standard iPhone viewport.

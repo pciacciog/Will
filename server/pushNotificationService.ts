@@ -474,7 +474,7 @@ class PushNotificationService {
       data: {
         type: 'commitment_reminder',
         willId: willId.toString(),
-        deepLink: `/will/${willId}/commit`
+        deepLink: `/will/${willId}/invite`
       }
     };
 

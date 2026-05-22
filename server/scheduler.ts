@@ -1917,7 +1917,7 @@ export class EndRoomScheduler {
             title: 'Finish committing — your Team Will starts soon',
             body: `Tap to set your commitment for "${inviteTitle}" before it begins`,
             category: 'shared_will_reminder',
-            data: { type: 'shared_will_commit', willId: row.willId, deepLink: `/will/${row.willId}/commit` },
+            data: { type: 'shared_will_commit', willId: row.willId, deepLink: `/will/${row.willId}/invite` },
           });
 
           await db

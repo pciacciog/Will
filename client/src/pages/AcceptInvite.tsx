@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Calendar, CheckCircle } from "lucide-react";
+import { ChevronLeft, Calendar, CheckCircle, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type TeamMember = {
@@ -117,30 +117,18 @@ export default function AcceptInvite() {
   const { invite, will, teamMembers = [] } = data;
   const willHasStarted = will?.startDate ? new Date(will.startDate) <= new Date() : false;
 
-  // Did the current invitee already submit a commitment for this will?
   const myMember = teamMembers.find(m => m.userId === user?.id);
   const hasMyCommitment = !!myMember?.commitment;
 
-  // "Dropped out" = the invitee accepted (we know because respondedAt is set)
-  // but never submitted a commitment AND the will has now started. Once the
-  // scheduler runs at startDate it flips status to 'expired', so we have to
-  // detect this from BOTH `accepted` (race window before scheduler tick) and
-  // `expired` (post-scheduler) — anchored on respondedAt to distinguish from
-  // a vanilla "never opened the invite" expired case.
   const acceptedDroppedOut =
     !hasMyCommitment &&
     willHasStarted &&
     !!invite.respondedAt &&
     (invite.status === "accepted" || invite.status === "expired");
 
-  // Accepted but never submitted a commitment, and the will has not started
-  // yet → invite is still actionable; route them to the commit step instead
-  // of the dead-end "already accepted" card.
   const acceptedButNotCommitted =
     invite.status === "accepted" && !hasMyCommitment && !willHasStarted;
 
-  // Generic expired card should NOT shadow the explicit dropped-out terminal
-  // state; that card is more informative.
   const expiresAtPassed = invite.expiresAt && new Date(invite.expiresAt) <= new Date();
   const isExpired = (invite.status === "expired" || expiresAtPassed) && !acceptedDroppedOut;
   const isAlreadyActioned = invite.status === "accepted" || invite.status === "declined";
@@ -148,12 +136,10 @@ export default function AcceptInvite() {
   const inviterName = will.creatorName || "A friend";
   const inviterInitial = inviterName.charAt(0).toUpperCase();
 
-  // Team section logic — show whenever at least one other person was invited (accepted or pending)
   const visibleMembers = teamMembers.filter(m => m.status !== "declined");
   const otherMembers = visibleMembers.filter(m => m.userId !== user?.id);
   const showTeamSection = otherMembers.length >= 1;
 
-  // Sort: accepted first, then pending
   const sortedMembers = [
     ...visibleMembers.filter(m => m.isCreator || m.status === "accepted"),
     ...visibleMembers.filter(m => !m.isCreator && m.status === "pending"),
@@ -161,110 +147,111 @@ export default function AcceptInvite() {
 
   const isBusy = declineMutation.isPending;
 
+  const PURPLE = "#7F77DD";
+  const PURPLE_BG = "#eeedfe";
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div
+      className="min-h-screen bg-white flex flex-col"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <div
-        className="flex-1 flex flex-col justify-center"
+        className="flex-1 flex flex-col max-w-sm mx-auto w-full px-4"
         style={{
-          paddingTop: "max(env(safe-area-inset-top), 1rem)",
-          paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)",
+          paddingBottom: "max(20px, env(safe-area-inset-bottom))",
         }}
       >
-        <div className="max-w-sm mx-auto px-4 space-y-2.5">
 
-          {/* 3-column nav */}
-          <div className="grid items-center mb-1" style={{ gridTemplateColumns: "40px 1fr 40px" }}>
-            <button
-              onClick={() => setLocation("/")}
-              className="w-10 h-10 flex items-center justify-center"
-              data-testid="button-back"
+        {/* ── Nav row ─────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-2.5 pt-3 pb-3">
+          <button
+            onClick={() => setLocation("/")}
+            className="w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 transition-all active:scale-95"
+            style={{ background: "#f2f2f7", border: "1px solid #e5e5ea" }}
+            data-testid="button-back"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-700" strokeWidth={2.5} />
+          </button>
+          <span className="text-sm font-semibold text-gray-900">Team Will Invite</span>
+        </div>
+
+        {/* ── Content ─────────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-2.5">
+
+          {/* Hero banner — compact horizontal */}
+          <div
+            className="flex items-center gap-3 px-4 py-3"
+            style={{ background: PURPLE, borderRadius: 16 }}
+          >
+            {/* Avatar */}
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(255,255,255,0.2)" }}
             >
-              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition-all active:scale-95">
-                <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
-              </span>
-            </button>
-            <h1 className="text-center text-sm font-semibold text-gray-900">Team Will Invite</h1>
-            <span />
-          </div>
-
-          {/* Hero card */}
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#7B3FC4" }}>
-            <div className="px-5 py-4 text-center">
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-2"
-                style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
-              >
-                <span className="text-white font-bold text-lg">{inviterInitial}</span>
-              </div>
-              <p className="text-xs mb-0.5" style={{ color: "rgba(255,255,255,0.75)" }}>
+              <span className="text-white font-bold text-base">{inviterInitial}</span>
+            </div>
+            {/* Text */}
+            <div className="min-w-0">
+              <p className="text-xs leading-tight" style={{ color: "rgba(255,255,255,0.75)" }}>
                 {inviterName} invited you to{will.title ? "" : " a"}
               </p>
-              <p className="text-lg font-bold text-white mb-2">
-                {will.title || "Will"}
+              <p className="text-base font-bold text-white leading-tight truncate">
+                {will.title || "Team Will"}
               </p>
-
-              {/* We Will — shared commitment inset */}
-              {isWeWill && will.sharedWhat && (
-                <div
-                  className="rounded-xl px-3 py-2.5 text-left"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
-                >
-                  <p className="text-[10px] font-medium mb-1" style={{ color: "rgba(255,255,255,0.65)" }}>
-                    The commitment
-                  </p>
-                  <p className="text-sm font-bold italic text-white">
-                    "{will.sharedWhat}"
-                  </p>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Team / Commitments — only shown when ≥ 2 confirmed non-current-user members */}
+          {/* Commitments card */}
           {showTeamSection && (
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-white overflow-hidden" style={{ borderRadius: 14, border: "1px solid #f0f0f0" }}>
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide px-4 pt-3 pb-1.5">
                 {isWeWill ? "Team" : "Commitments"}
               </p>
               {sortedMembers.map((member, idx) => {
                 const isAccepted = member.isCreator || member.status === "accepted";
                 const isCurrentUser = member.userId === user?.id;
+                const isPending = !isAccepted;
                 const isLast = idx === sortedMembers.length - 1;
                 return (
-                  <div
-                    key={member.userId}
-                    className={`flex items-center gap-3 px-4 py-2.5 ${!isLast ? "border-b border-gray-50" : ""} ${!isAccepted ? "opacity-50" : ""}`}
-                  >
-                    {/* Avatar with status dot */}
-                    <div className="relative flex-shrink-0">
+                  <div key={member.userId}>
+                    <div className="flex items-center gap-3 px-4" style={{ paddingTop: 7, paddingBottom: 7 }}>
+                      {/* Avatar */}
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                        style={{ backgroundColor: isAccepted ? "#7B3FC4" : "#D1D5DB" }}
+                        className="rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
+                        style={{
+                          width: 34, height: 34,
+                          background: isAccepted ? PURPLE : "#D1D5DB",
+                        }}
                       >
                         {member.firstName.charAt(0).toUpperCase()}
                       </div>
-                      {isAccepted && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white" />
-                      )}
-                    </div>
 
-                    {/* Name + commitment (I Will only) */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 leading-tight">
-                        {member.firstName}{isCurrentUser ? " (You)" : ""}
-                      </p>
-                      {!isWeWill && isAccepted && member.commitment && (
-                        <p className="text-xs italic text-gray-400 truncate">"{member.commitment}"</p>
-                      )}
-                    </div>
+                      {/* Name + commitment */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 leading-tight">
+                          {member.firstName}{isCurrentUser ? " (You)" : ""}
+                        </p>
+                        {!isWeWill && isAccepted && member.commitment && (
+                          <p className="text-xs italic text-gray-400 leading-snug truncate mt-0.5">
+                            "{member.commitment}"
+                          </p>
+                        )}
+                      </div>
 
-                    {/* Status label */}
-                    {isAccepted ? (
-                      isWeWill ? (
+                      {/* Right side */}
+                      {isPending ? (
+                        <span
+                          className="text-xs text-gray-400 flex-shrink-0 px-2 py-0.5 rounded-full"
+                          style={{ background: "#f2f2f7" }}
+                        >
+                          Pending
+                        </span>
+                      ) : isWeWill ? (
                         <span className="text-xs font-semibold text-emerald-600 flex-shrink-0">In</span>
-                      ) : null
-                    ) : (
-                      <span className="text-xs text-gray-400 flex-shrink-0">Pending</span>
+                      ) : null}
+                    </div>
+                    {!isLast && (
+                      <div style={{ height: 0.5, background: "#E5E7EB", marginLeft: 16, marginRight: 16 }} />
                     )}
                   </div>
                 );
@@ -272,46 +259,64 @@ export default function AcceptInvite() {
             </div>
           )}
 
-          {/* Type of Will */}
+          {/* Type of Will card */}
           <div
-            className="rounded-2xl px-4 py-3 border"
-            style={{ backgroundColor: "#F3EAFE", borderColor: "#D4B8F0" }}
+            className="flex items-center gap-3 px-4 py-3"
+            style={{ background: PURPLE_BG, borderRadius: 14 }}
           >
-            <p className="text-[10px] font-medium text-purple-400 mb-2 uppercase tracking-wide">Type of Will</p>
-            <div className="flex items-center gap-3">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: "#7B3FC4" }}
-              >
-                {isWeWill ? (
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="9" />
-                    <circle cx="12" cy="12" r="4" />
-                    <circle cx="12" cy="12" r="1" fill="currentColor" />
-                  </svg>
-                )}
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 text-sm">{isWeWill ? "We Will" : "I Will"}</p>
-                <p className="text-xs mt-0.5 leading-snug" style={{ color: "#7B3FC4" }}>
-                  {isWeWill
-                    ? "Every member pursues the same commitment"
-                    : "Each member pursues their own individual commitment"}
-                </p>
-              </div>
+            <div
+              className="flex items-center justify-center flex-shrink-0"
+              style={{ width: 36, height: 36, borderRadius: 10, background: PURPLE }}
+            >
+              {isWeWill ? (
+                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="12" cy="12" r="1" fill="currentColor" />
+                </svg>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-gray-900 leading-tight">{isWeWill ? "We Will" : "I Will"}</p>
+              <p className="text-xs leading-snug truncate" style={{ color: PURPLE }}>
+                {isWeWill
+                  ? "Every member pursues the same commitment"
+                  : "Each member pursues their own individual commitment"}
+              </p>
             </div>
           </div>
 
-          {/* Starts row */}
-          <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0 border border-amber-100">
+          {/* We Will shared commitment inset */}
+          {isWeWill && will.sharedWhat && (
+            <div
+              className="px-4 py-2.5"
+              style={{ background: PURPLE_BG, borderRadius: 12 }}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: PURPLE }}>
+                The commitment
+              </p>
+              <p className="text-sm font-semibold italic" style={{ color: PURPLE }}>
+                "{will.sharedWhat}"
+              </p>
+            </div>
+          )}
+
+          {/* Dates card */}
+          <div
+            className="bg-white flex items-center gap-3 px-4 py-3"
+            style={{ borderRadius: 14, border: "1px solid #f0f0f0" }}
+          >
+            <div
+              className="flex items-center justify-center flex-shrink-0"
+              style={{ width: 36, height: 36, borderRadius: 10, background: "#fffbeb", border: "1px solid #fde68a" }}
+            >
               <Calendar className="w-4 h-4 text-amber-500" />
             </div>
             <div>
@@ -322,14 +327,15 @@ export default function AcceptInvite() {
             </div>
           </div>
 
-          {/* Expiry */}
+          {/* Expiry note */}
           {invite.expiresAt && !isAlreadyActioned && !isExpired && (
-            <p className="text-xs text-gray-400 text-center">
+            <p className="text-[11px] text-gray-400 text-center -mt-1">
               {formatExpiryLine(invite.expiresAt)}
             </p>
           )}
 
-          {/* Expired state */}
+          {/* ── State-specific cards ─────────────────────────────────── */}
+
           {isExpired && (
             <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
               <p className="text-sm text-red-600 font-medium">This invite has expired</p>
@@ -337,7 +343,6 @@ export default function AcceptInvite() {
             </div>
           )}
 
-          {/* Accepted but never finished committing — still actionable */}
           {acceptedButNotCommitted && !isExpired && (
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-center" data-testid="card-finish-committing">
               <p className="text-sm text-amber-700 font-medium mb-1">You haven't finished committing yet</p>
@@ -354,7 +359,6 @@ export default function AcceptInvite() {
             </div>
           )}
 
-          {/* Accepted but ran out of time — terminal */}
           {acceptedDroppedOut && (
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center" data-testid="card-dropped-out">
               <p className="text-sm text-gray-700 font-medium">You didn't finish committing in time</p>
@@ -369,7 +373,6 @@ export default function AcceptInvite() {
             </div>
           )}
 
-          {/* Already accepted AND committed — direct to the hub */}
           {invite.status === "accepted" && hasMyCommitment && !isExpired && (
             <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
               <CheckCircle className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
@@ -383,42 +386,44 @@ export default function AcceptInvite() {
             </div>
           )}
 
-          {/* Already declined */}
           {invite.status === "declined" && (
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center">
               <p className="text-sm text-gray-600">You declined this invite.</p>
             </div>
           )}
 
-          {/* Action buttons */}
+          {/* ── Accept / Decline ─────────────────────────────────────── */}
           {invite.status === "pending" && !isExpired && (
-            <div className="space-y-2 pt-1">
+            <div className="flex flex-col gap-2 pt-1">
+              {/* Accept */}
               <button
                 onClick={handleAccept}
                 disabled={isBusy}
-                className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
-                style={{ backgroundColor: "#2D9D78" }}
+                className="w-full flex items-center justify-center gap-2 py-[14px] text-white font-semibold text-base transition-all active:scale-[0.98] disabled:opacity-50"
+                style={{ background: "#1D9E75", borderRadius: 14 }}
                 data-testid="button-accept-invite"
               >
-                <CheckCircle className="w-5 h-5" />
+                <Check className="w-5 h-5" strokeWidth={2.5} />
                 Accept invite
               </button>
 
+              {/* Decline */}
               <button
                 onClick={() => declineMutation.mutate()}
                 disabled={isBusy}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-white border border-gray-200 text-gray-500 font-medium text-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-[13px] bg-white font-medium text-sm transition-all active:scale-[0.98] disabled:opacity-50"
+                style={{ border: "1.5px solid #E5E7EB", borderRadius: 14, color: "#6B7280" }}
                 data-testid="button-decline-invite"
               >
                 {declineMutation.isPending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
                 ) : (
-                  <span className="text-base leading-none">×</span>
+                  <X className="w-4 h-4" strokeWidth={2.5} />
                 )}
                 Decline
               </button>
 
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-[11px] text-gray-400 text-center">
                 You can decline if this doesn't work for you right now.
               </p>
             </div>

@@ -433,7 +433,7 @@ export default function MyWills() {
                 <AwaitingCommitmentCard
                   key={item.invite.id}
                   item={item}
-                  onFinish={() => setLocation(`/will/${item.will.id}/commit`)}
+                  onFinish={() => setLocation(`/will/${item.will.id}/invite`)}
                 />
               ))}
             </div>
