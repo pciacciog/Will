@@ -1,0 +1,30 @@
+Bug fixes:
+The text input field is growing unbounded vertically instead of capping its height. It should expand up to a maximum of 5 lines, then become internally scrollable — it must never push the message list or the send button off screen. The send button must always remain visible and tappable regardless of how long the message is.
+When the keyboard opens on iOS, the input bar and message list must shift up with it correctly using Capacitor's keyboard resize handling (KeyboardResizeMode.Native or equivalent). The message list should never be obscured by the keyboard.
+
+Core behavior to implement (WhatsApp model):
+
+When the keyboard opens, the message list automatically scrolls to the bottom so the most recent message is always visible
+When a new message is sent or received, the list scrolls to the bottom automatically
+Tapping anywhere on the message list dismisses the keyboard
+Scrolling up through message history is smooth and does not interfere with the input field
+The input field retains focus after sending a message — the user should not have to re-tap to type the next message
+The send button is inactive (visually dimmed) when the input is empty and activates the moment the user starts typing
+
+
+Polish and UX improvements:
+
+Group consecutive messages from the same sender together — no timestamp or avatar repetition within a cluster. Show the timestamp once at the end of each cluster, small and muted, like WhatsApp
+Date separator pills ("Today", "May 12") should be centered, small, and lightly styled — keep what exists but make sure they only appear once per date change, not repeatedly
+Message bubbles should have a subtle tail on the first message of each cluster only (sent = right tail, received = left tail) — subsequent messages in the same cluster are straight-edged on that side
+Sent messages on the right in the app's green, received messages on the left in light gray with dark text
+Add a single checkmark on sent messages (delivered) — if read receipts are available, double checkmark. Keep it minimal
+Long-pressing a message bubble should surface a small action menu: Copy, Reply (if reply threading exists), Delete
+The input placeholder text should say "Type a message..." and disappear cleanly on focus
+If the chat has no messages yet, show a centered empty state — something like "Start the conversation" in small muted text
+
+
+Performance:
+
+Virtualize the message list if it isn't already — long conversations should not degrade scroll performance
+Images or proof drops shared in chat should load lazily with a placeholder while fetching
