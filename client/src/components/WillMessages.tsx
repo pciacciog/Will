@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, Check, Copy } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: number;
@@ -13,9 +13,10 @@ interface Message {
   user: { firstName: string };
 }
 
-function formatExactTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString("en-US", {
+const MAX_INPUT_HEIGHT = 120; // ~5 lines of text
+
+function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -27,20 +28,33 @@ function formatDayLabel(dateStr: string): string {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round((today.getTime() - msgDay.getTime()) / (1000 * 60 * 60 * 24));
-
+  const diffDays = Math.round((today.getTime() - msgDay.getTime()) / 86400000);
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) {
-    return date.toLocaleDateString("en-US", { weekday: "long" });
-  }
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: now.getFullYear() !== date.getFullYear() ? "numeric" : undefined });
+  if (diffDays < 7) return date.toLocaleDateString("en-US", { weekday: "long" });
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: now.getFullYear() !== date.getFullYear() ? "numeric" : undefined,
+  });
 }
 
 function isSameDay(a: string, b: string): boolean {
-  const da = new Date(a);
-  const db = new Date(b);
-  return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate();
+  const da = new Date(a), db = new Date(b);
+  return (
+    da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate()
+  );
+}
+
+function inSameCluster(a: Message, b: Message): boolean {
+  if (a.userId !== b.userId) return false;
+  if (!isSameDay(a.createdAt, b.createdAt)) return false;
+  const diff = Math.abs(
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  return diff < 5 * 60 * 1000;
 }
 
 export default function WillMessages({
@@ -51,12 +65,17 @@ export default function WillMessages({
   currentUserId: string;
 }) {
   const [text, setText] = useState("");
+  const [contextMsg, setContextMsg] = useState<Message | null>(null);
+  const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [hasScrolledOnLoad, setHasScrolledOnLoad] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [hasScrolledOnLoad, setHasScrolledOnLoad] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const prevMessageCountRef = useRef(0);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { toast } = useToast();
 
   const { data: rawMessages, isLoading } = useQuery<Message[]>({
     queryKey: ["/api/wills", willId, "messages"],
@@ -76,19 +95,25 @@ export default function WillMessages({
         method: "POST",
         body: JSON.stringify({ text: messageText }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any).message || "Failed to send message");
+      }
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["/api/wills", willId, "messages"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/wills", willId, "messages"] });
       setText("");
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.style.height = "36px";
+          inputRef.current.style.overflowY = "hidden";
           inputRef.current.focus();
         }
       }, 50);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Couldn't send", description: err.message, variant: "destructive" });
     },
   });
 
@@ -97,9 +122,9 @@ export default function WillMessages({
   }, []);
 
   const isNearBottom = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return true;
-    return container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+    const c = scrollContainerRef.current;
+    if (!c) return true;
+    return c.scrollHeight - c.scrollTop - c.clientHeight < 150;
   }, []);
 
   useEffect(() => {
@@ -111,9 +136,7 @@ export default function WillMessages({
 
   useEffect(() => {
     if (messages.length > prevMessageCountRef.current && hasScrolledOnLoad) {
-      if (isNearBottom()) {
-        setTimeout(() => scrollToBottom("smooth"), 50);
-      }
+      if (isNearBottom()) setTimeout(() => scrollToBottom("smooth"), 50);
     }
     prevMessageCountRef.current = messages.length;
   }, [messages.length, hasScrolledOnLoad, isNearBottom, scrollToBottom]);
@@ -121,15 +144,11 @@ export default function WillMessages({
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
-
     const onResize = () => {
-      const newKeyboardHeight = window.innerHeight - viewport.height - viewport.offsetTop;
-      setKeyboardHeight(Math.max(0, newKeyboardHeight));
-      if (newKeyboardHeight > 0) {
-        setTimeout(() => scrollToBottom("smooth"), 100);
-      }
+      const kh = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      setKeyboardHeight(kh);
+      if (kh > 0) setTimeout(() => scrollToBottom("smooth"), 80);
     };
-
     viewport.addEventListener("resize", onResize);
     viewport.addEventListener("scroll", onResize);
     return () => {
@@ -137,6 +156,15 @@ export default function WillMessages({
       viewport.removeEventListener("scroll", onResize);
     };
   }, [scrollToBottom]);
+
+  const resizeTextarea = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const capped = Math.min(el.scrollHeight, MAX_INPUT_HEIGHT);
+    el.style.height = capped + "px";
+    el.style.overflowY = el.scrollHeight > MAX_INPUT_HEIGHT ? "auto" : "hidden";
+  };
 
   const handleSend = () => {
     const trimmed = text.trim();
@@ -151,83 +179,162 @@ export default function WillMessages({
     }
   };
 
-  const handleTextareaInput = (e: React.FormEvent) => {
-    const target = e.target as HTMLTextAreaElement;
-    target.style.height = "auto";
-    target.style.height = Math.min(target.scrollHeight, 100) + "px";
+  const startLongPress = (msg: Message, clientX: number, clientY: number) => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      setContextMsg(msg);
+      setContextPos({ x: clientX, y: clientY });
+    }, 500);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const copyMessage = (msg: Message) => {
+    navigator.clipboard
+      ?.writeText(msg.text)
+      .then(() => toast({ title: "Copied to clipboard" }))
+      .catch(() => toast({ title: "Couldn't copy", variant: "destructive" }));
+    setContextMsg(null);
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12" data-testid="will-messages-loading">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2"
+          style={{ borderColor: "#1D9E75" }}
+        />
       </div>
     );
   }
 
-  const inputBarHeight = 60;
-  const safeAreaBottom = 34;
-  const bottomOffset = keyboardHeight > 0 ? keyboardHeight : 0;
+  const INPUT_BAR_H = 60;
+  const listPadBottom =
+    INPUT_BAR_H + (keyboardHeight > 0 ? keyboardHeight + 8 : 34 + 8);
 
   return (
-    <div className="flex flex-col h-full relative" data-testid="will-messages">
+    <div
+      className="flex flex-col h-full relative"
+      onClick={() => setContextMsg(null)}
+    >
+      {/* Long-press context menu */}
+      {contextMsg && (
+        <div
+          className="fixed z-50 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden"
+          style={{
+            top: Math.min(contextPos.y - 10, window.innerHeight - 80),
+            left: Math.max(8, Math.min(contextPos.x - 60, window.innerWidth - 140)),
+            minWidth: 130,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-gray-700 active:bg-gray-50"
+            onClick={() => copyMessage(contextMsg)}
+            data-testid="button-copy-message"
+          >
+            <Copy className="w-4 h-4 text-gray-500" />
+            Copy
+          </button>
+        </div>
+      )}
+
+      {/* Message list */}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto px-3 py-3"
-        style={{
-          minHeight: 0,
-          paddingBottom: inputBarHeight + bottomOffset + (keyboardHeight > 0 ? 8 : safeAreaBottom + 8),
-        }}
+        style={{ minHeight: 0, paddingBottom: listPadBottom }}
+        data-testid="will-messages-list"
       >
         {messages.length === 0 ? (
           <div
-            className="flex flex-col items-center justify-center py-16 text-gray-400"
+            className="flex flex-col items-center justify-center h-full py-20 gap-2"
             data-testid="will-messages-empty"
           >
-            <p className="text-sm">No messages yet.</p>
-            <p className="text-xs mt-1">Start the conversation!</p>
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-1">
+              <Send className="w-5 h-5 text-gray-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-500">Start the conversation</p>
+            <p className="text-xs text-gray-400">Be the first to say something!</p>
           </div>
         ) : (
-          messages.map((msg, index) => {
+          messages.map((msg, i) => {
             const isOwn = msg.userId === currentUserId;
-            const prevMsg = index > 0 ? messages[index - 1] : null;
-            const showDaySeparator = !prevMsg || !isSameDay(prevMsg.createdAt, msg.createdAt);
+            const prev = i > 0 ? messages[i - 1] : null;
+            const next = i < messages.length - 1 ? messages[i + 1] : null;
+            const showDay = !prev || !isSameDay(prev.createdAt, msg.createdAt);
+            const isFirst = !prev || !inSameCluster(prev, msg);
+            const isLast = !next || !inSameCluster(msg, next);
+
+            const bubbleShape = isOwn
+              ? isLast ? "rounded-2xl rounded-br-[4px]" : "rounded-2xl"
+              : isLast ? "rounded-2xl rounded-bl-[4px]" : "rounded-2xl";
+            const marginBottom = isLast ? "mb-3" : "mb-[3px]";
 
             return (
               <div key={msg.id}>
-                {showDaySeparator && (
-                  <div className="flex items-center justify-center my-3" data-testid={`day-separator-${msg.id}`}>
-                    <div className="bg-gray-200 rounded-full px-3 py-0.5">
-                      <span className="text-[11px] font-medium text-gray-500">
-                        {formatDayLabel(msg.createdAt)}
-                      </span>
-                    </div>
+                {showDay && (
+                  <div className="flex items-center justify-center my-4" data-testid={`day-sep-${msg.id}`}>
+                    <span className="bg-gray-100 rounded-full px-3 py-0.5 text-[11px] font-medium text-gray-500">
+                      {formatDayLabel(msg.createdAt)}
+                    </span>
                   </div>
                 )}
+
+                {!isOwn && isFirst && (
+                  <p
+                    className="text-[11px] font-semibold ml-3 mb-[3px]"
+                    style={{ color: "#1D9E75" }}
+                  >
+                    @{(msg.user?.firstName || "?").toLowerCase()}
+                  </p>
+                )}
+
                 <div
-                  className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1.5`}
+                  className={`flex ${isOwn ? "justify-end" : "justify-start"} ${marginBottom}`}
                   data-testid={`will-message-${msg.id}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl px-3 py-1.5 ${
-                      isOwn
-                        ? "bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-br-md"
-                        : "bg-gray-100 text-gray-900 rounded-bl-md"
-                    }`}
+                    className={`max-w-[78%] ${bubbleShape} px-3 py-[7px] select-none`}
+                    style={isOwn ? { backgroundColor: "#1D9E75", color: "#fff" } : { backgroundColor: "#F3F4F6", color: "#111827" }}
+                    onTouchStart={(e) => startLongPress(msg, e.touches[0].clientX, e.touches[0].clientY)}
+                    onTouchEnd={cancelLongPress}
+                    onTouchMove={cancelLongPress}
+                    onMouseDown={(e) => startLongPress(msg, e.clientX, e.clientY)}
+                    onMouseUp={cancelLongPress}
+                    onMouseLeave={cancelLongPress}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setContextMsg(msg);
+                      setContextPos({ x: e.clientX, y: e.clientY });
+                    }}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {!isOwn && (
-                      <p className="text-[11px] font-semibold text-emerald-600 leading-tight">
-                        {msg.user.firstName}
-                      </p>
-                    )}
-                    <p className="text-sm whitespace-pre-wrap break-words leading-snug">{msg.text}</p>
-                    <p
-                      className={`text-[10px] leading-none mt-0.5 ${
-                        isOwn ? "text-white/60 text-right" : "text-gray-400 text-right"
-                      }`}
-                    >
-                      {formatExactTime(msg.createdAt)}
+                    <p className="text-sm whitespace-pre-wrap break-words leading-snug">
+                      {msg.text}
                     </p>
+
+                    {isLast && (
+                      <div className={`flex items-center gap-1 mt-[3px] justify-end`}>
+                        <span
+                          className="text-[10px] leading-none"
+                          style={{ color: isOwn ? "rgba(255,255,255,0.6)" : "#9CA3AF" }}
+                        >
+                          {formatTime(msg.createdAt)}
+                        </span>
+                        {isOwn && (
+                          <Check
+                            className="w-3 h-3"
+                            style={{ color: "rgba(255,255,255,0.6)" }}
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -237,11 +344,15 @@ export default function WillMessages({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input bar */}
       <div
         className="absolute left-0 right-0 bg-white border-t border-gray-100 px-3 pt-2"
         style={{
-          bottom: bottomOffset,
-          paddingBottom: keyboardHeight > 0 ? 8 : "calc(env(safe-area-inset-bottom, 0px) + 8px)",
+          bottom: keyboardHeight,
+          paddingBottom:
+            keyboardHeight > 0
+              ? 8
+              : ("calc(env(safe-area-inset-bottom, 0px) + 8px)" as any),
         }}
       >
         {text.length > 400 && (
@@ -254,33 +365,34 @@ export default function WillMessages({
             ref={inputRef}
             value={text}
             onChange={(e) => {
-              if (e.target.value.length <= 500) setText(e.target.value);
+              if (e.target.value.length <= 500) {
+                setText(e.target.value);
+                requestAnimationFrame(resizeTextarea);
+              }
             }}
             onKeyDown={handleKeyDown}
-            onInput={handleTextareaInput}
             placeholder="Type a message..."
             rows={1}
-            className="flex-1 bg-gray-50 text-gray-900 placeholder:text-gray-400 rounded-2xl px-3.5 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500/50 border border-gray-200"
+            className="flex-1 bg-gray-50 text-gray-900 placeholder:text-gray-400 rounded-2xl px-3.5 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500/40 border border-gray-200"
             style={{
               height: "36px",
-              maxHeight: "100px",
-              overflow: "hidden",
+              maxHeight: MAX_INPUT_HEIGHT + "px",
+              overflowY: "hidden",
             }}
             data-testid="input-will-message"
           />
-          <Button
-            size="icon"
+          <button
             onClick={handleSend}
             disabled={!text.trim() || sendMutation.isPending}
-            className={`rounded-full h-9 w-9 shrink-0 shadow-md transition-all duration-200 ${
-              text.trim()
-                ? "bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 opacity-100"
-                : "bg-gray-300 opacity-50 cursor-not-allowed"
-            }`}
+            className="rounded-full h-9 w-9 shrink-0 flex items-center justify-center transition-all duration-200 active:scale-95 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: text.trim() ? "#1D9E75" : "#D1D5DB",
+              opacity: text.trim() ? 1 : 0.55,
+            }}
             data-testid="button-send-will-message"
           >
-            <Send className="h-4 w-4" />
-          </Button>
+            <Send className="h-4 w-4 text-white" />
+          </button>
         </div>
       </div>
     </div>
