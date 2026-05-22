@@ -734,8 +734,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
             )}
           </div>
           
-          {/* Current Step Title — hidden on review step only */}
-          {currentStep !== 5 && (
+          {/* Current Step Title — hidden on review step and notifications step (component renders its own heading) */}
+          {currentStep !== 5 && currentStep !== 4 && (
           <div className="text-center mt-3">
             <h1 className="text-xl font-semibold text-gray-900">
               {showTypeSelection && "Choose your Will Type:"}

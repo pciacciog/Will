@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+
+// ── Public interface ──────────────────────────────────────────────────────────
 
 export interface NotificationsData {
   commitmentCategory: 'recurring' | 'duration' | 'event';
@@ -22,81 +24,54 @@ interface NotificationsSetupProps {
 
 type Category = 'recurring' | 'duration' | 'event';
 
-const TIME_OPTIONS = [
-  { label: "6:00 AM", value: "06:00" },
-  { label: "6:30 AM", value: "06:30" },
-  { label: "7:00 AM", value: "07:00" },
-  { label: "7:30 AM", value: "07:30" },
-  { label: "8:00 AM", value: "08:00" },
-  { label: "8:30 AM", value: "08:30" },
-  { label: "9:00 AM", value: "09:00" },
-  { label: "12:00 PM", value: "12:00" },
-  { label: "3:00 PM", value: "15:00" },
-  { label: "5:00 PM", value: "17:00" },
-  { label: "6:00 PM", value: "18:00" },
-  { label: "7:00 PM", value: "19:00" },
-  { label: "7:30 PM", value: "19:30" },
-  { label: "8:00 PM", value: "20:00" },
-  { label: "8:30 PM", value: "20:30" },
-  { label: "9:00 PM", value: "21:00" },
-  { label: "9:30 PM", value: "21:30" },
-  { label: "10:00 PM", value: "22:00" },
-];
+// ── Color palette (per spec) ──────────────────────────────────────────────────
 
-
-const COLORS: Record<Category, { bg: string; border: string; text: string; pillBg: string; pillBorder: string; pillText: string; tint: string; chipBg: string; chipBorder: string; chipText: string; toggleOn: string; checkBg: string }> = {
+const C = {
   recurring: {
-    bg: "#1D9E75",
-    border: "#1D9E75",
-    text: "#1D9E75",
-    pillBg: "#E8F7F1",
-    pillBorder: "#1D9E75",
-    pillText: "#1D9E75",
-    tint: "#E8F7F1",
-    chipBg: "#E8F7F1",
-    chipBorder: "#1D9E75",
-    chipText: "#1D9E75",
-    toggleOn: "#1D9E75",
-    checkBg: "#1D9E75",
+    bg: '#1D9E75',
+    tabBg: '#e8f8f2',
+    text: '#1D9E75',
+    chipBg: '#e8f8f2',
+    chipBorder: '#1D9E75',
   },
   duration: {
-    bg: "#1D6FBE",
-    border: "#1D6FBE",
-    text: "#1D6FBE",
-    pillBg: "#E0EDFA",
-    pillBorder: "#1D6FBE",
-    pillText: "#1D6FBE",
-    tint: "#E0EDFA",
-    chipBg: "#E0EDFA",
-    chipBorder: "#1D6FBE",
-    chipText: "#1D6FBE",
-    toggleOn: "#1D6FBE",
-    checkBg: "#1D6FBE",
+    bg: '#378ADD',
+    tabBg: '#e6f1fb',
+    text: '#378ADD',
+    chipBg: '#e6f1fb',
+    chipBorder: '#378ADD',
   },
   event: {
-    bg: "#534AB7",
-    border: "#534AB7",
-    text: "#534AB7",
-    pillBg: "#EEEDF9",
-    pillBorder: "#534AB7",
-    pillText: "#534AB7",
-    tint: "#EEEDF9",
-    chipBg: "#EEEDF9",
-    chipBorder: "#534AB7",
-    chipText: "#534AB7",
-    toggleOn: "#534AB7",
-    checkBg: "#534AB7",
+    bg: '#7F77DD',
+    tabBg: '#eeedfe',
+    text: '#7F77DD',
+    chipBg: '#eeedfe',
+    chipBorder: '#7F77DD',
   },
-};
+} as const;
 
-function formatTime(value: string): string {
-  const opt = TIME_OPTIONS.find(t => t.value === value);
-  if (opt) return opt.label;
-  const [h, m] = value.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const display = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${display}:${String(m).padStart(2, "0")} ${period}`;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmt(t: string): string {
+  const [hStr, mStr] = t.split(':');
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  const ap = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ap}`;
 }
+
+function fmtDate(s: string): string {
+  if (!s) return '';
+  const [y, mo, d] = s.split('-').map(Number);
+  return new Date(y, mo - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+const TIME_OPTIONS = [
+  '06:00','06:30','07:00','07:30','08:00','08:30','09:00',
+  '12:00','15:00','17:00','18:00','19:00','19:30','20:00','20:30','21:00','21:30','22:00',
+];
+
+// ── Toggle ────────────────────────────────────────────────────────────────────
 
 function Toggle({ on, onChange, color }: { on: boolean; onChange: (v: boolean) => void; color: string }) {
   return (
@@ -104,72 +79,51 @@ function Toggle({ on, onChange, color }: { on: boolean; onChange: (v: boolean) =
       type="button"
       onClick={() => onChange(!on)}
       data-testid="toggle-notification"
-      aria-label={on ? "Turn off" : "Turn on"}
+      aria-label={on ? 'Turn off' : 'Turn on'}
       style={{
-        position: "relative",
-        flexShrink: 0,
-        width: 51,
-        height: 31,
-        borderRadius: 15.5,
-        background: on ? color : "#E5E7EB",
-        border: "none",
-        outline: "none",
-        cursor: "pointer",
-        overflow: "hidden",
-        transition: "background 0.2s",
-        padding: 0,
-        display: "inline-flex",
-        alignItems: "center",
+        position: 'relative', flexShrink: 0,
+        width: 44, height: 26, borderRadius: 13,
+        background: on ? color : '#d1d1d6',
+        border: 'none', outline: 'none', cursor: 'pointer',
+        transition: 'background 0.2s', padding: 0,
+        display: 'inline-flex', alignItems: 'center',
       }}
     >
-      <span
-        style={{
-          position: "absolute",
-          width: 23,
-          height: 23,
-          borderRadius: "50%",
-          background: "#fff",
-          top: 4,
-          left: on ? 24 : 4,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-          transition: "left 0.2s",
-        }}
-      />
+      <span style={{
+        position: 'absolute', width: 20, height: 20, borderRadius: '50%',
+        background: '#fff', top: 3, left: on ? 21 : 3,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.22)', transition: 'left 0.2s',
+      }} />
     </button>
   );
 }
 
-function TimeChip({ value, onChange, color }: { value: string; onChange: (v: string) => void; color: typeof COLORS.recurring }) {
+// ── Time picker (tappable time display) ───────────────────────────────────────
+
+function TimePicker({ value, onChange, color }: { value: string; onChange: (v: string) => void; color: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all active:scale-95"
-        style={{ background: color.chipBg, border: `1.5px solid ${color.chipBorder}`, color: color.chipText }}
+        className="text-sm font-semibold"
+        style={{ color }}
         data-testid="chip-time"
       >
-        <svg viewBox="0 0 24 24" style={{ width: 14, height: 14, flexShrink: 0 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-        </svg>
-        {formatTime(value)}
+        {fmt(value)}
       </button>
       {open && (
-        <div
-          className="absolute left-0 z-20 mt-1 rounded-xl overflow-y-auto shadow-lg border border-gray-100 bg-white"
-          style={{ width: 160, maxHeight: 240 }}
-        >
-          {TIME_OPTIONS.map(opt => (
+        <div className="absolute right-0 z-20 mt-1 rounded-xl overflow-y-auto shadow-lg border border-gray-100 bg-white" style={{ width: 140, maxHeight: 220 }}>
+          {TIME_OPTIONS.map(t => (
             <button
-              key={opt.value}
+              key={t}
               type="button"
-              onClick={() => { onChange(opt.value); setOpen(false); }}
-              className="w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-gray-50"
-              style={opt.value === value ? { color: color.chipText, fontWeight: 600, background: color.chipBg } : { color: "#374151" }}
-              data-testid={`option-time-${opt.value}`}
+              onClick={() => { onChange(t); setOpen(false); }}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+              style={t === value ? { color, fontWeight: 600 } : { color: '#374151' }}
             >
-              {opt.label}
+              {fmt(t)}
             </button>
           ))}
         </div>
@@ -178,83 +132,412 @@ function TimeChip({ value, onChange, color }: { value: string; onChange: (v: str
   );
 }
 
-function PreviewCard({ title, subtitle }: { title: string; subtitle: string }) {
+// ── Remove button (22×22, red circle) ────────────────────────────────────────
+
+function RemoveBtn({ onRemove }: { onRemove: () => void }) {
   return (
-    <div className="rounded-xl p-3 mt-3" style={{ background: "#F3F4F6" }}>
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">NOTIFICATION PREVIEW</p>
-      <p className="text-sm font-bold text-gray-900 leading-snug">{title || "Your will"}</p>
-      <p className="text-xs text-gray-500 mt-0.5 leading-snug">{subtitle || "Because…"}</p>
+    <button
+      type="button"
+      onClick={onRemove}
+      className="flex-shrink-0 flex items-center justify-center transition-opacity active:opacity-60"
+      style={{ width: 22, height: 22, borderRadius: '50%', border: '1.5px solid #ff3b30', color: '#ff3b30', fontSize: 16, lineHeight: '1', padding: 0 }}
+    >
+      ×
+    </button>
+  );
+}
+
+// ── Shared "daily reminder" row ───────────────────────────────────────────────
+
+function DailyReminderRow({ on, time, onToggle, onTime, color }: {
+  on: boolean; time: string; onToggle: (v: boolean) => void; onTime: (v: string) => void; color: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 mb-5">
+      <span className="flex-1 text-sm text-gray-600 font-medium">Daily reminder</span>
+      {on && <TimePicker value={time} onChange={onTime} color={color} />}
+      <Toggle on={on} onChange={onToggle} color={color} />
     </div>
   );
 }
 
-function NotifCard({ label, children }: { label: string; children: React.ReactNode }) {
+// ── DAY LABELS / VALUES ───────────────────────────────────────────────────────
+
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const;
+const DAY_JS = [1, 2, 3, 4, 5, 6, 0]; // Mon … Sat, Sun
+
+// ── RECURRING SECTION ─────────────────────────────────────────────────────────
+
+type RecState = { reminderOn: boolean; reminderTime: string; checkInOn: boolean; checkInTime: string; trackedDays: number[] };
+
+function RecurringSection({ state, onChange }: { state: RecState; onChange: (s: RecState) => void }) {
+  const { reminderOn, reminderTime, checkInOn, checkInTime, trackedDays } = state;
+  const c = C.recurring;
+
+  const toggleDay = (dv: number) => {
+    const on = trackedDays.includes(dv);
+    if (on && trackedDays.length === 1) return;
+    onChange({ ...state, trackedDays: on ? trackedDays.filter(d => d !== dv) : [...trackedDays, dv] });
+  };
+
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 mb-3">
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{label}</p>
-      {children}
+    <div>
+      {/* TRACK ON */}
+      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">TRACK ON</p>
+
+      {/* Day buttons — equal-width squares */}
+      <div className="flex gap-1.5 mb-5">
+        {DAY_LABELS.map((label, i) => {
+          const dv = DAY_JS[i];
+          const active = trackedDays.includes(dv);
+          return (
+            <button
+              key={dv}
+              type="button"
+              onClick={() => toggleDay(dv)}
+              className="flex-1 flex items-center justify-center font-semibold transition-all active:scale-90 select-none"
+              style={{
+                aspectRatio: '1',
+                borderRadius: 9,
+                fontSize: 13,
+                border: `1.5px solid ${active ? c.bg : '#D1D5DB'}`,
+                background: active ? c.bg : '#fff',
+                color: active ? '#fff' : '#9CA3AF',
+              }}
+              data-testid={`day-pill-${dv}`}
+              aria-pressed={active}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* NOTIFICATIONS */}
+      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">NOTIFICATIONS</p>
+
+      {/* Card */}
+      <div style={{ background: '#f7f7f7', borderRadius: 14, overflow: 'hidden' }}>
+        {/* Row 1 — Reminder */}
+        <div className="flex items-center px-4 py-3.5 gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-900">Reminder</p>
+            <p className="text-xs text-gray-400 mt-0.5">Before the moment</p>
+          </div>
+          <div className="flex items-center gap-2.5">
+            {reminderOn && (
+              <div className="relative flex items-center">
+                <span className="text-sm font-semibold" style={{ color: c.text }}>{fmt(reminderTime)}</span>
+                <input
+                  type="time" value={reminderTime}
+                  onChange={e => onChange({ ...state, reminderTime: e.target.value })}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  style={{ fontSize: 16 }}
+                  data-testid="input-reminder-time"
+                />
+              </div>
+            )}
+            <Toggle on={reminderOn} onChange={v => onChange({ ...state, reminderOn: v })} color={c.bg} />
+          </div>
+        </div>
+
+        {/* Hairline */}
+        <div style={{ height: 0.5, background: '#E5E7EB', marginLeft: 16, marginRight: 16 }} />
+
+        {/* Row 2 — Check-in */}
+        <div className="flex items-center px-4 py-3.5 gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-900">Check-in</p>
+            <p className="text-xs text-gray-400 mt-0.5">How did it go?</p>
+          </div>
+          <div className="flex items-center gap-2.5">
+            {checkInOn && (
+              <div className="relative flex items-center">
+                <span className="text-sm font-semibold" style={{ color: c.text }}>{fmt(checkInTime)}</span>
+                <input
+                  type="time" value={checkInTime}
+                  onChange={e => onChange({ ...state, checkInTime: e.target.value })}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  style={{ fontSize: 16 }}
+                  data-testid="input-checkin-time"
+                />
+              </div>
+            )}
+            <Toggle on={checkInOn} onChange={v => onChange({ ...state, checkInOn: v })} color={c.bg} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-interface MilestoneRow {
-  day: number;
-  label: string;
+// ── DURATION SECTION ──────────────────────────────────────────────────────────
+
+type MilestoneRow = { day: number; label: string };
+type DurState = { reminderOn: boolean; reminderTime: string; milestones: MilestoneRow[] };
+
+const MILESTONE_PLACEHOLDERS = [
+  'First day, you got this',
+  'Keep pushing, almost there',
+  'Halfway through — stay strong',
+  'Nearly done — keep going',
+];
+
+function DurationSection({ state, onChange, maxDay }: { state: DurState; onChange: (s: DurState) => void; maxDay: number }) {
+  const { reminderOn, reminderTime, milestones } = state;
+  const c = C.duration;
+
+  const addMilestone = () => {
+    onChange({ ...state, milestones: [...milestones, { day: 0, label: '' }] });
+  };
+
+  const removeMilestone = (i: number) => {
+    onChange({ ...state, milestones: milestones.filter((_, idx) => idx !== i) });
+  };
+
+  const updateMilestone = (i: number, field: 'day' | 'label', val: number | string) => {
+    onChange({ ...state, milestones: milestones.map((m, idx) => idx === i ? { ...m, [field]: val } : m) });
+  };
+
+  return (
+    <div>
+      {/* Daily reminder */}
+      <DailyReminderRow
+        on={reminderOn} time={reminderTime}
+        onToggle={v => onChange({ ...state, reminderOn: v })}
+        onTime={v => onChange({ ...state, reminderTime: v })}
+        color={c.bg}
+      />
+
+      {/* Section label */}
+      <p className="text-[13px] font-semibold mb-3" style={{ color: '#333' }}>Assign yourself milestones:</p>
+
+      {/* Milestone rows */}
+      <div className="space-y-2 mb-3">
+        {milestones.map((m, i) => (
+          <div key={i} className="flex items-center gap-2" data-testid={`milestone-row-${i}`}>
+            {/* Day chip */}
+            <div className="relative flex-shrink-0">
+              <div
+                className="flex items-center gap-1 px-2.5 py-1.5"
+                style={{
+                  background: c.chipBg, border: `1px dashed ${c.chipBorder}`,
+                  borderRadius: 8, color: c.text, fontSize: 12, fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {m.day ? `Day ${m.day}` : 'Day?'}
+                <span style={{ fontSize: 11, opacity: 0.75 }}>✎</span>
+              </div>
+              <select
+                value={m.day || ''}
+                onChange={e => updateMilestone(i, 'day', parseInt(e.target.value, 10))}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                style={{ fontSize: 16 }}
+                data-testid={`select-milestone-day-${i}`}
+              >
+                <option value="">Day?</option>
+                {Array.from({ length: Math.max(1, maxDay) }, (_, d) => d + 1).map(d => (
+                  <option key={d} value={d}>Day {d}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Text input */}
+            <input
+              type="text"
+              value={m.label}
+              onChange={e => updateMilestone(i, 'label', e.target.value)}
+              placeholder={MILESTONE_PLACEHOLDERS[i] ?? 'Your note here'}
+              maxLength={100}
+              className="flex-1 text-[13px] px-2.5 py-1.5"
+              style={{
+                background: '#f7f7f7', border: '1px solid #ebebeb', borderRadius: 8,
+                minWidth: 0, fontStyle: 'italic', color: '#374151', outline: 'none',
+              }}
+              data-testid={`input-milestone-label-${i}`}
+            />
+
+            {/* Remove */}
+            <RemoveBtn onRemove={() => removeMilestone(i)} />
+          </div>
+        ))}
+      </div>
+
+      {/* Add a milestone */}
+      <button
+        type="button"
+        onClick={addMilestone}
+        className="flex items-center gap-2 py-1 transition-opacity active:opacity-60"
+        data-testid="button-add-milestone"
+      >
+        <span
+          className="flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+          style={{ width: 20, height: 20, borderRadius: '50%', background: c.bg }}
+        >
+          +
+        </span>
+        <span className="text-sm font-medium" style={{ color: c.bg }}>Add a milestone</span>
+      </button>
+    </div>
+  );
 }
 
-interface ReminderRow {
-  id: string;
-  date: string;
-  note: string;
+// ── EVENT SECTION ─────────────────────────────────────────────────────────────
+
+type ReminderRow = { id: string; date: string; note: string };
+type EvtState = { reminderOn: boolean; reminderTime: string; reminders: ReminderRow[] };
+
+function EventSection({ state, onChange, because }: { state: EvtState; onChange: (s: EvtState) => void; because: string }) {
+  const { reminderOn, reminderTime, reminders } = state;
+  const c = C.event;
+
+  const addReminder = () => {
+    onChange({ ...state, reminders: [...reminders, { id: crypto.randomUUID(), date: '', note: '' }] });
+  };
+
+  const removeReminder = (id: string) => {
+    onChange({ ...state, reminders: reminders.filter(r => r.id !== id) });
+  };
+
+  const update = (id: string, field: 'date' | 'note', val: string) => {
+    onChange({ ...state, reminders: reminders.map(r => r.id === id ? { ...r, [field]: val } : r) });
+  };
+
+  const notePlaceholder = because ? because : 'Your reason…';
+
+  return (
+    <div>
+      {/* Daily reminder */}
+      <DailyReminderRow
+        on={reminderOn} time={reminderTime}
+        onToggle={v => onChange({ ...state, reminderOn: v })}
+        onTime={v => onChange({ ...state, reminderTime: v })}
+        color={c.bg}
+      />
+
+      {/* Section label */}
+      <p className="text-[13px] font-semibold mb-3" style={{ color: '#333' }}>When should we remind you?</p>
+
+      {/* Reminder rows */}
+      <div className="space-y-2 mb-3">
+        {reminders.map(r => (
+          <div key={r.id} className="flex items-center gap-2" data-testid={`reminder-row-${r.id}`}>
+            {/* Date chip */}
+            <div className="relative flex-shrink-0">
+              <div
+                className="flex items-center gap-1 px-2.5 py-1.5"
+                style={{
+                  background: c.chipBg, border: `1px dashed ${c.chipBorder}`,
+                  borderRadius: 8, color: c.text, fontSize: 12, fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {r.date ? fmtDate(r.date) : 'Date?'}
+                <span style={{ fontSize: 11, opacity: 0.75 }}>✎</span>
+              </div>
+              <input
+                type="date"
+                value={r.date}
+                onChange={e => update(r.id, 'date', e.target.value)}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                style={{ fontSize: 16 }}
+                data-testid={`input-reminder-date-${r.id}`}
+              />
+            </div>
+
+            {/* Note input */}
+            <input
+              type="text"
+              value={r.note}
+              onChange={e => update(r.id, 'note', e.target.value)}
+              placeholder={notePlaceholder}
+              maxLength={100}
+              className="flex-1 text-[13px] px-2.5 py-1.5"
+              style={{
+                background: '#f7f7f7', border: '1px solid #ebebeb', borderRadius: 8,
+                minWidth: 0, fontStyle: 'italic', color: '#374151', outline: 'none',
+              }}
+              data-testid={`input-reminder-note-${r.id}`}
+            />
+
+            {/* Remove */}
+            <RemoveBtn onRemove={() => removeReminder(r.id)} />
+          </div>
+        ))}
+      </div>
+
+      {/* Add a reminder */}
+      <button
+        type="button"
+        onClick={addReminder}
+        className="flex items-center gap-2 py-1 transition-opacity active:opacity-60"
+        data-testid="button-add-reminder"
+      >
+        <span
+          className="flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+          style={{ width: 20, height: 20, borderRadius: '50%', background: c.bg }}
+        >
+          +
+        </span>
+        <span className="text-sm font-medium" style={{ color: c.bg }}>Add a reminder</span>
+      </button>
+    </div>
+  );
 }
+
+// ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 
 export default function NotificationsSetup({ what, because, onComplete, onBack, willDurationDays }: NotificationsSetupProps) {
-  const formattedWhat = what?.toLowerCase().startsWith('i will')
-    ? what
-    : `I will ${what}`;
+  const formattedWhat = what?.toLowerCase().startsWith('i will') ? what : `I will ${what}`;
+  const willStatement = formattedWhat.startsWith('"') ? formattedWhat : `"${formattedWhat}"`;
 
-  const [selected, setSelected] = useState<Category | null>(null);
+  const [selected, setSelected] = useState<Category>('recurring');
 
-  const [recurringState, setRecurringState] = useState({
-    reminderOn: true, reminderTime: "20:30",
-    checkInOn: true, checkInTime: "08:00",
-    trackedDays: [0, 1, 2, 3, 4, 5, 6] as number[],
+  const [recState, setRecState] = useState<RecState>({
+    reminderOn: true, reminderTime: '20:30',
+    checkInOn: true, checkInTime: '08:00',
+    trackedDays: [0, 1, 2, 3, 4, 5, 6],
   });
-  const [durationState, setDurationState] = useState({
-    reminderOn: true, reminderTime: "18:00",
+
+  const [durState, setDurState] = useState<DurState>({
+    reminderOn: true, reminderTime: '18:00',
     milestones: [
-      { day: 2, label: "God deserves this, stay strong" },
-      { day: 5, label: "You're almost there" },
-    ] as MilestoneRow[],
+      { day: 1, label: '' },
+      { day: 3, label: '' },
+    ],
   });
-  const [eventState, setEventState] = useState<{ reminders: ReminderRow[] }>({
+
+  const [evtState, setEvtState] = useState<EvtState>({
+    reminderOn: true, reminderTime: '18:00',
     reminders: [{ id: crypto.randomUUID(), date: '', note: '' }],
   });
 
-  const handleContinue = () => {
-    if (!selected) return;
+  const color = C[selected];
+  const maxDay = Math.max(1, willDurationDays ?? 365);
 
+  const handleContinue = () => {
     let data: NotificationsData;
 
     if (selected === 'recurring') {
       data = {
         commitmentCategory: 'recurring',
-        reminderTime: recurringState.reminderOn ? recurringState.reminderTime : null,
-        checkInTime: recurringState.checkInOn ? recurringState.checkInTime : null,
+        reminderTime: recState.reminderOn ? recState.reminderTime : null,
+        checkInTime: recState.checkInOn ? recState.checkInTime : null,
         checkInType: 'daily',
         milestones: null,
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
         customReminders: null,
-        trackedDays: recurringState.trackedDays,
+        trackedDays: recState.trackedDays,
       };
     } else if (selected === 'duration') {
       data = {
         commitmentCategory: 'duration',
-        reminderTime: durationState.reminderOn ? durationState.reminderTime : null,
+        reminderTime: durState.reminderOn ? durState.reminderTime : null,
         checkInTime: null,
         checkInType: 'final_review',
-        milestones: durationState.milestones,
+        milestones: durState.milestones.filter(m => m.day > 0),
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
         customReminders: null,
@@ -263,13 +546,13 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
     } else {
       data = {
         commitmentCategory: 'event',
-        reminderTime: null,
+        reminderTime: evtState.reminderOn ? evtState.reminderTime : null,
         checkInTime: null,
         checkInType: 'final_review',
         milestones: null,
         missionReminderTime: null,
         deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
-        customReminders: eventState.reminders
+        customReminders: evtState.reminders
           .filter(r => r.date || r.note)
           .map(r => ({ date: r.date, note: r.note })),
         trackedDays: null,
@@ -279,630 +562,85 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
     onComplete(data);
   };
 
-  const CARDS: {
-    category: Category;
-    title: string;
-    example: string;
-    iconBg: string;
-    iconColor: string;
-    selectedCardBg: string;
-    selectedBorder: string;
-    selectedTitle: string;
-    selectedExample: string;
-    icon: 'repeat' | 'hourglass' | 'bolt';
-  }[] = [
-    {
-      category: 'recurring',
-      title: 'Recurring',
-      example: '"I will go to the gym 3x a week"',
-      iconBg: '#E1F5EE',
-      iconColor: '#1D9E75',
-      selectedCardBg: '#E8F7F1',
-      selectedBorder: '#1D9E75',
-      selectedTitle: '#085041',
-      selectedExample: '#0F6E56',
-      icon: 'repeat',
-    },
-    {
-      category: 'duration',
-      title: 'Duration',
-      example: '"I will not use social media"',
-      iconBg: '#E0EDFA',
-      iconColor: '#1D6FBE',
-      selectedCardBg: '#E0EDFA',
-      selectedBorder: '#1D6FBE',
-      selectedTitle: '#0D3D6E',
-      selectedExample: '#1A5490',
-      icon: 'hourglass',
-    },
-    {
-      category: 'event',
-      title: 'Event',
-      example: '"I will call my grandmother"',
-      iconBg: '#EEEDFE',
-      iconColor: '#534AB7',
-      selectedCardBg: '#EEEDF9',
-      selectedBorder: '#534AB7',
-      selectedTitle: '#2B2580',
-      selectedExample: '#403AA0',
-      icon: 'bolt',
-    },
-  ];
-
   return (
     <div className="flex flex-col min-h-0">
-      {/* Subtitle — shown before a type is selected */}
-      {!selected && (
-        <p className="px-4 mb-4 text-center" style={{ fontSize: 13, color: '#9CA3AF' }}>
-          Which type best describes your Will?
-        </p>
-      )}
+      {/* Large bold heading */}
+      <h1 className="text-[28px] font-bold text-gray-950 leading-tight mb-2 px-4">
+        Notifications<br />Setup
+      </h1>
 
-      {/* Will statement — shown after a type is selected, above the pills */}
-      {selected && (
-        <p className="px-4 mb-3 text-center flex-shrink-0" style={{ fontSize: 13, fontStyle: 'italic', color: COLORS[selected].text }}>
-          {formattedWhat.toLowerCase().startsWith('i will') ? `"${formattedWhat}"` : `"I will ${formattedWhat}"`}
-        </p>
-      )}
+      {/* Will statement */}
+      <p
+        className="px-4 mb-4 text-sm"
+        style={{ fontStyle: 'italic', color: color.text }}
+        data-testid="text-will-statement"
+      >
+        {willStatement}
+      </p>
 
-      {/* ── No selection: three big tap cards ── */}
-      {!selected && (
-        <div className="px-4 flex flex-col" style={{ gap: 10 }}>
-          {CARDS.map(card => (
-            <button
-              key={card.category}
-              type="button"
-              onClick={() => setSelected(card.category)}
-              className="w-full text-left transition-all duration-150 active:scale-[0.98] rounded-2xl"
-              style={{
-                background: '#fafafa',
-                border: '1.5px solid #eee',
-                padding: '14px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-              }}
-              data-testid={`card-${card.category}`}
-            >
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: card.iconBg,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                {card.icon === 'repeat' && (
-                  <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="17 1 21 5 17 9" />
-                    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                    <polyline points="7 23 3 19 7 15" />
-                    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                  </svg>
-                )}
-                {card.icon === 'hourglass' && (
-                  <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 22h14" />
-                    <path d="M5 2h14" />
-                    <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
-                    <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
-                  </svg>
-                )}
-                {card.icon === 'bolt' && (
-                  <svg viewBox="0 0 24 24" style={{ width: 22, height: 22 }} fill="none" stroke={card.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                  </svg>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold leading-tight" style={{ color: '#111' }}>{card.title}</p>
-                <p className="text-sm italic mt-0.5 leading-snug" style={{ color: '#888' }}>{card.example}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+      {/* 3-tab selector */}
+      <div className="flex gap-2 px-4 mb-5">
+        {(['recurring', 'duration', 'event'] as Category[]).map(cat => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => setSelected(cat)}
+            className="flex-1 py-2 text-sm font-semibold transition-all active:scale-95"
+            style={
+              selected === cat
+                ? { background: C[cat].tabBg, border: `2px solid ${C[cat].bg}`, color: C[cat].bg, borderRadius: 999 }
+                : { background: '#fff', border: '1.5px solid #E5E7EB', color: '#9CA3AF', borderRadius: 999 }
+            }
+            data-testid={`tab-${cat}`}
+          >
+            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+          </button>
+        ))}
+      </div>
 
-      {/* ── After selection: compact pills + will statement + section ── */}
-      {selected && (
-        <>
-          {/* Compact pill row */}
-          <div className="flex gap-2 px-4 mb-2 flex-shrink-0">
-            {(["recurring", "duration", "event"] as Category[]).map(cat => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelected(cat)}
-                className="flex-1 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
-                style={selected === cat
-                  ? { background: COLORS[cat].pillBg, border: `2px solid ${COLORS[cat].pillBorder}`, color: COLORS[cat].pillText }
-                  : { background: "#fff", border: "1.5px solid #D1D5DB", color: "#9CA3AF" }
-                }
-                data-testid={`pill-${cat}`}
-              >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            ))}
-          </div>
+      {/* Section content */}
+      <div className="px-4 pb-28 flex-1 overflow-y-auto">
+        {selected === 'recurring' && (
+          <RecurringSection state={recState} onChange={setRecState} />
+        )}
+        {selected === 'duration' && (
+          <DurationSection state={durState} onChange={setDurState} maxDay={maxDay} />
+        )}
+        {selected === 'event' && (
+          <EventSection state={evtState} onChange={setEvtState} because={because} />
+        )}
+      </div>
 
-          {/* Notification section */}
-          <div className="px-4 pb-24 flex-1 overflow-y-auto">
-            {selected === 'recurring' && (
-              <HabitSectionControlled
-                what={formattedWhat}
-                because={because}
-                color={COLORS.recurring}
-                state={recurringState}
-                onChange={setRecurringState}
-              />
-            )}
-            {selected === 'duration' && (
-              <AbstainSectionControlled
-                what={formattedWhat}
-                because={because}
-                color={COLORS.duration}
-                state={durationState}
-                onChange={setDurationState}
-                willDurationDays={willDurationDays}
-              />
-            )}
-            {selected === 'event' && (
-              <MissionSectionControlled
-                what={formattedWhat}
-                color={COLORS.event}
-                state={eventState}
-                onChange={setEventState}
-              />
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Continue button — fixed at bottom */}
+      {/* Fixed bottom Continue button */}
       <div
-        className="fixed bottom-0 left-0 right-0 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 bg-white border-t border-gray-100"
-        style={{ maxWidth: "640px", margin: "0 auto" }}
+        className="fixed bottom-0 left-0 right-0 px-4 bg-white border-t border-gray-100"
+        style={{
+          paddingTop: 12,
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+          maxWidth: 640,
+          margin: '0 auto',
+        }}
       >
         <button
           type="button"
           onClick={handleContinue}
-          disabled={!selected}
-          className="w-full py-4 rounded-2xl text-base font-semibold text-white transition-all active:scale-[0.98]"
-          style={selected
-            ? { background: COLORS[selected].bg }
-            : { background: "#E5E7EB", color: "#9CA3AF", cursor: "not-allowed" }
-          }
+          className="w-full py-4 text-base font-semibold text-white transition-all active:scale-[0.98]"
+          style={{ background: color.bg, borderRadius: 14 }}
           data-testid="button-notifications-continue"
         >
           Continue
         </button>
         {selected === 'duration' && (
-          <p className="text-center text-xs text-gray-400 mt-2">
-            Milestones are optional — you can always skip them.
+          <p className="text-center text-[11px] text-gray-400 mt-2">
+            Milestones are optional — skip if you'd like
+          </p>
+        )}
+        {selected === 'event' && (
+          <p className="text-center text-[11px] text-gray-400 mt-2">
+            Reminders are optional — skip if you'd like
           </p>
         )}
       </div>
-    </div>
-  );
-}
-
-/* ── Controlled wrappers so parent can read state ── */
-
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const;
-const DAY_JS_VALUES = [1, 2, 3, 4, 5, 6, 0]; // Mon=1 … Sat=6, Sun=0 (JS getDay())
-
-function HabitSectionControlled({
-  what, because, color, state, onChange,
-}: {
-  what: string; because: string; color: typeof COLORS.recurring;
-  state: { reminderOn: boolean; reminderTime: string; checkInOn: boolean; checkInTime: string; trackedDays: number[] };
-  onChange: (s: typeof state) => void;
-}) {
-  const { reminderOn, reminderTime, checkInOn, checkInTime, trackedDays } = state;
-
-  const toggleDay = (dayVal: number) => {
-    const isOn = trackedDays.includes(dayVal);
-    if (isOn && trackedDays.length === 1) return;
-    onChange({
-      ...state,
-      trackedDays: isOn ? trackedDays.filter(d => d !== dayVal) : [...trackedDays, dayVal],
-    });
-  };
-
-  return (
-    <div>
-      {/* TRACK ON */}
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">TRACK ON</p>
-
-      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden mb-5">
-        <div className="flex items-center justify-between px-4 py-3">
-          {DAY_LABELS.map((label, i) => {
-            const dayVal = DAY_JS_VALUES[i];
-            const isActive = trackedDays.includes(dayVal);
-            return (
-              <button
-                key={dayVal}
-                type="button"
-                onClick={() => toggleDay(dayVal)}
-                className="flex items-center justify-center rounded-full font-semibold transition-all active:scale-90"
-                style={{
-                  width: 36, height: 36, fontSize: 13,
-                  background: isActive ? color.bg : '#F3F4F6',
-                  color: isActive ? '#fff' : '#9CA3AF',
-                }}
-                data-testid={`day-pill-${dayVal}`}
-                aria-pressed={isActive}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* NOTIFICATIONS */}
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">NOTIFICATIONS</p>
-
-      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-        {/* Row 1 — Reminder */}
-        <div className="flex items-center px-4 py-3.5 gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900">Reminder</p>
-            <p className="text-xs text-gray-400 mt-0.5">Before the moment</p>
-          </div>
-          {reminderOn && (
-            <div className="relative flex items-center">
-              <span className="text-sm font-semibold mr-3" style={{ color: color.text }}>
-                {formatDisplayTime(reminderTime)}
-              </span>
-              <input
-                type="time"
-                value={reminderTime}
-                onChange={e => onChange({ ...state, reminderTime: e.target.value })}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                style={{ fontSize: 16 }}
-                data-testid="input-reminder-time"
-              />
-            </div>
-          )}
-          <Toggle on={reminderOn} onChange={v => onChange({ ...state, reminderOn: v })} color={color.toggleOn} />
-        </div>
-
-        {/* Hairline divider */}
-        <div style={{ height: 1, background: '#F3F4F6', marginLeft: 16, marginRight: 16 }} />
-
-        {/* Row 2 — Check-in */}
-        <div className="flex items-center px-4 py-3.5 gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900">Check-in</p>
-            <p className="text-xs text-gray-400 mt-0.5">How did it go?</p>
-          </div>
-          {checkInOn && (
-            <div className="relative flex items-center">
-              <span className="text-sm font-semibold mr-3" style={{ color: color.text }}>
-                {formatDisplayTime(checkInTime)}
-              </span>
-              <input
-                type="time"
-                value={checkInTime}
-                onChange={e => onChange({ ...state, checkInTime: e.target.value })}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                style={{ fontSize: 16 }}
-                data-testid="input-checkin-time"
-              />
-            </div>
-          )}
-          <Toggle on={checkInOn} onChange={v => onChange({ ...state, checkInOn: v })} color={color.toggleOn} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function formatDisplayTime(t: string): string {
-  const [hStr, mStr] = t.split(':');
-  const h = parseInt(hStr, 10);
-  const m = parseInt(mStr, 10);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
-}
-
-function AbstainSectionControlled({
-  what, because, color, state, onChange, willDurationDays,
-}: {
-  what: string; because: string; color: typeof COLORS.duration;
-  state: { reminderOn: boolean; reminderTime: string; milestones: MilestoneRow[] };
-  onChange: (s: typeof state) => void;
-  willDurationDays?: number;
-}) {
-  const { reminderOn, reminderTime, milestones } = state;
-  const maxDay = Math.max(1, willDurationDays ?? 365);
-
-  const addNote = () => {
-    onChange({ ...state, milestones: [...milestones, { day: 0, label: '' }] });
-  };
-
-  const deleteNote = (i: number) => {
-    onChange({ ...state, milestones: milestones.filter((_, idx) => idx !== i) });
-  };
-
-  const updateNote = (i: number, field: 'day' | 'label', value: number | string) => {
-    onChange({
-      ...state,
-      milestones: milestones.map((m, idx) => idx === i ? { ...m, [field]: value } : m),
-    });
-  };
-
-  return (
-    <div>
-      {/* Daily reminder — slim single row */}
-      <div className="flex items-center gap-3 mb-5 px-1">
-        <span className="text-xs text-gray-400 flex-1">Daily reminder</span>
-        {reminderOn && (
-          <div className="relative flex items-center">
-            <span className="text-sm font-semibold mr-3" style={{ color: color.text }}>
-              {formatDisplayTime(reminderTime)}
-            </span>
-            <input
-              type="time"
-              value={reminderTime}
-              onChange={e => onChange({ ...state, reminderTime: e.target.value })}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              style={{ fontSize: 16 }}
-              data-testid="input-reminder-time"
-            />
-          </div>
-        )}
-        <Toggle
-          on={reminderOn}
-          onChange={v => onChange({ ...state, reminderOn: v })}
-          color={color.toggleOn}
-        />
-      </div>
-
-      {/* Notes to self */}
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">NOTES TO SELF</p>
-
-      <div className="space-y-2 mb-3">
-        {milestones.map((m, i) => (
-          <div
-            key={i}
-            className="rounded-2xl border border-gray-200 bg-white overflow-hidden"
-            data-testid={`milestone-row-${i}`}
-          >
-            {/* Day selector row */}
-            <div className="flex items-center px-4 py-3 min-h-[44px] gap-2">
-              {/* Tappable day picker — transparent select overlay */}
-              <div className="relative flex items-center flex-1 min-h-[44px]">
-                <svg
-                  viewBox="0 0 24 24"
-                  style={{ width: 15, height: 15, marginRight: 8, flexShrink: 0 }}
-                  fill="none"
-                  stroke={m.day ? color.text : '#9CA3AF'}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                {m.day ? (
-                  <span className="text-sm font-semibold" style={{ color: color.text }}>Day {m.day}</span>
-                ) : (
-                  <span className="text-sm text-gray-400">Pick a day</span>
-                )}
-                <select
-                  value={m.day || ''}
-                  onChange={e => updateNote(i, 'day', parseInt(e.target.value, 10))}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full"
-                  style={{ fontSize: 16 }}
-                  data-testid={`select-milestone-day-${i}`}
-                >
-                  <option value="">Pick a day</option>
-                  {Array.from({ length: maxDay }, (_, d) => d + 1).map(d => (
-                    <option key={d} value={d}>Day {d}</option>
-                  ))}
-                </select>
-              </div>
-              {/* Delete button — outside the select overlay area */}
-              <button
-                type="button"
-                onClick={() => deleteNote(i)}
-                className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-opacity active:opacity-60"
-                style={{ background: 'rgba(0,0,0,0.06)' }}
-                data-testid={`button-delete-milestone-${i}`}
-                aria-label="Remove note"
-              >
-                <svg viewBox="0 0 24 24" style={{ width: 13, height: 13 }} fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Hairline divider */}
-            <div style={{ height: 1, background: '#F3F4F6', marginLeft: 16, marginRight: 16 }} />
-
-            {/* Note text input */}
-            <div className="flex items-center px-4 py-3">
-              <input
-                type="text"
-                value={m.label}
-                onChange={e => updateNote(i, 'label', e.target.value)}
-                className="flex-1 text-sm text-gray-800 bg-transparent border-none outline-none"
-                style={{ fontSize: 14, minWidth: 0 }}
-                maxLength={100}
-                data-testid={`input-milestone-label-${i}`}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Add a note */}
-      <button
-        type="button"
-        onClick={addNote}
-        className="flex items-center gap-2 text-sm font-semibold py-1 transition-opacity active:opacity-60"
-        style={{ color: color.text }}
-        data-testid="button-add-milestone"
-      >
-        <svg viewBox="0 0 24 24" style={{ width: 15, height: 15 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Add a note
-      </button>
-    </div>
-  );
-}
-
-function formatReminderDate(dateStr: string): string {
-  if (!dateStr) return '';
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function MissionSectionControlled({
-  what, color, state, onChange,
-}: {
-  what: string; color: typeof COLORS.event;
-  state: { reminders: ReminderRow[] };
-  onChange: (s: { reminders: ReminderRow[] }) => void;
-}) {
-  const { reminders } = state;
-
-  const addReminder = () => {
-    onChange({ reminders: [...reminders, { id: crypto.randomUUID(), date: '', note: '' }] });
-  };
-
-  const deleteReminder = (id: string) => {
-    onChange({ reminders: reminders.filter(r => r.id !== id) });
-  };
-
-  const updateReminder = (id: string, field: 'date' | 'note', value: string) => {
-    onChange({ reminders: reminders.map(r => r.id === id ? { ...r, [field]: value } : r) });
-  };
-
-  const previewReminder = reminders.find(r => r.date || r.note);
-
-  const getPreviewLine = () => {
-    if (!previewReminder) return { title: '', subtitle: '' };
-    const { date, note } = previewReminder;
-    const fd = date ? formatReminderDate(date) : null;
-    if (fd && note) return { title: `${fd} — ${note}`, subtitle: what };
-    if (note) return { title: `${note} — ${what}`, subtitle: '' };
-    if (fd) return { title: `${fd} — ${what}`, subtitle: '' };
-    return { title: '', subtitle: '' };
-  };
-
-  const preview = getPreviewLine();
-
-  return (
-    <div>
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">REMIND ME ON</p>
-
-      <div className="space-y-2 mb-3">
-        {reminders.map(reminder => (
-          <div
-            key={reminder.id}
-            className="rounded-2xl border border-gray-200 bg-white overflow-hidden"
-            data-testid={`reminder-row-${reminder.id}`}
-          >
-            {/* Date row */}
-            <div className="relative flex items-center px-4 py-3 min-h-[44px]">
-              <svg
-                viewBox="0 0 24 24"
-                style={{ width: 15, height: 15, marginRight: 8, flexShrink: 0 }}
-                fill="none"
-                stroke={reminder.date ? color.text : '#9CA3AF'}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              {reminder.date ? (
-                <span className="text-sm font-semibold" style={{ color: color.text }}>
-                  {formatReminderDate(reminder.date)}
-                </span>
-              ) : (
-                <span className="text-sm text-gray-400">Pick a date</span>
-              )}
-              {/* Transparent native date input covers the row to open picker on tap */}
-              <input
-                type="date"
-                value={reminder.date}
-                onChange={e => updateReminder(reminder.id, 'date', e.target.value)}
-                className="absolute inset-0 w-full opacity-0 cursor-pointer"
-                style={{ fontSize: 16 }}
-                data-testid={`input-reminder-date-${reminder.id}`}
-              />
-            </div>
-
-            {/* Hairline divider */}
-            <div style={{ height: 1, background: '#F3F4F6', marginLeft: 16, marginRight: 16 }} />
-
-            {/* Note row */}
-            <div className="flex items-center px-4 py-3 gap-3">
-              <input
-                type="text"
-                value={reminder.note}
-                onChange={e => updateReminder(reminder.id, 'note', e.target.value)}
-                className="flex-1 text-sm text-gray-800 bg-transparent border-none outline-none"
-                style={{ fontSize: 14, minWidth: 0 }}
-                maxLength={100}
-                data-testid={`input-reminder-note-${reminder.id}`}
-              />
-              <button
-                type="button"
-                onClick={() => deleteReminder(reminder.id)}
-                className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-opacity active:opacity-60"
-                style={{ background: 'rgba(0,0,0,0.06)' }}
-                data-testid={`button-delete-reminder-${reminder.id}`}
-                aria-label="Remove reminder"
-              >
-                <svg viewBox="0 0 24 24" style={{ width: 13, height: 13 }} fill="none" stroke="#6B7280" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Add reminder */}
-      <button
-        type="button"
-        onClick={addReminder}
-        className="flex items-center gap-2 text-sm font-semibold py-1 transition-opacity active:opacity-60"
-        style={{ color: color.text }}
-        data-testid="button-add-reminder"
-      >
-        <svg viewBox="0 0 24 24" style={{ width: 15, height: 15 }} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Add a reminder
-      </button>
-
-      {/* Preview — only once a row has any data */}
-      {previewReminder && preview.title && (
-        <div className="mt-4 rounded-xl p-3" style={{ background: '#F3F4F6' }}>
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">PREVIEW</p>
-          <p className="text-sm font-bold text-gray-900 leading-snug">{preview.title}</p>
-          {preview.subtitle && (
-            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{preview.subtitle}</p>
-          )}
-        </div>
-      )}
     </div>
   );
 }
