@@ -173,7 +173,7 @@ function Router() {
           targetPath = data.deepLink;
           
           if (targetPath.includes('/review')) {
-            targetPath = targetPath.replace('/review', '');
+            targetPath = targetPath.replace(/\/review$/, '');
             console.log('🔗 [DeepLink] Mapped review link to:', targetPath);
           }
           

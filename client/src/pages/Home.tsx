@@ -269,9 +269,9 @@ export default function Home() {
                         </button>
                       </div>
                     )}
-                    {!isInvite && n.deepLink && (
+                    {!isInvite && (n.deepLink || n.willId) && (
                       <button
-                        onClick={() => { markReadMutation.mutate(n.id); setLocation(n.deepLink!); }}
+                        onClick={() => { markReadMutation.mutate(n.id); setLocation(n.deepLink ?? `/will/${n.willId}`); }}
                         className="mt-2 text-[12px] text-emerald-600 font-medium hover:underline"
                         data-testid={`button-view-notif-${n.id}`}
                       >

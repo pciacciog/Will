@@ -197,6 +197,9 @@ export class EndRoomScheduler {
                   await storage.createUserNotification({
                     userId: participantId,
                     type: 'review_required',
+                    title: 'Review Required',
+                    body: 'Your will has ended — tap to complete your review.',
+                    deepLink: `/will/${will.id}`,
                     willId: will.id,
                     circleId: will.circleId,
                     isRead: false,
