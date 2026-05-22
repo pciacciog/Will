@@ -128,7 +128,7 @@ export default function PublicWillDetail() {
   // ── Push mutation ────────────────────────────────────────────────────────────
 
   const pushMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/wills/${willId}/push`),
+    mutationFn: () => apiRequest(`/api/wills/${willId}/push`, { method: 'POST' }),
     onSuccess: () => {
       setPushSuccess(true);
       qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/push/status`] });
@@ -241,9 +241,9 @@ export default function PublicWillDetail() {
       <div className="pb-28 space-y-3">
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div className="relative flex items-center justify-between min-h-[44px]">
+        <div className="flex items-center justify-between min-h-[56px]">
           <UnifiedBackButton onClick={() => setLocation('/explore')} testId="button-back" />
-          <div className="absolute left-0 right-0 flex flex-col items-center gap-1.5 pointer-events-none">
+          <div className="flex flex-col items-center gap-1.5">
             <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">Will Hub</h1>
             <div className="flex items-center gap-1.5">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700" data-testid="badge-active-day">
@@ -462,7 +462,7 @@ export default function PublicWillDetail() {
                 <Zap className="inline w-4 h-4 mr-0.5 -mt-0.5" style={{ color: '#F59E0B' }} />
                 {pushCount} {pushCount === 1 ? 'person' : 'people'} pushed {creatorHandle}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">Cumulative pushes since day 1</p>
+              <p className="text-xs text-gray-400 mt-0.5">Pushes · all time</p>
             </div>
             {/* Stacked pusher avatars */}
             {recentPushers.length > 0 && (
@@ -530,7 +530,7 @@ export default function PublicWillDetail() {
           )}
 
           <button
-            onClick={() => setLocation(`/will/${willId}/messages`)}
+            onClick={() => setLocation(`/will/${willId}/messages?from=public`)}
             className="w-full flex items-center justify-center gap-1 mt-4 py-2 text-sm font-medium transition-opacity active:opacity-70"
             style={{ color: '#534AB7' }}
             data-testid="button-see-all-messages"

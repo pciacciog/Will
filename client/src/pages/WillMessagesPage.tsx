@@ -12,7 +12,7 @@ interface WillMessagesPageProps {
 
 export default function WillMessagesPage({ willId }: WillMessagesPageProps) {
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
   const markRead = () => {
@@ -39,7 +39,10 @@ export default function WillMessagesPage({ willId }: WillMessagesPageProps) {
       <div className="bg-white ios-safe-area-top shrink-0">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <button
-            onClick={() => setLocation(`/will/${willId}`)}
+            onClick={() => {
+              const fromPublic = typeof window !== 'undefined' && window.location.search.includes('from=public');
+              setLocation(fromPublic ? `/public-will/${willId}` : `/will/${willId}`);
+            }}
             className="w-11 h-11 -ml-2 flex items-center justify-center"
             data-testid="button-back-will"
             aria-label="Back to Will"
