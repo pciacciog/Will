@@ -572,7 +572,7 @@ export default function WillDetails() {
       const isToday = d.getTime() === todayMidnight.getTime();
       const isPast = d < todayMidnight;
       const entry = abstainLogEntries.find((e: AbstainLog) => e.date === dateStr);
-      const status = isToday ? 'today' : isPast ? (entry?.honored ? 'checked-in' : 'missed') : 'upcoming';
+      const status = entry ? (entry.honored ? 'checked-in' : 'missed') : isToday ? 'today' : isPast ? 'missed' : 'upcoming';
       return { dayNum: i + 1, date: dateStr, status } as { dayNum: number; date: string; status: 'checked-in' | 'missed' | 'today' | 'upcoming' };
     });
   }, [effectiveCategory, will?.startDate, durTotalDays, abstainLogEntries]);
@@ -1466,12 +1466,8 @@ export default function WillDetails() {
                     <button
                       onClick={() => { setPendingCheckIn('yes'); setCheckInNote(''); }}
                       disabled={recurringCheckInMutation.isPending}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 rounded-xl text-base font-semibold text-white disabled:opacity-60"
-                      style={{ backgroundColor: '#1a7a4a', height: 52, borderRadius: 12, boxShadow: '0 4px 12px rgba(26,122,74,0.3)', transition: 'transform 0.1s' }}
-                      onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.96)')}
-                      onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-                      onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.96)')}
-                      onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80 disabled:opacity-60"
+                      style={{ backgroundColor: '#1D9E75' }}
                       data-testid="button-recurring-did-it"
                     >
                       <Check style={{ width: 18, height: 18, color: '#fff', flexShrink: 0 }} />
@@ -1686,22 +1682,11 @@ export default function WillDetails() {
               </div>
             )}
 
-            {/* Duration: Progress card (collapsible) */}
+            {/* Duration: Progress card (always expanded) */}
             {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" data-testid="card-abstain-progress">
-                <button
-                  className="w-full flex items-center justify-between px-4 py-3"
-                  onClick={() => setAbstainProgressExpanded(v => !v)}
-                  data-testid="button-abstain-progress-toggle"
-                >
-                  <span className="text-sm font-semibold text-gray-800">Your progress</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Day {durDaysIn} of {durTotalDays}</span>
-                    <ChevronDown style={{ width: 16, height: 16, color: '#9ca3af', transform: abstainProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                  </div>
-                </button>
-                {abstainProgressExpanded && (
-                  <div className="px-4 pb-4 space-y-4">
+                  <div className="p-4 space-y-4">
+                    <p className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase text-center">Your Progress</p>
                     {/* Ring */}
                     <div className="flex justify-center">
                       <div className="relative" style={{ width: 144, height: 144 }}>
@@ -1723,12 +1708,6 @@ export default function WillDetails() {
                         </div>
                       </div>
                     </div>
-                    {/* Date range */}
-                    {will.startDate && will.endDate && (
-                      <p className="text-sm text-gray-500 text-center -mt-2" data-testid="text-date-range">
-                        {new Date(String(will.startDate) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(String(will.endDate) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    )}
                     {/* Stat boxes */}
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
@@ -1833,7 +1812,6 @@ export default function WillDetails() {
                       </div>
                     )}
                   </div>
-                )}
               </div>
             )}
           </>
@@ -1908,16 +1886,27 @@ export default function WillDetails() {
                       </div>
                     </div>
                   ) : (
-                    /* Step 1: CTA */
-                    <button
-                      onClick={() => setMissionCheckInOpen(true)}
-                      className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
-                      style={{ backgroundColor: '#534AB7' }}
-                      data-testid="button-mission-check-in"
-                    >
-                      <Zap style={{ width: 20, height: 20, color: '#fff' }} />
-                      Did you complete this?
-                    </button>
+                    /* Step 1: Two side-by-side buttons */
+                    <div className="flex gap-2 w-full">
+                      <button
+                        onClick={() => setMissionConfirming(true)}
+                        className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                        style={{ backgroundColor: '#1D9E75' }}
+                        data-testid="button-mission-done"
+                      >
+                        <Check style={{ width: 18, height: 18, color: '#fff' }} />
+                        Done
+                      </button>
+                      <button
+                        onClick={() => { setMissionKeptGoing(true); setTimeout(() => setMissionKeptGoing(false), 2000); }}
+                        className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-opacity active:opacity-80"
+                        style={{ border: '2px solid #e74c3c', color: '#e74c3c' }}
+                        data-testid="button-mission-not-yet"
+                      >
+                        <X style={{ width: 18, height: 18, color: '#e74c3c' }} />
+                        Not yet
+                      </button>
+                    </div>
                   )
                 )}
 

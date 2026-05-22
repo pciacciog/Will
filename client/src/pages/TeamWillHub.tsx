@@ -804,7 +804,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       const isToday = d.getTime() === todayMidnight.getTime();
       const isPast = d < todayMidnight;
       const entry = abstainLogEntries.find((e: AbstainLog) => e.date === dateStr);
-      const status = isToday ? 'today' : isPast ? (entry?.honored ? 'checked-in' : 'missed') : 'upcoming';
+      const status = entry ? (entry.honored ? 'checked-in' : 'missed') : isToday ? 'today' : isPast ? 'missed' : 'upcoming';
       return { dayNum: i + 1, date: dateStr, status } as { dayNum: number; date: string; status: 'checked-in' | 'missed' | 'today' | 'upcoming' };
     });
   }, [will?.startDate, durTotalDays, abstainLogEntries]);
@@ -1483,10 +1483,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             )}
           </div>
 
-          {/* ── Progress section — YOUR PROGRESS label + category branch ── */}
+          {/* ── Progress section — category branch ── */}
           <div className="mb-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Your Progress</p>
-
             {isProgressLocked ? (
               /* Locked state — same for all categories */
               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm opacity-50 pointer-events-none select-none">
@@ -1515,6 +1513,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       Checked in for today ✓
                     </div>
                   ) : (
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center">How did it go?</p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => recurringCheckInMutation.mutate({ status: 'yes' })}
@@ -1536,6 +1536,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         <X style={{ width: 18, height: 18, color: '#E24B4A' }} />
                         Did not
                       </button>
+                    </div>
                     </div>
                   )
                 )}
@@ -1662,13 +1663,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         </div>
                       </div>
                     </div>
-
-                    {/* Date range */}
-                    {will.startDate && will.endDate && (
-                      <p className="text-sm text-gray-500 text-center -mt-2" data-testid="text-date-range">
-                        {new Date(String(will.startDate) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(String(will.endDate) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    )}
 
                     {/* Stat boxes */}
                     <div className="grid grid-cols-3 gap-2 mb-4">
@@ -1914,15 +1908,27 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           </div>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setMissionCheckInOpen(true)}
-                          className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
-                          style={{ backgroundColor: '#534AB7' }}
-                          data-testid="button-mission-check-in"
-                        >
-                          <Zap style={{ width: 20, height: 20, color: '#fff' }} />
-                          Did you complete this?
-                        </button>
+                        /* Step 1: Two side-by-side buttons */
+                        <div className="flex gap-2 w-full">
+                          <button
+                            onClick={() => setMissionConfirming(true)}
+                            className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                            style={{ backgroundColor: '#1D9E75' }}
+                            data-testid="button-mission-done"
+                          >
+                            <Check style={{ width: 18, height: 18, color: '#fff' }} />
+                            Done
+                          </button>
+                          <button
+                            onClick={() => { setMissionKeptGoing(true); setTimeout(() => setMissionKeptGoing(false), 2000); }}
+                            className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-opacity active:opacity-80"
+                            style={{ border: '2px solid #e74c3c', color: '#e74c3c' }}
+                            data-testid="button-mission-not-yet"
+                          >
+                            <X style={{ width: 18, height: 18, color: '#e74c3c' }} />
+                            Not yet
+                          </button>
+                        </div>
                       )
                     )}
                     {will.status === 'completed' && (
