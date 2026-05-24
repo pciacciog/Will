@@ -1,0 +1,50 @@
+Hey, before I give you the spec I want to share the vision behind this feature so you have it in mind as you build.
+The vision
+One of the biggest problems we have discovered while building Will is that people do not always know what to commit to. They open the app motivated to change something but they face a blank page. This feature exists to solve that. It is a lightweight guided flow that helps a user identify what actually matters to them right now and then converts that clarity directly into a Will. Think of it as a coach asking the right questions in the right order until the user arrives at their own answer. The goal is not to tell the user what to do — it is to help them hear what they already know. By the time they reach the will suggestion screen they should feel like the will was built for them, not handed to them. This is a first draft for internal testing only. Keep it simple and functional. There will be many iterations.
+Step 1 — Hub screen change
+Below the Explore and Friends cards, add a thin divider line, then a small centered section with two elements:
+
+Text: "Not sure what to commit to?" in muted gray
+Button below it: "Find your Will" — outlined style, not filled, subtle
+
+That's the only change to the hub. Tapping "Find your Will" opens the new flow.
+Step 2 — Life area screen
+Full screen with a back button and title "Where do you feel most off?" Show 5 tappable option buttons stacked vertically:
+
+Personal discipline
+Health and body
+Relationships
+Career and money
+Purpose and direction
+
+Below the options, a simple open text input labeled "What keeps coming up for you in this area?" with placeholder "Be honest, even one sentence helps."
+At the bottom a full-width button "Find my Will" that is disabled until the user selects a category. Text input is optional.
+Step 3 — Suggestions screen
+Show a short reflection line at the top based on the category selected — hardcode one line per category:
+
+Personal discipline: "Discipline is built one decision at a time."
+Health and body: "Your body keeps the score. Start small."
+Relationships: "The people in your life feel your presence or your absence."
+Career and money: "Clarity on one thing beats confusion about everything."
+Purpose and direction: "You already know what matters. You just haven't committed yet."
+
+Below that show 3 will suggestion cards — one Recurring, one Duration, one Event — hardcoded per category. Use the following content:
+Personal discipline — Recurring: "I will wake up at 5:30am every day without hitting snooze" / Duration: "I will not look at my phone for the first 30 minutes of my day for 21 days" / Event: "I will write out my top 3 priorities every Sunday night"
+Health and body — Recurring: "I will train for at least 30 minutes every day" / Duration: "I will cut out sugar completely for 30 days" / Event: "I will book my annual health checkup this week"
+Relationships — Recurring: "I will check in on someone I care about every day" / Duration: "I will put my phone away during every meal for 14 days" / Event: "I will write a letter to someone who has impacted my life"
+Career and money — Recurring: "I will spend 30 minutes every day working on my most important project" / Duration: "I will track every dollar I spend for 30 days" / Event: "I will send that email I have been putting off this week"
+Purpose and direction — Recurring: "I will journal for 10 minutes every morning" / Duration: "I will consume zero mindless content for 14 days" / Event: "I will write out where I want to be in 1 year and why"
+Each card shows the will type badge (Recurring / Duration / Event) above the commitment text. Tapping a card selects it and highlights it. Once one is selected a "Commit to this Will" button appears at the bottom.
+Step 4 — Hand off to existing will creation screen
+When the user taps "Commit to this Will" navigate to the existing will creation screen with two fields pre-populated:
+
+The commitment text from the selected card
+The will type (Recurring / Duration / Event) already selected
+
+The user should only need to fill in their "because" field and hit confirm. Everything else is already done. Do not build a new will creation screen — reuse the existing one and just pre-fill it.
+Important notes:
+
+No AI calls, no API, no external dependencies. This is purely a static flow with hardcoded content.
+Do not label this feature anywhere in the UI. No feature name shown to the user. The only user-facing text is "Not sure what to commit to?" and "Find your Will."
+Keep the design consistent with the rest of the app — same card styles, same buttons, same colors.
+This is a first draft for internal testing on staging only. Functional over perfect. I will iterate heavily on this after testing.
