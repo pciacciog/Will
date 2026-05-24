@@ -156,13 +156,16 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
     setCheckInType(isIndefinite ? 'daily' : 'final_review');
   }, [isIndefinite]);
   
-  const [willData, setWillData] = useState({
-    startDate: '',
-    endDate: '',
-    what: '',
-    why: '',
-    circleId: null as number | null,
-    endRoomScheduledAt: '' as string | null,
+  const [willData, setWillData] = useState(() => {
+    const prefill = new URLSearchParams(window.location.search);
+    return {
+      startDate: '',
+      endDate: '',
+      what: prefill.get('what') || '',
+      why: '',
+      circleId: null as number | null,
+      endRoomScheduledAt: '' as string | null,
+    };
   });
   
   // Will type for Circle mode: 'classic' (individual commitments) or 'cumulative' (shared commitment)
@@ -198,7 +201,13 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   
   // For Circle mode, we show type selection before step 1
   const showTypeSelection = !isSoloMode && willType === null;
-  const [whatCharCount, setWhatCharCount] = useState(0);
+  const [whatCharCount, setWhatCharCount] = useState(
+    () => (new URLSearchParams(window.location.search).get('what') || '').length
+  );
+  const [prefillCategory] = useState<'recurring' | 'duration' | 'event' | null>(() => {
+    const cat = new URLSearchParams(window.location.search).get('category');
+    return (cat === 'recurring' || cat === 'duration' || cat === 'event') ? cat : null;
+  });
   const [whyCharCount, setWhyCharCount] = useState(0);
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [showHelpIcon, setShowHelpIcon] = useState(false);
@@ -978,7 +987,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
               setCurrentStep(5);
             }}
             onBack={() => setCurrentStep(3)}
-            defaultCategory={notificationsData?.commitmentCategory as Category | undefined}
+            defaultCategory={(notificationsData?.commitmentCategory ?? prefillCategory ?? undefined) as Category | undefined}
             willDurationDays={(() => {
               if (isIndefinite || !willData.startDate || !willData.endDate) return undefined;
               const diffMs = new Date(willData.endDate).getTime() - new Date(willData.startDate).getTime();

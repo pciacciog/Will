@@ -431,6 +431,19 @@ export default function Home() {
             </button>
           </div>
 
+          {/* "Find your Will" prompt */}
+          <div className="flex flex-col items-center gap-2 pt-1 pb-2">
+            <hr className="w-full border-gray-100" />
+            <p className="text-xs text-gray-400 mt-1">Not sure what to commit to?</p>
+            <button
+              onClick={() => setLocation('/find-will')}
+              className="px-5 py-2 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-800 active:bg-gray-50 transition-all duration-200"
+              data-testid="button-find-your-will"
+            >
+              Find your Will
+            </button>
+          </div>
+
           {/* Footer — Settings + Sign Out */}
           <div className="mt-auto pt-4 flex items-center justify-center gap-5">
             <button

@@ -41,6 +41,8 @@ import FriendProfile from "@/pages/FriendProfile";
 import NotificationsPage from "@/pages/NotificationsPage";
 import PublicWillDetail from "@/pages/PublicWillDetail";
 import DirectMessagePage from "@/pages/DirectMessagePage";
+import FindWillLifeArea from "@/pages/FindWillLifeArea";
+import FindWillSuggestions from "@/pages/FindWillSuggestions";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -372,6 +374,8 @@ function Router() {
             <Route path="/my-wills" component={MyWills} />
             <Route path="/today" component={Today} />
             <Route path="/create-will">{() => <StartWill isSoloMode={true} />}</Route>
+            <Route path="/find-will/suggestions" component={FindWillSuggestions} />
+            <Route path="/find-will" component={FindWillLifeArea} />
             <Route path="/explore" component={Explore} />
             <Route path="/public-will/:id" component={PublicWillDetail} />
             <Route path="/dm/:userId" component={DirectMessagePage} />
