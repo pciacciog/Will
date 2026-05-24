@@ -171,7 +171,10 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   // Will type for Circle mode: 'classic' (individual commitments) or 'cumulative' (shared commitment)
   const [willType, setWillType] = useState<'classic' | 'cumulative' | null>(null);
   
-  const [checkInType, setCheckInType] = useState<'daily' | 'specific_days' | 'final_review'>('daily');
+  const [checkInType, setCheckInType] = useState<'daily' | 'specific_days' | 'final_review'>(() => {
+    const cat = new URLSearchParams(window.location.search).get('category');
+    return cat === 'event' ? 'final_review' : 'daily';
+  });
 
   // Short-duration wills (< 24 hours) skip the check-in time step entirely
   const isShortDuration = useMemo(() => {
