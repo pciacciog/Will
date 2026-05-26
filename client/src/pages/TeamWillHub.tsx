@@ -1518,7 +1518,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center">How did it go?</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center">How did it go today?</p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => recurringCheckInMutation.mutate({ status: 'yes' })}
