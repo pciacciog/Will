@@ -16,7 +16,7 @@ import DailyCheckInModal from "@/components/DailyCheckInModal";
 import { Capacitor } from "@capacitor/core";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Camera, Plus, Clock, CheckCircle, XCircle, X, Check,
-  Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle, Zap, Bell, Trash2,
+  Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle, Zap, Bell, Trash2, Heart,
 } from "lucide-react";
 import type { Will, AbstainLog, WillCheckIn } from "@shared/schema";
 
@@ -83,6 +83,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   // Ping modal state
   const [pingTarget, setPingTarget] = useState<{ id: number; invitedUserId: string; firstName: string } | null>(null);
   const [pingSent, setPingSent] = useState(false);
+  const [showWhyTag, setShowWhyTag] = useState(false);
 
   useAppRefresh();
 
@@ -1295,7 +1296,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           {isWeWill ? (
             /* We Will — shared commitment text only */
             <div className="mb-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-center mb-2" style={{ color: '#1D9E75' }}>We Will</p>
+              <p className="text-[22px] font-bold text-center mb-2" style={{ color: will?.commitmentCategory === 'duration' ? '#1D6FBE' : will?.commitmentCategory === 'event' ? '#534AB7' : '#1D9E75' }}>We Will</p>
               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                 {will.sharedWhat ? (
                   <p className="text-[20px] font-bold text-gray-900 text-center leading-snug">
@@ -1310,7 +1311,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             /* I Will — current user's own commitment text */
             userCommitment?.what ? (
               <div className="mb-2">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-center mb-2" style={{ color: '#1D9E75' }}>I Will</p>
+                <p className="text-[22px] font-bold text-center mb-2" style={{ color: will?.commitmentCategory === 'duration' ? '#1D6FBE' : will?.commitmentCategory === 'event' ? '#534AB7' : '#1D9E75' }}>I Will</p>
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                   <p className="text-[18px] font-bold text-gray-900 text-center leading-snug">
                     &ldquo;{userCommitment.what}&rdquo;
@@ -1388,9 +1389,27 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
                             {member.firstName}
                           </p>
-                          <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
-                            {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
-                          </p>
+                          {((member.status === 'creator' || member.status === 'self') || !(will.status === 'active' || will.status === 'will_review')) && (
+                            <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
+                              {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
+                            </p>
+                          )}
+                          {(member.status === 'creator' || member.status === 'self') && userCommitment?.why && (
+                            <button
+                              onClick={e => { e.stopPropagation(); setShowWhyTag(prev => !prev); }}
+                              className="flex items-center gap-0.5 mt-0.5"
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                              data-testid="button-why-tag"
+                            >
+                              <Heart className="w-2.5 h-2.5" style={{ color: '#9CA3AF' }} fill="currentColor" />
+                              <span className="text-[10px] italic text-gray-400">{showWhyTag ? 'hide' : 'why'}</span>
+                            </button>
+                          )}
+                          {(member.status === 'creator' || member.status === 'self') && showWhyTag && userCommitment?.why && (
+                            <p className="text-[10px] text-gray-400 italic text-center max-w-[60px] leading-tight mt-0.5">
+                              {userCommitment.why}
+                            </p>
+                          )}
                         </button>
                       );
                     })}
@@ -1444,6 +1463,22 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             </div>
                             {c.what && (
                               <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{c.what}</p>
+                            )}
+                            {isMe && c.why && (
+                              <div className="mt-1">
+                                <button
+                                  onClick={e => { e.stopPropagation(); setShowWhyTag(prev => !prev); }}
+                                  className="flex items-center gap-0.5"
+                                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                                  data-testid="button-why-tag-i-will"
+                                >
+                                  <Heart className="w-2.5 h-2.5" style={{ color: '#9CA3AF' }} fill="currentColor" />
+                                  <span className="text-[10px] italic text-gray-400">{showWhyTag ? 'hide' : 'why'}</span>
+                                </button>
+                                {showWhyTag && (
+                                  <p className="text-[11px] text-gray-400 italic mt-0.5">{c.why}</p>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>

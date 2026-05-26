@@ -227,6 +227,7 @@ export default function WillDetails() {
   const [editDate, setEditDate] = useState<string | null>(null);
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const [recurringWeekOffset, setRecurringWeekOffset] = useState(0);
+  const [showSoloWhy, setShowSoloWhy] = useState(false);
 
   const todayLocalDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
 
@@ -1027,9 +1028,14 @@ export default function WillDetails() {
                  if (effectiveCategory === 'event' && will.endDate) {
                    const d = new Date(will.endDate);
                    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                   return `Active · deadline ${label}`;
+                   return isSoloMode ? `Active · deadline ${label} · Event` : `Active · deadline ${label}`;
                  }
                  if (effectiveCategory === 'duration' && will.endDate) {
+                   if (isSoloMode) {
+                     const startLabel = new Date(will.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                     const endLabel = new Date(will.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                     return `Active · ${startLabel} → ${endLabel} · Duration`;
+                   }
                    return `Active · ${durDaysLeft} day${durDaysLeft !== 1 ? 's' : ''} left`;
                  }
                  return 'Active';
@@ -1129,8 +1135,8 @@ export default function WillDetails() {
           </div>
         )}
 
-        {/* Timeline Section — hidden for recurring wills (replaced by inline status line) */}
-        {effectiveCategory !== 'recurring' && (
+        {/* Timeline Section — hidden for solo mode and recurring wills */}
+        {!isSoloMode && effectiveCategory !== 'recurring' && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center mb-3">
               <Calendar className="w-5 h-5 text-blue-600 mr-2" />
@@ -1282,45 +1288,48 @@ export default function WillDetails() {
         {/* Commitment Details - Solo Mode */}
         {will.status !== 'will_review' && isSoloMode && will.commitments?.[0] && (
           effectiveCategory ? (
-            /* Category-aware hero card */
-            <div className="bg-white rounded-xl border border-gray-200 p-[14px] text-center" data-testid="card-commitment-hero">
-              <div className="flex items-center justify-center mb-2">
-                <div className="flex items-center justify-center rounded-2xl" style={{
-                  width: 52, height: 52,
-                  backgroundColor: effectiveCategory === 'recurring' ? '#E1F5EE' : effectiveCategory === 'duration' ? '#E0EDFA' : '#EEEDF9'
-                }}>
-                  {effectiveCategory === 'recurring' && <CheckCircle style={{ width: 26, height: 26, color: '#1D9E75' }} strokeWidth={1.75} />}
-                  {effectiveCategory === 'duration' && (
-                    <svg viewBox="0 0 24 24" style={{ width: 26, height: 26 }} fill="none" stroke="#1D6FBE" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 22h14" /><path d="M5 2h14" />
-                      <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
-                      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
-                    </svg>
-                  )}
-                  {effectiveCategory === 'event' && <Zap style={{ width: 26, height: 26, color: '#534AB7' }} strokeWidth={1.75} />}
+            <>
+              {/* I WILL label — large bold statement above the card */}
+              <p className="text-xl font-bold uppercase tracking-widest text-center mb-2" style={{
+                color: effectiveCategory === 'recurring' ? '#1D9E75' : effectiveCategory === 'duration' ? '#1D6FBE' : '#534AB7'
+              }}>I Will</p>
+              {/* Commitment card — no icon, no MY COMMITMENT label */}
+              <div className="bg-white rounded-xl border border-gray-200 p-[14px] text-center" data-testid="card-commitment-hero">
+                <div className="text-[15px] font-bold text-gray-900 leading-snug">
+                  "{will.commitments[0].what?.toLowerCase().startsWith('i will')
+                    ? will.commitments[0].what
+                    : `I will ${will.commitments[0].what}`}"
                 </div>
+                {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
+                  <button
+                    onClick={() => setLocation(`/will/${id}/edit`)}
+                    className="mt-3 text-sm text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                    data-testid="button-edit-will"
+                  >
+                    Edit
+                  </button>
+                )}
+                {will.commitments[0].why && (
+                  <div className="mt-3 text-left">
+                    <button
+                      onClick={() => setShowSoloWhy(prev => !prev)}
+                      className="flex items-center gap-1 text-sm font-medium underline"
+                      style={{ color: effectiveCategory === 'recurring' ? '#1D9E75' : effectiveCategory === 'duration' ? '#1D6FBE' : '#534AB7', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                      data-testid="button-solo-why"
+                    >
+                      <Heart className="w-3.5 h-3.5" fill="currentColor" />
+                      {showSoloWhy ? 'Hide' : 'Why'}
+                    </button>
+                    <div
+                      className="overflow-hidden transition-all duration-300"
+                      style={{ maxHeight: showSoloWhy ? '200px' : '0px', opacity: showSoloWhy ? 1 : 0 }}
+                    >
+                      <p className="text-sm text-gray-500 italic mt-2">Because {will.commitments[0].why}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">My Commitment</p>
-              <div className="text-[15px] font-bold text-gray-900 leading-snug mb-1">
-                "{will.commitments[0].what?.toLowerCase().startsWith('i will')
-                  ? will.commitments[0].what
-                  : `I will ${will.commitments[0].what}`}"
-              </div>
-              {will.commitments[0].why && (
-                <div className="text-sm text-gray-400 italic">
-                  Because {will.commitments[0].why}
-                </div>
-              )}
-              {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
-                <button
-                  onClick={() => setLocation(`/will/${id}/edit`)}
-                  className="mt-3 text-sm text-blue-600 font-medium hover:text-blue-700 transition-colors"
-                  data-testid="button-edit-will"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
+            </>
           ) : (
             /* Legacy card — unchanged */
             <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -1644,26 +1653,24 @@ export default function WillDetails() {
                   /* Options card — first check-in or changing answer */
                   <div className="bg-white rounded-xl border border-gray-200 p-4" data-testid="abstain-checkin-options">
                     <p className="text-xs text-gray-400 text-center mb-3">Did you honor your will today?</p>
-                    <div className="space-y-2">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); setAbstainChanging(false); abstainLogMutation.mutate({ honored: true }); }}
                         disabled={abstainLogMutation.isPending}
-                        className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                        style={{ border: '2px solid #1D6FBE', color: '#0A3870' }}
+                        className="flex-1 flex items-center justify-center py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-colors active:opacity-80"
+                        style={{ backgroundColor: '#1D6FBE' }}
                         data-testid="button-abstain-honored"
                       >
-                        <CheckCircle style={{ width: 20, height: 20, color: '#1D6FBE' }} />
-                        I honored my will
+                        Holding
                       </button>
                       <button
                         onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); setAbstainChanging(false); abstainLogMutation.mutate({ honored: false }); }}
                         disabled={abstainLogMutation.isPending}
-                        className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                        style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
+                        className="flex-1 flex items-center justify-center py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                        style={{ border: '2px solid #E24B4A', color: '#E24B4A' }}
                         data-testid="button-abstain-didnt-honor"
                       >
-                        <XCircle style={{ width: 20, height: 20, color: '#E24B4A' }} />
-                        I didn't honor it
+                        Slipped
                       </button>
                     </div>
                   </div>

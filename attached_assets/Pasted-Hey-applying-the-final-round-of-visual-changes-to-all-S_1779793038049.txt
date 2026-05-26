@@ -1,0 +1,46 @@
+Hey, applying the final round of visual changes to all Solo and Team Will detail screens. Please read everything carefully before touching any code.
+
+1. Remove the Timeline card — Solo Duration and Solo Event screens
+The full Timeline card (calendar icon, Start date, End date) is still showing on Solo Duration and Solo Event screens. Remove it entirely. Replace with a single condensed status line directly below the header, badge styled, one line only:
+
+Solo Duration: "Active · May 20 → May 27 · Duration"
+Solo Event: "Active · deadline May 31 · Event"
+Solo Recurring is already correct — do not touch it
+Also verify Team Will screens — if any still show a Timeline card, remove it and apply the same condensed format
+
+
+2. "I WILL" / "WE WILL" label — increase size across all screens
+The Team Will screens already have this label. The concept and positioning are correct — just increase the font size significantly so it reads as a bold statement, not a small caption. Same size increase must be applied to all Solo Will screens which should also show "I WILL" in the same style. Color stays type-specific: green for Recurring, blue for Duration, purple for Event.
+
+3. Remove commitment card icons on Solo screens
+Solo screens currently show an icon (checkmark, hourglass, lightning bolt) above the MY COMMITMENT label. Remove all icons entirely. The commitment card should only contain the bold commitment text. Nothing else decorating it.
+
+4. Why button — Solo screens only, on the commitment card
+On Solo Will screens only, add a small ♥ Why button at the bottom left of the commitment card that reveals the because text on tap:
+
+Heart icon + "Why" capitalized
+Colored to match will type, underlined, no chevron or arrow
+Tapping smoothly reveals the because text inside the card with a fade/slide animation
+Button flips to ♥ Hide when open
+Apply to Solo Recurring, Solo Duration, and Solo Event
+
+
+5. Why tag — Team Will screens only, on YOUR avatar in the members section
+On Team Will screens only, do NOT put a Why button on the commitment card. Instead place a tiny subtle Why tag directly under "You" on your avatar column in the members section:
+
+It must be visually small — think of it as a quiet attachment to your avatar, not a prominent button
+Lowercase heart icon + lowercase "why" in muted gray italic style
+Tapping reveals your personal because text in a tiny italic block directly below your avatar, contained within your column only
+No other member has this tag — it is personal to you only
+Color stays muted/gray by default, not type-colored — it should barely be noticeable until tapped
+Apply to all Team Will types: Recurring, Duration, Event, and both We Will and I Will formats
+
+
+6. Members section — active state removes "In ✓" labels
+When a Team Will is active, remove all "In ✓" status labels from member avatars. Show avatar and name only for all members except yourself — your column shows avatar, name, "You" in purple, and the ♥ why tag below that. When a Team Will is pending, keep the existing "In ✓" / "Pending" status labels as they are.
+
+7. Duration check-in buttons — side by side
+Currently the Duration screen shows check-in options stacked vertically as "I honored my will" / "I didn't honor it". Replace with two side-by-side buttons: "Holding" (blue filled) on the left / "Slipped" (red border, white background) on the right. Matching the same side-by-side layout already used on Recurring and Event screens.
+
+8. Remove commitment card icons on Solo screens — also remove MY COMMITMENT label
+While removing the icon, also evaluate whether the "MY COMMITMENT" label is still needed. Given we now have the large bold "I WILL" label directly above the card, the "MY COMMITMENT" label inside the card is redundant. Remove it — the card should just show the bold commitment text and the ♥ Why button at the bottom left.
