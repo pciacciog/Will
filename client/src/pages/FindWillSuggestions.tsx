@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 
@@ -164,8 +164,7 @@ export default function FindWillSuggestions() {
 
   const [selected, setSelected] = useState<number | null>(null);
 
-  // Pick 1 random suggestion per type on mount; stable for this screen visit
-  const cards: Card[] = useMemo(() => {
+  const buildCards = useCallback((): Card[] => {
     const pool = POOLS[area] ?? POOLS.personal_discipline;
     return [
       { type: "recurring", text: pickRandom(pool.recurring) },
@@ -173,6 +172,13 @@ export default function FindWillSuggestions() {
       { type: "event",     text: pickRandom(pool.event) },
     ];
   }, [area]);
+
+  const [cards, setCards] = useState<Card[]>(buildCards);
+
+  const reshuffle = () => {
+    setCards(buildCards());
+    setSelected(null);
+  };
 
   const reflection = REFLECTIONS[area] ?? "";
 
@@ -227,6 +233,17 @@ export default function FindWillSuggestions() {
               </p>
             </button>
           ))}
+        </div>
+
+        {/* Re-randomise link */}
+        <div className="flex justify-center pt-1">
+          <button
+            onClick={reshuffle}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            data-testid="button-reshuffle"
+          >
+            Show me different ones
+          </button>
         </div>
       </div>
 
