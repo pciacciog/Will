@@ -61,8 +61,6 @@ export default function FindWillSuggestions() {
   const [, setLocation] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const area = params.get("area") || "personal_discipline";
-  const userText = params.get("text") || "";
-
   const [selected, setSelected] = useState<number | null>(null);
 
   const suggestions = SUGGESTIONS[area] ?? SUGGESTIONS.personal_discipline;
@@ -91,13 +89,6 @@ export default function FindWillSuggestions() {
 
         {/* Reflection line */}
         <p className="text-sm text-gray-400 italic text-center px-2">{reflection}</p>
-
-        {/* User's own reflection from life-area screen, if provided */}
-        {userText && (
-          <p className="text-xs text-gray-400 text-center px-4 -mt-2">
-            You said: <span className="text-gray-500 italic">"{userText}"</span>
-          </p>
-        )}
 
         {/* Suggestion cards */}
         <div className="space-y-3">

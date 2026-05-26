@@ -3,29 +3,27 @@ import { useLocation } from "wouter";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 
 const LIFE_AREAS = [
-  { label: "Personal discipline",   slug: "personal_discipline" },
-  { label: "Health and body",       slug: "health_and_body" },
-  { label: "Relationships",         slug: "relationships" },
-  { label: "Career and money",      slug: "career_and_money" },
-  { label: "Purpose and direction", slug: "purpose_and_direction" },
+  { label: "Personal discipline",   sub: "Habits, routines, self-control",  slug: "personal_discipline" },
+  { label: "Health and body",       sub: "Movement, sleep, nutrition",       slug: "health_and_body" },
+  { label: "Relationships",         sub: "Family, friends, connection",      slug: "relationships" },
+  { label: "Career and money",      sub: "Work, income, stability",          slug: "career_and_money" },
+  { label: "Purpose and direction", sub: "Meaning, values, future self",     slug: "purpose_and_direction" },
 ] as const;
 
 export default function FindWillLifeArea() {
   const [, setLocation] = useLocation();
   const [selected, setSelected] = useState<string | null>(null);
-  const [reflection, setReflection] = useState("");
 
   const handleNext = () => {
     if (!selected) return;
     const params = new URLSearchParams();
     params.set("area", selected);
-    if (reflection.trim()) params.set("text", reflection.trim());
     setLocation(`/find-will/suggestions?${params.toString()}`);
   };
 
   return (
     <MobileLayout>
-      <div className="pb-32 px-5 space-y-5">
+      <div className="pb-32 px-5">
         {/* Header */}
         <div className="flex items-center min-h-[44px]">
           <UnifiedBackButton onClick={() => setLocation("/")} testId="button-back-find-will" />
@@ -34,43 +32,33 @@ export default function FindWillLifeArea() {
           </h1>
         </div>
 
+        <p className="text-center text-xs text-gray-400 mt-0.5 mb-5">Pick the area that pulls at you most right now.</p>
+
         {/* Option cards */}
-        <div className="space-y-2.5">
-          {LIFE_AREAS.map(({ label, slug }) => (
+        <div className="space-y-3">
+          {LIFE_AREAS.map(({ label, sub, slug }) => (
             <button
               key={slug}
               onClick={() => setSelected(slug)}
               className={`w-full rounded-2xl border p-4 text-left transition-all duration-150 active:scale-[0.98] ${
                 selected === slug
                   ? "border-[#1D9E75] bg-[#F0FAF5] shadow-sm"
-                  : "border-gray-200 bg-white shadow-sm"
+                  : "border-gray-200 bg-white shadow-sm hover:border-gray-300"
               }`}
               data-testid={`button-area-${slug}`}
             >
-              <span
-                className={`text-sm font-medium ${
-                  selected === slug ? "text-[#1D9E75]" : "text-gray-800"
-                }`}
-              >
+              <p className={`text-sm font-semibold leading-tight ${
+                selected === slug ? "text-[#1D9E75]" : "text-gray-800"
+              }`}>
                 {label}
-              </span>
+              </p>
+              <p className={`text-xs mt-0.5 ${
+                selected === slug ? "text-[#1D9E75]/70" : "text-gray-400"
+              }`}>
+                {sub}
+              </p>
             </button>
           ))}
-        </div>
-
-        {/* Open text input */}
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
-            What keeps coming up for you in this area?
-          </label>
-          <textarea
-            value={reflection}
-            onChange={(e) => setReflection(e.target.value)}
-            placeholder="Be honest, even one sentence helps."
-            rows={3}
-            className="w-full bg-gray-50 text-gray-900 placeholder:text-gray-400 rounded-xl px-3.5 py-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500/40 border border-gray-200"
-            data-testid="input-reflection"
-          />
         </div>
       </div>
 
