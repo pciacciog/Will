@@ -1,48 +1,139 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 
 type WillCategory = "recurring" | "duration" | "event";
 
-interface Suggestion {
-  type: WillCategory;
-  text: string;
+interface SuggestionPool {
+  recurring: string[];
+  duration: string[];
+  event: string[];
 }
 
 const REFLECTIONS: Record<string, string> = {
-  personal_discipline:  "Discipline is built one decision at a time.",
-  health_and_body:      "Your body keeps the score. Start small.",
-  relationships:        "The people in your life feel your presence or your absence.",
-  career_and_money:     "Clarity on one thing beats confusion about everything.",
+  personal_discipline:   "Discipline is built one decision at a time.",
+  health_and_body:       "Your body keeps the score. Start small.",
+  relationships:         "The people in your life feel your presence or your absence.",
+  career_and_money:      "Clarity on one thing beats confusion about everything.",
   purpose_and_direction: "You already know what matters. You just haven't committed yet.",
 };
 
-const SUGGESTIONS: Record<string, Suggestion[]> = {
-  personal_discipline: [
-    { type: "recurring", text: "I will wake up at 5:30am every day without hitting snooze" },
-    { type: "duration",  text: "I will not look at my phone for the first 30 minutes of my day for 21 days" },
-    { type: "event",     text: "I will write out my top 3 priorities every Sunday night" },
-  ],
-  health_and_body: [
-    { type: "recurring", text: "I will train for at least 30 minutes every day" },
-    { type: "duration",  text: "I will cut out sugar completely for 30 days" },
-    { type: "event",     text: "I will book my annual health checkup this week" },
-  ],
-  relationships: [
-    { type: "recurring", text: "I will check in on someone I care about every day" },
-    { type: "duration",  text: "I will put my phone away during every meal for 14 days" },
-    { type: "event",     text: "I will write a letter to someone who has impacted my life" },
-  ],
-  career_and_money: [
-    { type: "recurring", text: "I will spend 30 minutes every day working on my most important project" },
-    { type: "duration",  text: "I will track every dollar I spend for 30 days" },
-    { type: "event",     text: "I will send that email I have been putting off this week" },
-  ],
-  purpose_and_direction: [
-    { type: "recurring", text: "I will journal for 10 minutes every morning" },
-    { type: "duration",  text: "I will consume zero mindless content for 14 days" },
-    { type: "event",     text: "I will write out where I want to be in 1 year and why" },
-  ],
+const POOLS: Record<string, SuggestionPool> = {
+  personal_discipline: {
+    recurring: [
+      "I will wake up at 5:30am every day without hitting snooze",
+      "I will make my bed every single morning before I leave my room",
+      "I will read for 20 minutes every night before bed",
+      "I will plan my next day the night before every day",
+      "I will do 10 minutes of meditation every morning",
+    ],
+    duration: [
+      "I will not look at my phone for the first 30 minutes of my day for 21 days",
+      "I will wake up at the same time every day for 30 days",
+      "I will not watch TV for 2 weeks",
+      "I will do a digital detox every Sunday for a month",
+      "I will go to bed before midnight every night for 21 days",
+    ],
+    event: [
+      "I will write out my top 3 priorities every Sunday night this week",
+      "I will delete every app on my phone that wastes my time this weekend",
+      "I will set up my ideal morning routine on paper today",
+      "I will identify my single biggest distraction and eliminate it this week",
+      "I will block off deep work time on my calendar for the next month this week",
+    ],
+  },
+  health_and_body: {
+    recurring: [
+      "I will train for at least 30 minutes every day",
+      "I will train before I open my phone every morning",
+      "I will go for a 20 minute walk every day",
+      "I will not eat after 8pm every day",
+      "I will stretch for 10 minutes every night before bed",
+    ],
+    duration: [
+      "I will cut out sugar completely for 30 days",
+      "I will not drink alcohol for 30 days",
+      "I will eat no processed food for 2 weeks",
+      "I will train every day for 21 days without missing",
+      "I will sleep at least 7 hours every night for 30 days",
+    ],
+    event: [
+      "I will book my annual health checkup this week",
+      "I will sign up for a gym or fitness class this week",
+      "I will meal prep for the entire week this Sunday",
+      "I will get my bloodwork done this month",
+      "I will buy nothing but whole foods at my next grocery run",
+    ],
+  },
+  relationships: {
+    recurring: [
+      "I will check in on someone I care about every day",
+      "I will tell someone I love them every single day",
+      "I will put my phone away for the first hour after getting home every day",
+      "I will write one thing I appreciate about someone in my life every morning",
+      "I will have one real conversation every day — no small talk",
+    ],
+    duration: [
+      "I will put my phone away during every meal for 14 days",
+      "I will not complain to anyone about anything for 7 days",
+      "I will reach out to one person I have lost touch with every day for 2 weeks",
+      "I will go screen-free every evening after 8pm for 21 days",
+      "I will say something genuine and specific to someone I love every day for 30 days",
+    ],
+    event: [
+      "I will write a letter to someone who has impacted my life this week",
+      "I will plan a meaningful experience with someone I love this month",
+      "I will have an honest conversation I have been avoiding this week",
+      "I will call my parents or a family member I have been neglecting this week",
+      "I will apologize to someone I owe an apology to this week",
+    ],
+  },
+  career_and_money: {
+    recurring: [
+      "I will spend 30 minutes every day working on my most important project",
+      "I will review my finances for 10 minutes every morning",
+      "I will reach out to one person in my industry every single day",
+      "I will learn something new in my field for 20 minutes every day",
+      "I will write down one idea every day no matter what",
+    ],
+    duration: [
+      "I will track every dollar I spend for 30 days",
+      "I will not make any unnecessary purchases for 21 days",
+      "I will work on my side project for at least 1 hour every day for 30 days",
+      "I will cut out one recurring expense I do not need for 60 days",
+      "I will cold outreach one person every day for 30 days",
+    ],
+    event: [
+      "I will send that email I have been putting off this week",
+      "I will set up a budget this weekend",
+      "I will update my resume or portfolio this week",
+      "I will have the salary or rate conversation I have been avoiding this month",
+      "I will define my 90 day career goal in writing this week",
+    ],
+  },
+  purpose_and_direction: {
+    recurring: [
+      "I will journal for 10 minutes every morning",
+      "I will spend 15 minutes every day working toward something that is purely mine",
+      "I will listen to something that challenges my thinking every day",
+      "I will spend 30 minutes every day working on my own thing — no exceptions",
+      "I will do one thing every day that the person I want to become would do",
+    ],
+    duration: [
+      "I will consume zero mindless content for 14 days",
+      "I will read one book this month from cover to cover",
+      "I will spend 30 days saying yes to things that scare me",
+      "I will go social media free for 21 days",
+      "I will spend 30 days doing one thing every day that moves me toward my goal",
+    ],
+    event: [
+      "I will write out where I want to be in 1 year and why this week",
+      "I will identify my core values and write them down this weekend",
+      "I will have a conversation with someone who is living the life I want this month",
+      "I will write my personal mission statement this week",
+      "I will make a decision I have been sitting on for too long this week",
+    ],
+  },
 };
 
 const TYPE_LABEL: Record<WillCategory, string> = {
@@ -57,18 +148,37 @@ const TYPE_BADGE_CLASS: Record<WillCategory, string> = {
   event:     "bg-[#EEEDF9] text-[#534AB7]",
 };
 
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+interface Card {
+  type: WillCategory;
+  text: string;
+}
+
 export default function FindWillSuggestions() {
   const [, setLocation] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const area = params.get("area") || "personal_discipline";
+
   const [selected, setSelected] = useState<number | null>(null);
 
-  const suggestions = SUGGESTIONS[area] ?? SUGGESTIONS.personal_discipline;
+  // Pick 1 random suggestion per type on mount; stable for this screen visit
+  const cards: Card[] = useMemo(() => {
+    const pool = POOLS[area] ?? POOLS.personal_discipline;
+    return [
+      { type: "recurring", text: pickRandom(pool.recurring) },
+      { type: "duration",  text: pickRandom(pool.duration) },
+      { type: "event",     text: pickRandom(pool.event) },
+    ];
+  }, [area]);
+
   const reflection = REFLECTIONS[area] ?? "";
 
   const handleCommit = () => {
     if (selected === null) return;
-    const s = suggestions[selected];
+    const s = cards[selected];
     const dest = new URLSearchParams();
     dest.set("what", s.text);
     dest.set("category", s.type);
@@ -92,14 +202,14 @@ export default function FindWillSuggestions() {
 
         {/* Suggestion cards */}
         <div className="space-y-3">
-          {suggestions.map((s, i) => (
+          {cards.map((s, i) => (
             <button
               key={i}
               onClick={() => setSelected(i)}
               className={`w-full rounded-2xl border p-4 text-left transition-all duration-150 active:scale-[0.98] ${
                 selected === i
                   ? "border-[#1D9E75] bg-[#F0FAF5] shadow-sm"
-                  : "border-gray-200 bg-white shadow-sm"
+                  : "border-gray-200 bg-white shadow-sm hover:border-gray-300"
               }`}
               data-testid={`button-suggestion-${i}`}
             >
