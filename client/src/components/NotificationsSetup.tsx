@@ -187,7 +187,7 @@ function RecurringSection({ state, onChange }: { state: RecState; onChange: (s: 
       <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">TRACK ON</p>
 
       {/* Day buttons — equal-width squares */}
-      <div className="flex gap-1.5 mb-5">
+      <div className="grid grid-cols-7 gap-1.5 mb-5">
         {DAY_LABELS.map((label, i) => {
           const dv = DAY_JS[i];
           const active = trackedDays.includes(dv);
@@ -196,9 +196,8 @@ function RecurringSection({ state, onChange }: { state: RecState; onChange: (s: 
               key={dv}
               type="button"
               onClick={() => toggleDay(dv)}
-              className="flex-1 flex items-center justify-center font-semibold transition-all active:scale-90 select-none"
+              className="aspect-square flex items-center justify-center font-semibold transition-all active:scale-90 select-none"
               style={{
-                aspectRatio: '1',
                 borderRadius: 9,
                 fontSize: 13,
                 border: `1.5px solid ${active ? c.bg : '#D1D5DB'}`,
@@ -220,7 +219,7 @@ function RecurringSection({ state, onChange }: { state: RecState; onChange: (s: 
       {/* Card */}
       <div style={{ background: '#f7f7f7', borderRadius: 14, overflow: 'hidden' }}>
         {/* Row 1 — Reminder */}
-        <div className="flex items-center px-4 py-3.5 gap-3">
+        <div className="flex items-center px-4 py-2.5 gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-gray-900">Reminder</p>
             <p className="text-xs text-gray-400 mt-0.5">Before the moment</p>
@@ -246,7 +245,7 @@ function RecurringSection({ state, onChange }: { state: RecState; onChange: (s: 
         <div style={{ height: 0.5, background: '#E5E7EB', marginLeft: 16, marginRight: 16 }} />
 
         {/* Row 2 — Check-in */}
-        <div className="flex items-center px-4 py-3.5 gap-3">
+        <div className="flex items-center px-4 py-2.5 gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-gray-900">Check-in</p>
             <p className="text-xs text-gray-400 mt-0.5">How did it go?</p>
@@ -566,8 +565,8 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
   return (
     <div className="flex flex-col min-h-0">
       {/* Large bold heading */}
-      <h1 className="text-[28px] font-bold text-gray-950 leading-tight mb-2 px-4">
-        Notifications<br />Setup
+      <h1 className="text-xl font-semibold text-gray-900 text-center mb-4 px-4">
+        Notifications Setup
       </h1>
 
       {/* Will statement */}
@@ -586,7 +585,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
             key={cat}
             type="button"
             onClick={() => setSelected(cat)}
-            className="flex-1 py-2 text-sm font-semibold transition-all active:scale-95"
+            className="flex-1 py-2 text-sm font-semibold text-center transition-all active:scale-95"
             style={
               selected === cat
                 ? { background: C[cat].tabBg, border: `2px solid ${C[cat].bg}`, color: C[cat].bg, borderRadius: 999 }
