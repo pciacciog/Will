@@ -9,6 +9,7 @@ import { Zap, ChevronRight, CheckCircle, XCircle, Users, MessageCircle } from "l
 import type { WillCheckIn } from "@shared/schema";
 import DayStrip from "@/components/DayStrip";
 import { cn } from "@/lib/utils";
+import DeadlineArc, { deadlineUrgency } from "@/components/DeadlineArc";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -153,6 +154,11 @@ export default function PublicWillDetail() {
   const category = will?.commitmentCategory ?? null;
   const creatorHandle = will ? `@${will.creatorName.toLowerCase().replace(/\s+/g, '')}` : '';
 
+  const missionDaysRemaining = useMemo(() => {
+    if (category !== 'event' || !will?.endDate) return 999;
+    return Math.ceil((new Date(will.endDate).getTime() - new Date().setHours(0,0,0,0)) / 86400000);
+  }, [category, will?.endDate]);
+
   // Duration calendar computations
   const durTotalDays = useMemo(() => {
     if (category !== 'duration' || !will?.startDate || !will?.endDate) return 0;
@@ -246,9 +252,17 @@ export default function PublicWillDetail() {
           <div className="flex flex-col items-center gap-1.5">
             <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">Will Hub</h1>
             <div className="flex items-center gap-1.5">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700" data-testid="badge-active-day">
-                Active · Day {will.daysIn}
-              </span>
+              {(() => {
+                const urg = category === 'event' ? deadlineUrgency(missionDaysRemaining) : null;
+                return (
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${urg ? `${urg.pillBg} ${urg.pillText}` : 'bg-emerald-100 text-emerald-700'}`}
+                    data-testid="badge-active-day"
+                  >
+                    Active · Day {will.daysIn}
+                  </span>
+                );
+              })()}
               {typeBadgeLabel && (
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: '#EEEDF9', color: '#534AB7' }} data-testid="badge-will-type">
                   {typeBadgeLabel}
@@ -437,20 +451,19 @@ export default function PublicWillDetail() {
           </div>
 
         ) : category === 'event' ? (
-          /* Event: status card */
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-progress-event">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-3">Status</p>
-            {will.status === 'completed' ? (
-              <div className="flex items-center justify-center gap-2 py-3 rounded-xl" style={{ backgroundColor: '#E1F5EE', border: '1.5px solid #1D9E75' }}>
-                <CheckCircle style={{ width: 20, height: 20, color: '#1D9E75' }} />
-                <span className="text-sm font-semibold" style={{ color: '#085041' }}>Completed</span>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-50 border border-gray-200">
-                <span className="text-sm font-semibold text-gray-600">Not yet — still going</span>
-              </div>
-            )}
-          </div>
+          /* Event: Deadline Arc */
+          will.status === 'completed' ? (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-center gap-2" data-testid="card-progress-event">
+              <CheckCircle style={{ width: 20, height: 20, color: '#1D9E75' }} />
+              <span className="text-sm font-semibold" style={{ color: '#085041' }}>Completed</span>
+            </div>
+          ) : will.startDate && will.endDate ? (
+            <DeadlineArc startDate={will.startDate} endDate={will.endDate} />
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-center" data-testid="card-progress-event">
+              <span className="text-sm font-semibold text-gray-600">Still going</span>
+            </div>
+          )
         ) : null}
 
         {/* ── Push card ────────────────────────────────────────────────────── */}

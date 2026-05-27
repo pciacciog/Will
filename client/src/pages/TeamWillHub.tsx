@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getApiPath } from "@/config/api";
+import DeadlineArc, { deadlineUrgency } from "@/components/DeadlineArc";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { useAppRefresh } from "@/hooks/useAppRefresh";
 import { formatDisplayDateTime } from "@/lib/dateUtils";
@@ -1161,13 +1162,22 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
           {/* Badge row — status + optional category context */}
           <div className="flex justify-center items-center mb-4">
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
-              {will.status === 'active' && category === 'event' && missionDeadlineLabel
+            {(() => {
+              const isActiveEvent = will.status === 'active' && category === 'event';
+              const urg = isActiveEvent ? deadlineUrgency(missionDaysRemaining) : null;
+              const bgCls = urg ? urg.pillBg : statusInfo.bg;
+              const txtCls = urg ? urg.pillText : statusInfo.text;
+              const label = will.status === 'active' && category === 'event' && missionDeadlineLabel
                 ? `Active · deadline ${missionDeadlineLabel}`
                 : will.status === 'active' && (category === 'duration' || (category === 'recurring' && daysLeft !== null))
                 ? `Active · ${category === 'duration' ? durDaysLeft : daysLeft} days left`
-                : statusInfo.label}
-            </span>
+                : statusInfo.label;
+              return (
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${bgCls} ${txtCls}`}>
+                  {label}
+                </span>
+              );
+            })()}
           </div>
 
           {/* ── State banner ─────────────────────────────────────── */}
@@ -1884,6 +1894,11 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             ) : category === 'event' ? (
               /* ── Event ── */
               <div className="space-y-3">
+                {/* Deadline Arc */}
+                {will.status === 'active' && will.endDate && will.startDate && (
+                  <DeadlineArc startDate={will.startDate as string} endDate={will.endDate as string} />
+                )}
+
                 {(will.status === 'active' || will.status === 'completed') && (
                   <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col items-center gap-2.5" data-testid="card-mission-progress">
                     {/* Check-in flow */}

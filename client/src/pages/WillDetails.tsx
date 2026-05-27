@@ -18,6 +18,7 @@ import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
 import { getWillStatus } from "@/lib/willStatus";
+import DeadlineArc, { deadlineUrgency } from "@/components/DeadlineArc";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import DailyGutCheckModal from "@/components/DailyGutCheckModal";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
@@ -1011,6 +1012,8 @@ export default function WillDetails() {
           <div className="flex items-center justify-center space-x-2 mb-1">
             <Badge 
               className={`text-xs tracking-tight ${
+                will.status === 'active' && effectiveCategory === 'event'
+                  ? `${deadlineUrgency(missionDaysRemaining).pillBg} ${deadlineUrgency(missionDaysRemaining).pillText}` :
                 will.status === 'active' ? 'bg-green-100 text-green-800' :
                 will.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                 will.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
@@ -1825,6 +1828,11 @@ export default function WillDetails() {
 
         ) : effectiveCategory === 'event' ? (
           <>
+            {/* Deadline Arc */}
+            {will.status === 'active' && will.endDate && will.startDate && (
+              <DeadlineArc startDate={will.startDate} endDate={will.endDate} />
+            )}
+
             {/* Event: mark-as-done flow */}
             {(will.status === 'active' || will.status === 'completed') && (
               <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col items-center gap-2.5" data-testid="card-mission-progress">
