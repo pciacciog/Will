@@ -1399,26 +1399,41 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
                             {member.firstName}
                           </p>
-                          {((member.status === 'creator' || member.status === 'self') || !(will.status === 'active' || will.status === 'will_review')) && (
+                          {/* Active state: Why chip for current user, invisible spacer for others */}
+                          {(will.status === 'active' || will.status === 'will_review') ? (
+                            (member.status === 'creator' || member.status === 'self') && userCommitment?.why ? (
+                              <button
+                                onClick={e => { e.stopPropagation(); setShowWhyTag(prev => !prev); }}
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+                                style={{ backgroundColor: '#F5F3FF', border: '1px solid #DDD6FE' }}
+                                data-testid="button-why-chip"
+                              >
+                                <Heart className="w-2.5 h-2.5" style={{ color: '#8B5CF6' }} fill="currentColor" />
+                                <span className="text-[10px] font-medium" style={{ color: '#7C3AED' }}>Why</span>
+                                <ChevronDown
+                                  className="w-3 h-3 transition-transform duration-200"
+                                  style={{ color: '#8B5CF6', transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                />
+                              </button>
+                            ) : (
+                              <div style={{ height: 22 }} aria-hidden="true" />
+                            )
+                          ) : (
+                            /* Non-active state: show status labels as before */
                             <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? '#8B5CF6' : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
                               {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
                             </p>
                           )}
+                          {/* Because text — animated reveal */}
                           {(member.status === 'creator' || member.status === 'self') && userCommitment?.why && (
-                            <button
-                              onClick={e => { e.stopPropagation(); setShowWhyTag(prev => !prev); }}
-                              className="flex items-center gap-0.5 mt-0.5"
-                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                              data-testid="button-why-tag"
+                            <div
+                              className="overflow-hidden transition-all duration-200 text-center"
+                              style={{ maxHeight: showWhyTag ? '80px' : '0px', opacity: showWhyTag ? 1 : 0 }}
                             >
-                              <Heart className="w-2.5 h-2.5" style={{ color: '#9CA3AF' }} fill="currentColor" />
-                              <span className="text-[10px] italic text-gray-400">{showWhyTag ? 'hide' : 'why'}</span>
-                            </button>
-                          )}
-                          {(member.status === 'creator' || member.status === 'self') && showWhyTag && userCommitment?.why && (
-                            <p className="text-[10px] text-gray-400 italic text-center max-w-[60px] leading-tight mt-0.5">
-                              {userCommitment.why}
-                            </p>
+                              <p className="text-[10px] text-gray-400 italic max-w-[64px] leading-tight mt-1">
+                                {userCommitment.why}
+                              </p>
+                            </div>
                           )}
                         </button>
                       );
@@ -1469,25 +1484,31 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-semibold text-gray-900 truncate">{firstName}</p>
-                              {isMe && <span className="text-[10px] text-gray-400">You</span>}
                             </div>
                             {c.what && (
                               <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{c.what}</p>
                             )}
                             {isMe && c.why && (
-                              <div className="mt-1">
+                              <div className="mt-1.5">
                                 <button
                                   onClick={e => { e.stopPropagation(); setShowWhyTag(prev => !prev); }}
-                                  className="flex items-center gap-0.5"
-                                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                                  data-testid="button-why-tag-i-will"
+                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+                                  style={{ backgroundColor: '#F5F3FF', border: '1px solid #DDD6FE' }}
+                                  data-testid="button-why-chip"
                                 >
-                                  <Heart className="w-2.5 h-2.5" style={{ color: '#9CA3AF' }} fill="currentColor" />
-                                  <span className="text-[10px] italic text-gray-400">{showWhyTag ? 'hide' : 'why'}</span>
+                                  <Heart className="w-2.5 h-2.5" style={{ color: '#8B5CF6' }} fill="currentColor" />
+                                  <span className="text-[10px] font-medium" style={{ color: '#7C3AED' }}>Why</span>
+                                  <ChevronDown
+                                    className="w-3 h-3 transition-transform duration-200"
+                                    style={{ color: '#8B5CF6', transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                  />
                                 </button>
-                                {showWhyTag && (
+                                <div
+                                  className="overflow-hidden transition-all duration-200"
+                                  style={{ maxHeight: showWhyTag ? '80px' : '0px', opacity: showWhyTag ? 1 : 0 }}
+                                >
                                   <p className="text-[11px] text-gray-400 italic mt-0.5">{c.why}</p>
-                                )}
+                                </div>
                               </div>
                             )}
                           </div>
