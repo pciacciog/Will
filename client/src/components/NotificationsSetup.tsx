@@ -577,7 +577,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
       {(() => {
         const cards: { cat: Category; example: string }[] = [
           { cat: 'recurring', example: 'I will make my bed every morning' },
-          { cat: 'duration',  example: 'I will have no sugar for 7 days' },
+          { cat: 'duration',  example: 'I will not consume sugar for 7 days' },
           { cat: 'event',     example: 'I will write a letter to my mom this week' },
         ];
         return (
