@@ -1751,16 +1751,16 @@ export default function WillDetails() {
                                   backgroundColor:
                                     d.status === 'checked-in' ? '#1D9E75'
                                     : d.status === 'missed' ? '#FECDD3'
-                                    : d.status === 'today' ? 'rgba(83,74,183,0.12)'
+                                    : d.status === 'today' ? 'rgba(29,111,190,0.12)'
                                     : '#F3F4F6',
                                   border:
                                     d.status === 'missed' ? '2px solid #E24B4A'
-                                    : d.status === 'today' ? '2px solid #534AB7'
+                                    : d.status === 'today' ? '2px solid #1D6FBE'
                                     : 'none',
                                   color:
                                     d.status === 'checked-in' ? '#fff'
                                     : d.status === 'missed' ? '#E24B4A'
-                                    : d.status === 'today' ? '#534AB7'
+                                    : d.status === 'today' ? '#1D6FBE'
                                     : '#9CA3AF',
                                   cursor: d.status === 'upcoming' ? 'default' : 'pointer',
                                 }}
