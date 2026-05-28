@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Calendar, CheckCircle, X, Check } from "lucide-react";
+import { Calendar, CheckCircle, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type TeamMember = {
@@ -161,19 +161,6 @@ export default function AcceptInvite() {
           paddingBottom: "max(20px, env(safe-area-inset-bottom))",
         }}
       >
-
-        {/* ── Nav row ─────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-2.5 pt-3 pb-3">
-          <button
-            onClick={() => setLocation("/")}
-            className="w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 transition-all active:scale-95"
-            style={{ background: "#f2f2f7", border: "1px solid #e5e5ea" }}
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 text-gray-700" strokeWidth={2.5} />
-          </button>
-          <span className="text-sm font-semibold text-gray-900">Team Will Invite</span>
-        </div>
 
         {/* ── Content ─────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-2.5">
