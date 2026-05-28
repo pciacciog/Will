@@ -273,32 +273,43 @@ export default function PublicWillDetail() {
           <div className="w-11" />
         </div>
 
+        {/* ── Username label above commitment card ─────────────────────────── */}
+        <p
+          className="text-center text-xl font-bold tracking-tight"
+          style={{
+            color: category === 'recurring' ? '#1D9E75'
+                 : category === 'duration'  ? '#1D6FBE'
+                 : '#534AB7'
+          }}
+          data-testid="label-will-owner"
+        >
+          {will.isOwner ? 'I WILL' : `${creatorHandle} will`}
+        </p>
+
         {/* ── Commitment card ──────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3" data-testid="card-commitment">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="card-commitment">
           {/* Creator row */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pb-3">
             <div className="relative flex-shrink-0">
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold"
                 style={{ backgroundColor: avatarColor(will.createdBy) }}
                 data-testid="avatar-creator"
               >
                 {getInitials(will.creatorName)}
               </div>
-              <span className="absolute -top-1 -right-1 text-[13px] leading-none">👑</span>
+              <span className="absolute -top-1 -right-1 text-[12px] leading-none">👑</span>
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-900" data-testid="text-creator-name">{creatorHandle}</p>
               <p className="text-xs text-gray-400">Creator · {will.daysIn} days in</p>
             </div>
           </div>
+          <div className="border-t border-gray-100 mb-3" />
           {/* Commitment text */}
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">The Commitment</p>
-            <p className="text-base font-semibold text-gray-900 leading-snug" data-testid="text-commitment">
-              "{will.what}"
-            </p>
-          </div>
+          <p className="text-base font-semibold text-gray-900 leading-snug" data-testid="text-commitment">
+            "{will.what}"
+          </p>
         </div>
 
         {/* ── 3 Stat boxes ─────────────────────────────────────────────────── */}
@@ -376,12 +387,6 @@ export default function PublicWillDetail() {
               </div>
             </div>
 
-            {/* Date range */}
-            {will.startDate && will.endDate && (
-              <p className="text-sm text-gray-500 text-center -mt-2">
-                {new Date(will.startDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(will.endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </p>
-            )}
 
             {/* Stat boxes */}
             <div className="grid grid-cols-3 gap-2">
