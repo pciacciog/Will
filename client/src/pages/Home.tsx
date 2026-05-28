@@ -3,7 +3,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Users, Compass, Settings, LogOut, ChevronRight, Flame, Bell } from "lucide-react";
 import { WhoModal } from "@/components/WhoModal";
 import SplashScreen from "@/components/SplashScreen";
@@ -212,24 +211,39 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/20">
+      <style>{`
+        @keyframes sparkle-float {
+          0%, 100% { transform: translateY(0px) scale(1) rotate(0deg); opacity: 0.55; }
+          50%       { transform: translateY(-7px) scale(1.3) rotate(18deg); opacity: 1; }
+        }
+        .sp { animation: sparkle-float 2.6s ease-in-out infinite; }
+        .sp1 { animation-delay: 0s; }
+        .sp2 { animation-delay: 0.52s; }
+        .sp3 { animation-delay: 1.04s; }
+        .sp4 { animation-delay: 1.56s; }
+        .sp5 { animation-delay: 2.08s; }
+      `}</style>
+
       <div className="pt-[calc(env(safe-area-inset-top)+5.5rem)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] min-h-screen flex flex-col">
         <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col">
 
-          {/* Header */}
-          <div className="mb-4 flex items-start justify-between">
+          {/* ── Header ── */}
+          <div className="mb-5 flex items-start justify-between">
             <div>
-              <h1 className="text-[17px] font-bold text-gray-900 leading-tight" data-testid="text-welcome">
+              <h1 className="text-[24px] font-bold text-gray-900 leading-tight tracking-tight" data-testid="text-welcome">
                 Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
               </h1>
-              <p className="text-[13px] text-gray-400 leading-tight">What will you commit to?</p>
+              <p className="text-[15px] text-gray-500 font-medium leading-tight mt-0.5">
+                What will you commit to today?
+              </p>
             </div>
             <button
               onClick={() => setLocation('/notifications')}
-              className="relative mt-0.5 p-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+              className="relative mt-1 p-2 rounded-xl hover:bg-gray-100 transition-colors"
               data-testid="button-notifications"
             >
-              <Bell className="w-5 h-5 text-gray-500" />
+              <Bell className="w-5 h-5 text-gray-400" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none px-0.5">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -238,16 +252,13 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Unread alerts preview — one at a time */}
+          {/* ── Notification preview ── */}
           {previewNotifs.length > 0 && (
-            <div className="mb-3">
+            <div className="mb-4">
               {previewNotifs.map((n) => {
                 const isInvite = n.type === 'team_will_invite';
                 return (
-                  <div
-                    key={n.id}
-                    className="bg-white border border-emerald-100 rounded-2xl px-4 py-3 shadow-sm"
-                  >
+                  <div key={n.id} className="bg-white border border-emerald-100 rounded-2xl px-4 py-3 shadow-sm">
                     <div className="flex items-start gap-2.5">
                       <span className="text-lg leading-none mt-0.5 flex-shrink-0">
                         {n.type === 'friend_request' ? '👋' : n.type === 'proof_dropped' ? '📸' : '🔔'}
@@ -293,112 +304,81 @@ export default function Home() {
             </div>
           )}
 
-          {/* Create Will Button */}
-          <button
-            onClick={handleCreateWill}
-            className="w-full mb-3 group"
-            data-testid="button-create-will"
-          >
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-4 shadow-lg group-hover:shadow-xl transition-all duration-200 group-active:scale-[0.98]">
-              <span className="text-white text-xl font-bold tracking-tight">+ Create a Will</span>
+          {/* ── Create a Will ── */}
+          <button onClick={handleCreateWill} className="w-full mb-3 group" data-testid="button-create-will">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-4 shadow-lg group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all duration-200 group-active:scale-[0.98]">
+              <span className="text-white text-[17px] font-bold tracking-tight">+ Create a Will</span>
             </div>
           </button>
 
-          {/* My Wills — loading / error / data states */}
+          {/* ── My Wills states ── */}
           {willsLoading && user?.id && (
-            <div className="w-full mb-3">
-              <div className="flex items-center gap-2 justify-center py-3">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
-                <span className="text-sm text-gray-400">Loading your wills...</span>
-              </div>
+            <div className="w-full mb-3 flex items-center gap-2 justify-center py-3">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600" />
+              <span className="text-sm text-gray-400">Loading your wills...</span>
             </div>
           )}
           {isActiveWillsError && (
-            <div className="w-full mb-3">
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
-                <p className="text-sm text-red-600 mb-1">Could not load your wills</p>
-                <p className="text-xs text-red-400 mb-1 font-mono break-all">{activeWillsError?.message || 'Unknown error'}</p>
-                <button
-                  onClick={() => refetchWills()}
-                  className="text-xs text-red-500 underline"
-                  data-testid="button-retry-wills"
-                >
-                  Tap to retry
-                </button>
-              </div>
+            <div className="w-full mb-3 bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+              <p className="text-sm text-red-600 mb-1">Could not load your wills</p>
+              <p className="text-xs text-red-400 mb-1 font-mono break-all">{activeWillsError?.message || 'Unknown error'}</p>
+              <button onClick={() => refetchWills()} className="text-xs text-red-500 underline" data-testid="button-retry-wills">Tap to retry</button>
             </div>
           )}
           {allActiveWills === null && !willsLoading && user?.id && (
-            <div className="w-full mb-3">
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-                <p className="text-sm text-amber-600 mb-1">Session expired — please sign out and back in</p>
-                <button
-                  onClick={() => refetchWills()}
-                  className="text-xs text-amber-500 underline"
-                  data-testid="button-retry-auth"
-                >
-                  Tap to retry
-                </button>
-              </div>
+            <div className="w-full mb-3 bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+              <p className="text-sm text-amber-600 mb-1">Session expired — please sign out and back in</p>
+              <button onClick={() => refetchWills()} className="text-xs text-amber-500 underline" data-testid="button-retry-auth">Tap to retry</button>
             </div>
           )}
           {!willsLoading && !isActiveWillsError && allActiveWills !== null && (
-            <button
-              onClick={() => setLocation('/wills')}
-              className="w-full mb-3 group"
-              data-testid="button-view-all-wills"
-            >
-              <Card className="bg-white border-2 border-emerald-100 shadow-md group-hover:shadow-lg group-hover:border-emerald-300 transition-all duration-200 group-active:scale-[0.98]">
-                <CardContent className="px-5 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                        <Flame className={`w-5 h-5 ${activeWills.length > 0 ? 'text-orange-500' : 'text-gray-400'}`} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-gray-900 leading-tight">My Wills</h3>
-                        {activeWills.length > 0 ? (
-                          <span
-                            className="text-[12px] text-emerald-600 font-medium"
-                            data-testid="text-active-wills-label"
-                          >
-                            {activeWills.length} active
-                          </span>
-                        ) : (
-                          <span className="text-[12px] text-gray-400" data-testid="text-active-wills-label">No active wills</span>
-                        )}
-                      </div>
+            <button onClick={() => setLocation('/wills')} className="w-full mb-3 group" data-testid="button-view-all-wills">
+              <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3.5 shadow-sm group-hover:shadow-md group-hover:border-emerald-200 transition-all duration-200 group-active:scale-[0.98]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                      <Flame className={`w-5 h-5 ${activeWills.length > 0 ? 'text-orange-500' : 'text-gray-400'}`} />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                    <div>
+                      <h3 className="text-[15px] font-bold text-gray-900 leading-tight">My Wills</h3>
+                      {activeWills.length > 0 ? (
+                        <span className="text-[12px] text-emerald-600 font-medium" data-testid="text-active-wills-label">
+                          {activeWills.length} active
+                        </span>
+                      ) : (
+                        <span className="text-[12px] text-gray-400" data-testid="text-active-wills-label">No active wills</span>
+                      )}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-emerald-400 transition-colors" />
+                </div>
+              </div>
             </button>
           )}
 
-          {/* Explore & My Circles — 2-col grid */}
-          <div className="grid grid-cols-2 gap-3 w-full mb-3">
+          {/* ── Explore & Friends ── */}
+          <div className="grid grid-cols-2 gap-3 w-full mb-4">
             <button
               onClick={() => { setActiveCard('explore'); handleExplore(); }}
               onPointerDown={() => setActiveCard('explore')}
               className="group"
               data-testid="button-explore"
             >
-              <div className={`h-full rounded-2xl transition-all duration-200 group-hover:-translate-y-0.5 ${
+              <div className={`h-full rounded-2xl border transition-all duration-200 group-hover:-translate-y-0.5 ${
                 activeCard === 'explore'
-                  ? 'bg-white border-2 border-blue-300 shadow-md shadow-blue-100/50'
-                  : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-blue-200'
+                  ? 'bg-blue-50 border-blue-200 shadow-md'
+                  : 'bg-white border-gray-100 shadow-sm group-hover:shadow-md group-hover:border-blue-200'
               }`}>
-                <div className="p-3 flex flex-col items-center justify-center text-center">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1 transition-colors duration-200 ${
+                <div className="p-4 flex flex-col items-center text-center gap-0.5">
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center mb-1.5 transition-colors duration-200 ${
                     activeCard === 'explore' ? 'bg-blue-100' : 'bg-blue-50'
                   }`}>
                     <Compass className={`w-5 h-5 transition-colors duration-200 ${
-                      activeCard === 'explore' ? 'text-blue-600' : 'text-blue-400'
+                      activeCard === 'explore' ? 'text-blue-600' : 'text-blue-500'
                     }`} />
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-900 leading-tight">Explore</h3>
-                  <p className="text-[11px] text-gray-400 leading-tight">Browse public Wills</p>
+                  <h3 className="text-[13px] font-bold text-gray-900 leading-tight">Explore</h3>
+                  <p className="text-[11px] text-gray-400 leading-snug mt-0.5">See what others<br/>are pursuing</p>
                 </div>
               </div>
             </button>
@@ -409,46 +389,56 @@ export default function Home() {
               className="group"
               data-testid="button-friends"
             >
-              <div className={`h-full rounded-2xl transition-all duration-200 group-hover:-translate-y-0.5 ${
+              <div className={`h-full rounded-2xl border transition-all duration-200 group-hover:-translate-y-0.5 ${
                 activeCard === 'friends'
-                  ? 'bg-white border-2 border-purple-300 shadow-md shadow-purple-100/50'
-                  : 'bg-white border border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-purple-200'
+                  ? 'bg-violet-50 border-violet-200 shadow-md'
+                  : 'bg-white border-gray-100 shadow-sm group-hover:shadow-md group-hover:border-violet-200'
               }`}>
-                <div className="p-3 flex flex-col items-center justify-center text-center">
-                  <div className="relative">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1 transition-colors duration-200 ${
-                      activeCard === 'friends' ? 'bg-purple-100' : 'bg-purple-50'
-                    }`}>
-                      <Users className={`w-5 h-5 transition-colors duration-200 ${
-                        activeCard === 'friends' ? 'text-purple-600' : 'text-purple-400'
-                      }`} />
-                    </div>
+                <div className="p-4 flex flex-col items-center text-center gap-0.5">
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center mb-1.5 transition-colors duration-200 ${
+                    activeCard === 'friends' ? 'bg-violet-100' : 'bg-violet-50'
+                  }`}>
+                    <Users className={`w-5 h-5 transition-colors duration-200 ${
+                      activeCard === 'friends' ? 'text-violet-600' : 'text-violet-500'
+                    }`} />
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-900 leading-tight">Friends</h3>
-                  <p className="text-[11px] text-gray-400 leading-tight">find people to grow with</p>
+                  <h3 className="text-[13px] font-bold text-gray-900 leading-tight">Friends</h3>
+                  <p className="text-[11px] text-gray-400 leading-snug mt-0.5">Build your circle,<br/>grow together</p>
                 </div>
               </div>
             </button>
           </div>
 
-          {/* "Find your Will" prompt */}
+          {/* ── Find Your Will — magical section ── */}
           <div className="flex flex-col items-center gap-2 pt-1 pb-2">
-            <hr className="w-full border-gray-100" />
-            <p className="text-xs text-gray-400 mt-1">Not sure what to commit to?</p>
-            <button
-              onClick={() => setLocation('/find-will')}
-              className="px-5 py-2 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-800 active:bg-gray-50 transition-all duration-200"
-              data-testid="button-find-your-will"
-            >
-              Find your Will
-            </button>
+            <div className="w-full border-t border-gray-100" />
+            <div className="flex flex-col items-center gap-1 mt-2">
+              <p className="text-[14px] font-semibold text-gray-600 text-center">Not sure where to start?</p>
+              <p className="text-[12px] text-gray-400 text-center">Let us help you find the right commitment.</p>
+            </div>
+
+            {/* Sparkles + button */}
+            <div className="relative inline-flex items-center justify-center mt-1 mb-1">
+              <span className="sp sp1 absolute -top-4 left-4  text-emerald-400 text-sm  select-none pointer-events-none">✦</span>
+              <span className="sp sp2 absolute -top-3 right-3 text-teal-300   text-[10px] select-none pointer-events-none">✦</span>
+              <span className="sp sp3 absolute top-1  -right-6 text-emerald-300 text-xs   select-none pointer-events-none">✦</span>
+              <span className="sp sp4 absolute -bottom-3 -left-6 text-teal-400 text-[10px] select-none pointer-events-none">✦</span>
+              <span className="sp sp5 absolute -bottom-2 right-1 text-emerald-500 text-sm  select-none pointer-events-none">✦</span>
+              <button
+                onClick={() => setLocation('/find-will')}
+                className="px-8 py-3 rounded-full text-white text-[14px] font-bold bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200"
+                data-testid="button-find-your-will"
+              >
+                Find Your Will
+              </button>
+            </div>
           </div>
 
-          {/* Footer — Settings + Sign Out */}
-          <div className="mt-auto pt-4 flex items-center justify-center gap-5">
+          {/* ── Footer ── */}
+          <div className="mt-auto pt-3 flex items-center justify-center gap-5">
             <button
               onClick={() => setShowAccountSettings(true)}
-              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-sm transition-colors"
+              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-[12px] transition-colors"
               data-testid="button-settings"
             >
               <Settings className="w-3.5 h-3.5" />
@@ -458,7 +448,7 @@ export default function Home() {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-sm transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-[12px] transition-colors disabled:opacity-50"
               data-testid="button-sign-out"
             >
               <LogOut className="w-3.5 h-3.5" />
