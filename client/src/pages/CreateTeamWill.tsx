@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { createDateTimeFromInputs } from "@/lib/dateUtils";
 import { MobileLayout, PrimaryButton, UnifiedBackButton } from "@/components/ui/design-system";
-import { ArrowRight, Check, Users, Target, Calendar, Clock, ClipboardList, MessageCircle, CalendarDays, CheckCircle, Heart, Search } from "lucide-react";
+import { ArrowRight, Check, Users, Target, Calendar, Clock, ClipboardList, MessageCircle, CalendarDays, CheckCircle, Heart, Search, ChevronDown, ChevronRight, Repeat, Hourglass, Zap } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 import NotificationsSetup, { type NotificationsData } from "@/components/NotificationsSetup";
 
@@ -65,6 +65,13 @@ function getDurationText(startStr: string, endStr: string) {
   return rem === 0 ? `${weeks} week${weeks > 1 ? "s" : ""}` : `${weeks} week${weeks > 1 ? "s" : ""}, ${rem} day${rem > 1 ? "s" : ""}`;
 }
 
+function formatTime12h(t: string): string {
+  const [h, m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
 export default function CreateTeamWill() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -89,6 +96,7 @@ export default function CreateTeamWill() {
   const [whatCharCount, setWhatCharCount] = useState(0);
   const [friendSearch, setFriendSearch] = useState("");
   const [notificationsData, setNotificationsData] = useState<NotificationsData | null>(null);
+  const [showWhyReview, setShowWhyReview] = useState(false);
 
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
@@ -245,6 +253,27 @@ export default function CreateTeamWill() {
   };
 
   const selectedFriends = friends.filter(f => selectedFriendIds.includes(f.userId));
+
+  // Step 6 derived constants
+  const reviewTypeColor = notificationsData?.commitmentCategory === 'duration' ? '#185FA5'
+    : notificationsData?.commitmentCategory === 'event' ? '#3C3489'
+    : '#1D9E75';
+  const reviewTypeColorLight = notificationsData?.commitmentCategory === 'duration' ? '#EBF2FB'
+    : notificationsData?.commitmentCategory === 'event' ? '#EEEDF8'
+    : '#E8F7F2';
+  const reviewTypeLabel = notificationsData?.commitmentCategory === 'duration' ? 'Duration'
+    : notificationsData?.commitmentCategory === 'event' ? 'Event'
+    : 'Recurring';
+  const reviewTypeIcon = notificationsData?.commitmentCategory === 'duration'
+    ? <Hourglass className="w-4 h-4" style={{ color: reviewTypeColor }} />
+    : notificationsData?.commitmentCategory === 'event'
+    ? <Zap className="w-4 h-4" style={{ color: reviewTypeColor }} />
+    : <Repeat className="w-4 h-4" style={{ color: reviewTypeColor }} />;
+  const reviewCheckInTimeRaw = notificationsData?.checkInTime ?? notificationsData?.reminderTime ?? null;
+  const reviewCheckInDisplay = reviewCheckInTimeRaw ? `${formatTime12h(reviewCheckInTimeRaw)} daily` : null;
+  const reviewTimelineText = isIndefinite
+    ? 'Ongoing · no end date'
+    : `${formatDateShort(createDateTimeFromInputs(startDate, startTime))} → ${formatDateShort(createDateTimeFromInputs(endDate, endTime))} · ${getDurationText(createDateTimeFromInputs(startDate, startTime), createDateTimeFromInputs(endDate, endTime))}`;
 
   const stepLabel = ["Friends", "Type", "What", "Why", "When", "Tracking", "Review"][step];
   const totalSteps = 7;
@@ -696,117 +725,129 @@ export default function CreateTeamWill() {
 
           {/* Step 6: Review */}
           {step === 6 && (
-            <div className="animate-in fade-in duration-500">
-              {/* Page heading */}
-              <div className="mb-2">
-                <h1 className="text-[18px] font-semibold text-gray-900 leading-tight">Review your Will</h1>
-                <p className="text-[13px] text-gray-500 mt-0.5">Make sure everything looks right.</p>
-              </div>
+            <div className="animate-in fade-in duration-500 flex flex-col gap-3">
 
-              {/* Review rows */}
-              <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-100 shadow-sm">
-                {/* Team */}
-                <div className="flex items-start gap-2.5 px-3 py-2">
-                  <div className="w-7 h-7 rounded-md bg-violet-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Users className="w-3.5 h-3.5 text-violet-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-gray-400">Team</p>
-                    <div className="mt-0.5 space-y-0.5" data-testid="text-confirm-friends">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user
-                          ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "You"
-                          : "You"}{" "}
-                        <span className="text-xs text-gray-400 font-normal">(you)</span>
-                      </p>
-                      {selectedFriends.map(f => (
-                        <p key={f.userId} className="text-sm font-medium text-gray-900">{displayName(f)}</p>
-                      ))}
+              {/* Commitment hero card */}
+              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm px-5 pt-5 pb-5 flex flex-col items-center gap-3">
+                {/* I WILL / WE WILL label */}
+                <p className="text-[11px] font-bold tracking-widest uppercase" style={{ color: reviewTypeColor }}>
+                  {willType === "cumulative" ? "We Will" : "I Will"}
+                </p>
+                {/* Commitment text — no prefix, exactly as typed */}
+                <p className="text-[17px] font-bold text-gray-900 text-center leading-snug" data-testid="text-confirm-what">
+                  "{what}"
+                </p>
+                {/* Why reveal */}
+                {why && (
+                  <>
+                    <div style={{ height: 1, background: '#E5E7EB', alignSelf: 'stretch' }} />
+                    <div className="flex flex-col items-center w-full">
+                      <button
+                        onClick={() => setShowWhyReview(prev => !prev)}
+                        className="flex items-center gap-1.5 text-sm font-medium"
+                        style={{ color: reviewTypeColor, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                        data-testid="button-why-review"
+                      >
+                        <Heart className="w-3.5 h-3.5" />
+                        <span>Why</span>
+                        <ChevronDown
+                          className="w-3.5 h-3.5 transition-transform duration-200"
+                          style={{ transform: showWhyReview ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                        />
+                      </button>
+                      <div
+                        className="overflow-hidden transition-all duration-300 w-full"
+                        style={{ maxHeight: showWhyReview ? '200px' : '0px', opacity: showWhyReview ? 1 : 0 }}
+                      >
+                        <div className="rounded-xl px-4 py-3 text-center mt-2" style={{ background: reviewTypeColorLight }}>
+                          <p className="text-sm italic" style={{ color: reviewTypeColor }} data-testid="text-confirm-why">
+                            Because {why}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                {/* What */}
-                <div className="flex items-start gap-2.5 px-3 py-2">
-                  <div className="w-7 h-7 rounded-md bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <ClipboardList className="w-3.5 h-3.5 text-emerald-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-gray-400">What</p>
-                    <p className="text-sm font-medium text-gray-900 mt-0.5" data-testid="text-confirm-what">
-                      {willType === "cumulative" ? "We Will" : "I Will"} {what}
-                    </p>
-                  </div>
-                </div>
-                {/* Why */}
-                <div className="flex items-start gap-2.5 px-3 py-2">
-                  <div className="w-7 h-7 rounded-md bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-gray-400">Why · private</p>
-                    <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-why">{why}</p>
-                  </div>
-                </div>
-                {/* Timeline */}
-                <div className="flex items-start gap-2.5 px-3 py-2">
-                  <div className="w-7 h-7 rounded-md bg-amber-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Calendar className="w-3.5 h-3.5 text-amber-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-gray-400">Timeline</p>
-                    {isIndefinite ? (
-                      <p className="text-sm text-gray-700 mt-0.5">Ongoing (no end date)</p>
-                    ) : (
-                      <p className="text-sm text-gray-700 mt-0.5">
-                        {formatDateShort(createDateTimeFromInputs(startDate, startTime))} → {formatDateShort(createDateTimeFromInputs(endDate, endTime))}, {new Date(createDateTimeFromInputs(endDate, endTime)).getFullYear()} · {getDurationText(createDateTimeFromInputs(startDate, startTime), createDateTimeFromInputs(endDate, endTime))}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {/* Notifications */}
-                {notificationsData?.commitmentCategory && (
-                  <div className="flex items-start gap-2.5 px-3 py-2">
-                    <div className="w-7 h-7 rounded-md bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, color: '#7B3FC4' }}>
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-medium text-gray-400">Notifications</p>
-                      <p className="text-sm text-gray-700 mt-0.5" data-testid="text-confirm-notifications">
-                        {notificationsData.commitmentCategory === 'recurring' ? 'Recurring' : notificationsData.commitmentCategory === 'duration' ? 'Duration' : 'Event'}
-                      </p>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
 
-              {/* Disclaimer */}
-              <p className="text-[12px] text-gray-400 text-center mt-2 leading-relaxed px-2">
-                Your team will be notified and can accept until the start date.
-              </p>
+              {/* Details card — tappable rows */}
+              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm divide-y divide-gray-100 overflow-hidden">
+                {/* Type row */}
+                <button
+                  onClick={() => setStep(1)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-gray-50 transition-colors"
+                  data-testid="row-edit-type"
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: reviewTypeColorLight }}>
+                    {reviewTypeIcon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Type</p>
+                    <p className="text-sm font-medium text-gray-900">{reviewTypeLabel}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                </button>
+
+                {/* Timeline row */}
+                <button
+                  onClick={() => setStep(4)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-gray-50 transition-colors"
+                  data-testid="row-edit-timeline"
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: reviewTypeColorLight }}>
+                    <Calendar className="w-4 h-4" style={{ color: reviewTypeColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Timeline</p>
+                    <p className="text-sm font-medium text-gray-900">{reviewTimelineText}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                </button>
+
+                {/* Check-in time row */}
+                {reviewCheckInDisplay && (
+                  <button
+                    onClick={() => setStep(5)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-gray-50 transition-colors"
+                    data-testid="row-edit-checkin"
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: reviewTypeColorLight }}>
+                      <Clock className="w-4 h-4" style={{ color: reviewTypeColor }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Check-in time</p>
+                      <p className="text-sm font-medium text-gray-900">{reviewCheckInDisplay}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                  </button>
+                )}
+              </div>
+
+              {/* Hint */}
+              <p className="text-[12px] text-gray-400 text-center -mt-1">Tap any row to edit before committing</p>
 
               {/* CTA */}
-              <div className="pt-2">
-                <button
-                  onClick={handleConfirm}
-                  disabled={createWillMutation.isPending}
-                  className={`w-full py-3 rounded-2xl text-[15px] font-semibold flex items-center justify-center transition-all ${
-                    createWillMutation.isPending
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "text-white shadow-sm active:scale-[0.98]"
-                  }`}
-                  style={createWillMutation.isPending ? {} : {
-                    backgroundColor: notificationsData?.commitmentCategory === 'duration' ? '#185FA5'
-                      : notificationsData?.commitmentCategory === 'event' ? '#3C3489'
-                      : '#1D9E75'
-                  }}
-                  data-testid="button-create-will"
-                >
-                  {createWillMutation.isPending ? "Creating..." : "Create Will →"}
-                </button>
-              </div>
+              <button
+                onClick={handleConfirm}
+                disabled={createWillMutation.isPending}
+                className="w-full py-[14px] rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+                style={createWillMutation.isPending
+                  ? { background: '#E5E7EB', color: '#9CA3AF' }
+                  : { background: reviewTypeColor, color: 'white' }}
+                data-testid="button-create-will"
+              >
+                {createWillMutation.isPending ? "Creating..." : (
+                  <>
+                    <Check className="w-5 h-5" strokeWidth={2.5} />
+                    Commit to this Will
+                  </>
+                )}
+              </button>
+
+              {/* Disclaimer */}
+              <p className="text-[12px] text-gray-400 text-center leading-relaxed px-2">
+                Your team will be notified and can accept until the start date.
+              </p>
             </div>
           )}
 
