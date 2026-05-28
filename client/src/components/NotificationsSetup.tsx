@@ -573,25 +573,42 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         {willStatement}
       </p>
 
-      {/* 3-tab selector */}
-      <div className="flex gap-2 px-4 mb-5">
-        {(['recurring', 'duration', 'event'] as Category[]).map(cat => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => setSelected(cat)}
-            className="flex-1 py-2 text-sm font-semibold text-center transition-all active:scale-95"
-            style={
-              selected === cat
-                ? { background: C[cat].tabBg, border: `2px solid ${C[cat].bg}`, color: C[cat].bg, borderRadius: 999 }
-                : { background: '#fff', border: '1.5px solid #E5E7EB', color: '#9CA3AF', borderRadius: 999 }
-            }
-            data-testid={`tab-${cat}`}
-          >
-            {cat.charAt(0).toUpperCase() + cat.slice(1)}
-          </button>
-        ))}
-      </div>
+      {/* Type selector — stacked cards */}
+      {(() => {
+        const cards: { cat: Category; example: string }[] = [
+          { cat: 'recurring', example: 'I will make my bed every morning' },
+          { cat: 'duration',  example: 'I will have no sugar for 7 days' },
+          { cat: 'event',     example: 'I will write a letter to my mom this week' },
+        ];
+        return (
+          <div className="flex flex-col gap-2 px-4 mb-5">
+            {cards.map(({ cat, example }) => {
+              const isSelected = selected === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelected(cat)}
+                  className="w-full text-left px-4 py-3 rounded-xl transition-all active:scale-[0.98]"
+                  style={
+                    isSelected
+                      ? { background: C[cat].tabBg, border: `2px solid ${C[cat].bg}` }
+                      : { background: '#fff', border: '1.5px solid #E5E7EB' }
+                  }
+                  data-testid={`tab-${cat}`}
+                >
+                  <p className="text-sm font-semibold" style={{ color: isSelected ? C[cat].bg : '#6B7280' }}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </p>
+                  <p className="text-xs italic mt-0.5" style={{ color: isSelected ? C[cat].bg : '#9CA3AF' }}>
+                    "{example}"
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Section content */}
       <div className="px-4 pb-28 flex-1 overflow-y-auto">
