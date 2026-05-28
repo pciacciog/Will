@@ -244,9 +244,9 @@ export default function FindWillSuggestions() {
 
   return (
     <MobileLayout>
-      <div className="pb-32 px-5 space-y-4">
+      <div className="px-4 pt-1 pb-24 flex flex-col gap-2.5">
         {/* Header */}
-        <div className="flex items-center min-h-[44px]">
+        <div className="flex items-center min-h-[36px]">
           <UnifiedBackButton
             onClick={() => window.history.back()}
             testId="button-back-suggestions"
@@ -270,7 +270,7 @@ export default function FindWillSuggestions() {
         <p className="text-sm text-gray-400 italic text-center px-2">{reflection}</p>
 
         {/* Suggestion cards */}
-        <div className="space-y-3">
+        <div className="flex flex-col gap-2">
           {cards.map((s, i) => {
             const isSelected = selected === i;
             const isOther = selected !== null && !isSelected;
@@ -278,11 +278,11 @@ export default function FindWillSuggestions() {
               <button
                 key={i}
                 onClick={() => setSelected(i)}
-                className="w-full rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98] relative"
+                className="w-full rounded-2xl border p-3 text-left transition-all duration-200 active:scale-[0.98] relative"
                 style={{
-                  borderColor: isSelected ? TYPE_COLOR[s.type] : '#E5E7EB',
+                  borderColor: isSelected ? TYPE_COLOR[s.type] : `${TYPE_COLOR[s.type]}55`,
                   backgroundColor: isSelected ? TYPE_BG[s.type] : 'white',
-                  boxShadow: isSelected ? `0 0 0 1.5px ${TYPE_COLOR[s.type]}22` : '0 1px 3px rgba(0,0,0,0.06)',
+                  boxShadow: isSelected ? `0 0 0 1.5px ${TYPE_COLOR[s.type]}22` : '0 1px 3px rgba(0,0,0,0.04)',
                   opacity: isOther ? 0.45 : 1,
                 }}
                 data-testid={`button-suggestion-${i}`}
@@ -290,15 +290,16 @@ export default function FindWillSuggestions() {
                 {/* Checkmark badge — top right when selected */}
                 {isSelected && (
                   <CheckCircle
-                    className="absolute top-3 right-3 w-5 h-5"
+                    className="absolute top-2.5 right-3 w-5 h-5"
                     style={{ color: TYPE_COLOR[s.type] }}
                   />
                 )}
                 <span
-                  className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-2"
+                  className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-1.5"
                   style={{
-                    backgroundColor: isSelected ? TYPE_BADGE_BG[s.type] : '#F3F4F6',
-                    color: isSelected ? TYPE_COLOR[s.type] : '#6B7280',
+                    backgroundColor: TYPE_BADGE_BG[s.type],
+                    color: TYPE_COLOR[s.type],
+                    border: `1px solid ${TYPE_COLOR[s.type]}44`,
                   }}
                 >
                   {TYPE_LABEL[s.type]}
@@ -314,15 +315,15 @@ export default function FindWillSuggestions() {
           })}
         </div>
 
-        {/* Circular refresh button — small, quiet, icon-only */}
-        <div className="flex justify-center pt-1">
+        {/* Refresh button — bare, large icon, no box */}
+        <div className="flex justify-center py-1">
           <button
             onClick={reshuffle}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm transition-all active:scale-95 hover:border-gray-300"
+            className="transition-all active:scale-90 active:opacity-60"
             data-testid="button-reshuffle"
             aria-label="Show different suggestions"
           >
-            <RotateCcw className="w-4 h-4 text-gray-400" />
+            <RotateCcw className="w-7 h-7 text-gray-400" />
           </button>
         </div>
       </div>
