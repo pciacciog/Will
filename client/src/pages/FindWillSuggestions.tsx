@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
+import { RotateCcw, CheckCircle } from "lucide-react";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 
 type WillCategory = "recurring" | "duration" | "event";
@@ -16,6 +17,14 @@ const REFLECTIONS: Record<string, string> = {
   relationships:         "The people in your life feel your presence or your absence.",
   career_and_money:      "Clarity on one thing beats confusion about everything.",
   purpose_and_direction: "You already know what matters. You just haven't committed yet.",
+};
+
+const AREA_BADGE: Record<string, string> = {
+  personal_discipline:   "🧠 Personal Discipline",
+  health_and_body:       "💪 Health & Body",
+  relationships:         "❤️ Relationships",
+  career_and_money:      "💼 Career & Money",
+  purpose_and_direction: "🧭 Purpose & Direction",
 };
 
 const POOLS: Record<string, SuggestionPool> = {
@@ -142,10 +151,28 @@ const TYPE_LABEL: Record<WillCategory, string> = {
   event:     "Event",
 };
 
-const TYPE_BADGE_CLASS: Record<WillCategory, string> = {
-  recurring: "bg-emerald-100 text-emerald-700",
-  duration:  "bg-blue-100 text-blue-700",
-  event:     "bg-[#EEEDF9] text-[#534AB7]",
+const TYPE_COLOR: Record<WillCategory, string> = {
+  recurring: "#1D9E75",
+  duration:  "#185FA5",
+  event:     "#3C3489",
+};
+
+const TYPE_BG: Record<WillCategory, string> = {
+  recurring: "#E8F7F2",
+  duration:  "#EBF2FB",
+  event:     "#EEEDF9",
+};
+
+const TYPE_TEXT: Record<WillCategory, string> = {
+  recurring: "#085041",
+  duration:  "#0D3A6B",
+  event:     "#2A2460",
+};
+
+const TYPE_BADGE_BG: Record<WillCategory, string> = {
+  recurring: "#D1F5E8",
+  duration:  "#DAEAF8",
+  event:     "#E2E1F5",
 };
 
 function pickRandom<T>(arr: T[]): T {
@@ -181,6 +208,7 @@ export default function FindWillSuggestions() {
   };
 
   const reflection = REFLECTIONS[area] ?? "";
+  const areaBadge = AREA_BADGE[area] ?? "";
 
   const handleCommit = () => {
     if (selected === null) return;
@@ -191,9 +219,12 @@ export default function FindWillSuggestions() {
     setLocation(`/create-will?${dest.toString()}`);
   };
 
+  const selectedCard = selected !== null ? cards[selected] : null;
+  const commitColor = selectedCard ? TYPE_COLOR[selectedCard.type] : "#1D9E75";
+
   return (
     <MobileLayout>
-      <div className="pb-32 px-5 space-y-5">
+      <div className="pb-32 px-5 space-y-4">
         {/* Header */}
         <div className="flex items-center min-h-[44px]">
           <UnifiedBackButton
@@ -203,46 +234,75 @@ export default function FindWillSuggestions() {
           <div className="flex-1" />
         </div>
 
+        {/* Area context badge */}
+        {areaBadge && (
+          <div className="flex justify-center">
+            <span
+              className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-semibold text-gray-600 bg-gray-100 border border-gray-200"
+              data-testid="badge-area-context"
+            >
+              {areaBadge}
+            </span>
+          </div>
+        )}
+
         {/* Reflection line */}
         <p className="text-sm text-gray-400 italic text-center px-2">{reflection}</p>
 
         {/* Suggestion cards */}
         <div className="space-y-3">
-          {cards.map((s, i) => (
-            <button
-              key={i}
-              onClick={() => setSelected(i)}
-              className={`w-full rounded-2xl border p-4 text-left transition-all duration-150 active:scale-[0.98] ${
-                selected === i
-                  ? "border-[#1D9E75] bg-[#F0FAF5] shadow-sm"
-                  : "border-gray-200 bg-white shadow-sm hover:border-gray-300"
-              }`}
-              data-testid={`button-suggestion-${i}`}
-            >
-              <span
-                className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-2 ${TYPE_BADGE_CLASS[s.type]}`}
+          {cards.map((s, i) => {
+            const isSelected = selected === i;
+            const isOther = selected !== null && !isSelected;
+            return (
+              <button
+                key={i}
+                onClick={() => setSelected(i)}
+                className="w-full rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98] relative"
+                style={{
+                  borderColor: isSelected ? TYPE_COLOR[s.type] : '#E5E7EB',
+                  backgroundColor: isSelected ? TYPE_BG[s.type] : 'white',
+                  boxShadow: isSelected ? `0 0 0 1.5px ${TYPE_COLOR[s.type]}22` : '0 1px 3px rgba(0,0,0,0.06)',
+                  opacity: isOther ? 0.45 : 1,
+                }}
+                data-testid={`button-suggestion-${i}`}
               >
-                {TYPE_LABEL[s.type]}
-              </span>
-              <p
-                className={`text-sm font-medium leading-snug ${
-                  selected === i ? "text-[#085041]" : "text-gray-800"
-                }`}
-              >
-                "{s.text}"
-              </p>
-            </button>
-          ))}
+                {/* Checkmark badge — top right when selected */}
+                {isSelected && (
+                  <CheckCircle
+                    className="absolute top-3 right-3 w-5 h-5"
+                    style={{ color: TYPE_COLOR[s.type] }}
+                  />
+                )}
+                <span
+                  className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-2"
+                  style={{
+                    backgroundColor: isSelected ? TYPE_BADGE_BG[s.type] : '#F3F4F6',
+                    color: isSelected ? TYPE_COLOR[s.type] : '#6B7280',
+                  }}
+                >
+                  {TYPE_LABEL[s.type]}
+                </span>
+                <p
+                  className="text-sm font-medium leading-snug pr-6"
+                  style={{ color: isSelected ? TYPE_TEXT[s.type] : '#1F2937' }}
+                >
+                  "{s.text}"
+                </p>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Re-randomise link */}
+        {/* Circular refresh button — small, quiet, icon-only */}
         <div className="flex justify-center pt-1">
           <button
             onClick={reshuffle}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm transition-all active:scale-95 hover:border-gray-300"
             data-testid="button-reshuffle"
+            aria-label="Show different suggestions"
           >
-            Show me different ones
+            <RotateCcw className="w-4 h-4 text-gray-400" />
           </button>
         </div>
       </div>
@@ -250,13 +310,13 @@ export default function FindWillSuggestions() {
       {/* Fixed bottom button — appears once a card is selected */}
       {selected !== null && (
         <div
-          className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5"
+          className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 transition-all duration-200"
           style={{ paddingTop: 12, paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
         >
           <button
             onClick={handleCommit}
             className="w-full py-3.5 rounded-2xl text-sm font-semibold text-white transition-all duration-200 active:opacity-80"
-            style={{ backgroundColor: "#1D9E75" }}
+            style={{ backgroundColor: commitColor }}
             data-testid="button-commit-will"
           >
             Commit to this Will
