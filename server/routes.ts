@@ -1110,20 +1110,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Messages are only available for public or team wills" });
       }
 
-      let isParticipant: boolean;
       let messageThreadId: number;
 
       if (isPublic) {
-        const parentId = (will as any).parentWillId || willId;
-        isParticipant = await isUserPublicWillParticipant(userId, parentId);
-        messageThreadId = parentId;
+        // Public will hub chat is open to any authenticated user — no participant check
+        messageThreadId = (will as any).parentWillId || willId;
       } else {
-        isParticipant = await isUserSharedWillParticipant(userId, willId);
+        const isParticipant = await isUserSharedWillParticipant(userId, willId);
+        if (!isParticipant) {
+          return res.status(403).json({ message: "You are not a participant of this Will" });
+        }
         messageThreadId = willId;
-      }
-
-      if (!isParticipant) {
-        return res.status(403).json({ message: "You are not a participant of this Will" });
       }
 
       const messages = await storage.getWillMessages(messageThreadId, 50);
@@ -1163,23 +1160,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Messages are only available for public or team wills" });
       }
 
-      let isParticipant: boolean;
       let messageThreadId: number;
       let otherParticipantIds: string[];
 
       if (isPublic) {
+        // Public will hub chat: any authenticated user may send — no participant check
         const parentId = (will as any).parentWillId || willId;
-        isParticipant = await isUserPublicWillParticipant(userId, parentId);
         messageThreadId = parentId;
         otherParticipantIds = await getOtherPublicWillParticipants(userId, parentId);
       } else {
-        isParticipant = await isUserSharedWillParticipant(userId, willId);
+        const isParticipant = await isUserSharedWillParticipant(userId, willId);
+        if (!isParticipant) {
+          return res.status(403).json({ message: "You are not a participant of this Will" });
+        }
         messageThreadId = willId;
         otherParticipantIds = await getOtherSharedWillParticipants(userId, willId);
-      }
-
-      if (!isParticipant) {
-        return res.status(403).json({ message: "You are not a participant of this Will" });
       }
 
       const message = await storage.createWillMessage({
