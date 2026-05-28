@@ -1,7 +1,8 @@
 import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { ChevronLeft, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { UnifiedBackButton } from "@/components/ui/design-system";
 
 type Profile = {
   id: string;
@@ -85,14 +86,11 @@ export default function FriendProfile() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       {/* Nav */}
-      <div className="flex items-center justify-between px-4 pt-14 pb-2 bg-gray-50">
-        <button
-          onClick={() => setLocation("/friends")}
-          className="w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-all active:scale-95 shadow-sm"
-          data-testid="button-back-friends"
-        >
-          <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
-        </button>
+      <div className="flex items-center justify-between px-4 pt-3 pb-2 bg-gray-50">
+        <UnifiedBackButton
+          onClick={() => window.history.back()}
+          testId="button-back-friends"
+        />
 
         <button
           onClick={() => setLocation(`/dm/${userId}`)}
