@@ -1306,26 +1306,33 @@ export default function WillDetails() {
                     Edit
                   </button>
                 )}
-                {will.commitments[0].why && (
-                  <div className="mt-3 text-left">
-                    <button
-                      onClick={() => setShowSoloWhy(prev => !prev)}
-                      className="flex items-center gap-1 text-sm font-medium underline"
-                      style={{ color: effectiveCategory === 'recurring' ? '#1D9E75' : effectiveCategory === 'duration' ? '#1D6FBE' : '#534AB7', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                      data-testid="button-solo-why"
-                    >
-                      <Heart className="w-3.5 h-3.5" fill="currentColor" />
-                      {showSoloWhy ? 'Hide' : 'Why'}
-                    </button>
-                    <div
-                      className="overflow-hidden transition-all duration-300"
-                      style={{ maxHeight: showSoloWhy ? '200px' : '0px', opacity: showSoloWhy ? 1 : 0 }}
-                    >
-                      <p className="text-sm text-gray-500 italic mt-2">Because {will.commitments[0].why}</p>
+              </div>
+              {/* Why button — centered between commitment card and check-in section */}
+              {will.commitments[0].why && (
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => setShowSoloWhy(prev => !prev)}
+                    className="flex items-center gap-1.5 text-sm font-medium"
+                    style={{ color: effectiveCategory === 'recurring' ? '#1D9E75' : effectiveCategory === 'duration' ? '#1D6FBE' : '#534AB7', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    data-testid="button-solo-why"
+                  >
+                    <Heart className="w-3.5 h-3.5" />
+                    <span>Why</span>
+                    <ChevronDown
+                      className="w-3.5 h-3.5 transition-transform duration-200"
+                      style={{ transform: showSoloWhy ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    />
+                  </button>
+                  <div
+                    className="overflow-hidden transition-all duration-300 w-full"
+                    style={{ maxHeight: showSoloWhy ? '200px' : '0px', opacity: showSoloWhy ? 1 : 0 }}
+                  >
+                    <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-center mt-2">
+                      <p className="text-sm text-gray-500 italic">Because {will.commitments[0].why}</p>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </>
           ) : (
             /* Legacy card — unchanged */
