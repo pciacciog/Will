@@ -795,8 +795,13 @@ export default function CreateTeamWill() {
                   className={`w-full py-3 rounded-2xl text-[15px] font-semibold flex items-center justify-center transition-all ${
                     createWillMutation.isPending
                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm active:scale-[0.98]"
+                      : "text-white shadow-sm active:scale-[0.98]"
                   }`}
+                  style={createWillMutation.isPending ? {} : {
+                    backgroundColor: notificationsData?.commitmentCategory === 'duration' ? '#185FA5'
+                      : notificationsData?.commitmentCategory === 'event' ? '#3C3489'
+                      : '#1D9E75'
+                  }}
                   data-testid="button-create-will"
                 >
                   {createWillMutation.isPending ? "Creating..." : "Create Will →"}

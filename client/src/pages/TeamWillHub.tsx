@@ -1170,15 +1170,19 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             {(() => {
               const isActiveEvent = will.status === 'active' && category === 'event';
               const urg = isActiveEvent ? deadlineUrgency(missionDaysRemaining) : null;
-              const bgCls = urg ? urg.pillBg : statusInfo.bg;
-              const txtCls = urg ? urg.pillText : statusInfo.text;
+              const useTypeStyle = !urg && (will.status === 'active' || will.status === 'completed');
+              const bgCls = urg ? urg.pillBg : (useTypeStyle ? '' : statusInfo.bg);
+              const txtCls = urg ? urg.pillText : (useTypeStyle ? '' : statusInfo.text);
               const label = will.status === 'active' && category === 'event' && missionDeadlineLabel
                 ? `Active · deadline ${missionDeadlineLabel}`
                 : will.status === 'active' && (category === 'duration' || (category === 'recurring' && daysLeft !== null))
                 ? `Active · ${category === 'duration' ? durDaysLeft : daysLeft} days left`
                 : statusInfo.label;
               return (
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${bgCls} ${txtCls}`}>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${bgCls} ${txtCls}`}
+                  style={useTypeStyle ? { backgroundColor: typeColorLight, color: typeColor } : {}}
+                >
                   {label}
                 </span>
               );
