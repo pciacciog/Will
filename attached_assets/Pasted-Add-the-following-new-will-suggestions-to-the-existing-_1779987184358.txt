@@ -1,0 +1,46 @@
+Add the following new will suggestions to the existing suggestion pools in the Find Your Will feature. Each suggestion should be added to its respective category and type array. When the user taps the refresh icon on the suggestions screen, the new suggestions should be included in the random rotation alongside the existing ones — the randomizer should pull from the full updated pool each time.
+Personal Discipline — Event (add to existing):
+
+"I will learn how to make a tie this week"
+"I will learn how to change a tire this week"
+"I will sign up for one challenging thing this week"
+"I will learn one practical skill I have been putting off"
+
+Personal Discipline — Duration (add to existing):
+
+"I will do one important task every day for 10 days without exception"
+
+Health and Body — Event (add to existing):
+
+"I will fast for 24 hours this week"
+"I will cook one special dish from scratch this week"
+
+Health and Body — Duration (add to existing):
+
+"I will try a new way of eating for 21 days"
+
+Relationships — Event (add to existing):
+
+"I will gift my mom something meaningful this week"
+"I will gift my sister something meaningful this week"
+"I will host an intimate gathering with people I care about"
+"I will make that difficult but important phone call this week"
+"I will genuinely appreciate a coworker out loud this week"
+
+Relationships — Duration (add to existing):
+
+"I will reach out to someone different in my contacts every day for 7 days just to wish them well"
+
+Purpose and Direction — Event (add to existing):
+
+"I will donate to a cause I believe in this week"
+"I will create my dream book this weekend"
+
+Purpose and Direction — Duration (add to existing):
+
+"I will read the Bible for 10 minutes every morning for 21 days"
+"I will keep a gratitude journal for 10 days"
+"I will write down three things I am grateful for every day for 7 days"
+"I will pray for my boss for 2 minutes every day for a week"
+
+Do not remove or replace any existing suggestions — only add to the existing arrays. The refresh button should continue pulling 1 random suggestion per type (Recurring / Duration / Event) from the full updated pool for the selected category each time it is tapped.

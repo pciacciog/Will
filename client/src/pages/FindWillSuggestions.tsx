@@ -42,6 +42,7 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will not watch TV for 2 weeks",
       "I will do a digital detox every Sunday for a month",
       "I will go to bed before midnight every night for 21 days",
+      "I will do one important task every day for 10 days without exception",
     ],
     event: [
       "I will write out my top 3 priorities every Sunday night this week",
@@ -49,6 +50,10 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will set up my ideal morning routine on paper today",
       "I will identify my single biggest distraction and eliminate it this week",
       "I will block off deep work time on my calendar for the next month this week",
+      "I will learn how to make a tie this week",
+      "I will learn how to change a tire this week",
+      "I will sign up for one challenging thing this week",
+      "I will learn one practical skill I have been putting off",
     ],
   },
   health_and_body: {
@@ -65,6 +70,7 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will eat no processed food for 2 weeks",
       "I will train every day for 21 days without missing",
       "I will sleep at least 7 hours every night for 30 days",
+      "I will try a new way of eating for 21 days",
     ],
     event: [
       "I will book my annual health checkup this week",
@@ -72,6 +78,8 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will meal prep for the entire week this Sunday",
       "I will get my bloodwork done this month",
       "I will buy nothing but whole foods at my next grocery run",
+      "I will fast for 24 hours this week",
+      "I will cook one special dish from scratch this week",
     ],
   },
   relationships: {
@@ -88,6 +96,7 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will reach out to one person I have lost touch with every day for 2 weeks",
       "I will go screen-free every evening after 8pm for 21 days",
       "I will say something genuine and specific to someone I love every day for 30 days",
+      "I will reach out to someone different in my contacts every day for 7 days just to wish them well",
     ],
     event: [
       "I will write a letter to someone who has impacted my life this week",
@@ -95,6 +104,11 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will have an honest conversation I have been avoiding this week",
       "I will call my parents or a family member I have been neglecting this week",
       "I will apologize to someone I owe an apology to this week",
+      "I will gift my mom something meaningful this week",
+      "I will gift my sister something meaningful this week",
+      "I will host an intimate gathering with people I care about",
+      "I will make that difficult but important phone call this week",
+      "I will genuinely appreciate a coworker out loud this week",
     ],
   },
   career_and_money: {
@@ -134,6 +148,10 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will spend 30 days saying yes to things that scare me",
       "I will go social media free for 21 days",
       "I will spend 30 days doing one thing every day that moves me toward my goal",
+      "I will read the Bible for 10 minutes every morning for 21 days",
+      "I will keep a gratitude journal for 10 days",
+      "I will write down three things I am grateful for every day for 7 days",
+      "I will pray for my boss for 2 minutes every day for a week",
     ],
     event: [
       "I will write out where I want to be in 1 year and why this week",
@@ -141,6 +159,8 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will have a conversation with someone who is living the life I want this month",
       "I will write my personal mission statement this week",
       "I will make a decision I have been sitting on for too long this week",
+      "I will donate to a cause I believe in this week",
+      "I will create my dream book this weekend",
     ],
   },
 };
