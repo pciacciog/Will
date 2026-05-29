@@ -333,7 +333,7 @@ export default function Home() {
           )}
           {!willsLoading && !isActiveWillsError && allActiveWills !== null && (
             <button onClick={() => setLocation('/wills')} className="w-full mb-2.5 group" data-testid="button-view-all-wills">
-              <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2.5 shadow-sm group-hover:shadow-md group-hover:border-emerald-200 transition-all duration-200 group-active:scale-[0.98]">
+              <div className="bg-white border border-emerald-200 rounded-2xl px-4 py-2.5 shadow-sm group-hover:shadow-md group-hover:border-emerald-400 transition-all duration-200 group-active:scale-[0.98]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
@@ -367,7 +367,7 @@ export default function Home() {
               <div className={`h-full rounded-2xl border transition-all duration-200 group-hover:-translate-y-0.5 ${
                 activeCard === 'explore'
                   ? 'bg-blue-50 border-blue-200 shadow-md'
-                  : 'bg-white border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-blue-200'
+                  : 'bg-white border-emerald-200 shadow-sm group-hover:shadow-md group-hover:border-blue-300'
               }`}>
                 <div className="p-3 flex flex-col items-center text-center gap-0.5">
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-1 transition-colors duration-200 ${
@@ -392,7 +392,7 @@ export default function Home() {
               <div className={`h-full rounded-2xl border transition-all duration-200 group-hover:-translate-y-0.5 ${
                 activeCard === 'friends'
                   ? 'bg-violet-50 border-violet-200 shadow-md'
-                  : 'bg-white border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-violet-200'
+                  : 'bg-white border-emerald-200 shadow-sm group-hover:shadow-md group-hover:border-violet-300'
               }`}>
                 <div className="p-3 flex flex-col items-center text-center gap-0.5">
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-1 transition-colors duration-200 ${
