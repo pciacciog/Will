@@ -1357,7 +1357,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 {membersForRow.length === 0 ? (
                   <p className="text-xs text-gray-400 italic text-center py-1">No members yet — waiting for friends to accept</p>
                 ) : (
-                  <div className="flex gap-5 overflow-x-auto pb-1">
+                  <div className="flex overflow-hidden items-start">
                     {membersForRow.map(member => {
                       const isPending = member.status === 'pending';
                       const initial = member.firstName.charAt(0).toUpperCase();
@@ -1372,7 +1372,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       return (
                         <button
                           key={member.key}
-                          className={`flex flex-col items-center gap-1 flex-shrink-0 ${isPending ? 'active:opacity-70' : 'cursor-default'}`}
+                          className={`flex flex-col items-center gap-1 flex-1 min-w-0 overflow-hidden ${isPending ? 'active:opacity-70' : 'cursor-default'}`}
                           onClick={() => {
                             if (isPending && member.inviteId) {
                               setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
