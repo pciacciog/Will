@@ -1103,7 +1103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      const isPublic = (will as any).visibility === 'public' || (will as any).mode === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) {
@@ -1153,7 +1153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      const isPublic = (will as any).visibility === 'public' || (will as any).mode === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) {
@@ -1213,24 +1213,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: "Will not found" });
 
-      const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      const isPublic = (will as any).visibility === 'public' || (will as any).mode === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or team wills" });
 
       let messageThreadId: number;
-      let isParticipant: boolean;
 
       if (isPublic) {
-        const parentId = (will as any).parentWillId || willId;
-        isParticipant = await isUserPublicWillParticipant(userId, parentId);
-        messageThreadId = parentId;
+        // Public will hub: any authenticated user may read unread count — no participant check
+        messageThreadId = (will as any).parentWillId || willId;
       } else {
-        isParticipant = await isUserSharedWillParticipant(userId, willId);
+        const isParticipant = await isUserSharedWillParticipant(userId, willId);
+        if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
         messageThreadId = willId;
       }
-
-      if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
 
       const unreadCount = await storage.getWillMessageUnreadCount(userId, messageThreadId);
       res.json({ unreadCount });
@@ -1250,24 +1247,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: "Will not found" });
 
-      const isPublic = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      const isPublic = (will as any).visibility === 'public' || (will as any).mode === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or team wills" });
 
       let messageThreadId: number;
-      let isParticipant: boolean;
 
       if (isPublic) {
-        const parentId = (will as any).parentWillId || willId;
-        isParticipant = await isUserPublicWillParticipant(userId, parentId);
-        messageThreadId = parentId;
+        // Public will hub: any authenticated user may mark messages read — no participant check
+        messageThreadId = (will as any).parentWillId || willId;
       } else {
-        isParticipant = await isUserSharedWillParticipant(userId, willId);
+        const isParticipant = await isUserSharedWillParticipant(userId, willId);
+        if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
         messageThreadId = willId;
       }
-
-      if (!isParticipant) return res.status(403).json({ message: "You are not a participant of this Will" });
 
       await storage.markWillMessagesRead(userId, messageThreadId);
       res.json({ success: true });
