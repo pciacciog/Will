@@ -273,19 +273,6 @@ export default function PublicWillDetail() {
           <div className="w-11" />
         </div>
 
-        {/* ── Username label above commitment card ─────────────────────────── */}
-        <p
-          className="text-center text-xl font-bold tracking-tight"
-          style={{
-            color: category === 'recurring' ? '#1D9E75'
-                 : category === 'duration'  ? '#1D6FBE'
-                 : '#534AB7'
-          }}
-          data-testid="label-will-owner"
-        >
-          {will.isOwner ? 'I WILL' : `${creatorHandle} will`}
-        </p>
-
         {/* ── Commitment card ──────────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="card-commitment">
           {/* Creator row */}
@@ -306,6 +293,19 @@ export default function PublicWillDetail() {
             </div>
           </div>
           <div className="border-t border-gray-100 mb-3" />
+          {/* WILL label */}
+          <p
+            className="text-[11px] font-bold tracking-[0.12em] uppercase mb-2"
+            style={{
+              color: category === 'recurring' ? '#1D9E75'
+                   : category === 'duration'  ? '#1D6FBE'
+                   : category === 'event'     ? '#534AB7'
+                   : '#1D9E75'
+            }}
+            data-testid="label-will-owner"
+          >
+            WILL
+          </p>
           {/* Commitment text */}
           <p className="text-base font-semibold text-gray-900 leading-snug" data-testid="text-commitment">
             "{will.what}"
