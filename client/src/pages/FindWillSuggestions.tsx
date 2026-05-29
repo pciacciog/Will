@@ -234,7 +234,8 @@ export default function FindWillSuggestions() {
     if (selected === null) return;
     const s = cards[selected];
     const dest = new URLSearchParams();
-    dest.set("what", s.text);
+    const stripped = s.text.replace(/^i will\s+/i, '');
+    dest.set("what", stripped);
     dest.set("category", s.type);
     setLocation(`/create-will?${dest.toString()}`);
   };
