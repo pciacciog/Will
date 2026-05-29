@@ -564,6 +564,11 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
 
   return (
     <div className="flex flex-col min-h-0">
+      {/* Title */}
+      <h2 className="px-4 mb-3 text-[17px] font-bold text-gray-900" data-testid="text-notifications-setup-title">
+        Notification Set up
+      </h2>
+
       {/* Will statement */}
       <p
         className="px-4 mb-4 text-sm"
