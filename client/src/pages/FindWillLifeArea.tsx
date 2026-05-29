@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
+import { Target, Activity, Heart, TrendingUp, Compass, ChevronRight } from "lucide-react";
 
 const LIFE_AREAS = [
   {
@@ -10,6 +11,7 @@ const LIFE_AREAS = [
     color: "#D97706",
     bg: "#FFFBEB",
     selectedBg: "#FEF3C7",
+    Icon: Target,
   },
   {
     label: "Health and body",
@@ -18,6 +20,7 @@ const LIFE_AREAS = [
     color: "#1D9E75",
     bg: "#F0FAF5",
     selectedBg: "#D1FAE5",
+    Icon: Activity,
   },
   {
     label: "Relationships",
@@ -26,6 +29,7 @@ const LIFE_AREAS = [
     color: "#E11D48",
     bg: "#FFF1F4",
     selectedBg: "#FFE4E6",
+    Icon: Heart,
   },
   {
     label: "Career and money",
@@ -34,6 +38,7 @@ const LIFE_AREAS = [
     color: "#2563EB",
     bg: "#EFF6FF",
     selectedBg: "#DBEAFE",
+    Icon: TrendingUp,
   },
   {
     label: "Purpose and direction",
@@ -42,6 +47,7 @@ const LIFE_AREAS = [
     color: "#7C3AED",
     bg: "#F5F3FF",
     selectedBg: "#EDE9FE",
+    Icon: Compass,
   },
 ] as const;
 
@@ -76,7 +82,7 @@ export default function FindWillLifeArea() {
 
         {/* Option cards */}
         <div className="space-y-3">
-          {LIFE_AREAS.map(({ label, sub, slug, color, bg, selectedBg }) => {
+          {LIFE_AREAS.map(({ label, sub, slug, color, bg, selectedBg, Icon }) => {
             const isSelected = selected === slug;
             return (
               <button
@@ -93,13 +99,13 @@ export default function FindWillLifeArea() {
                 data-testid={`button-area-${slug}`}
               >
                 <div className="flex items-stretch">
-                  {/* Left accent bar */}
+                  {/* Left accent bar — thicker */}
                   <div
-                    className="w-1 flex-shrink-0 rounded-l-2xl"
-                    style={{ backgroundColor: color, opacity: isSelected ? 1 : 0.35 }}
+                    className="w-[5px] flex-shrink-0 rounded-l-2xl"
+                    style={{ backgroundColor: color, opacity: isSelected ? 1 : 0.45 }}
                   />
                   {/* Text */}
-                  <div className="px-4 py-3.5">
+                  <div className="flex-1 px-4 py-3.5">
                     <p
                       className="text-[15px] font-semibold leading-tight"
                       style={{ color: isSelected ? color : '#1C1C1E' }}
@@ -112,6 +118,16 @@ export default function FindWillLifeArea() {
                     >
                       {sub}
                     </p>
+                  </div>
+                  {/* Right — category icon + chevron */}
+                  <div className="flex items-center gap-1.5 pr-4">
+                    <Icon
+                      className="w-4 h-4 flex-shrink-0"
+                      style={{ color, opacity: isSelected ? 0.9 : 0.4 }}
+                    />
+                    <ChevronRight
+                      className="w-4 h-4 flex-shrink-0 text-gray-300"
+                    />
                   </div>
                 </div>
               </button>
@@ -128,8 +144,8 @@ export default function FindWillLifeArea() {
         <button
           onClick={handleNext}
           disabled={!selected}
-          className="w-full py-3.5 rounded-2xl text-sm font-semibold text-white transition-all duration-200 active:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ backgroundColor: selected ? LIFE_AREAS.find(a => a.slug === selected)?.color ?? "#1D9E75" : "#1D9E75" }}
+          className="w-full py-3.5 rounded-2xl text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed"
+          style={{ backgroundColor: "#1D9E75" }}
           data-testid="button-find-will"
         >
           Find my Will
