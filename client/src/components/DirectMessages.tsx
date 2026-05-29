@@ -214,7 +214,7 @@ export default function DirectMessages({
             className={`rounded-full h-9 w-9 shrink-0 shadow-md transition-all duration-200 ${text.trim() ? "bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 opacity-100" : "bg-gray-300 opacity-50 cursor-not-allowed"}`}
             data-testid="button-send-dm"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-6 w-6" />
           </Button>
         </div>
       </div>
