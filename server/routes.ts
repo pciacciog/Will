@@ -2422,6 +2422,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userCheckInTime: string | null = joinCheckInType !== 'final_review'
         ? (req.body.checkInTime || parentWill.checkInTime || null)
         : null;
+      // Joiner's own notification preferences — fall back to parent's when not supplied
+      const joinerCommitmentCategory = req.body.commitmentCategory || parentWill.commitmentCategory || null;
+      const joinerReminderTime = req.body.reminderTime !== undefined ? req.body.reminderTime : parentWill.reminderTime;
+      const joinerMilestones = req.body.milestones !== undefined ? req.body.milestones : parentWill.milestones;
+      const joinerDeadlineReminders = req.body.deadlineReminders !== undefined ? req.body.deadlineReminders : parentWill.deadlineReminders;
+      const joinerMissionReminderTime = req.body.missionReminderTime !== undefined ? req.body.missionReminderTime : parentWill.missionReminderTime;
 
       // Create a new will instance for this user
       // Start date is when the user joins, not when the parent will started
@@ -2438,15 +2444,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate: parentWill.endDate,
         isIndefinite: parentWill.isIndefinite,
         checkInType: joinCheckInType,
-        reminderTime: parentWill.reminderTime,
+        reminderTime: joinerReminderTime,
         checkInTime: userCheckInTime,
         activeDays: joinerActiveDays,
         customDays: joinerCustomDays,
-        // Category inheritance — joiner gets the same category and notification settings
-        commitmentCategory: parentWill.commitmentCategory,
-        milestones: parentWill.milestones,
-        deadlineReminders: parentWill.deadlineReminders,
-        missionReminderTime: parentWill.missionReminderTime,
+        // Use joiner's own notification preferences (fall back to parent's)
+        commitmentCategory: joinerCommitmentCategory,
+        milestones: joinerMilestones,
+        deadlineReminders: joinerDeadlineReminders,
+        missionReminderTime: joinerMissionReminderTime,
         // Fresh streak for the joining user — they start their own journey
         streakStartDate: new Date(),
         sentMilestones: null,
