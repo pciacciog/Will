@@ -229,7 +229,7 @@ export default function Home() {
         <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col">
 
           {/* ── Header ── */}
-          <div className="mb-5 flex items-start justify-between">
+          <div className="mb-3 flex items-start justify-between">
             <div>
               <h1 className="text-[24px] font-bold text-gray-900 leading-tight tracking-tight" data-testid="text-welcome">
                 Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
@@ -305,8 +305,8 @@ export default function Home() {
           )}
 
           {/* ── Create a Will ── */}
-          <button onClick={handleCreateWill} className="w-full mb-3 group" data-testid="button-create-will">
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-4 shadow-lg group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all duration-200 group-active:scale-[0.98]">
+          <button onClick={handleCreateWill} className="w-full mb-2.5 group" data-testid="button-create-will">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-3 shadow-lg group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all duration-200 group-active:scale-[0.98]">
               <span className="text-white text-[17px] font-bold tracking-tight">+ Create a Will</span>
             </div>
           </button>
@@ -332,8 +332,8 @@ export default function Home() {
             </div>
           )}
           {!willsLoading && !isActiveWillsError && allActiveWills !== null && (
-            <button onClick={() => setLocation('/wills')} className="w-full mb-3 group" data-testid="button-view-all-wills">
-              <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3.5 shadow-sm group-hover:shadow-md group-hover:border-emerald-200 transition-all duration-200 group-active:scale-[0.98]">
+            <button onClick={() => setLocation('/wills')} className="w-full mb-2.5 group" data-testid="button-view-all-wills">
+              <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2.5 shadow-sm group-hover:shadow-md group-hover:border-emerald-200 transition-all duration-200 group-active:scale-[0.98]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
@@ -357,7 +357,7 @@ export default function Home() {
           )}
 
           {/* ── Explore & Friends ── */}
-          <div className="grid grid-cols-2 gap-3 w-full mb-4">
+          <div className="grid grid-cols-2 gap-2.5 w-full mb-2.5">
             <button
               onClick={() => { setActiveCard('explore'); handleExplore(); }}
               onPointerDown={() => setActiveCard('explore')}
@@ -367,10 +367,10 @@ export default function Home() {
               <div className={`h-full rounded-2xl border transition-all duration-200 group-hover:-translate-y-0.5 ${
                 activeCard === 'explore'
                   ? 'bg-blue-50 border-blue-200 shadow-md'
-                  : 'bg-white border-gray-100 shadow-sm group-hover:shadow-md group-hover:border-blue-200'
+                  : 'bg-white border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-blue-200'
               }`}>
-                <div className="p-4 flex flex-col items-center text-center gap-0.5">
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center mb-1.5 transition-colors duration-200 ${
+                <div className="p-3 flex flex-col items-center text-center gap-0.5">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-1 transition-colors duration-200 ${
                     activeCard === 'explore' ? 'bg-blue-100' : 'bg-blue-50'
                   }`}>
                     <Compass className={`w-5 h-5 transition-colors duration-200 ${
@@ -392,10 +392,10 @@ export default function Home() {
               <div className={`h-full rounded-2xl border transition-all duration-200 group-hover:-translate-y-0.5 ${
                 activeCard === 'friends'
                   ? 'bg-violet-50 border-violet-200 shadow-md'
-                  : 'bg-white border-gray-100 shadow-sm group-hover:shadow-md group-hover:border-violet-200'
+                  : 'bg-white border-gray-200 shadow-sm group-hover:shadow-md group-hover:border-violet-200'
               }`}>
-                <div className="p-4 flex flex-col items-center text-center gap-0.5">
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center mb-1.5 transition-colors duration-200 ${
+                <div className="p-3 flex flex-col items-center text-center gap-0.5">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-1 transition-colors duration-200 ${
                     activeCard === 'friends' ? 'bg-violet-100' : 'bg-violet-50'
                   }`}>
                     <Users className={`w-5 h-5 transition-colors duration-200 ${
@@ -410,15 +410,15 @@ export default function Home() {
           </div>
 
           {/* ── Find Your Will — magical section ── */}
-          <div className="flex flex-col items-center gap-2 pt-1 pb-2">
+          <div className="flex flex-col items-center gap-1.5 pt-1 pb-1">
             <div className="w-full border-t border-gray-100" />
-            <div className="flex flex-col items-center gap-1 mt-2">
-              <p className="text-[14px] font-semibold text-gray-600 text-center">Not sure where to start?</p>
-              <p className="text-[12px] text-gray-400 text-center">Let us help you find the right commitment.</p>
+            <div className="flex flex-col items-center gap-0.5 mt-1">
+              <p className="text-[13px] font-semibold text-gray-600 text-center">Not sure where to start?</p>
+              <p className="text-[11px] text-gray-400 text-center">Let us help you find the right commitment.</p>
             </div>
 
             {/* Sparkles + button */}
-            <div className="relative inline-flex items-center justify-center mt-1 mb-1">
+            <div className="relative inline-flex items-center justify-center mt-1">
               <span className="sp sp1 absolute -top-4 left-4  text-emerald-400 text-sm  select-none pointer-events-none">✦</span>
               <span className="sp sp2 absolute -top-3 right-3 text-teal-300   text-[10px] select-none pointer-events-none">✦</span>
               <span className="sp sp3 absolute top-1  -right-6 text-emerald-300 text-xs   select-none pointer-events-none">✦</span>
@@ -426,7 +426,7 @@ export default function Home() {
               <span className="sp sp5 absolute -bottom-2 right-1 text-emerald-500 text-sm  select-none pointer-events-none">✦</span>
               <button
                 onClick={() => setLocation('/find-will')}
-                className="px-8 py-3 rounded-full text-white text-[14px] font-bold bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200"
+                className="px-8 py-2.5 rounded-full text-white text-[14px] font-bold bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200"
                 data-testid="button-find-your-will"
               >
                 Find Your Will
@@ -435,7 +435,7 @@ export default function Home() {
           </div>
 
           {/* ── Footer ── */}
-          <div className="mt-auto pt-3 flex items-center justify-center gap-5">
+          <div className="mt-auto pt-2 flex items-center justify-center gap-5">
             <button
               onClick={() => setShowAccountSettings(true)}
               className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-[12px] transition-colors"
