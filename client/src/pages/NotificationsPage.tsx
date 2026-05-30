@@ -166,9 +166,14 @@ export default function NotificationsPage() {
 
   // Swipe state
   const touchStartX = useRef<Record<number, number>>({});
+  const touchStartY = useRef<Record<number, number>>({});
+  const isScrolling = useRef<Record<number, boolean | null>>({});
   const [swipeX, setSwipeX] = useState<Record<number, number>>({});
   const [touchingId, setTouchingId] = useState<number | null>(null);
   const [dismissingIds, setDismissingIds] = useState<Set<number>>(new Set());
+
+  // Panel width — card slides exactly this far to fully reveal the delete zone
+  const PANEL_W = 80;
 
   // Optimistic invite action state
   const [inviteActions, setInviteActions] = useState<Record<number, "accepted" | "declined">>({});
@@ -225,22 +230,38 @@ export default function NotificationsPage() {
 
   // ── Swipe handlers ────────────────────────────────────────────────────────
 
-  function onTouchStart(id: number, clientX: number) {
+  function onTouchStart(id: number, clientX: number, clientY: number) {
     setTouchingId(id);
     touchStartX.current[id] = clientX;
+    touchStartY.current[id] = clientY;
+    isScrolling.current[id] = null; // undecided until first move
   }
 
-  function onTouchMove(id: number, clientX: number) {
+  function onTouchMove(id: number, clientX: number, clientY: number) {
     const dx = clientX - (touchStartX.current[id] ?? clientX);
+    const dy = clientY - (touchStartY.current[id] ?? clientY);
+
+    // Decide scroll vs swipe on first meaningful move
+    if (isScrolling.current[id] === null && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      isScrolling.current[id] = Math.abs(dy) > Math.abs(dx);
+    }
+    // If the user is scrolling vertically, don't interfere
+    if (isScrolling.current[id]) return;
+
     if (dx < 0) {
-      setSwipeX((prev) => ({ ...prev, [id]: Math.max(-110, dx) }));
+      setSwipeX((prev) => ({ ...prev, [id]: Math.max(-PANEL_W, dx) }));
     }
   }
 
   function onTouchEnd(id: number) {
     setTouchingId(null);
+    if (isScrolling.current[id]) {
+      isScrolling.current[id] = null;
+      return;
+    }
+    isScrolling.current[id] = null;
     const x = swipeX[id] ?? 0;
-    if (x < -80) {
+    if (x <= -(PANEL_W * 0.6)) {
       triggerDismiss(id);
     } else {
       setSwipeX((prev) => ({ ...prev, [id]: 0 }));
@@ -249,8 +270,8 @@ export default function NotificationsPage() {
 
   function triggerDismiss(id: number) {
     setDismissingIds((prev) => new Set(prev).add(id));
-    setSwipeX((prev) => ({ ...prev, [id]: -500 }));
-    setTimeout(() => dismissMutation.mutate(id), 280);
+    setSwipeX((prev) => ({ ...prev, [id]: -600 }));
+    setTimeout(() => dismissMutation.mutate(id), 300);
   }
 
   // ── Tap (navigate + mark read) ────────────────────────────────────────────
@@ -322,24 +343,27 @@ export default function NotificationsPage() {
 
     return (
       <div className="relative overflow-hidden rounded-2xl">
-        {/* Dismiss background */}
-        <div className="absolute inset-y-0 right-0 flex items-center justify-end px-4 bg-red-500 rounded-2xl min-w-full">
-          <Trash2 className="w-5 h-5 text-white" />
+        {/* Fixed-width delete zone — always 80px on the right */}
+        <div
+          className="absolute inset-y-0 right-0 flex items-center justify-center bg-red-500"
+          style={{ width: PANEL_W }}
+        >
+          <Trash2 className="w-6 h-6 text-white" />
         </div>
 
         {/* Swipeable card */}
         <div
           style={{
             transform: `translateX(${x}px)`,
-            transition: isTouching ? "none" : "transform 0.25s ease",
+            transition: isTouching ? "none" : "transform 0.28s ease",
           }}
-          onTouchStart={(e) => onTouchStart(n.id, e.touches[0].clientX)}
-          onTouchMove={(e) => onTouchMove(n.id, e.touches[0].clientX)}
+          onTouchStart={(e) => onTouchStart(n.id, e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchMove={(e) => { e.stopPropagation(); onTouchMove(n.id, e.touches[0].clientX, e.touches[0].clientY); }}
           onTouchEnd={() => onTouchEnd(n.id)}
-          onClick={() => handleTap(n)}
+          onClick={() => { if (Math.abs(swipeX[n.id] ?? 0) < 8) handleTap(n); }}
           data-testid={`notif-item-${n.id}`}
           className={`w-full text-left rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors duration-150 ${
-            !isInvite && !isActedOn ? "active:scale-[0.98] cursor-pointer" : "cursor-default"
+            !isInvite && !isActedOn ? "cursor-pointer" : "cursor-default"
           } ${cardBg}`}
         >
           {/* Icon */}
