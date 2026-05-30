@@ -250,7 +250,7 @@ export default function PublicWillDetail() {
         <div className="flex items-center justify-between min-h-[56px]">
           <UnifiedBackButton onClick={() => setLocation('/explore')} testId="button-back" />
           <div className="flex flex-col items-center gap-1.5">
-            <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">Will Hub</h1>
+            <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">Public Will</h1>
             <div className="flex items-center gap-1.5">
               {(() => {
                 const urg = category === 'event' ? deadlineUrgency(missionDaysRemaining) : null;
