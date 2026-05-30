@@ -1376,7 +1376,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                  Outer wrapper is the positioned ancestor for the chip,
                  so the chip lives entirely OUTSIDE the card and cannot
                  affect any flex-row alignment inside it.  */
-              <div style={{ position: 'relative', paddingBottom: showWeWillWhyChip ? 20 : 0 }}>
+              <div style={{ position: 'relative', marginBottom: showWeWillWhyChip ? 14 : 0 }}>
                 {/* Card — no position:relative, no overflow issues */}
                 <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
                   {membersForRow.length === 0 ? (
@@ -1478,10 +1478,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   )}
                 </div>
 
-                {/* Fix 1: chip is positioned on the OUTER wrapper, completely outside the card.
-                    It can never affect avatar layout inside the card. */}
+                {/* Chip — sibling of card, anchored bottom-right of wrapper. Never in card flow. */}
                 {showWeWillWhyChip && (
-                  <div style={{ position: 'absolute', bottom: 7, left: weWillChipLeft, transform: 'translateX(-50%)', zIndex: 10 }}>
+                  <div style={{ position: 'absolute', bottom: -11, right: 6, zIndex: 10 }}>
                     <button
                       onClick={() => setShowWhyTag(prev => !prev)}
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
@@ -1500,7 +1499,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </div>
             ) : (
               /* I Will: vertical rows with name + commitment text */
-              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm">
                 {membersForRow.length === 0 && commitments.length === 0 ? (
                   <p className="text-xs text-gray-400 italic text-center py-4">No members yet — waiting for friends to accept</p>
                 ) : (() => {
@@ -1564,8 +1563,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             {!isLastRow && (
                               showIWillWhyChip ? (
                                 /* Chip sits centered on the divider line — zero added height */
-                                <div className="relative" style={{ height: 1, backgroundColor: '#f9fafb' }}>
-                                  <div style={{ position: 'absolute', left: 44, top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                                <div style={{ position: 'relative', overflow: 'visible', height: 1, backgroundColor: '#f9fafb' }}>
+                                  <div style={{ position: 'absolute', left: 38, top: '50%', transform: 'translateY(-50%)', zIndex: 10, whiteSpace: 'nowrap' }}>
                                     <button
                                       onClick={() => setShowWhyTag(prev => !prev)}
                                       className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
