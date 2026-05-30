@@ -391,7 +391,7 @@ export default function WillMessages({
             }}
             data-testid="button-send-will-message"
           >
-            <Send className="h-6 w-6 text-white" />
+            <Send className="h-8 w-8 text-white" />
           </button>
         </div>
       </div>

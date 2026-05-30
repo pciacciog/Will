@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 import { useToast } from "@/hooks/use-toast";
-import { Zap, ChevronRight, ChevronDown, ChevronUp, CheckCircle, XCircle, Users, MessageCircle } from "lucide-react";
+import { Zap, ChevronRight, ChevronDown, ChevronUp, CheckCircle, XCircle, Users } from "lucide-react";
 import type { WillCheckIn } from "@shared/schema";
 import DayStrip from "@/components/DayStrip";
 import { cn } from "@/lib/utils";
@@ -220,8 +220,19 @@ export default function PublicWillDetail() {
       const honored = entries.filter(e => e.honored).length;
       return Math.round((honored / past.length) * 100);
     }
+    if (category === 'recurring' && will) {
+      const cis = progressData?.checkIns ?? [];
+      const start = new Date(will.startDate + 'T00:00:00');
+      start.setHours(0, 0, 0, 0);
+      const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0);
+      const elapsedDays = Math.floor((todayMid.getTime() - start.getTime()) / 86400000);
+      if (elapsedDays <= 0) return null;
+      const yesCount = cis.filter((c: WillCheckIn) => c.status === 'yes').length;
+      const partialCount = cis.filter((c: WillCheckIn) => c.status === 'partial').length;
+      return Math.round(((yesCount + partialCount * 0.5) / elapsedDays) * 100);
+    }
     return progressData?.progress?.successRate != null ? Math.round(progressData.progress.successRate) : null;
-  }, [category, progressData, durCalendarDays]);
+  }, [category, progressData, durCalendarDays, will]);
 
   // ── Loading / error states ──────────────────────────────────────────────────
 
@@ -529,7 +540,6 @@ export default function PublicWillDetail() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-lg font-bold text-gray-900">
-                <Zap className="inline w-4 h-4 mr-0.5 -mt-0.5" style={{ color: '#F59E0B' }} />
                 {pushCount} {pushCount === 1 ? 'push' : 'pushes'}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">All time · be the next to push</p>
@@ -564,7 +574,7 @@ export default function PublicWillDetail() {
               data-testid="button-push"
             >
               <Zap className={cn("w-4 h-4", alreadyPushed ? "text-gray-400" : "fill-white text-white")} />
-              {alreadyPushed ? 'Pushed today ✓' : `⚡ Push ${creatorHandle} today`}
+              {alreadyPushed ? 'Pushed today ✓' : `Push ${creatorHandle} today`}
             </button>
           )}
         </div>
