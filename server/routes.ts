@@ -1936,11 +1936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (invite.status === 'accepted') return res.status(409).json({ message: 'Invite already accepted' });
       if (invite.status === 'declined') return res.status(409).json({ message: 'Invite was declined — cannot accept' });
 
-      // Reject acceptance if the will's startDate has already passed
       const will = await storage.getWillById(willId);
-      if (will && will.startDate <= new Date()) {
-        return res.status(410).json({ message: 'This invite has expired — the Will has already started' });
-      }
 
       await db
         .update(teamWillInvites)
@@ -3351,8 +3347,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const notifications = await storage.getAllNotifications(userId, 50);
+
+      // For team_will_invite notifications, join the live invite status so the
+      // client can show the correct acted-on state even after a page refresh.
+      const enriched = await Promise.all(notifications.map(async (n) => {
+        if (n.type === 'team_will_invite' && n.willId) {
+          const [invite] = await db
+            .select({ status: teamWillInvites.status })
+            .from(teamWillInvites)
+            .where(and(eq(teamWillInvites.willId, n.willId), eq(teamWillInvites.invitedUserId, userId)))
+            .limit(1);
+          return { ...n, inviteStatus: invite?.status ?? null };
+        }
+        return { ...n, inviteStatus: null };
+      }));
+
       const unreadCount = notifications.filter(n => !n.isRead).length;
-      res.json({ notifications, unreadCount });
+      res.json({ notifications: enriched, unreadCount });
     } catch (error) {
       console.error("Error fetching notifications:", error);
       res.status(500).json({ message: "Failed to fetch notifications" });

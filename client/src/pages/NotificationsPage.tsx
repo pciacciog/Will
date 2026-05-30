@@ -18,6 +18,7 @@ type InAppNotification = {
   willId: number | null;
   isRead: boolean;
   createdAt: string;
+  inviteStatus: "pending" | "accepted" | "declined" | "expired" | null;
 };
 
 type NotifResponse = {
@@ -282,10 +283,18 @@ export default function NotificationsPage() {
   function NotifCard({ n }: { n: InAppNotification }) {
     const x = swipeX[n.id] ?? 0;
     const isTouching = touchingId === n.id;
-    const action = inviteActions[n.id];
+    const localAction = inviteActions[n.id];
     const pending = invitePending.has(n.id);
     const isInvite = n.type === "team_will_invite";
-    const isActedOn = !!action;
+
+    // Derive acted-on state: prefer local optimistic state, fall back to server status
+    const serverActed = n.inviteStatus === "accepted" || n.inviteStatus === "declined" || n.inviteStatus === "expired";
+    const isActedOn = !!localAction || serverActed;
+    const action: "accepted" | "declined" | "expired" | undefined =
+      localAction ??
+      (n.inviteStatus === "accepted" ? "accepted" :
+       n.inviteStatus === "declined" ? "declined" :
+       n.inviteStatus === "expired"  ? "expired"  : undefined);
 
     const cardBg = isActedOn
       ? "bg-gray-50 border border-gray-100"
@@ -368,6 +377,8 @@ export default function NotificationsPage() {
               <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
                 {action === "accepted" ? (
                   <><Check className="w-3 h-3 text-emerald-400" /> Accepted</>
+                ) : action === "expired" ? (
+                  <><X className="w-3 h-3 text-gray-400" /> Expired</>
                 ) : (
                   <><X className="w-3 h-3 text-gray-400" /> Declined</>
                 )}
