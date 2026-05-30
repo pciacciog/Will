@@ -1372,123 +1372,116 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             </div>
 
             {isWeWill ? (
-              /* We Will: horizontal avatar strip */
-              <div
-                className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm relative"
-                style={{ marginBottom: showWeWillWhyChip ? 18 : 0 }}
-              >
-                {membersForRow.length === 0 ? (
-                  <p className="text-xs text-gray-400 italic text-center py-1">No members yet — waiting for friends to accept</p>
-                ) : (
-                  <div className="flex overflow-hidden items-start">
-                    {membersForRow.map(member => {
-                      const isPending = member.status === 'pending';
-                      const isCurrentUser = member.status === 'creator' || member.status === 'self';
-                      const initial = member.firstName.charAt(0).toUpperCase();
-                      const s = teamCheckInMap[member.userId];
-                      const cat = will?.commitmentCategory;
-                      const isActive = will?.status === 'active' || will?.status === 'will_review' || will?.status === 'completed';
-                      const isCompleted = isActive && (
-                        (cat === 'recurring' && (s === 'yes' || s === 'partial')) ||
-                        (cat === 'duration' && s === 'honored') ||
-                        (cat === 'event' && s === 'completed')
-                      );
+              /* We Will: horizontal avatar strip
+                 Outer wrapper is the positioned ancestor for the chip,
+                 so the chip lives entirely OUTSIDE the card and cannot
+                 affect any flex-row alignment inside it.  */
+              <div style={{ position: 'relative', paddingBottom: showWeWillWhyChip ? 20 : 0 }}>
+                {/* Card — no position:relative, no overflow issues */}
+                <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
+                  {membersForRow.length === 0 ? (
+                    <p className="text-xs text-gray-400 italic text-center py-1">No members yet — waiting for friends to accept</p>
+                  ) : (
+                    /* Fix 2: justify-evenly gives identical gaps regardless of member count.
+                       All columns are plain divs with the same class — no element-type mismatch. */
+                    <div className="flex items-start justify-evenly">
+                      {membersForRow.map(member => {
+                        const isPending = member.status === 'pending';
+                        const isCurrentUser = member.status === 'creator' || member.status === 'self';
+                        const initial = member.firstName.charAt(0).toUpperCase();
+                        const s = teamCheckInMap[member.userId];
+                        const cat = will?.commitmentCategory;
+                        const isActive = will?.status === 'active' || will?.status === 'will_review' || will?.status === 'completed';
+                        const isCompleted = isActive && (
+                          (cat === 'recurring' && (s === 'yes' || s === 'partial')) ||
+                          (cat === 'duration' && s === 'honored') ||
+                          (cat === 'event' && s === 'completed')
+                        );
 
-                      const avatarContent = (
-                        <>
-                          <div className="relative">
-                            <div
-                              className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold"
-                              style={isPending
-                                ? { opacity: 0.45, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }
-                                : isCompleted
-                                  ? { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', boxShadow: `0 0 0 2.5px ${typeColor}` }
-                                  : { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }
-                              }
-                            >
-                              <span style={{ color: isPending ? '#92400E' : '#fff' }}>{initial}</span>
-                            </div>
-                            {isCompleted && (
-                              <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: typeColor }}>
-                                <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />
-                              </div>
-                            )}
-                            {!isCompleted && !isPending && (
+                        const columnContent = (
+                          <>
+                            <div className="relative">
                               <div
-                                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
-                                style={{ backgroundColor: isCurrentUser ? typeColor : '#22C55E' }}
-                              />
-                            )}
-                          </div>
-                          <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
-                            {member.firstName}
-                          </p>
-                          {/* Status labels for non-active states only */}
-                          {!(will.status === 'active' || will.status === 'will_review') && (
-                            <p className="text-[10px] font-medium" style={{ color: isCurrentUser ? typeColor : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
-                              {isCurrentUser ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
+                                className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold"
+                                style={isPending
+                                  ? { opacity: 0.45, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }
+                                  : isCompleted
+                                    ? { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', boxShadow: `0 0 0 2.5px ${typeColor}` }
+                                    : { background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }
+                                }
+                              >
+                                <span style={{ color: isPending ? '#92400E' : '#fff' }}>{initial}</span>
+                              </div>
+                              {isCompleted && (
+                                <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: typeColor }}>
+                                  <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />
+                                </div>
+                              )}
+                              {!isCompleted && !isPending && (
+                                <div
+                                  className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+                                  style={{ backgroundColor: isCurrentUser ? typeColor : '#22C55E' }}
+                                />
+                              )}
+                            </div>
+                            <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
+                              {member.firstName}
                             </p>
-                          )}
-                        </>
-                      );
+                            {!(will.status === 'active' || will.status === 'will_review') && (
+                              <p className="text-[10px] font-medium" style={{ color: isCurrentUser ? typeColor : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
+                                {isCurrentUser ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
+                              </p>
+                            )}
+                          </>
+                        );
 
-                      // Current user: plain div — chip is now outside the avatar grid
-                      if (isCurrentUser) {
+                        /* All columns are divs — same element type eliminates browser baseline differences.
+                           Pending members get onClick on the div. */
                         return (
                           <div
                             key={member.key}
-                            className="flex flex-col items-center gap-1 flex-1 min-w-0"
+                            className={`flex flex-col items-center gap-1 ${isPending ? 'active:opacity-70 cursor-pointer' : 'cursor-default'}`}
+                            onClick={() => {
+                              if (isPending && member.inviteId) {
+                                setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
+                                setPingSent(false);
+                              }
+                            }}
                             data-testid={`member-avatar-${member.userId}`}
                           >
-                            {avatarContent}
+                            {columnContent}
                           </div>
                         );
-                      }
-
-                      // Other members: keep as button (pending members are tappable)
-                      return (
-                        <button
-                          key={member.key}
-                          className={`flex flex-col items-center gap-1 flex-1 min-w-0 overflow-hidden ${isPending ? 'active:opacity-70' : 'cursor-default'}`}
-                          onClick={() => {
-                            if (isPending && member.inviteId) {
-                              setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
-                              setPingSent(false);
-                            }
-                          }}
-                          data-testid={`member-avatar-${member.userId}`}
-                        >
-                          {avatarContent}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Because text — reveals inside card bottom as a softly tinted block */}
-                {showWeWillWhyChip && (
-                  <div
-                    className="overflow-hidden transition-all duration-300"
-                    style={{ maxHeight: showWhyTag ? '100px' : '0px', opacity: showWhyTag ? 1 : 0 }}
-                  >
-                    <div className="rounded-xl px-3 py-2 mt-2" style={{ backgroundColor: typeColorTint }}>
-                      <p className="text-[11px] italic text-center leading-snug" style={{ color: typeColor }}>
-                        {userCommitment?.why}
-                      </p>
+                      })}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {membersForRow.some(m => m.status === 'pending') && (
-                  <p className="text-center text-[11px] text-amber-600 mt-2.5 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
-                    <span>👆</span>
-                    Tap a pending member to ping them
-                  </p>
-                )}
+                  {/* Because text — reveals inside card as a softly tinted block */}
+                  {showWeWillWhyChip && (
+                    <div
+                      className="overflow-hidden transition-all duration-300"
+                      style={{ maxHeight: showWhyTag ? '100px' : '0px', opacity: showWhyTag ? 1 : 0 }}
+                    >
+                      <div className="rounded-xl px-3 py-2 mt-2" style={{ backgroundColor: typeColorTint }}>
+                        <p className="text-[11px] italic text-center leading-snug" style={{ color: typeColor }}>
+                          {userCommitment?.why}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-                {/* Why chip — floats on the card's bottom border, aligned with user's avatar column */}
+                  {membersForRow.some(m => m.status === 'pending') && (
+                    <p className="text-center text-[11px] text-amber-600 mt-2.5 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
+                      <span>👆</span>
+                      Tap a pending member to ping them
+                    </p>
+                  )}
+                </div>
+
+                {/* Fix 1: chip is positioned on the OUTER wrapper, completely outside the card.
+                    It can never affect avatar layout inside the card. */}
                 {showWeWillWhyChip && (
-                  <div style={{ position: 'absolute', bottom: -13, left: weWillChipLeft, transform: 'translateX(-50%)', zIndex: 10 }}>
+                  <div style={{ position: 'absolute', bottom: 7, left: weWillChipLeft, transform: 'translateX(-50%)', zIndex: 10 }}>
                     <button
                       onClick={() => setShowWhyTag(prev => !prev)}
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
@@ -1572,7 +1565,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               showIWillWhyChip ? (
                                 /* Chip sits centered on the divider line — zero added height */
                                 <div className="relative" style={{ height: 1, backgroundColor: '#f9fafb' }}>
-                                  <div style={{ position: 'absolute', left: 68, top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                                  <div style={{ position: 'absolute', left: 44, top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
                                     <button
                                       onClick={() => setShowWhyTag(prev => !prev)}
                                       className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
