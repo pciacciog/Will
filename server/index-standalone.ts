@@ -136,6 +136,11 @@ app.get("/privacy-policy", (req, res) => {
   res.send(privacyPolicyHtml);
 });
 
+// robots.txt
+app.get("/robots.txt", (_req, res) => {
+  res.type("text/plain").send("User-agent: *\nAllow: /\n");
+});
+
 const PORT = process.env.PORT || 5000;
 
 // Run migration, register routes, and start server — all sequenced to ensure

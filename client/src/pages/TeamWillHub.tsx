@@ -285,7 +285,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       return res.json();
     },
     onSuccess: () => {
-      setMissionCheckInOpen(false);
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
       queryClient.invalidateQueries({ queryKey: ["/api/wills/all-active"] });
     },
@@ -1174,9 +1173,11 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               const bgCls = urg ? urg.pillBg : (useTypeStyle ? '' : statusInfo.bg);
               const txtCls = urg ? urg.pillText : (useTypeStyle ? '' : statusInfo.text);
               const label = will.status === 'active' && category === 'event' && missionDeadlineLabel
-                ? `Active · deadline ${missionDeadlineLabel}`
-                : will.status === 'active' && (category === 'duration' || (category === 'recurring' && daysLeft !== null))
-                ? `Active · ${category === 'duration' ? durDaysLeft : daysLeft} days left`
+                ? `Active · deadline ${missionDeadlineLabel} · Event`
+                : will.status === 'active' && category === 'duration' && durDaysLeft !== null
+                ? `Active · ${durDaysLeft} days left · Duration`
+                : will.status === 'active' && category === 'recurring' && daysLeft !== null
+                ? `Active · ${daysLeft} days left · Recurring`
                 : statusInfo.label;
               return (
                 <span
@@ -1314,11 +1315,11 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           {/* ── COMMITMENT ───────────────────────────────────────── */}
           {isWeWill ? (
             /* We Will — shared commitment text only */
-            <div className="mb-2">
-              <p className="text-[22px] font-bold text-center mb-2" style={{ color: typeColor }}>We Will</p>
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+            <div className="mb-1.5">
+              <p className="text-lg font-bold text-center mb-1" style={{ color: typeColor }}>WE WILL</p>
+              <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
                 {will.sharedWhat ? (
-                  <p className="text-[20px] font-bold text-gray-900 text-center leading-snug">
+                  <p className="text-[16px] font-bold text-gray-900 text-center leading-snug">
                     &ldquo;{will.sharedWhat}&rdquo;
                   </p>
                 ) : (
@@ -1329,10 +1330,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           ) : (
             /* I Will — current user's own commitment text */
             userCommitment?.what ? (
-              <div className="mb-2">
-                <p className="text-[22px] font-bold text-center mb-2" style={{ color: typeColor }}>I Will</p>
-                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-                  <p className="text-[18px] font-bold text-gray-900 text-center leading-snug">
+              <div className="mb-1.5">
+                <p className="text-lg font-bold text-center mb-1" style={{ color: typeColor }}>I WILL</p>
+                <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
+                  <p className="text-[15px] font-bold text-gray-900 text-center leading-snug">
                     &ldquo;{userCommitment.what}&rdquo;
                   </p>
                 </div>
@@ -1341,8 +1342,8 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
           )}
 
           {/* ── MEMBERS ──────────────────────────────────────────── */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-2">
+          <div className="mb-1.5">
+            <div className="flex items-center justify-between mb-1.5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Members</p>
               {isCreator && pendingInvites.length > 0 && (
                 <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" data-testid="badge-pending-invites">
@@ -1353,7 +1354,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
             {isWeWill ? (
               /* We Will: horizontal avatar strip */
-              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+              <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
                 {membersForRow.length === 0 ? (
                   <p className="text-xs text-gray-400 italic text-center py-1">No members yet — waiting for friends to accept</p>
                 ) : (
@@ -1408,41 +1409,11 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <p className={`text-[11px] font-medium text-center max-w-[54px] truncate ${isPending ? 'text-gray-400' : 'text-gray-800'}`}>
                             {member.firstName}
                           </p>
-                          {/* Active state: Why chip for current user, invisible spacer for others */}
-                          {(will.status === 'active' || will.status === 'will_review') ? (
-                            (member.status === 'creator' || member.status === 'self') && userCommitment?.why ? (
-                              <button
-                                onClick={e => { e.stopPropagation(); setShowWhyTag(prev => !prev); }}
-                                className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                                style={{ backgroundColor: typeColorLight, border: `1px solid ${typeColorChipBorder}` }}
-                                data-testid="button-why-chip"
-                              >
-                                <Heart className="w-2.5 h-2.5" style={{ color: typeColor }} fill="currentColor" />
-                                <span className="text-[10px] font-medium" style={{ color: typeColor }}>Why</span>
-                                <ChevronDown
-                                  className="w-3 h-3 transition-transform duration-200"
-                                  style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                                />
-                              </button>
-                            ) : (
-                              <div style={{ height: 22 }} aria-hidden="true" />
-                            )
-                          ) : (
-                            /* Non-active state: show status labels as before */
+                          {/* Status labels for non-active states only */}
+                          {!(will.status === 'active' || will.status === 'will_review') && (
                             <p className="text-[10px] font-medium" style={{ color: (member.status === 'creator' || member.status === 'self') ? typeColor : member.status === 'accepted' ? '#16A34A' : '#D97706' }}>
                               {(member.status === 'creator' || member.status === 'self') ? 'You' : member.status === 'accepted' ? 'In ✓' : 'Pending'}
                             </p>
-                          )}
-                          {/* Because text — animated reveal */}
-                          {(member.status === 'creator' || member.status === 'self') && userCommitment?.why && (
-                            <div
-                              className="overflow-hidden transition-all duration-200 text-center"
-                              style={{ maxHeight: showWhyTag ? '80px' : '0px', opacity: showWhyTag ? 1 : 0 }}
-                            >
-                              <p className="text-[10px] text-gray-400 italic max-w-[64px] leading-tight mt-1">
-                                {userCommitment.why}
-                              </p>
-                            </div>
                           )}
                         </button>
                       );
@@ -1497,29 +1468,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             {c.what && (
                               <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{c.what}</p>
                             )}
-                            {isMe && c.why && (
-                              <div className="mt-1.5">
-                                <button
-                                  onClick={e => { e.stopPropagation(); setShowWhyTag(prev => !prev); }}
-                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                                  style={{ backgroundColor: typeColorLight, border: `1px solid ${typeColorChipBorder}` }}
-                                  data-testid="button-why-chip"
-                                >
-                                  <Heart className="w-2.5 h-2.5" style={{ color: typeColor }} fill="currentColor" />
-                                  <span className="text-[10px] font-medium" style={{ color: typeColor }}>Why</span>
-                                  <ChevronDown
-                                    className="w-3 h-3 transition-transform duration-200"
-                                    style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                                  />
-                                </button>
-                                <div
-                                  className="overflow-hidden transition-all duration-200"
-                                  style={{ maxHeight: showWhyTag ? '80px' : '0px', opacity: showWhyTag ? 1 : 0 }}
-                                >
-                                  <p className="text-[11px] text-gray-400 italic mt-0.5">{c.why}</p>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
@@ -1558,6 +1506,30 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     Tap a pending member to ping them
                   </p>
                 )}
+              </div>
+            )}
+            {/* Why chip hanging below members card */}
+            {(will.status === 'active' || will.status === 'will_review') && userCommitment?.why && (
+              <div className="-mt-2.5 ml-3 relative z-10">
+                <button
+                  onClick={() => setShowWhyTag(prev => !prev)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full shadow-sm"
+                  style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
+                  data-testid="button-why-chip"
+                >
+                  <Heart className="w-2.5 h-2.5" style={{ color: typeColor }} fill="currentColor" />
+                  <span className="text-[10px] font-medium" style={{ color: typeColor }}>Why</span>
+                  <ChevronDown
+                    className="w-3 h-3 transition-transform duration-200"
+                    style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  />
+                </button>
+                <div
+                  className="overflow-hidden transition-all duration-200"
+                  style={{ maxHeight: showWhyTag ? '80px' : '0px', opacity: showWhyTag ? 1 : 0 }}
+                >
+                  <p className="text-[11px] text-gray-400 italic mt-1.5 ml-1">{userCommitment.why}</p>
+                </div>
               </div>
             )}
           </div>
@@ -1713,131 +1685,114 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </div>
 
             ) : category === 'duration' ? (
-              /* ── Duration (flat progress card) ── */
-              <div className="space-y-3">
+              /* ── Duration ── */
+              <div className="space-y-2">
+                {/* Check-in section outside progress card */}
+                {will.status === 'active' && (
+                  <div data-testid="section-abstain-actions">
+                    {(abstainTodayEntry || abstainJustLoggedHonored !== null) ? (
+                      (() => {
+                        const honored = abstainTodayEntry?.honored ?? (abstainJustLoggedHonored ?? true);
+                        return honored ? (
+                          <div className="w-full rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: typeColorLight, border: `1.5px solid ${typeColor}` }} data-testid="abstain-result-honored">
+                            <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 36, height: 36, backgroundColor: typeColor }}>
+                              <CheckCircle style={{ width: 18, height: 18, color: '#fff' }} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold" style={{ color: '#085041' }}>Holding today ✓</p>
+                              <p className="text-xs" style={{ color: '#2E7D63' }}>Logged for today.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#FCEBEB', border: '1.5px solid #E24B4A' }} data-testid="abstain-result-not-honored">
+                            <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 36, height: 36, backgroundColor: '#E24B4A' }}>
+                              <XCircle style={{ width: 18, height: 18, color: '#fff' }} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold" style={{ color: '#791F1F' }}>That's okay</p>
+                              <p className="text-xs" style={{ color: '#A32D2D' }}>Tomorrow is a fresh start.</p>
+                            </div>
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">How did it go?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => { setAbstainJustLoggedHonored(true); abstainLogMutation.mutate({ honored: true, date: todayLocalDate }); }}
+                            disabled={abstainLogMutation.isPending}
+                            className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80 disabled:opacity-60"
+                            style={{ backgroundColor: typeColor }}
+                            data-testid="button-abstain-honored"
+                          >
+                            <Check style={{ width: 18, height: 18, color: '#fff' }} />
+                            Holding
+                          </button>
+                          <button
+                            onClick={() => { setAbstainJustLoggedHonored(false); abstainLogMutation.mutate({ honored: false, date: todayLocalDate }); }}
+                            disabled={abstainLogMutation.isPending}
+                            className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-opacity active:opacity-80 disabled:opacity-60"
+                            style={{ border: '2px solid #E24B4A', color: '#E24B4A' }}
+                            data-testid="button-abstain-didnt-honor"
+                          >
+                            <X style={{ width: 18, height: 18, color: '#E24B4A' }} />
+                            Slipped
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+                {/* Progress card */}
                 {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
-                  <div className="bg-white rounded-xl border border-gray-200 p-4" data-testid="card-duration-progress">
-                    {/* Section label */}
-                    <p className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase text-center mb-4">Your Progress</p>
-
+                  <div className="bg-white rounded-xl border border-gray-200 p-3" data-testid="card-duration-progress">
+                    <p className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase text-center mb-3">Your Progress</p>
                     {/* Circular progress ring */}
-                    <div className="flex justify-center mb-4">
-                      <div className="relative" style={{ width: 144, height: 144 }}>
-                        <svg width="144" height="144" style={{ transform: 'rotate(-90deg)' }}>
-                          <circle cx="72" cy="72" r="56" fill="none" stroke="#E5E7EB" strokeWidth="10" />
+                    <div className="flex justify-center mb-3">
+                      <div className="relative" style={{ width: 120, height: 120 }}>
+                        <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
+                          <circle cx="60" cy="60" r="46" fill="none" stroke="#E5E7EB" strokeWidth="9" />
                           <circle
-                            cx="72" cy="72" r="56" fill="none"
-                            stroke={typeColor} strokeWidth="10"
+                            cx="60" cy="60" r="46" fill="none"
+                            stroke={typeColor} strokeWidth="9"
                             strokeLinecap="round"
-                            strokeDasharray={`${2 * Math.PI * 56}`}
-                            strokeDashoffset={`${2 * Math.PI * 56 * (1 - durDaysIn / Math.max(1, durTotalDays))}`}
+                            strokeDasharray={`${2 * Math.PI * 46}`}
+                            strokeDashoffset={`${2 * Math.PI * 46 * (1 - durDaysIn / Math.max(1, durTotalDays))}`}
                             style={{ transition: 'stroke-dashoffset 0.6s ease' }}
                           />
                         </svg>
-                        {/* Centered inner text — three lines */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ gap: 0 }}>
-                          <span className="text-[11px] text-gray-400" style={{ lineHeight: '1.2' }}>Day</span>
-                          <span className="font-bold" style={{ fontSize: 36, lineHeight: '1.05', color: typeColor }}>{durDaysIn}</span>
-                          <span className="text-[11px] text-gray-400" style={{ lineHeight: '1.2' }}>of {durTotalDays}</span>
+                          <span className="text-[10px] text-gray-400" style={{ lineHeight: '1.2' }}>Day</span>
+                          <span className="font-bold" style={{ fontSize: 28, lineHeight: '1.05', color: typeColor }}>{durDaysIn}</span>
+                          <span className="text-[10px] text-gray-400" style={{ lineHeight: '1.2' }}>of {durTotalDays}</span>
                         </div>
                       </div>
                     </div>
-
                     {/* Stat boxes */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
-                        <div className="text-lg font-bold text-gray-800">{durDaysIn}</div>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
+                        <div className="text-base font-bold text-gray-800">{durDaysIn}</div>
                         <div className="text-[11px] text-gray-500">days in</div>
                       </div>
-                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
-                        <div className="text-lg font-bold text-gray-800">{durDaysLeft}</div>
+                      <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
+                        <div className="text-base font-bold text-gray-800">{durDaysLeft}</div>
                         <div className="text-[11px] text-gray-500">days left</div>
                       </div>
-                      <div className="text-center py-2.5 px-1 rounded-xl bg-gray-50">
-                        <div className="text-lg font-bold" style={{ color: durMissedDays > 0 ? '#E24B4A' : '#1F2937' }}>{durMissedDays}</div>
+                      <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
+                        <div className="text-base font-bold" style={{ color: durMissedDays > 0 ? '#E24B4A' : '#1F2937' }}>{durMissedDays}</div>
                         <div className="text-[11px] text-gray-500">missed</div>
                       </div>
                     </div>
-
-                    {/* Check-in area (active only) */}
-                    {will.status === 'active' && (
-                      <div className="mb-4" data-testid="section-abstain-actions">
-                        {(abstainTodayEntry || abstainJustLoggedHonored !== null) ? (
-                          (() => {
-                            const honored = abstainTodayEntry?.honored ?? (abstainJustLoggedHonored ?? true);
-                            return honored ? (
-                              <div className="w-full rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: typeColorLight, border: `1.5px solid ${typeColor}` }} data-testid="abstain-result-honored">
-                                <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 36, height: 36, backgroundColor: typeColor }}>
-                                  <CheckCircle style={{ width: 18, height: 18, color: '#fff' }} />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold" style={{ color: '#085041' }}>Will honored today</p>
-                                  <p className="text-xs" style={{ color: '#2E7D63' }}>Logged for today.</p>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="w-full rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#FCEBEB', border: '1.5px solid #E24B4A' }} data-testid="abstain-result-not-honored">
-                                <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 36, height: 36, backgroundColor: '#E24B4A' }}>
-                                  <XCircle style={{ width: 18, height: 18, color: '#fff' }} />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold" style={{ color: '#791F1F' }}>That's okay</p>
-                                  <p className="text-xs" style={{ color: '#A32D2D' }}>Tomorrow is a fresh start.</p>
-                                </div>
-                              </div>
-                            );
-                          })()
-                        ) : abstainCheckInOpen ? (
-                          <div className="space-y-2" data-testid="abstain-checkin-options">
-                            <p className="text-xs text-gray-400 text-center">Did you honor your will today?</p>
-                            <button
-                              onClick={() => { setAbstainJustLoggedHonored(true); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: true, date: todayLocalDate }); }}
-                              disabled={abstainLogMutation.isPending}
-                              className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                              style={{ border: `2px solid ${typeColor}`, color: '#0A3870' }}
-                              data-testid="button-abstain-honored"
-                            >
-                              <CheckCircle style={{ width: 20, height: 20, color: typeColor }} />
-                              I honored my will
-                            </button>
-                            <button
-                              onClick={() => { setAbstainJustLoggedHonored(false); setAbstainCheckInOpen(false); abstainLogMutation.mutate({ honored: false, date: todayLocalDate }); }}
-                              disabled={abstainLogMutation.isPending}
-                              className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                              style={{ border: '2px solid #E24B4A', color: '#A32D2D' }}
-                              data-testid="button-abstain-didnt-honor"
-                            >
-                              <XCircle style={{ width: 20, height: 20, color: '#E24B4A' }} />
-                              I didn't honor it
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setAbstainCheckInOpen(true)}
-                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
-                            style={{ backgroundColor: typeColor }}
-                            data-testid="button-abstain-check-in"
-                          >
-                            <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
-                            Check in for today
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Divider */}
                     <div className="border-t border-gray-100 mb-3" />
-
-                    {/* 7-column calendar grid */}
+                    {/* Calendar grid */}
                     {durCalendarDays.length > 0 && (
                       <div>
-                        {/* Day-of-week headers */}
                         <div className="grid grid-cols-7 mb-1.5">
                           {['M','T','W','T','F','S','S'].map((h, i) => (
                             <div key={i} className="text-center text-[10px] font-semibold text-gray-400">{h}</div>
                           ))}
                         </div>
-                        {/* Day cells */}
                         <div className="grid grid-cols-7 gap-y-1.5">
                           {Array.from({ length: durStartDOW }).map((_, i) => <div key={`pad-${i}`} />)}
                           {durCalendarDays.map((d) => (
@@ -1850,20 +1805,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                                 }}
                                 className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
                                 style={{
-                                  backgroundColor:
-                                    d.status === 'checked-in' ? typeColor
-                                    : d.status === 'missed' ? '#FECDD3'
-                                    : d.status === 'today' ? typeColorTint
-                                    : '#F3F4F6',
-                                  border:
-                                    d.status === 'missed' ? '2px solid #E24B4A'
-                                    : d.status === 'today' ? `2px solid ${typeColor}`
-                                    : 'none',
-                                  color:
-                                    d.status === 'checked-in' ? '#fff'
-                                    : d.status === 'missed' ? '#E24B4A'
-                                    : d.status === 'today' ? typeColor
-                                    : '#9CA3AF',
+                                  backgroundColor: d.status === 'checked-in' ? typeColor : d.status === 'missed' ? '#FECDD3' : d.status === 'today' ? typeColorTint : '#F3F4F6',
+                                  border: d.status === 'missed' ? '2px solid #E24B4A' : d.status === 'today' ? `2px solid ${typeColor}` : 'none',
+                                  color: d.status === 'checked-in' ? '#fff' : d.status === 'missed' ? '#E24B4A' : d.status === 'today' ? typeColor : '#9CA3AF',
                                   cursor: d.status === 'upcoming' ? 'default' : 'pointer',
                                 }}
                                 data-testid={`day-dot-${d.dayNum}`}
@@ -1873,7 +1817,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             </div>
                           ))}
                         </div>
-                        {/* Inline past-day edit panel */}
                         {durPastEditDate && (() => {
                           const displayDate = new Date(durPastEditDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                           return (
@@ -1904,7 +1847,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             </div>
                           );
                         })()}
-                        {/* Legend */}
                         <div className="flex items-center justify-center gap-4 mt-3">
                           <div className="flex items-center gap-1">
                             <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: typeColor }} />
@@ -1923,77 +1865,45 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
             ) : category === 'event' ? (
               /* ── Event ── */
-              <div className="space-y-3">
-                {/* Deadline Arc */}
-                {will.status === 'active' && will.endDate && will.startDate && (
-                  <DeadlineArc startDate={will.startDate as string} endDate={will.endDate as string} />
-                )}
-
-                {(will.status === 'active' || will.status === 'completed') && (
-                  <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col items-center gap-2.5" data-testid="card-mission-progress">
-                    {/* Check-in flow */}
-                    {will.status === 'active' && (
-                      missionCompleted ? (
-                        <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: typeColorLight, border: `2px solid ${typeColor}` }} data-testid="mission-result-completed">
-                          <p className="text-sm font-semibold" style={{ color: '#085041' }}>You completed it!</p>
-                          <p className="text-xs" style={{ color: '#2E7D63' }}>Your event is done.</p>
-                        </div>
-                      ) : missionKeptGoing ? (
-                        <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5 bg-gray-50 border border-gray-200" data-testid="mission-result-not-yet">
-                          <p className="text-sm font-semibold text-gray-700">Keep going</p>
-                          <p className="text-xs text-gray-400">You still have time.</p>
-                        </div>
-                      ) : missionConfirming ? (
-                        <div className="w-full space-y-2" data-testid="mission-confirm-step">
-                          <button
-                            onClick={() => { missionCompleteMutation.mutate(); setMissionConfirming(false); }}
-                            disabled={missionCompleteMutation.isPending}
-                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
-                            style={{ backgroundColor: typeColor }}
-                            data-testid="button-mission-confirm-done"
-                          >
-                            <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
-                            {missionCompleteMutation.isPending ? 'Saving...' : 'Confirm completion'}
-                          </button>
-                          <button
-                            onClick={() => setMissionConfirming(false)}
-                            className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                            style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
-                            data-testid="button-mission-confirm-cancel"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : missionCheckInOpen ? (
-                        <div className="w-full" data-testid="mission-checkin-options">
-                          <p className="text-xs text-gray-400 text-center mb-3">Did you complete this?</p>
-                          <div className="space-y-2">
-                            <button
-                              onClick={() => { setMissionCheckInOpen(false); setMissionConfirming(true); }}
-                              className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                              style={{ border: `2px solid ${typeColor}`, color: '#26215C' }}
-                              data-testid="button-mission-yes"
-                            >
-                              <CheckCircle style={{ width: 20, height: 20, color: typeColor }} />
-                              Yes
-                            </button>
-                            <button
-                              onClick={() => {
-                                setMissionCheckInOpen(false);
-                                setMissionKeptGoing(true);
-                                setTimeout(() => setMissionKeptGoing(false), 2000);
-                              }}
-                              className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
-                              style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
-                              data-testid="button-mission-not-yet"
-                            >
-                              Not yet
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Step 1: Two side-by-side buttons */
-                        <div className="flex gap-2 w-full">
+              <div className="space-y-2">
+                {/* HAVE YOU DONE IT? check-in section */}
+                {will.status === 'active' && (
+                  <div>
+                    {missionCompleted ? (
+                      <div className="w-full rounded-xl p-3 flex flex-col items-center gap-1" style={{ backgroundColor: typeColorLight, border: `2px solid ${typeColor}` }} data-testid="mission-result-completed">
+                        <p className="text-sm font-semibold" style={{ color: '#085041' }}>You completed it!</p>
+                        <p className="text-xs" style={{ color: '#2E7D63' }}>Your event is done.</p>
+                      </div>
+                    ) : missionKeptGoing ? (
+                      <div className="w-full rounded-xl p-3 flex flex-col items-center gap-1 bg-gray-50 border border-gray-200" data-testid="mission-result-not-yet">
+                        <p className="text-sm font-semibold text-gray-700">Keep going</p>
+                        <p className="text-xs text-gray-400">You still have time.</p>
+                      </div>
+                    ) : missionConfirming ? (
+                      <div className="w-full space-y-2" data-testid="mission-confirm-step">
+                        <button
+                          onClick={() => { missionCompleteMutation.mutate(); setMissionConfirming(false); }}
+                          disabled={missionCompleteMutation.isPending}
+                          className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
+                          style={{ backgroundColor: typeColor }}
+                          data-testid="button-mission-confirm-done"
+                        >
+                          <CheckCircle style={{ width: 20, height: 20, color: '#fff' }} />
+                          {missionCompleteMutation.isPending ? 'Saving...' : 'Confirm completion'}
+                        </button>
+                        <button
+                          onClick={() => setMissionConfirming(false)}
+                          className="w-full flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-colors active:opacity-80"
+                          style={{ border: '0.5px solid #D1D5DB', color: '#6B7280' }}
+                          data-testid="button-mission-confirm-cancel"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">Have you done it?</p>
+                        <div className="flex gap-2">
                           <button
                             onClick={() => setMissionConfirming(true)}
                             className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80"
@@ -2006,50 +1916,53 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                           <button
                             onClick={() => { setMissionKeptGoing(true); setTimeout(() => setMissionKeptGoing(false), 2000); }}
                             className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-opacity active:opacity-80"
-                            style={{ border: '2px solid #e74c3c', color: '#e74c3c' }}
+                            style={{ border: '2px solid #E24B4A', color: '#E24B4A' }}
                             data-testid="button-mission-not-yet"
                           >
-                            <X style={{ width: 18, height: 18, color: '#e74c3c' }} />
+                            <X style={{ width: 18, height: 18, color: '#E24B4A' }} />
                             Not yet
                           </button>
                         </div>
-                      )
+                      </>
+                    )}
+                  </div>
+                )}
+                {/* Team status progress card */}
+                {(will.status === 'active' || will.status === 'completed') && (
+                  <div className="bg-white rounded-xl border border-gray-200 p-3" data-testid="card-mission-progress">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-3">Your Progress</p>
+                    {commitments.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {commitments.map((c: any) => {
+                          const isDone = c.missionCompleted === true || teamCheckInMap[c.userId] === 'completed';
+                          const firstName = c.user?.firstName || c.user?.email?.split('@')[0] || '?';
+                          const initial = firstName.charAt(0).toUpperCase();
+                          return (
+                            <div key={c.id} className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                                <span className="text-white font-semibold text-xs">{initial}</span>
+                              </div>
+                              <p className="text-sm font-medium text-gray-800 flex-1 truncate">{firstName}</p>
+                              {isDone ? (
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle style={{ width: 14, height: 14, color: typeColor, flexShrink: 0 }} />
+                                  <span className="text-[11px] font-semibold" style={{ color: typeColor }}>Done</span>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-gray-400">Not yet</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 text-center py-2">No members yet</p>
                     )}
                     {will.status === 'completed' && (
-                      <div className="w-full rounded-xl p-4 flex flex-col items-center gap-1.5" style={{ backgroundColor: typeColorLight, border: `2px solid ${typeColor}` }} data-testid="mission-already-completed">
-                        <p className="text-sm font-semibold" style={{ color: '#085041' }}>Will completed!</p>
-                        <p className="text-xs" style={{ color: '#2E7D63' }}>You did it. This chapter is closed.</p>
+                      <div className="mt-3 pt-3 border-t border-gray-100 text-center">
+                        <p className="text-sm font-semibold" style={{ color: typeColor }}>Will completed!</p>
                       </div>
                     )}
-                    {/* Completion log — who has finished the event */}
-                    {commitments.length > 0 && (() => {
-                      const completedMembers = commitments.filter((c: any) =>
-                        c.missionCompleted === true || teamCheckInMap[c.userId] === 'completed'
-                      );
-                      if (completedMembers.length === 0) return null;
-                      return (
-                        <div className="w-full rounded-xl border border-gray-100 p-3 mt-1" data-testid="card-event-completion-log">
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2.5">
-                            Completion Log · {completedMembers.length}/{commitments.length}
-                          </p>
-                          <div className="space-y-2">
-                            {completedMembers.map((c: any) => (
-                              <div key={c.id} className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-white font-semibold text-xs">
-                                    {(c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                                <p className="text-xs font-medium text-gray-800 flex-1 truncate">
-                                  {c.user?.firstName || c.user?.email?.split('@')[0]}
-                                </p>
-                                <CheckCircle style={{ width: 14, height: 14, color: typeColor, flexShrink: 0 }} />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
                   </div>
                 )}
               </div>
@@ -2132,6 +2045,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </div>
             )}
           </div>
+          {/* Scroll hint */}
+          {will.status === 'active' && category && (
+            <p className="text-center text-[11px] text-gray-400 italic mb-1">↓ scroll for proof</p>
+          )}
 
           {/* ── Awaiting commitment (creator-only) ─────────────────── */}
           {will.createdBy === user?.id && awaitingCommitInvitees.length > 0 && (

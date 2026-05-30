@@ -1,0 +1,17 @@
+Hey, the Alerts screen needs several fixes and enhancements:
+Bug fix
+"review_required" is showing as a raw system string in one of the notifications. Map this and any other internal notification type strings to human-readable messages before they render. No raw keys should ever be visible to the user.
+Remove the duplicate handshake emoji
+Each notification currently shows a handshake emoji both as the icon on the left AND embedded in the notification title text. Remove the emoji from the title text — it should only appear once as the icon on the left.
+Replace emoji icons with app-styled icons
+Replace the handshake and bell emojis with proper styled icon components consistent with the rest of the app — same style as the icons used in cards and buttons throughout. Use your judgment on appropriate icons per notification type.
+Add read/unread state
+Unread notifications should be visually distinct — subtle tinted background, slightly bolder title, or a small colored dot indicator. Read notifications should appear in the current muted style. Mark a notification as read when the user taps it.
+Add inline Accept / Decline buttons on invite notifications
+For Team Will invite notifications, add two small inline buttons directly on the card — "Accept" in green and "Decline" in red border style. Tapping either should act immediately without requiring the user to navigate elsewhere. Once acted on, the notification should update its state to reflect the decision.
+Group notifications by time
+Replace the single "EARLIER" section with three groups: "Today", "This week", and "Earlier". Only show groups that have notifications.
+Add dismiss functionality
+Allow users to swipe left on individual notifications to dismiss them. Add a "Clear all" option in the top right corner of the screen.
+Clean up stale acted-on notifications
+Any invite notification that has already been accepted or declined should either be removed from the list or shown in a clearly resolved/muted state so it does not clutter the active list.

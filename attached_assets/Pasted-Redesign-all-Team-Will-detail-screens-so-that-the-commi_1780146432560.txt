@@ -1,0 +1,15 @@
+Redesign all Team Will detail screens so that the commitment, members section, check-in buttons, and full progress section all fit on screen without scrolling. Proof is the only element that should require scrolling. Apply the following across all Team Will types — Recurring, Duration, Event, both We Will and I Will formats:
+Why chip — hang outside the members card
+Remove the Why chip from inside the members card entirely. Instead position it as a small floating pill that hangs just below the bottom edge of the members card, aligned to the user's avatar column — visually attached to the card but technically outside it. It should overlap the card's bottom border slightly using absolute positioning. The chip contains a heart icon, "Why", and a small chevron. Tapping it reveals the because text below the chip with a smooth animation. This eliminates all whitespace created inside the members card by the chip.
+Compact everything to fit above the fold
+Reduce padding inside all cards, reduce gap between sections, and reduce font sizes slightly where needed so the following all fit on one screen without scrolling: status badge → I WILL / WE WILL label → commitment card → members section → check-in buttons → full progress section. Use your judgment on where to recover space.
+Add a subtle scroll hint
+Below the progress section add a small muted italic line: "↓ scroll for proof" so users know the proof section exists below without needing to discover it.
+Progress section per type — must show fully:
+
+Recurring → stats row (done/partial/missed) + full week strip + success rate line
+Duration → ring (Day X of Y) + stats row (days in/left/missed) + full calendar grid
+Event → team status list showing each member with Done ✓ or Not yet
+
+Color consistency
+All elements on screen must use the will type color — green for Recurring, blue for Duration, purple for Event. Header icon buttons, badge, WE WILL / I WILL label, check-in buttons, ring, calendar dots, toggles — everything derives from the type color. Nothing hardcoded.

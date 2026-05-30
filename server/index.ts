@@ -153,6 +153,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// robots.txt
+app.get('/robots.txt', (_req, res) => {
+  res.type('text/plain').send('User-agent: *\nAllow: /\n');
+});
+
 // Serve privacy policy BEFORE API routes to avoid conflicts
 app.get('/privacy-policy.html', (req, res) => {
   console.log('Privacy policy route hit!');
