@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Bell, BellOff, Users, UserPlus, UserCheck,
   Camera, FileCheck, Zap, CheckCircle2, ClipboardList,
-  MessageCircle, Trash2, Check, X, Star,
+  MessageCircle, Trash2, Star,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, differenceInDays } from "date-fns";
 
@@ -164,32 +164,17 @@ interface NotifCardProps {
   n: InAppNotification;
   x: number;
   isTouching: boolean;
-  localAction: "accepted" | "declined" | undefined;
-  pending: boolean;
   onTouchStart: (id: number, cx: number, cy: number) => void;
   onTouchMove: (id: number, cx: number, cy: number) => void;
   onTouchEnd: (id: number) => void;
   onTap: (n: InAppNotification) => void;
-  onInviteAction: (n: InAppNotification, action: "accepted" | "declined") => void;
 }
 
 const NotifCard = memo(function NotifCard({
-  n, x, isTouching, localAction, pending,
-  onTouchStart, onTouchMove, onTouchEnd, onTap, onInviteAction,
+  n, x, isTouching,
+  onTouchStart, onTouchMove, onTouchEnd, onTap,
 }: NotifCardProps) {
-  const isInvite = n.type === "team_will_invite";
-
-  const serverActed = n.inviteStatus === "accepted" || n.inviteStatus === "declined" || n.inviteStatus === "expired";
-  const isActedOn = !!localAction || serverActed;
-  const action: "accepted" | "declined" | "expired" | undefined =
-    localAction ??
-    (n.inviteStatus === "accepted" ? "accepted" :
-     n.inviteStatus === "declined" ? "declined" :
-     n.inviteStatus === "expired"  ? "expired"  : undefined);
-
-  const cardBg = isActedOn
-    ? "bg-gray-50 border border-gray-100"
-    : n.isRead
+  const cardBg = n.isRead
     ? "bg-white border border-gray-100"
     : "bg-emerald-50 border border-emerald-100";
 
@@ -214,68 +199,21 @@ const NotifCard = memo(function NotifCard({
         onTouchEnd={() => onTouchEnd(n.id)}
         onClick={() => { if (Math.abs(x) < 8) onTap(n); }}
         data-testid={`notif-item-${n.id}`}
-        className={`w-full text-left rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors duration-150 ${
-          !isInvite && !isActedOn ? "cursor-pointer" : "cursor-default"
-        } ${cardBg}`}
+        className={`w-full text-left cursor-pointer rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors duration-150 ${cardBg}`}
       >
-        <div className={isActedOn ? "opacity-40" : ""}>
-          <TypeIcon type={n.type} />
-        </div>
+        <TypeIcon type={n.type} />
 
         <div className="flex-1 min-w-0">
           <p
             className={`text-[14px] leading-snug ${
-              isActedOn
-                ? "text-gray-400"
-                : n.isRead
-                ? "text-gray-700"
-                : "text-gray-900 font-semibold"
+              n.isRead ? "text-gray-700" : "text-gray-900 font-semibold"
             }`}
           >
             {cleanTitle(n.title, n.type)}
           </p>
           {n.body && (
-            <p className={`text-[12px] leading-snug mt-0.5 line-clamp-2 ${isActedOn ? "text-gray-400" : "text-gray-500"}`}>
+            <p className="text-[12px] leading-snug mt-0.5 line-clamp-2 text-gray-500">
               {stripEmoji(n.body).trim() || undefined}
-            </p>
-          )}
-
-          {/* Inline Accept / Decline */}
-          {isInvite && !isActedOn && n.willId && (
-            <div className="flex items-center gap-2 mt-2.5">
-              <button
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => { e.stopPropagation(); onInviteAction(n, "accepted"); }}
-                disabled={pending}
-                data-testid={`button-accept-invite-${n.id}`}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold disabled:opacity-50 active:scale-[0.97] transition-transform"
-              >
-                <Check className="w-3 h-3" />
-                Accept
-              </button>
-              <button
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => { e.stopPropagation(); onInviteAction(n, "declined"); }}
-                disabled={pending}
-                data-testid={`button-decline-invite-${n.id}`}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-300 text-red-500 text-[12px] font-semibold disabled:opacity-50 active:scale-[0.97] transition-transform"
-              >
-                <X className="w-3 h-3" />
-                Decline
-              </button>
-            </div>
-          )}
-
-          {/* Acted-on state */}
-          {isInvite && isActedOn && (
-            <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
-              {action === "accepted" ? (
-                <><Check className="w-3 h-3 text-emerald-400" /> Accepted</>
-              ) : action === "expired" ? (
-                <><X className="w-3 h-3 text-gray-400" /> Expired</>
-              ) : (
-                <><X className="w-3 h-3 text-gray-400" /> Declined</>
-              )}
             </p>
           )}
 
@@ -284,7 +222,7 @@ const NotifCard = memo(function NotifCard({
           </p>
         </div>
 
-        {!n.isRead && !isActedOn && (
+        {!n.isRead && (
           <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />
         )}
       </div>
@@ -306,10 +244,6 @@ export default function NotificationsPage() {
   const [touchingId, setTouchingId] = useState<number | null>(null);
   const [dismissingIds, setDismissingIds] = useState<Set<number>>(new Set());
 
-  // Optimistic invite action state
-  const [inviteActions, setInviteActions] = useState<Record<number, "accepted" | "declined">>({});
-  const [invitePending, setInvitePending] = useState<Set<number>>(new Set());
-
   const { data, isLoading } = useQuery<NotifResponse>({
     queryKey: ["/api/notifications"],
     queryFn: getQueryFn({ on401: "returnNull" }),
@@ -329,11 +263,23 @@ export default function NotificationsPage() {
   const dismissMutation = useMutation({
     mutationFn: (id: number) =>
       apiRequest(`/api/notifications/${id}`, { method: "DELETE" }),
+    onMutate: (id: number) => {
+      setDismissingIds((prev) => new Set(prev).add(id));
+      return { id };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
     },
-    onError: () => {
+    onError: (_err, _id, context) => {
+      if (context?.id !== undefined) {
+        setDismissingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(context.id);
+          return next;
+        });
+        setSwipeX((prev) => ({ ...prev, [context.id]: 0 }));
+      }
       toast({ title: "Couldn't remove alert", variant: "destructive" });
     },
   });
@@ -381,7 +327,6 @@ export default function NotificationsPage() {
   }, []);
 
   const triggerDismiss = useCallback((id: number) => {
-    setDismissingIds((prev) => new Set(prev).add(id));
     setSwipeX((prev) => ({ ...prev, [id]: -600 }));
     setTimeout(() => dismissMutation.mutate(id), 300);
   }, [dismissMutation]);
@@ -404,36 +349,13 @@ export default function NotificationsPage() {
   // ── Tap (navigate + mark read) ────────────────────────────────────────────
 
   const handleTap = useCallback((n: InAppNotification) => {
-    if (n.type === "team_will_invite") return;
     if (!n.isRead) markReadMutation.mutate(n.id);
-    if (n.deepLink) setLocation(n.deepLink);
-  }, [markReadMutation, setLocation]);
-
-  // ── Invite actions ─────────────────────────────────────────────────────────
-
-  const handleInviteAction = useCallback(async (n: InAppNotification, action: "accepted" | "declined") => {
-    if (!n.willId || invitePending.has(n.id)) return;
-    setInvitePending((prev) => new Set(prev).add(n.id));
-    try {
-      const endpoint = action === "accepted"
-        ? `/api/wills/${n.willId}/accept-invite`
-        : `/api/wills/${n.willId}/decline-invite`;
-      await apiRequest(endpoint, { method: "POST" });
-      setInviteActions((prev) => ({ ...prev, [n.id]: action }));
-      if (!n.isRead) markReadMutation.mutate(n.id);
-      if (action === "accepted" && n.willId) {
-        setLocation(`/will/${n.willId}/commit`);
-      }
-    } catch {
-      setInviteActions((prev) => ({ ...prev, [n.id]: action }));
-    } finally {
-      setInvitePending((prev) => {
-        const s = new Set(prev);
-        s.delete(n.id);
-        return s;
-      });
+    if (n.deepLink) {
+      setLocation(n.deepLink);
+    } else if (n.type === "team_will_invite" && n.willId) {
+      setLocation(`/will/${n.willId}`);
     }
-  }, [invitePending, markReadMutation, setLocation]);
+  }, [markReadMutation, setLocation]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
@@ -459,13 +381,10 @@ export default function NotificationsPage() {
               n={n}
               x={swipeX[n.id] ?? 0}
               isTouching={touchingId === n.id}
-              localAction={inviteActions[n.id]}
-              pending={invitePending.has(n.id)}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
               onTap={handleTap}
-              onInviteAction={handleInviteAction}
             />
           ))}
         </div>
