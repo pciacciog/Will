@@ -16,7 +16,7 @@ import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import { Capacitor } from "@capacitor/core";
 import {
-  ChevronLeft, ChevronRight, ChevronDown, Camera, Plus, Clock, CheckCircle, XCircle, X, Check,
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Camera, Plus, Clock, CheckCircle, XCircle, X, Check,
   Pause, Play, Power, AlertTriangle, ImageIcon, MinusCircle, Zap, Bell, Trash2, Heart,
 } from "lucide-react";
 import type { Will, AbstainLog, WillCheckIn } from "@shared/schema";
@@ -76,6 +76,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
   const [abstainJustLoggedHonored, setAbstainJustLoggedHonored] = useState<boolean | null>(null);
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
   const [durPastEditDate, setDurPastEditDate] = useState<string | null>(null);
+  const [calendarExpanded, setCalendarExpanded] = useState(false);
   const [missionCheckInOpen, setMissionCheckInOpen] = useState(false);
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
   const [missionConfirming, setMissionConfirming] = useState(false);
@@ -825,6 +826,17 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     if (!will?.startDate) return 0;
     return (new Date(will.startDate as unknown as string).getDay() + 6) % 7;
   }, [will?.startDate]);
+
+  const currentWeekSlice = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const daysFromMon = (today.getDay() + 6) % 7;
+    const monday = new Date(today); monday.setDate(today.getDate() - daysFromMon);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const dateStr = d.toLocaleDateString('en-CA');
+      return durCalendarDays.find(x => x.date === dateStr) ?? null;
+    });
+  }, [durCalendarDays]);
 
   // Abstain: calendar day strip (last 14 days) — kept for any legacy usage
   const abstainCalendarDays = useMemo(() => {
@@ -1793,30 +1805,61 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             <div key={i} className="text-center text-[10px] font-semibold text-gray-400">{h}</div>
                           ))}
                         </div>
-                        <div className="grid grid-cols-7 gap-y-1.5">
-                          {Array.from({ length: durStartDOW }).map((_, i) => <div key={`pad-${i}`} />)}
-                          {durCalendarDays.map((d) => (
-                            <div key={d.dayNum} className="flex justify-center">
-                              <button
-                                onClick={() => {
-                                  if (d.status === 'upcoming') return;
-                                  if (d.status === 'today') { setAbstainCheckInOpen(true); return; }
-                                  setDurPastEditDate(durPastEditDate === d.date ? null : d.date);
-                                }}
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
-                                style={{
-                                  backgroundColor: d.status === 'checked-in' ? typeColor : d.status === 'missed' ? '#FECDD3' : d.status === 'today' ? typeColorTint : '#F3F4F6',
-                                  border: d.status === 'missed' ? '2px solid #E24B4A' : d.status === 'today' ? `2px solid ${typeColor}` : 'none',
-                                  color: d.status === 'checked-in' ? '#fff' : d.status === 'missed' ? '#E24B4A' : d.status === 'today' ? typeColor : '#9CA3AF',
-                                  cursor: d.status === 'upcoming' ? 'default' : 'pointer',
-                                }}
-                                data-testid={`day-dot-${d.dayNum}`}
-                              >
-                                {d.dayNum}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                        {/* Compact week strip (default when >7 days) */}
+                        {durTotalDays > 7 && !calendarExpanded ? (
+                          <div className="grid grid-cols-7 gap-y-1.5">
+                            {currentWeekSlice.map((d, i) => (
+                              <div key={i} className="flex justify-center">
+                                {d ? (
+                                  <button
+                                    onClick={() => { if (d.status === 'upcoming') return; if (d.status === 'today') { setAbstainCheckInOpen(true); return; } setDurPastEditDate(durPastEditDate === d.date ? null : d.date); }}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                                    style={{
+                                      backgroundColor: d.status === 'checked-in' ? typeColor : d.status === 'missed' ? '#FECDD3' : d.status === 'today' ? typeColorTint : '#F3F4F6',
+                                      border: d.status === 'missed' ? '2px solid #E24B4A' : d.status === 'today' ? `2px solid ${typeColor}` : 'none',
+                                      color: d.status === 'checked-in' ? '#fff' : d.status === 'missed' ? '#E24B4A' : d.status === 'today' ? typeColor : '#9CA3AF',
+                                      cursor: d.status === 'upcoming' ? 'default' : 'pointer',
+                                    }}
+                                    data-testid={`day-dot-${d.dayNum}`}
+                                  >
+                                    {d.dayNum}
+                                  </button>
+                                ) : (
+                                  <div className="w-8 h-8 flex items-center justify-center">
+                                    <span className="text-[10px] text-gray-200">·</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          /* Full grid */
+                          <div className="grid grid-cols-7 gap-y-1.5">
+                            {Array.from({ length: durStartDOW }).map((_, i) => <div key={`pad-${i}`} />)}
+                            {durCalendarDays.map((d) => (
+                              <div key={d.dayNum} className="flex justify-center">
+                                <button
+                                  onClick={() => {
+                                    if (d.status === 'upcoming') return;
+                                    if (d.status === 'today') { setAbstainCheckInOpen(true); return; }
+                                    setDurPastEditDate(durPastEditDate === d.date ? null : d.date);
+                                  }}
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                                  style={{
+                                    backgroundColor: d.status === 'checked-in' ? typeColor : d.status === 'missed' ? '#FECDD3' : d.status === 'today' ? typeColorTint : '#F3F4F6',
+                                    border: d.status === 'missed' ? '2px solid #E24B4A' : d.status === 'today' ? `2px solid ${typeColor}` : 'none',
+                                    color: d.status === 'checked-in' ? '#fff' : d.status === 'missed' ? '#E24B4A' : d.status === 'today' ? typeColor : '#9CA3AF',
+                                    cursor: d.status === 'upcoming' ? 'default' : 'pointer',
+                                  }}
+                                  data-testid={`day-dot-${d.dayNum}`}
+                                >
+                                  {d.dayNum}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Inline past-day edit panel — visible in both modes */}
                         {durPastEditDate && (() => {
                           const displayDate = new Date(durPastEditDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                           return (
@@ -1857,6 +1900,19 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             <span className="text-[10px] text-gray-500">Missed</span>
                           </div>
                         </div>
+                        {/* Expand / collapse toggle */}
+                        {durTotalDays > 7 && (
+                          <button
+                            onClick={() => setCalendarExpanded(e => !e)}
+                            className="w-full flex items-center justify-center gap-1 mt-2 text-[12px] text-gray-400 hover:text-gray-600 transition-colors py-1"
+                            data-testid="button-calendar-expand"
+                          >
+                            {calendarExpanded
+                              ? <><ChevronUp className="w-3.5 h-3.5" /> Show less</>
+                              : <><ChevronDown className="w-3.5 h-3.5" /> Show full calendar</>
+                            }
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

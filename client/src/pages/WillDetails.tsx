@@ -13,7 +13,7 @@ import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
-import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, ChevronLeft, ChevronDown, X, Check, MessageCircle, Rocket, Bell, Star } from "lucide-react";
+import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, X, Check, MessageCircle, Rocket, Bell, Star } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
@@ -219,6 +219,7 @@ export default function WillDetails() {
   const [abstainChanging, setAbstainChanging] = useState(false);
   const [abstainProgressExpanded, setAbstainProgressExpanded] = useState(false);
   const [durPastEditDate, setDurPastEditDate] = useState<string | null>(null);
+  const [calendarExpanded, setCalendarExpanded] = useState(false);
   const [missionCheckInOpen, setMissionCheckInOpen] = useState(false);
   const [missionKeptGoing, setMissionKeptGoing] = useState(false);
   const [missionCompleted, setMissionCompleted] = useState(false);
@@ -580,6 +581,17 @@ export default function WillDetails() {
     if (effectiveCategory !== 'duration' || !will?.startDate) return 0;
     return (new Date(will.startDate).getDay() + 6) % 7;
   }, [effectiveCategory, will?.startDate]);
+
+  const currentWeekSliceGrid = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const daysFromMon = (today.getDay() + 6) % 7;
+    const monday = new Date(today); monday.setDate(today.getDate() - daysFromMon);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const dateStr = d.toLocaleDateString('en-CA');
+      return durCalendarDaysGrid.find(x => x.date === dateStr) ?? null;
+    });
+  }, [durCalendarDaysGrid]);
 
   // Mission: compute days remaining / total
   const missionDaysRemaining = useMemo(() => {
@@ -1744,41 +1756,71 @@ export default function WillDetails() {
                             <div key={i} className="text-center text-[10px] font-semibold text-gray-400">{h}</div>
                           ))}
                         </div>
-                        <div className="grid grid-cols-7 gap-y-1.5">
-                          {Array.from({ length: durStartDOWGrid }).map((_, i) => <div key={`pad-${i}`} />)}
-                          {durCalendarDaysGrid.map((d) => (
-                            <div key={d.dayNum} className="flex justify-center">
-                              <button
-                                onClick={() => {
-                                  if (d.status === 'upcoming') return;
-                                  setDurPastEditDate(durPastEditDate === d.date ? null : d.date);
-                                }}
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
-                                style={{
-                                  backgroundColor:
-                                    d.status === 'checked-in' ? '#1D9E75'
-                                    : d.status === 'missed' ? '#FECDD3'
-                                    : d.status === 'today' ? 'rgba(29,111,190,0.12)'
-                                    : '#F3F4F6',
-                                  border:
-                                    d.status === 'missed' ? '2px solid #E24B4A'
-                                    : d.status === 'today' ? '2px solid #1D6FBE'
-                                    : 'none',
-                                  color:
-                                    d.status === 'checked-in' ? '#fff'
-                                    : d.status === 'missed' ? '#E24B4A'
-                                    : d.status === 'today' ? '#1D6FBE'
-                                    : '#9CA3AF',
-                                  cursor: d.status === 'upcoming' ? 'default' : 'pointer',
-                                }}
-                                data-testid={`day-dot-${d.dayNum}`}
-                              >
-                                {d.dayNum}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        {/* Inline past-day edit panel */}
+                        {/* Compact week strip (default when >7 days) */}
+                        {durTotalDays > 7 && !calendarExpanded ? (
+                          <div className="grid grid-cols-7 gap-y-1.5">
+                            {currentWeekSliceGrid.map((d, i) => (
+                              <div key={i} className="flex justify-center">
+                                {d ? (
+                                  <button
+                                    onClick={() => { if (d.status === 'upcoming') return; setDurPastEditDate(durPastEditDate === d.date ? null : d.date); }}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                                    style={{
+                                      backgroundColor: d.status === 'checked-in' ? '#1D9E75' : d.status === 'missed' ? '#FECDD3' : d.status === 'today' ? 'rgba(29,111,190,0.12)' : '#F3F4F6',
+                                      border: d.status === 'missed' ? '2px solid #E24B4A' : d.status === 'today' ? '2px solid #1D6FBE' : 'none',
+                                      color: d.status === 'checked-in' ? '#fff' : d.status === 'missed' ? '#E24B4A' : d.status === 'today' ? '#1D6FBE' : '#9CA3AF',
+                                      cursor: d.status === 'upcoming' ? 'default' : 'pointer',
+                                    }}
+                                    data-testid={`day-dot-${d.dayNum}`}
+                                  >
+                                    {d.dayNum}
+                                  </button>
+                                ) : (
+                                  <div className="w-8 h-8 flex items-center justify-center">
+                                    <span className="text-[10px] text-gray-200">·</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          /* Full grid */
+                          <div className="grid grid-cols-7 gap-y-1.5">
+                            {Array.from({ length: durStartDOWGrid }).map((_, i) => <div key={`pad-${i}`} />)}
+                            {durCalendarDaysGrid.map((d) => (
+                              <div key={d.dayNum} className="flex justify-center">
+                                <button
+                                  onClick={() => {
+                                    if (d.status === 'upcoming') return;
+                                    setDurPastEditDate(durPastEditDate === d.date ? null : d.date);
+                                  }}
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                                  style={{
+                                    backgroundColor:
+                                      d.status === 'checked-in' ? '#1D9E75'
+                                      : d.status === 'missed' ? '#FECDD3'
+                                      : d.status === 'today' ? 'rgba(29,111,190,0.12)'
+                                      : '#F3F4F6',
+                                    border:
+                                      d.status === 'missed' ? '2px solid #E24B4A'
+                                      : d.status === 'today' ? '2px solid #1D6FBE'
+                                      : 'none',
+                                    color:
+                                      d.status === 'checked-in' ? '#fff'
+                                      : d.status === 'missed' ? '#E24B4A'
+                                      : d.status === 'today' ? '#1D6FBE'
+                                      : '#9CA3AF',
+                                    cursor: d.status === 'upcoming' ? 'default' : 'pointer',
+                                  }}
+                                  data-testid={`day-dot-${d.dayNum}`}
+                                >
+                                  {d.dayNum}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Inline past-day edit panel — visible in both modes */}
                         {durPastEditDate && (() => {
                           const displayDate = new Date(durPastEditDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                           return (
@@ -1820,6 +1862,19 @@ export default function WillDetails() {
                             <span className="text-[10px] text-gray-500">Missed</span>
                           </div>
                         </div>
+                        {/* Expand / collapse toggle */}
+                        {durTotalDays > 7 && (
+                          <button
+                            onClick={() => setCalendarExpanded(e => !e)}
+                            className="w-full flex items-center justify-center gap-1 mt-2 text-[12px] text-gray-400 hover:text-gray-600 transition-colors py-1"
+                            data-testid="button-calendar-expand"
+                          >
+                            {calendarExpanded
+                              ? <><ChevronUp className="w-3.5 h-3.5" /> Show less</>
+                              : <><ChevronDown className="w-3.5 h-3.5" /> Show full calendar</>
+                            }
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
