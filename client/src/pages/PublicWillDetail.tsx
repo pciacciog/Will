@@ -52,7 +52,7 @@ type PublicProgress = {
 };
 
 type PushStatus = {
-  hasUserPushed: boolean;
+  hasUserPushedToday: boolean;
   pushes: { id: number; willId: number; userId: string; pushedAt: string; user: { firstName: string; id?: string } }[];
 };
 
@@ -138,8 +138,8 @@ export default function PublicWillDetail() {
     },
     onError: (err: any) => {
       const msg = err?.message || 'Could not send push';
-      if (msg.includes('already pushed')) {
-        toast({ title: "Already pushed", description: "You've already encouraged this Will." });
+      if (msg.includes('already pushed today') || msg.includes('already pushed')) {
+        toast({ title: "Already pushed today", description: "Come back tomorrow to push again." });
       } else {
         toast({ title: "Error", description: msg, variant: "destructive" });
       }
@@ -148,7 +148,7 @@ export default function PublicWillDetail() {
 
   // ── Derived values ──────────────────────────────────────────────────────────
 
-  const alreadyPushed = will?.hasPushed || pushStatus?.hasUserPushed || pushSuccess;
+  const alreadyPushed = pushStatus?.hasUserPushedToday || pushSuccess;
   const pushCount = pushStatus?.pushes?.length ?? 0;
   const recentPushers = pushStatus?.pushes?.slice(0, 4) ?? [];
 
@@ -528,11 +528,11 @@ export default function PublicWillDetail() {
           {/* Push count row */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-lg font-bold text-gray-900">
                 <Zap className="inline w-4 h-4 mr-0.5 -mt-0.5" style={{ color: '#F59E0B' }} />
-                {pushCount} {pushCount === 1 ? 'person' : 'people'} pushed {creatorHandle}
+                {pushCount} {pushCount === 1 ? 'push' : 'pushes'}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">Pushes · all time</p>
+              <p className="text-xs text-gray-400 mt-0.5">All time · be the next to push</p>
             </div>
             {/* Stacked pusher avatars */}
             {recentPushers.length > 0 && (
@@ -558,13 +558,13 @@ export default function PublicWillDetail() {
               disabled={alreadyPushed || pushMutation.isPending}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-opacity active:opacity-80"
               style={{
-                backgroundColor: alreadyPushed ? '#E5E7EB' : '#534AB7',
-                color: alreadyPushed ? '#6B7280' : '#fff',
+                backgroundColor: alreadyPushed ? '#F3F4F6' : '#534AB7',
+                color: alreadyPushed ? '#9CA3AF' : '#fff',
               }}
               data-testid="button-push"
             >
-              <Zap className={cn("w-4 h-4", alreadyPushed ? "" : "fill-white text-white")} />
-              {alreadyPushed ? 'Pushed ✓' : `Push ${creatorHandle}`}
+              <Zap className={cn("w-4 h-4", alreadyPushed ? "text-gray-400" : "fill-white text-white")} />
+              {alreadyPushed ? 'Pushed today ✓' : `⚡ Push ${creatorHandle} today`}
             </button>
           )}
         </div>

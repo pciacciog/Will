@@ -3251,10 +3251,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPublicWill = (will as any).visibility === 'public' || !!(will as any).parentWillId;
       const pushDedupeId = isPublicWill ? ((will as any).parentWillId || willId) : willId;
 
-      // Check if user has already pushed (normalized to parent for public wills)
-      const hasAlreadyPushed = await storage.hasUserPushed(pushDedupeId, userId);
+      // Check if user has already pushed today (resets daily at midnight)
+      const hasAlreadyPushed = await storage.hasUserPushedToday(pushDedupeId, userId);
       if (hasAlreadyPushed) {
-        return res.status(409).json({ message: "You have already pushed for this will" });
+        return res.status(409).json({ message: "You have already pushed today" });
       }
 
       // Get pusher info
@@ -3322,11 +3322,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPublic = will && ((will as any).visibility === 'public' || !!(will as any).parentWillId);
       const checkId = isPublic ? ((will as any).parentWillId || willId) : willId;
 
-      const hasUserPushed = await storage.hasUserPushed(checkId, userId);
+      const hasUserPushedToday = await storage.hasUserPushedToday(checkId, userId);
       const pushes = await storage.getWillPushes(checkId);
 
       res.json({ 
-        hasUserPushed, 
+        hasUserPushedToday, 
         pushes 
       });
     } catch (error) {

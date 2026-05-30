@@ -62,7 +62,7 @@ import {
   teamWillInvites,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, inArray, isNotNull, isNull } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray, isNotNull, isNull, gte, lt } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -142,6 +142,7 @@ export interface IStorage {
   // Push notification operations
   addWillPush(push: InsertWillPush): Promise<WillPush>;
   hasUserPushed(willId: number, userId: string): Promise<boolean>;
+  hasUserPushedToday(willId: number, userId: string): Promise<boolean>;
   getWillPushes(willId: number): Promise<(WillPush & { user: User })[]>;
   
   // Admin operations
@@ -1260,6 +1261,21 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(willPushes)
       .where(and(eq(willPushes.willId, willId), eq(willPushes.userId, userId)));
+    return !!push;
+  }
+
+  async hasUserPushedToday(willId: number, userId: string): Promise<boolean> {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const [push] = await db
+      .select()
+      .from(willPushes)
+      .where(and(
+        eq(willPushes.willId, willId),
+        eq(willPushes.userId, userId),
+        gte(willPushes.pushedAt, today),
+        lt(willPushes.pushedAt, tomorrow),
+      ));
     return !!push;
   }
 
