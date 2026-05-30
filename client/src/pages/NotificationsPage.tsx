@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Bell, BellOff, Users, UserPlus, UserCheck,
   Camera, FileCheck, Zap, CheckCircle2, ClipboardList,
@@ -161,6 +162,7 @@ function groupByRecency(notifications: InAppNotification[]) {
 
 export default function NotificationsPage() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   // Swipe state
   const touchStartX = useRef<Record<number, number>>({});
@@ -195,13 +197,29 @@ export default function NotificationsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
     },
+    onError: () => {
+      toast({ title: "Couldn't remove alert", variant: "destructive" });
+    },
   });
 
   const clearAllMutation = useMutation({
     mutationFn: () => apiRequest("/api/notifications", { method: "DELETE" }),
+    onMutate: () => {
+      // Optimistically wipe the list immediately so the UI responds at once
+      queryClient.setQueryData(["/api/notifications"], { notifications: [], unreadCount: 0 });
+      queryClient.setQueryData(["/api/notifications/unread-count"], { count: 0 });
+      setDismissingIds(new Set());
+      setSwipeX({});
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+    },
+    onError: () => {
+      // Roll back optimistic update
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+      toast({ title: "Couldn't clear alerts — please try again", variant: "destructive" });
     },
   });
 
