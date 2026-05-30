@@ -1821,26 +1821,26 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                       })()
                     ) : (
                       <>
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-2">How did it go?</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 text-center mb-1.5">How did it go?</p>
                         <div className="flex gap-2">
                           <button
                             onClick={() => { setAbstainJustLoggedHonored(true); abstainLogMutation.mutate({ honored: true, date: todayLocalDate }); }}
                             disabled={abstainLogMutation.isPending}
-                            className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold text-white transition-opacity active:opacity-80 disabled:opacity-60"
+                            className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-semibold text-white transition-opacity active:opacity-80 disabled:opacity-60"
                             style={{ backgroundColor: typeColor }}
                             data-testid="button-abstain-honored"
                           >
-                            <Check style={{ width: 18, height: 18, color: '#fff' }} />
+                            <Check style={{ width: 16, height: 16, color: '#fff' }} />
                             Holding
                           </button>
                           <button
                             onClick={() => { setAbstainJustLoggedHonored(false); abstainLogMutation.mutate({ honored: false, date: todayLocalDate }); }}
                             disabled={abstainLogMutation.isPending}
-                            className="flex-1 flex items-center justify-center gap-2 py-[11px] px-4 rounded-xl text-base font-semibold bg-white transition-opacity active:opacity-80 disabled:opacity-60"
+                            className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-semibold bg-white transition-opacity active:opacity-80 disabled:opacity-60"
                             style={{ border: '2px solid #E24B4A', color: '#E24B4A' }}
                             data-testid="button-abstain-didnt-honor"
                           >
-                            <X style={{ width: 18, height: 18, color: '#E24B4A' }} />
+                            <X style={{ width: 16, height: 16, color: '#E24B4A' }} />
                             Slipped
                           </button>
                         </div>
@@ -1851,44 +1851,44 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                 {/* Progress card */}
                 {(will.status === 'active' || will.status === 'will_review' || will.status === 'completed' || will.status === 'terminated') && (
                   <div className="bg-white rounded-xl border border-gray-200 p-3" data-testid="card-duration-progress">
-                    <p className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase text-center mb-3">Your Progress</p>
+                    <p className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase text-center mb-2">Your Progress</p>
                     {/* Circular progress ring */}
-                    <div className="flex justify-center mb-3">
-                      <div className="relative" style={{ width: 120, height: 120 }}>
-                        <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
-                          <circle cx="60" cy="60" r="46" fill="none" stroke="#E5E7EB" strokeWidth="9" />
+                    <div className="flex justify-center mb-2">
+                      <div className="relative" style={{ width: 96, height: 96 }}>
+                        <svg width="96" height="96" style={{ transform: 'rotate(-90deg)' }}>
+                          <circle cx="48" cy="48" r="36" fill="none" stroke="#E5E7EB" strokeWidth="7" />
                           <circle
-                            cx="60" cy="60" r="46" fill="none"
-                            stroke={typeColor} strokeWidth="9"
+                            cx="48" cy="48" r="36" fill="none"
+                            stroke={typeColor} strokeWidth="7"
                             strokeLinecap="round"
-                            strokeDasharray={`${2 * Math.PI * 46}`}
-                            strokeDashoffset={`${2 * Math.PI * 46 * (1 - durDaysIn / Math.max(1, durTotalDays))}`}
+                            strokeDasharray={`${2 * Math.PI * 36}`}
+                            strokeDashoffset={`${2 * Math.PI * 36 * (1 - durDaysIn / Math.max(1, durTotalDays))}`}
                             style={{ transition: 'stroke-dashoffset 0.6s ease' }}
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ gap: 0 }}>
-                          <span className="text-[10px] text-gray-400" style={{ lineHeight: '1.2' }}>Day</span>
-                          <span className="font-bold" style={{ fontSize: 28, lineHeight: '1.05', color: typeColor }}>{durDaysIn}</span>
-                          <span className="text-[10px] text-gray-400" style={{ lineHeight: '1.2' }}>of {durTotalDays}</span>
+                          <span className="text-[9px] text-gray-400" style={{ lineHeight: '1.2' }}>Day</span>
+                          <span className="font-bold" style={{ fontSize: 22, lineHeight: '1.05', color: typeColor }}>{durDaysIn}</span>
+                          <span className="text-[9px] text-gray-400" style={{ lineHeight: '1.2' }}>of {durTotalDays}</span>
                         </div>
                       </div>
                     </div>
                     {/* Stat boxes */}
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
-                        <div className="text-base font-bold text-gray-800">{durDaysIn}</div>
-                        <div className="text-[11px] text-gray-500">days in</div>
+                    <div className="grid grid-cols-3 gap-1.5 mb-2">
+                      <div className="text-center py-1.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-sm font-bold text-gray-800">{durDaysIn}</div>
+                        <div className="text-[10px] text-gray-500">days in</div>
                       </div>
-                      <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
-                        <div className="text-base font-bold text-gray-800">{durDaysLeft}</div>
-                        <div className="text-[11px] text-gray-500">days left</div>
+                      <div className="text-center py-1.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-sm font-bold text-gray-800">{durDaysLeft}</div>
+                        <div className="text-[10px] text-gray-500">days left</div>
                       </div>
-                      <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
-                        <div className="text-base font-bold" style={{ color: durMissedDays > 0 ? '#E24B4A' : '#1F2937' }}>{durMissedDays}</div>
-                        <div className="text-[11px] text-gray-500">missed</div>
+                      <div className="text-center py-1.5 px-1 rounded-xl bg-gray-50">
+                        <div className="text-sm font-bold" style={{ color: durMissedDays > 0 ? '#E24B4A' : '#1F2937' }}>{durMissedDays}</div>
+                        <div className="text-[10px] text-gray-500">missed</div>
                       </div>
                     </div>
-                    <div className="border-t border-gray-100 mb-3" />
+                    <div className="border-t border-gray-100 mb-2" />
                     {/* Calendar grid */}
                     {durCalendarDays.length > 0 && (
                       <div>
@@ -1982,13 +1982,13 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             </div>
                           );
                         })()}
-                        <div className="flex items-center justify-center gap-4 mt-3">
+                        <div className="flex items-center justify-center gap-4 mt-2">
                           <div className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: typeColor }} />
+                            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: typeColor }} />
                             <span className="text-[10px] text-gray-500">Done</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#FECDD3', border: '1.5px solid #E24B4A' }} />
+                            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: '#FECDD3', border: '1.5px solid #E24B4A' }} />
                             <span className="text-[10px] text-gray-500">Missed</span>
                           </div>
                         </div>
