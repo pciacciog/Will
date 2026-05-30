@@ -30,7 +30,7 @@ const AREA_BADGE: Record<string, string> = {
 const POOLS: Record<string, SuggestionPool> = {
   personal_discipline: {
     recurring: [
-      "I will wake up at 5:30am every day without hitting snooze",
+      "I will wake up at 5:00am every day without hitting snooze",
       "I will make my bed every single morning before I leave my room",
       "I will read for 20 minutes every night before bed",
       "I will plan my next day the night before every day",
@@ -42,7 +42,7 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will not watch TV for 2 weeks",
       "I will do a digital detox every Sunday for a month",
       "I will go to bed before midnight every night for 21 days",
-      "I will do one important task every day for 10 days without exception",
+      "I will fast from food for 24 hours",
     ],
     event: [
       "I will write out my top 3 priorities every Sunday night this week",
@@ -54,27 +54,27 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will learn how to change a tire this week",
       "I will sign up for one challenging thing this week",
       "I will learn one practical skill I have been putting off",
+      "I will clean my car",
+      "I will organize my room",
     ],
   },
   health_and_body: {
     recurring: [
-      "I will train for at least 30 minutes every day",
-      "I will train before I open my phone every morning",
       "I will go for a 20 minute walk every day",
-      "I will not eat after 8pm every day",
+      "I will train for at least 45 minutes every day",
+      "I will get up from my desk and walk three times throughout the day",
       "I will stretch for 10 minutes every night before bed",
     ],
     duration: [
       "I will cut out sugar completely for 30 days",
       "I will not drink alcohol for 30 days",
       "I will eat no processed food for 2 weeks",
-      "I will train every day for 21 days without missing",
-      "I will sleep at least 7 hours every night for 30 days",
+      "I will train every day for a straight month",
+      "I will sleep 8 hours every night for a month",
       "I will try a new way of eating for 21 days",
     ],
     event: [
       "I will book my annual health checkup this week",
-      "I will sign up for a gym or fitness class this week",
       "I will meal prep for the entire week this Sunday",
       "I will get my bloodwork done this month",
       "I will buy nothing but whole foods at my next grocery run",
@@ -85,17 +85,16 @@ const POOLS: Record<string, SuggestionPool> = {
   relationships: {
     recurring: [
       "I will check in on someone I care about every day",
-      "I will tell someone I love them every single day",
       "I will put my phone away for the first hour after getting home every day",
       "I will write one thing I appreciate about someone in my life every morning",
-      "I will have one real conversation every day — no small talk",
+      "I will write one thing I was grateful for at the end of the day",
+      "I will put my phone away during every meal",
     ],
     duration: [
       "I will put my phone away during every meal for 14 days",
       "I will not complain to anyone about anything for 7 days",
       "I will reach out to one person I have lost touch with every day for 2 weeks",
       "I will go screen-free every evening after 8pm for 21 days",
-      "I will say something genuine and specific to someone I love every day for 30 days",
       "I will reach out to someone different in my contacts every day for 7 days just to wish them well",
     ],
     event: [
@@ -107,17 +106,16 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will gift my mom something meaningful this week",
       "I will gift my sister something meaningful this week",
       "I will host an intimate gathering with people I care about",
-      "I will make that difficult but important phone call this week",
-      "I will genuinely appreciate a coworker out loud this week",
+      "I will find something to appreciate about a coworker this week",
     ],
   },
   career_and_money: {
     recurring: [
       "I will spend 30 minutes every day working on my most important project",
       "I will review my finances for 10 minutes every morning",
-      "I will reach out to one person in my industry every single day",
+      "I will reach out to one new person in my industry every single day",
       "I will learn something new in my field for 20 minutes every day",
-      "I will write down one idea every day no matter what",
+      "I will write down one idea every day",
     ],
     duration: [
       "I will track every dollar I spend for 30 days",
@@ -127,20 +125,19 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will cold outreach one person every day for 30 days",
     ],
     event: [
-      "I will send that email I have been putting off this week",
-      "I will set up a budget this weekend",
-      "I will update my resume or portfolio this week",
-      "I will have the salary or rate conversation I have been avoiding this month",
+      "I will define what my dream work / day routine looks like this Sunday",
+      "I will create my 5 year financial plan this weekend",
+      "I will create my monthly budget this Saturday",
+      "I will have the salary conversation I have been avoiding this month",
       "I will define my 90 day career goal in writing this week",
     ],
   },
   purpose_and_direction: {
     recurring: [
       "I will journal for 10 minutes every morning",
-      "I will spend 15 minutes every day working toward something that is purely mine",
-      "I will listen to something that challenges my thinking every day",
-      "I will spend 30 minutes every day working on my own thing — no exceptions",
-      "I will do one thing every day that the person I want to become would do",
+      "I will journal for 10 minutes every night",
+      "I will pray for 5 minutes every morning",
+      "I will spend at least 30 minutes every day working toward something that is purely mine",
     ],
     duration: [
       "I will consume zero mindless content for 14 days",
@@ -159,8 +156,10 @@ const POOLS: Record<string, SuggestionPool> = {
       "I will have a conversation with someone who is living the life I want this month",
       "I will write my personal mission statement this week",
       "I will make a decision I have been sitting on for too long this week",
-      "I will donate to a cause I believe in this week",
+      "I will give 10% of my income this month",
       "I will create my dream book this weekend",
+      "I will make a list of the things that the person I want to become would do",
+      "I will make a list of the things that the person I want to become would have",
     ],
   },
 };
