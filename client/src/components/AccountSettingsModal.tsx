@@ -4,7 +4,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, User, Shield, Settings, X } from "lucide-react";
+import { Eye, EyeOff, User, Shield } from "lucide-react";
+import { UnifiedBackButton } from "@/components/ui/design-system";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -206,21 +207,15 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
       <DialogContent className="sm:max-w-[480px] max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-2xl">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white px-5 pt-4 pb-3 border-b border-gray-100/80">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-                <Settings className="h-4 w-4 text-gray-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">Account Settings</h2>
-            </div>
-            <button
+          <div className="relative flex items-center">
+            <UnifiedBackButton
               onClick={onClose}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 active:scale-95"
-              aria-label="Close"
-              data-testid="button-close-settings"
-            >
-              <X className="h-5 w-5" />
-            </button>
+              testId="button-close-settings"
+            />
+            <h2 className="absolute left-0 right-0 text-center text-lg font-semibold text-gray-900 pointer-events-none">
+              Account Settings
+            </h2>
+            <div className="ml-auto w-11" />
           </div>
         </div>
 
