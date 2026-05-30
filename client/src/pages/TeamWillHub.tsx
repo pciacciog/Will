@@ -676,6 +676,13 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     }));
   }, [isCreator, invitesData, commitments, user, will?.createdBy]);
 
+  // We Will chip: which flex column the user sits in, for alignment
+  const weWillUserIdx = membersForRow.findIndex(m => m.status === 'creator' || m.status === 'self');
+  const weWillChipLeft = membersForRow.length > 0 && weWillUserIdx >= 0
+    ? `${((weWillUserIdx + 0.5) / membersForRow.length) * 100}%`
+    : '50%';
+  const showWeWillWhyChip = !!(userCommitment?.why && (will?.status === 'active' || will?.status === 'will_review'));
+
   // Which cards are locked
   const isProgressLocked = will?.status === "pending" || will?.status === "scheduled";
   const isProofLocked = will?.status !== "active" && will?.status !== "will_review";
@@ -1366,7 +1373,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
 
             {isWeWill ? (
               /* We Will: horizontal avatar strip */
-              <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
+              <div
+                className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm relative"
+                style={{ marginBottom: showWeWillWhyChip ? 18 : 0 }}
+              >
                 {membersForRow.length === 0 ? (
                   <p className="text-xs text-gray-400 italic text-center py-1">No members yet — waiting for friends to accept</p>
                 ) : (
@@ -1383,7 +1393,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         (cat === 'duration' && s === 'honored') ||
                         (cat === 'event' && s === 'completed')
                       );
-                      const showWhyChip = isCurrentUser && userCommitment?.why && (will.status === 'active' || will.status === 'will_review');
 
                       const avatarContent = (
                         <>
@@ -1423,7 +1432,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                         </>
                       );
 
-                      // Current user: render as div so the Why chip button is valid (no nested buttons)
+                      // Current user: plain div — chip is now outside the avatar grid
                       if (isCurrentUser) {
                         return (
                           <div
@@ -1432,32 +1441,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             data-testid={`member-avatar-${member.userId}`}
                           >
                             {avatarContent}
-                            {/* Why chip — anchored directly under the user's own avatar */}
-                            {showWhyChip && (
-                              <div className="flex flex-col items-center w-full">
-                                <button
-                                  onClick={() => setShowWhyTag(prev => !prev)}
-                                  className="flex items-center gap-0.5 px-2 py-0.5 rounded-full shadow-sm"
-                                  style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
-                                  data-testid="button-why-chip"
-                                >
-                                  <Heart className="w-2 h-2" style={{ color: typeColor }} fill="currentColor" />
-                                  <span className="text-[9px] font-medium" style={{ color: typeColor }}>Why</span>
-                                  <ChevronDown
-                                    className="w-2.5 h-2.5 transition-transform duration-200"
-                                    style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                                  />
-                                </button>
-                                <div
-                                  className="overflow-hidden transition-all duration-200 w-full"
-                                  style={{ maxHeight: showWhyTag ? '60px' : '0px', opacity: showWhyTag ? 1 : 0 }}
-                                >
-                                  <p className="text-[10px] text-gray-400 italic text-center mt-1 leading-snug px-1">
-                                    {userCommitment!.why}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         );
                       }
@@ -1481,11 +1464,45 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                     })}
                   </div>
                 )}
+
+                {/* Because text — reveals inside card bottom as a softly tinted block */}
+                {showWeWillWhyChip && (
+                  <div
+                    className="overflow-hidden transition-all duration-300"
+                    style={{ maxHeight: showWhyTag ? '100px' : '0px', opacity: showWhyTag ? 1 : 0 }}
+                  >
+                    <div className="rounded-xl px-3 py-2 mt-2" style={{ backgroundColor: typeColorTint }}>
+                      <p className="text-[11px] italic text-center leading-snug" style={{ color: typeColor }}>
+                        {userCommitment?.why}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {membersForRow.some(m => m.status === 'pending') && (
                   <p className="text-center text-[11px] text-amber-600 mt-2.5 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
                     <span>👆</span>
                     Tap a pending member to ping them
                   </p>
+                )}
+
+                {/* Why chip — floats on the card's bottom border, aligned with user's avatar column */}
+                {showWeWillWhyChip && (
+                  <div style={{ position: 'absolute', bottom: -13, left: weWillChipLeft, transform: 'translateX(-50%)', zIndex: 10 }}>
+                    <button
+                      onClick={() => setShowWhyTag(prev => !prev)}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
+                      style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
+                      data-testid="button-why-chip"
+                    >
+                      <Heart className="w-2.5 h-2.5" style={{ color: typeColor }} fill="currentColor" />
+                      <span className="text-[10px] font-medium" style={{ color: typeColor }}>{showWhyTag ? 'Hide' : 'Why'}</span>
+                      <ChevronDown
+                        className="w-2.5 h-2.5 transition-transform duration-200"
+                        style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                      />
+                    </button>
+                  </div>
                 )}
               </div>
             ) : (
@@ -1493,98 +1510,124 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
                 {membersForRow.length === 0 && commitments.length === 0 ? (
                   <p className="text-xs text-gray-400 italic text-center py-4">No members yet — waiting for friends to accept</p>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {commitments.map((c: any) => {
-                      const isMe = c.userId === user.id;
-                      const initial = (c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase() || '?';
-                      const firstName = c.user?.firstName || c.user?.email?.split('@')[0] || '?';
-                      const s = teamCheckInMap[c.userId];
-                      const cat = will?.commitmentCategory;
-                      const isActive = will?.status === 'active' || will?.status === 'will_review' || will?.status === 'completed';
-                      const isCompleted = isActive && (
-                        (cat === 'recurring' && (s === 'yes' || s === 'partial')) ||
-                        (cat === 'duration' && s === 'honored') ||
-                        (cat === 'event' && (s === 'completed' || c.missionCompleted === true))
-                      );
-                      return (
-                        <div key={c.id} className="flex items-center gap-3 px-4 py-3" data-testid={`member-row-${c.userId}`}>
-                          <div className="relative flex-shrink-0">
-                            <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gradient-to-br from-violet-500 to-purple-500"
-                              style={isCompleted ? { boxShadow: `0 0 0 2.5px ${typeColor}` } : undefined}
-                            >
-                              <span className="text-white">{initial}</span>
-                            </div>
-                            {isCompleted && (
-                              <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: typeColor }}>
-                                <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-semibold text-gray-900 truncate">{firstName}</p>
-                            </div>
-                            {c.what && (
-                              <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{c.what}</p>
-                            )}
-                            {/* Why chip — only shown on the current user's row */}
-                            {isMe && userCommitment?.why && (will.status === 'active' || will.status === 'will_review') && (
-                              <div className="mt-1.5">
-                                <button
-                                  onClick={() => setShowWhyTag(prev => !prev)}
-                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
-                                  style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
-                                  data-testid="button-why-chip"
-                                >
-                                  <Heart className="w-2 h-2" style={{ color: typeColor }} fill="currentColor" />
-                                  <span className="text-[9px] font-medium" style={{ color: typeColor }}>Why</span>
-                                  <ChevronDown
-                                    className="w-2.5 h-2.5 transition-transform duration-200"
-                                    style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                                  />
-                                </button>
+                ) : (() => {
+                  const pendingMembers = membersForRow.filter(m => m.status === 'pending');
+                  return (
+                    <div>
+                      {commitments.map((c: any, idx: number) => {
+                        const isMe = c.userId === user.id;
+                        const initial = (c.user?.firstName || c.user?.email)?.charAt(0).toUpperCase() || '?';
+                        const firstName = c.user?.firstName || c.user?.email?.split('@')[0] || '?';
+                        const s = teamCheckInMap[c.userId];
+                        const cat = will?.commitmentCategory;
+                        const isActive = will?.status === 'active' || will?.status === 'will_review' || will?.status === 'completed';
+                        const isCompleted = isActive && (
+                          (cat === 'recurring' && (s === 'yes' || s === 'partial')) ||
+                          (cat === 'duration' && s === 'honored') ||
+                          (cat === 'event' && (s === 'completed' || c.missionCompleted === true))
+                        );
+                        const showIWillWhyChip = isMe && !!(userCommitment?.why) && (will.status === 'active' || will.status === 'will_review');
+                        const isLastRow = idx === commitments.length - 1 && pendingMembers.length === 0;
+                        return (
+                          <div key={c.id}>
+                            {/* Row */}
+                            <div className="flex items-center gap-3 px-4 py-3" data-testid={`member-row-${c.userId}`}>
+                              <div className="relative flex-shrink-0">
                                 <div
-                                  className="overflow-hidden transition-all duration-200"
-                                  style={{ maxHeight: showWhyTag ? '60px' : '0px', opacity: showWhyTag ? 1 : 0 }}
+                                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gradient-to-br from-violet-500 to-purple-500"
+                                  style={isCompleted ? { boxShadow: `0 0 0 2.5px ${typeColor}` } : undefined}
                                 >
-                                  <p className="text-[11px] text-gray-400 italic mt-1">{userCommitment!.why}</p>
+                                  <span className="text-white">{initial}</span>
+                                </div>
+                                {isCompleted && (
+                                  <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white" style={{ width: 18, height: 18, backgroundColor: typeColor }}>
+                                    <Check style={{ width: 10, height: 10, color: 'white', strokeWidth: 3 }} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 truncate">{firstName}</p>
+                                {c.what && (
+                                  <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{c.what}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Because text — collapses/expands above the chip-divider */}
+                            {showIWillWhyChip && (
+                              <div
+                                className="overflow-hidden transition-all duration-300 px-4"
+                                style={{ maxHeight: showWhyTag ? '80px' : '0px', opacity: showWhyTag ? 1 : 0 }}
+                              >
+                                <div className="rounded-xl px-3 py-1.5 mb-2" style={{ backgroundColor: typeColorTint }}>
+                                  <p className="text-[11px] italic leading-snug" style={{ color: typeColor }}>
+                                    {userCommitment?.why}
+                                  </p>
                                 </div>
                               </div>
                             )}
+
+                            {/* Divider: chip-enhanced for user's row, plain for others */}
+                            {!isLastRow && (
+                              showIWillWhyChip ? (
+                                /* Chip sits centered on the divider line — zero added height */
+                                <div className="relative" style={{ height: 1, backgroundColor: '#f9fafb' }}>
+                                  <div style={{ position: 'absolute', left: 68, top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                                    <button
+                                      onClick={() => setShowWhyTag(prev => !prev)}
+                                      className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
+                                      style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
+                                      data-testid="button-why-chip"
+                                    >
+                                      <Heart className="w-2.5 h-2.5" style={{ color: typeColor }} fill="currentColor" />
+                                      <span className="text-[10px] font-medium" style={{ color: typeColor }}>{showWhyTag ? 'Hide' : 'Why'}</span>
+                                      <ChevronDown
+                                        className="w-2.5 h-2.5 transition-transform duration-200"
+                                        style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                      />
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ height: 1, backgroundColor: '#f9fafb' }} />
+                              )
+                            )}
                           </div>
-                        </div>
-                      );
-                    })}
-                    {membersForRow.filter(m => m.status === 'pending').map(member => (
-                      <button
-                        key={member.key}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-amber-50"
-                        onClick={() => {
-                          if (member.inviteId) {
-                            setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
-                            setPingSent(false);
-                          }
-                        }}
-                        data-testid={`member-avatar-${member.userId}`}
-                      >
-                        <div className="flex-shrink-0">
-                          <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold"
-                            style={{ opacity: 0.5, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }}
+                        );
+                      })}
+                      {pendingMembers.map((member, idx) => (
+                        <div key={member.key}>
+                          {(commitments.length > 0 || idx > 0) && (
+                            <div style={{ height: 1, backgroundColor: '#f9fafb' }} />
+                          )}
+                          <button
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-amber-50"
+                            onClick={() => {
+                              if (member.inviteId) {
+                                setPingTarget({ id: member.inviteId, invitedUserId: member.userId, firstName: member.firstName });
+                                setPingSent(false);
+                              }
+                            }}
+                            data-testid={`member-avatar-${member.userId}`}
                           >
-                            <span style={{ color: '#92400E' }}>{member.firstName.charAt(0).toUpperCase()}</span>
-                          </div>
+                            <div className="flex-shrink-0">
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold"
+                                style={{ opacity: 0.5, border: '2px dashed #F59E0B', backgroundColor: '#FEF3C7' }}
+                              >
+                                <span style={{ color: '#92400E' }}>{member.firstName.charAt(0).toUpperCase()}</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-500 truncate">{member.firstName}</p>
+                              <p className="text-xs text-amber-600">Pending</p>
+                            </div>
+                          </button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-500 truncate">{member.firstName}</p>
-                          <p className="text-xs text-amber-600">Pending</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  );
+                })()}
                 {membersForRow.some(m => m.status === 'pending') && (
                   <p className="text-center text-[11px] text-amber-600 py-2.5 border-t border-gray-50 flex items-center justify-center gap-1" data-testid="hint-tap-pending">
                     <span>👆</span>
