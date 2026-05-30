@@ -384,7 +384,7 @@ export default function WillMessages({
           <button
             onClick={handleSend}
             disabled={!text.trim() || sendMutation.isPending}
-            className="rounded-full h-9 w-9 shrink-0 flex items-center justify-center transition-all duration-200 active:scale-95 disabled:cursor-not-allowed"
+            className="rounded-full h-11 w-11 shrink-0 flex items-center justify-center transition-all duration-200 active:scale-95 disabled:cursor-not-allowed"
             style={{
               backgroundColor: text.trim() ? "#1D9E75" : "#D1D5DB",
               opacity: text.trim() ? 1 : 0.55,

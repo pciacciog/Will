@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 
 interface DMMessage {
@@ -207,15 +206,14 @@ export default function DirectMessages({
             style={{ height: "36px", maxHeight: "100px", overflow: "hidden" }}
             data-testid="input-dm-message"
           />
-          <Button
-            size="icon"
+          <button
             onClick={handleSend}
             disabled={!text.trim() || sendMutation.isPending}
-            className={`rounded-full h-9 w-9 shrink-0 shadow-md transition-all duration-200 ${text.trim() ? "bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 opacity-100" : "bg-gray-300 opacity-50 cursor-not-allowed"}`}
+            className={`rounded-full h-11 w-11 shrink-0 shadow-md flex items-center justify-center transition-all duration-200 active:scale-95 ${text.trim() ? "bg-gradient-to-br from-emerald-500 to-teal-500 opacity-100" : "bg-gray-300 opacity-50 cursor-not-allowed"}`}
             data-testid="button-send-dm"
           >
-            <Send className="h-6 w-6" />
-          </Button>
+            <Send className="h-6 w-6 text-white" />
+          </button>
         </div>
       </div>
     </div>
