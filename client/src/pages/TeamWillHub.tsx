@@ -1478,9 +1478,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   )}
                 </div>
 
-                {/* Chip — sibling of card, anchored bottom-right of wrapper. Never in card flow. */}
+                {/* Chip — sibling of card, centered below wrapper. Never in card flow. */}
                 {showWeWillWhyChip && (
-                  <div style={{ position: 'absolute', bottom: -11, right: 6, zIndex: 10 }}>
+                  <div style={{ position: 'absolute', bottom: -11, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
                     <button
                       onClick={() => setShowWhyTag(prev => !prev)}
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
@@ -1564,7 +1564,7 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               showIWillWhyChip ? (
                                 /* Chip sits centered on the divider line — zero added height */
                                 <div style={{ position: 'relative', overflow: 'visible', height: 1, backgroundColor: '#f9fafb' }}>
-                                  <div style={{ position: 'absolute', left: 38, top: '50%', transform: 'translateY(-50%)', zIndex: 10, whiteSpace: 'nowrap' }}>
+                                  <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 10, whiteSpace: 'nowrap' }}>
                                     <button
                                       onClick={() => setShowWhyTag(prev => !prev)}
                                       className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
