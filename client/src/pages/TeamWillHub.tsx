@@ -1971,6 +1971,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
             ) : category === 'event' ? (
               /* ── Event ── */
               <div className="space-y-2">
+                {/* Deadline Arc — semi-circle countdown */}
+                {will.status === 'active' && will.endDate && will.startDate && (
+                  <DeadlineArc startDate={will.startDate as string} endDate={will.endDate as string} />
+                )}
                 {/* HAVE YOU DONE IT? check-in section */}
                 {will.status === 'active' && (
                   <div>
