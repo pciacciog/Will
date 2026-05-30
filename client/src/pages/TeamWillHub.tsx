@@ -1538,7 +1538,24 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{firstName}</p>
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{firstName}</p>
+                                  {showIWillWhyChip && (
+                                    <button
+                                      onClick={() => setShowWhyTag(prev => !prev)}
+                                      className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm flex-shrink-0"
+                                      style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
+                                      data-testid="button-why-chip"
+                                    >
+                                      <Heart className="w-2.5 h-2.5" style={{ color: typeColor }} fill="currentColor" />
+                                      <span className="text-[10px] font-medium" style={{ color: typeColor }}>{showWhyTag ? 'Hide' : 'Why'}</span>
+                                      <ChevronDown
+                                        className="w-2.5 h-2.5 transition-transform duration-200"
+                                        style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                      />
+                                    </button>
+                                  )}
+                                </div>
                                 {c.what && (
                                   <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{c.what}</p>
                                 )}
@@ -1559,30 +1576,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               </div>
                             )}
 
-                            {/* Divider: chip-enhanced for user's row, plain for others */}
+                            {/* Plain divider for all rows */}
                             {!isLastRow && (
-                              showIWillWhyChip ? (
-                                /* Chip on divider, starts after avatar — clear of commitment text */
-                                <div style={{ position: 'relative', overflow: 'visible', height: 1, backgroundColor: '#f9fafb' }}>
-                                  <div style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', zIndex: 10, whiteSpace: 'nowrap' }}>
-                                    <button
-                                      onClick={() => setShowWhyTag(prev => !prev)}
-                                      className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
-                                      style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
-                                      data-testid="button-why-chip"
-                                    >
-                                      <Heart className="w-2.5 h-2.5" style={{ color: typeColor }} fill="currentColor" />
-                                      <span className="text-[10px] font-medium" style={{ color: typeColor }}>{showWhyTag ? 'Hide' : 'Why'}</span>
-                                      <ChevronDown
-                                        className="w-2.5 h-2.5 transition-transform duration-200"
-                                        style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                                      />
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div style={{ height: 1, backgroundColor: '#f9fafb' }} />
-                              )
+                              <div style={{ height: 1, backgroundColor: '#f9fafb' }} />
                             )}
                           </div>
                         );
