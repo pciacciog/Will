@@ -1478,12 +1478,12 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                   )}
                 </div>
 
-                {/* Chip — sibling of card, centered below wrapper. Never in card flow. */}
+                {/* Chip — sibling of card, aligned to user's avatar column. Never in card flow. */}
                 {showWeWillWhyChip && (
-                  <div style={{ position: 'absolute', bottom: -11, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
+                  <div style={{ position: 'absolute', bottom: -13, left: weWillChipLeft, transform: 'translateX(-50%)', zIndex: 10 }}>
                     <button
                       onClick={() => setShowWhyTag(prev => !prev)}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded-full shadow-sm"
                       style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
                       data-testid="button-why-chip"
                     >
@@ -1562,9 +1562,9 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                             {/* Divider: chip-enhanced for user's row, plain for others */}
                             {!isLastRow && (
                               showIWillWhyChip ? (
-                                /* Chip sits centered on the divider line — zero added height */
+                                /* Chip on divider, starts after avatar — clear of commitment text */
                                 <div style={{ position: 'relative', overflow: 'visible', height: 1, backgroundColor: '#f9fafb' }}>
-                                  <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 10, whiteSpace: 'nowrap' }}>
+                                  <div style={{ position: 'absolute', left: 40, top: '50%', transform: 'translateY(-50%)', zIndex: 10, whiteSpace: 'nowrap' }}>
                                     <button
                                       onClick={() => setShowWhyTag(prev => !prev)}
                                       className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"

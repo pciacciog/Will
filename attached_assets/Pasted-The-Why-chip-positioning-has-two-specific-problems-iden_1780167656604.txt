@@ -1,0 +1,15 @@
+The Why chip positioning has two specific problems identified. Do not change anything else — only fix these two positioning issues:
+Problem 1 — We Will: chip wrong column AND covering avatar name
+The chip is currently using left: 50% which hardcodes it to the center of the card, always landing over the middle avatar's name. Two things need to be fixed simultaneously:
+First, fix the column alignment. Calculate the logged-in user's avatar column position dynamically. The avatar row uses justify-content: space-evenly with 3 members, so each column center falls at approximately:
+
+First avatar (index 0): left: 16.7%
+Second avatar (index 1): left: 50%
+Third avatar (index 2): left: 83.3%
+
+Use the formula left: ((2 * userIndex + 1) / (2 * totalMembers)) * 100% then add transform: translateX(-50%) to center the chip on that column.
+Second, fix the vertical position. Even when correctly aligned to the user's column, the chip covers the avatar name text below the avatar. The chip must sit BELOW the name — not on top of it. Increase the bottom offset so the chip clears the name text entirely. The name sits inside the card near the bottom, so the chip should be positioned further below the card's bottom edge — approximately bottom: -13px or whatever value ensures it sits visually below the name without overlapping it.
+Also make the chip slightly smaller — reduce font size to 10px and padding to 2px 6px so it feels like a subtle tag rather than a large button.
+The chip must remain position: absolute on the wrapper — outside the card entirely, never inside it.
+Problem 2 — I Will: chip centered on divider cuts across Bebo's commitment text
+The chip is currently left: 50% on the divider which places it mid-screen, directly overlapping the user's long commitment text above it. Fix by changing from left: 50% to left: 40px — starting the chip just after the avatar width, placing it in the clear space to the left where no text content exists. Remove transform: translateX(-50%) entirely.
