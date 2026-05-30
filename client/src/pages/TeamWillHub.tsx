@@ -2154,11 +2154,6 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
               </div>
             )}
           </div>
-          {/* Scroll hint */}
-          {will.status === 'active' && category && (
-            <p className="text-center text-[11px] text-gray-400 italic mb-1">↓ scroll for proof</p>
-          )}
-
           {/* ── Awaiting commitment (creator-only) ─────────────────── */}
           {will.createdBy === user?.id && awaitingCommitInvitees.length > 0 && (
             <div className="mb-3" data-testid="section-awaiting-commitment">

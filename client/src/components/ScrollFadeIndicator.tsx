@@ -23,6 +23,7 @@ export function ScrollFadeIndicator() {
     };
   }, [check]);
 
+  // Re-check after route change (content may be taller or shorter)
   useEffect(() => {
     const t = setTimeout(check, 150);
     return () => clearTimeout(t);
@@ -34,13 +35,14 @@ export function ScrollFadeIndicator() {
       style={{ opacity: visible ? 1 : 0 }}
       aria-hidden="true"
     >
+      {/* Gradient fade */}
       <div
-        className="w-full"
         style={{
-          height: 60,
-          background: 'linear-gradient(to bottom, transparent, #f9fafb)',
+          height: 64,
+          background: 'linear-gradient(to bottom, transparent, #ffffff)',
         }}
       />
+      {/* Bouncing chevron — sits at the bottom of the gradient */}
       <div className="absolute bottom-2 left-0 right-0 flex justify-center">
         <ChevronDown className="w-4 h-4 text-gray-400 scroll-bounce" />
       </div>
