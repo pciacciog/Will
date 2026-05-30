@@ -1564,17 +1564,17 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
                               showIWillWhyChip ? (
                                 /* Chip on divider, starts after avatar — clear of commitment text */
                                 <div style={{ position: 'relative', overflow: 'visible', height: 1, backgroundColor: '#f9fafb' }}>
-                                  <div style={{ position: 'absolute', left: 40, top: '50%', transform: 'translateY(-50%)', zIndex: 10, whiteSpace: 'nowrap' }}>
+                                  <div style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', zIndex: 10, whiteSpace: 'nowrap' }}>
                                     <button
                                       onClick={() => setShowWhyTag(prev => !prev)}
-                                      className="flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm"
-                                      style={{ backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
+                                      className="flex items-center gap-1 rounded-full shadow-sm"
+                                      style={{ padding: '1.5px 6px', backgroundColor: 'white', border: `1px solid ${typeColorChipBorder}` }}
                                       data-testid="button-why-chip"
                                     >
-                                      <Heart className="w-2.5 h-2.5" style={{ color: typeColor }} fill="currentColor" />
-                                      <span className="text-[10px] font-medium" style={{ color: typeColor }}>{showWhyTag ? 'Hide' : 'Why'}</span>
+                                      <Heart className="w-2 h-2" style={{ color: typeColor }} fill="currentColor" />
+                                      <span className="font-medium" style={{ color: typeColor, fontSize: 7 }}>{showWhyTag ? 'Hide' : 'Why'}</span>
                                       <ChevronDown
-                                        className="w-2.5 h-2.5 transition-transform duration-200"
+                                        className="w-2 h-2 transition-transform duration-200"
                                         style={{ color: typeColor, transform: showWhyTag ? 'rotate(180deg)' : 'rotate(0deg)' }}
                                       />
                                     </button>
