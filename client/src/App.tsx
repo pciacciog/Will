@@ -43,6 +43,7 @@ import PublicWillDetail from "@/pages/PublicWillDetail";
 import DirectMessagePage from "@/pages/DirectMessagePage";
 import FindWillLifeArea from "@/pages/FindWillLifeArea";
 import FindWillSuggestions from "@/pages/FindWillSuggestions";
+import { ScrollFadeIndicator } from "@/components/ScrollFadeIndicator";
 
 // Global debug helper for easy access
 (window as any).getNotificationDebugInfo = () => {
@@ -348,6 +349,7 @@ function Router() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ScrollFadeIndicator />
       <Switch>
         {/* Routes available without authentication */}
         <Route path="/notification-test" component={NotificationTest} />
