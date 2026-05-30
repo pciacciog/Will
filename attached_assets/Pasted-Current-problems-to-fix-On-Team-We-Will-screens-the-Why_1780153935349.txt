@@ -1,0 +1,15 @@
+Current problems to fix:
+On Team We Will screens the Why chip is currently rendered inside the members card as a large pill button sitting below the user's name. This creates a large block of empty space inside the card between the user's avatar column and the other members' columns — making the members section look uneven and bloated.
+On Team I Will screens the Why chip is also inside the members card, sitting below the user's commitment text as a standalone pill row. This creates extra vertical height between the user's row and the next member's row, making the list feel uneven.
+In both cases the chip must be taken out of the members card content flow entirely — it should never be a child element that adds height or width to the card's layout.
+Team We Will — horizontal avatar grid
+The Why chip hangs just below the bottom edge of the members card as a floating pill, overlapping the card's bottom border slightly using absolute positioning. It is horizontally aligned with the logged-in user's avatar column — calculated dynamically based on where the user's avatar renders in the row. If the user is the first avatar it aligns left, middle it centers, last it aligns right. The chip contains a heart icon, "Why", and a ˅ chevron. Tapping reveals the because text in a smooth animation below the chip. Chip flips to "Hide ˄" when open. Zero whitespace created inside the members card.
+Team I Will — vertical member list
+The Why chip sits directly on the divider line that separates the user's row from the next member's row. Use position: absolute on the divider with transform: translateY(-50%) to center the chip vertically on the line. Align it horizontally to start after the avatar. In the closed state the chip adds zero height to the layout — it lives entirely on the divider line. When tapped the because text reveals in a softly tinted block above the divider, contained within the bottom of the user's row. Chip flips to "Hide ˄" when open.
+Shared rules for both formats:
+
+Chip style: small pill, white background, subtle type-colored border, heart icon + "Why" + chevron, small drop shadow
+Color matches will type: purple for Event, green for Recurring, blue for Duration
+Chip only appears for the logged-in user — never on other members
+Because text reveals with a smooth fade/slide animation
+No other member's row or layout is affected when the chip opens or closes

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, memo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
@@ -53,7 +53,6 @@ function typeLabel(type: string): string {
   return TYPE_LABEL[type] ?? "Notification";
 }
 
-// Strip all emoji characters from a string
 const EMOJI_RE = /\p{Extended_Pictographic}/gu;
 function stripEmoji(s: string): string {
   return s.replace(EMOJI_RE, "").replace(/\s{2,}/g, " ").trim();
@@ -65,7 +64,6 @@ function cleanTitle(title: string | null, type: string): string {
   return stripped || typeLabel(type);
 }
 
-// Icon + background colour per type
 function TypeIcon({ type }: { type: string }) {
   const base = "w-5 h-5 flex-shrink-0";
   switch (type) {
@@ -158,6 +156,142 @@ function groupByRecency(notifications: InAppNotification[]) {
   return { today, thisWeek, earlier };
 }
 
+// ─── Panel width (card slides this far to reveal the delete zone) ───────────
+const PANEL_W = 80;
+
+// ─── NotifCard — MUST be top-level so React never unmounts it on parent re-render ─
+interface NotifCardProps {
+  n: InAppNotification;
+  x: number;
+  isTouching: boolean;
+  localAction: "accepted" | "declined" | undefined;
+  pending: boolean;
+  onTouchStart: (id: number, cx: number, cy: number) => void;
+  onTouchMove: (id: number, cx: number, cy: number) => void;
+  onTouchEnd: (id: number) => void;
+  onTap: (n: InAppNotification) => void;
+  onInviteAction: (n: InAppNotification, action: "accepted" | "declined") => void;
+}
+
+const NotifCard = memo(function NotifCard({
+  n, x, isTouching, localAction, pending,
+  onTouchStart, onTouchMove, onTouchEnd, onTap, onInviteAction,
+}: NotifCardProps) {
+  const isInvite = n.type === "team_will_invite";
+
+  const serverActed = n.inviteStatus === "accepted" || n.inviteStatus === "declined" || n.inviteStatus === "expired";
+  const isActedOn = !!localAction || serverActed;
+  const action: "accepted" | "declined" | "expired" | undefined =
+    localAction ??
+    (n.inviteStatus === "accepted" ? "accepted" :
+     n.inviteStatus === "declined" ? "declined" :
+     n.inviteStatus === "expired"  ? "expired"  : undefined);
+
+  const cardBg = isActedOn
+    ? "bg-gray-50 border border-gray-100"
+    : n.isRead
+    ? "bg-white border border-gray-100"
+    : "bg-emerald-50 border border-emerald-100";
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl">
+      {/* Fixed-width delete zone — always PANEL_W px on the right */}
+      <div
+        className="absolute inset-y-0 right-0 flex items-center justify-center bg-red-500"
+        style={{ width: PANEL_W }}
+      >
+        <Trash2 className="w-6 h-6 text-white" />
+      </div>
+
+      {/* Swipeable card */}
+      <div
+        style={{
+          transform: `translateX(${x}px)`,
+          transition: isTouching ? "none" : "transform 0.28s ease",
+        }}
+        onTouchStart={(e) => onTouchStart(n.id, e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchMove={(e) => onTouchMove(n.id, e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchEnd={() => onTouchEnd(n.id)}
+        onClick={() => { if (Math.abs(x) < 8) onTap(n); }}
+        data-testid={`notif-item-${n.id}`}
+        className={`w-full text-left rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors duration-150 ${
+          !isInvite && !isActedOn ? "cursor-pointer" : "cursor-default"
+        } ${cardBg}`}
+      >
+        <div className={isActedOn ? "opacity-40" : ""}>
+          <TypeIcon type={n.type} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p
+            className={`text-[14px] leading-snug ${
+              isActedOn
+                ? "text-gray-400"
+                : n.isRead
+                ? "text-gray-700"
+                : "text-gray-900 font-semibold"
+            }`}
+          >
+            {cleanTitle(n.title, n.type)}
+          </p>
+          {n.body && (
+            <p className={`text-[12px] leading-snug mt-0.5 line-clamp-2 ${isActedOn ? "text-gray-400" : "text-gray-500"}`}>
+              {stripEmoji(n.body).trim() || undefined}
+            </p>
+          )}
+
+          {/* Inline Accept / Decline */}
+          {isInvite && !isActedOn && n.willId && (
+            <div className="flex items-center gap-2 mt-2.5">
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onInviteAction(n, "accepted"); }}
+                disabled={pending}
+                data-testid={`button-accept-invite-${n.id}`}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold disabled:opacity-50 active:scale-[0.97] transition-transform"
+              >
+                <Check className="w-3 h-3" />
+                Accept
+              </button>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onInviteAction(n, "declined"); }}
+                disabled={pending}
+                data-testid={`button-decline-invite-${n.id}`}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-300 text-red-500 text-[12px] font-semibold disabled:opacity-50 active:scale-[0.97] transition-transform"
+              >
+                <X className="w-3 h-3" />
+                Decline
+              </button>
+            </div>
+          )}
+
+          {/* Acted-on state */}
+          {isInvite && isActedOn && (
+            <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
+              {action === "accepted" ? (
+                <><Check className="w-3 h-3 text-emerald-400" /> Accepted</>
+              ) : action === "expired" ? (
+                <><X className="w-3 h-3 text-gray-400" /> Expired</>
+              ) : (
+                <><X className="w-3 h-3 text-gray-400" /> Declined</>
+              )}
+            </p>
+          )}
+
+          <p className="text-[11px] text-gray-400 mt-1">
+            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+          </p>
+        </div>
+
+        {!n.isRead && !isActedOn && (
+          <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />
+        )}
+      </div>
+    </div>
+  );
+});
+
 // ─── Page ──────────────────────────────────────────────────────────────────
 
 export default function NotificationsPage() {
@@ -171,9 +305,6 @@ export default function NotificationsPage() {
   const [swipeX, setSwipeX] = useState<Record<number, number>>({});
   const [touchingId, setTouchingId] = useState<number | null>(null);
   const [dismissingIds, setDismissingIds] = useState<Set<number>>(new Set());
-
-  // Panel width — card slides exactly this far to fully reveal the delete zone
-  const PANEL_W = 80;
 
   // Optimistic invite action state
   const [inviteActions, setInviteActions] = useState<Record<number, "accepted" | "declined">>({});
@@ -210,7 +341,6 @@ export default function NotificationsPage() {
   const clearAllMutation = useMutation({
     mutationFn: () => apiRequest("/api/notifications", { method: "DELETE" }),
     onMutate: () => {
-      // Optimistically wipe the list immediately so the UI responds at once
       queryClient.setQueryData(["/api/notifications"], { notifications: [], unreadCount: 0 });
       queryClient.setQueryData(["/api/notifications/unread-count"], { count: 0 });
       setDismissingIds(new Set());
@@ -221,7 +351,6 @@ export default function NotificationsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
     },
     onError: () => {
-      // Roll back optimistic update
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
       toast({ title: "Couldn't clear alerts — please try again", variant: "destructive" });
@@ -230,30 +359,34 @@ export default function NotificationsPage() {
 
   // ── Swipe handlers ────────────────────────────────────────────────────────
 
-  function onTouchStart(id: number, clientX: number, clientY: number) {
+  const onTouchStart = useCallback((id: number, cx: number, cy: number) => {
     setTouchingId(id);
-    touchStartX.current[id] = clientX;
-    touchStartY.current[id] = clientY;
-    isScrolling.current[id] = null; // undecided until first move
-  }
+    touchStartX.current[id] = cx;
+    touchStartY.current[id] = cy;
+    isScrolling.current[id] = null;
+  }, []);
 
-  function onTouchMove(id: number, clientX: number, clientY: number) {
-    const dx = clientX - (touchStartX.current[id] ?? clientX);
-    const dy = clientY - (touchStartY.current[id] ?? clientY);
+  const onTouchMove = useCallback((id: number, cx: number, cy: number) => {
+    const dx = cx - (touchStartX.current[id] ?? cx);
+    const dy = cy - (touchStartY.current[id] ?? cy);
 
-    // Decide scroll vs swipe on first meaningful move
     if (isScrolling.current[id] === null && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
       isScrolling.current[id] = Math.abs(dy) > Math.abs(dx);
     }
-    // If the user is scrolling vertically, don't interfere
     if (isScrolling.current[id]) return;
 
     if (dx < 0) {
       setSwipeX((prev) => ({ ...prev, [id]: Math.max(-PANEL_W, dx) }));
     }
-  }
+  }, []);
 
-  function onTouchEnd(id: number) {
+  const triggerDismiss = useCallback((id: number) => {
+    setDismissingIds((prev) => new Set(prev).add(id));
+    setSwipeX((prev) => ({ ...prev, [id]: -600 }));
+    setTimeout(() => dismissMutation.mutate(id), 300);
+  }, [dismissMutation]);
+
+  const onTouchEnd = useCallback((id: number) => {
     setTouchingId(null);
     if (isScrolling.current[id]) {
       isScrolling.current[id] = null;
@@ -266,26 +399,19 @@ export default function NotificationsPage() {
     } else {
       setSwipeX((prev) => ({ ...prev, [id]: 0 }));
     }
-  }
-
-  function triggerDismiss(id: number) {
-    setDismissingIds((prev) => new Set(prev).add(id));
-    setSwipeX((prev) => ({ ...prev, [id]: -600 }));
-    setTimeout(() => dismissMutation.mutate(id), 300);
-  }
+  }, [swipeX, triggerDismiss]);
 
   // ── Tap (navigate + mark read) ────────────────────────────────────────────
 
-  function handleTap(n: InAppNotification) {
-    // Don't navigate if it's an invite with inline buttons (or already acted on)
+  const handleTap = useCallback((n: InAppNotification) => {
     if (n.type === "team_will_invite") return;
     if (!n.isRead) markReadMutation.mutate(n.id);
     if (n.deepLink) setLocation(n.deepLink);
-  }
+  }, [markReadMutation, setLocation]);
 
   // ── Invite actions ─────────────────────────────────────────────────────────
 
-  async function handleInviteAction(n: InAppNotification, action: "accepted" | "declined") {
+  const handleInviteAction = useCallback(async (n: InAppNotification, action: "accepted" | "declined") => {
     if (!n.willId || invitePending.has(n.id)) return;
     setInvitePending((prev) => new Set(prev).add(n.id));
     try {
@@ -299,7 +425,6 @@ export default function NotificationsPage() {
         setLocation(`/will/${n.willId}/commit`);
       }
     } catch {
-      // If already acted (409), still update UI
       setInviteActions((prev) => ({ ...prev, [n.id]: action }));
     } finally {
       setInvitePending((prev) => {
@@ -308,140 +433,19 @@ export default function NotificationsPage() {
         return s;
       });
     }
-  }
+  }, [invitePending, markReadMutation, setLocation]);
+
+  // ── Derived ───────────────────────────────────────────────────────────────
 
   const rawNotifications = data?.notifications ?? [];
   const unreadCount = data?.unreadCount ?? 0;
-
-  // Filter out notifications still animating out (dismissing)
   const notifications = rawNotifications.filter((n) => !dismissingIds.has(n.id));
   const groups = groupByRecency(notifications);
+  const hasAny = notifications.length > 0;
 
-  // ── Card ────────────────────────────────────────────────────────────────────
+  // ── Render a group section ─────────────────────────────────────────────────
 
-  function NotifCard({ n }: { n: InAppNotification }) {
-    const x = swipeX[n.id] ?? 0;
-    const isTouching = touchingId === n.id;
-    const localAction = inviteActions[n.id];
-    const pending = invitePending.has(n.id);
-    const isInvite = n.type === "team_will_invite";
-
-    // Derive acted-on state: prefer local optimistic state, fall back to server status
-    const serverActed = n.inviteStatus === "accepted" || n.inviteStatus === "declined" || n.inviteStatus === "expired";
-    const isActedOn = !!localAction || serverActed;
-    const action: "accepted" | "declined" | "expired" | undefined =
-      localAction ??
-      (n.inviteStatus === "accepted" ? "accepted" :
-       n.inviteStatus === "declined" ? "declined" :
-       n.inviteStatus === "expired"  ? "expired"  : undefined);
-
-    const cardBg = isActedOn
-      ? "bg-gray-50 border border-gray-100"
-      : n.isRead
-      ? "bg-white border border-gray-100"
-      : "bg-emerald-50 border border-emerald-100";
-
-    return (
-      <div className="relative overflow-hidden rounded-2xl">
-        {/* Fixed-width delete zone — always 80px on the right */}
-        <div
-          className="absolute inset-y-0 right-0 flex items-center justify-center bg-red-500"
-          style={{ width: PANEL_W }}
-        >
-          <Trash2 className="w-6 h-6 text-white" />
-        </div>
-
-        {/* Swipeable card */}
-        <div
-          style={{
-            transform: `translateX(${x}px)`,
-            transition: isTouching ? "none" : "transform 0.28s ease",
-          }}
-          onTouchStart={(e) => onTouchStart(n.id, e.touches[0].clientX, e.touches[0].clientY)}
-          onTouchMove={(e) => { e.stopPropagation(); onTouchMove(n.id, e.touches[0].clientX, e.touches[0].clientY); }}
-          onTouchEnd={() => onTouchEnd(n.id)}
-          onClick={() => { if (Math.abs(swipeX[n.id] ?? 0) < 8) handleTap(n); }}
-          data-testid={`notif-item-${n.id}`}
-          className={`w-full text-left rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors duration-150 ${
-            !isInvite && !isActedOn ? "cursor-pointer" : "cursor-default"
-          } ${cardBg}`}
-        >
-          {/* Icon */}
-          <div className={isActedOn ? "opacity-40" : ""}>
-            <TypeIcon type={n.type} />
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <p
-              className={`text-[14px] leading-snug ${
-                isActedOn
-                  ? "text-gray-400"
-                  : n.isRead
-                  ? "text-gray-700"
-                  : "text-gray-900 font-semibold"
-              }`}
-            >
-              {cleanTitle(n.title, n.type)}
-            </p>
-            {n.body && (
-              <p className={`text-[12px] leading-snug mt-0.5 line-clamp-2 ${isActedOn ? "text-gray-400" : "text-gray-500"}`}>
-                {stripEmoji(n.body).trim() || undefined}
-              </p>
-            )}
-
-            {/* Inline Accept / Decline */}
-            {isInvite && !isActedOn && n.willId && (
-              <div className="flex items-center gap-2 mt-2.5">
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleInviteAction(n, "accepted"); }}
-                  disabled={pending}
-                  data-testid={`button-accept-invite-${n.id}`}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[12px] font-semibold disabled:opacity-50 active:scale-[0.97] transition-transform"
-                >
-                  <Check className="w-3 h-3" />
-                  Accept
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleInviteAction(n, "declined"); }}
-                  disabled={pending}
-                  data-testid={`button-decline-invite-${n.id}`}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-300 text-red-500 text-[12px] font-semibold disabled:opacity-50 active:scale-[0.97] transition-transform"
-                >
-                  <X className="w-3 h-3" />
-                  Decline
-                </button>
-              </div>
-            )}
-
-            {/* Acted-on state */}
-            {isInvite && isActedOn && (
-              <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
-                {action === "accepted" ? (
-                  <><Check className="w-3 h-3 text-emerald-400" /> Accepted</>
-                ) : action === "expired" ? (
-                  <><X className="w-3 h-3 text-gray-400" /> Expired</>
-                ) : (
-                  <><X className="w-3 h-3 text-gray-400" /> Declined</>
-                )}
-              </p>
-            )}
-
-            <p className="text-[11px] text-gray-400 mt-1">
-              {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
-            </p>
-          </div>
-
-          {/* Unread dot */}
-          {!n.isRead && !isActedOn && (
-            <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  function Section({ label, items }: { label: string; items: InAppNotification[] }) {
+  function renderSection(label: string, items: InAppNotification[]) {
     if (items.length === 0) return null;
     return (
       <div className="mb-4">
@@ -450,14 +454,24 @@ export default function NotificationsPage() {
         </p>
         <div className="space-y-1.5">
           {items.map((n) => (
-            <NotifCard key={n.id} n={n} />
+            <NotifCard
+              key={n.id}
+              n={n}
+              x={swipeX[n.id] ?? 0}
+              isTouching={touchingId === n.id}
+              localAction={inviteActions[n.id]}
+              pending={invitePending.has(n.id)}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+              onTap={handleTap}
+              onInviteAction={handleInviteAction}
+            />
           ))}
         </div>
       </div>
     );
   }
-
-  const hasAny = notifications.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
@@ -523,9 +537,9 @@ export default function NotificationsPage() {
           {/* Grouped list */}
           {!isLoading && hasAny && (
             <div className="flex-1">
-              <Section label="Today" items={groups.today} />
-              <Section label="This week" items={groups.thisWeek} />
-              <Section label="Earlier" items={groups.earlier} />
+              {renderSection("Today", groups.today)}
+              {renderSection("This week", groups.thisWeek)}
+              {renderSection("Earlier", groups.earlier)}
             </div>
           )}
         </div>
