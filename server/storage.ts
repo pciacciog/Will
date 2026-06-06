@@ -267,6 +267,7 @@ export interface IStorage {
   markNotificationRead(notificationId: number, userId: string): Promise<void>;
   markAllNotificationsRead(userId: string): Promise<void>;
   markNotificationsReadByTypeAndWill(userId: string, type: string, willId: number): Promise<void>;
+  deleteNotificationsByTypeAndWill(userId: string, types: string[], willId: number): Promise<void>;
   deleteNotification(id: number, userId: string): Promise<void>;
   deleteAllNotifications(userId: string): Promise<void>;
 }
@@ -1846,6 +1847,15 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(userNotifications.userId, userId),
         eq(userNotifications.type, type),
+        eq(userNotifications.willId, willId),
+      ));
+  }
+
+  async deleteNotificationsByTypeAndWill(userId: string, types: string[], willId: number): Promise<void> {
+    await db.delete(userNotifications)
+      .where(and(
+        eq(userNotifications.userId, userId),
+        inArray(userNotifications.type, types),
         eq(userNotifications.willId, willId),
       ));
   }

@@ -141,6 +141,9 @@ export function WillReviewFlow({ willId, mode = 'circle', checkInType = 'one-tim
       queryClient.invalidateQueries({ queryKey: ["/api/wills", willId] });
       queryClient.invalidateQueries({ queryKey: ["/api/wills", willId, "review-status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/wills", willId, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home-alerts"] });
       onComplete();
     },
     onError: (error: Error) => {

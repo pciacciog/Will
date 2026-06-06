@@ -2763,9 +2763,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add review
       const review = await storage.addWillReview(reviewData);
 
-      // Auto-clear any "review_required" in-app notification for this will
+      // Auto-delete any review-required in-app notifications for this will
       try {
-        await storage.markNotificationsReadByTypeAndWill(userId, 'review_required', willId);
+        await storage.deleteNotificationsByTypeAndWill(userId, ['review_required', 'will_review_required'], willId);
       } catch (e) { /* non-critical */ }
 
       // Send member_review_submitted notification to other members of team wills

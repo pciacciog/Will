@@ -84,6 +84,9 @@ export function OngoingWillReviewFlow({ willId, startDate, onComplete }: Ongoing
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/details`] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/review-status`] });
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/reviews`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home-alerts"] });
       onComplete();
     },
     onError: (error: Error) => {

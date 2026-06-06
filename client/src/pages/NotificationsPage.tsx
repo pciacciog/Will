@@ -1,4 +1,4 @@
-import { useState, useRef, memo, useCallback } from "react";
+import { useState, useRef, memo, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
@@ -251,6 +251,42 @@ export default function NotificationsPage() {
     refetchInterval: 30000,
   });
 
+  // ── On mount: reconcile stale review alerts ───────────────────────────────
+  // Any review-required notification whose underlying review is already done
+  // gets silently deleted so it never shows as a dead-end action item.
+  useEffect(() => {
+    if (!data?.notifications) return;
+    const staleReviewTypes = new Set(["will_review_required", "review_required"]);
+    const reviewAlerts = data.notifications.filter(
+      (n) => staleReviewTypes.has(n.type) && n.willId != null
+    );
+    if (reviewAlerts.length === 0) return;
+
+    (async () => {
+      const toDelete: number[] = [];
+      await Promise.all(
+        reviewAlerts.map(async (n) => {
+          try {
+            const res = await fetch(`/api/wills/${n.willId}/review-status`, { credentials: "include" });
+            if (res.ok) {
+              const { hasReviewed } = await res.json();
+              if (hasReviewed) toDelete.push(n.id);
+            }
+          } catch (_) { /* non-critical */ }
+        })
+      );
+      if (toDelete.length === 0) return;
+      await Promise.all(
+        toDelete.map((id) =>
+          apiRequest(`/api/notifications/${id}`, { method: "DELETE" }).catch(() => {})
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home-alerts"] });
+    })();
+  }, [data?.notifications]);
+
   const markReadMutation = useMutation({
     mutationFn: (id: number) =>
       apiRequest(`/api/notifications/${id}/read`, { method: "PATCH" }),
@@ -348,14 +384,33 @@ export default function NotificationsPage() {
 
   // ── Tap (navigate + mark read) ────────────────────────────────────────────
 
-  const handleTap = useCallback((n: InAppNotification) => {
+  const handleTap = useCallback(async (n: InAppNotification) => {
+    const isReviewAlert = n.type === "will_review_required" || n.type === "review_required";
+
+    if (isReviewAlert && n.willId) {
+      // Guard: check whether the review has already been submitted before navigating
+      try {
+        const res = await fetch(`/api/wills/${n.willId}/review-status`, { credentials: "include" });
+        if (res.ok) {
+          const { hasReviewed } = await res.json();
+          if (hasReviewed) {
+            // Stale alert — silently delete it and show a brief toast
+            dismissMutation.mutate(n.id);
+            toast({ title: "Already done", description: "This review has already been completed.", duration: 3000 });
+            queryClient.invalidateQueries({ queryKey: ["/api/home-alerts"] });
+            return;
+          }
+        }
+      } catch (_) { /* non-critical — fall through to normal navigation */ }
+    }
+
     if (!n.isRead) markReadMutation.mutate(n.id);
     if (n.deepLink) {
       setLocation(n.deepLink);
     } else if (n.type === "team_will_invite" && n.willId) {
       setLocation(`/will/${n.willId}`);
     }
-  }, [markReadMutation, setLocation]);
+  }, [markReadMutation, dismissMutation, setLocation, toast]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
