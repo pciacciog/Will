@@ -3331,6 +3331,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/home-alerts — actionable badge alerts for the home screen
+  app.get('/api/home-alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const alerts: Array<{
+        type: string;
+        count: number;
+        targetSection: string;
+        willIds?: string[];
+      }> = [];
+
+      // 1. Will reviews — wills where this user has a commitment and status = 'will_review'
+      const reviewRows = await db
+        .select({ willId: willCommitments.willId })
+        .from(willCommitments)
+        .innerJoin(wills, eq(willCommitments.willId, wills.id))
+        .where(and(eq(willCommitments.userId, userId), eq(wills.status, 'will_review')));
+
+      if (reviewRows.length > 0) {
+        alerts.push({
+          type: 'will_review',
+          count: reviewRows.length,
+          targetSection: 'my_wills',
+          willIds: reviewRows.map(r => String(r.willId)),
+        });
+      }
+
+      // 2. Pending team will invites
+      const inviteRows = await db
+        .select({ willId: teamWillInvites.willId })
+        .from(teamWillInvites)
+        .where(and(eq(teamWillInvites.invitedUserId, userId), eq(teamWillInvites.status, 'pending')));
+
+      if (inviteRows.length > 0) {
+        alerts.push({
+          type: 'invite_accepted',
+          count: inviteRows.length,
+          targetSection: 'my_wills',
+          willIds: inviteRows.map(r => String(r.willId)),
+        });
+      }
+
+      // 3. Pending incoming friend requests
+      const friendReqRows = await db
+        .select({ id: friendships.id })
+        .from(friendships)
+        .where(and(eq(friendships.addresseeId, userId), eq(friendships.status, 'pending')));
+
+      if (friendReqRows.length > 0) {
+        alerts.push({
+          type: 'friend_request',
+          count: friendReqRows.length,
+          targetSection: 'friends',
+        });
+      }
+
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching home alerts:", error);
+      res.status(500).json({ message: "Failed to fetch home alerts" });
+    }
+  });
+
   // In-app notification routes
   app.get('/api/notifications/unread-count', isAuthenticated, async (req: any, res) => {
     try {

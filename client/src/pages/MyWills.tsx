@@ -2,12 +2,13 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { willDisplayTitle } from "@/lib/willUtils";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe, History, Mail } from "lucide-react";
+import { Users, Target, ChevronRight, Calendar, Flame, Pause, Clock, Globe, History, Mail, X } from "lucide-react";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 import { WhoModal } from "@/components/WhoModal";
+import { useHomeAlerts, type HomeAlertType } from "@/hooks/useHomeAlerts";
 
 type Will = {
   id: number;
@@ -36,9 +37,6 @@ type PendingInvite = {
   invitedBy: { id: string; firstName: string };
 };
 
-// "Awaiting commitment" — invitee already accepted, but never finished
-// submitting their commitment, and the will hasn't started yet. Surface as a
-// recovery card so the user can finish before they get auto-dropped.
 type AwaitingCommitment = PendingInvite;
 
 function AwaitingCommitmentCard({ item, onFinish }: { item: AwaitingCommitment; onFinish: () => void }) {
@@ -129,7 +127,7 @@ function getDisplayTitle(will: Will, userId?: string): string {
   return willDisplayTitle(will, userId);
 }
 
-function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; userId?: string }) {
+function WillCard({ will, onClick, userId, alertType }: { will: Will; onClick: () => void; userId?: string; alertType?: HomeAlertType | null }) {
   const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
   const isCircle = will.mode === 'circle';
   const isTeamWill = will.mode === 'team';
@@ -158,6 +156,11 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
     return `${daysLeft} days left`;
   };
 
+  const inlineAlertBadge = (() => {
+    if (will.status === 'will_review') return { label: 'Review needed', className: 'bg-amber-100 text-amber-700' };
+    return null;
+  })();
+
   return (
     <button
       onClick={onClick}
@@ -165,7 +168,9 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
       data-testid={`card-will-${will.id}`}
     >
       <Card className={`border shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-[0.98] ${
-        isTeamWill
+        inlineAlertBadge
+          ? 'border-amber-200 bg-gradient-to-br from-amber-50/40 to-white group-hover:border-amber-300'
+          : isTeamWill
           ? 'bg-white border-violet-200 group-hover:border-violet-300'
           : isCircle
           ? 'bg-white border-purple-200 group-hover:border-purple-300'
@@ -176,21 +181,31 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              isTeamWill ? 'bg-violet-50' : isCircle ? 'bg-purple-50' : isPublic ? 'bg-blue-50' : 'bg-emerald-50'
+              inlineAlertBadge ? 'bg-amber-50' : isTeamWill ? 'bg-violet-50' : isCircle ? 'bg-purple-50' : isPublic ? 'bg-blue-50' : 'bg-emerald-50'
             }`}>
               {isTeamWill
-                ? <Users className="w-5 h-5 text-violet-600" />
+                ? <Users className={`w-5 h-5 ${inlineAlertBadge ? 'text-amber-500' : 'text-violet-600'}`} />
                 : isCircle
-                ? <Users className="w-5 h-5 text-purple-600" />
+                ? <Users className={`w-5 h-5 ${inlineAlertBadge ? 'text-amber-500' : 'text-purple-600'}`} />
                 : isPublic
-                ? <Globe className="w-5 h-5 text-blue-600" />
-                : <Target className="w-5 h-5 text-emerald-600" />
+                ? <Globe className={`w-5 h-5 ${inlineAlertBadge ? 'text-amber-500' : 'text-blue-600'}`} />
+                : <Target className={`w-5 h-5 ${inlineAlertBadge ? 'text-amber-500' : 'text-emerald-600'}`} />
               }
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate" data-testid={`text-will-title-${will.id}`}>
-                {getDisplayTitle(will, userId)}
-              </p>
+              <div className="flex items-start gap-2 justify-between">
+                <p className="text-sm font-medium text-gray-900 truncate flex-1" data-testid={`text-will-title-${will.id}`}>
+                  {getDisplayTitle(will, userId)}
+                </p>
+                {inlineAlertBadge && (
+                  <span
+                    className={`flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none ${inlineAlertBadge.className}`}
+                    data-testid={`badge-will-alert-${will.id}`}
+                  >
+                    {inlineAlertBadge.label}
+                  </span>
+                )}
+              </div>
               {isTeamWill && (
                 <div className="mt-0.5" data-testid={`text-shared-info-${will.id}`}>
                   {will.commitments && will.commitments.length > 0 && (
@@ -242,7 +257,9 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
               </div>
             </div>
             <ChevronRight className={`w-5 h-5 mt-2.5 flex-shrink-0 ${
-              isTeamWill
+              inlineAlertBadge
+                ? 'text-amber-300 group-hover:text-amber-500'
+                : isTeamWill
                 ? 'text-gray-300 group-hover:text-violet-400'
                 : isCircle
                 ? 'text-gray-300 group-hover:text-purple-400'
@@ -258,10 +275,16 @@ function WillCard({ will, onClick, userId }: { will: Will; onClick: () => void; 
 }
 
 export default function MyWills() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<'solo' | 'team' | 'public'>('solo');
   const [showWhoModal, setShowWhoModal] = useState(false);
   const [actioningInviteId, setActioningInviteId] = useState<{ id: number; action: 'accept' | 'decline' } | null>(null);
+  const [alertFilterDismissed, setAlertFilterDismissed] = useState(false);
+  const alertBannerRef = useRef<HTMLDivElement>(null);
+
+  // Parse ?alert= query param for deep navigation
+  const alertParam = new URLSearchParams(location.split('?')[1] ?? '').get('alert') as HomeAlertType | null;
+  const isAlertMode = !!alertParam && !alertFilterDismissed;
 
   const { data: user, isLoading: userLoading } = useQuery<{ firstName?: string; id: string } | null>({
     queryKey: ['/api/user'],
@@ -290,9 +313,6 @@ export default function MyWills() {
     refetchOnMount: 'always',
   });
 
-  // Team Wills the user accepted but never finished committing to before
-  // the will started. Shown once as a history-style "didn't commit in time"
-  // card so the user has a clear record they were involved.
   const { data: missedTeamWills = [] } = useQuery<AwaitingCommitment[]>({
     queryKey: ['/api/wills/my-missed-team-wills'],
     queryFn: getQueryFn({ on401: "returnNull" }),
@@ -300,10 +320,13 @@ export default function MyWills() {
     refetchOnMount: 'always',
   });
 
+  const { getAlert } = useHomeAlerts(!!user?.id);
+
   const declineMutation = useMutation({
     mutationFn: (willId: number) => apiRequest('POST', `/api/wills/${willId}/decline-invite`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/wills/my-pending-invites'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/home-alerts'] });
       setActioningInviteId(null);
     },
     onError: () => setActioningInviteId(null),
@@ -318,11 +341,47 @@ export default function MyWills() {
   const teamWills = activeWills.filter(w => w.mode === 'team');
   const publicWills = activeWills.filter(w => isPublicWill(w));
 
+  // Alert-mode: compute flagged will IDs for the active alert
+  const alertWillIds: Set<string> = (() => {
+    if (!isAlertMode || !alertParam) return new Set();
+    const a = getAlert(alertParam);
+    return new Set(a?.willIds ?? []);
+  })();
+
+  // When alert mode is active, split wills into flagged + rest
+  const getSortedWills = (wills: Will[]) => {
+    if (!isAlertMode || alertWillIds.size === 0) return { flagged: [], rest: wills };
+    const flagged = wills.filter(w => alertWillIds.has(String(w.id)));
+    const rest = wills.filter(w => !alertWillIds.has(String(w.id)));
+    return { flagged, rest };
+  };
+
   const displayWills = activeTab === 'solo' ? soloWills : activeTab === 'team' ? teamWills : publicWills;
+  const { flagged: flaggedWills, rest: restWills } = getSortedWills(displayWills);
   const sharedTabCount = teamWills.length + pendingInvites.length + awaitingCommitment.length;
+
+  // Auto-switch tab to the relevant one for the alert type
+  useEffect(() => {
+    if (!isAlertMode || !alertParam) return;
+    if (alertParam === 'will_review') {
+      // Check which tab has the flagged wills
+      const hasSolo = soloWills.some(w => alertWillIds.has(String(w.id)));
+      const hasTeam = teamWills.some(w => alertWillIds.has(String(w.id)));
+      const hasPublic = publicWills.some(w => alertWillIds.has(String(w.id)));
+      if (hasSolo) setActiveTab('solo');
+      else if (hasTeam) setActiveTab('team');
+      else if (hasPublic) setActiveTab('public');
+    } else if (alertParam === 'invite_accepted') {
+      setActiveTab('team');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alertParam, isAlertMode]);
 
   const handleViewWill = (will: Will) => {
     sessionStorage.setItem('willBackUrl', '/wills');
+    if (isAlertMode && alertParam) {
+      sessionStorage.setItem('willAlertType', alertParam);
+    }
     setLocation(`/will/${will.id}`);
   };
 
@@ -330,6 +389,14 @@ export default function MyWills() {
     setLocation('/auth');
     return null;
   }
+
+  const alertBannerCount = flaggedWills.length;
+  const alertBannerLabel = (() => {
+    if (!isAlertMode) return null;
+    if (alertParam === 'will_review') return alertBannerCount === 1 ? '1 will needs your review' : `${alertBannerCount} wills need your review`;
+    if (alertParam === 'invite_accepted') return alertBannerCount === 1 ? '1 invite pending' : `${alertBannerCount} invites pending`;
+    return `${alertBannerCount} will${alertBannerCount !== 1 ? 's' : ''} need your attention`;
+  })();
 
   return (
     <>
@@ -374,6 +441,28 @@ export default function MyWills() {
             ))}
           </div>
 
+          {/* Alert banner — shown when navigated via a home screen badge */}
+          {isAlertMode && alertBannerCount > 0 && alertBannerLabel && (
+            <div
+              ref={alertBannerRef}
+              className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 mb-1"
+              data-testid="banner-alert-filter"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+                <p className="text-[13px] font-semibold text-amber-800 truncate">{alertBannerLabel}</p>
+              </div>
+              <button
+                onClick={() => setAlertFilterDismissed(true)}
+                className="flex-shrink-0 p-1 rounded-lg hover:bg-amber-100 transition-colors text-amber-600"
+                data-testid="button-dismiss-alert-banner"
+                aria-label="Dismiss filter"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {isLoading && (
             <div className="flex items-center gap-2 justify-center py-12">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600"></div>
@@ -408,7 +497,7 @@ export default function MyWills() {
             </div>
           )}
 
-          {/* Pending invitations — shown only in the Shared tab */}
+          {/* Pending invitations — shown only in the Team tab */}
           {!isLoading && activeTab === 'team' && pendingInvites.length > 0 && (
             <div className="space-y-3">
               {pendingInvites.map(item => (
@@ -439,8 +528,7 @@ export default function MyWills() {
             </div>
           )}
 
-          {/* Accepted but never committed before the Will started — terminal
-              "didn't commit in time" history entry. */}
+          {/* Missed team wills — terminal history entry */}
           {!isLoading && activeTab === 'team' && missedTeamWills.length > 0 && (
             <div className="space-y-3">
               {missedTeamWills.map(item => {
@@ -508,14 +596,37 @@ export default function MyWills() {
             </div>
           )}
 
+          {/* Wills list — flagged first (in alert mode), then the rest */}
           {!isLoading && displayWills.length > 0 && (
             <div className="space-y-3">
-              {displayWills.map(will => (
+              {/* Flagged wills float to top */}
+              {isAlertMode && flaggedWills.length > 0 && flaggedWills.map(will => (
                 <WillCard
                   key={will.id}
                   will={will}
                   onClick={() => handleViewWill(will)}
                   userId={user?.id}
+                  alertType={alertParam}
+                />
+              ))}
+
+              {/* Divider between flagged and rest in alert mode */}
+              {isAlertMode && flaggedWills.length > 0 && restWills.length > 0 && (
+                <div className="flex items-center gap-2 py-1">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Other wills</span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+              )}
+
+              {/* Rest of wills (or all wills when not in alert mode) */}
+              {(isAlertMode ? restWills : displayWills).map(will => (
+                <WillCard
+                  key={will.id}
+                  will={will}
+                  onClick={() => handleViewWill(will)}
+                  userId={user?.id}
+                  alertType={null}
                 />
               ))}
             </div>

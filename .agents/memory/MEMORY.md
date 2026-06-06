@@ -1,0 +1,1 @@
+- [Home alert badge system](home-alerts.md) — /api/home-alerts is the badge source of truth; invalidate it after any review/invite/friend action to clear badges in real-time.

@@ -50,13 +50,17 @@ function displayName(firstName: string | null, lastName: string | null, username
 }
 
 export default function FriendsPage() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [optimisticPending, setOptimisticPending] = useState<Set<string>>(new Set());
   const [discoverPending, setDiscoverPending] = useState<Set<string>>(new Set());
+  const requestsSectionRef = useRef<HTMLDivElement>(null);
+
+  // Parse ?highlight=requests from URL
+  const highlightRequests = new URLSearchParams(location.split('?')[1] ?? '').get('highlight') === 'requests';
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -87,6 +91,17 @@ export default function FriendsPage() {
     staleTime: 60000,
   });
 
+  const pendingIncoming = friendsData?.pendingIncoming ?? [];
+
+  // Auto-scroll to requests section when navigated via Friends badge
+  useEffect(() => {
+    if (highlightRequests && pendingIncoming.length > 0 && requestsSectionRef.current) {
+      setTimeout(() => {
+        requestsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    }
+  }, [highlightRequests, pendingIncoming.length]);
+
   const sendRequestMutation = useMutation({
     mutationFn: async (userId: string) => {
       const res = await apiRequest('/api/friends/request', {
@@ -115,6 +130,7 @@ export default function FriendsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/home-alerts'] });
       toast({ title: "Friend added!", description: "You are now friends." });
     },
     onError: () => {
@@ -127,7 +143,10 @@ export default function FriendsPage() {
       const res = await apiRequest(`/api/friends/${friendshipId}/decline`, { method: 'PATCH' });
       return res.json();
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/friends'] }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/home-alerts'] });
+    },
     onError: () => {
       toast({ title: "Error", description: "Failed to decline request", variant: "destructive" });
     },
@@ -149,14 +168,13 @@ export default function FriendsPage() {
 
   const isSearching = debouncedQ.length >= 2;
   const friends = friendsData?.friends ?? [];
-  const pendingIncoming = friendsData?.pendingIncoming ?? [];
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-white to-purple-50/20">
       <div className="pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]">
         <div className="max-w-sm mx-auto px-5">
 
-          {/* Back button — matches app-wide rounded-lg icon pattern */}
+          {/* Back button */}
           <div className="mb-5">
             <button
               onClick={() => setLocation('/')}
@@ -256,7 +274,21 @@ export default function FriendsPage() {
 
           {/* Pending Incoming Requests */}
           {!isSearching && pendingIncoming.length > 0 && (
-            <div className="mb-5">
+            <div
+              ref={requestsSectionRef}
+              className={`mb-5 ${highlightRequests ? 'scroll-mt-4' : ''}`}
+              data-testid="section-friend-requests"
+            >
+              {highlightRequests && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+                  <p className="text-[12px] font-semibold text-amber-800">
+                    {pendingIncoming.length === 1
+                      ? '1 friend request waiting'
+                      : `${pendingIncoming.length} friend requests waiting`}
+                  </p>
+                </div>
+              )}
               <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-2">
                 Friend requests
                 <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-purple-600 text-white text-[9px] font-bold leading-none">
@@ -321,7 +353,6 @@ export default function FriendsPage() {
           {/* Friends List */}
           {!isSearching && (
             <div className="mb-5">
-              {/* Section label */}
               <div className="flex items-center gap-2 mb-2">
                 <p className="text-[12px] font-medium text-gray-500">Your friends</p>
                 {friends.length > 0 && (

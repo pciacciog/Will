@@ -9,6 +9,7 @@ import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
 import { useToast } from "@/hooks/use-toast";
 import { getApiPath } from "@/config/api";
+import { useHomeAlerts } from "@/hooks/useHomeAlerts";
 
 type Will = {
   id: number;
@@ -22,19 +23,8 @@ type Will = {
   commitments?: { id: number; userId: string; what: string; why: string }[];
 };
 
-type InAppNotification = {
-  id: number;
-  type: string;
-  title: string | null;
-  body: string | null;
-  deepLink: string | null;
-  willId: number | null;
-  isRead: boolean;
-  createdAt: string;
-};
-
 type NotifResponse = {
-  notifications: InAppNotification[];
+  notifications: Array<{ id: number; type: string; isRead: boolean }>;
   unreadCount: number;
 };
 
@@ -103,25 +93,6 @@ export default function Home() {
   });
 
   const unreadCount = notifData?.unreadCount ?? 0;
-  const previewNotifs = (notifData?.notifications ?? []).filter(n => !n.isRead).slice(0, 1);
-
-  const declineInviteMutation = useMutation({
-    mutationFn: async (willId: number) => {
-      await apiRequest(`/api/wills/${willId}/decline-invite`, { method: 'POST' });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-    },
-  });
-
-  const markReadMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest(`/api/notifications/${id}/read`, { method: 'PATCH' });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-    },
-  });
 
   const { data: allActiveWills, error: activeWillsError, isError: isActiveWillsError, failureCount, isLoading: willsLoading, isFetching: willsFetching, refetch: refetchWills, status: willsQueryStatus, fetchStatus: willsFetchStatus } = useQuery<Will[] | null>({
     queryKey: ['/api/wills/all-active', user?.id],
@@ -135,6 +106,8 @@ export default function Home() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     refetchInterval: 30000,
   });
+
+  const { getAlert, totalForSection } = useHomeAlerts(!!user);
 
   useEffect(() => {
     if (user?.id) {
@@ -179,7 +152,35 @@ export default function Home() {
   };
 
   const handleFriends = () => {
-    setLocation('/friends');
+    const friendAlert = getAlert('friend_request');
+    if (friendAlert) {
+      setLocation('/friends?highlight=requests');
+    } else {
+      setLocation('/friends');
+    }
+  };
+
+  // Smart deep navigation for the My Wills card
+  const handleMyWills = () => {
+    const reviewAlert = getAlert('will_review');
+    const inviteAlert = getAlert('invite_accepted');
+
+    // Prioritise review over invite
+    const primaryAlert = reviewAlert ?? inviteAlert;
+
+    if (!primaryAlert || !primaryAlert.willIds?.length) {
+      setLocation('/wills');
+      return;
+    }
+
+    if (primaryAlert.willIds.length === 1) {
+      // Single will — go straight to detail
+      sessionStorage.setItem('willAlertType', primaryAlert.type);
+      setLocation(`/will/${primaryAlert.willIds[0]}`);
+    } else {
+      // Multiple wills — open list with filter active
+      setLocation(`/wills?alert=${primaryAlert.type}`);
+    }
   };
 
   if (showSplash) {
@@ -209,6 +210,29 @@ export default function Home() {
       </div>
     );
   }
+
+  const myWillsAlertCount = totalForSection('my_wills');
+  const friendsAlertCount = totalForSection('friends');
+  const reviewAlert = getAlert('will_review');
+  const inviteAlert = getAlert('invite_accepted');
+  const friendAlert = getAlert('friend_request');
+
+  const myWillsBadgeLabel = (() => {
+    if (reviewAlert && inviteAlert) {
+      return `${myWillsAlertCount} need attention`;
+    }
+    if (reviewAlert) {
+      return reviewAlert.count === 1 ? '1 review needed' : `${reviewAlert.count} reviews needed`;
+    }
+    if (inviteAlert) {
+      return inviteAlert.count === 1 ? '1 invite' : `${inviteAlert.count} invites`;
+    }
+    return null;
+  })();
+
+  const friendsBadgeLabel = friendAlert
+    ? friendAlert.count === 1 ? '1 request' : `${friendAlert.count} requests`
+    : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/20">
@@ -252,58 +276,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* ── Notification preview ── */}
-          {previewNotifs.length > 0 && (
-            <div className="mb-4">
-              {previewNotifs.map((n) => {
-                const isInvite = n.type === 'team_will_invite';
-                return (
-                  <div key={n.id} className="bg-white border border-emerald-100 rounded-2xl px-4 py-3 shadow-sm">
-                    <div className="flex items-start gap-2.5">
-                      <span className="text-lg leading-none mt-0.5 flex-shrink-0">
-                        {n.type === 'friend_request' ? '👋' : n.type === 'proof_dropped' ? '📸' : '🔔'}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-gray-900 leading-snug">{n.title}</p>
-                        {n.body && <p className="text-[12px] text-gray-500 leading-snug mt-0.5 line-clamp-1">{n.body}</p>}
-                      </div>
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />
-                    </div>
-                    {isInvite && n.willId && (
-                      <div className="mt-2.5">
-                        <button
-                          onClick={() => setLocation(`/will/${n.willId}/invite`)}
-                          className="w-full py-1.5 rounded-xl text-white text-[12px] font-semibold transition-colors bg-violet-600 hover:bg-violet-700"
-                          data-testid={`button-view-invite-${n.willId}`}
-                        >
-                          View invite
-                        </button>
-                      </div>
-                    )}
-                    {!isInvite && (n.deepLink || n.willId) && (
-                      <button
-                        onClick={() => { markReadMutation.mutate(n.id); setLocation(n.deepLink ?? `/will/${n.willId}`); }}
-                        className="mt-2 text-[12px] text-emerald-600 font-medium hover:underline"
-                        data-testid={`button-view-notif-${n.id}`}
-                      >
-                        View →
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              {unreadCount > 1 && (
-                <button
-                  onClick={() => setLocation('/notifications')}
-                  className="w-full text-center text-[12px] text-gray-400 hover:text-gray-600 transition-colors py-1 mt-1.5"
-                  data-testid="button-view-all-alerts"
-                >
-                  +{unreadCount - 1} more alert{unreadCount - 1 !== 1 ? 's' : ''} — view all
-                </button>
-              )}
-            </div>
-          )}
-
           {/* ── Create a Will ── */}
           <button onClick={handleCreateWill} className="w-full mb-2.5 group" data-testid="button-create-will">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl px-10 py-3 shadow-lg group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all duration-200 group-active:scale-[0.98]">
@@ -332,7 +304,7 @@ export default function Home() {
             </div>
           )}
           {!willsLoading && !isActiveWillsError && allActiveWills !== null && (
-            <button onClick={() => setLocation('/wills')} className="w-full mb-2.5 group" data-testid="button-view-all-wills">
+            <button onClick={handleMyWills} className="w-full mb-2.5 group" data-testid="button-view-all-wills">
               <div className="bg-white border border-emerald-200 rounded-2xl px-4 py-2.5 shadow-sm group-hover:shadow-md group-hover:border-emerald-400 transition-all duration-200 group-active:scale-[0.98]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -340,7 +312,17 @@ export default function Home() {
                       <Flame className={`w-5 h-5 ${activeWills.length > 0 ? 'text-orange-500' : 'text-gray-400'}`} />
                     </div>
                     <div>
-                      <h3 className="text-[15px] font-bold text-gray-900 leading-tight">My Wills</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-[15px] font-bold text-gray-900 leading-tight">My Wills</h3>
+                        {myWillsBadgeLabel && (
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 leading-none"
+                            data-testid="badge-my-wills-alert"
+                          >
+                            {myWillsBadgeLabel}
+                          </span>
+                        )}
+                      </div>
                       {activeWills.length > 0 ? (
                         <span className="text-[12px] text-emerald-600 font-medium" data-testid="text-active-wills-label">
                           {activeWills.length} active
@@ -395,15 +377,26 @@ export default function Home() {
                   : 'bg-white border-emerald-200 shadow-sm group-hover:shadow-md group-hover:border-violet-300'
               }`}>
                 <div className="p-3 flex flex-col items-center text-center gap-0.5">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-1 transition-colors duration-200 ${
+                  <div className={`relative w-10 h-10 rounded-2xl flex items-center justify-center mb-1 transition-colors duration-200 ${
                     activeCard === 'friends' ? 'bg-violet-100' : 'bg-violet-50'
                   }`}>
                     <Users className={`w-5 h-5 transition-colors duration-200 ${
                       activeCard === 'friends' ? 'text-violet-600' : 'text-violet-500'
                     }`} />
+                    {friendsAlertCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-amber-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none px-0.5" data-testid="badge-friends-count">
+                        {friendsAlertCount > 9 ? '9+' : friendsAlertCount}
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-[13px] font-bold text-gray-900 leading-tight">Friends</h3>
-                  <p className="text-[11px] text-gray-400 leading-snug mt-0.5">Build your circle,<br/>grow together</p>
+                  {friendsBadgeLabel ? (
+                    <span className="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 leading-none" data-testid="badge-friends-alert">
+                      {friendsBadgeLabel}
+                    </span>
+                  ) : (
+                    <p className="text-[11px] text-gray-400 leading-snug mt-0.5">Build your circle,<br/>grow together</p>
+                  )}
                 </div>
               </div>
             </button>

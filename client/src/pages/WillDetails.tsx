@@ -304,6 +304,15 @@ export default function WillDetails() {
       localStorage.setItem('lastWillMode', will.mode);
     }
   }, [will?.mode]);
+
+  // Contextual alert banner — set when navigated from a home screen badge
+  const [alertBannerType, setAlertBannerType] = useState<string | null>(() => {
+    const t = sessionStorage.getItem('willAlertType');
+    if (t) sessionStorage.removeItem('willAlertType');
+    return t;
+  });
+  const [alertBannerDismissed, setAlertBannerDismissed] = useState(false);
+  const showAlertBanner = !!alertBannerType && !alertBannerDismissed;
   
   const getHubUrl = () => {
     const backUrl = sessionStorage.getItem('willBackUrl');
@@ -1013,6 +1022,36 @@ export default function WillDetails() {
           )}
         </div>
         
+        {/* Contextual alert banner — shown when opened via a home screen badge */}
+        {showAlertBanner && will && (
+          <div
+            className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 mb-1"
+            data-testid="banner-will-alert-context"
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0 mt-1" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold text-amber-800 leading-snug">
+                {alertBannerType === 'will_review'
+                  ? `Review needed${will.endDate ? ` — your will ended ${new Date(will.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`
+                  : alertBannerType === 'invite_accepted'
+                  ? 'You have a pending Team Will invite'
+                  : 'Action needed on this will'}
+              </p>
+              {alertBannerType === 'will_review' && (
+                <p className="text-[11px] text-amber-700 mt-0.5">Scroll down to submit your review.</p>
+              )}
+            </div>
+            <button
+              onClick={() => setAlertBannerDismissed(true)}
+              className="flex-shrink-0 p-0.5 rounded-lg hover:bg-amber-100 transition-colors text-amber-500"
+              data-testid="button-dismiss-will-alert-banner"
+              aria-label="Dismiss"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Status Badge */}
         <div className="text-center">
           <div className="flex items-center justify-center space-x-2 mb-1">
