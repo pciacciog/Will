@@ -552,7 +552,7 @@ export function WillReviewFlow({ willId, mode = 'circle', checkInType = 'one-tim
                   type="button"
                   onClick={() => setStep(skippedExpand ? 1 : 2)}
                   variant="outline"
-                  className="flex-1 rounded-xl"
+                  className="flex-1 min-h-[48px] px-6 rounded-xl"
                   data-testid="button-back-3"
                 >
                   Back
@@ -560,8 +560,7 @@ export function WillReviewFlow({ willId, mode = 'circle', checkInType = 'one-tim
                 <Button
                   type="submit"
                   disabled={submitReview.isPending}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl"
-                  size="lg"
+                  className="flex-1 min-h-[48px] px-7 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl whitespace-nowrap"
                   data-testid="button-submit-review"
                 >
                   {submitReview.isPending ? (
