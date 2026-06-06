@@ -38,7 +38,8 @@ export default function SeeAllMembersPage() {
   });
 
   const pushMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/wills/${willId}/push`, { method: 'POST' }),
+    mutationFn: (targetUserId: string) =>
+      apiRequest(`/api/wills/${willId}/push-member/${targetUserId}`, { method: 'POST' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/push/status`] });
       toast({ title: "Push sent! 🙌", description: "Keep each other going." });
@@ -89,7 +90,7 @@ export default function SeeAllMembersPage() {
             <MemberCard
               key={m.userId}
               member={{ ...m, isYou: m.userId === currentUserId }}
-              onPush={() => pushMutation.mutate()}
+              onPush={(uid) => pushMutation.mutate(uid)}
               alreadyPushed={alreadyPushed}
               pushPending={pushMutation.isPending}
               onTapProfile={(uid) => setLocation(`/profile/${uid}`)}

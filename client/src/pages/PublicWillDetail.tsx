@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,7 +7,7 @@ import { MobileLayout } from "@/components/ui/design-system";
 import { useToast } from "@/hooks/use-toast";
 import {
   Zap, ChevronRight, CheckCircle, Users, MessageCircle,
-  ArrowLeft, Star, XCircle,
+  ArrowLeft, Star, XCircle, Send,
 } from "lucide-react";
 import type { WillCheckIn } from "@shared/schema";
 import DayStrip from "@/components/DayStrip";
@@ -85,6 +85,14 @@ type MessagesPreview = {
   totalCount: number;
 };
 
+type ChatMessage = {
+  id: number;
+  text: string;
+  createdAt: string;
+  userId: string;
+  user: { firstName: string };
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = [
@@ -106,15 +114,175 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// ── Chat Preview Card (shared by both views) ──────────────────────────────────
+// ── Inline Hub Chat (full inline chat for owner/member) ───────────────────────
+
+function InlineHubChat({
+  willId, currentUserId, creatorId,
+}: {
+  willId: number;
+  currentUserId: string;
+  creatorId: string;
+}) {
+  const [text, setText] = useState('');
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
+    queryKey: ['/api/wills', willId, 'messages'],
+    queryFn: async () => {
+      const res = await apiRequest(`/api/wills/${willId}/messages`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    refetchInterval: 10000,
+  });
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length]);
+
+  const sendMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest(`/api/wills/${willId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ text: text.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to send');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setText('');
+      qc.invalidateQueries({ queryKey: ['/api/wills', willId, 'messages'] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Couldn't send", description: err?.message || "Please try again.", variant: "destructive" });
+    },
+  });
+
+  const handleSend = () => {
+    if (text.trim() && !sendMutation.isPending) sendMutation.mutate();
+  };
+
+  return (
+    <div
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+      data-testid="card-hub-chat-inline"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-50">
+        <MessageCircle className="w-4 h-4 text-blue-500" />
+        <p className="text-sm font-semibold text-gray-700 flex-1">Hub Chat</p>
+        {messages.length > 0 && (
+          <span className="text-xs text-gray-400">{messages.length} messages</span>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div className="max-h-72 overflow-y-auto px-3 py-3 space-y-2">
+        {isLoading ? (
+          <p className="text-sm text-gray-400 text-center py-4">Loading…</p>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-1">
+            <p className="text-sm font-medium text-gray-500">Start the conversation</p>
+            <p className="text-xs text-gray-400">Be the first to say something!</p>
+          </div>
+        ) : (
+          messages.map(msg => {
+            const isOwn = msg.userId === currentUserId;
+            const isCreator = msg.userId === creatorId;
+            return (
+              <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2`}>
+                {!isOwn && (
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0 mt-0.5"
+                    style={{ backgroundColor: avatarColor(msg.userId) }}
+                  >
+                    {getInitials(msg.user.firstName)}
+                  </div>
+                )}
+                <div className="max-w-[78%]">
+                  {!isOwn && (
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="text-[11px] font-semibold text-gray-700">
+                        @{msg.user.firstName.toLowerCase()}
+                      </span>
+                      {isCreator && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                          Creator
+                        </span>
+                      )}
+                      <span className="text-[10px] text-gray-400">{relativeTime(msg.createdAt)}</span>
+                    </div>
+                  )}
+                  <div
+                    className={cn(
+                      "px-3 py-2 rounded-2xl text-sm leading-snug break-words",
+                      isOwn
+                        ? "bg-purple-600 text-white rounded-tr-sm"
+                        : "bg-gray-100 text-gray-800 rounded-tl-sm",
+                    )}
+                  >
+                    {msg.text}
+                  </div>
+                  {isOwn && (
+                    <p className="text-[10px] text-gray-400 text-right mt-0.5">
+                      {relativeTime(msg.createdAt)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-gray-50 px-3 py-2.5 flex items-end gap-2">
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          placeholder="Message the group…"
+          maxLength={500}
+          rows={1}
+          className="flex-1 text-sm bg-gray-50 rounded-xl px-3 py-2 border border-gray-100 outline-none focus:border-purple-300 resize-none"
+          style={{ maxHeight: 96 }}
+          data-testid="input-hub-chat"
+        />
+        <button
+          onClick={handleSend}
+          disabled={!text.trim() || sendMutation.isPending}
+          className="p-2 rounded-xl text-white disabled:opacity-40 flex-shrink-0"
+          style={{ backgroundColor: '#534AB7' }}
+          data-testid="button-send-chat"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Chat Preview Card (viewer-only) ──────────────────────────────────────────
 
 function ChatPreviewCard({
-  totalCount, messages, onOpenChat, isParticipant,
+  totalCount, messages, onOpenChat,
 }: {
   totalCount: number;
   messages: MessagesPreview['messages'];
   onOpenChat: () => void;
-  isParticipant?: boolean;
 }) {
   const preview = messages.slice(0, 3);
   return (
@@ -123,11 +291,6 @@ function ChatPreviewCard({
         <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
           <MessageCircle className="w-4 h-4 text-blue-500" />
           Hub Chat
-          {isParticipant && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 ml-1">
-              Member
-            </span>
-          )}
         </p>
         {totalCount > 0 && (
           <span className="text-xs text-gray-400">{totalCount} {totalCount === 1 ? 'message' : 'messages'}</span>
@@ -164,9 +327,7 @@ function ChatPreviewCard({
         style={{ color: '#534AB7' }}
         data-testid="button-open-chat"
       >
-        {isParticipant
-          ? totalCount > 0 ? `See all ${totalCount} messages` : 'Open chat'
-          : totalCount > 0 ? `See ${totalCount} messages` : 'Start the conversation'}
+        {totalCount > 0 ? `See all ${totalCount} messages` : 'Start the conversation'}
         <ChevronRight className="w-4 h-4" />
       </button>
     </div>
@@ -178,8 +339,7 @@ function ChatPreviewCard({
 function ViewerView({
   will, members, pushStatus, messagesPreview,
   onJoin, onTeamPush, teamPushPending, onOpenChat,
-  onPushMember, pushPending,
-  currentUserId,
+  onPushMember, pushPending, currentUserId,
 }: {
   will: PublicWillDetails;
   members: MemberCardData[];
@@ -189,13 +349,18 @@ function ViewerView({
   onTeamPush: () => void;
   teamPushPending: boolean;
   onOpenChat: () => void;
-  onPushMember: () => void;
+  onPushMember: (targetUserId: string) => void;
   pushPending: boolean;
   currentUserId?: string;
 }) {
   const [, setLocation] = useLocation();
   const alreadyPushed = pushStatus?.hasUserPushedToday ?? false;
-  const topMembers = members.slice(0, 4);
+
+  const sortedMembers = useMemo(
+    () => [...members].sort((a, b) => new Date(a.joinDate).getTime() - new Date(b.joinDate).getTime()),
+    [members],
+  );
+  const topMembers = sortedMembers.slice(0, 4);
 
   const avgSuccessRate = useMemo(() => {
     if (!members || members.length === 0) return null;
@@ -232,10 +397,14 @@ function ViewerView({
               )}
             </div>
             <p className="text-base font-semibold text-gray-900 leading-snug mb-4">
-              {will.title
-                ? <>{will.title}<span className="text-gray-400 font-normal text-sm ml-2">— I will {will.what}</span></>
-                : <>I will {will.what}</>
-              }
+              {will.title ? (
+                <>
+                  {will.title}
+                  <span className="text-gray-400 font-normal text-sm ml-2">— I will {will.what}</span>
+                </>
+              ) : (
+                <>I will {will.what}</>
+              )}
             </p>
             <div className="flex items-center gap-2">
               <div
@@ -293,7 +462,7 @@ function ViewerView({
                   <MemberCard
                     key={m.userId}
                     member={{ ...m, isYou: m.userId === currentUserId }}
-                    onPush={onPushMember}
+                    onPush={m.userId !== currentUserId ? onPushMember : undefined}
                     alreadyPushed={alreadyPushed}
                     pushPending={pushPending}
                   />
@@ -330,20 +499,17 @@ function ViewerView({
               style={alreadyPushed ? {} : { backgroundColor: '#534AB7' }}
               data-testid="button-team-push"
             >
-              <Zap
-                className={cn("w-4 h-4", alreadyPushed ? "text-gray-400" : "fill-white text-white")}
-              />
+              <Zap className={cn("w-4 h-4", alreadyPushed ? "text-gray-400" : "fill-white text-white")} />
               {alreadyPushed ? 'Team Pushed today ✓' : '⚡ Team Push'}
             </button>
           </div>
 
-          {/* Hub Chat preview */}
+          {/* Hub Chat preview (viewer only) */}
           {messagesPreview && (
             <ChatPreviewCard
               totalCount={messagesPreview.totalCount}
               messages={messagesPreview.messages}
               onOpenChat={onOpenChat}
-              isParticipant={false}
             />
           )}
         </div>
@@ -370,8 +536,8 @@ function ViewerView({
 // ── Personal View (owner / member) ────────────────────────────────────────────
 
 function PersonalView({
-  will, myProgress, members, pushStatus, messagesPreview,
-  onOpenChat, onOpenAllMembers,
+  will, myProgress, members, pushStatus,
+  onOpenAllMembers,
   checkInOpen, onOpenCheckIn, onCloseCheckIn, checkInDate, onDayClick,
   onPushMember, pushPending, currentUserId,
 }: {
@@ -379,15 +545,13 @@ function PersonalView({
   myProgress: MyProgress;
   members: MemberCardData[];
   pushStatus: PushStatus | undefined;
-  messagesPreview: MessagesPreview | undefined;
-  onOpenChat: () => void;
   onOpenAllMembers: () => void;
   checkInOpen: boolean;
   onOpenCheckIn: (date?: string) => void;
   onCloseCheckIn: () => void;
   checkInDate: string | null;
   onDayClick: (date: string) => void;
-  onPushMember: () => void;
+  onPushMember: (targetUserId: string) => void;
   pushPending: boolean;
   currentUserId?: string;
 }) {
@@ -403,8 +567,12 @@ function PersonalView({
   const isDuration = myProgress.commitmentCategory === 'duration';
   const isEvent = myProgress.commitmentCategory === 'event';
 
-  const othersWithMe = members.filter(m => m.userId !== currentUserId);
-  const topOthers = othersWithMe.slice(0, 3);
+  // Include ALL members (including own card with isYou pill), sorted by join date
+  const sortedMembers = useMemo(
+    () => [...members].sort((a, b) => new Date(a.joinDate).getTime() - new Date(b.joinDate).getTime()),
+    [members],
+  );
+  const topOthers = sortedMembers.slice(0, 4);
 
   const pushesReceived = pushStatus?.pushes ?? [];
   const lastPusher = pushesReceived.length > 0
@@ -572,7 +740,7 @@ function PersonalView({
             </div>
           )}
 
-          {/* Who's with you */}
+          {/* Who's with you — includes own card with "You" pill, no push button on own */}
           {topOthers.length > 0 && (
             <div data-testid="section-members-with-you">
               <div className="flex items-center justify-between mb-3">
@@ -594,23 +762,24 @@ function PersonalView({
                   <MemberCard
                     key={m.userId}
                     member={{ ...m, isYou: m.userId === currentUserId }}
-                    onPush={onPushMember}
+                    onPush={m.userId !== currentUserId ? onPushMember : undefined}
                     alreadyPushed={alreadyPushed}
                     pushPending={pushPending}
-                    onTapProfile={(uid) => setLocation(`/profile/${uid}`)}
+                    onTapProfile={m.userId !== currentUserId
+                      ? (uid) => setLocation(`/profile/${uid}`)
+                      : undefined}
                   />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Hub Chat */}
-          {messagesPreview && (
-            <ChatPreviewCard
-              totalCount={messagesPreview.totalCount}
-              messages={messagesPreview.messages}
-              onOpenChat={onOpenChat}
-              isParticipant={true}
+          {/* Full inline Hub Chat */}
+          {currentUserId && (
+            <InlineHubChat
+              willId={will.id}
+              currentUserId={currentUserId}
+              creatorId={will.createdBy}
             />
           )}
         </div>
@@ -693,13 +862,12 @@ export default function PublicWillDetail() {
 
   const { data: messagesPreview } = useQuery<MessagesPreview>({
     queryKey: [`/api/wills/${willId}/public-messages-preview`],
-    enabled: !!willId,
+    enabled: !!willId && !isParticipant,
     refetchInterval: 30000,
   });
 
-  const invalidatePushStatus = () => {
+  const invalidatePushStatus = () =>
     qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/push/status`] });
-  };
 
   const teamPushMutation = useMutation({
     mutationFn: () => apiRequest(`/api/wills/${willId}/team-push`, { method: 'POST' }),
@@ -719,7 +887,8 @@ export default function PublicWillDetail() {
   });
 
   const memberPushMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/wills/${willId}/push`, { method: 'POST' }),
+    mutationFn: (targetUserId: string) =>
+      apiRequest(`/api/wills/${willId}/push-member/${targetUserId}`, { method: 'POST' }),
     onSuccess: () => {
       invalidatePushStatus();
       toast({ title: "Push sent! 🙌", description: "Keep each other going." });
@@ -816,22 +985,20 @@ export default function PublicWillDetail() {
         )}
       </div>
 
-      {/* Dispatch to appropriate view */}
+      {/* Dispatch */}
       {isParticipant && myProgress ? (
         <PersonalView
           will={will}
           myProgress={myProgress}
           members={members}
           pushStatus={pushStatus}
-          messagesPreview={messagesPreview}
-          onOpenChat={handleOpenChat}
           onOpenAllMembers={handleOpenAllMembers}
           checkInOpen={checkInOpen}
           onOpenCheckIn={handleOpenCheckIn}
           onCloseCheckIn={handleCloseCheckIn}
           checkInDate={checkInDate}
           onDayClick={handleDayClick}
-          onPushMember={() => memberPushMutation.mutate()}
+          onPushMember={(uid) => memberPushMutation.mutate(uid)}
           pushPending={memberPushMutation.isPending}
           currentUserId={currentUserId}
         />
@@ -845,7 +1012,7 @@ export default function PublicWillDetail() {
           onTeamPush={() => teamPushMutation.mutate()}
           teamPushPending={teamPushMutation.isPending}
           onOpenChat={handleOpenChat}
-          onPushMember={() => memberPushMutation.mutate()}
+          onPushMember={(uid) => memberPushMutation.mutate(uid)}
           pushPending={memberPushMutation.isPending}
           currentUserId={currentUserId}
         />

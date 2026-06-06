@@ -3691,12 +3691,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const commitments = await storage.getWillCommitments(willId);
         const willTitle = will.title || commitments[0]?.what || 'this Will';
         const { pushNotificationService } = await import('./pushNotificationService');
-        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, willId);
+        await pushNotificationService.sendToMultipleUsers(memberIds, {
+          title: `Team Push from @${pusherName.toLowerCase()}! ⚡`,
+          body: `@${pusherName.toLowerCase()} sent a Team Push on "${willTitle}" — the whole crew is counting on you!`,
+          category: 'team_push',
+          data: {
+            type: 'team_push',
+            pusherName,
+            willTitle,
+            willId: willId.toString(),
+            isSoloMode: 'false',
+            deepLink: `/public-will/${willId}`,
+          },
+        });
       }
       res.json({ ...push, membersNotified: memberIds.length });
     } catch (error) {
       console.error("Error sending team push:", error);
       res.status(500).json({ message: "Failed to send team push" });
+    }
+  });
+
+  app.post('/api/wills/:id/push-member/:targetUserId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const targetUserId = req.params.targetUserId;
+      const will = await storage.getWillById(willId);
+      if (!will || (will as any).kind !== 'public') {
+        return res.status(404).json({ message: "Public Will not found" });
+      }
+      if (!ACTIVE_PARTICIPANT_STATUSES.includes(will.status)) {
+        return res.status(400).json({ message: "Push is only available for active wills" });
+      }
+      if (targetUserId === userId) {
+        return res.status(400).json({ message: "You cannot push yourself" });
+      }
+      const hasAlreadyPushed = await storage.hasUserPushedToday(willId, userId);
+      if (hasAlreadyPushed) {
+        return res.status(409).json({ message: "You have already pushed today" });
+      }
+      const push = await storage.addWillPush({ willId, userId });
+      const pusher = await storage.getUser(userId);
+      const pusherName = pusher?.firstName || 'Someone';
+      const commitments = await storage.getWillCommitments(willId);
+      const willTitle = will.title || commitments[0]?.what || 'this Will';
+      const { pushNotificationService } = await import('./pushNotificationService');
+      await pushNotificationService.sendToUser(targetUserId, {
+        title: `@${pusherName.toLowerCase()} pushed you! 🙌`,
+        body: `Keep going on "${willTitle}" — someone's cheering you on!`,
+        category: 'solo_push',
+        data: {
+          type: 'solo_push',
+          pusherName,
+          willTitle,
+          willId: willId.toString(),
+          deepLink: `/public-will/${willId}`,
+        },
+      });
+      res.json({ ...push, membersNotified: 1 });
+    } catch (error) {
+      console.error("Error sending member push:", error);
+      res.status(500).json({ message: "Failed to send member push" });
     }
   });
 

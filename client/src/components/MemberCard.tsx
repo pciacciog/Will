@@ -51,7 +51,7 @@ const activityStyle: Record<MemberActivity, string> = {
 
 interface MemberCardProps {
   member: MemberCardData;
-  onPush?: () => void;
+  onPush?: (userId: string) => void;
   alreadyPushed?: boolean;
   pushPending?: boolean;
   onTapProfile?: (userId: string) => void;
@@ -109,7 +109,7 @@ export default function MemberCard({
 
         {showPushButton && (
           <button
-            onClick={onPush}
+            onClick={() => onPush?.(member.userId)}
             disabled={alreadyPushed || pushPending}
             className={cn(
               "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all flex-shrink-0",
