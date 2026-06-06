@@ -2,6 +2,7 @@ import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import TeamWillHub from "./TeamWillHub";
+import TeamWillViewer from "./TeamWillViewer";
 import WillDetails from "./WillDetails";
 import SoloWillViewer from "./SoloWillViewer";
 
@@ -11,6 +12,7 @@ interface WillMeta {
   kind: string | null;
   createdBy: string;
   status: string;
+  isMember?: boolean;
 }
 
 export default function WillPage() {
@@ -18,7 +20,7 @@ export default function WillPage() {
   const willId = parseInt(id || "0");
   const { user } = useAuth();
 
-  // Use /meta — returns only safe routing fields, never private data like "because"
+  // /meta returns only safe routing fields — no private data like "because"
   const { data: meta, isLoading } = useQuery<WillMeta>({
     queryKey: [`/api/wills/${willId}/meta`],
     enabled: !!user && !!willId,
@@ -34,7 +36,10 @@ export default function WillPage() {
   }
 
   if (meta?.mode === "team") {
-    return <TeamWillHub willId={willId} />;
+    // Members see the full hub; non-members see the read-only viewer
+    return meta.isMember
+      ? <TeamWillHub willId={willId} />
+      : <TeamWillViewer willId={willId} />;
   }
 
   // Solo will viewed by a non-owner → read-only viewer screen

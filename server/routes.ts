@@ -2374,19 +2374,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Minimal public-safe routing metadata — no private fields (safe for any auth user)
   app.get('/api/wills/:id/meta', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.id;
       const willId = parseInt(req.params.id);
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: "Will not found" });
+      // For team wills include membership flag so WillPage can route correctly
+      const isMember = will.mode === 'team'
+        ? await storage.hasUserCommitted(willId, userId)
+        : undefined;
       res.json({
         id: will.id,
         mode: will.mode,
         kind: (will as any).kind ?? null,
         createdBy: will.createdBy,
         status: will.status,
+        ...(isMember !== undefined ? { isMember } : {}),
       });
     } catch (error) {
       console.error("Error fetching will meta:", error);
       res.status(500).json({ message: "Failed to fetch will metadata" });
+    }
+  });
+
+  // Read-only viewer data for non-members landing on a Team Will (strips commitment + Why)
+  app.get('/api/wills/:id/team-viewer', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+      if (will.mode !== 'team') return res.status(400).json({ message: "Not a team will" });
+
+      const isMember = await storage.hasUserCommitted(willId, userId);
+      const willWithCommitments = await storage.getWillWithCommitments(willId);
+
+      const now = new Date();
+      const startDate = new Date(will.startDate);
+      const daysActive = Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+      // Members: first name + daysActive only — NO commitment text, NO "because"/why
+      const members = (willWithCommitments?.commitments || []).map(c => ({
+        firstName: c.user.firstName,
+        daysActive,
+      }));
+
+      // Aggregate group check-in rate (daily / specific_days wills only)
+      let groupCheckInRate: number | null = null;
+      if ((will.checkInType === 'daily' || will.checkInType === 'specific_days') && members.length > 0) {
+        const progressList = await Promise.all(
+          (willWithCommitments?.commitments || []).map(c =>
+            storage.getWillCheckInProgress(willId, c.userId)
+          )
+        );
+        const totalChecked = progressList.reduce((sum, p) => sum + p.checkedInDays, 0);
+        const totalExpected = progressList.reduce((sum, p) => sum + p.totalDays, 0);
+        groupCheckInRate = totalExpected > 0 ? Math.round((totalChecked / totalExpected) * 100) : null;
+      }
+
+      res.json({
+        id: will.id,
+        title: will.title,
+        kind: (will as any).kind ?? null,
+        status: will.status,
+        startDate: will.startDate,
+        endDate: will.endDate,
+        isIndefinite: will.isIndefinite,
+        memberCount: members.length,
+        members,
+        groupCheckInRate,
+        isMember,
+      });
+    } catch (error) {
+      console.error("Error fetching team viewer data:", error);
+      res.status(500).json({ message: "Failed to fetch team will data" });
     }
   });
 
