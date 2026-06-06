@@ -1126,7 +1126,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Public will hub chat is open to any authenticated user — no participant check
         messageThreadId = (will as any).parentWillId || willId;
       } else if (isSoloWill) {
-        // Solo will supporter thread — owner + all viewers share the same thread (willId)
+        // Solo will supporter thread — only the owner may read it (one-way: viewer → owner)
+        if (will.createdBy !== userId) {
+          return res.status(403).json({ message: "Only the will owner can read supporter messages" });
+        }
         messageThreadId = willId;
       } else {
         const isParticipant = await isUserSharedWillParticipant(userId, willId);
@@ -2368,6 +2371,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Minimal public-safe routing metadata — no private fields (safe for any auth user)
+  app.get('/api/wills/:id/meta', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+      res.json({
+        id: will.id,
+        mode: will.mode,
+        kind: (will as any).kind ?? null,
+        createdBy: will.createdBy,
+        status: will.status,
+      });
+    } catch (error) {
+      console.error("Error fetching will meta:", error);
+      res.status(500).json({ message: "Failed to fetch will metadata" });
+    }
+  });
+
   // Public-safe solo will data for non-owner viewers — strips "because" / Why field
   app.get('/api/wills/:id/solo-viewer', isAuthenticated, async (req: any, res) => {
     try {
@@ -3372,9 +3394,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .filter(c => c.userId !== userId)
           .map(c => c.userId);
       } else if (will.mode === 'personal' || will.mode === 'solo') {
-        // Solo will: a supporter pushing the owner
+        // Solo will: a supporter encouraging the owner
         if (will.createdBy !== userId) {
           memberIds = [will.createdBy];
+          // Use solo-specific notification (not team_push semantics)
+          const willWithCommitmentsForPush = await storage.getWillWithCommitments(willId);
+          const ownerCommitment = willWithCommitmentsForPush?.commitments?.find(c => c.userId === will.createdBy);
+          const willDisplayTitle = will.title || ownerCommitment?.what || 'your Will';
+          const { pushNotificationService } = await import('./pushNotificationService');
+          const soloPayload = {
+            title: `${pusherName} is rooting for you 🙌`,
+            body: `You got a push on "${willDisplayTitle}" — keep going!`,
+            category: 'solo_push',
+            data: {
+              type: 'solo_push',
+              pusherName,
+              willTitle: willDisplayTitle,
+              willId: willId.toString(),
+              deepLink: `/will/${willId}`,
+            },
+          };
+          await pushNotificationService.sendToUser(will.createdBy, soloPayload);
+          // Skip the generic notification block below for solo wills
+          res.json({ ...await storage.addWillPush({ willId: pushDedupeId, userId }), pusherName, membersNotified: 1 });
+          return;
         }
       }
 
