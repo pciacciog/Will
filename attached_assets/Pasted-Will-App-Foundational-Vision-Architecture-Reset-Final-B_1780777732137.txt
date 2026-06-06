@@ -1,0 +1,175 @@
+Will App — Foundational Vision & Architecture Reset (Final)
+Before implementing any new features, align the codebase and data model to the following product vision. This is a structural reset that all future work builds on. Read and internalize fully before touching any code.
+
+The Vision
+Will is a commitment and accountability platform built around one idea: intention must be acted on. The app operates across three levels of human motivation — personal growth, social accountability, and community/competition. Every will a user creates lives at one of these levels.
+A user's wills are their posts. Their profile is their commitment history. Explore is the feed. Private toggle = hidden from the world. The content is not curated highlights — it is real, ongoing, lived commitments.
+
+The Five Will Types
+1. Solo Will
+
+Purpose: Personal development, self-growth, personal goals
+Who does it: Just the creator
+Visibility toggle: Appears on the "What would you like to do?" screen at the very start of creation. Toggle label: "Make this will private", default OFF (open). Subtext: "Private wills won't appear on Explore or your profile"
+Default visibility: Open
+Joinability: Not joinable
+Outside interaction: Viewers can Push and send messages to the creator
+
+2. Team Will — I Will
+
+Purpose: Different individual goals, shared accountability between friends
+Who does it: Creator + invited members (invite only)
+Visibility toggle: Appears on the "What would you like to do?" screen at the very start of creation. Toggle label: "Make this will private", default OFF (open). Subtext: "Private wills won't appear on your profile. Only invited members will see it"
+Default visibility: Open
+Joinability: Invite only. Strangers cannot join
+Outside interaction: Read-only for non-members. No Push, no messages from outside
+
+3. Team Will — We Will
+
+Purpose: One shared goal, everyone commits together
+Who does it: Creator + invited members (invite only)
+Visibility toggle: Same as I Will above
+Default visibility: Open
+Joinability: Invite only. Strangers cannot join
+Outside interaction: Read-only for non-members. No Push, no messages from outside
+
+4. Public Will
+
+Purpose: One goal, open community format. Anyone can join and participate. Meant to inspire — someone on day 125 of an ultra marathon with strangers who joined alongside them
+Who does it: Creator + any user who chooses to join
+Visibility: Always open. No privacy toggle
+Joinability: Open to anyone
+Outside interaction: Push, messages, Join — all available
+Design changes: Covered in separate prompt
+
+5. Challenge Will (scaffold only — do not build UI yet)
+
+Purpose: Competition, leaderboard, rankings
+Visibility: Configurable at creation (open or private)
+Design: Needed from scratch — future prompt
+
+
+Design Changes Needed
+Solo Will
+Viewer mode (net new screen — does not exist yet):
+Build a new read-only screen that a non-member sees when opening a Solo Will from Explore or a profile. It should show:
+
+Will title and type pill
+Creator avatar + username + days active
+Full progress view: progress ring or arc (Day N of N / days active for ongoing), calendar strip showing check-in history (✓ / ✗ / pending), key stats (days in, success rate, days left if applicable)
+Why chip: NOT shown to viewer — this is personal and owner-only
+Bottom CTA section: Push button + message input field. Message goes directly to the creator as encouragement
+No Join button, no check-in button, no review prompt — those are owner-only actions
+
+Owner view (existing screen — minimal addition):
+The current solo will screen stays exactly as-is. Add one small, non-intrusive section at the very bottom — below all existing content — to surface incoming social activity:
+
+Section label: "From your supporters"
+Shows incoming pushes: "@bruno pushed you · 2h ago"
+Shows incoming messages: small collapsible message thread
+If no activity yet: section is hidden entirely — takes up zero space
+This section must not interrupt the owner's primary flow. It only appears when there is actual activity to show
+
+
+Team Will — I Will and We Will
+Viewer mode (net new screen — does not exist yet):
+Build a new read-only screen that a non-member sees when opening a Team Will from Explore or a profile. It should show:
+
+Will title and type pill
+Member list: avatar + username + days in for each member
+Aggregate stat if available: e.g. group check-in rate
+A subtle label: "This is a closed group will"
+Bottom CTA: "Start your own Team Will"
+No Push, no message input, no Join button — strictly read-only
+Why chip: NOT shown — personal and member-only
+
+Owner/member view (existing screen):
+No changes whatsoever.
+
+Privacy Toggle — Placement & Behavior
+
+Location: "What would you like to do?" screen — the very first screen of will creation, before the user types anything
+UI: A simple toggle row at the bottom of the screen, below the will type options
+Default: OFF (open)
+When toggled ON: will is created as private from the start
+Public Will: no toggle shown — always open
+Challenge: toggle shown, but options are "Open to all" vs "Invite only" — different framing since it affects joinability not just visibility
+
+
+Explore Page Rules
+Unified feed of all visibility: open wills:
+
+Solo Wills: visible, Push + message available on card or detail
+Team Wills (I Will + We Will): visible, read-only, no interaction CTAs
+Public Wills: visible, Join + Push available
+Challenge (when built): visible if open, leaderboard preview card
+Private wills: never appear under any circumstance
+
+Each Explore card shows:
+
+Will title
+Creator username + avatar
+Will type pill: Solo / Team / Public / Challenge
+Days active or duration
+Member count if applicable
+Contextual inline CTA:
+
+Solo: "⚡ Push"
+Team: no CTA, just "View →"
+Public: "Join" + "⚡ Push"
+
+
+
+
+User Profile Rules
+When viewing any user's profile:
+
+Show all their visibility: open wills — active and past — in reverse chronological order
+Each will card shows: type pill, title, duration, status (active / completed)
+Private wills: shown as a locked card with padlock icon and label "Private will" — no title, no details. Visible to the owner only on their own profile; hidden entirely from other viewers
+Owner's own profile: sees everything including private wills (with lock indicator)
+Viewer seeing someone else's profile: sees only open wills + locked placeholders for private ones
+
+
+Interaction Matrix
+ActionSoloTeam I WillTeam We WillPublic WillChallengeVisible on Explore✓✓✓✓✓ (if open)Visible on profile✓✓✓✓✓Push from outside✓✗✗✓✓Message from outside✓✗✗✓✓Join✗✗✗✓✓ (if open)View full progress✓✗ (headline only)✗ (headline only)✓✓Why chip visible to viewer✗✗✗✗✗View leaderboard✗✗✗✗✓
+
+Data Model Changes Required
+tstype WillType =
+  | 'solo'
+  | 'team_i_will'
+  | 'team_we_will'
+  | 'public'
+  | 'challenge'        // scaffold only — no UI
+
+type WillVisibility = 'open' | 'private'
+
+type Will = {
+  id: string
+  type: WillType
+  visibility: WillVisibility   // NEW FIELD
+  creatorId: string
+  members: WillMember[]
+  // all existing fields unchanged
+}
+Migration:
+
+All existing wills → visibility: 'open'
+Existing Solo Wills → type: 'solo'
+Existing Public Wills → type: 'public'
+Existing Team Wills → type: 'team_i_will' or type: 'team_we_will' based on existing subtype
+
+
+What this prompt is asking for — no more, no less:
+
+Add visibility field to will schema and database with migration
+Update type enum to include all five types (Challenge scaffolded in DB only — no UI)
+Add privacy toggle to "What would you like to do?" screen for Solo and Team will types
+Build Solo Will viewer mode: full progress view + Push + message input. Why chip hidden
+Add "From your supporters" section to Solo Will owner view — bottom only, hidden when empty
+Build Team Will viewer mode (I Will + We Will): read-only headline view, no interaction CTAs, Why chip hidden
+Update Explore: show all open will types with type pill badge and correct contextual CTAs per type
+Update user profile: show all open wills, locked cards for private wills, hidden from other viewers
+Filter private wills out of Explore and other users' profile views at the data layer
+
+Do not build yet: Challenge UI, Public Will redesign, Explore card redesign beyond type pill and CTA — all separate prompts.
