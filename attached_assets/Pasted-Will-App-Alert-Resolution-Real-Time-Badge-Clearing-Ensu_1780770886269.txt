@@ -1,0 +1,32 @@
+Will App – Alert Resolution & Real-Time Badge Clearing
+Ensure every alert badge clears automatically the moment its action is resolved. No stale indicators anywhere — home screen, My Wills list, or Will detail.
+Core principle: An alert exists in one place in state. When the triggering condition is resolved, it is removed from that state and every badge derived from it updates immediately — no manual refresh, no stale UI.
+Resolution triggers by alert type:
+tstype AlertResolutionEvent =
+  | { type: 'will_review';      willId: string   }  // user submits the review form
+  | { type: 'friend_request';   userId: string   }  // user taps Accept or Decline
+  | { type: 'invite_accepted';  willId: string   }  // user views the will detail after acceptance
+  | { type: 'proof_drop';       proofId: string  }  // user opens/views the proof
+  | { type: 'explore_match';    willId: string   }  // user views the matched will
+What must clear when resolved:
+
+Home screen section badge (pill disappears or count decrements)
+My Wills in-list badge on that specific will row
+"N wills need your attention" filtered header — recomputes; if count hits 0, header disappears and filter lifts automatically, restoring the full list
+Will detail contextual banner — dismisses immediately after the CTA action completes
+Bell icon notification count in the header — decrements accordingly
+
+Implementation approach:
+
+Store alerts in a central store (Zustand slice or React context) as the single source of truth
+All badge renders are derived/computed from that store — no local copies
+On resolution event, call resolveAlert(type, id) which removes the matching entry from the store
+Resolution should be triggered at the point of action completion, not on screen exit — e.g. after the review form is successfully submitted, not when the user navigates away
+If the resolution involves an API call, optimistically clear the badge immediately and roll back only on error
+
+Edge cases to handle:
+
+User resolves a will review but has 2 more pending → badge decrements to "2 reviews needed", does not disappear
+User declines a friend request → clears that request's alert; other pending requests remain
+User backgrounded the app, another device resolved the action → on foreground, re-fetch alert state and reconcile (clear any already-resolved alerts)
+Network error on resolution → restore the badge, show a subtle error toast, do not leave a phantom-cleared alert

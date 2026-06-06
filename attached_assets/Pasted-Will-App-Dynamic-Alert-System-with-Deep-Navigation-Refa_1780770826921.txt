@@ -1,0 +1,32 @@
+Will App – Dynamic Alert System with Deep Navigation
+Refactor the home screen alert card into a context-aware badge system, and ensure every alert guides the user directly to the source — not just the section.
+Part 1: Home screen badges (same as before)
+Each alert type maps to a home screen section and renders as an inline pill badge. Driven by:
+tstype HomeAlert = {
+  type: 'will_review' | 'friend_request' | 'invite_accepted' | 'proof_drop' | 'explore_match'
+  count: number
+  targetSection: 'my_wills' | 'friends' | 'explore'
+  willIds?: string[]
+  userId?: string
+}
+Part 2: Deep navigation — guided all the way in
+When the user taps a badged section, the app must guide them to the exact item, not just the list.
+Rule: If willIds.length === 1, navigate directly to that will's detail screen. If willIds.length > 1, open My Wills but apply a filter automatically so only the flagged wills are visible.
+Inside My Wills list — in-list alerting:
+
+Wills with a pending action get a pill badge on their row (same amber/teal system), so the user can spot them instantly even among 45 entries
+The filtered view should show flagged wills at the top, with a dismissible header like "2 wills need your attention" above them and the rest of the list below
+Once the user resolves the action (completes review, accepts invite, etc.), the badge clears in real time — no stale indicators
+
+Inside the Will detail screen:
+
+If the will was opened via an alert, scroll to or highlight the relevant section (e.g. scroll to the review prompt, highlight the new proof drop, show the pending invite banner at the top)
+Show a subtle contextual banner at the top: e.g. "Review needed — your will ended on Jun 3" or "Bruno sent you a Team Will invite" with a clear CTA button
+Banner dismisses after the user completes the action or manually closes it
+
+Friend request flow:
+
+Tapping the Friends badge opens the Friends screen with a "Requests" tab pre-selected, not the default view
+Each pending request row has an Accept / Decline inline — no extra navigation needed
+
+General navigation principle: Every alert must have a deterministic, one-tap-or-less path from home screen badge → exact item → clear CTA. No dead ends, no hunting.
