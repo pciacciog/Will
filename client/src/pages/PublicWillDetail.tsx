@@ -1,17 +1,25 @@
-import { useState, useMemo } from "react";
-import { useLocation, useParams } from "wouter";
+import { useState } from "react";
+import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
-import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
+import { MobileLayout } from "@/components/ui/design-system";
 import { useToast } from "@/hooks/use-toast";
-import { Zap, ChevronRight, ChevronDown, ChevronUp, CheckCircle, XCircle, Users } from "lucide-react";
+import {
+  Zap, ChevronRight, CheckCircle, Users, MessageCircle,
+  ArrowLeft, Star, XCircle,
+} from "lucide-react";
 import type { WillCheckIn } from "@shared/schema";
 import DayStrip from "@/components/DayStrip";
+import DeadlineArc from "@/components/DeadlineArc";
+import DailyCheckInModal from "@/components/DailyCheckInModal";
+import MemberCard from "@/components/MemberCard";
+import type { MemberCardData } from "@/components/MemberCard";
 import { cn } from "@/lib/utils";
-import DeadlineArc, { deadlineUrgency } from "@/components/DeadlineArc";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+type RenderState = 'owner' | 'member' | 'viewer';
 
 type PublicWillDetails = {
   id: number;
@@ -32,14 +40,23 @@ type PublicWillDetails = {
   hasJoined: boolean;
   hasPushed: boolean;
   daysIn: number;
+  renderState: RenderState;
+  childWillId?: number;
 };
 
-type Participant = { id: string; firstName: string; joinDate: string | null };
-
-type PublicProgress = {
-  checkIns: WillCheckIn[];
-  abstainEntries: { date: string; honored: boolean }[];
+type MyProgress = {
+  myWillId: number;
+  isOwner: boolean;
+  what: string;
+  why: string;
+  checkInType: string | null;
   commitmentCategory: string | null;
+  startDate: string;
+  endDate: string | null;
+  isIndefinite: boolean | null;
+  activeDays: string | null;
+  customDays: string | null;
+  checkIns: WillCheckIn[];
   progress: {
     totalDays: number;
     checkedInDays: number;
@@ -49,11 +66,18 @@ type PublicProgress = {
     noCount: number;
     streak: number;
   };
+  dayCount: number;
+  daysLeft: number | null;
+};
+
+type MembersData = {
+  members: MemberCardData[];
+  totalCount: number;
 };
 
 type PushStatus = {
   hasUserPushedToday: boolean;
-  pushes: { id: number; willId: number; userId: string; pushedAt: string; user: { firstName: string; id?: string } }[];
+  pushes: { id: number; willId: number; userId: string; pushedAt: string; user: { firstName: string } }[];
 };
 
 type MessagesPreview = {
@@ -64,640 +88,671 @@ type MessagesPreview = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = [
-  '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B',
-  '#EC4899', '#14B8A6', '#6366F1', '#F43F5E',
+  '#7C3AED', '#2563EB', '#059669', '#D97706',
+  '#DC2626', '#0891B2', '#65A30D', '#C026D3',
 ];
-
-function avatarColor(id: string): string {
+function avatarColor(id: string) {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
-
-function getInitials(name: string): string {
-  return name.charAt(0).toUpperCase();
+function getInitials(name: string) { return (name || '?').charAt(0).toUpperCase(); }
+function todayKey() { return new Date().toLocaleDateString('en-CA'); }
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function formatJoinDate(dateStr: string | null): string {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+// ── Chat Preview Card (shared by both views) ──────────────────────────────────
+
+function ChatPreviewCard({
+  totalCount, messages, onOpenChat,
+}: {
+  totalCount: number;
+  messages: MessagesPreview['messages'];
+  onOpenChat: () => void;
+}) {
+  const preview = messages.slice(0, 3);
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-hub-chat">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+          <MessageCircle className="w-4 h-4 text-blue-500" />
+          Hub Chat
+        </p>
+        {totalCount > 0 && (
+          <span className="text-xs text-gray-400">{totalCount} {totalCount === 1 ? 'message' : 'messages'}</span>
+        )}
+      </div>
+
+      {preview.length > 0 ? (
+        <div className="space-y-2.5 mb-3">
+          {preview.map(msg => (
+            <div key={msg.id} className="flex items-start gap-2">
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0 mt-0.5"
+                style={{ backgroundColor: avatarColor(msg.userId) }}
+              >
+                {getInitials(msg.user.firstName)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-semibold text-gray-700">
+                  @{msg.user.firstName.toLowerCase()}
+                </span>
+                <span className="text-gray-400 ml-1 text-[10px]">{relativeTime(msg.createdAt)}</span>
+                <p className="text-xs text-gray-600 break-words leading-snug">{msg.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-400 text-center py-2 mb-3">No messages yet — be the first!</p>
+      )}
+
+      <button
+        onClick={onOpenChat}
+        className="w-full flex items-center justify-center gap-1 py-2 text-sm font-medium transition-opacity active:opacity-70"
+        style={{ color: '#534AB7' }}
+        data-testid="button-open-chat"
+      >
+        {totalCount > 0 ? `See all ${totalCount} messages` : 'Start the conversation'}
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Viewer View ───────────────────────────────────────────────────────────────
+
+function ViewerView({
+  will, members, pushStatus, messagesPreview,
+  onJoin, onTeamPush, teamPushPending, onOpenChat,
+}: {
+  will: PublicWillDetails;
+  members: MemberCardData[];
+  pushStatus: PushStatus | undefined;
+  messagesPreview: MessagesPreview | undefined;
+  onJoin: () => void;
+  onTeamPush: () => void;
+  teamPushPending: boolean;
+  onOpenChat: () => void;
+}) {
+  const [, setLocation] = useLocation();
+  const alreadyPushed = pushStatus?.hasUserPushedToday ?? false;
+  const topMembers = members.slice(0, 4);
+
+  return (
+    <>
+      <div
+        className="flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+80px)]"
+        style={{ paddingTop: 12 }}
+      >
+        <div className="px-4 space-y-4">
+
+          {/* Commitment header card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="card-commitment">
+            <div className="flex items-start gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+                style={{ backgroundColor: avatarColor(will.createdBy) }}
+              >
+                {getInitials(will.creatorName)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 mb-0.5">@{will.creatorName.toLowerCase()}</p>
+                <p className="text-base font-semibold text-gray-900 leading-snug">I will {will.what}</p>
+                <div className="flex items-center flex-wrap gap-2 mt-2">
+                  {will.commitmentCategory && (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 capitalize">
+                      {will.commitmentCategory}
+                    </span>
+                  )}
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                    Public Will
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-members">
+              <p className="text-xl font-bold text-gray-900">{will.memberCount}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">members</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-days">
+              <p className="text-xl font-bold text-gray-900">{will.daysIn}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">days running</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-status">
+              <p className="text-base font-bold text-emerald-600 mt-1">●</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                {will.status === 'active' ? 'active' : will.status ?? 'open'}
+              </p>
+            </div>
+          </div>
+
+          {/* Who's in */}
+          {topMembers.length > 0 && (
+            <div data-testid="section-members">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  Who's in ({will.memberCount})
+                </p>
+                {will.memberCount > 4 && (
+                  <button
+                    onClick={() => setLocation(`/public-will/${will.id}/members`)}
+                    className="text-xs font-medium flex items-center gap-0.5"
+                    style={{ color: '#534AB7' }}
+                    data-testid="button-see-all-members"
+                  >
+                    See all <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="space-y-3">
+                {topMembers.map(m => <MemberCard key={m.userId} member={m} />)}
+                {will.memberCount > 4 && (
+                  <button
+                    onClick={() => setLocation(`/public-will/${will.id}/members`)}
+                    className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-500 bg-gray-50 border border-gray-100"
+                    data-testid="button-see-more-members"
+                  >
+                    + {will.memberCount - 4} more members
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Team Push card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-team-push">
+            <div className="flex items-center gap-2 mb-1">
+              <Zap className="w-4 h-4 text-amber-500" fill="currentColor" />
+              <p className="text-sm font-semibold text-gray-700">Team Push</p>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Encourage everyone in this Will — they'll all get a notification from you.
+            </p>
+            <button
+              onClick={() => !alreadyPushed && !teamPushPending && onTeamPush()}
+              disabled={alreadyPushed || teamPushPending}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all",
+                alreadyPushed ? "bg-gray-100 text-gray-400" : "text-white active:opacity-80",
+              )}
+              style={alreadyPushed ? {} : { backgroundColor: '#534AB7' }}
+              data-testid="button-team-push"
+            >
+              <Zap
+                className={cn("w-4 h-4", alreadyPushed ? "text-gray-400" : "fill-white text-white")}
+              />
+              {alreadyPushed ? 'Team Pushed today ✓' : 'Push the whole group ⚡'}
+            </button>
+          </div>
+
+          {/* Hub Chat preview */}
+          {messagesPreview && (
+            <ChatPreviewCard
+              totalCount={messagesPreview.totalCount}
+              messages={messagesPreview.messages}
+              onOpenChat={onOpenChat}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Fixed bottom: Join CTA */}
+      <div
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4"
+        style={{ paddingTop: 12, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+      >
+        <button
+          onClick={onJoin}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-base font-semibold text-white transition-opacity active:opacity-80"
+          style={{ backgroundColor: '#534AB7' }}
+          data-testid="button-join"
+        >
+          Join Will
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ── Personal View (owner / member) ────────────────────────────────────────────
+
+function PersonalView({
+  will, myProgress, members, pushStatus, messagesPreview,
+  onOpenChat, onOpenAllMembers,
+  checkInOpen, onOpenCheckIn, onCloseCheckIn, checkInDate, onDayClick,
+}: {
+  will: PublicWillDetails;
+  myProgress: MyProgress;
+  members: MemberCardData[];
+  pushStatus: PushStatus | undefined;
+  messagesPreview: MessagesPreview | undefined;
+  onOpenChat: () => void;
+  onOpenAllMembers: () => void;
+  checkInOpen: boolean;
+  onOpenCheckIn: (date?: string) => void;
+  onCloseCheckIn: () => void;
+  checkInDate: string | null;
+  onDayClick: (date: string) => void;
+}) {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [whyExpanded, setWhyExpanded] = useState(false);
+
+  const todayStr = todayKey();
+  const todayCheckIn = myProgress.checkIns.find(c => c.date === todayStr);
+  const isCheckedInToday = todayCheckIn?.status === 'yes' || todayCheckIn?.status === 'partial';
+  const isDailyTracking = myProgress.checkInType === 'daily' || myProgress.checkInType === 'specific_days';
+  const isRecurring = myProgress.commitmentCategory === 'recurring';
+  const isDuration = myProgress.commitmentCategory === 'duration';
+  const isEvent = myProgress.commitmentCategory === 'event';
+
+  const othersWithMe = members.filter(m => m.userId !== user?.id);
+  const topOthers = othersWithMe.slice(0, 3);
+  const receievedPushCount = (pushStatus?.pushes ?? []).length;
+
+  const heroGradient = isRecurring
+    ? 'from-emerald-500 to-emerald-600'
+    : isDuration
+    ? 'from-blue-500 to-blue-600'
+    : isEvent
+    ? 'from-purple-500 to-purple-600'
+    : 'from-gray-500 to-gray-600';
+
+  return (
+    <>
+      <div
+        className="flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+72px)]"
+        style={{ paddingTop: 12 }}
+      >
+        <div className="px-4 space-y-4">
+
+          {/* Personal hero card */}
+          <div
+            className={`bg-gradient-to-br ${heroGradient} rounded-2xl p-5 shadow-sm`}
+            data-testid="card-personal-hero"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              {isRecurring && <CheckCircle className="w-4 h-4 text-white opacity-80" />}
+              {isDuration && <XCircle className="w-4 h-4 text-white opacity-80" />}
+              {isEvent && <Star className="w-4 h-4 text-white opacity-80" />}
+              <span className="text-white text-xs font-medium opacity-80 capitalize">
+                {myProgress.commitmentCategory ?? 'Will'}
+              </span>
+            </div>
+            <p className="text-white font-semibold text-base leading-snug mb-4">
+              I will {myProgress.what || will.what}
+            </p>
+
+            {isRecurring && isDailyTracking ? (
+              isCheckedInToday ? (
+                <div className="flex items-center gap-2 bg-white/20 rounded-xl px-4 py-3">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                  <span className="text-white font-semibold text-sm">Checked in today ✓</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => onOpenCheckIn()}
+                  className="w-full flex items-center justify-center gap-2 bg-white rounded-xl py-3 text-sm font-semibold transition-opacity active:opacity-80"
+                  style={{ color: '#059669' }}
+                  data-testid="button-check-in"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Check in for today
+                </button>
+              )
+            ) : isDuration ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white text-xs opacity-70">Streak</p>
+                  <p className="text-white text-2xl font-bold">{myProgress.progress?.streak ?? 0} days</p>
+                </div>
+                <button
+                  onClick={() => setLocation(`/will/${myProgress.myWillId}`)}
+                  className="flex items-center gap-1 bg-white/20 text-white text-xs font-medium px-3 py-1.5 rounded-full"
+                  data-testid="button-full-view"
+                >
+                  Check in <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            ) : isEvent ? (
+              <button
+                onClick={() => setLocation(`/will/${myProgress.myWillId}`)}
+                className="w-full flex items-center justify-center gap-2 bg-white/20 text-white rounded-xl py-3 text-sm font-semibold"
+                data-testid="button-full-view"
+              >
+                View full Will <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <div className="bg-white/20 rounded-xl px-4 py-3">
+                <p className="text-white text-xs opacity-70">Day</p>
+                <p className="text-white text-2xl font-bold">{myProgress.dayCount}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-day-in">
+              <p className="text-xl font-bold text-gray-900">{myProgress.dayCount}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">day in</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-days-left">
+              <p className="text-xl font-bold text-gray-900">
+                {myProgress.daysLeft !== null ? myProgress.daysLeft : '∞'}
+              </p>
+              <p className="text-[11px] text-gray-400 mt-0.5">days left</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-success-rate">
+              <p className="text-xl font-bold text-gray-900">
+                {Math.round(myProgress.progress?.successRate ?? 0)}%
+              </p>
+              <p className="text-[11px] text-gray-400 mt-0.5">done</p>
+            </div>
+          </div>
+
+          {/* DayStrip calendar (only if daily tracking with data) */}
+          {isDailyTracking && myProgress.checkIns.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-calendar">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your Calendar</p>
+              <DayStrip
+                startDate={myProgress.startDate}
+                endDate={myProgress.endDate}
+                checkIns={myProgress.checkIns}
+                onDayClick={onDayClick}
+              />
+            </div>
+          )}
+
+          {/* DeadlineArc for event wills */}
+          {isEvent && myProgress.startDate && myProgress.endDate && (
+            <DeadlineArc startDate={myProgress.startDate} endDate={myProgress.endDate} />
+          )}
+
+          {/* Why chip */}
+          {myProgress.why && (
+            <button
+              onClick={() => setWhyExpanded(e => !e)}
+              className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left"
+              data-testid="card-why"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Because</p>
+                <ChevronRight
+                  className={cn("w-4 h-4 text-gray-400 transition-transform", whyExpanded && "rotate-90")}
+                />
+              </div>
+              {whyExpanded ? (
+                <p className="text-sm text-gray-700 mt-2 leading-relaxed">{myProgress.why}</p>
+              ) : (
+                <p className="text-sm text-gray-500 mt-1 truncate">{myProgress.why}</p>
+              )}
+            </button>
+          )}
+
+          {/* Pushes received */}
+          {receievedPushCount > 0 && (
+            <div
+              className="bg-amber-50 rounded-2xl border border-amber-100 p-4 flex items-center gap-3"
+              data-testid="card-pushes-received"
+            >
+              <Zap className="w-5 h-5 text-amber-500 flex-shrink-0" fill="currentColor" />
+              <p className="text-sm text-amber-800">
+                <span className="font-semibold">{receievedPushCount}</span>{' '}
+                {receievedPushCount === 1 ? 'person has' : 'people have'} pushed this Will today!
+              </p>
+            </div>
+          )}
+
+          {/* Who's with you */}
+          {topOthers.length > 0 && (
+            <div data-testid="section-members-with-you">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  Who's with you ({will.memberCount})
+                </p>
+                <button
+                  onClick={onOpenAllMembers}
+                  className="text-xs font-medium flex items-center gap-0.5"
+                  style={{ color: '#534AB7' }}
+                  data-testid="button-see-all-members"
+                >
+                  See all <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                {topOthers.map(m => <MemberCard key={m.userId} member={m} />)}
+              </div>
+            </div>
+          )}
+
+          {/* Hub Chat preview */}
+          {messagesPreview && (
+            <ChatPreviewCard
+              totalCount={messagesPreview.totalCount}
+              messages={messagesPreview.messages}
+              onOpenChat={onOpenChat}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* DailyCheckInModal */}
+      <DailyCheckInModal
+        isOpen={checkInOpen}
+        onClose={onCloseCheckIn}
+        willId={myProgress.myWillId}
+        initialDate={checkInDate}
+        commitmentText={myProgress.what || will.what}
+        startDate={myProgress.startDate}
+        endDate={myProgress.endDate ?? undefined}
+        existingCheckIns={myProgress.checkIns}
+        checkInType={myProgress.checkInType ?? undefined}
+        activeDays={myProgress.activeDays ?? undefined}
+        customDays={myProgress.customDays ?? undefined}
+      />
+
+      {/* Fixed bottom status bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 border-t px-4"
+        style={{
+          paddingTop: 12,
+          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+          backgroundColor: '#F0FDF4',
+          borderColor: '#D1FAE5',
+        }}
+      >
+        <div className="flex items-center justify-center gap-2">
+          <CheckCircle className="w-4 h-4 text-emerald-600" />
+          <span className="text-sm font-medium text-emerald-700">
+            {will.renderState === 'owner' ? 'Your Will' : "You're in ✓"}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 
 export default function PublicWillDetail() {
   const { id } = useParams<{ id: string }>();
-  const willId = parseInt(id);
+  const willId = parseInt(id!);
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const [pushSuccess, setPushSuccess] = useState(false);
-  const [showJoinersModal, setShowJoinersModal] = useState(false);
-  const [calendarExpanded, setCalendarExpanded] = useState(false);
-
-  // ── Queries ─────────────────────────────────────────────────────────────────
+  const [checkInOpen, setCheckInOpen] = useState(false);
+  const [checkInDate, setCheckInDate] = useState<string | null>(null);
 
   const { data: will, isLoading } = useQuery<PublicWillDetails>({
     queryKey: [`/api/wills/${willId}/public-details`],
     enabled: !!willId,
+    refetchInterval: 30000,
   });
 
-  const { data: participantsData } = useQuery<{ participants: Participant[]; totalCount: number }>({
-    queryKey: [`/api/wills/${willId}/participants`],
+  const { data: membersData } = useQuery<MembersData>({
+    queryKey: [`/api/wills/${willId}/members-activity`],
     enabled: !!willId,
-  });
-
-  const { data: progressData } = useQuery<PublicProgress>({
-    queryKey: [`/api/wills/${willId}/public-progress`],
-    enabled: !!willId,
+    refetchInterval: 60000,
   });
 
   const { data: pushStatus } = useQuery<PushStatus>({
     queryKey: [`/api/wills/${willId}/push/status`],
     enabled: !!willId,
+    refetchInterval: 60000,
+  });
+
+  const isParticipant = will?.renderState === 'owner' || will?.renderState === 'member';
+
+  const { data: myProgress } = useQuery<MyProgress>({
+    queryKey: [`/api/wills/${willId}/my-public-progress`],
+    enabled: !!willId && isParticipant,
     refetchInterval: 30000,
   });
 
   const { data: messagesPreview } = useQuery<MessagesPreview>({
     queryKey: [`/api/wills/${willId}/public-messages-preview`],
     enabled: !!willId,
-    refetchInterval: 15000,
+    refetchInterval: 30000,
   });
 
-  // ── Push mutation ────────────────────────────────────────────────────────────
-
-  const pushMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/wills/${willId}/push`, { method: 'POST' }),
+  const teamPushMutation = useMutation({
+    mutationFn: () => apiRequest(`/api/wills/${willId}/team-push`, 'POST'),
     onSuccess: () => {
-      setPushSuccess(true);
       qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/push/status`] });
-      qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/public-details`] });
+      toast({ title: "Team Push sent! ⚡", description: "Everyone got your encouragement." });
     },
     onError: (err: any) => {
-      const msg = err?.message || 'Could not send push';
-      if (msg.includes('already pushed today') || msg.includes('already pushed')) {
-        toast({ title: "Already pushed today", description: "Come back tomorrow to push again." });
+      const msg = String(err?.message || '');
+      if (msg.toLowerCase().includes('already')) {
+        toast({ title: "Already pushed today", description: "Come back tomorrow!" });
+        qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/push/status`] });
       } else {
-        toast({ title: "Error", description: msg, variant: "destructive" });
+        toast({ title: "Couldn't send push", description: msg || "Please try again.", variant: "destructive" });
       }
     },
   });
 
-  // ── Derived values ──────────────────────────────────────────────────────────
+  const handleOpenCheckIn = (date?: string) => {
+    setCheckInDate(date ?? null);
+    setCheckInOpen(true);
+  };
 
-  const alreadyPushed = pushStatus?.hasUserPushedToday || pushSuccess;
-  const pushCount = pushStatus?.pushes?.length ?? 0;
-  const recentPushers = pushStatus?.pushes?.slice(0, 4) ?? [];
+  const handleCloseCheckIn = () => {
+    setCheckInOpen(false);
+    setCheckInDate(null);
+    qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/my-public-progress`] });
+  };
 
-  const category = will?.commitmentCategory ?? null;
-  const creatorHandle = will ? `@${will.creatorName.toLowerCase().replace(/\s+/g, '')}` : '';
+  const handleDayClick = (date: string) => handleOpenCheckIn(date);
+  const handleOpenChat = () => setLocation(`/will/${willId}/messages?from=public`);
+  const handleJoin = () => setLocation(`/explore/join/${willId}`);
+  const handleOpenAllMembers = () => setLocation(`/public-will/${willId}/members`);
 
-  const missionDaysRemaining = useMemo(() => {
-    if (category !== 'event' || !will?.endDate) return 999;
-    return Math.ceil((new Date(will.endDate).getTime() - new Date().setHours(0,0,0,0)) / 86400000);
-  }, [category, will?.endDate]);
+  const members = membersData?.members ?? [];
+  const navTitle = will?.title || (will?.what ? `I will ${will.what}` : 'Public Will');
 
-  // Duration calendar computations
-  const durTotalDays = useMemo(() => {
-    if (category !== 'duration' || !will?.startDate || !will?.endDate) return 0;
-    return Math.max(1, Math.round((new Date(will.endDate).getTime() - new Date(will.startDate).getTime()) / 86400000));
-  }, [category, will?.startDate, will?.endDate]);
-
-  const durDaysIn = useMemo(() => {
-    if (category !== 'duration' || !will?.startDate || durTotalDays === 0) return 0;
-    const start = new Date(will.startDate); start.setHours(0, 0, 0, 0);
-    const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0);
-    return Math.min(durTotalDays, Math.max(1, Math.floor((todayMid.getTime() - start.getTime()) / 86400000) + 1));
-  }, [category, will?.startDate, durTotalDays]);
-
-  const durDaysLeft = Math.max(0, durTotalDays - durDaysIn);
-
-  const durStartDOW = useMemo(() => {
-    if (category !== 'duration' || !will?.startDate) return 0;
-    return (new Date(will.startDate).getDay() + 6) % 7;
-  }, [category, will?.startDate]);
-
-  const durCalendarDays = useMemo(() => {
-    if (category !== 'duration' || !will?.startDate || durTotalDays === 0) return [] as { dayNum: number; date: string; status: 'checked-in' | 'missed' | 'today' | 'upcoming' }[];
-    const abstainEntries = progressData?.abstainEntries ?? [];
-    const start = new Date(will.startDate); start.setHours(0, 0, 0, 0);
-    const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0);
-    return Array.from({ length: durTotalDays }, (_, i) => {
-      const d = new Date(start); d.setDate(d.getDate() + i);
-      const dateStr = d.toLocaleDateString('en-CA');
-      const isToday = d.getTime() === todayMid.getTime();
-      const isPast = d < todayMid;
-      const entry = abstainEntries.find(e => e.date === dateStr);
-      const status = isToday ? 'today' : isPast ? (entry?.honored ? 'checked-in' : 'missed') : 'upcoming';
-      return { dayNum: i + 1, date: dateStr, status } as { dayNum: number; date: string; status: 'checked-in' | 'missed' | 'today' | 'upcoming' };
-    });
-  }, [category, will?.startDate, durTotalDays, progressData?.abstainEntries]);
-
-  const durMissedCount = useMemo(() => {
-    return durCalendarDays.filter(d => d.status === 'missed').length;
-  }, [durCalendarDays]);
-
-  const currentWeekSlice = useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const daysFromMon = (today.getDay() + 6) % 7;
-    const monday = new Date(today); monday.setDate(today.getDate() - daysFromMon);
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(monday); d.setDate(monday.getDate() + i);
-      const dateStr = d.toLocaleDateString('en-CA');
-      return durCalendarDays.find(x => x.date === dateStr) ?? null;
-    });
-  }, [durCalendarDays]);
-
-  // Success rate for stat box
-  const successRate = useMemo(() => {
-    if (category === 'duration') {
-      const entries = progressData?.abstainEntries ?? [];
-      const past = durCalendarDays.filter(d => d.status === 'checked-in' || d.status === 'missed');
-      if (past.length === 0) return null;
-      const honored = entries.filter(e => e.honored).length;
-      return Math.round((honored / past.length) * 100);
-    }
-    if (category === 'recurring' && will) {
-      const cis = progressData?.checkIns ?? [];
-      const start = new Date(will.startDate + 'T00:00:00');
-      start.setHours(0, 0, 0, 0);
-      const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0);
-      const elapsedDays = Math.floor((todayMid.getTime() - start.getTime()) / 86400000);
-      if (elapsedDays <= 0) return null;
-      const yesCount = cis.filter((c: WillCheckIn) => c.status === 'yes').length;
-      const partialCount = cis.filter((c: WillCheckIn) => c.status === 'partial').length;
-      return Math.round(((yesCount + partialCount * 0.5) / elapsedDays) * 100);
-    }
-    return progressData?.progress?.successRate != null ? Math.round(progressData.progress.successRate) : null;
-  }, [category, progressData, durCalendarDays, will]);
-
-  // ── Loading / error states ──────────────────────────────────────────────────
-
-  if (isLoading) {
+  if (isLoading || !will) {
     return (
       <MobileLayout>
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#1D9E75' }} />
+        <div
+          className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center gap-3"
+          style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+        >
+          <button onClick={() => setLocation('/explore')} className="text-gray-600 p-1 -ml-1">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <div className="p-4 space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />
+          ))}
         </div>
       </MobileLayout>
     );
   }
-
-  if (!will) {
-    return (
-      <MobileLayout>
-        <div className="text-center py-20 text-gray-500">Will not found.</div>
-      </MobileLayout>
-    );
-  }
-
-  const typeBadgeLabel =
-    category === 'recurring' ? 'Recurring'
-    : category === 'duration' ? 'Duration'
-    : category === 'event' ? 'Event'
-    : null;
-
-  const checkIns = progressData?.checkIns ?? [];
-  const participants = participantsData?.participants ?? [];
-  const msgPreview = messagesPreview?.messages ?? [];
-  const msgTotal = messagesPreview?.totalCount ?? 0;
 
   return (
     <MobileLayout>
-      <div className="pb-28 space-y-3">
-
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between min-h-[56px]">
-          <UnifiedBackButton onClick={() => setLocation('/explore')} testId="button-back" />
-          <div className="flex flex-col items-center gap-1.5">
-            <h1 className="text-xl font-semibold text-gray-900" data-testid="text-page-title">Public Will</h1>
-            <div className="flex items-center gap-1.5">
-              {(() => {
-                const urg = category === 'event' ? deadlineUrgency(missionDaysRemaining) : null;
-                return (
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${urg ? `${urg.pillBg} ${urg.pillText}` : 'bg-emerald-100 text-emerald-700'}`}
-                    data-testid="badge-active-day"
-                  >
-                    Active · Day {will.daysIn}
-                  </span>
-                );
-              })()}
-              {typeBadgeLabel && (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: '#EEEDF9', color: '#534AB7' }} data-testid="badge-will-type">
-                  {typeBadgeLabel}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="w-11" />
-        </div>
-
-        {/* ── Commitment card ──────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="card-commitment">
-          {/* Creator row */}
-          <div className="flex items-center gap-3 pb-3">
-            <div className="relative flex-shrink-0">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                style={{ backgroundColor: avatarColor(will.createdBy) }}
-                data-testid="avatar-creator"
-              >
-                {getInitials(will.creatorName)}
-              </div>
-              <span className="absolute -top-1 -right-1 text-[12px] leading-none">👑</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900" data-testid="text-creator-name">{creatorHandle}</p>
-              <p className="text-xs text-gray-400">Creator · {will.daysIn} days in</p>
-            </div>
-          </div>
-          <div className="border-t border-gray-100 mb-3" />
-          {/* WILL label */}
-          <p
-            className="text-[11px] font-bold tracking-[0.12em] uppercase mb-2"
-            style={{
-              color: category === 'recurring' ? '#1D9E75'
-                   : category === 'duration'  ? '#1D6FBE'
-                   : category === 'event'     ? '#534AB7'
-                   : '#1D9E75'
-            }}
-            data-testid="label-will-owner"
-          >
-            WILL
-          </p>
-          {/* Commitment text */}
-          <p className="text-base font-semibold text-gray-900 leading-snug" data-testid="text-commitment">
-            "{will.what}"
-          </p>
-        </div>
-
-        {/* ── 3 Stat boxes ─────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-2" data-testid="row-stats">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-3 px-1">
-            <div className="text-lg font-bold text-gray-900" data-testid="stat-days-in">{will.daysIn}</div>
-            <div className="text-[11px] text-gray-400">days in</div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-3 px-1">
-            {successRate !== null ? (
-              <div className="text-lg font-bold" style={{ color: '#1D9E75' }} data-testid="stat-success-rate">{successRate}%</div>
-            ) : (
-              <div className="text-lg font-bold text-gray-300">—</div>
-            )}
-            <div className="text-[11px] text-gray-400">success rate</div>
-          </div>
+      {/* Nav bar */}
+      <div
+        className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center gap-3"
+        style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+      >
+        <button
+          onClick={() => setLocation('/explore')}
+          className="text-gray-600 p-1 -ml-1 flex-shrink-0"
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <p
+          className="flex-1 text-sm font-semibold text-gray-900 truncate"
+          data-testid="text-nav-title"
+        >
+          {navTitle}
+        </p>
+        {isParticipant ? (
           <button
-            onClick={() => setShowJoinersModal(true)}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-3 px-1 flex flex-col items-center justify-center active:opacity-70 transition-opacity"
-            data-testid="stat-joined"
+            onClick={handleOpenAllMembers}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 flex-shrink-0"
+            data-testid="button-members-count"
           >
-            <div className="flex items-center gap-0.5">
-              <span className="text-lg font-bold text-gray-900">{will.memberCount}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-gray-400 mt-0.5" />
-            </div>
-            <div className="text-[11px] text-gray-400">joined</div>
+            <Users className="w-3 h-3" />
+            {will.memberCount}
           </button>
-        </div>
-
-        {/* ── Progress section ─────────────────────────────────────────────── */}
-        {category === 'recurring' ? (
-          /* Recurring: 7-day week strip */
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3" data-testid="card-progress-recurring">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{will.creatorName}'s Week</p>
-            {checkIns.length > 0 && (
-              <DayStrip
-                startDate={will.startDate}
-                endDate={will.endDate ?? null}
-                checkIns={checkIns}
-              />
-            )}
-            {progressData?.progress && (
-              <p className="text-xs text-gray-400">
-                Success rate <span className="font-semibold" style={{ color: '#1D9E75' }}>{Math.round(progressData.progress.successRate)}%</span>
-                {' · '}{progressData.progress.checkedInDays} of {progressData.progress.totalDays} days
-                {(progressData.progress.streak ?? 0) > 0 && ` · ${progressData.progress.streak}-day streak 🔥`}
-              </p>
-            )}
-          </div>
-
-        ) : category === 'duration' ? (
-          /* Duration: ring + calendar grid */
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4" data-testid="card-progress-duration">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 text-center">Their Progress</p>
-
-            {/* Ring */}
-            <div className="flex justify-center">
-              <div className="relative" style={{ width: 136, height: 136 }}>
-                <svg width="136" height="136" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="68" cy="68" r="52" fill="none" stroke="#E5E7EB" strokeWidth="10" />
-                  <circle
-                    cx="68" cy="68" r="52" fill="none"
-                    stroke="#1D6FBE" strokeWidth="10"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 52}`}
-                    strokeDashoffset={`${2 * Math.PI * 52 * (1 - durDaysIn / Math.max(1, durTotalDays))}`}
-                    style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ gap: 0 }}>
-                  <span className="text-[11px] text-gray-400" style={{ lineHeight: '1.2' }}>Day</span>
-                  <span className="font-bold" style={{ fontSize: 32, lineHeight: '1.05', color: '#1D6FBE' }}>{durDaysIn}</span>
-                  <span className="text-[11px] text-gray-400" style={{ lineHeight: '1.2' }}>of {durTotalDays}</span>
-                </div>
-              </div>
-            </div>
-
-
-            {/* Stat boxes */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
-                <div className="text-base font-bold text-gray-800">{durDaysIn}</div>
-                <div className="text-[11px] text-gray-500">days in</div>
-              </div>
-              <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
-                <div className="text-base font-bold text-gray-800">{durDaysLeft}</div>
-                <div className="text-[11px] text-gray-500">days left</div>
-              </div>
-              <div className="text-center py-2 px-1 rounded-xl bg-gray-50">
-                <div className="text-base font-bold" style={{ color: durMissedCount > 0 ? '#E24B4A' : '#1F2937' }}>{durMissedCount}</div>
-                <div className="text-[11px] text-gray-500">missed</div>
-              </div>
-            </div>
-
-            {/* Grid calendar */}
-            {durCalendarDays.length > 0 && (
-              <div>
-                <div className="border-t border-gray-100 mb-3" />
-                <div className="grid grid-cols-7 mb-1.5">
-                  {['M','T','W','T','F','S','S'].map((h, i) => (
-                    <div key={i} className="text-center text-[10px] font-semibold text-gray-400">{h}</div>
-                  ))}
-                </div>
-                {/* Compact week strip (default when >7 days) */}
-                {durTotalDays > 7 && !calendarExpanded ? (
-                  <div className="grid grid-cols-7 gap-y-1.5">
-                    {currentWeekSlice.map((d, i) => (
-                      <div key={i} className="flex justify-center">
-                        {d ? (
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold"
-                            style={{
-                              backgroundColor: d.status === 'checked-in' ? '#1D9E75' : d.status === 'missed' ? '#FECDD3' : d.status === 'today' ? 'rgba(83,74,183,0.12)' : '#F3F4F6',
-                              border: d.status === 'missed' ? '2px solid #E24B4A' : d.status === 'today' ? '2px solid #534AB7' : 'none',
-                              color: d.status === 'checked-in' ? '#fff' : d.status === 'missed' ? '#E24B4A' : d.status === 'today' ? '#534AB7' : '#9CA3AF',
-                            }}
-                          >
-                            {d.dayNum}
-                          </div>
-                        ) : (
-                          <div className="w-7 h-7 flex items-center justify-center">
-                            <span className="text-[10px] text-gray-200">·</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  /* Full grid */
-                  <div className="grid grid-cols-7 gap-y-1.5">
-                    {Array.from({ length: durStartDOW }).map((_, i) => <div key={`pad-${i}`} />)}
-                    {durCalendarDays.map((d) => (
-                      <div key={d.dayNum} className="flex justify-center">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold"
-                          style={{
-                            backgroundColor:
-                              d.status === 'checked-in' ? '#1D9E75'
-                              : d.status === 'missed' ? '#FECDD3'
-                              : d.status === 'today' ? 'rgba(83,74,183,0.12)'
-                              : '#F3F4F6',
-                            border:
-                              d.status === 'missed' ? '2px solid #E24B4A'
-                              : d.status === 'today' ? '2px solid #534AB7'
-                              : 'none',
-                            color:
-                              d.status === 'checked-in' ? '#fff'
-                              : d.status === 'missed' ? '#E24B4A'
-                              : d.status === 'today' ? '#534AB7'
-                              : '#9CA3AF',
-                          }}
-                        >
-                          {d.dayNum}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center justify-center gap-4 mt-3">
-                  <div className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#1D9E75' }} />
-                    <span className="text-[10px] text-gray-500">Done</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#FECDD3', border: '1.5px solid #E24B4A' }} />
-                    <span className="text-[10px] text-gray-500">Missed</span>
-                  </div>
-                </div>
-                {/* Expand / collapse toggle */}
-                {durTotalDays > 7 && (
-                  <button
-                    onClick={() => setCalendarExpanded(e => !e)}
-                    className="w-full flex items-center justify-center gap-1 mt-2 text-[12px] text-gray-400 hover:text-gray-600 transition-colors py-1"
-                    data-testid="button-calendar-expand"
-                  >
-                    {calendarExpanded
-                      ? <><ChevronUp className="w-3.5 h-3.5" /> Show less</>
-                      : <><ChevronDown className="w-3.5 h-3.5" /> Show full calendar</>
-                    }
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-        ) : category === 'event' ? (
-          /* Event: Deadline Arc */
-          will.status === 'completed' ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-center gap-2" data-testid="card-progress-event">
-              <CheckCircle style={{ width: 20, height: 20, color: '#1D9E75' }} />
-              <span className="text-sm font-semibold" style={{ color: '#085041' }}>Completed</span>
-            </div>
-          ) : will.startDate && will.endDate ? (
-            <DeadlineArc startDate={will.startDate} endDate={will.endDate} />
-          ) : (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-center" data-testid="card-progress-event">
-              <span className="text-sm font-semibold text-gray-600">Still going</span>
-            </div>
-          )
-        ) : null}
-
-        {/* ── Push card ────────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3" data-testid="card-push">
-          {/* Push count row */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-lg font-bold text-gray-900">
-                {pushCount} {pushCount === 1 ? 'push' : 'pushes'}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">All time · be the next to push</p>
-            </div>
-            {/* Stacked pusher avatars */}
-            {recentPushers.length > 0 && (
-              <div className="flex -space-x-2 flex-shrink-0">
-                {recentPushers.map((p, i) => (
-                  <div
-                    key={i}
-                    className="w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-white text-[11px] font-semibold"
-                    style={{ backgroundColor: avatarColor(p.userId) }}
-                    title={p.user?.firstName}
-                  >
-                    {getInitials(p.user?.firstName || '?')}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Push button — inline in card, not owner only */}
-          {!will.isOwner && (
-            <button
-              onClick={() => { if (!alreadyPushed && !pushMutation.isPending) pushMutation.mutate(); }}
-              disabled={alreadyPushed || pushMutation.isPending}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-opacity active:opacity-80"
-              style={{
-                backgroundColor: alreadyPushed ? '#F3F4F6' : '#534AB7',
-                color: alreadyPushed ? '#9CA3AF' : '#fff',
-              }}
-              data-testid="button-push"
-            >
-              <Zap className={cn("w-4 h-4", alreadyPushed ? "text-gray-400" : "fill-white text-white")} />
-              {alreadyPushed ? 'Pushed today ✓' : `Push ${creatorHandle} today`}
-            </button>
-          )}
-        </div>
-
-        {/* ── Hub Chat card ────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-hub-chat">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Hub Chat</p>
-            {msgTotal > 0 && (
-              <span className="text-xs text-gray-400">{msgTotal} {msgTotal === 1 ? 'message' : 'messages'}</span>
-            )}
-          </div>
-
-          {msgPreview.length > 0 ? (
-            <div className="space-y-3">
-              {msgPreview.map((msg) => (
-                <div key={msg.id} className="flex items-start gap-2.5">
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-semibold flex-shrink-0 mt-0.5"
-                    style={{ backgroundColor: avatarColor(msg.userId) }}
-                  >
-                    {getInitials(msg.user.firstName)}
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-gray-700">@{msg.user.firstName.toLowerCase()}</span>
-                    <p className="text-sm text-gray-600 leading-snug">{msg.text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 text-center py-2">No messages yet. Be the first!</p>
-          )}
-
-          <button
-            onClick={() => setLocation(`/will/${willId}/messages?from=public`)}
-            className="w-full flex items-center justify-center gap-1 mt-4 py-2 text-sm font-medium transition-opacity active:opacity-70"
-            style={{ color: '#534AB7' }}
-            data-testid="button-see-all-messages"
+        ) : (
+          <span
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-gray-100 text-gray-500 flex-shrink-0"
+            data-testid="text-members-count"
           >
-            See all {msgTotal > 0 ? msgTotal : ''} messages
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-
+            <Users className="w-3 h-3" />
+            {will.memberCount}
+          </span>
+        )}
       </div>
 
-      {/* ── Bottom bar ──────────────────────────────────────────────────────── */}
-      {will.isOwner ? (
-        <div
-          className="fixed bottom-0 left-0 right-0 bg-emerald-50 border-t border-emerald-100 px-4 flex items-center justify-center gap-2"
-          style={{ paddingTop: 12, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
-        >
-          <CheckCircle className="w-4 h-4 text-emerald-600" />
-          <span className="text-sm font-medium text-emerald-700">Your Will</span>
-        </div>
-      ) : will.hasJoined ? (
-        <div
-          className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4"
-          style={{ paddingTop: 12, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
-        >
-          <div className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-50" data-testid="label-joined">
-            <CheckCircle className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm font-semibold text-emerald-700">You're in ✓</span>
-          </div>
-        </div>
+      {/* Dispatch to appropriate view */}
+      {isParticipant && myProgress ? (
+        <PersonalView
+          will={will}
+          myProgress={myProgress}
+          members={members}
+          pushStatus={pushStatus}
+          messagesPreview={messagesPreview}
+          onOpenChat={handleOpenChat}
+          onOpenAllMembers={handleOpenAllMembers}
+          checkInOpen={checkInOpen}
+          onOpenCheckIn={handleOpenCheckIn}
+          onCloseCheckIn={handleCloseCheckIn}
+          checkInDate={checkInDate}
+          onDayClick={handleDayClick}
+        />
       ) : (
-        <div
-          className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4"
-          style={{ paddingTop: 12, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
-        >
-          <button
-            onClick={() => setLocation(`/explore/join/${willId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-base font-semibold text-white transition-opacity active:opacity-80"
-            style={{ backgroundColor: '#534AB7' }}
-            data-testid="button-join"
-          >
-            Join Will
-          </button>
-        </div>
-      )}
-
-      {/* ── Joiners modal ────────────────────────────────────────────────────── */}
-      {showJoinersModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
-          onClick={() => setShowJoinersModal(false)}
-        >
-          <div
-            className="relative w-full max-w-md bg-white rounded-t-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-900">Who's joined</h2>
-              <button onClick={() => setShowJoinersModal(false)} className="text-gray-400 text-sm">Close</button>
-            </div>
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {participants.map((p) => (
-                <div key={p.id} className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
-                    style={{ backgroundColor: avatarColor(p.id) }}
-                  >
-                    {getInitials(p.firstName)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">@{p.firstName.toLowerCase()}</p>
-                    {p.joinDate && (
-                      <p className="text-xs text-gray-400">Joined {formatJoinDate(p.joinDate)}</p>
-                    )}
-                  </div>
-                  {p.id === will.createdBy && (
-                    <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">Creator</span>
-                  )}
-                </div>
-              ))}
-              {participants.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">No participants yet.</p>
-              )}
-            </div>
-          </div>
-        </div>
+        <ViewerView
+          will={will}
+          members={members}
+          pushStatus={pushStatus}
+          messagesPreview={messagesPreview}
+          onJoin={handleJoin}
+          onTeamPush={() => teamPushMutation.mutate()}
+          teamPushPending={teamPushMutation.isPending}
+          onOpenChat={handleOpenChat}
+        />
       )}
     </MobileLayout>
   );

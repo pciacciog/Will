@@ -2332,10 +2332,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasJoined,
         hasPushed,
         daysIn,
+        renderState: isOwner ? 'owner' : hasJoined ? 'member' : 'viewer',
+        childWillId: hasJoined && joinedWill ? (joinedWill as any).id : undefined,
       });
     } catch (error) {
       console.error("Error fetching public will details:", error);
       res.status(500).json({ message: "Failed to fetch Will details" });
+    }
+  });
+
+  app.get('/api/wills/:id/my-public-progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will || (will as any).kind !== 'public') {
+        return res.status(404).json({ message: "Public Will not found" });
+      }
+      const isOwner = will.createdBy === userId;
+      const joinedWill = isOwner ? null : await storage.getUserJoinedWill(userId, willId);
+      if (!isOwner && !joinedWill) {
+        return res.status(403).json({ message: "Not a participant" });
+      }
+      const myWillId = isOwner ? willId : (joinedWill as any).id;
+      const myWill: any = isOwner ? will : joinedWill!;
+      const childCommits = await storage.getWillCommitments(myWillId);
+      let myCommitment: any = childCommits.find((c: any) => c.userId === userId);
+      if (!myCommitment && !isOwner) {
+        const parentCommits = await storage.getWillCommitments(willId);
+        myCommitment = parentCommits.find((c: any) => c.userId === userId);
+      }
+      const checkIns = await storage.getWillCheckIns(myWillId, userId);
+      const progress = await storage.getWillCheckInProgress(myWillId, userId);
+      const now = new Date();
+      const myStart = new Date(myWill.startDate);
+      const dayCount = Math.max(1, Math.floor((now.getTime() - myStart.getTime()) / 86400000) + 1);
+      let daysLeft: number | null = null;
+      if (myWill.endDate && !myWill.isIndefinite) {
+        daysLeft = Math.max(0, Math.ceil((new Date(myWill.endDate).getTime() - now.getTime()) / 86400000));
+      }
+      res.json({
+        myWillId,
+        isOwner,
+        what: myCommitment?.what || '',
+        why: myCommitment?.why || '',
+        checkInType: myWill.checkInType,
+        commitmentCategory: myWill.commitmentCategory ?? null,
+        startDate: myWill.startDate,
+        endDate: myWill.endDate,
+        isIndefinite: myWill.isIndefinite,
+        activeDays: myWill.activeDays,
+        customDays: myWill.customDays,
+        checkIns,
+        progress,
+        dayCount,
+        daysLeft,
+      });
+    } catch (error) {
+      console.error("Error fetching my public progress:", error);
+      res.status(500).json({ message: "Failed to fetch progress" });
+    }
+  });
+
+  app.get('/api/wills/:id/members-activity', isAuthenticated, async (req: any, res) => {
+    try {
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will || (will as any).kind !== 'public') {
+        return res.status(404).json({ message: "Public Will not found" });
+      }
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const sevenDaysAgo = new Date(today); sevenDaysAgo.setDate(today.getDate() - 6);
+      const toDateStr = (d: Date) => {
+        const y = d.getFullYear(), mo = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+        return `${y}-${mo}-${dd}`;
+      };
+      const sevenDayDates = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(sevenDaysAgo); d.setDate(sevenDaysAgo.getDate() + i);
+        return toDateStr(d);
+      });
+      const buildActivity = (checkInsForUser: any[], joinDate: Date): Array<'yes' | 'partial' | 'no' | 'none'> => {
+        return sevenDayDates.map(d => {
+          const day = new Date(d + 'T00:00:00');
+          if (day > today) return 'none';
+          const joinDay = new Date(joinDate); joinDay.setHours(0, 0, 0, 0);
+          if (day < joinDay) return 'none';
+          const ci = checkInsForUser.find((c: any) => c.date === d);
+          if (!ci) return 'no';
+          return ci.status === 'yes' ? 'yes' : ci.status === 'partial' ? 'partial' : 'no';
+        });
+      };
+      const [creatorUser] = await db.select({ id: users.id, firstName: users.firstName })
+        .from(users).where(eq(users.id, will.createdBy));
+      const creatorCheckIns = await storage.getWillCheckIns(willId, will.createdBy);
+      const creatorJoinDate = new Date(will.startDate as Date);
+      const creatorDaysIn = Math.max(1, Math.floor((today.getTime() - creatorJoinDate.getTime()) / 86400000) + 1);
+      const members: any[] = [{
+        userId: creatorUser?.id || will.createdBy,
+        firstName: creatorUser?.firstName || 'Creator',
+        isCreator: true,
+        daysIn: creatorDaysIn,
+        joinDate: (will.createdAt as Date | null)?.toISOString() || new Date().toISOString(),
+        sevenDayActivity: buildActivity(creatorCheckIns, creatorJoinDate),
+      }];
+      const childWillRows = await db.select({
+        id: wills.id,
+        createdBy: wills.createdBy,
+        createdAt: wills.createdAt,
+        startDate: wills.startDate,
+      }).from(wills).where(and(
+        eq(wills.parentWillId, willId),
+        inArray(wills.status, ACTIVE_PARTICIPANT_STATUSES)
+      ));
+      for (const cw of childWillRows) {
+        const [memberUser] = await db.select({ firstName: users.firstName })
+          .from(users).where(eq(users.id, cw.createdBy));
+        const memberCheckIns = await storage.getWillCheckIns(cw.id, cw.createdBy);
+        const joinDate = new Date(cw.startDate as Date);
+        const daysIn = Math.max(1, Math.floor((today.getTime() - joinDate.getTime()) / 86400000) + 1);
+        members.push({
+          userId: cw.createdBy,
+          firstName: memberUser?.firstName || 'Member',
+          isCreator: false,
+          daysIn,
+          joinDate: (cw.createdAt as Date | null)?.toISOString() || new Date().toISOString(),
+          sevenDayActivity: buildActivity(memberCheckIns, joinDate),
+        });
+      }
+      res.json({ members, totalCount: members.length });
+    } catch (error) {
+      console.error("Error fetching members activity:", error);
+      res.status(500).json({ message: "Failed to fetch members activity" });
     }
   });
 
@@ -3537,6 +3664,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting push status:", error);
       res.status(500).json({ message: "Failed to get push status" });
+    }
+  });
+
+  app.post('/api/wills/:id/team-push', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will || (will as any).kind !== 'public') {
+        return res.status(404).json({ message: "Public Will not found" });
+      }
+      if (!ACTIVE_PARTICIPANT_STATUSES.includes(will.status)) {
+        return res.status(400).json({ message: "Team Push is only available for active wills" });
+      }
+      const hasAlreadyPushed = await storage.hasUserPushedToday(willId, userId);
+      if (hasAlreadyPushed) {
+        return res.status(409).json({ message: "You have already team-pushed today" });
+      }
+      const allParticipants = await getPublicWillParticipantIds(willId);
+      const memberIds = allParticipants.filter(id => id !== userId);
+      const push = await storage.addWillPush({ willId, userId });
+      if (memberIds.length > 0) {
+        const pusher = await storage.getUser(userId);
+        const pusherName = pusher?.firstName || 'Someone';
+        const commitments = await storage.getWillCommitments(willId);
+        const willTitle = will.title || commitments[0]?.what || 'this Will';
+        const { pushNotificationService } = await import('./pushNotificationService');
+        await pushNotificationService.sendTeamPushNotification(pusherName, willTitle, memberIds, willId);
+      }
+      res.json({ ...push, membersNotified: memberIds.length });
+    } catch (error) {
+      console.error("Error sending team push:", error);
+      res.status(500).json({ message: "Failed to send team push" });
     }
   });
 

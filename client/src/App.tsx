@@ -40,6 +40,7 @@ import WillPage from "@/pages/WillPage";
 import FriendProfile from "@/pages/FriendProfile";
 import NotificationsPage from "@/pages/NotificationsPage";
 import PublicWillDetail from "@/pages/PublicWillDetail";
+import SeeAllMembersPage from "@/pages/SeeAllMembersPage";
 import DirectMessagePage from "@/pages/DirectMessagePage";
 import FindWillLifeArea from "@/pages/FindWillLifeArea";
 import FindWillSuggestions from "@/pages/FindWillSuggestions";
@@ -380,6 +381,7 @@ function Router() {
             <Route path="/find-will" component={FindWillLifeArea} />
             <Route path="/explore" component={Explore} />
             <Route path="/public-will/:id" component={PublicWillDetail} />
+            <Route path="/public-will/:id/members" component={SeeAllMembersPage} />
             <Route path="/dm/:userId" component={DirectMessagePage} />
             <Route path="/explore/join/:willId" component={JoinWill} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>

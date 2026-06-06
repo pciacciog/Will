@@ -1,0 +1,104 @@
+Feature – Explore Page Redesign: Unified Feed with Type-Aware Cards
+Redesign the Explore page from a Public-Will-only list into a unified feed of all visibility: 'open' wills across all types, with clean cards and correct navigation targets per type.
+
+Feed content rules:
+Include all wills where visibility = 'open', regardless of type:
+
+Solo Wills
+Team Wills (I Will + We Will)
+Public Wills
+Private wills: never appear under any circumstance
+Challenge: excluded for now (future prompt)
+
+Sort by most recent activity (last check-in or last message), not creation date.
+
+Filter pills (horizontal scroll row below header):
+All  |  Solo  |  Team  |  Public
+
+Default: All selected
+Tapping a pill filters the feed to that type only
+Active pill: purple fill (#534AB7, white text)
+Inactive: white bg, muted text, light border
+Filter is client-side — no re-fetch needed if all types are loaded on mount
+
+
+Card anatomy (identical structure across all types):
+[ Type pill ]                    [ days active / N members ]
+"Will title text here"
+[ avatar(s) ]  @username         [ View → / Your will ]
+
+Type pill colors:
+
+Solo: teal (background: #E1F5EE; color: #085041)
+Team: purple (background: #EEEDFE; color: #3C3489)
+Public: teal (background: #E1F5EE; color: #085041)
+
+
+Top right context:
+
+Solo + Team: "N days active"
+Public: "N members · N days"
+
+
+Creator row:
+
+Solo: single avatar + @username
+Team: stacked avatars (up to 3, overlapping) + "@creator + N others"
+Public: single creator avatar + @username
+
+
+CTA (bottom right of creator row):
+
+All types (not yours): "View →" — muted button
+Your own will: teal "✓ Your will" button, card gets a 1.5px solid #1D9E75 border accent + a "Yours" pill next to the type pill
+
+
+Entire card is tappable — tapping anywhere navigates to the will detail. The View → button is a visual affordance, not the only tap target
+
+
+Navigation targets on tap — this is critical:
+Each will type must navigate to the correct destination screen:
+Will typeNavigation targetSolo Will (not yours)Solo Will viewer screen (SoloWillViewer)Solo Will (yours)Solo Will owner screen (WillDetails)Team Will (not a member)Team Will viewer screen (TeamWillViewer)Team Will (member or creator)Team Will hub (TeamWillHub)Public Will (not a member)Public Will viewer statePublic Will (member)Public Will member statePublic Will (creator/owner)Public Will owner state
+Use the same getRenderState logic established in the Public Will redesign prompt. The Explore card must pass the willId and the router must resolve to the correct screen and state based on currentUser relationship to the will.
+Do not navigate all cards to a generic will detail page — each type has its own screen and the routing must be type-aware.
+
+API changes:
+Update GET /api/wills/public (or create GET /api/wills/explore) to:
+
+Return all visibility = 'open' wills across all types (not just Public Wills)
+Include kind field on each will so the frontend can render the correct pill and route correctly
+Include memberCount, daysActive, creatorUsername, creatorAvatar, and members (first 3 for avatar stack) in the response
+Exclude because / Why field — never exposed on Explore cards
+Enforce: visibility = 'private' wills are never returned regardless of type
+
+
+Your own wills on Explore:
+
+Do appear in the feed — seeing your own will in the public feed is intentional (it's your post)
+Visually distinguished: green border accent, "Yours" pill, teal "✓ Your will" CTA
+Tapping navigates to your owner/member view of that will, not a viewer screen
+
+
+Empty states:
+
+All filter, no wills yet: "Nothing here yet — be the first to share a will with the world."
+Solo filter, none: "No solo wills yet."
+Team filter, none: "No team wills yet."
+Public filter, none: "No public wills yet."
+
+
+What does NOT change:
+
+Will detail screens themselves (covered in separate prompts)
+Creation flows
+Home screen
+
+
+What this prompt is asking for — no more, no less:
+
+Update Explore feed API to return all visibility: 'open' wills with kind, memberCount, daysActive, creator info, and first 3 member avatars
+Redesign Explore card component: type pill, title, creator row, context metadata, View → CTA
+Add filter pill row: All / Solo / Team / Public, client-side filtering
+Your own will card variant: green border, Yours pill, teal CTA
+Type-aware routing: each card navigates to the correct screen and render state based on will type and current user's relationship to the will
+Enforce private will exclusion at the API layer
