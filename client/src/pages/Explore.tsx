@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Users, ArrowRight, Target, CheckCircle, Zap } from "lucide-react";
+import { Target, ArrowRight, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type PublicWill = {
+type ExploreWill = {
   id: number;
   title: string | null;
   kind: string | null;
   what: string;
-  checkInType: string;
+  checkInType: string | null;
   startDate: string;
   endDate: string;
   isIndefinite: boolean;
@@ -19,210 +18,245 @@ type PublicWill = {
   creatorName: string;
   memberCount: number;
   status: string;
+  daysActive: number;
+  members: { userId: string; firstName: string }[];
   isOwner: boolean;
   hasJoined: boolean;
+  isTeamMember: boolean;
 };
 
-function KindPill({ kind }: { kind: string | null }) {
-  if (!kind) return null;
-  const map: Record<string, { label: string; className: string }> = {
-    solo:          { label: "Solo",    className: "bg-emerald-100 text-emerald-700" },
-    public:        { label: "Public",  className: "bg-blue-100 text-blue-700" },
-    team_i_will:   { label: "Team",    className: "bg-violet-100 text-violet-700" },
-    team_we_will:  { label: "We Will", className: "bg-indigo-100 text-indigo-700" },
-  };
-  const { label, className } = map[kind] ?? { label: kind, className: "bg-gray-100 text-gray-600" };
+const KIND_STYLES: Record<string, { label: string; bg: string; text: string }> = {
+  solo:        { label: "Solo",      bg: "#E1F5EE", text: "#085041" },
+  public:      { label: "Public",    bg: "#E1F5EE", text: "#085041" },
+  team_i_will: { label: "Team",      bg: "#EEEDFE", text: "#3C3489" },
+  team_we_will:{ label: "We Will",   bg: "#EEEDFE", text: "#3C3489" },
+  challenge:   { label: "Challenge", bg: "#FAECE7", text: "#712B13" },
+};
+
+const FILTERS = ["All", "Solo", "Team", "Public", "Challenge"] as const;
+type Filter = typeof FILTERS[number];
+
+function avatarColor(id: string) {
+  const colors = ["#534AB7","#1D9E75","#D85A30","#0891B2","#7C3AED","#DC2626","#059669","#D97706"];
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xfffffff;
+  return colors[Math.abs(h) % colors.length];
+}
+
+function getInitial(name: string) {
+  return (name || "?").charAt(0).toUpperCase();
+}
+
+function AvatarStack({ members, size = 7 }: { members: { userId: string; firstName: string }[]; size?: number }) {
+  const px = size === 7 ? "w-7 h-7 text-xs" : "w-6 h-6 text-[10px]";
   return (
-    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide ${className}`}>
-      {label}
-    </span>
+    <div className="flex items-center -space-x-1.5">
+      {members.slice(0, 3).map((m) => (
+        <div
+          key={m.userId}
+          className={cn("rounded-full border-2 border-white flex items-center justify-center font-semibold text-white flex-shrink-0", px)}
+          style={{ backgroundColor: avatarColor(m.userId) }}
+        >
+          {getInitial(m.firstName)}
+        </div>
+      ))}
+    </div>
   );
 }
 
+function getNavTarget(will: ExploreWill): string {
+  const { kind, id, isOwner, isTeamMember, hasJoined } = will;
+  if (kind === "public") return `/public-will/${id}`;
+  if (kind === "solo") return isOwner ? `/will/${id}` : `/solo-viewer/${id}`;
+  if (kind === "team_i_will" || kind === "team_we_will") {
+    return isOwner || isTeamMember ? `/will/${id}` : `/team-viewer/${id}`;
+  }
+  if (kind === "challenge") return `/challenge/${id}`;
+  return `/will/${id}`;
+}
+
+function getContextLabel(will: ExploreWill): string {
+  const { kind, memberCount, daysActive } = will;
+  if (kind === "public") {
+    const mem = `${memberCount} ${memberCount === 1 ? "member" : "members"}`;
+    const days = daysActive > 0 ? ` · ${daysActive}d` : "";
+    return `${mem}${days}`;
+  }
+  if (kind === "challenge") {
+    const comp = `${memberCount} ${memberCount === 1 ? "competitor" : "competitors"}`;
+    const days = daysActive > 0 ? ` · ${daysActive}d` : "";
+    return `${comp}${days}`;
+  }
+  return daysActive > 0 ? `${daysActive} days active` : "Just started";
+}
+
+function CreatorRow({ will }: { will: ExploreWill }) {
+  const isTeam = will.kind === "team_i_will" || will.kind === "team_we_will";
+  const extra = will.memberCount - 1;
+  return (
+    <div className="flex items-center gap-2">
+      <AvatarStack members={will.members} />
+      <span className="text-xs text-gray-500 truncate">
+        @{will.creatorName.toLowerCase()}
+        {isTeam && extra > 0 ? ` + ${extra} other${extra === 1 ? "" : "s"}` : ""}
+      </span>
+    </div>
+  );
+}
+
+function ExploreCard({ will }: { will: ExploreWill }) {
+  const [, setLocation] = useLocation();
+  const style = KIND_STYLES[will.kind ?? "solo"] ?? KIND_STYLES.solo;
+  const isYours = will.isOwner || (will.kind === "public" && will.hasJoined);
+
+  const navigate = () => setLocation(getNavTarget(will));
+
+  return (
+    <div
+      className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer active:bg-gray-50 transition-colors"
+      style={{
+        border: isYours ? "1.5px solid #1D9E75" : "1px solid #F3F4F6",
+      }}
+      onClick={navigate}
+      data-testid={`card-will-${will.id}`}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide"
+            style={{ backgroundColor: style.bg, color: style.text }}
+            data-testid={`pill-kind-${will.id}`}
+          >
+            {style.label}
+          </span>
+          {isYours && (
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide"
+              style={{ backgroundColor: "#E6F9F2", color: "#1D9E75" }}
+              data-testid={`pill-yours-${will.id}`}
+            >
+              Yours
+            </span>
+          )}
+        </div>
+        <span className="text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0" data-testid={`text-context-${will.id}`}>
+          {getContextLabel(will)}
+        </span>
+      </div>
+
+      <p className="text-[15px] font-semibold text-gray-900 leading-snug mb-3" data-testid={`text-title-${will.id}`}>
+        {will.title ?? will.what}
+      </p>
+
+      <div className="flex items-center justify-between gap-2">
+        <CreatorRow will={will} />
+
+        {isYours ? (
+          <div
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0"
+            style={{ backgroundColor: "#E6F9F2", color: "#1D9E75" }}
+            data-testid={`label-yours-${will.id}`}
+          >
+            <CheckCircle className="w-3.5 h-3.5" />
+            Your will
+          </div>
+        ) : (
+          <button
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 flex-shrink-0 active:bg-gray-200 transition-colors"
+            onClick={(e) => { e.stopPropagation(); navigate(); }}
+            data-testid={`button-view-${will.id}`}
+          >
+            View
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function matchesFilter(will: ExploreWill, filter: Filter): boolean {
+  if (filter === "All") return true;
+  if (filter === "Solo") return will.kind === "solo";
+  if (filter === "Team") return will.kind === "team_i_will" || will.kind === "team_we_will";
+  if (filter === "Public") return will.kind === "public";
+  if (filter === "Challenge") return will.kind === "challenge";
+  return true;
+}
+
+const EMPTY_MESSAGES: Record<Filter, string> = {
+  All: "Nothing here yet — be the first to share a will with the world.",
+  Solo: "No solo wills yet.",
+  Team: "No team wills yet.",
+  Public: "No public wills yet.",
+  Challenge: "No challenges yet.",
+};
+
 export default function Explore() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [pushedIds, setPushedIds] = useState<Set<number>>(new Set());
+  const [activeFilter, setActiveFilter] = useState<Filter>("All");
 
-  const { data: publicWills, isLoading } = useQuery<PublicWill[]>({
-    queryKey: ['/api/wills/public'],
+  const { data: allWills, isLoading } = useQuery<ExploreWill[]>({
+    queryKey: ["/api/wills/public"],
     staleTime: 30000,
   });
 
-  const pushMutation = useMutation({
-    mutationFn: (willId: number) =>
-      apiRequest(`/api/wills/${willId}/push`, { method: "POST" }).then(r => r.json()),
-    onSuccess: (_data, willId) => {
-      setPushedIds(prev => new Set(prev).add(willId));
-      toast({ title: "Pushed! 🚀", description: "Your encouragement was sent." });
-    },
-    onError: (err: any, willId) => {
-      if (err?.status === 409 || err?.message?.includes("already")) {
-        setPushedIds(prev => new Set(prev).add(willId));
-        toast({ title: "Already pushed today", description: "Come back tomorrow!", variant: "destructive" });
-      } else {
-        toast({ title: "Error", description: err?.message ?? "Could not send push.", variant: "destructive" });
-      }
-    },
-  });
-
-  const getTimelineLabel = (will: PublicWill) => {
-    if (will.isIndefinite) return "Ongoing";
-    if (!will.startDate || !will.endDate) return "Ongoing";
-    const start = new Date(will.startDate);
-    const end = new Date(will.endDate);
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    return `${days} days`;
-  };
-
-  const wills = publicWills || [];
+  const wills = (allWills ?? []).filter((w) => matchesFilter(w, activeFilter));
 
   return (
     <MobileLayout>
       <div className="space-y-3">
-        <div className="relative flex items-center justify-between mb-2 min-h-[44px]">
-          <UnifiedBackButton onClick={() => setLocation('/')} testId="button-back" />
+        <div className="relative flex items-center justify-between mb-1 min-h-[44px]">
+          <UnifiedBackButton onClick={() => setLocation("/")} testId="button-back" />
           <h1
             className="absolute left-0 right-0 text-center text-xl font-semibold text-gray-900 pointer-events-none"
             data-testid="text-page-title"
           >
-            Explore Wills
+            Explore
           </h1>
           <div className="w-11" />
         </div>
 
+        {/* Filter pills */}
+        <div className="flex items-center gap-2 pb-1 overflow-x-auto no-scrollbar" data-testid="row-filter-pills">
+          {FILTERS.map((f) => {
+            const active = f === activeFilter;
+            return (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all"
+                style={
+                  active
+                    ? { backgroundColor: "#534AB7", color: "#fff", borderColor: "#534AB7" }
+                    : { backgroundColor: "#fff", color: "#6B7280", borderColor: "#E5E7EB" }
+                }
+                data-testid={`pill-filter-${f.toLowerCase()}`}
+              >
+                {f}
+              </button>
+            );
+          })}
+        </div>
+
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
           </div>
         ) : wills.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Target className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1" data-testid="text-empty-title">
-              No open Wills yet
-            </h3>
-            <p className="text-sm text-gray-500">Check back later for Wills to explore.</p>
+            <p className="text-sm text-gray-500 px-8" data-testid="text-empty">
+              {EMPTY_MESSAGES[activeFilter]}
+            </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {wills.map((will) => {
-              const hasPushed = pushedIds.has(will.id);
-              const isSolo = will.kind === 'solo';
-              const isTeam = will.kind === 'team_i_will' || will.kind === 'team_we_will';
-              const isPublicKind = will.kind === 'public';
-
-              return (
-                <div
-                  key={will.id}
-                  className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm"
-                  data-testid={`card-will-${will.id}`}
-                >
-                  {/* Kind pill + title */}
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <KindPill kind={will.kind} />
-                  </div>
-                  <p className="text-base font-medium text-gray-900 leading-snug" data-testid={`text-title-${will.id}`}>
-                    {will.title ?? will.what}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1" data-testid={`text-creator-${will.id}`}>
-                    by @{will.creatorName?.toLowerCase().replace(/\s+/g, '')}
-                  </p>
-
-                  <div className="flex items-center gap-2 mt-2.5 text-xs text-gray-500">
-                    <span data-testid={`text-timeline-${will.id}`}>{getTimelineLabel(will)}</span>
-                    <span className="text-gray-300">&bull;</span>
-                    <span className="inline-flex items-center gap-1" data-testid={`text-members-${will.id}`}>
-                      <Users className="w-3 h-3" />
-                      {will.memberCount} {will.memberCount === 1 ? 'member' : 'members'}
-                    </span>
-                  </div>
-
-                  {/* CTAs */}
-                  {will.isOwner ? (
-                    <div
-                      className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center gap-1.5"
-                      data-testid={`label-owner-${will.id}`}
-                    >
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      Your Will
-                    </div>
-                  ) : isSolo ? (
-                    // Solo: Push button CTA
-                    <button
-                      onClick={() => !hasPushed && pushMutation.mutate(will.id)}
-                      disabled={hasPushed || pushMutation.isPending}
-                      className="mt-3 w-full py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:cursor-default"
-                      style={{
-                        background: hasPushed ? '#F3F4F6' : 'linear-gradient(135deg, #10B981, #059669)',
-                        color: hasPushed ? '#9CA3AF' : 'white',
-                      }}
-                      data-testid={`button-push-${will.id}`}
-                    >
-                      <Zap className="w-3.5 h-3.5" fill={hasPushed ? 'none' : 'currentColor'} />
-                      {hasPushed ? 'Pushed ✓' : '⚡ Push'}
-                    </button>
-                  ) : isTeam ? (
-                    // Team: View → link only, no interaction CTA
-                    <button
-                      onClick={() => setLocation(`/will/${will.id}`)}
-                      className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1.5"
-                      data-testid={`button-view-${will.id}`}
-                    >
-                      View
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  ) : isPublicKind ? (
-                    // Public: Join + Push CTAs, data-driven from hasJoined
-                    <div className="mt-3 flex gap-2">
-                      {will.hasJoined ? (
-                        <div
-                          className="flex-1 py-2 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center gap-1.5"
-                          data-testid={`label-joined-${will.id}`}
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          Joined
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setLocation(`/public-will/${will.id}`)}
-                          className="flex-1 py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5"
-                          data-testid={`button-join-${will.id}`}
-                        >
-                          Join
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => !hasPushed && pushMutation.mutate(will.id)}
-                        disabled={hasPushed || pushMutation.isPending}
-                        className="flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:cursor-default"
-                        style={{
-                          background: hasPushed ? '#F3F4F6' : '#F59E0B',
-                          color: hasPushed ? '#9CA3AF' : 'white',
-                        }}
-                        data-testid={`button-push-${will.id}`}
-                      >
-                        <Zap className="w-3.5 h-3.5" fill={hasPushed ? 'none' : 'currentColor'} />
-                        {hasPushed ? 'Pushed ✓' : '⚡ Push'}
-                      </button>
-                    </div>
-                  ) : (
-                    // Fallback
-                    <button
-                      onClick={() => setLocation(`/will/${will.id}`)}
-                      className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5"
-                      data-testid={`button-view-${will.id}`}
-                    >
-                      View
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+          <div className="space-y-3" data-testid="list-wills">
+            {wills.map((will) => (
+              <ExploreCard key={will.id} will={will} />
+            ))}
           </div>
         )}
       </div>

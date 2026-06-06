@@ -84,7 +84,7 @@ export interface IStorage {
   getUserActiveSoloWillCount(userId: string): Promise<number>;
   getUserActiveTeamWillCount(userId: string): Promise<number>;
   getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string; circleCode?: string })[]>;
-  getPublicWills(search?: string): Promise<{ id: number; title: string | null; kind: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
+  getPublicWills(search?: string): Promise<{ id: number; title: string | null; kind: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null; daysActive: number; members: { userId: string; firstName: string }[] }[]>;
   getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
   updateWillStatus(willId: number, status: string): Promise<void>;
@@ -714,6 +714,35 @@ export class DatabaseStorage implements IStorage {
             .where(eq(willCommitments.willId, will.id));
           memberCount = Number(commitCount?.count || 0);
         }
+
+        const daysActive = will.startDate
+          ? Math.max(0, Math.floor((Date.now() - new Date(will.startDate as string).getTime()) / 86400000))
+          : 0;
+
+        // First 3 members for avatar stack
+        let members: { userId: string; firstName: string }[] = [];
+        if (will.kind === 'team_i_will' || will.kind === 'team_we_will') {
+          const teamMembers = await db
+            .select({ userId: willCommitments.userId, firstName: users.firstName })
+            .from(willCommitments)
+            .innerJoin(users, eq(users.id, willCommitments.userId))
+            .where(eq(willCommitments.willId, will.id))
+            .limit(3);
+          members = teamMembers.map(m => ({ userId: m.userId, firstName: m.firstName || 'Anonymous' }));
+        } else if (will.kind === 'public') {
+          const childCreators = await db
+            .select({ createdBy: wills.createdBy, firstName: users.firstName })
+            .from(wills)
+            .innerJoin(users, eq(users.id, wills.createdBy))
+            .where(eq(wills.parentWillId, will.id))
+            .limit(2);
+          members = [
+            { userId: will.createdBy, firstName: creator?.firstName || 'Anonymous' },
+            ...childCreators.map(c => ({ userId: c.createdBy, firstName: c.firstName || 'Anonymous' }))
+          ];
+        } else {
+          members = [{ userId: will.createdBy, firstName: creator?.firstName || 'Anonymous' }];
+        }
         
         return {
           id: will.id,
@@ -729,6 +758,8 @@ export class DatabaseStorage implements IStorage {
           memberCount,
           status: will.status,
           createdAt: will.createdAt,
+          daysActive,
+          members,
         };
       })
     );
