@@ -175,15 +175,40 @@ export default function Explore() {
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   ) : isPublicKind ? (
-                    // Public: existing View behavior (join/push happen on detail page)
-                    <button
-                      onClick={() => setLocation(`/public-will/${will.id}`)}
-                      className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5"
-                      data-testid={`button-view-${will.id}`}
-                    >
-                      View
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                    // Public: Join + Push CTAs, data-driven from hasJoined
+                    <div className="mt-3 flex gap-2">
+                      {will.hasJoined ? (
+                        <div
+                          className="flex-1 py-2 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center gap-1.5"
+                          data-testid={`label-joined-${will.id}`}
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          Joined
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setLocation(`/public-will/${will.id}`)}
+                          className="flex-1 py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5"
+                          data-testid={`button-join-${will.id}`}
+                        >
+                          Join
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => !hasPushed && pushMutation.mutate(will.id)}
+                        disabled={hasPushed || pushMutation.isPending}
+                        className="flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:cursor-default"
+                        style={{
+                          background: hasPushed ? '#F3F4F6' : '#F59E0B',
+                          color: hasPushed ? '#9CA3AF' : 'white',
+                        }}
+                        data-testid={`button-push-${will.id}`}
+                      >
+                        <Zap className="w-3.5 h-3.5" fill={hasPushed ? 'none' : 'currentColor'} />
+                        {hasPushed ? 'Pushed ✓' : '⚡ Push'}
+                      </button>
+                    </div>
                   ) : (
                     // Fallback
                     <button
