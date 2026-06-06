@@ -195,8 +195,12 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [activeDays, setActiveDays] = useState<'every_day' | 'weekdays' | 'custom'>('every_day');
   const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   
-  // Visibility: 'open' (default, discoverable) or 'private' (hidden from Explore/profile)
-  const [visibility, setVisibility] = useState<'private' | 'open'>('open');
+  // Visibility: 'open' (default) | 'private' (hidden) | 'public' (legacy public-will path)
+  // 'public' is set when ?visibility=public comes from WhoModal (Public Will creation) — no toggle shown.
+  const [visibility, setVisibility] = useState<'private' | 'open' | 'public'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('visibility') === 'public' ? 'public' : 'open';
+  });
   
   // For Circle mode, we show type selection before step 1
   const showTypeSelection = !isSoloMode && willType === null;
@@ -1166,7 +1170,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </p>
                 </div>
 
-                {isSoloMode && (
+                {isSoloMode && visibility !== 'public' && (
                   <div className="mt-5 flex items-start justify-between gap-3 px-2 animate-in fade-in duration-300" style={{ animationDelay: '300ms' }}>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-700">Make this will private</p>
@@ -1174,7 +1178,7 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </div>
                     <button
                       type="button"
-                      onClick={() => setVisibility(v => v === 'private' ? 'open' : 'private')}
+                      onClick={() => setVisibility(v => (v === 'private' ? 'open' : 'private'))}
                       className="flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200"
                       style={{ background: visibility === 'private' ? '#111827' : '#D1D5DB' }}
                       data-testid="toggle-private"
