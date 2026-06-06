@@ -148,8 +148,17 @@ async function isUserPublicWillParticipant(userId: string, parentWillId: number)
 }
 
 async function getOtherPublicWillParticipants(userId: string, parentWillId: number): Promise<string[]> {
+  // Formal will-joiners
   const participantIds = await getPublicWillParticipantIds(parentWillId);
-  return participantIds.filter(id => id !== userId);
+  const idSet = new Set(participantIds);
+  // Also include anyone who has ever sent a message in this chat thread
+  const chatters = await db
+    .selectDistinct({ userId: willMessages.userId })
+    .from(willMessages)
+    .where(eq(willMessages.willId, parentWillId));
+  chatters.forEach(c => idSet.add(c.userId));
+  idSet.delete(userId); // exclude the current sender
+  return Array.from(idSet);
 }
 
 // Single source of truth for "real participants" of a Team / shared Will.
@@ -2346,9 +2355,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const activeChildWills = childWills.filter(w => ACTIVE_PARTICIPANT_STATUSES.includes(w.status));
       const allParticipantIds = [rootWill!.createdBy, ...activeChildWills.map(w => w.createdBy)];
+
+      // Also include anyone who has sent a message in this will's chat thread
+      const chatters = await db
+        .selectDistinct({ userId: willMessages.userId })
+        .from(willMessages)
+        .where(eq(willMessages.willId, rootWillId));
+      chatters.forEach(c => allParticipantIds.push(c.userId));
+
       const uniqueIds = Array.from(new Set(allParticipantIds));
 
-      // Build joinDate map: creator gets root will startDate, others get their child will startDate
+      // Build joinDate map: creator gets root will startDate, formal joiners get their child will startDate
       const joinDateMap: Record<string, string | null> = {};
       joinDateMap[rootWill!.createdBy] = rootWill!.startDate as string | null;
       for (const cw of activeChildWills) {

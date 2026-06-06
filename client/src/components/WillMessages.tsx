@@ -101,8 +101,12 @@ export default function WillMessages({
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (newMsg) => {
       queryClient.invalidateQueries({ queryKey: ["/api/wills", willId, "messages"] });
+      // Refresh participants list so newly chatted users appear immediately
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/participants`] });
+      // Refresh the hub preview card on PublicWillDetail
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${willId}/public-messages-preview`] });
       setText("");
       setTimeout(() => {
         if (inputRef.current) {
@@ -113,7 +117,14 @@ export default function WillMessages({
       }, 50);
     },
     onError: (err: Error) => {
-      toast({ title: "Couldn't send", description: err.message, variant: "destructive" });
+      // Never surface raw 403/400 backend codes — show a friendly inline message
+      const friendlyMsg =
+        err.message.toLowerCase().includes("participant") ||
+        err.message.toLowerCase().includes("group chat") ||
+        err.message.toLowerCase().includes("403")
+          ? "You can't send messages here right now."
+          : err.message || "Couldn't send — please try again.";
+      toast({ title: "Message not sent", description: friendlyMsg, variant: "destructive" });
     },
   });
 
