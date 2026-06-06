@@ -123,6 +123,81 @@ function DailyProgressSection({ willId, startDate, endDate, checkInType, activeD
   );
 }
 
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function SupportersSection({ willId, ownerId }: {
+  willId: number; ownerId: string;
+}) {
+  const { data: pushStatus } = useQuery<{
+    hasUserPushedToday: boolean;
+    pushes: { id: number; userId: string; pushedAt: string; user?: { firstName: string | null } }[];
+  }>({
+    queryKey: [`/api/wills/${willId}/push/status`],
+    enabled: !!willId,
+    refetchInterval: 60000,
+  });
+
+  const { data: messages = [] } = useQuery<
+    { id: number; userId: string; text: string; createdAt: string; user?: { firstName: string | null } }[]
+  >({
+    queryKey: [`/api/wills/${willId}/messages`],
+    queryFn: async () => {
+      const r = await apiRequest(`/api/wills/${willId}/messages`);
+      return r.json();
+    },
+    enabled: !!willId,
+    refetchInterval: 30000,
+  });
+
+  const supporterPushes = (pushStatus?.pushes ?? []).filter(p => p.userId !== ownerId);
+  const supporterMessages = messages.filter(m => m.userId !== ownerId);
+
+  if (supporterPushes.length === 0 && supporterMessages.length === 0) return null;
+
+  return (
+    <div className="mx-4 mb-4 rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden" data-testid="section-supporters">
+      <div className="px-4 pt-3 pb-2 border-b border-gray-50">
+        <p className="text-sm font-semibold text-gray-700">From your supporters</p>
+      </div>
+      <div className="divide-y divide-gray-50">
+        {supporterPushes.map(p => (
+          <div key={`push-${p.id}`} className="px-4 py-2.5 flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-3.5 h-3.5 text-emerald-600" fill="currentColor" />
+            </div>
+            <p className="text-sm text-gray-700 flex-1">
+              <span className="font-medium">{p.user?.firstName || "Someone"}</span>
+              {" pushed you"}
+              <span className="text-gray-400 ml-1 text-xs">· {relativeTime(p.pushedAt)}</span>
+            </p>
+          </div>
+        ))}
+        {supporterMessages.map(m => (
+          <div key={`msg-${m.id}`} className="px-4 py-2.5 flex items-start gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">{m.user?.firstName || "Someone"}</span>
+                <span className="text-gray-400 ml-1 text-xs">· {relativeTime(m.createdAt)}</span>
+              </p>
+              <p className="text-sm text-gray-600 break-words">{m.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function formatDateRange(startDate: string, endDate: string | null): string {
   const start = new Date(startDate);
   if (!endDate) {
@@ -2588,6 +2663,11 @@ export default function WillDetails() {
           onClose={() => setShowGutCheckModal(false)}
           willId={Number(id)}
         />
+      )}
+
+      {/* Supporters section — solo will owners see pushes + messages from others */}
+      {isSoloMode && will?.createdBy === user?.id && id && will?.createdBy && (
+        <SupportersSection willId={Number(id)} ownerId={will.createdBy} />
       )}
 
       {/* Participants Modal for Public Wills */}

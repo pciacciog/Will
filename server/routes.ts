@@ -1115,8 +1115,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPublic = (will as any).kind === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
-      if (!isPublic && !isShared) {
-        return res.status(400).json({ message: "Messages are only available for public or team wills" });
+      const isSoloWill = will.mode === 'personal' || will.mode === 'solo';
+      if (!isPublic && !isShared && !isSoloWill) {
+        return res.status(400).json({ message: "Messages are only available for public, team, or solo wills" });
       }
 
       let messageThreadId: number;
@@ -1124,6 +1125,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isPublic) {
         // Public will hub chat is open to any authenticated user — no participant check
         messageThreadId = (will as any).parentWillId || willId;
+      } else if (isSoloWill) {
+        // Solo will supporter thread — owner + all viewers share the same thread (willId)
+        messageThreadId = willId;
       } else {
         const isParticipant = await isUserSharedWillParticipant(userId, willId);
         if (!isParticipant) {
@@ -1165,8 +1169,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPublic = (will as any).kind === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
-      if (!isPublic && !isShared) {
-        return res.status(400).json({ message: "Messages are only available for public or team wills" });
+      const isSoloWillPost = will.mode === 'personal' || will.mode === 'solo';
+      if (!isPublic && !isShared && !isSoloWillPost) {
+        return res.status(400).json({ message: "Messages are only available for public, team, or solo wills" });
       }
 
       let messageThreadId: number;
@@ -1177,6 +1182,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const parentId = (will as any).parentWillId || willId;
         messageThreadId = parentId;
         otherParticipantIds = await getOtherPublicWillParticipants(userId, parentId);
+      } else if (isSoloWillPost) {
+        // Solo supporter message: viewer → owner direction; owner reading → no notifications
+        messageThreadId = willId;
+        otherParticipantIds = will.createdBy !== userId ? [will.createdBy] : [];
       } else {
         const isParticipant = await isUserSharedWillParticipant(userId, willId);
         if (!isParticipant) {
@@ -2359,6 +2368,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public-safe solo will data for non-owner viewers — strips "because" / Why field
+  app.get('/api/wills/:id/solo-viewer', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const willId = parseInt(req.params.id);
+      const will = await storage.getWillById(willId);
+      if (!will) return res.status(404).json({ message: "Will not found" });
+
+      const isSolo = will.mode === 'personal' || will.mode === 'solo';
+      if (!isSolo) return res.status(400).json({ message: "This endpoint is for solo wills only" });
+
+      const creator = await storage.getUser(will.createdBy);
+      const checkIns = await storage.getWillCheckIns(willId, will.createdBy);
+      const progress = await storage.getWillCheckInProgress(willId, will.createdBy);
+
+      const now = new Date();
+      const startDate = new Date(will.startDate);
+      const daysActive = Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+      // Strip the private 'because' field before sending to non-owners
+      const { because, ...safeWill } = will as any;
+
+      res.json({
+        ...safeWill,
+        creator: {
+          id: creator?.id,
+          firstName: creator?.firstName,
+          username: creator?.username,
+        },
+        checkIns,
+        progress,
+        daysActive,
+        isOwner: will.createdBy === userId,
+      });
+    } catch (error) {
+      console.error("Error fetching solo viewer data:", error);
+      res.status(500).json({ message: "Failed to fetch will data" });
+    }
+  });
+
   app.get('/api/wills/:id/participants', isAuthenticated, async (req: any, res) => {
     try {
       const willId = parseInt(req.params.id);
@@ -3322,6 +3371,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memberIds = (willWithCommsForPush?.commitments || [])
           .filter(c => c.userId !== userId)
           .map(c => c.userId);
+      } else if (will.mode === 'personal' || will.mode === 'solo') {
+        // Solo will: a supporter pushing the owner
+        if (will.createdBy !== userId) {
+          memberIds = [will.createdBy];
+        }
       }
 
       // Record the push (normalized to parent for public wills)
