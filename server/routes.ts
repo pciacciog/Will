@@ -2352,7 +2352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isOwner = will.createdBy === userId;
       const joinedWill = isOwner ? null : await storage.getUserJoinedWill(userId, willId);
       if (!isOwner && !joinedWill) {
-        return res.status(403).json({ message: "Not a participant" });
+        return res.status(404).json({ message: "Not a participant" });
       }
       const myWillId = isOwner ? willId : (joinedWill as any).id;
       const myWill: any = isOwner ? will : joinedWill!;

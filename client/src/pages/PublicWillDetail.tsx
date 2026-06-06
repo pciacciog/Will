@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -97,7 +97,6 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 function getInitials(name: string) { return (name || '?').charAt(0).toUpperCase(); }
-function todayKey() { return new Date().toLocaleDateString('en-CA'); }
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -110,11 +109,12 @@ function relativeTime(dateStr: string): string {
 // ── Chat Preview Card (shared by both views) ──────────────────────────────────
 
 function ChatPreviewCard({
-  totalCount, messages, onOpenChat,
+  totalCount, messages, onOpenChat, isParticipant,
 }: {
   totalCount: number;
   messages: MessagesPreview['messages'];
   onOpenChat: () => void;
+  isParticipant?: boolean;
 }) {
   const preview = messages.slice(0, 3);
   return (
@@ -123,6 +123,11 @@ function ChatPreviewCard({
         <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
           <MessageCircle className="w-4 h-4 text-blue-500" />
           Hub Chat
+          {isParticipant && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 ml-1">
+              Member
+            </span>
+          )}
         </p>
         {totalCount > 0 && (
           <span className="text-xs text-gray-400">{totalCount} {totalCount === 1 ? 'message' : 'messages'}</span>
@@ -159,7 +164,9 @@ function ChatPreviewCard({
         style={{ color: '#534AB7' }}
         data-testid="button-open-chat"
       >
-        {totalCount > 0 ? `See all ${totalCount} messages` : 'Start the conversation'}
+        {isParticipant
+          ? totalCount > 0 ? `See all ${totalCount} messages` : 'Open chat'
+          : totalCount > 0 ? `See ${totalCount} messages` : 'Start the conversation'}
         <ChevronRight className="w-4 h-4" />
       </button>
     </div>
@@ -171,6 +178,8 @@ function ChatPreviewCard({
 function ViewerView({
   will, members, pushStatus, messagesPreview,
   onJoin, onTeamPush, teamPushPending, onOpenChat,
+  onPushMember, pushPending,
+  currentUserId,
 }: {
   will: PublicWillDetails;
   members: MemberCardData[];
@@ -180,10 +189,24 @@ function ViewerView({
   onTeamPush: () => void;
   teamPushPending: boolean;
   onOpenChat: () => void;
+  onPushMember: () => void;
+  pushPending: boolean;
+  currentUserId?: string;
 }) {
   const [, setLocation] = useLocation();
   const alreadyPushed = pushStatus?.hasUserPushedToday ?? false;
   const topMembers = members.slice(0, 4);
+
+  const avgSuccessRate = useMemo(() => {
+    if (!members || members.length === 0) return null;
+    const rates = members.map(m => {
+      const relevant = m.sevenDayActivity.filter(a => a !== 'none');
+      if (relevant.length === 0) return null;
+      return (relevant.filter(a => a === 'yes' || a === 'partial').length / relevant.length) * 100;
+    }).filter((r): r is number => r !== null);
+    if (rates.length === 0) return null;
+    return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length);
+  }, [members]);
 
   return (
     <>
@@ -193,47 +216,56 @@ function ViewerView({
       >
         <div className="px-4 space-y-4">
 
-          {/* Commitment header card */}
+          {/* Commitment header card — title + Public pill + Active · Day N */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5" data-testid="card-commitment">
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-600">
+                Public
+              </span>
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                Active · Day {will.daysIn}
+              </span>
+              {will.commitmentCategory && (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 capitalize">
+                  {will.commitmentCategory}
+                </span>
+              )}
+            </div>
+            <p className="text-base font-semibold text-gray-900 leading-snug mb-4">
+              {will.title
+                ? <>{will.title}<span className="text-gray-400 font-normal text-sm ml-2">— I will {will.what}</span></>
+                : <>I will {will.what}</>
+              }
+            </p>
+            <div className="flex items-center gap-2">
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
                 style={{ backgroundColor: avatarColor(will.createdBy) }}
               >
                 {getInitials(will.creatorName)}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-400 mb-0.5">@{will.creatorName.toLowerCase()}</p>
-                <p className="text-base font-semibold text-gray-900 leading-snug">I will {will.what}</p>
-                <div className="flex items-center flex-wrap gap-2 mt-2">
-                  {will.commitmentCategory && (
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 capitalize">
-                      {will.commitmentCategory}
-                    </span>
-                  )}
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                    Public Will
-                  </span>
-                </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-700">@{will.creatorName.toLowerCase()}</p>
+                <p className="text-[11px] text-gray-400">Creator · {will.daysIn} days in</p>
               </div>
             </div>
           </div>
 
-          {/* Stats row */}
+          {/* Stats row: Days Running · Avg Success Rate · Members */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-members">
-              <p className="text-xl font-bold text-gray-900">{will.memberCount}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">members</p>
-            </div>
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-days">
               <p className="text-xl font-bold text-gray-900">{will.daysIn}</p>
               <p className="text-[11px] text-gray-400 mt-0.5">days running</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-status">
-              <p className="text-base font-bold text-emerald-600 mt-1">●</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">
-                {will.status === 'active' ? 'active' : will.status ?? 'open'}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-success-rate">
+              <p className="text-xl font-bold text-gray-900">
+                {avgSuccessRate !== null ? `${avgSuccessRate}%` : '—'}
               </p>
+              <p className="text-[11px] text-gray-400 mt-0.5">avg rate</p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-members">
+              <p className="text-xl font-bold text-gray-900">{will.memberCount}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">members</p>
             </div>
           </div>
 
@@ -257,7 +289,15 @@ function ViewerView({
                 )}
               </div>
               <div className="space-y-3">
-                {topMembers.map(m => <MemberCard key={m.userId} member={m} />)}
+                {topMembers.map(m => (
+                  <MemberCard
+                    key={m.userId}
+                    member={{ ...m, isYou: m.userId === currentUserId }}
+                    onPush={onPushMember}
+                    alreadyPushed={alreadyPushed}
+                    pushPending={pushPending}
+                  />
+                ))}
                 {will.memberCount > 4 && (
                   <button
                     onClick={() => setLocation(`/public-will/${will.id}/members`)}
@@ -293,7 +333,7 @@ function ViewerView({
               <Zap
                 className={cn("w-4 h-4", alreadyPushed ? "text-gray-400" : "fill-white text-white")}
               />
-              {alreadyPushed ? 'Team Pushed today ✓' : 'Push the whole group ⚡'}
+              {alreadyPushed ? 'Team Pushed today ✓' : '⚡ Team Push'}
             </button>
           </div>
 
@@ -303,6 +343,7 @@ function ViewerView({
               totalCount={messagesPreview.totalCount}
               messages={messagesPreview.messages}
               onOpenChat={onOpenChat}
+              isParticipant={false}
             />
           )}
         </div>
@@ -332,6 +373,7 @@ function PersonalView({
   will, myProgress, members, pushStatus, messagesPreview,
   onOpenChat, onOpenAllMembers,
   checkInOpen, onOpenCheckIn, onCloseCheckIn, checkInDate, onDayClick,
+  onPushMember, pushPending, currentUserId,
 }: {
   will: PublicWillDetails;
   myProgress: MyProgress;
@@ -345,12 +387,15 @@ function PersonalView({
   onCloseCheckIn: () => void;
   checkInDate: string | null;
   onDayClick: (date: string) => void;
+  onPushMember: () => void;
+  pushPending: boolean;
+  currentUserId?: string;
 }) {
-  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [whyExpanded, setWhyExpanded] = useState(false);
+  const alreadyPushed = pushStatus?.hasUserPushedToday ?? false;
 
-  const todayStr = todayKey();
+  const todayStr = new Date().toLocaleDateString('en-CA');
   const todayCheckIn = myProgress.checkIns.find(c => c.date === todayStr);
   const isCheckedInToday = todayCheckIn?.status === 'yes' || todayCheckIn?.status === 'partial';
   const isDailyTracking = myProgress.checkInType === 'daily' || myProgress.checkInType === 'specific_days';
@@ -358,9 +403,13 @@ function PersonalView({
   const isDuration = myProgress.commitmentCategory === 'duration';
   const isEvent = myProgress.commitmentCategory === 'event';
 
-  const othersWithMe = members.filter(m => m.userId !== user?.id);
+  const othersWithMe = members.filter(m => m.userId !== currentUserId);
   const topOthers = othersWithMe.slice(0, 3);
-  const receievedPushCount = (pushStatus?.pushes ?? []).length;
+
+  const pushesReceived = pushStatus?.pushes ?? [];
+  const lastPusher = pushesReceived.length > 0
+    ? pushesReceived[pushesReceived.length - 1]?.user?.firstName
+    : null;
 
   const heroGradient = isRecurring
     ? 'from-emerald-500 to-emerald-600'
@@ -462,7 +511,7 @@ function PersonalView({
             </div>
           </div>
 
-          {/* DayStrip calendar (only if daily tracking with data) */}
+          {/* DayStrip calendar */}
           {isDailyTracking && myProgress.checkIns.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-calendar">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your Calendar</p>
@@ -502,16 +551,24 @@ function PersonalView({
           )}
 
           {/* Pushes received */}
-          {receievedPushCount > 0 && (
+          {pushesReceived.length > 0 && (
             <div
-              className="bg-amber-50 rounded-2xl border border-amber-100 p-4 flex items-center gap-3"
+              className="bg-amber-50 rounded-2xl border border-amber-100 p-4"
               data-testid="card-pushes-received"
             >
-              <Zap className="w-5 h-5 text-amber-500 flex-shrink-0" fill="currentColor" />
-              <p className="text-sm text-amber-800">
-                <span className="font-semibold">{receievedPushCount}</span>{' '}
-                {receievedPushCount === 1 ? 'person has' : 'people have'} pushed this Will today!
-              </p>
+              <div className="flex items-start gap-3">
+                <Zap className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-800">
+                    You've been pushed {pushesReceived.length} {pushesReceived.length === 1 ? 'time' : 'times'} today!
+                  </p>
+                  {lastPusher && (
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      Last push from @{lastPusher.toLowerCase()}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -533,17 +590,27 @@ function PersonalView({
                 </button>
               </div>
               <div className="space-y-3">
-                {topOthers.map(m => <MemberCard key={m.userId} member={m} />)}
+                {topOthers.map(m => (
+                  <MemberCard
+                    key={m.userId}
+                    member={{ ...m, isYou: m.userId === currentUserId }}
+                    onPush={onPushMember}
+                    alreadyPushed={alreadyPushed}
+                    pushPending={pushPending}
+                    onTapProfile={(uid) => setLocation(`/profile/${uid}`)}
+                  />
+                ))}
               </div>
             </div>
           )}
 
-          {/* Hub Chat preview */}
+          {/* Hub Chat */}
           {messagesPreview && (
             <ChatPreviewCard
               totalCount={messagesPreview.totalCount}
               messages={messagesPreview.messages}
               onOpenChat={onOpenChat}
+              isParticipant={true}
             />
           )}
         </div>
@@ -592,6 +659,7 @@ export default function PublicWillDetail() {
   const willId = parseInt(id!);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const qc = useQueryClient();
 
   const [checkInOpen, setCheckInOpen] = useState(false);
@@ -629,19 +697,40 @@ export default function PublicWillDetail() {
     refetchInterval: 30000,
   });
 
+  const invalidatePushStatus = () => {
+    qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/push/status`] });
+  };
+
   const teamPushMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/wills/${willId}/team-push`, 'POST'),
+    mutationFn: () => apiRequest(`/api/wills/${willId}/team-push`, { method: 'POST' }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/push/status`] });
+      invalidatePushStatus();
       toast({ title: "Team Push sent! ⚡", description: "Everyone got your encouragement." });
     },
     onError: (err: any) => {
       const msg = String(err?.message || '');
       if (msg.toLowerCase().includes('already')) {
         toast({ title: "Already pushed today", description: "Come back tomorrow!" });
-        qc.invalidateQueries({ queryKey: [`/api/wills/${willId}/push/status`] });
+        invalidatePushStatus();
       } else {
         toast({ title: "Couldn't send push", description: msg || "Please try again.", variant: "destructive" });
+      }
+    },
+  });
+
+  const memberPushMutation = useMutation({
+    mutationFn: () => apiRequest(`/api/wills/${willId}/push`, { method: 'POST' }),
+    onSuccess: () => {
+      invalidatePushStatus();
+      toast({ title: "Push sent! 🙌", description: "Keep each other going." });
+    },
+    onError: (err: any) => {
+      const msg = String(err?.message || '');
+      if (msg.toLowerCase().includes('already')) {
+        toast({ title: "Already pushed today", description: "Come back tomorrow!" });
+        invalidatePushStatus();
+      } else {
+        toast({ title: "Couldn't push", description: msg || "Please try again.", variant: "destructive" });
       }
     },
   });
@@ -658,12 +747,13 @@ export default function PublicWillDetail() {
   };
 
   const handleDayClick = (date: string) => handleOpenCheckIn(date);
-  const handleOpenChat = () => setLocation(`/will/${willId}/messages?from=public`);
+  const handleOpenChat = () => setLocation(`/will/${willId}/messages`);
   const handleJoin = () => setLocation(`/explore/join/${willId}`);
   const handleOpenAllMembers = () => setLocation(`/public-will/${willId}/members`);
 
   const members = membersData?.members ?? [];
   const navTitle = will?.title || (will?.what ? `I will ${will.what}` : 'Public Will');
+  const currentUserId = user?.id;
 
   if (isLoading || !will) {
     return (
@@ -741,6 +831,9 @@ export default function PublicWillDetail() {
           onCloseCheckIn={handleCloseCheckIn}
           checkInDate={checkInDate}
           onDayClick={handleDayClick}
+          onPushMember={() => memberPushMutation.mutate()}
+          pushPending={memberPushMutation.isPending}
+          currentUserId={currentUserId}
         />
       ) : (
         <ViewerView
@@ -752,6 +845,9 @@ export default function PublicWillDetail() {
           onTeamPush={() => teamPushMutation.mutate()}
           teamPushPending={teamPushMutation.isPending}
           onOpenChat={handleOpenChat}
+          onPushMember={() => memberPushMutation.mutate()}
+          pushPending={memberPushMutation.isPending}
+          currentUserId={currentUserId}
         />
       )}
     </MobileLayout>

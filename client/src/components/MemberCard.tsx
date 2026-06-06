@@ -1,3 +1,4 @@
+import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type MemberActivity = 'yes' | 'partial' | 'no' | 'none';
@@ -6,6 +7,7 @@ export type MemberCardData = {
   userId: string;
   firstName: string;
   isCreator: boolean;
+  isYou?: boolean;
   daysIn: number;
   joinDate: string;
   sevenDayActivity: MemberActivity[];
@@ -26,6 +28,20 @@ export function getInitials(name: string) {
   return (name || '?').charAt(0).toUpperCase();
 }
 
+function joinedAgo(joinDate: string): string {
+  const diff = Date.now() - new Date(joinDate).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'joined today';
+  if (days === 1) return 'joined 1 day ago';
+  if (days < 7) return `joined ${days} days ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks === 1) return 'joined 1 week ago';
+  if (weeks < 5) return `joined ${weeks} weeks ago`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return 'joined 1 month ago';
+  return `joined ${months} months ago`;
+}
+
 const activityStyle: Record<MemberActivity, string> = {
   yes: 'bg-emerald-500',
   partial: 'bg-amber-400',
@@ -35,23 +51,43 @@ const activityStyle: Record<MemberActivity, string> = {
 
 interface MemberCardProps {
   member: MemberCardData;
+  onPush?: () => void;
+  alreadyPushed?: boolean;
+  pushPending?: boolean;
+  onTapProfile?: (userId: string) => void;
 }
 
-export default function MemberCard({ member }: MemberCardProps) {
+export default function MemberCard({
+  member,
+  onPush,
+  alreadyPushed = false,
+  pushPending = false,
+  onTapProfile,
+}: MemberCardProps) {
+  const showPushButton = !member.isYou && !!onPush;
+
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3"
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"
       data-testid={`card-member-${member.userId}`}
     >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
-          style={{ backgroundColor: avatarColor(member.userId) }}
+      <div className="flex items-center gap-3 mb-3">
+        <button
+          className="flex-shrink-0"
+          onClick={() => onTapProfile?.(member.userId)}
+          disabled={!onTapProfile}
+          aria-label={`View ${member.firstName}'s profile`}
         >
-          {getInitials(member.firstName)}
-        </div>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+            style={{ backgroundColor: avatarColor(member.userId) }}
+          >
+            {getInitials(member.firstName)}
+          </div>
+        </button>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-sm font-semibold text-gray-900 truncate">
               @{member.firstName.toLowerCase()}
             </span>
@@ -60,9 +96,36 @@ export default function MemberCard({ member }: MemberCardProps) {
                 Creator
               </span>
             )}
+            {member.isYou && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 flex-shrink-0">
+                You
+              </span>
+            )}
           </div>
-          <span className="text-xs text-gray-400">Day {member.daysIn}</span>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Day {member.daysIn} · {joinedAgo(member.joinDate)}
+          </p>
         </div>
+
+        {showPushButton && (
+          <button
+            onClick={onPush}
+            disabled={alreadyPushed || pushPending}
+            className={cn(
+              "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all flex-shrink-0",
+              alreadyPushed
+                ? "bg-gray-100 text-gray-400"
+                : "text-white active:opacity-80",
+            )}
+            style={alreadyPushed ? {} : { backgroundColor: '#534AB7' }}
+            data-testid={`button-push-member-${member.userId}`}
+          >
+            <Zap
+              className={cn("w-3 h-3", alreadyPushed ? "text-gray-400" : "fill-white text-white")}
+            />
+            {alreadyPushed ? 'Pushed ✓' : 'Push'}
+          </button>
+        )}
       </div>
 
       <div className="flex gap-1" aria-label="7-day activity">

@@ -1,0 +1,160 @@
+Feature – Challenge Will: Creation Flow + View Screens
+Build the Challenge Will type from scratch. This is a net new will type focused entirely on competition — no Push mechanic, leaderboard-driven, same goal for all participants. Keep it minimal for now; the goal is to prove the concept.
+
+Visual identity
+Challenge Will uses coral/orange throughout to distinguish it from all other will types:
+
+Primary color: #D85A30
+Light fill: #FAECE7
+Dark text on light fill: #712B13
+Mid text: #993C1D
+Type pill: background: #FAECE7; color: #712B13
+
+
+Creation flow
+Challenge Will creation plugs into the existing will creation entry point (the "What would you like to do?" sheet). Add "Challenge" as a fourth option on that sheet with a coral icon and the tagline: "One goal. Pure competition."
+Step 1 — Audience picker (net new screen):
+Before anything else, the user picks who competes:
+Two cards side by side:
+
+"Friends only" — invite from friend list. Icon: people/group. Selected state: coral border + coral light fill
+"Public" — open to everyone. Icon: globe. Selected state: same
+
+No instructional text — the two cards are self-explanatory. CTA: "Continue →" in coral.
+This selection sets challenge.visibility: 'private' (friends only) or 'open' (public).
+Steps 2 onwards — same as existing will creation flow:
+
+Will type (recurring / duration / event) — same screen, same logic
+Goal text input — same screen
+Why — same screen
+For private: after Why, show friend invite screen (reuse existing friend invite UI)
+For public: after Why, challenge goes live immediately — no invite step
+
+No new screens needed beyond Step 1. Reuse everything.
+
+Data model addition
+ts// kind already scaffolded — activate 'challenge'
+type ChallengeVisibility = 'open' | 'private'
+
+// Additional fields on Will when kind === 'challenge':
+{
+  kind: 'challenge',
+  visibility: ChallengeVisibility,
+  // all existing fields (title, type, startDate, endDate, because, etc.) unchanged
+}
+Score computation (derived, not stored):
+tsscore = Math.round((successRate * 0.6) + (totalDaysCompleted * 0.4 / totalDays * 100))
+// Weighted: 60% success rate + 40% completion progress
+// Returns 0–100
+
+View screens
+Determine render state the same way as Public Will:
+tstype ChallengeRenderState = 'owner' | 'participant' | 'viewer'
+
+const getChallengeRenderState = (challenge, currentUser) => {
+  if (challenge.creatorId === currentUser.id) return 'owner'
+  if (challenge.members.some(m => m.userId === currentUser.id)) return 'participant'
+  return 'viewer'
+}
+
+Owner + Participant view (shared layout):
+Both see the same screen — the only difference is the "You" pill on their own leaderboard row.
+Header:
+
+Pill: "Challenge · Private · Day N" or "Challenge · Public · Day N" in coral
+
+Challenge card:
+
+Creator avatar + username + "Creator" label + "started this bet" (private) or "started this challenge" (public)
+Section label: "THE BET" (private) or "THE CHALLENGE" (public) in coral uppercase
+Goal text
+Date range + days remaining
+
+Stats row (3 tiles):
+
+Competitors count
+Days in
+Days left (coral color when ≤ 3 days)
+
+Standings / Leaderboard section:
+
+Section label: "Standings" (private) or "Leaderboard" (public)
+Show top 4 by score, full list truncated with "See all →" overflow row (stacked avatars + "+N more competitors")
+Each row:
+
+Rank: 🥇🥈🥉 for top 3, plain number for 4+
+Avatar + username
+Success rate + total days completed (e.g. "86% · 12 days done")
+Score number (right-aligned, green if ≥ 70, red if < 50, primary color otherwise)
+Score bar: horizontal fill bar below the row, width proportional to score, color matches score color
+
+
+Current user's row: coral border accent (1.5px solid #D85A30) + "You" pill next to username
+Creator's row: "Creator" pill in coral
+
+Check-in CTA:
+
+"Mark today complete" in coral — full width, bottom of screen
+Same check-in logic as existing will types
+After check-in: score recalculates, leaderboard reorders in real time
+
+No Push button anywhere — Challenge Will has no Push mechanic.
+
+Viewer view (not a participant):
+Same layout as owner/participant view except:
+
+No "You" pill on any row
+No check-in button
+Bottom CTA:
+
+Public challenge: "Join Challenge" in coral
+Private challenge: viewer should never reach this screen (private challenges are not visible on Explore or profiles to non-members) — if they somehow do, show: "This challenge is private." with no join option
+
+
+
+On join (public only):
+
+Add user to participant list
+Re-render in participant state
+User starts at the bottom of the leaderboard with score 0
+
+
+"See all competitors" screen:
+Full scrollable leaderboard of all participants. Same row format as above. Header: "Competitors · N total". Each row tappable to view that user's profile.
+
+Explore card for Challenge Will:
+Same card structure as other types per the Explore redesign prompt:
+
+Type pill: coral "Challenge"
+Top right: "N competitors · N days left" (or "Ended" if past)
+Creator avatar + username
+CTA: "View →"
+Private challenges: never appear on Explore
+
+
+Profile visibility:
+
+Public challenges: appear on creator's and all participants' profiles
+Private challenges: appear on profiles of participants only — locked placeholder to everyone else
+
+
+What does NOT exist yet and is explicitly out of scope:
+
+End-of-challenge winner screen / summary
+Notifications tied to leaderboard position changes
+Any social mechanic (no Push, no chat, no messages)
+Challenge editing after creation
+
+
+What this prompt is asking for — no more, no less:
+
+Add "Challenge" option to will type selector sheet with coral styling and tagline
+Build audience picker screen (Step 1 of Challenge creation) — Friends only vs Public
+Wire remaining creation steps to existing will creation flow — no new screens beyond Step 1
+Build shared owner/participant view: challenge card, stats row, leaderboard with score bars, check-in CTA
+Build viewer view: same layout, Join Challenge CTA for public, blocked state for private
+Build "See all competitors" overflow screen
+Score computation logic: (successRate × 0.6) + (completionProgress × 0.4) rounded to integer
+Real-time leaderboard reorder on check-in
+Explore card support for Challenge type (coral pill, competitor count, View →)
+Profile visibility rules: public challenges visible, private challenges locked to non-participants
