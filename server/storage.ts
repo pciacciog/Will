@@ -84,7 +84,7 @@ export interface IStorage {
   getUserActiveSoloWillCount(userId: string): Promise<number>;
   getUserActiveTeamWillCount(userId: string): Promise<number>;
   getUserAllActiveWills(userId: string): Promise<(Will & { commitments: (WillCommitment & { user: User })[]; circleName?: string; circleCode?: string })[]>;
-  getPublicWills(search?: string): Promise<{ id: number; title: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
+  getPublicWills(search?: string): Promise<{ id: number; title: string | null; kind: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]>;
   getUserJoinedWill(userId: string, parentWillId: number): Promise<Will | undefined>;
   getWillById(id: number): Promise<Will | undefined>;
   updateWillStatus(willId: number, status: string): Promise<void>;
@@ -662,11 +662,13 @@ export class DatabaseStorage implements IStorage {
     return willsWithCommitments as any;
   }
 
-  async getPublicWills(search?: string): Promise<{ id: number; title: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
+  async getPublicWills(search?: string): Promise<{ id: number; title: string | null; kind: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
+    // Explore feed: all visibility='open' parent wills (solo + team + public kinds)
     const publicWillsList = await db
       .select({
         id: wills.id,
         title: wills.title,
+        kind: wills.kind,
         checkInType: wills.checkInType,
         startDate: wills.startDate,
         endDate: wills.endDate,
@@ -677,7 +679,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(wills)
       .where(and(
-        eq(wills.kind, 'public'),
+        eq(wills.visibility, 'open'),
         sql`${wills.parentWillId} IS NULL`,
         sql`${wills.status} IN ('pending', 'scheduled', 'active')`
       ))
@@ -697,14 +699,26 @@ export class DatabaseStorage implements IStorage {
           .from(users)
           .where(eq(users.id, will.createdBy));
         
-        const [memberCountResult] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(wills)
-          .where(eq(wills.parentWillId, will.id));
+        // Member count varies by kind
+        let memberCount = 1;
+        if (will.kind === 'public') {
+          const [childCount] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(wills)
+            .where(eq(wills.parentWillId, will.id));
+          memberCount = Number(childCount?.count || 0) + 1;
+        } else if (will.kind === 'team_i_will' || will.kind === 'team_we_will') {
+          const [commitCount] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(willCommitments)
+            .where(eq(willCommitments.willId, will.id));
+          memberCount = Number(commitCount?.count || 0);
+        }
         
         return {
           id: will.id,
           title: will.title ?? null,
+          kind: will.kind ?? null,
           what: commitment?.what || 'Untitled commitment',
           checkInType: will.checkInType,
           startDate: will.startDate,
@@ -712,7 +726,7 @@ export class DatabaseStorage implements IStorage {
           isIndefinite: will.isIndefinite,
           createdBy: will.createdBy,
           creatorName: creator?.firstName || 'Anonymous',
-          memberCount: Number(memberCountResult?.count || 0) + 1,
+          memberCount,
           status: will.status,
           createdAt: will.createdAt,
         };
@@ -729,7 +743,11 @@ export class DatabaseStorage implements IStorage {
     const sorted = results.map(({ createdAt: _ca, ...rest }) => rest);
 
     if (search) {
-      return sorted.filter(w => w.what.toLowerCase().includes(search.toLowerCase()));
+      const q = search.toLowerCase();
+      return sorted.filter(w =>
+        w.what.toLowerCase().includes(q) ||
+        (w.title && w.title.toLowerCase().includes(q))
+      );
     }
     
     return sorted;

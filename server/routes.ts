@@ -509,22 +509,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pastWills = userWills.filter(w => w.status === 'completed');
 
       const processWill = async (w: typeof wills.$inferSelect, isActive: boolean) => {
-        const isPublicVis = (w as any).kind === 'public';
-        let showTitle = isPublicVis || viewerId === profileUserId;
-        if (!showTitle) {
-          const [memberCommit] = await db
-            .select({ id: willCommitments.id })
-            .from(willCommitments)
-            .where(and(eq(willCommitments.willId, w.id), eq(willCommitments.userId, viewerId)));
-          showTitle = !!memberCommit;
+        const isPrivate = (w as any).visibility === 'private';
+        const willKind: string | null = (w as any).kind ?? null;
+        const isOwnProfile = viewerId === profileUserId;
+
+        // Non-owners see a locked stub for private wills — no details leaked
+        if (isPrivate && !isOwnProfile) {
+          return { id: w.id, locked: true };
         }
 
-        let displayTitle: string | null = null;
-        if (showTitle) {
-          const commitments = await storage.getWillCommitments(w.id);
-          const creatorCommit = commitments.find(c => c.userId === profileUserId);
-          displayTitle = w.title || creatorCommit?.what || null;
-        }
+        // Full data for open wills (any viewer) or owner's own private wills
+        const commitments = await storage.getWillCommitments(w.id);
+        const creatorCommit = commitments.find(c => c.userId === profileUserId);
+        const displayTitle = w.title || creatorCommit?.what || null;
 
         let dayCount = 0;
         let successRate = 0;
@@ -532,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const start = new Date(w.startDate);
           const now = new Date();
           dayCount = Math.max(1, Math.ceil((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-          if (showTitle && (w.checkInType === 'daily' || w.checkInType === 'specific_days')) {
+          if (w.checkInType === 'daily' || w.checkInType === 'specific_days') {
             const progress = await storage.getWillCheckInProgress(w.id, profileUserId);
             successRate = progress.successRate;
           }
@@ -550,7 +547,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           w.commitmentCategory === 'event' ? 'Event' :
           w.mode === 'team' ? 'Team Will' : 'Personal';
 
-        return { id: w.id, isPublic: showTitle, title: displayTitle, category: categoryLabel, dayCount, successRate, duration };
+        return {
+          id: w.id,
+          locked: false,
+          isPrivate,
+          kind: willKind,
+          title: displayTitle,
+          category: categoryLabel,
+          dayCount,
+          successRate,
+          duration,
+        };
       };
 
       const [activeResults, pastResults] = await Promise.all([
@@ -2250,8 +2257,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enriched = await Promise.all(
         publicWills.map(async (w) => {
           const isOwner = w.createdBy === userId;
+          // hasJoined only applies to kind='public' wills; solo/team wills are not joinable
           let hasJoined = false;
-          if (!isOwner) {
+          if (!isOwner && w.kind === 'public') {
             const joined = await storage.getUserJoinedWill(userId, w.id);
             hasJoined = !!joined;
           }

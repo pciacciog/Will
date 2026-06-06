@@ -1,7 +1,7 @@
 import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Lock } from "lucide-react";
 import { UnifiedBackButton } from "@/components/ui/design-system";
 
 type Profile = {
@@ -13,12 +13,14 @@ type Profile = {
 
 type WillEntry = {
   id: number;
-  isPublic: boolean;
-  title: string | null;
-  category: string;
-  dayCount: number;
-  successRate: number;
-  duration: string | null;
+  locked?: boolean;
+  isPrivate?: boolean;
+  kind?: string | null;
+  title?: string | null;
+  category?: string;
+  dayCount?: number;
+  successRate?: number;
+  duration?: string | null;
 };
 
 type WillsProfile = {
@@ -55,6 +57,23 @@ function handleDisplay(firstName: string | null, username: string | null) {
   return '';
 }
 
+type KindPillProps = { kind?: string | null };
+function KindPill({ kind }: KindPillProps) {
+  if (!kind) return null;
+  const map: Record<string, { label: string; className: string }> = {
+    solo:         { label: "Solo",    className: "bg-emerald-100 text-emerald-700" },
+    public:       { label: "Public",  className: "bg-blue-100 text-blue-700" },
+    team_i_will:  { label: "Team",    className: "bg-violet-100 text-violet-700" },
+    team_we_will: { label: "We Will", className: "bg-indigo-100 text-indigo-700" },
+  };
+  const cfg = map[kind] ?? { label: kind, className: "bg-gray-100 text-gray-600" };
+  return (
+    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide ${cfg.className}`}>
+      {cfg.label}
+    </span>
+  );
+}
+
 export default function FriendProfile() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/profile/:userId");
@@ -87,11 +106,7 @@ export default function FriendProfile() {
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       {/* Nav */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2 bg-gray-50">
-        <UnifiedBackButton
-          onClick={() => window.history.back()}
-          testId="button-back-friends"
-        />
-
+        <UnifiedBackButton onClick={() => window.history.back()} testId="button-back-friends" />
         <button
           onClick={() => setLocation(`/dm/${userId}`)}
           className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-emerald-500 text-emerald-600 bg-white text-sm font-semibold hover:bg-emerald-50 transition-all active:scale-95 shadow-sm"
@@ -143,12 +158,31 @@ export default function FriendProfile() {
             ) : (
               activeWills.map(w => (
                 <div key={w.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3" data-testid={`card-active-will-${w.id}`}>
-                  {w.isPublic ? (
+                  {w.locked ? (
+                    // Locked stub — private will viewed by non-owner
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-gray-300" />
+                        <p className="text-sm text-gray-400" data-testid={`text-locked-${w.id}`}>Private will</p>
+                      </div>
+                      <span className="shrink-0 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+                        Active
+                      </span>
+                    </div>
+                  ) : (
                     <>
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-gray-900 leading-snug flex-1" data-testid={`text-will-title-${w.id}`}>
-                          {w.title}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <KindPill kind={w.kind} />
+                            {w.isPrivate && (
+                              <Lock className="w-3 h-3 text-gray-400" />
+                            )}
+                          </div>
+                          <p className="text-sm font-semibold text-gray-900 leading-snug" data-testid={`text-will-title-${w.id}`}>
+                            {w.title}
+                          </p>
+                        </div>
                         <span className="shrink-0 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
                           Active
                         </span>
@@ -156,23 +190,15 @@ export default function FriendProfile() {
                       <p className="text-xs text-gray-400 mt-1" data-testid={`text-will-meta-${w.id}`}>
                         {w.category} · Day {w.dayCount}
                       </p>
-                      <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                          style={{ width: `${Math.min(w.successRate, 100)}%` }}
-                        />
-                      </div>
+                      {(w.successRate ?? 0) > 0 && (
+                        <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                            style={{ width: `${Math.min(w.successRate ?? 0, 100)}%` }}
+                          />
+                        </div>
+                      )}
                     </>
-                  ) : (
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium text-gray-400">🔒 Private Will</p>
-                        <p className="text-xs text-gray-400 mt-0.5">Ongoing</p>
-                      </div>
-                      <span className="shrink-0 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
-                        Active
-                      </span>
-                    </div>
                   )}
                 </div>
               ))
@@ -195,25 +221,30 @@ export default function FriendProfile() {
               <>
                 {pastWills.map(w => (
                   <div key={w.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3" data-testid={`card-past-will-${w.id}`}>
-                    {w.isPublic ? (
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-gray-900 leading-snug" data-testid={`text-past-will-title-${w.id}`}>
-                            {w.title}
-                          </p>
-                          {w.duration && (
-                            <p className="text-xs text-gray-400 mt-0.5">{w.duration}</p>
-                          )}
+                    {w.locked ? (
+                      // Locked stub — private will viewed by non-owner
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-gray-300" />
+                          <p className="text-sm text-gray-400" data-testid={`text-locked-past-${w.id}`}>Private will</p>
                         </div>
                         <span className="shrink-0 text-[11px] font-semibold text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
                           Done
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium text-gray-400">🔒 Completed Will</p>
-                          {w.duration && <p className="text-xs text-gray-400 mt-0.5">{w.duration}</p>}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <KindPill kind={w.kind} />
+                            {w.isPrivate && <Lock className="w-3 h-3 text-gray-400" />}
+                          </div>
+                          <p className="text-sm font-semibold text-gray-900 leading-snug" data-testid={`text-past-will-title-${w.id}`}>
+                            {w.title}
+                          </p>
+                          {w.duration && (
+                            <p className="text-xs text-gray-400 mt-0.5">{w.duration}</p>
+                          )}
                         </div>
                         <span className="shrink-0 text-[11px] font-semibold text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
                           Done
