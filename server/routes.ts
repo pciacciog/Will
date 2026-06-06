@@ -3727,6 +3727,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (targetUserId === userId) {
         return res.status(400).json({ message: "You cannot push yourself" });
       }
+      const allParticipantIds = await getPublicWillParticipantIds(willId);
+      if (!allParticipantIds.includes(targetUserId)) {
+        return res.status(400).json({ message: "Target user is not a participant of this Will" });
+      }
       const hasAlreadyPushed = await storage.hasUserPushedToday(willId, userId);
       if (hasAlreadyPushed) {
         return res.status(409).json({ message: "You have already pushed today" });

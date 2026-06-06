@@ -470,10 +470,21 @@ function ViewerView({
                 {will.memberCount > 4 && (
                   <button
                     onClick={() => setLocation(`/public-will/${will.id}/members`)}
-                    className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-500 bg-gray-50 border border-gray-100"
+                    className="w-full py-2.5 rounded-xl text-sm font-medium bg-gray-50 border border-gray-100 flex items-center justify-center gap-2"
                     data-testid="button-see-more-members"
                   >
-                    + {will.memberCount - 4} more members
+                    <div className="flex items-center -space-x-2">
+                      {sortedMembers.slice(4, 7).map(m => (
+                        <div
+                          key={m.userId}
+                          className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+                          style={{ backgroundColor: avatarColor(m.userId) }}
+                        >
+                          {getInitials(m.firstName)}
+                        </div>
+                      ))}
+                    </div>
+                    <span className="text-gray-500">+ {will.memberCount - 4} more · See all →</span>
                   </button>
                 )}
               </div>

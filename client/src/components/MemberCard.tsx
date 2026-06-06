@@ -68,23 +68,20 @@ export default function MemberCard({
 
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"
+      className={cn(
+        "bg-white rounded-2xl border border-gray-100 shadow-sm p-4",
+        onTapProfile && !member.isYou ? "cursor-pointer active:bg-gray-50 transition-colors" : "",
+      )}
+      onClick={() => !member.isYou && onTapProfile?.(member.userId)}
       data-testid={`card-member-${member.userId}`}
     >
       <div className="flex items-center gap-3 mb-3">
-        <button
-          className="flex-shrink-0"
-          onClick={() => onTapProfile?.(member.userId)}
-          disabled={!onTapProfile}
-          aria-label={`View ${member.firstName}'s profile`}
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+          style={{ backgroundColor: avatarColor(member.userId) }}
         >
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-            style={{ backgroundColor: avatarColor(member.userId) }}
-          >
-            {getInitials(member.firstName)}
-          </div>
-        </button>
+          {getInitials(member.firstName)}
+        </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -109,7 +106,7 @@ export default function MemberCard({
 
         {showPushButton && (
           <button
-            onClick={() => onPush?.(member.userId)}
+            onClick={(e) => { e.stopPropagation(); onPush?.(member.userId); }}
             disabled={alreadyPushed || pushPending}
             className={cn(
               "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all flex-shrink-0",
