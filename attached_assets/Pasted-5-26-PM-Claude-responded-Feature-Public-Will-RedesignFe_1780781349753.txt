@@ -1,0 +1,160 @@
+5:26 PMClaude responded: Feature – Public Will RedesignFeature – Public Will Redesign
+Redesign the Public Will screen to support three distinct render states based on the current user's relationship to the will. All three states share the same underlying data but present it differently.
+Determining render state:
+tstype PublicWillRenderState = 'owner' | 'member' | 'viewer'
+
+const getRenderState = (will, currentUser) => {
+  if (will.creatorId === currentUser.id) return 'owner'
+  if (will.members.some(m => m.userId === currentUser.id)) return 'member'
+  return 'viewer'
+}
+
+State 1 — Owner view (renderState === 'owner')
+The personal accountability section stays identical to the current solo will experience — unchanged. Below it, append a social layer.
+Personal accountability section (unchanged):
+
+Will title, type badge, date range
+Check-in button for today
+Progress ring (Day N of N)
+Stats: days in, days left, missed
+Calendar strip
+Why chip (owner's own — never shown to viewers)
+
+Social layer (appended below):
+Who's with you section:
+
+Section header: "Who's with you"
+Member cards (see member card spec below)
+Shows top 4 members by join date — no ranking, community not competition
+If 5+ members: "See all →" overflow row with stacked avatar previews (+N more)
+Empty state: "Nobody's joined yet — share your will and bring someone along" with share nudge
+Each member card has an individual Push button
+
+Push activity:
+
+"You've been pushed N times" as motivation
+"Last push from @username · 2h ago"
+
+Hub Chat:
+
+Full chat interface
+Owner messages show a subtle "Creator" badge next to their name in thread
+Empty state: "Your community can chat here. Be the first to set the tone."
+
+No "Join Will" button — owner is already in it.
+No "Push @username" directed at themselves.
+
+State 2 — Member view (renderState === 'member')
+Identical to owner view with these specific adaptations:
+Personal accountability section:
+
+Check-in button present — member tracks their own progress
+Progress ring reflects the member's own progress (their Day N of N)
+Calendar strip reflects the member's own check-in history
+Stats (days in, days left, missed) reflect the member's own data
+Why chip: shown — displays the viewing member's own Why, same as owner view. Why is always personal to the individual tracking their own progress. Never visible to outside viewers
+
+Social layer:
+
+"Who's with you" section shows all other members including the creator. Creator card shows "Creator" pill. The viewing member's own card shows "You" pill
+Push buttons: member can push any other member but not themselves — their own card shows no push button
+Hub Chat: member participates fully. Their messages show their username, no special badge
+
+Language adaptations:
+
+Anywhere the current design uses owner-specific language ("your will", "you created this") — adapt to participant language ("you're part of this", "joined N days ago")
+
+No "Join Will" button — already a member.
+
+State 3 — Viewer view (renderState === 'viewer')
+Community-first layout. No personal accountability section.
+Header:
+
+Will title + "Public" type pill
+Active badge (e.g. "Active · Day 97")
+
+Creator card:
+
+Creator avatar + username + "Creator · N days in"
+Will text
+
+Group stats row (3 tiles):
+
+Days running (since will creation)
+Avg success rate (average across all members)
+Member count
+
+Members section:
+
+Section header: "Who's in it" (left) + "N members" (right, muted)
+Show top 4 members by join date — no ranking, no success rate comparison
+Each member card: avatar, username, days in, 7-day mini calendar strip, individual Push button
+If 5+ members: "See all →" overflow row with stacked avatar previews of next 3 + "+N more members". Tapping opens full member list screen
+"Creator" pill on creator's card
+
+Team Push button:
+
+Full width, label: "⚡ Team Push"
+Sends push notification to all members simultaneously
+After tap: disabled for rest of day, label changes to "Team pushed today ✓"
+Notification copy: "@{viewer} sent a Team Push on '{willTitle}' — the whole crew is counting on you!"
+
+Hub Chat preview:
+
+Shows last 1–2 messages if available
+Empty state: "No messages yet. Be the first!"
+"See all messages →" opens full chat
+Fix 403 error: any authenticated user can send messages in a Public Will chat. On first message, auto-join user as chat participant. Authorization middleware must treat will.kind === 'public' as open access
+
+Join Will CTA:
+
+Full-width button pinned at bottom: "Join Will"
+On join: adds user to member list, re-renders in member state, hides Join button
+
+
+Member card spec (reusable across all three states):
+[ avatar ] @username                    [ ⚡ Push ]
+           Day N · joined X days ago
+[ ✓ ][ ✗ ][ ✓ ][ ✓ ][ ✗ ][ ✓ ][ · ]
+
+Avatar: initials + color
+Username + days active
+7-day mini calendar strip: ✓ green, ✗ red, · gray for future/no data
+Push button states:
+
+Default: "⚡ Push"
+Already pushed today: "Pushed ✓", disabled
+Own card: no push button shown
+Creator card in owner view: no push button
+
+
+
+
+"See all members" screen:
+Full scrollable list of all members, same card format. Each card tappable to view that member's profile. Individual Push buttons per member. Header: "Members · N total"
+
+Group stats computation:
+tsgroupStats = {
+  daysRunning: daysSince(will.createdAt),
+  avgSuccessRate: average(members.map(m => m.successRate)),
+  memberCount: will.members.length
+}
+
+What does NOT change:
+
+Solo Will owner view
+Team Will screens
+Will creation flow
+Alert/notification infrastructure
+
+
+What this prompt is asking for — no more, no less:
+
+Implement three-state render logic (owner / member / viewer) on the Public Will screen
+Build owner view: existing personal accountability section unchanged + social layer appended below
+Build member view: same as owner view with member's own progress data, own Why chip, and participant-adapted language
+Build viewer view: community layout with group stats, member cards, Team Push, Hub Chat preview, Join Will CTA
+Build "See all members" overflow screen
+Fix Hub Chat 403 error for public wills — open access for authenticated users
+Team Push notification logic
+Member card as a reusable component used across all three states
