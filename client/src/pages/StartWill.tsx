@@ -195,12 +195,8 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [activeDays, setActiveDays] = useState<'every_day' | 'weekdays' | 'custom'>('every_day');
   const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   
-  // Visibility: 'private' (default) or 'public' (discoverable in Explore)
-  // Pre-set to 'public' if ?visibility=public is in the URL (from WhoModal "Everyone" choice)
-  const [visibility, setVisibility] = useState<'private' | 'public'>(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('visibility') === 'public' ? 'public' : 'private';
-  });
+  // Visibility: 'open' (default, discoverable) or 'private' (hidden from Explore/profile)
+  const [visibility, setVisibility] = useState<'private' | 'open'>('open');
   
   // For Circle mode, we show type selection before step 1
   const showTypeSelection = !isSoloMode && willType === null;
@@ -1169,6 +1165,29 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     {whatCharCount} / 75
                   </p>
                 </div>
+
+                {isSoloMode && (
+                  <div className="mt-5 flex items-start justify-between gap-3 px-2 animate-in fade-in duration-300" style={{ animationDelay: '300ms' }}>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-700">Make this will private</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Private wills won't appear on Explore or your profile</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setVisibility(v => v === 'private' ? 'open' : 'private')}
+                      className="flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200"
+                      style={{ background: visibility === 'private' ? '#111827' : '#D1D5DB' }}
+                      data-testid="toggle-private"
+                      aria-checked={visibility === 'private'}
+                      role="switch"
+                    >
+                      <span
+                        className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                        style={{ transform: visibility === 'private' ? 'translateX(22px)' : 'translateX(4px)' }}
+                      />
+                    </button>
+                  </div>
+                )}
 
               </div>
               

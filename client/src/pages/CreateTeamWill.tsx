@@ -97,6 +97,7 @@ export default function CreateTeamWill() {
   const [friendSearch, setFriendSearch] = useState("");
   const [notificationsData, setNotificationsData] = useState<NotificationsData | null>(null);
   const [showWhyReview, setShowWhyReview] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const whyRef = useRef<HTMLTextAreaElement>(null);
@@ -249,6 +250,7 @@ export default function CreateTeamWill() {
       commitmentCategory: notificationsData?.commitmentCategory ?? undefined,
       milestones: notificationsData?.milestones ? JSON.stringify(notificationsData.milestones) : undefined,
       reminderTime: notificationsData?.reminderTime ?? undefined,
+      visibility: isPrivate ? 'private' : 'open',
     });
   };
 
@@ -564,6 +566,28 @@ export default function CreateTeamWill() {
                       ))}
                     </div>
                   )}
+                </button>
+              </div>
+
+              {/* Privacy toggle */}
+              <div className="mt-4 flex items-start justify-between gap-3 px-1">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">Make this will private</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Private wills won't appear on your profile. Only invited members will see it</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPrivate(p => !p)}
+                  className="flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200"
+                  style={{ background: isPrivate ? '#111827' : '#D1D5DB' }}
+                  data-testid="toggle-private"
+                  aria-checked={isPrivate}
+                  role="switch"
+                >
+                  <span
+                    className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                    style={{ transform: isPrivate ? 'translateX(22px)' : 'translateX(4px)' }}
+                  />
                 </button>
               </div>
 
