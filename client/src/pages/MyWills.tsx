@@ -131,7 +131,7 @@ function WillCard({ will, onClick, userId, alertType }: { will: Will; onClick: (
   const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
   const isCircle = will.mode === 'circle';
   const isTeamWill = will.mode === 'team';
-  const isPublic = will.visibility === 'public' || !!will.parentWillId;
+  const isPublic = (will as any).kind === 'public' || !!will.parentWillId;
 
   const statusConfig: Record<string, { label: string; className: string; icon: typeof Flame }> = {
     active: { label: 'Active', className: 'bg-emerald-100 text-emerald-700', icon: Flame },
@@ -336,7 +336,7 @@ export default function MyWills() {
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending' || w.status === 'paused'
   ) || [];
 
-  const isPublicWill = (w: Will) => w.visibility === 'public' || !!w.parentWillId;
+  const isPublicWill = (w: Will) => (w as any).kind === 'public' || !!w.parentWillId;
   const soloWills = activeWills.filter(w => w.mode !== 'circle' && w.mode !== 'team' && !isPublicWill(w));
   const teamWills = activeWills.filter(w => w.mode === 'team');
   const publicWills = activeWills.filter(w => isPublicWill(w));

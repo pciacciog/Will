@@ -329,7 +329,7 @@ export default function WillDetails() {
     return '/my-wills';
   };
 
-  const isPublicWill = will?.visibility === 'public' || !!will?.parentWillId;
+  const isPublicWill = (will as any)?.kind === 'public' || !!will?.parentWillId;
   const participantWillId = will?.parentWillId || will?.id;
 
   const { data: unreadData } = useQuery<{ unreadCount: number }>({

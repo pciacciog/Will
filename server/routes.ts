@@ -509,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pastWills = userWills.filter(w => w.status === 'completed');
 
       const processWill = async (w: typeof wills.$inferSelect, isActive: boolean) => {
-        const isPublicVis = w.visibility === 'public';
+        const isPublicVis = (w as any).kind === 'public';
         let showTitle = isPublicVis || viewerId === profileUserId;
         if (!showTitle) {
           const [memberCommit] = await db
@@ -1112,7 +1112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const isPublic = (will as any).visibility === 'public' || (will as any).mode === 'public' || !!(will as any).parentWillId;
+      const isPublic = (will as any).kind === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) {
@@ -1162,7 +1162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      const isPublic = (will as any).visibility === 'public' || (will as any).mode === 'public' || !!(will as any).parentWillId;
+      const isPublic = (will as any).kind === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) {
@@ -1222,7 +1222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: "Will not found" });
 
-      const isPublic = (will as any).visibility === 'public' || (will as any).mode === 'public' || !!(will as any).parentWillId;
+      const isPublic = (will as any).kind === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or team wills" });
@@ -1256,7 +1256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: "Will not found" });
 
-      const isPublic = (will as any).visibility === 'public' || (will as any).mode === 'public' || !!(will as any).parentWillId;
+      const isPublic = (will as any).kind === 'public' || !!(will as any).parentWillId;
       const isShared = (will as any).mode === 'team';
 
       if (!isPublic && !isShared) return res.status(400).json({ message: "Messages are only available for public or team wills" });
@@ -1294,6 +1294,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validCheckInTypes = ['daily', 'specific_days', 'final_review'];
       const normalizedCheckInType = validCheckInTypes.includes(rawCheckInType) ? rawCheckInType : 'final_review';
 
+      // Derive the unified kind from mode + willType
+      const incomingWillType = req.body.willType || 'classic';
+      let derivedKind: string;
+      if (req.body.mode === 'team' && incomingWillType === 'cumulative') {
+        derivedKind = 'team_we_will';
+      } else if (req.body.mode === 'team') {
+        derivedKind = 'team_i_will';
+      } else if (req.body.visibility === 'public') {
+        // Legacy clients that still send visibility='public' for public wills
+        derivedKind = 'public';
+      } else {
+        derivedKind = 'solo';
+      }
+
+      // Normalise visibility: accept 'open'/'private'; legacy 'public' becomes 'open' + kind='public'
+      const rawVisibility = req.body.visibility;
+      let normalisedVisibility: string;
+      if (rawVisibility === 'private') {
+        normalisedVisibility = 'private';
+      } else if (rawVisibility === 'public') {
+        normalisedVisibility = 'open'; // legacy – treat as open public will
+      } else {
+        normalisedVisibility = 'open'; // default: open
+      }
+
       const willDataWithDefaults: any = {
         title: req.body.title ? String(req.body.title).trim().slice(0, 40) || null : null,
         description: req.body.description,
@@ -1301,7 +1326,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate: isIndefinite ? null : (req.body.endDate ? new Date(req.body.endDate) : null),
         createdBy: userId,
         mode: isPersonalMode ? 'personal' : isTeamMode ? 'team' : 'circle',
-        visibility: req.body.visibility || 'private',
+        visibility: normalisedVisibility,
+        kind: derivedKind,
         endRoomScheduledAt: req.body.endRoomScheduledAt ? new Date(req.body.endRoomScheduledAt) : null,
         checkInType: normalizedCheckInType,
         reminderTime: req.body.reminderTime || null,
@@ -1363,7 +1389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // The scheduler will also send the will_started notification when transitioning
         
         // Notify all users when a new public will is created
-        if (willData.visibility === 'public') {
+        if ((willData as any).kind === 'public') {
           try {
             const creator = await storage.getUser(userId);
             const creatorName = creator?.firstName || 'Someone';
@@ -2232,7 +2258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const willId = parseInt(req.params.id);
       const will = await storage.getWillById(willId);
-      if (!will || will.visibility !== 'public') {
+      if (!will || (will as any).kind !== 'public') {
         return res.status(404).json({ message: "Public Will not found" });
       }
       
@@ -2297,7 +2323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const willId = parseInt(req.params.id);
       const will = await storage.getWillById(willId);
-      if (!will || will.visibility !== 'public') {
+      if (!will || (will as any).kind !== 'public') {
         return res.status(404).json({ message: "Public Will not found" });
       }
       const ownerId = will.createdBy;
@@ -2320,7 +2346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const willId = parseInt(req.params.id);
       const will = await storage.getWillById(willId);
-      if (!will || will.visibility !== 'public') {
+      if (!will || (will as any).kind !== 'public') {
         return res.status(404).json({ message: "Public Will not found" });
       }
       const messages = await storage.getWillMessages(willId, 3);
@@ -2341,7 +2367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
 
-      if (will.visibility !== 'public' && !will.parentWillId) {
+      if ((will as any).kind !== 'public' && !will.parentWillId) {
         return res.status(403).json({ message: "Participants are only available for Public Wills" });
       }
 
@@ -2405,7 +2431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Will not found" });
       }
       
-      if (parentWill.visibility !== 'public') {
+      if ((parentWill as any).kind !== 'public') {
         return res.status(403).json({ message: "This Will is not public" });
       }
       
@@ -2451,7 +2477,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newWill = await storage.createWill({
         createdBy: userId,
         mode: 'personal',
-        visibility: 'private',
+        visibility: 'open',
+        kind: 'public',
         parentWillId: parentWillId,
         startDate: effectiveStartDate,
         endDate: parentWill.endDate,
@@ -3261,7 +3288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Push notifications are only available for active wills" });
       }
 
-      const isPublicWill = (will as any).visibility === 'public' || !!(will as any).parentWillId;
+      const isPublicWill = (will as any).kind === 'public' || !!(will as any).parentWillId;
       const pushDedupeId = isPublicWill ? ((will as any).parentWillId || willId) : willId;
 
       // Check if user has already pushed today (resets daily at midnight)
@@ -3332,7 +3359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const willId = parseInt(req.params.id);
 
       const will = await storage.getWillById(willId);
-      const isPublic = will && ((will as any).visibility === 'public' || !!(will as any).parentWillId);
+      const isPublic = will && ((will as any).kind === 'public' || !!(will as any).parentWillId);
       const checkId = isPublic ? ((will as any).parentWillId || willId) : willId;
 
       const hasUserPushedToday = await storage.hasUserPushedToday(checkId, userId);

@@ -77,12 +77,16 @@ export const friendships = pgTable("friendships", {
   uniqueIndex("IDX_friendships_pair").on(table.requesterId, table.addresseeId),
 ]);
 
+export type WillKind = 'solo' | 'team_i_will' | 'team_we_will' | 'public' | 'challenge';
+export type WillVisibility = 'open' | 'private';
+
 export const wills = pgTable("wills", {
   id: serial("id").primaryKey(),
   circleId: integer("circle_id").references(() => circles.id), // Nullable for non-circle wills
   createdBy: varchar("created_by").notNull().references(() => users.id),
-  mode: varchar("mode", { length: 10 }).notNull().default("personal"), // 'personal' or 'circle'
-  visibility: varchar("visibility", { length: 10 }).notNull().default("private"), // 'private' or 'public'
+  mode: varchar("mode", { length: 10 }).notNull().default("personal"), // 'personal' or 'circle' — legacy, kept for backward compat
+  visibility: varchar("visibility", { length: 10 }).notNull().default("open"), // 'open' or 'private'
+  kind: varchar("kind", { length: 20 }).notNull().default("solo"), // 'solo' | 'team_i_will' | 'team_we_will' | 'public' | 'challenge'
   parentWillId: integer("parent_will_id"), // For joined instances: references the original public will
   willType: varchar("will_type", { length: 20 }).default("classic"), // 'classic' or 'cumulative' (only for circle mode)
   title: text("title"), // Optional display title (max 40 chars), originator-only edit

@@ -597,7 +597,7 @@ export class DatabaseStorage implements IStorage {
         let pendingInviteCount: number | undefined = undefined;
         let sharedParticipants: { firstName: string }[] | undefined = undefined;
 
-        const isPublicWill = will.visibility === 'public' || !!will.parentWillId;
+        const isPublicWill = (will as any).kind === 'public' || !!will.parentWillId;
         if (isPublicWill) {
           try {
             const rootWillId = will.parentWillId || will.id;
@@ -677,7 +677,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(wills)
       .where(and(
-        eq(wills.visibility, 'public'),
+        eq(wills.kind, 'public'),
         sql`${wills.parentWillId} IS NULL`,
         sql`${wills.status} IN ('pending', 'scheduled', 'active')`
       ))
@@ -927,8 +927,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
-          inArray(wills.mode, ['solo', 'personal']),
-          eq(wills.visibility, 'private'),
+          eq(wills.kind, 'solo'),
           sql`${wills.parentWillId} IS NULL`,
           inArray(wills.status, ['completed', 'archived'])
         ))
@@ -940,8 +939,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
-          inArray(wills.mode, ['solo', 'personal']),
-          eq(wills.visibility, 'public'),
+          eq(wills.kind, 'public'),
           inArray(wills.status, ['completed', 'archived', 'terminated'])
         ));
       
@@ -1471,8 +1469,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
-          inArray(wills.mode, ['solo', 'personal']),
-          eq(wills.visibility, 'private'),
+          eq(wills.kind, 'solo'),
           inArray(wills.status, ['completed', 'archived'])
         ));
     }
@@ -1483,8 +1480,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
-          inArray(wills.mode, ['solo', 'personal']),
-          eq(wills.visibility, 'public'),
+          eq(wills.kind, 'public'),
           inArray(wills.status, ['completed', 'archived'])
         ));
       
@@ -1495,8 +1491,7 @@ export class DatabaseStorage implements IStorage {
           .from(wills)
           .where(and(
             inArray(wills.id, willIds),
-            inArray(wills.mode, ['solo', 'personal']),
-            eq(wills.visibility, 'public'),
+            eq(wills.kind, 'public'),
             inArray(wills.status, ['completed', 'archived'])
           ));
       }
@@ -1633,8 +1628,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
-          inArray(wills.mode, ['solo', 'personal']),
-          eq(wills.visibility, 'private'),
+          eq(wills.kind, 'solo'),
           sql`${wills.parentWillId} IS NULL`,
           inArray(wills.status, ['completed', 'archived'])
         ))
@@ -1646,8 +1640,7 @@ export class DatabaseStorage implements IStorage {
         .from(wills)
         .where(and(
           eq(wills.createdBy, userId),
-          inArray(wills.mode, ['solo', 'personal']),
-          eq(wills.visibility, 'public'),
+          eq(wills.kind, 'public'),
           inArray(wills.status, ['completed', 'archived', 'terminated'])
         ));
       
