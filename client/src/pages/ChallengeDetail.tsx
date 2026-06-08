@@ -189,7 +189,7 @@ export default function ChallengeDetail({ challengeId }: { challengeId: number }
     return (
       <MobileLayout>
         <div className="relative flex items-center mb-6 min-h-[44px]">
-          <UnifiedBackButton onClick={() => setLocation(-1 as any)} testId="button-back" />
+          <UnifiedBackButton onClick={() => window.history.back()} testId="button-back" />
         </div>
         <div className="text-center py-20 px-6">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: CORAL_LIGHT }}>
@@ -220,7 +220,7 @@ export default function ChallengeDetail({ challengeId }: { challengeId: number }
     <MobileLayout>
       {/* Header */}
       <div className="relative flex items-center mb-4 min-h-[44px]">
-        <UnifiedBackButton onClick={() => setLocation(-1 as any)} testId="button-back" />
+        <UnifiedBackButton onClick={() => window.history.back()} testId="button-back" />
         <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
           <span
             className="text-xs font-semibold px-3 py-1 rounded-full"

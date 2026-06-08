@@ -47,7 +47,7 @@ function getInitial(name: string) {
   return (name || "?").charAt(0).toUpperCase();
 }
 
-function AvatarStack({ members, size = 7 }: { members: { userId: string; firstName: string }[]; size?: number }) {
+function AvatarStack({ members = [], size = 7 }: { members?: { userId: string; firstName: string }[]; size?: number }) {
   const px = size === 7 ? "w-7 h-7 text-xs" : "w-6 h-6 text-[10px]";
   return (
     <div className="flex items-center -space-x-1.5">
@@ -97,7 +97,7 @@ function CreatorRow({ will }: { will: ExploreWill }) {
     <div className="flex items-center gap-2">
       <AvatarStack members={will.members} />
       <span className="text-xs text-gray-500 truncate">
-        @{will.creatorName.toLowerCase()}
+        @{(will.creatorName ?? "").toLowerCase()}
         {isTeam && extra > 0 ? ` + ${extra} other${extra === 1 ? "" : "s"}` : ""}
       </span>
     </div>
