@@ -5,12 +5,14 @@ import { getApiPath } from '@/config/api';
 const AUTH_TOKEN_KEY = 'auth_token';
 const TOKEN_TIMESTAMP_KEY = 'auth_token_timestamp';
 
+// Synchronous localStorage key — no bridge call needed
+const LS_TOKEN_KEY = 'will_auth_token';
+
 class SessionPersistenceService {
   private isNativePlatform = Capacitor.isNativePlatform();
   private authToken: string | null = null;
   
   constructor() {
-    // 🔍 DIAGNOSTIC: Log platform detection immediately on service creation
     console.log('╔════════════════════════════════════════════════════════════╗');
     console.log('║ SessionPersistence Service Initialized                     ║');
     console.log('╚════════════════════════════════════════════════════════════╝');
@@ -18,12 +20,25 @@ class SessionPersistenceService {
     console.log(`🔍 [SessionPersistence] isNativePlatform: ${this.isNativePlatform}`);
     console.log(`🔍 [SessionPersistence] Timestamp: ${new Date().toISOString()}`);
     console.log(`🔍 [SessionPersistence] User Agent: ${navigator.userAgent}`);
+
+    // Immediately seed memory from localStorage (synchronous — no bridge call)
+    // This ensures getToken() never needs to call Preferences.get() in the hot path
+    try {
+      const lsToken = localStorage.getItem(LS_TOKEN_KEY);
+      if (lsToken) {
+        this.authToken = lsToken;
+        console.log('✅ [SessionPersistence] Token pre-loaded from localStorage (synchronous)');
+      } else {
+        console.log('⚠️ [SessionPersistence] No token in localStorage yet');
+      }
+    } catch (e) {
+      console.warn('⚠️ [SessionPersistence] localStorage unavailable:', e);
+    }
     console.log('════════════════════════════════════════════════════════════');
   }
 
   /**
    * Save JWT auth token to persistent storage
-   * This runs after successful login
    */
   async saveToken(token: string) {
     const timestamp = new Date().toISOString();
@@ -33,141 +48,118 @@ class SessionPersistenceService {
     console.log('║ SAVING TOKEN                                               ║');
     console.log('╚════════════════════════════════════════════════════════════╝');
     console.log(`🔐 [SessionPersistence] Token preview: ${tokenPreview}`);
-    console.log(`🔐 [SessionPersistence] Token length: ${token.length} chars`);
     console.log(`🔐 [SessionPersistence] Platform: ${Capacitor.getPlatform()}`);
-    console.log(`🔐 [SessionPersistence] isNativePlatform: ${this.isNativePlatform}`);
     console.log(`🔐 [SessionPersistence] Timestamp: ${timestamp}`);
     
+    // 1. Memory cache (fastest)
     this.authToken = token;
-    
+
+    // 2. localStorage (synchronous, survives page reloads, no bridge call)
+    try {
+      localStorage.setItem(LS_TOKEN_KEY, token);
+      console.log('✅ [SessionPersistence] Token saved to localStorage (sync)');
+    } catch (e) {
+      console.warn('⚠️ [SessionPersistence] localStorage write failed:', e);
+    }
+
     if (!this.isNativePlatform) {
-      console.log('⚠️ [SessionPersistence] WEB PLATFORM - Token saved to MEMORY ONLY (will be lost on refresh!)');
+      console.log('⚠️ [SessionPersistence] WEB PLATFORM - Saved to memory + localStorage only');
       console.log('════════════════════════════════════════════════════════════');
       return;
     }
 
+    // 3. Capacitor Preferences (async bridge call — persists across full app restarts)
     try {
-      // Save token
-      await Preferences.set({
-        key: AUTH_TOKEN_KEY,
-        value: token
-      });
+      await Preferences.set({ key: AUTH_TOKEN_KEY, value: token });
+      await Preferences.set({ key: TOKEN_TIMESTAMP_KEY, value: timestamp });
       
-      // Save timestamp for diagnostics
-      await Preferences.set({
-        key: TOKEN_TIMESTAMP_KEY,
-        value: timestamp
-      });
-      
-      // Verify it was saved by reading it back
       const verification = await Preferences.get({ key: AUTH_TOKEN_KEY });
-      const timestampVerification = await Preferences.get({ key: TOKEN_TIMESTAMP_KEY });
-      
       if (verification.value === token) {
         console.log('✅ [SessionPersistence] Token SUCCESSFULLY saved to Capacitor Preferences');
-        console.log(`✅ [SessionPersistence] Saved at: ${timestampVerification.value}`);
-        console.log(`✅ [SessionPersistence] Verification: Token read back matches`);
       } else {
-        console.error('❌ [SessionPersistence] CRITICAL: Token verification FAILED!');
-        console.error(`❌ [SessionPersistence] Saved token length: ${token.length}`);
-        console.error(`❌ [SessionPersistence] Retrieved token length: ${verification.value?.length || 0}`);
+        console.error('❌ [SessionPersistence] CRITICAL: Preferences verification FAILED');
       }
-      
       console.log('════════════════════════════════════════════════════════════');
     } catch (error) {
-      console.error('╔════════════════════════════════════════════════════════════╗');
-      console.error('║ CRITICAL ERROR SAVING TOKEN                                ║');
-      console.error('╚════════════════════════════════════════════════════════════╝');
-      console.error('❌ [SessionPersistence] Exception:', error);
-      console.error(`❌ [SessionPersistence] Error type: ${error instanceof Error ? error.name : typeof error}`);
-      console.error(`❌ [SessionPersistence] Error message: ${error instanceof Error ? error.message : String(error)}`);
-      console.error('════════════════════════════════════════════════════════════');
+      console.error('❌ [SessionPersistence] Preferences save error:', error);
+      console.log('════════════════════════════════════════════════════════════');
     }
   }
 
   /**
-   * Get current auth token (from memory or persistent storage)
+   * Get current auth token.
+   * Priority: memory → localStorage (sync, no bridge) → Capacitor Preferences (async)
+   * The localStorage layer prevents the iOS Capacitor bridge stall that caused ~60s hangs.
    */
   async getToken(): Promise<string | null> {
-    console.log('🔍 [SessionPersistence] getToken() called');
-    console.log(`🔍 [SessionPersistence] Memory cache: ${this.authToken ? 'HAS TOKEN' : 'EMPTY'}`);
-    
-    // Return from memory if available
+    // 1. Memory cache — fastest, set on login or previous getToken call
     if (this.authToken) {
-      console.log(`✅ [SessionPersistence] Returning token from MEMORY cache`);
-      console.log(`✅ [SessionPersistence] Token preview: ${this.authToken.substring(0, 20)}...${this.authToken.substring(this.authToken.length - 10)}`);
       return this.authToken;
     }
 
-    // For mobile, try to restore from persistent storage
+    // 2. localStorage — synchronous, no bridge call, available immediately in WKWebView
+    try {
+      const lsToken = localStorage.getItem(LS_TOKEN_KEY);
+      if (lsToken) {
+        this.authToken = lsToken;
+        console.log('✅ [SessionPersistence] Token restored from localStorage (sync)');
+        return lsToken;
+      }
+    } catch (e) {
+      console.warn('⚠️ [SessionPersistence] localStorage read failed:', e);
+    }
+
+    // 3. Capacitor Preferences — async bridge call, only reached on first cold start
     if (this.isNativePlatform) {
-      console.log('🔍 [SessionPersistence] Memory cache empty - checking Capacitor Preferences...');
+      console.log('🔍 [SessionPersistence] Checking Capacitor Preferences (cold start)...');
       try {
         const { value } = await Preferences.get({ key: AUTH_TOKEN_KEY });
         const { value: timestamp } = await Preferences.get({ key: TOKEN_TIMESTAMP_KEY });
         
         if (value) {
           this.authToken = value;
+          // Back-fill localStorage so future calls skip the bridge
+          try {
+            localStorage.setItem(LS_TOKEN_KEY, value);
+          } catch (e) { /* ignore */ }
+
           console.log('╔════════════════════════════════════════════════════════════╗');
           console.log('║ TOKEN RESTORED FROM PREFERENCES                            ║');
           console.log('╚════════════════════════════════════════════════════════════╝');
-          console.log(`✅ [SessionPersistence] Token found in Capacitor Preferences!`);
-          console.log(`✅ [SessionPersistence] Token length: ${value.length} chars`);
-          console.log(`✅ [SessionPersistence] Token preview: ${value.substring(0, 20)}...${value.substring(value.length - 10)}`);
+          console.log(`✅ [SessionPersistence] Token found in Capacitor Preferences`);
           console.log(`✅ [SessionPersistence] Originally saved at: ${timestamp || 'UNKNOWN'}`);
-          console.log(`✅ [SessionPersistence] Time since save: ${timestamp ? Math.round((Date.now() - new Date(timestamp).getTime()) / 1000 / 60) : '?'} minutes`);
           console.log('════════════════════════════════════════════════════════════');
           return value;
         } else {
-          console.log('╔════════════════════════════════════════════════════════════╗');
-          console.log('║ NO TOKEN IN PREFERENCES                                    ║');
-          console.log('╚════════════════════════════════════════════════════════════╝');
-          console.log('⚠️ [SessionPersistence] Capacitor Preferences returned NULL');
-          console.log('⚠️ [SessionPersistence] This means either:');
-          console.log('⚠️   1. User never logged in');
-          console.log('⚠️   2. Token was cleared (logout)');
-          console.log('⚠️   3. iOS cleared Preferences storage (CRITICAL BUG)');
-          console.log('⚠️   4. Storage is not persisting correctly');
-          console.log('════════════════════════════════════════════════════════════');
+          console.log('⚠️ [SessionPersistence] No token in Capacitor Preferences');
         }
       } catch (error) {
-        console.error('╔════════════════════════════════════════════════════════════╗');
-        console.error('║ ERROR READING FROM PREFERENCES                             ║');
-        console.error('╚════════════════════════════════════════════════════════════╝');
-        console.error('❌ [SessionPersistence] Exception:', error);
-        console.error(`❌ [SessionPersistence] Error type: ${error instanceof Error ? error.name : typeof error}`);
-        console.error(`❌ [SessionPersistence] Error message: ${error instanceof Error ? error.message : String(error)}`);
-        console.error('════════════════════════════════════════════════════════════');
+        console.error('❌ [SessionPersistence] Preferences read error:', error);
       }
-    } else {
-      console.log('⚠️ [SessionPersistence] WEB PLATFORM - Not checking Preferences (memory only)');
     }
 
-    console.log('❌ [SessionPersistence] No token available - user needs to login');
+    console.log('❌ [SessionPersistence] No token found — user needs to log in');
     return null;
   }
 
   /**
-   * Restore auth token from persistent storage AND validate it with server
-   * This runs on app launch before API calls
+   * Restore session on app launch — validate token with server
    */
   async restoreSession(): Promise<boolean> {
     console.log('╔════════════════════════════════════════════════════════════╗');
     console.log('║ RESTORING SESSION ON APP LAUNCH                           ║');
     console.log('╚════════════════════════════════════════════════════════════╝');
     console.log(`🔄 [SessionPersistence] App launch time: ${new Date().toISOString()}`);
-    console.log(`🔄 [SessionPersistence] Platform: ${Capacitor.getPlatform()}`);
     
     const token = await this.getToken();
     
     if (!token) {
-      console.log('❌ [SessionPersistence] No token found - session NOT restored');
+      console.log('❌ [SessionPersistence] No token found — session NOT restored');
       console.log('════════════════════════════════════════════════════════════');
       return false;
     }
     
-    // 🔥 NEW: Validate token with server before claiming session restored
-    console.log('🔐 [SessionPersistence] Token found - validating with server...');
+    console.log('🔐 [SessionPersistence] Token found — validating with server...');
     try {
       const fetchOpts: RequestInit = {
         headers: { 
@@ -182,7 +174,7 @@ class SessionPersistenceService {
       
       if (response.ok) {
         const user = await response.json();
-        console.log(`✅ [SessionPersistence] Token VALID - User ${user.id} authenticated`);
+        console.log(`✅ [SessionPersistence] Token VALID — User ${user.id} authenticated`);
         return true;
       } else if (response.status === 401) {
         console.log('⚠️ [SessionPersistence] Token rejected (401) — attempting refresh...');
@@ -195,19 +187,13 @@ class SessionPersistenceService {
         await this.clearSession();
         return false;
       } else {
-        console.error(`❌ [SessionPersistence] Server returned ${response.status}: ${response.statusText}`);
+        console.error(`❌ [SessionPersistence] Server returned ${response.status}`);
         await this.clearSession();
         return false;
       }
     } catch (error) {
-      console.error('╔════════════════════════════════════════════════════════════╗');
-      console.error('║ NETWORK ERROR DURING TOKEN VALIDATION                      ║');
-      console.error('╚════════════════════════════════════════════════════════════╝');
-      console.error('❌ [SessionPersistence] Could not validate token with server');
-      console.error('❌ [SessionPersistence] Error:', error);
-      console.error('⚠️ [SessionPersistence] Assuming token is valid (network issue)');
-      console.error('════════════════════════════════════════════════════════════');
-      // If network error, assume token is valid and let the app try
+      console.error('❌ [SessionPersistence] Network error during validation:', error);
+      // Assume token is valid if network is unavailable
       return true;
     }
   }
@@ -244,61 +230,45 @@ class SessionPersistenceService {
   }
 
   /**
-   * Clear saved auth token
-   * This runs on logout
+   * Clear saved auth token on logout
    */
   async clearSession() {
     console.log('╔════════════════════════════════════════════════════════════╗');
     console.log('║ CLEARING SESSION                                           ║');
     console.log('╚════════════════════════════════════════════════════════════╝');
-    console.log(`🗑️ [SessionPersistence] Timestamp: ${new Date().toISOString()}`);
-    console.log(`🗑️ [SessionPersistence] Platform: ${Capacitor.getPlatform()}`);
     console.log(`🗑️ [SessionPersistence] Had token in memory: ${this.authToken ? 'YES' : 'NO'}`);
     
-    // Get timestamp before clearing to see how long session lasted
-    if (this.isNativePlatform) {
-      try {
-        const { value: timestamp } = await Preferences.get({ key: TOKEN_TIMESTAMP_KEY });
-        if (timestamp) {
-          const minutesSinceLogin = Math.round((Date.now() - new Date(timestamp).getTime()) / 1000 / 60);
-          console.log(`📊 [SessionPersistence] Session duration: ${minutesSinceLogin} minutes`);
-          console.log(`📊 [SessionPersistence] Token was saved at: ${timestamp}`);
-        }
-      } catch (e) {
-        // Ignore error, just diagnostic
-      }
-    }
-    
+    // 1. Memory
     this.authToken = null;
-    
+
+    // 2. localStorage
+    try {
+      localStorage.removeItem(LS_TOKEN_KEY);
+      console.log('✅ [SessionPersistence] Token removed from localStorage');
+    } catch (e) {
+      console.warn('⚠️ [SessionPersistence] localStorage remove failed:', e);
+    }
+
     if (!this.isNativePlatform) {
-      console.log('⚠️ [SessionPersistence] WEB PLATFORM - Cleared from memory only');
+      console.log('⚠️ [SessionPersistence] WEB PLATFORM — cleared memory + localStorage');
       console.log('════════════════════════════════════════════════════════════');
       return;
     }
 
+    // 3. Capacitor Preferences
     try {
       await Preferences.remove({ key: AUTH_TOKEN_KEY });
       await Preferences.remove({ key: TOKEN_TIMESTAMP_KEY });
-      
-      // Verify deletion
       const verification = await Preferences.get({ key: AUTH_TOKEN_KEY });
       if (!verification.value) {
         console.log('✅ [SessionPersistence] Token SUCCESSFULLY removed from Capacitor Preferences');
-        console.log('✅ [SessionPersistence] Verification: Preferences storage is empty');
       } else {
-        console.error('❌ [SessionPersistence] CRITICAL: Token still exists after removal attempt!');
+        console.error('❌ [SessionPersistence] CRITICAL: Token still exists after removal!');
       }
-      
       console.log('════════════════════════════════════════════════════════════');
     } catch (error) {
-      console.error('╔════════════════════════════════════════════════════════════╗');
-      console.error('║ ERROR CLEARING SESSION                                     ║');
-      console.error('╚════════════════════════════════════════════════════════════╝');
-      console.error('❌ [SessionPersistence] Exception:', error);
-      console.error(`❌ [SessionPersistence] Error type: ${error instanceof Error ? error.name : typeof error}`);
-      console.error(`❌ [SessionPersistence] Error message: ${error instanceof Error ? error.message : String(error)}`);
-      console.error('════════════════════════════════════════════════════════════');
+      console.error('❌ [SessionPersistence] Preferences clear error:', error);
+      console.log('════════════════════════════════════════════════════════════');
     }
   }
 }

@@ -63,6 +63,14 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Prevent iOS WKWebView from caching API responses (including error responses).
+// Without this header, iOS caches 500/4xx responses and re-serves them for ~60s,
+// causing requests to appear hung on the client.
+app.use('/api', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
 const privacyPolicyHtml = `
 <!DOCTYPE html>
 <html lang="en">

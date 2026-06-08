@@ -1,6 +1,7 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { queryClient } from "@/lib/queryClient";
 import TeamWillHub from "./TeamWillHub";
 import TeamWillViewer from "./TeamWillViewer";
 import WillDetails from "./WillDetails";
@@ -21,13 +22,33 @@ export default function WillPage() {
   const { user } = useAuth();
 
   // /meta returns only safe routing fields — no private data like "because"
+  // placeholderData seeds the result instantly from the all-active cache so we
+  // never show a loading spinner when navigating from My Wills (data already cached).
   const { data: meta, isLoading } = useQuery<WillMeta>({
     queryKey: [`/api/wills/${willId}/meta`],
     enabled: !!user && !!willId,
     staleTime: 30000,
+    placeholderData: () => {
+      // Try to seed routing info from the all-active cache
+      const allActive = queryClient.getQueryData<any[]>(['/api/wills/all-active']);
+      const cached = allActive?.find((w: any) => w.id === willId);
+      if (cached) {
+        return {
+          id: willId,
+          mode: cached.mode,
+          kind: cached.kind ?? null,
+          createdBy: cached.createdBy,
+          status: cached.status,
+          // Any will in all-active means this user is a participant → isMember true
+          isMember: true,
+        } as WillMeta;
+      }
+      return undefined;
+    },
   });
 
-  if (isLoading) {
+  // Only show spinner when there is genuinely no data at all (not even placeholder)
+  if (isLoading && !meta) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />

@@ -1,1 +1,2 @@
 - [Neon production DB schema drift](neon-schema-drift.md) — new schema columns must be manually migrated to the Neon production DB; `db:push` only updates the Replit dev PostgreSQL.
+- [Capacitor HTTP bridge stall on iOS](capacitor-http-bridge-stall.md) — CapacitorHttp.enabled=true routes all fetch() through native bridge; concurrent bridge calls stall ~60s; fix: localStorage in SessionPersistence + placeholderData in queries.
