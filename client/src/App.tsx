@@ -10,6 +10,7 @@ import { sessionPersistence } from "@/services/SessionPersistence";
 import { useLocation } from "wouter";
 import { logBridge } from "@/lib/logBridge";
 import { getApiUrl } from "@/config/api";
+import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
 import NotFound from "@/pages/not-found";
@@ -414,6 +415,28 @@ function Router() {
 }
 
 function App() {
+  // On iOS, Capacitor Preferences is async — we must await the token read before
+  // mounting Router (and therefore before any useQuery fires).
+  // On web, localStorage is synchronous so the constructor already handled it.
+  const [tokenReady, setTokenReady] = useState(() => !Capacitor.isNativePlatform());
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      sessionPersistence.initialize().then(() => {
+        console.log('[App] ✅ Token initialization complete — mounting Router');
+        setTokenReady(true);
+      });
+    }
+  }, []);
+
+  if (!tokenReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+      </div>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

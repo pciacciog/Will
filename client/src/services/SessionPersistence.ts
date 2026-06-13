@@ -87,9 +87,46 @@ class SessionPersistenceService {
   }
 
   /**
+   * Initialize token from persistent storage BEFORE any API requests are made.
+   * Must be awaited at app startup on iOS — gates the entire Router from mounting.
+   * On web: no-op (localStorage already read synchronously in the constructor).
+   * On iOS: reads from Capacitor Preferences (async bridge) and populates memory + localStorage,
+   * so every subsequent getToken() call is a synchronous memory hit.
+   */
+  async initialize(): Promise<void> {
+    // Already have token in memory (set in constructor from localStorage, or from a prior call)
+    if (this.authToken) {
+      console.log('✅ [SessionPersistence] initialize() — token already in memory, no bridge needed');
+      return;
+    }
+
+    // Web: localStorage is synchronous and was already checked in the constructor
+    if (!this.isNativePlatform) {
+      console.log('✅ [SessionPersistence] initialize() — web platform, localStorage already checked');
+      return;
+    }
+
+    // iOS: read Capacitor Preferences (async bridge call)
+    console.log('🔍 [SessionPersistence] initialize() — awaiting Capacitor Preferences bridge...');
+    try {
+      const { value } = await Preferences.get({ key: AUTH_TOKEN_KEY });
+      if (value) {
+        this.authToken = value;
+        // Back-fill localStorage so every future getToken() skips the bridge entirely
+        try { localStorage.setItem(LS_TOKEN_KEY, value); } catch {}
+        console.log('✅ [SessionPersistence] initialize() — token loaded from Capacitor Preferences');
+      } else {
+        console.log('⚠️ [SessionPersistence] initialize() — no token in Preferences (user not logged in)');
+      }
+    } catch (err) {
+      console.error('❌ [SessionPersistence] initialize() — Preferences read error:', err);
+    }
+  }
+
+  /**
    * Get current auth token.
    * Priority: memory → localStorage (sync, no bridge) → Capacitor Preferences (async)
-   * The localStorage layer prevents the iOS Capacitor bridge stall that caused ~60s hangs.
+   * After initialize() has run, this is always a synchronous memory hit.
    */
   async getToken(): Promise<string | null> {
     // 1. Memory cache — fastest, set on login or previous getToken call
