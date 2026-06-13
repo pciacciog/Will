@@ -1,0 +1,21 @@
+We are preparing this app (WILL) for App Store submission. We just completed a full production readiness audit in the staging environment. Here is the current status and what needs to happen next.
+
+Already done (pull from GitHub to get these):
+
+Challenge Will feature removed entirely
+"Make will private" visibility toggle removed
+iOS auth token initialization gate added (fixes infinite loading spinner on cold start)
+Account deletion UI added to Account Settings → Security tab (Apple App Store requirement)
+Your immediate tasks before touching code (15 minutes):
+
+Add RESEND_API_KEY to Replit Secrets — get it from your Resend dashboard. This fixes the forgot password flow which currently sends no emails (silent failure).
+Confirm APNS_PRODUCTION=true is set in this production environment's secrets. If missing or false, push notifications silently fail for all App Store users.
+In the Replit Deploy panel, confirm this deployment is a Reserved VM, not Autoscale. Autoscale sleeps and kills the notification scheduler.
+In your Neon dashboard, confirm you're on a paid plan with backups enabled. The free tier sleeps and has no backups.
+Next code task — iOS entitlements fix (hard App Store blocker):
+The file ios/App/App/App.entitlements currently has aps-environment set to development. This must be changed to production for the App Store build, otherwise push notifications will not deliver to any App Store user. This requires an Xcode change and a binary rebuild.
+
+After that — Stripe subscription system:
+Nothing is built yet. The plan is Stripe web (not IAP) — no payment UI inside the iOS app, users subscribe on the web, the app checks subscription status via the backend. Needs: schema additions (subscriptionStatus, stripeCustomerId, trialStartedAt), trial start on signup, Stripe Checkout session endpoint, webhook handler, and a paywall screen in the app.
+
+Please start by confirming which of the 4 secrets/infrastructure items above are already in place, then we'll tackle the entitlements fix and Stripe build.
