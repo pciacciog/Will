@@ -49,6 +49,7 @@ outputType = "webview"
 
 [agent]
 expertMode = true
+integrations = ["stripe:1.0.0"]
 
 [userenv]
 
