@@ -4,12 +4,14 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, User, Shield } from "lucide-react";
+import { Eye, EyeOff, User, Shield, Trash2, AlertTriangle } from "lucide-react";
 import { UnifiedBackButton } from "@/components/ui/design-system";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { queryClient } from "@/lib/queryClient";
+import { sessionPersistence } from "@/services/SessionPersistence";
+import { useLocation } from "wouter";
 
 interface AccountSettingsModalProps {
   isOpen: boolean;
@@ -19,10 +21,16 @@ interface AccountSettingsModalProps {
 export default function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
@@ -39,6 +47,9 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
       setUsername(user.username || '');
       setUsernameError('');
       setUsernameSaved(false);
+      setShowDeleteConfirm(false);
+      setDeletePassword('');
+      setDeleteError('');
     }
   }, [isOpen, user]);
 
@@ -159,6 +170,34 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
     }
 
     updateProfileMutation.mutate({ firstName, lastName, email });
+  };
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (password: string) => {
+      const res = await apiRequest('/api/account', {
+        method: 'DELETE',
+        body: JSON.stringify({ password }),
+      });
+      return await res.json();
+    },
+    onSuccess: async () => {
+      await sessionPersistence.clearSession();
+      queryClient.clear();
+      onClose();
+      setLocation('/');
+    },
+    onError: (error: any) => {
+      setDeleteError(error.message || 'Incorrect password. Please try again.');
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    setDeleteError('');
+    if (!deletePassword) {
+      setDeleteError('Please enter your password to confirm.');
+      return;
+    }
+    deleteAccountMutation.mutate(deletePassword);
   };
 
   const handleChangePassword = (e: React.FormEvent<HTMLFormElement>) => {
@@ -461,6 +500,99 @@ export default function AccountSettingsModal({ isOpen, onClose }: AccountSetting
                       </Button>
                     </div>
                   </form>
+                </div>
+              </div>
+
+
+
+              {/* Danger Zone */}
+              <div className="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-red-100">
+                  <h3 className="text-sm font-semibold text-red-600 tracking-wide uppercase">Danger Zone</h3>
+                </div>
+                <div className="p-5">
+                  {!showDeleteConfirm ? (
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800">Delete Account</p>
+                        <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
+                          Permanently removes your account and all data. This cannot be undone.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="flex-shrink-0 h-9 px-3 rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-sm font-medium transition-all"
+                        data-testid="button-delete-account-start"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                        Delete
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
+                        <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-700 leading-relaxed">
+                          This will permanently delete your account, all your wills, check-ins, and data. <strong>This cannot be undone.</strong>
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-sm font-medium text-gray-600">Confirm with your password</Label>
+                        <div className="relative">
+                          <Input
+                            type={showDeletePassword ? "text" : "password"}
+                            value={deletePassword}
+                            onChange={(e) => {
+                              setDeletePassword(e.target.value);
+                              setDeleteError('');
+                            }}
+                            placeholder="Enter your password"
+                            className="h-11 pr-11 rounded-lg border-red-200 bg-red-50/30 focus:bg-white focus:border-red-400 focus:ring-red-400/20 transition-all"
+                            data-testid="input-delete-password"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-0 top-0 h-full w-11 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                            onClick={() => setShowDeletePassword(!showDeletePassword)}
+                            aria-label={showDeletePassword ? "Hide password" : "Show password"}
+                          >
+                            {showDeletePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {deleteError && (
+                          <p className="text-xs text-red-500" data-testid="text-delete-error">{deleteError}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setShowDeleteConfirm(false);
+                            setDeletePassword('');
+                            setDeleteError('');
+                          }}
+                          className="flex-1 h-10 rounded-lg border-gray-200 text-gray-600 hover:bg-gray-50 font-medium transition-all"
+                          disabled={deleteAccountMutation.isPending}
+                          data-testid="button-delete-cancel"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleDeleteAccount}
+                          disabled={deleteAccountMutation.isPending || !deletePassword}
+                          className="flex-1 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
+                          data-testid="button-delete-account-confirm"
+                        >
+                          {deleteAccountMutation.isPending ? "Deleting..." : "Yes, delete my account"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
