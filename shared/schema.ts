@@ -77,7 +77,7 @@ export const friendships = pgTable("friendships", {
   uniqueIndex("IDX_friendships_pair").on(table.requesterId, table.addresseeId),
 ]);
 
-export type WillKind = 'solo' | 'team_i_will' | 'team_we_will' | 'public' | 'challenge';
+export type WillKind = 'solo' | 'team_i_will' | 'team_we_will' | 'public';
 export type WillVisibility = 'open' | 'private';
 
 export const wills = pgTable("wills", {

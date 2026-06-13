@@ -265,7 +265,7 @@ export function WillReviewFlow({ willId, mode = 'circle', checkInType = 'one-tim
                 // Daily Tracker Summary View
                 <>
                   <div className="text-center">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Challenge Results</h2>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Progress Summary</h2>
                     <p className="text-gray-500 text-sm">
                       Review your daily check-ins before finalizing
                     </p>

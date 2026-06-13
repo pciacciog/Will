@@ -15,7 +15,7 @@ import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, U
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { notificationService } from "@/services/NotificationService";
-import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users, Lock, Eye, ClipboardList, MessageCircle, CalendarDays } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Target, HelpCircle, CheckCircle, Heart, Video, Users, ClipboardList, MessageCircle, CalendarDays } from "lucide-react";
 import TimeChipPicker from "@/components/TimeChipPicker";
 import NotificationsSetup, { type NotificationsData } from "@/components/NotificationsSetup";
 
@@ -195,12 +195,11 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
   const [activeDays, setActiveDays] = useState<'every_day' | 'weekdays' | 'custom'>('every_day');
   const [customDays, setCustomDays] = useState<number[]>([1, 2, 3, 4, 5]);
   
-  // Visibility: 'open' (default) | 'private' (hidden) | 'public' (legacy public-will path)
-  // 'public' is set when ?visibility=public comes from WhoModal (Public Will creation) — no toggle shown.
-  const [visibility, setVisibility] = useState<'private' | 'open' | 'public'>(() => {
+  // Visibility: derived from URL param — 'public' for Public Will creation, 'open' for everything else.
+  const visibility = (() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('visibility') === 'public' ? 'public' : 'open';
-  });
+    return params.get('visibility') === 'public' ? 'public' as const : 'open' as const;
+  })();
   
   // For Circle mode, we show type selection before step 1
   const showTypeSelection = !isSoloMode && willType === null;
@@ -1086,23 +1085,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                     </>
                   )}
 
-                  {isSoloMode && (
-                    <>
-                      <div className="border-t border-gray-200"></div>
-                      <div className="flex items-start gap-3">
-                        {visibility === 'private' 
-                          ? <Lock className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                          : <Eye className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                        }
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Visibility</p>
-                          <p className="text-sm text-gray-700 mt-0.5 capitalize" data-testid="text-confirm-visibility">
-                            {visibility}
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
@@ -1170,28 +1152,6 @@ export default function StartWill({ isSoloMode = false, circleId }: StartWillPro
                   </p>
                 </div>
 
-                {isSoloMode && visibility !== 'public' && (
-                  <div className="mt-5 flex items-start justify-between gap-3 px-2 animate-in fade-in duration-300" style={{ animationDelay: '300ms' }}>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-700">Make this will private</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Private wills won't appear on Explore or your profile</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setVisibility(v => (v === 'private' ? 'open' : 'private'))}
-                      className="flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200"
-                      style={{ background: visibility === 'private' ? '#111827' : '#D1D5DB' }}
-                      data-testid="toggle-private"
-                      aria-checked={visibility === 'private'}
-                      role="switch"
-                    >
-                      <span
-                        className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
-                        style={{ transform: visibility === 'private' ? 'translateX(22px)' : 'translateX(4px)' }}
-                      />
-                    </button>
-                  </div>
-                )}
 
               </div>
               

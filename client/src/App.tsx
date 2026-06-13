@@ -43,9 +43,6 @@ import PublicWillDetail from "@/pages/PublicWillDetail";
 import SeeAllMembersPage from "@/pages/SeeAllMembersPage";
 import SoloWillViewer from "@/pages/SoloWillViewer";
 import TeamWillViewer from "@/pages/TeamWillViewer";
-import CreateChallenge from "@/pages/CreateChallenge";
-import ChallengeDetail from "@/pages/ChallengeDetail";
-import SeeAllCompetitorsPage from "@/pages/SeeAllCompetitorsPage";
 import DirectMessagePage from "@/pages/DirectMessagePage";
 import FindWillLifeArea from "@/pages/FindWillLifeArea";
 import FindWillSuggestions from "@/pages/FindWillSuggestions";
@@ -389,9 +386,6 @@ function Router() {
             <Route path="/public-will/:id/members" component={SeeAllMembersPage} />
             <Route path="/solo-viewer/:id">{(params) => <SoloWillViewer willId={parseInt(params.id)} />}</Route>
             <Route path="/team-viewer/:id">{(params) => <TeamWillViewer willId={parseInt(params.id)} />}</Route>
-            <Route path="/create-challenge" component={CreateChallenge} />
-            <Route path="/challenge/:id/competitors">{(params) => <SeeAllCompetitorsPage challengeId={parseInt(params.id)} />}</Route>
-            <Route path="/challenge/:id">{(params) => <ChallengeDetail challengeId={parseInt(params.id)} />}</Route>
             <Route path="/dm/:userId" component={DirectMessagePage} />
             <Route path="/explore/join/:willId" component={JoinWill} />
             <Route path="/solo/history">{() => <WillHistory mode="solo" />}</Route>

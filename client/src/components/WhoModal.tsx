@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Target, Users, Globe, ArrowRight, Swords } from "lucide-react";
+import { Target, Users, Globe, ArrowRight } from "lucide-react";
 
 interface WhoModalProps {
   isOpen: boolean;
@@ -11,14 +11,12 @@ export function WhoModal({ isOpen, onClose }: WhoModalProps) {
 
   if (!isOpen) return null;
 
-  const handleChoice = (choice: "solo" | "friends" | "public" | "challenge") => {
+  const handleChoice = (choice: "solo" | "friends" | "public") => {
     onClose();
     if (choice === "solo") {
       setLocation("/create-will");
     } else if (choice === "friends") {
       setLocation("/create-team-will");
-    } else if (choice === "challenge") {
-      setLocation("/create-challenge");
     } else {
       setLocation("/create-will?visibility=public");
     }
@@ -102,24 +100,6 @@ export function WhoModal({ isOpen, onClose }: WhoModalProps) {
                 <p className="text-xs text-gray-500 mt-0.5">Maximum accountability. Inspire others.</p>
               </div>
               <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-400 flex-shrink-0 transition-colors" />
-            </div>
-          </button>
-
-          {/* Challenge Will */}
-          <button
-            onClick={() => handleChoice("challenge")}
-            className="w-full text-left group"
-            data-testid="button-who-challenge"
-          >
-            <div className="relative flex items-center gap-4 bg-white border-2 border-gray-100 group-hover:border-orange-200 rounded-2xl p-4 transition-all duration-200 group-active:scale-[0.98]">
-              <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Swords className="w-6 h-6 text-orange-500" strokeWidth={1.5} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900">Challenge</p>
-                <p className="text-xs text-gray-500 mt-0.5">One goal. Pure competition.</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-orange-400 flex-shrink-0 transition-colors" />
             </div>
           </button>
 

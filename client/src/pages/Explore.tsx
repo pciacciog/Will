@@ -26,14 +26,13 @@ type ExploreWill = {
 };
 
 const KIND_STYLES: Record<string, { label: string; bg: string; text: string }> = {
-  solo:        { label: "Solo",      bg: "#E1F5EE", text: "#085041" },
-  public:      { label: "Public",    bg: "#E1F5EE", text: "#085041" },
-  team_i_will: { label: "Team",      bg: "#EEEDFE", text: "#3C3489" },
-  team_we_will:{ label: "We Will",   bg: "#EEEDFE", text: "#3C3489" },
-  challenge:   { label: "Challenge", bg: "#FAECE7", text: "#712B13" },
+  solo:        { label: "Solo",     bg: "#E1F5EE", text: "#085041" },
+  public:      { label: "Public",   bg: "#E1F5EE", text: "#085041" },
+  team_i_will: { label: "Team",     bg: "#EEEDFE", text: "#3C3489" },
+  team_we_will:{ label: "We Will",  bg: "#EEEDFE", text: "#3C3489" },
 };
 
-const FILTERS = ["All", "Solo", "Team", "Public", "Challenge"] as const;
+const FILTERS = ["All", "Solo", "Team", "Public"] as const;
 type Filter = typeof FILTERS[number];
 
 function avatarColor(id: string) {
@@ -71,7 +70,6 @@ function getNavTarget(will: ExploreWill): string {
   if (kind === "team_i_will" || kind === "team_we_will") {
     return isOwner || isTeamMember ? `/will/${id}` : `/team-viewer/${id}`;
   }
-  if (kind === "challenge") return `/challenge/${id}`;
   return `/will/${id}`;
 }
 
@@ -81,11 +79,6 @@ function getContextLabel(will: ExploreWill): string {
     const mem = `${memberCount} ${memberCount === 1 ? "member" : "members"}`;
     const days = daysActive > 0 ? ` · ${daysActive}d` : "";
     return `${mem}${days}`;
-  }
-  if (kind === "challenge") {
-    const comp = `${memberCount} ${memberCount === 1 ? "competitor" : "competitors"}`;
-    const days = daysActive > 0 ? ` · ${daysActive}d` : "";
-    return `${comp}${days}`;
   }
   return daysActive > 0 ? `${daysActive} days active` : "Just started";
 }
@@ -180,7 +173,6 @@ function matchesFilter(will: ExploreWill, filter: Filter): boolean {
   if (filter === "Solo") return will.kind === "solo";
   if (filter === "Team") return will.kind === "team_i_will" || will.kind === "team_we_will";
   if (filter === "Public") return will.kind === "public";
-  if (filter === "Challenge") return will.kind === "challenge";
   return true;
 }
 
@@ -189,7 +181,6 @@ const EMPTY_MESSAGES: Record<Filter, string> = {
   Solo: "No solo wills yet.",
   Team: "No team wills yet.",
   Public: "No public wills yet.",
-  Challenge: "No challenges yet.",
 };
 
 export default function Explore() {
