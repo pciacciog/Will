@@ -1,0 +1,36 @@
+
+We are preparing the Will app for production and App Store submission. Before we write a single line of code, I want you to review our codebase t and produce a detailed, prioritized action plan covering everything we need to address before we can ship.
+Do not make any changes yet. Only analyze and plan.
+Here is everything we know needs to be addressed:
+Auth & Accounts
+* Forgot password flow is broken and needs to be fixed end to end (I’ll provide more details ont his alter)
+* Username/handle system needs to be verified — every account needs a proper unique handle
+* Confirm email verification works on new signups (is this working?)
+* Confirm session persistence works correctly on logout and login
+* Account deletion must be accessible from within the app — Apple requires this
+Payments
+* Payment system needs to be built from scratch
+* $5.99/month subscription with a 4-week free trial
+* Trial starts on signup and auto-converts after 28 days
+* Paywall logic — what happens when trial expires and user has not paid
+* Webhook handling — failed payments, card declines, cancellations
+* Restore purchases flow — Apple requires this
+* Important flag: if charging inside the iOS app, Apple requires In-App Purchase and takes 30%. Alternative is directing users to a web page to subscribe via Stripe. Evaluate both options and recommend the best path for our stage.
+Push Notifications
+* Confirm APNs production certificate is configured — this is different from the sandbox certificate used in TestFlight
+* Test notification delivery on a production build
+* Confirm device token registration happens reliably on a fresh install
+* Verify notifications fire correctly for all trigger points — Will deadline, team check-in, invite received
+Backend & Infrastructure
+* Audit whether Neon PostgreSQL is on a plan that does not sleep
+* Confirm the server is not running on a free Replit Autoscale tier that sleeps and drops connections — needs to be always-on for production
+* Confirm production environment variables are fully separated from development
+* Recommend a basic error logging solution so we can see crashes in production
+* Confirm automated database backups are running
+App Store Submission
+* We are currently operating on TestFlight.. Do we need to make any configurations before shipping to production ? 
+For each item above I want you to:
+1. Check the current state of the codebase and tell me what exists, what is missing, and what is broken
+2. Flag anything that would block App Store approval if not addressed
+3. Produce a prioritized Monday execution plan — ordered by what to tackle first so we are unblocked as early as possible
+Again — do not change anything. Just analyze, report, and plan.
