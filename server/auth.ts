@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { validateUsername } from "@shared/username";
 import connectPg from "connect-pg-simple";
 import jwt from "jsonwebtoken";
 import { getDatabaseUrl } from "./config/environment";
@@ -242,10 +243,15 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { email, password, firstName, lastName, timezone, deviceToken: bodyDeviceToken } = req.body;
+      const { email, password, firstName, lastName, username, timezone, deviceToken: bodyDeviceToken } = req.body;
       
       if (!email || !password || !firstName || !lastName) {
         return res.status(400).json({ message: "All fields are required" });
+      }
+
+      const usernameCheck = validateUsername(username ?? "");
+      if (!usernameCheck.valid) {
+        return res.status(400).json({ message: usernameCheck.reason || "Invalid username" });
       }
 
       const existingUser = await storage.getUserByEmail(email);
@@ -262,6 +268,7 @@ export function setupAuth(app: Express) {
         password: await hashPassword(password),
         firstName,
         lastName,
+        username: usernameCheck.normalized,
         timezone: userTimezone,
         profileImageUrl: null,
         role: 'user',
@@ -290,7 +297,11 @@ export function setupAuth(app: Express) {
         
         res.status(201).json({ ...user, token });
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        // Unique-constraint race: email was pre-checked, so this is the username.
+        return res.status(409).json({ message: "Username is already taken" });
+      }
       console.error("Registration error:", error);
       res.status(500).json({ message: "Registration failed" });
     }

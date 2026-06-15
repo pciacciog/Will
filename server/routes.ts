@@ -34,6 +34,7 @@ import {
   directMessages,
 } from "@shared/schema";
 import { z } from "zod";
+import { validateUsername } from "@shared/username";
 import { isAuthenticated, isAdmin } from "./auth";
 import { registerStripeRoutes } from "./stripeRoutes";
 import { db, pool } from "./db";
@@ -357,11 +358,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username is required" });
       }
 
-      const trimmed = username.trim().toLowerCase();
-
-      if (!/^[a-z0-9_]{3,30}$/.test(trimmed)) {
-        return res.status(400).json({ message: "Username must be 3–30 characters, letters, numbers, or underscores only" });
+      const check = validateUsername(username);
+      if (!check.valid) {
+        return res.status(400).json({ message: check.reason });
       }
+      const trimmed = check.normalized;
 
       // Check uniqueness
       const [existing] = await db
@@ -380,9 +381,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       res.json(updated);
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        return res.status(409).json({ message: "Username is already taken" });
+      }
       console.error("[USERNAME] Error updating username:", error);
       res.status(500).json({ message: "Failed to update username" });
+    }
+  });
+
+  // ─── USERNAME AVAILABILITY (public; used by signup + existing-user intercept) ─
+  app.get('/api/users/username-available', async (req, res) => {
+    try {
+      const raw = (req.query.u as string) || '';
+      const check = validateUsername(raw);
+      if (!check.valid) {
+        return res.json({ valid: false, available: false, reason: check.reason });
+      }
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.username, check.normalized));
+      return res.json({ valid: true, available: !existing });
+    } catch (error) {
+      console.error("[USERNAME-AVAILABLE] Error:", error);
+      res.status(500).json({ message: "Failed to check username" });
     }
   });
 
@@ -403,16 +426,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: users.firstName,
           lastName: users.lastName,
           username: users.username,
-          email: users.email,
         })
         .from(users)
         .where(
           and(
             ne(users.id, currentUserId),
-            or(
-              ilike(users.username, `%${q}%`),
-              eq(users.email, q.toLowerCase())
-            )
+            isNotNull(users.username),
+            ilike(users.username, `%${q}%`)
           )
         )
         .limit(20);
@@ -447,7 +467,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: u.firstName,
           lastName: u.lastName,
           username: u.username,
-          email: u.email,
           friendshipId: fs?.id ?? null,
           friendshipStatus: fs?.status ?? null,
           friendshipDirection: fs?.direction ?? null,
@@ -480,9 +499,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ]));
 
       const discoverUsers = await db
-        .select({ userId: users.id, firstName: users.firstName, email: users.email })
+        .select({ userId: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username })
         .from(users)
-        .where(notInArray(users.id, excludeIds));
+        .where(and(notInArray(users.id, excludeIds), isNotNull(users.username)));
 
       res.json(discoverUsers);
     } catch (error) {
@@ -665,10 +684,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       allUserIds.delete(userId);
 
-      let userMap = new Map<string, { id: string; firstName: string | null; lastName: string | null; username: string | null; email: string | null }>();
+      let userMap = new Map<string, { id: string; firstName: string | null; lastName: string | null; username: string | null }>();
       if (allUserIds.size > 0) {
         const userRows = await db
-          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username, email: users.email })
+          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username })
           .from(users)
           .where(inArray(users.id, Array.from(allUserIds)));
         for (const u of userRows) {
@@ -685,7 +704,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: other?.firstName ?? null,
           lastName: other?.lastName ?? null,
           username: other?.username ?? null,
-          email: other?.email ?? null,
         };
       });
 
@@ -697,7 +715,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: other?.firstName ?? null,
           lastName: other?.lastName ?? null,
           username: other?.username ?? null,
-          email: other?.email ?? null,
         };
       });
 
@@ -6012,7 +6029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: willProofs.status,
           createdAt: willProofs.createdAt,
           firstName: users.firstName,
-          email: users.email,
+          username: users.username,
         })
         .from(willProofs)
         .innerJoin(users, eq(willProofs.userId, users.id))

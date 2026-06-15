@@ -15,7 +15,7 @@ type ProofDrop = {
   caption: string | null;
   createdAt: string;
   firstName: string | null;
-  email: string;
+  username: string | null;
 };
 
 type ProofResponse = {
@@ -31,7 +31,7 @@ interface ProofFeedProps {
 type PhotoModal = {
   imageUrl: string;
   firstName: string | null;
-  email: string;
+  username: string | null;
   caption: string | null;
   createdAt: string;
 } | null;
@@ -154,7 +154,7 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
         {allItems.length > 0 && (
           <div className="space-y-4">
             {allItems.map((proof) => {
-              const name = proof.firstName || proof.email?.split('@')[0] || '?';
+              const name = proof.firstName || proof.username || '?';
               const initial = name.charAt(0).toUpperCase();
               return (
                 <button
@@ -162,7 +162,7 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
                   onClick={() => setPhotoModal({
                     imageUrl: proof.imageUrl,
                     firstName: proof.firstName,
-                    email: proof.email,
+                    username: proof.username,
                     caption: proof.caption,
                     createdAt: proof.createdAt,
                   })}
@@ -219,7 +219,7 @@ export default function ProofFeed({ circleId }: ProofFeedProps) {
           >
             <div className="min-w-0">
               <p className="font-semibold text-sm truncate">
-                {photoModal.firstName || photoModal.email?.split('@')[0]}
+                {photoModal.firstName || photoModal.username}
               </p>
               <p className="text-xs text-white/60">
                 {new Date(photoModal.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}

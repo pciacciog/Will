@@ -50,6 +50,7 @@ import DirectMessagePage from "@/pages/DirectMessagePage";
 import FindWillLifeArea from "@/pages/FindWillLifeArea";
 import FindWillSuggestions from "@/pages/FindWillSuggestions";
 import Paywall from "@/pages/Paywall";
+import UsernameSetup from "@/components/UsernameSetup";
 import { ScrollFadeIndicator } from "@/components/ScrollFadeIndicator";
 
 // Global debug helper for easy access
@@ -359,6 +360,12 @@ function Router() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // Username gate: existing/new authenticated users must claim an @username
+  // BEFORE any subscription/paywall logic. Non-dismissible until set.
+  if (isAuthenticated && user && !user.username) {
+    return <UsernameSetup />;
   }
 
   // While we resolve subscription state for an authenticated user, avoid flashing
