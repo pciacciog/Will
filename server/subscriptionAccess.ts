@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { sql, eq } from "drizzle-orm";
+import { sql, eq, and, isNull } from "drizzle-orm";
 import { users, type User } from "@shared/schema";
 import { probeRevenueCatEntitlement, type RcProbe } from "./revenueCatAccess";
 
@@ -63,23 +63,51 @@ function persistStatus(user: User, nextStatus: "active" | "trialing" | "canceled
 
 /**
  * Computes a user's access state.
- * - Users with NULL trialStartedAt are grandfathered (created before subscriptions existed) → always have access.
- * - Otherwise access = within 28-day trial OR has an active Stripe subscription.
+ * - Users with NULL trialStartedAt are existing (pre-subscription) accounts. Rather
+ *   than granting them free access forever, we start their 28-day trial the first time
+ *   we see them after the subscriptions update, then convert them to paying like
+ *   everyone else.
+ * - Otherwise access = within 28-day trial OR has an active subscription (Stripe or Apple IAP).
  */
 export async function getSubscriptionStatus(user: User): Promise<SubscriptionStatus> {
-  if (!user.trialStartedAt) {
-    return {
-      hasAccess: true,
-      isGrandfathered: true,
-      isSubscribed: false,
-      isTrialing: false,
-      status: user.subscriptionStatus ?? null,
-      trialEndsAt: null,
-      daysLeft: null,
-    };
+  let trialStartedAt = user.trialStartedAt;
+
+  // Existing accounts created before subscriptions existed have a NULL trial start.
+  // Begin their 28-day trial now (lazily, on first access after the update) so their
+  // clock starts when they actually return — nobody's trial expires before they've
+  // seen the new version. The UPDATE only fires while the column is still NULL, so
+  // concurrent requests can't reset an already-started trial.
+  if (!trialStartedAt) {
+    const startNow = new Date();
+    try {
+      const stamped = await db
+        .update(users)
+        .set({ trialStartedAt: startNow, subscriptionStatus: "trialing" })
+        .where(and(eq(users.id, user.id), isNull(users.trialStartedAt)))
+        .returning({ trialStartedAt: users.trialStartedAt });
+      if (stamped[0]?.trialStartedAt) {
+        trialStartedAt = stamped[0].trialStartedAt;
+      } else {
+        // Lost a concurrent race — another request already started this user's trial.
+        // Re-read the persisted value so we honor the real start, not a skewed local time.
+        const [current] = await db
+          .select({ trialStartedAt: users.trialStartedAt })
+          .from(users)
+          .where(eq(users.id, user.id))
+          .limit(1);
+        if (!current?.trialStartedAt) throw new SubscriptionUnverifiableError();
+        trialStartedAt = current.trialStartedAt;
+      }
+    } catch (err) {
+      if (err instanceof SubscriptionUnverifiableError) throw err;
+      // The trial start could not be persisted (DB write/read failed). Fail closed to
+      // a retry screen rather than synthesizing a fresh trial on every request, which
+      // would over-grant access to pre-subscription users during a sustained outage.
+      throw new SubscriptionUnverifiableError();
+    }
   }
 
-  const trialStart = new Date(user.trialStartedAt);
+  const trialStart = new Date(trialStartedAt);
   const trialEndsAt = new Date(trialStart.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
   const now = new Date();
   const inTrial = now < trialEndsAt;

@@ -18,11 +18,20 @@ NOT `settings.secret_key`. Code uses `settings.secret ?? settings.secret_key` as
 defensive fallback.
 
 ## Subscription access policy (dual-source, bounded outage grace) — intentional decision
-`getSubscriptionStatus` (server/subscriptionAccess.ts): access = grandfathered
-(trialStartedAt null) OR within 28-day trial OR an active subscription from EITHER
-billing source — Stripe (web, probed live from the synced `stripe.subscriptions`
-schema) OR RevenueCat / Apple IAP (iOS, probed live). RevenueCat is probed only when
-the user is NOT already Stripe-active and NOT in trial, to bound external calls.
+`getSubscriptionStatus` (server/subscriptionAccess.ts): access = within 28-day trial
+OR an active subscription from EITHER billing source — Stripe (web, probed live from
+the synced `stripe.subscriptions` schema) OR RevenueCat / Apple IAP (iOS, probed live).
+RevenueCat is probed only when the user is NOT already Stripe-active and NOT in trial,
+to bound external calls.
+
+NOTE: permanent "grandfathering" was REMOVED. A NULL `trialStartedAt` (existing
+pre-subscription accounts) no longer means free-forever — instead the 28-day trial is
+stamped lazily on first access after the update (atomic `UPDATE ... WHERE id=? AND
+trial_started_at IS NULL`), then those users convert to paying like everyone else.
+**Why:** product decision — existing users should also go through the trial→pay flow.
+If that lazy stamp can't be persisted, fail closed (`SubscriptionUnverifiableError`)
+rather than synthesizing a fresh `now`, which would over-grant on every request during
+a sustained DB outage.
 
 Outage handling differs by source on purpose:
 - A *source unavailable* result ('unknown' from either probe) falls back to the
