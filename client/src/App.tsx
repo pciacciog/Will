@@ -11,6 +11,7 @@ import { sessionPersistence } from "@/services/SessionPersistence";
 import { useLocation } from "wouter";
 import { logBridge } from "@/lib/logBridge";
 import { getApiUrl } from "@/config/api";
+import { initRevenueCat } from "@/lib/revenueCat";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
@@ -143,6 +144,12 @@ function Router() {
       console.log('User authenticated - initializing push notifications');
       notificationService.initialize().catch(console.error);
       console.log('✅ User authenticated - server handles token association automatically');
+
+      // Link RevenueCat (Apple In-App Purchase) to this user on iOS so purchases
+      // are tied to the same identity the server verifies. No-op off-device.
+      initRevenueCat(user.id).catch((err) =>
+        console.error('[App] RevenueCat init error:', err)
+      );
       
       console.log('[App] 🔄 Auth state changed to authenticated - invalidating wills queries');
       queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });

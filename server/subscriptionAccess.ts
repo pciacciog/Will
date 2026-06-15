@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { sql, eq } from "drizzle-orm";
 import { users, type User } from "@shared/schema";
+import { probeRevenueCatEntitlement, type RcProbe } from "./revenueCatAccess";
 
 export const TRIAL_DAYS = 28;
 
@@ -48,6 +49,19 @@ async function probeStripeSubscription(customerId: string | null | undefined): P
 }
 
 /**
+ * Best-effort persistence of the last verified subscription state so the bounded
+ * grace fallback has accurate data during future billing-source outages.
+ * Writes the verification timestamp always; the status only when it changed.
+ */
+function persistStatus(user: User, nextStatus: "active" | "trialing" | "canceled"): void {
+  const patch: Partial<typeof users.$inferInsert> = { subscriptionLastVerifiedAt: new Date() };
+  if (nextStatus !== user.subscriptionStatus) patch.subscriptionStatus = nextStatus;
+  void db.update(users).set(patch).where(eq(users.id, user.id)).catch(() => {
+    // best-effort persistence; non-fatal
+  });
+}
+
+/**
  * Computes a user's access state.
  * - Users with NULL trialStartedAt are grandfathered (created before subscriptions existed) → always have access.
  * - Otherwise access = within 28-day trial OR has an active Stripe subscription.
@@ -71,36 +85,57 @@ export async function getSubscriptionStatus(user: User): Promise<SubscriptionSta
   const inTrial = now < trialEndsAt;
   const daysLeft = Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
 
-  const probe = await probeStripeSubscription(user.stripeCustomerId);
+  // Access can come from two billing sources: Stripe (web) or RevenueCat / Apple
+  // In-App Purchase (iOS). A user is subscribed if EITHER source is active.
+  const stripeProbe = await probeStripeSubscription(user.stripeCustomerId);
+  const stripeActive = stripeProbe === "active";
+
+  // Only probe RevenueCat when it can actually change the outcome: the user isn't
+  // already granted by Stripe and isn't inside the free trial. This bounds external
+  // calls to the post-trial, non-Stripe users for whom iOS purchase is the only
+  // thing standing between them and a lockout.
+  let rcProbe: RcProbe = "none";
+  if (!stripeActive && !inTrial) {
+    rcProbe = await probeRevenueCatEntitlement(user.id);
+  }
+  const rcActive = rcProbe === "active";
+
+  const liveActive = stripeActive || rcActive;
+
   let isSubscribed: boolean;
-  if (probe === "unknown") {
-    // Stripe schema unavailable. Honor a last-known 'active' status only within a
-    // bounded grace window so a transient outage doesn't lock out a real paying
-    // subscriber — but a stale/canceled status can't grant indefinite access.
-    const verifiedAt = user.subscriptionLastVerifiedAt
-      ? new Date(user.subscriptionLastVerifiedAt).getTime()
-      : 0;
-    const withinGrace = Date.now() - verifiedAt < OUTAGE_GRACE_HOURS * 60 * 60 * 1000;
-    if (user.subscriptionStatus === "active" && withinGrace) {
-      isSubscribed = true;
-    } else if (inTrial) {
-      // Still inside the trial window — access is granted regardless of Stripe state.
-      isSubscribed = false;
-    } else {
-      // No safe fallback: refuse to over-grant. Caller fails closed (retry screen).
-      throw new SubscriptionUnverifiableError();
-    }
+  if (liveActive) {
+    // At least one source definitively confirmed an active subscription.
+    isSubscribed = true;
+    persistStatus(user, "active");
   } else {
-    isSubscribed = probe === "active";
-    // Record a successful verification (timestamp always; status only on change) so
-    // the bounded-grace fallback above has accurate data during future outages.
-    const nextStatus = isSubscribed ? "active" : inTrial ? "trialing" : "canceled";
-    try {
-      const patch: Partial<typeof users.$inferInsert> = { subscriptionLastVerifiedAt: new Date() };
-      if (nextStatus !== user.subscriptionStatus) patch.subscriptionStatus = nextStatus;
-      await db.update(users).set(patch).where(eq(users.id, user.id));
-    } catch {
-      // best-effort persistence; non-fatal
+    const sourceUnavailable = stripeProbe === "unknown" || rcProbe === "unknown";
+    if (sourceUnavailable) {
+      // A billing source was unreachable. Honor a last-known 'active' status only
+      // within a bounded grace window so a transient outage doesn't lock out a real
+      // paying subscriber — but a stale/canceled status can't grant indefinite access.
+      const verifiedAt = user.subscriptionLastVerifiedAt
+        ? new Date(user.subscriptionLastVerifiedAt).getTime()
+        : 0;
+      const withinGrace = Date.now() - verifiedAt < OUTAGE_GRACE_HOURS * 60 * 60 * 1000;
+      if (user.subscriptionStatus === "active" && withinGrace) {
+        isSubscribed = true;
+      } else if (inTrial) {
+        // Still inside the trial window — access is granted regardless of billing state.
+        isSubscribed = false;
+      } else if (stripeProbe === "unknown") {
+        // Stripe itself is unverifiable and there's no last-known active subscription.
+        // Fail closed to a retry screen rather than over- or under-granting.
+        throw new SubscriptionUnverifiableError();
+      } else {
+        // Only RevenueCat was unavailable and this user has no last-known active
+        // subscription, so they aren't an iOS subscriber → show the paywall. Don't
+        // persist (the read was inconclusive for that source).
+        isSubscribed = false;
+      }
+    } else {
+      // Every probed source definitively reported no active subscription.
+      isSubscribed = false;
+      persistStatus(user, inTrial ? "trialing" : "canceled");
     }
   }
 

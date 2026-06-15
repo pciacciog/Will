@@ -49,7 +49,7 @@ outputType = "webview"
 
 [agent]
 expertMode = true
-integrations = ["stripe:1.0.0"]
+integrations = ["stripe:1.0.0", "revenuecat:1.0.0"]
 
 [userenv]
 
@@ -58,6 +58,9 @@ APNS_PRODUCTION = "true"
 APP_ENV = "production"
 APP_URL = "https://will-staging-porfirioaciacci.replit.app"
 EMAIL_FROM = "noreply@willapp.live"
+VITE_REVENUECAT_IOS_API_KEY = "appl_lpEFGxTCAkzgpnFlFPiLGqNdFbk"
+REVENUECAT_PROJECT_ID = "proj404a18c1"
+REVENUECAT_ENTITLEMENT_ID = "premium"
 
 [postMerge]
 path = "scripts/post-merge.sh"
