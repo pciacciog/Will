@@ -955,9 +955,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const baseUrl = process.env.APP_URL || originFromRequest || getDefaultOrigin();
         
         console.log(`[PasswordReset] Using base URL: ${baseUrl} (from origin: ${req.headers.origin}, referer: ${req.headers.referer})`);
-        await emailService.sendPasswordResetEmail(user.email, token, baseUrl);
-        
-        console.log(`[PasswordReset] Reset email sent to ${user.email}`);
+        const sent = await emailService.sendPasswordResetEmail(user.email, token, baseUrl);
+
+        if (sent) {
+          console.log(`[PasswordReset] Reset email sent to ${user.email}`);
+        } else {
+          console.error(`[PasswordReset] ❌ Failed to deliver reset email to ${user.email} (check EMAIL_FROM / Resend domain verification)`);
+        }
       } else {
         console.log(`[PasswordReset] No user found for email: ${email}`);
       }
