@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { endRoomScheduler } from "./scheduler";
 import path from "path";
+import fs from "fs";
 import { getAllowedOrigins, getDefaultOrigin, getEnvironment } from "./config/environment";
 
 const app = express();
@@ -237,7 +238,7 @@ const PORT = process.env.PORT || 5000;
     app.get('*', (req, res) => {
       if (!req.path.startsWith('/api/')) {
         const indexPath = path.join(distPath, 'index.html');
-        if (require('fs').existsSync(indexPath)) {
+        if (fs.existsSync(indexPath)) {
           res.sendFile(indexPath);
         } else {
           res.status(404).send('Frontend not found - check dist/public/index.html');
