@@ -60,6 +60,28 @@ app.use((req, res, next) => {
   next();
 });
 
+// Stripe webhook — MUST be registered BEFORE express.json() so the raw body
+// (needed for signature verification) is preserved.
+app.post(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const signature = req.headers['stripe-signature'];
+    if (!signature) {
+      return res.status(400).json({ error: 'Missing stripe-signature' });
+    }
+    try {
+      const sig = Array.isArray(signature) ? signature[0] : signature;
+      const { WebhookHandlers } = await import('./stripeWebhook');
+      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+      res.status(200).json({ received: true });
+    } catch (error: any) {
+      console.error('[Stripe] Webhook error:', error?.message || error);
+      res.status(400).json({ error: 'Webhook processing error' });
+    }
+  }
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -141,6 +163,44 @@ app.get("/robots.txt", (_req, res) => {
   res.type("text/plain").send("User-agent: *\nAllow: /\n");
 });
 
+/**
+ * Initialize Stripe schema and sync data on startup.
+ * Wrapped so any failure logs but does not crash the app.
+ */
+async function initStripe() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.warn('[Stripe] DATABASE_URL missing — skipping Stripe init');
+    return;
+  }
+  try {
+    const { runMigrations } = await import('stripe-replit-sync');
+    const { getStripeSync } = await import('./stripeClient');
+
+    console.log('[Stripe] Running migrations (stripe schema)...');
+    await runMigrations({ databaseUrl, schema: 'stripe' });
+
+    const stripeSync = await getStripeSync();
+
+    const domain = process.env.REPLIT_DOMAINS?.split(',')[0];
+    if (domain) {
+      const webhookResult = await stripeSync.findOrCreateManagedWebhook(
+        `https://${domain}/api/stripe/webhook`
+      );
+      console.log('[Stripe] Managed webhook ready:', webhookResult?.webhook?.url || 'ok');
+    } else {
+      console.warn('[Stripe] REPLIT_DOMAINS not set — skipping managed webhook setup');
+    }
+
+    // Backfill runs in the background; don't block startup.
+    stripeSync.syncBackfill()
+      .then(() => console.log('[Stripe] Data synced'))
+      .catch((err) => console.error('[Stripe] Backfill error:', err?.message || err));
+  } catch (error: any) {
+    console.error('[Stripe] Init failed (non-fatal):', error?.message || error);
+  }
+}
+
 const PORT = process.env.PORT || 5000;
 
 // Run migration, register routes, and start server — all sequenced to ensure
@@ -151,6 +211,10 @@ const PORT = process.env.PORT || 5000;
   // post-circle code on unmigrated data.
   const { runCircleMigration } = await import("./circleMigration");
   await runCircleMigration();
+
+  // Initialize Stripe: create stripe schema, managed webhook, and backfill data.
+  // Non-fatal: a Stripe init failure must never take down the core app.
+  await initStripe();
 
   // Register all API routes after migration completes
   registerRoutes(app);

@@ -35,6 +35,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "./auth";
+import { registerStripeRoutes } from "./stripeRoutes";
 import { db, pool } from "./db";
 import { eq, and, or, isNull, isNotNull, sql, inArray, notInArray, lt, gt, gte, desc, ne, ilike } from "drizzle-orm";
 import { cloudinary, cloudName, apiKey as cloudApiKey } from "./cloudinary";
@@ -209,6 +210,9 @@ async function getOtherSharedWillParticipants(userId: string, willId: number): P
 export async function registerRoutes(app: Express): Promise<Server> {
   // Use local authentication only - bypass Replit auth
   setupAuth(app);
+
+  // Stripe subscription routes (checkout, portal, status)
+  registerStripeRoutes(app);
 
   // Auth routes are handled by setupAuth
 

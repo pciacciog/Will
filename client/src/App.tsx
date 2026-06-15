@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useEffect, useState, useRef } from "react";
 import { notificationService } from "@/services/NotificationService";
 import { sessionPersistence } from "@/services/SessionPersistence";
@@ -47,6 +48,7 @@ import TeamWillViewer from "@/pages/TeamWillViewer";
 import DirectMessagePage from "@/pages/DirectMessagePage";
 import FindWillLifeArea from "@/pages/FindWillLifeArea";
 import FindWillSuggestions from "@/pages/FindWillSuggestions";
+import Paywall from "@/pages/Paywall";
 import { ScrollFadeIndicator } from "@/components/ScrollFadeIndicator";
 
 // Global debug helper for easy access
@@ -71,6 +73,7 @@ function CircleLobbyRedirect() {
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { subscription, isLoading: subLoading, refetch: refetchSubscription } = useSubscription(isAuthenticated);
   const [location, setLocation] = useLocation();
   const [sessionRestored, setSessionRestored] = useState(false);
   const pendingDeepLinkRef = useRef<string | null>(null);
@@ -349,6 +352,42 @@ function Router() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // While we resolve subscription state for an authenticated user, avoid flashing
+  // either the app or the paywall.
+  if (isAuthenticated && subLoading && !subscription) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Fail closed: if we couldn't determine subscription state for an authenticated
+  // user, do NOT grant app access. Show a retry screen (not the paywall, to avoid
+  // misleading grandfathered/paying users during a transient outage).
+  if (isAuthenticated && !subscription) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-gray-600" data-testid="text-subscription-unavailable">
+          We couldn't verify your subscription. Please check your connection and try again.
+        </p>
+        <button
+          onClick={() => refetchSubscription()}
+          className="rounded-xl bg-brandGreen px-6 py-2.5 font-semibold text-white hover:bg-brandGreen/90"
+          data-testid="button-retry-subscription"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Full lockout: authenticated users whose trial has ended without an active
+  // subscription only see the paywall.
+  if (isAuthenticated && subscription && !subscription.hasAccess) {
+    return <Paywall />;
   }
 
   return (

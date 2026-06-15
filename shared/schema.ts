@@ -46,6 +46,12 @@ export const users = pgTable("users", {
   dailyReminderEnabled: boolean("daily_reminder_enabled").default(true),
   lastDailyReminderSentAt: timestamp("last_daily_reminder_sent_at"),
   lastMotivationalSentAt: timestamp("last_motivational_sent_at"),
+  // Stripe subscription fields
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  subscriptionStatus: varchar("subscription_status", { length: 20 }).default("trialing"), // 'trialing' | 'active' | 'canceled' | 'past_due'
+  trialStartedAt: timestamp("trial_started_at").defaultNow(), // NULL for grandfathered users (created before subscriptions existed)
+  subscriptionLastVerifiedAt: timestamp("subscription_last_verified_at"), // last successful Stripe-schema confirmation; bounds the outage grace window
 });
 
 export const circles = pgTable("circles", {
