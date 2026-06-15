@@ -56,7 +56,7 @@ integrations = ["stripe:1.0.0", "revenuecat:1.0.0"]
 [userenv.shared]
 APNS_PRODUCTION = "true"
 APP_ENV = "production"
-APP_URL = "https://will-staging-porfirioaciacci.replit.app"
+APP_URL = "https://will-production.replit.app"
 EMAIL_FROM = "support@willapp.live"
 VITE_REVENUECAT_IOS_API_KEY = "appl_lpEFGxTCAkzgpnFlFPiLGqNdFbk"
 REVENUECAT_PROJECT_ID = "proj404a18c1"
