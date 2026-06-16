@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -199,10 +200,31 @@ export default function Paywall() {
             </Button>
           )}
 
-          <p className="mt-4 text-xs text-gray-400">
-            {onIos
-              ? "Cancel anytime in your Apple ID settings. Billed through the App Store."
-              : "Cancel anytime. Secure payment powered by Stripe."}
+          {onIos ? (
+            <p className="mt-4 text-[11px] leading-relaxed text-gray-400">
+              {priceLabel ?? "$5.99"}/month. Your subscription automatically renews
+              monthly unless cancelled at least 24 hours before the end of the current
+              period. Payment is charged to your Apple ID account at confirmation of
+              purchase. Manage or cancel anytime in your Apple ID settings.
+            </p>
+          ) : (
+            <p className="mt-4 text-xs text-gray-400">
+              Cancel anytime. Secure payment powered by Stripe.
+            </p>
+          )}
+
+          <p className="mt-3 text-[11px] text-gray-400">
+            <Link href="/terms">
+              <a className="underline hover:text-gray-600" data-testid="link-paywall-terms">
+                Terms of Use
+              </a>
+            </Link>
+            {" · "}
+            <Link href="/privacy">
+              <a className="underline hover:text-gray-600" data-testid="link-paywall-privacy">
+                Privacy Policy
+              </a>
+            </Link>
           </p>
         </div>
       </div>

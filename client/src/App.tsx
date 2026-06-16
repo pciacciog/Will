@@ -34,6 +34,8 @@ import IconGenerator from "@/pages/IconGenerator";
 import FriendsPage from "@/pages/FriendsPage";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import Terms from "@/pages/Terms";
 import MyWills from "@/pages/MyWills";
 import Today from "@/pages/Today";
 import ProofFeed from "@/pages/ProofFeed";
@@ -399,8 +401,16 @@ function Router() {
   }
 
   // Full lockout: authenticated users whose trial has ended without an active
-  // subscription only see the paywall.
-  if (isAuthenticated && subscription && !subscription.hasAccess) {
+  // subscription only see the paywall. Legal pages are exempted so the
+  // Privacy/Terms links shown on the paywall remain reachable (Apple requires
+  // these links to be functional from the subscription screen).
+  if (
+    isAuthenticated &&
+    subscription &&
+    !subscription.hasAccess &&
+    location !== "/privacy" &&
+    location !== "/terms"
+  ) {
     return <Paywall />;
   }
 
@@ -415,6 +425,10 @@ function Router() {
         {/* Password reset routes - always accessible */}
         <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/reset-password" component={ResetPassword} />
+
+        {/* Legal pages - public, required for App Store submission */}
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={Terms} />
         
         {!isAuthenticated ? (
           <>
