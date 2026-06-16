@@ -3,7 +3,13 @@ import { sql, eq, and, isNull } from "drizzle-orm";
 import { users, type User } from "@shared/schema";
 import { probeRevenueCatEntitlement, type RcProbe } from "./revenueCatAccess";
 
-export const TRIAL_DAYS = 28;
+// In-app trial is DISABLED. The free trial is granted by the App Store as an
+// introductory offer ("first month free"), so we must not also grant a separate
+// in-app free period or new iOS users would stack two trials. With 0 days, every
+// non-subscriber sees the paywall immediately; tapping Subscribe starts Apple's
+// free month. (If a web/Stripe launch needs a trial later, configure it natively
+// in Stripe rather than re-enabling this.)
+export const TRIAL_DAYS = 0;
 
 // During a Stripe-schema outage we honor a last-known 'active' status only if it
 // was confirmed within this window. Beyond it, we refuse to over-grant access.
@@ -63,20 +69,18 @@ function persistStatus(user: User, nextStatus: "active" | "trialing" | "canceled
 
 /**
  * Computes a user's access state.
- * - Users with NULL trialStartedAt are existing (pre-subscription) accounts. Rather
- *   than granting them free access forever, we start their 28-day trial the first time
- *   we see them after the subscriptions update, then convert them to paying like
- *   everyone else.
- * - Otherwise access = within 28-day trial OR has an active subscription (Stripe or Apple IAP).
+ * - The in-app trial is disabled (TRIAL_DAYS = 0): the only free period is Apple's
+ *   App Store introductory offer, applied at purchase. So access = an active
+ *   subscription (Stripe web or Apple IAP). The trialStartedAt stamping below is kept
+ *   for historical continuity but no longer grants access while TRIAL_DAYS is 0.
  */
 export async function getSubscriptionStatus(user: User): Promise<SubscriptionStatus> {
   let trialStartedAt = user.trialStartedAt;
 
-  // Existing accounts created before subscriptions existed have a NULL trial start.
-  // Begin their 28-day trial now (lazily, on first access after the update) so their
-  // clock starts when they actually return — nobody's trial expires before they've
-  // seen the new version. The UPDATE only fires while the column is still NULL, so
-  // concurrent requests can't reset an already-started trial.
+  // Legacy lazy stamp: accounts created before subscriptions have a NULL trial start.
+  // We still stamp trialStartedAt once (idempotent — the UPDATE only fires while the
+  // column is NULL, so concurrent requests can't reset it) to keep historical records
+  // consistent, but with TRIAL_DAYS = 0 this no longer grants any access.
   if (!trialStartedAt) {
     const startNow = new Date();
     try {

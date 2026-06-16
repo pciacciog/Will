@@ -67,7 +67,28 @@ npm install fails with ERESOLVE.
 
 ## Steps that must happen OUTSIDE this repo for iOS IAP to actually work
 RevenueCat dashboard product/app/entitlement/offering are created, but the user must
-still: create the matching auto-renewable subscription in App Store Connect with
-product id `will_premium_monthly`; add the App Store Connect in-app-purchase key to
-RevenueCat (the app shows `app_store_connect_api_key_configured:false`); and rebuild +
-resubmit to TestFlight. IAP cannot be tested in the Replit env (needs device + Apple sandbox).
+still: add the App Store Connect in-app-purchase API key AND App-Specific Shared Secret
+to RevenueCat (the app shows `app_store_connect_api_key_configured:false` /
+`subscription_key_configured:false`); and rebuild + resubmit to TestFlight. IAP cannot
+be tested in the Replit env (needs device + Apple sandbox).
+
+## RevenueCat store_identifier must equal the App Store Connect Product ID exactly
+The App Store Connect subscription Product ID is `com.porfirio.will.monthly`; the
+RevenueCat product's `store_identifier` MUST match it character-for-character or
+purchases won't validate. `store_identifier` is IMMUTABLE in RevenueCat (the v2 API
+rejects it on update) — to change it you must create a new product, attach it to the
+`premium` entitlement and the `$rc_monthly` package, detach+delete the old product, then
+re-attach the new product to the package (a package rejects attaching while an
+incompatible same-app product is still attached). App Store Connect IDs can't be reused
+once created, so always adapt RevenueCat to Apple, never the reverse.
+
+## Free trial: ONLY the App Store intro offer — no stacking
+The app previously granted a 28-day in-app trial in `server/subscriptionAccess.ts`
+(`TRIAL_DAYS`) BEFORE the paywall, separate from any store trial. That stacked with
+Apple's "first month free" introductory offer (set in App Store Connect), giving new
+iOS users ~2 free months. Decision: in-app trial is disabled (`TRIAL_DAYS = 0`) so the
+only free period is Apple's store-side intro offer applied at purchase.
+**Why:** user wants exactly one free month. **How to apply:** don't re-enable the in-app
+trial for iOS; if web/Stripe ever needs a trial, configure it natively in Stripe.
+Paywall copy must be eligibility-scoped ("new subscribers", "eligibility determined by
+the App Store") because Apple intro offers are not granted to every Apple ID.

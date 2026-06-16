@@ -39,7 +39,7 @@ Authentication features a custom email/password system, Express sessions with Po
 The application uses PostgreSQL (Neon serverless) with Drizzle ORM, employing environment-based database routing. API design is RESTful with JSON responses, robust error handling, and consistent UTC storage with per-user local time display. Privacy is maintained by keeping "Because" statements private and using only first names for members.
 
 ## External Dependencies
-- **Stripe**: Web subscription billing ($5.99/mo, 28-day trial).
+- **Stripe**: Web subscription billing ($5.99/mo). No in-app free trial — the free trial is the App Store introductory offer (first month free) on iOS; the legacy 28-day in-app trial is disabled (`TRIAL_DAYS = 0` in `server/subscriptionAccess.ts`).
 - **RevenueCat** (`@revenuecat/purchases-capacitor`): Apple In-App Purchase billing for the iOS app. Server verifies entitlements via the RevenueCat connector proxy.
 - **@neondatabase/serverless**: PostgreSQL database connection.
 - **drizzle-orm**: Database ORM and query builder.

@@ -142,10 +142,12 @@ export default function Paywall() {
         </div>
 
         <h1 className="text-3xl font-bold tracking-tight text-gray-900" data-testid="text-paywall-title">
-          Your free trial has ended
+          {onIos ? "Start your free month" : "Subscribe to WILL"}
         </h1>
         <p className="mt-3 text-gray-600" data-testid="text-paywall-subtitle">
-          Subscribe to WILL to keep building momentum on your goals.
+          {onIos
+            ? "New subscribers get their first month free — then keep building momentum on your goals."
+            : "Subscribe to keep building momentum on your goals."}
         </p>
 
         <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -155,6 +157,11 @@ export default function Paywall() {
             </span>
             <span className="text-gray-500">/month</span>
           </div>
+          {onIos && (
+            <p className="mt-1 text-sm font-medium text-brandGreen" data-testid="text-free-month">
+              First month free for new subscribers
+            </p>
+          )}
 
           <ul className="mt-6 space-y-3 text-left">
             {FEATURES.map((feature) => (
@@ -202,10 +209,12 @@ export default function Paywall() {
 
           {onIos ? (
             <p className="mt-4 text-[11px] leading-relaxed text-gray-400">
-              {priceLabel ?? "$5.99"}/month. Your subscription automatically renews
-              monthly unless cancelled at least 24 hours before the end of the current
-              period. Payment is charged to your Apple ID account at confirmation of
-              purchase. Manage or cancel anytime in your Apple ID settings.
+              New subscribers get a 1-month free trial, then {priceLabel ?? "$5.99"}/month.
+              Free trial eligibility is determined by the App Store. Your subscription
+              automatically renews monthly unless cancelled at least 24 hours before the
+              end of the current period. Payment is charged to your Apple ID account when
+              the free trial ends (or at purchase if you're not eligible for the trial).
+              Manage or cancel anytime in your Apple ID settings.
             </p>
           ) : (
             <p className="mt-4 text-xs text-gray-400">
