@@ -21,6 +21,11 @@ interface NotificationsSetupProps {
   onBack: () => void;
   willDurationDays?: number;
   defaultCategory?: Category;
+  // When provided, the form is pre-filled from an existing will's config so the
+  // user can edit it. In edit mode the category is locked (changing the type of an
+  // active will would orphan its tracking/check-in data).
+  initialData?: NotificationsData | null;
+  editMode?: boolean;
 }
 
 type Category = 'recurring' | 'duration' | 'event';
@@ -488,29 +493,63 @@ function EventSection({ state, onChange, because }: { state: EvtState; onChange:
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 
-export default function NotificationsSetup({ what, because, onComplete, onBack, willDurationDays, defaultCategory }: NotificationsSetupProps) {
+export default function NotificationsSetup({ what, because, onComplete, onBack, willDurationDays, defaultCategory, initialData, editMode }: NotificationsSetupProps) {
   const formattedWhat = what?.toLowerCase().startsWith('i will') ? what : `I will ${what}`;
   const willStatement = formattedWhat.startsWith('"') ? formattedWhat : `"${formattedWhat}"`;
 
-  const [selected, setSelected] = useState<Category>(defaultCategory ?? 'recurring');
+  const [selected, setSelected] = useState<Category>(initialData?.commitmentCategory ?? defaultCategory ?? 'recurring');
 
-  const [recState, setRecState] = useState<RecState>({
-    reminderOn: true, reminderTime: '20:30',
-    checkInOn: true, checkInTime: '08:00',
-    trackedDays: [0, 1, 2, 3, 4, 5, 6],
+  const [recState, setRecState] = useState<RecState>(() => {
+    if (initialData && initialData.commitmentCategory === 'recurring') {
+      return {
+        reminderOn: initialData.reminderTime != null,
+        reminderTime: initialData.reminderTime ?? '20:30',
+        checkInOn: initialData.checkInTime != null,
+        checkInTime: initialData.checkInTime ?? '08:00',
+        trackedDays: initialData.trackedDays && initialData.trackedDays.length > 0
+          ? initialData.trackedDays
+          : [0, 1, 2, 3, 4, 5, 6],
+      };
+    }
+    return {
+      reminderOn: true, reminderTime: '20:30',
+      checkInOn: true, checkInTime: '08:00',
+      trackedDays: [0, 1, 2, 3, 4, 5, 6],
+    };
   });
 
-  const [durState, setDurState] = useState<DurState>({
-    reminderOn: true, reminderTime: '18:00',
-    milestones: [
-      { day: 1, label: '' },
-      { day: 3, label: '' },
-    ],
+  const [durState, setDurState] = useState<DurState>(() => {
+    if (initialData && initialData.commitmentCategory === 'duration') {
+      return {
+        reminderOn: initialData.reminderTime != null,
+        reminderTime: initialData.reminderTime ?? '18:00',
+        milestones: initialData.milestones && initialData.milestones.length > 0
+          ? initialData.milestones
+          : [{ day: 1, label: '' }, { day: 3, label: '' }],
+      };
+    }
+    return {
+      reminderOn: true, reminderTime: '18:00',
+      milestones: [
+        { day: 1, label: '' },
+        { day: 3, label: '' },
+      ],
+    };
   });
 
-  const [evtState, setEvtState] = useState<EvtState>({
-    reminderOn: true, reminderTime: '18:00',
-    reminders: [{ id: crypto.randomUUID(), date: '', note: '' }],
+  const [evtState, setEvtState] = useState<EvtState>(() => {
+    if (initialData && initialData.commitmentCategory === 'event') {
+      const rems = (initialData.customReminders ?? []).map(r => ({ id: crypto.randomUUID(), date: r.date, note: r.note }));
+      return {
+        reminderOn: initialData.reminderTime != null,
+        reminderTime: initialData.reminderTime ?? '18:00',
+        reminders: rems.length > 0 ? rems : [{ id: crypto.randomUUID(), date: '', note: '' }],
+      };
+    }
+    return {
+      reminderOn: true, reminderTime: '18:00',
+      reminders: [{ id: crypto.randomUUID(), date: '', note: '' }],
+    };
   });
 
   const color = C[selected];
@@ -566,7 +605,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
     <div className="flex flex-col min-h-0">
       {/* Title */}
       <h2 className="px-4 mb-3 text-[17px] font-bold text-gray-900" data-testid="text-notifications-setup-title">
-        Notification Set up
+        {editMode ? 'Edit Notifications' : 'Notification Set up'}
       </h2>
 
       {/* Will statement */}
@@ -578,8 +617,8 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
         {willStatement}
       </p>
 
-      {/* Type selector — stacked cards */}
-      {(() => {
+      {/* Type selector — stacked cards (hidden in edit mode: category is locked) */}
+      {!editMode && (() => {
         const cards: { cat: Category; example: string }[] = [
           { cat: 'recurring', example: 'I will make my bed every morning' },
           { cat: 'duration',  example: 'I will not consume sugar for 7 days' },
@@ -645,7 +684,7 @@ export default function NotificationsSetup({ what, because, onComplete, onBack, 
           style={{ background: color.bg, borderRadius: 14 }}
           data-testid="button-notifications-continue"
         >
-          Continue
+          {editMode ? 'Save changes' : 'Continue'}
         </button>
         {selected === 'duration' && (
           <p className="text-center text-[11px] text-gray-400 mt-2">

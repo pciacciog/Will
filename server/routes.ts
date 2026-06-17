@@ -4416,16 +4416,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
       }
 
-      const { reminderTime } = req.body;
+      const {
+        reminderTime,
+        checkInTime,
+        checkInType,
+        commitmentCategory,
+        activeDays,
+        customDays,
+        milestones,
+        customReminders,
+      } = req.body;
 
-      if (reminderTime !== null && reminderTime !== undefined) {
-        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-        if (!timeRegex.test(reminderTime)) {
-          return res.status(400).json({ message: "Invalid time format. Use HH:MM" });
-        }
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      const validateTime = (t: any) => t === null || t === undefined || timeRegex.test(t);
+      if (!validateTime(reminderTime) || !validateTime(checkInTime)) {
+        return res.status(400).json({ message: "Invalid time format. Use HH:MM" });
       }
 
-      await db.update(wills).set({ reminderTime: reminderTime || null }).where(eq(wills.id, willId));
+      // Build a partial update. Only fields present in the body are touched, so the
+      // legacy reminder-only callers keep working unchanged.
+      const updates: Record<string, any> = {};
+      if (reminderTime !== undefined) updates.reminderTime = reminderTime || null;
+
+      // Full editor payload (Solo wills): present when commitmentCategory is sent.
+      // These are will-level fields, so restrict full edits to the owner — a
+      // participant may only change their own reminder time (handled above).
+      if (commitmentCategory !== undefined) {
+        if (will.createdBy !== userId) {
+          return res.status(403).json({ message: "Only the owner can edit these settings" });
+        }
+        if (!['recurring', 'duration', 'event'].includes(commitmentCategory)) {
+          return res.status(400).json({ message: "Invalid commitment category" });
+        }
+        if (checkInType !== undefined) {
+          if (!['daily', 'specific_days', 'final_review'].includes(checkInType)) {
+            return res.status(400).json({ message: "Invalid check-in type" });
+          }
+          updates.checkInType = checkInType;
+        }
+        if (activeDays !== undefined) {
+          if (!['every_day', 'weekdays', 'custom'].includes(activeDays)) {
+            return res.status(400).json({ message: "Invalid active days" });
+          }
+          updates.activeDays = activeDays;
+        }
+        updates.commitmentCategory = commitmentCategory;
+        updates.checkInTime = checkInTime || null;
+        updates.customDays = customDays ?? null;
+        updates.milestones = milestones ?? null;
+        updates.customReminders = customReminders ?? null;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await db.update(wills).set(updates).where(eq(wills.id, willId));
+      }
 
       res.json({ success: true });
     } catch (error) {

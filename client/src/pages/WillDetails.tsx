@@ -24,8 +24,45 @@ import DailyGutCheckModal from "@/components/DailyGutCheckModal";
 import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import ProgressView from "@/components/ProgressView";
 import DayStrip from "@/components/DayStrip";
+import NotificationsSetup, { type NotificationsData } from "@/components/NotificationsSetup";
 import type { WillCheckIn, AbstainLog } from "@shared/schema";
 
+
+// Build the NotificationsSetup pre-fill payload from an existing will's stored config.
+// Converts activeDays/customDays back into the component's trackedDays array and parses
+// the JSON-string columns (milestones, customReminders).
+function buildNotifInitialData(will: any): NotificationsData {
+  const cat = ((will?.commitmentCategory as 'recurring' | 'duration' | 'event') ?? 'recurring');
+  const parseJson = <T,>(s: any): T | null => {
+    if (s == null) return null;
+    if (typeof s !== 'string') return s as T;
+    try { return JSON.parse(s) as T; } catch { return null; }
+  };
+  let trackedDays: number[] | null = null;
+  if (cat === 'recurring') {
+    if (will?.activeDays === 'custom') {
+      trackedDays = parseJson<number[]>(will?.customDays) ?? [0, 1, 2, 3, 4, 5, 6];
+    } else if (will?.activeDays === 'weekdays') {
+      trackedDays = [1, 2, 3, 4, 5];
+    } else {
+      trackedDays = [0, 1, 2, 3, 4, 5, 6];
+    }
+  }
+  const checkInType = (will?.checkInType === 'daily' || will?.checkInType === 'specific_days' || will?.checkInType === 'final_review')
+    ? will.checkInType
+    : (cat === 'recurring' ? 'daily' : 'final_review');
+  return {
+    commitmentCategory: cat,
+    reminderTime: will?.reminderTime ?? null,
+    checkInTime: will?.checkInTime ?? null,
+    checkInType,
+    milestones: parseJson<{ day: number; label: string }[]>(will?.milestones),
+    missionReminderTime: null,
+    deadlineReminders: { threeDays: false, oneDay: false, dayOf: false },
+    customReminders: parseJson<{ date: string; note: string }[]>(will?.customReminders),
+    trackedDays,
+  };
+}
 
 function isActiveDay(date: Date, activeDays: string, customDays?: string): boolean {
   if (!activeDays || activeDays === 'every_day') return true;
@@ -282,6 +319,7 @@ export default function WillDetails() {
   const [showGutCheckModal, setShowGutCheckModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [showNotifEditor, setShowNotifEditor] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifTime, setNotifTime] = useState('20:00');
   const [checkinAutoOpened, setCheckinAutoOpened] = useState(false);
@@ -872,6 +910,45 @@ export default function WillDetails() {
       queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
       toast({ title: "Saved", description: "Notification settings updated" });
       setShowNotifPanel(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to save", variant: "destructive" });
+    },
+  });
+
+  // Full notification + tracking-days edit (Solo wills) — reuses the NotificationsSetup form.
+  const saveFullNotifMutation = useMutation({
+    mutationFn: async (data: NotificationsData) => {
+      // Round-trip trackedDays back to the stored enum: [0..6]→every_day, [1..5]→weekdays, else custom.
+      let activeDays = 'every_day';
+      let customDays: string | null = null;
+      const td = data.trackedDays;
+      if (td && td.length > 0) {
+        const sorted = Array.from(new Set(td)).sort((a, b) => a - b);
+        const isEvery = sorted.length === 7;
+        const isWeekdays = sorted.length === 5 && [1, 2, 3, 4, 5].every(d => sorted.includes(d));
+        if (isEvery) { activeDays = 'every_day'; customDays = null; }
+        else if (isWeekdays) { activeDays = 'weekdays'; customDays = null; }
+        else { activeDays = 'custom'; customDays = JSON.stringify(sorted); }
+      }
+      const body = {
+        commitmentCategory: data.commitmentCategory,
+        checkInType: data.checkInType,
+        reminderTime: data.reminderTime,
+        checkInTime: data.checkInTime,
+        activeDays,
+        customDays,
+        milestones: data.milestones && data.milestones.length > 0 ? JSON.stringify(data.milestones) : null,
+        customReminders: data.customReminders && data.customReminders.length > 0 ? JSON.stringify(data.customReminders) : null,
+      };
+      const res = await apiRequest(`/api/wills/${id}/notifications`, { method: 'PATCH', body });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/details`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/wills/${id}/progress`] });
+      toast({ title: "Saved", description: "Notification settings updated" });
+      setShowNotifEditor(false);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to save", variant: "destructive" });
@@ -2399,6 +2476,39 @@ export default function WillDetails() {
         </div>
       </div>
 
+      {/* Full Notifications Editor (Solo wills) — reuses the creation NotificationsSetup form */}
+      {showNotifEditor && isSoloMode && effectiveCategory && (
+        <div className="fixed inset-0 z-[60] bg-white flex flex-col" data-testid="overlay-notif-editor">
+          {/* Top bar with cancel */}
+          <div
+            className="flex items-center px-4 border-b border-gray-100"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 10px)', paddingBottom: 10 }}
+          >
+            <button
+              onClick={() => setShowNotifEditor(false)}
+              className="p-1 rounded-lg hover:bg-gray-100 text-gray-500"
+              data-testid="button-notif-editor-cancel"
+              aria-label="Cancel"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <span className="flex-1 text-center text-sm font-semibold text-gray-700 pr-6">Edit Notifications</span>
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <NotificationsSetup
+              what={will.commitments?.[0]?.what ?? ''}
+              because={will.commitments?.[0]?.why ?? ''}
+              editMode
+              defaultCategory={effectiveCategory as 'recurring' | 'duration' | 'event'}
+              initialData={buildNotifInitialData(will)}
+              willDurationDays={durTotalDays || undefined}
+              onBack={() => setShowNotifEditor(false)}
+              onComplete={(data) => saveFullNotifMutation.mutate(data)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Manage Will Modal */}
       {showManageModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => { setShowManageModal(false); setShowNotifPanel(false); }}>
@@ -2526,8 +2636,20 @@ export default function WillDetails() {
                     </>
                   )}
 
-                  {/* Edit Notifications — available to anyone with check-in type reminders */}
-                  {will.checkInType !== 'final_review' && will.checkInType !== 'one-time' && (
+                  {/* Edit Notifications */}
+                  {isSoloMode && effectiveCategory ? (
+                    /* Solo wills: full editor (notifications + tracked days + milestones/reminders) */
+                    <Button
+                      onClick={() => { setShowManageModal(false); setShowNotifPanel(false); setShowNotifEditor(true); }}
+                      className="w-full border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-xl py-3 text-base font-medium flex items-center justify-center gap-2"
+                      variant="outline"
+                      data-testid="button-edit-notifications"
+                    >
+                      <Bell className="w-4 h-4" />
+                      Edit Notifications
+                    </Button>
+                  ) : (will.checkInType !== 'final_review' && will.checkInType !== 'one-time') ? (
+                    /* Other wills: simple reminder-time panel */
                     <Button
                       onClick={() => {
                         setNotifEnabled(!!will.reminderTime);
@@ -2541,7 +2663,7 @@ export default function WillDetails() {
                       <Bell className="w-4 h-4" />
                       Edit Notifications
                     </Button>
-                  )}
+                  ) : null}
 
                   {(will.mode === 'circle' || !!will.parentWillId) && (
                     <Button
