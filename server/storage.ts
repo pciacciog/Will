@@ -663,7 +663,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPublicWills(search?: string): Promise<{ id: number; title: string | null; kind: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
-    // Explore feed: all visibility='open' parent wills (solo + team + public kinds)
+    // Explore feed: public, viewable/joinable wills only — public solo wills
+    // (viewable) and public-kind wills (joinable). Team wills are invite-only and
+    // are intentionally excluded. Accept both visibility values: 'open' is the
+    // canonical "public" flag, but legacy/un-migrated rows still use 'public'.
     const publicWillsList = await db
       .select({
         id: wills.id,
@@ -679,8 +682,9 @@ export class DatabaseStorage implements IStorage {
       })
       .from(wills)
       .where(and(
-        eq(wills.visibility, 'open'),
+        inArray(wills.visibility, ['open', 'public']),
         sql`${wills.parentWillId} IS NULL`,
+        inArray(wills.kind, ['solo', 'public']),
         sql`${wills.status} IN ('pending', 'scheduled', 'active')`
       ))
       .orderBy(desc(wills.createdAt))

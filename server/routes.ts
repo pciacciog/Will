@@ -2279,20 +2279,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const search = req.query.search as string | undefined;
       const publicWills = await storage.getPublicWills(search);
+      // Explore is a discovery page — show only OTHER people's public wills,
+      // never the requester's own. (Wills they've joined still belong to others.)
+      const othersWills = publicWills.filter((w) => w.createdBy !== userId);
       const enriched = await Promise.all(
-        publicWills.map(async (w) => {
-          const isOwner = w.createdBy === userId;
+        othersWills.map(async (w) => {
           let hasJoined = false;
-          let isTeamMember = false;
-          if (!isOwner) {
-            if (w.kind === 'public') {
-              const joined = await storage.getUserJoinedWill(userId, w.id);
-              hasJoined = !!joined;
-            } else if (w.kind === 'team_i_will' || w.kind === 'team_we_will') {
-              isTeamMember = await storage.hasUserCommitted(w.id, userId);
-            }
+          if (w.kind === 'public') {
+            const joined = await storage.getUserJoinedWill(userId, w.id);
+            hasJoined = !!joined;
           }
-          return { ...w, isOwner, hasJoined, isTeamMember };
+          return { ...w, isOwner: false, hasJoined, isTeamMember: false };
         })
       );
       res.json(enriched);
