@@ -1419,9 +1419,11 @@ export default function WillDetails() {
               {/* Commitment card — no icon, no MY COMMITMENT label */}
               <div className="bg-white rounded-xl border border-gray-200 p-[14px] text-center" data-testid="card-commitment-hero">
                 <div className="text-[15px] font-bold text-gray-900 leading-snug">
-                  "{will.commitments[0].what?.toLowerCase().startsWith('i will')
-                    ? will.commitments[0].what
-                    : `I will ${will.commitments[0].what}`}"
+                  {(() => {
+                    const stripped = (will.commitments[0].what ?? '').replace(/^\s*i\s+will\s+/i, '').trim();
+                    const display = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+                    return `"${display}"`;
+                  })()}
                 </div>
                 {will.createdBy === user?.id && (will.status === 'pending' || will.status === 'scheduled') && (
                   <button
