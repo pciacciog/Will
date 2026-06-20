@@ -578,41 +578,14 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Please sign in to view this Will.</p>
-      </div>
-    );
-  }
-
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
-      </div>
-    );
-  }
-
-  if (!will) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">Will not found.</p>
-          <Button onClick={() => setLocation("/")} variant="outline">Go Home</Button>
-        </div>
-      </div>
-    );
-  }
-
-  const isCreator = will.createdBy === user.id;
-  const userHasCommitted = !!will.commitments?.find((c: any) => c.userId === user.id);
+  const isCreator = will?.createdBy === user?.id;
+  const userHasCommitted = !!will?.commitments?.find((c: any) => c.userId === user?.id);
   const canManage = isCreator || userHasCommitted;
-  const isWeWill = will.willType === "cumulative";
-  const commitments: any[] = will.commitments || [];
+  const isWeWill = will?.willType === "cumulative";
+  const commitments: any[] = will?.commitments || [];
   const pendingInvites = (invitesData || []).filter(i => i.status === "pending");
-  const canPauseResume = canManage && (will.status === "active" || will.status === "paused");
-  const canTerminate = canManage && (will.status === "active" || will.status === "paused" || will.status === "scheduled");
+  const canPauseResume = canManage && (will?.status === "active" || will?.status === "paused");
+  const canTerminate = canManage && (will?.status === "active" || will?.status === "paused" || will?.status === "scheduled");
 
   const backUrl = (() => {
     const stored = sessionStorage.getItem("willBackUrl");
@@ -872,6 +845,36 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
     if (!will?.endDate) return '';
     return new Date(will.endDate as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }, [will?.endDate]);
+
+  // Guards run AFTER all hooks so the hook order stays stable across renders
+  // (moving these above the hooks caused "Rendered more hooks than during the
+  // previous render" crashes when the will data loaded in).
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Please sign in to view this Will.</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
+      </div>
+    );
+  }
+
+  if (!will) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Will not found.</p>
+          <Button onClick={() => setLocation("/")} variant="outline">Go Home</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-violet-50/30">
