@@ -1,25 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Hand, Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import appLogo from "@assets/apple-devices/AppIcon.appiconset/icon-ios-1024x1024.png";
 import {
   isIosNative,
   initRevenueCat,
-  getMonthlyPackage,
   purchasePremium,
   restorePurchases,
   isUserCancelled,
 } from "@/lib/revenueCat";
-
-const FEATURES = [
-  "Unlimited Solo & Inner Circle wills",
-  "Team wills with friends",
-  "Daily progress tracking & streaks",
-  "Reminders & accountability nudges",
-];
 
 export default function Paywall() {
   const { toast } = useToast();
@@ -29,7 +21,6 @@ export default function Paywall() {
 
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
-  const [priceLabel, setPriceLabel] = useState<string | null>(null);
 
   // Ensures RevenueCat is configured for this user before any store interaction.
   // Idempotent and re-attempts if a prior init failed (avoids a race where the
@@ -38,22 +29,10 @@ export default function Paywall() {
     if (userId) await initRevenueCat(userId);
   };
 
-  // On iOS, pull the real App Store price string from the current offering.
+  // Warm RevenueCat configuration on mount so the purchase is ready when tapped.
   useEffect(() => {
     if (!onIos || !userId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        await initRevenueCat(userId);
-        const pkg = await getMonthlyPackage();
-        if (!cancelled && pkg?.product?.priceString) setPriceLabel(pkg.product.priceString);
-      } catch (err) {
-        console.error("[Paywall] failed to load offering", err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    initRevenueCat(userId).catch((err) => console.error("[Paywall] init failed", err));
   }, [onIos, userId]);
 
   const refreshAccess = () => {
@@ -135,107 +114,74 @@ export default function Paywall() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-gradient-to-b from-brandGreen/10 via-white to-brandBlue/10">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-gradient-to-b from-brandGreen/10 to-white">
       <div className="w-full max-w-md text-center">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-brandGreen/15">
-          <Hand className="h-8 w-8 text-brandGreen" />
-        </div>
-
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900" data-testid="text-paywall-title">
-          {onIos ? "Start your free month" : "Subscribe to WILL"}
-        </h1>
-        <p className="mt-3 text-gray-600" data-testid="text-paywall-subtitle">
-          {onIos
-            ? "New subscribers get their first month free — then keep building momentum on your goals."
-            : "Subscribe to keep building momentum on your goals."}
+        <p
+          className="text-sm font-bold uppercase tracking-[0.2em] text-[#1D9E75]"
+          data-testid="text-paywall-brand"
+        >
+          WILL
         </p>
 
-        <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-baseline justify-center gap-1">
-            <span className="text-4xl font-bold text-gray-900" data-testid="text-price">
-              {priceLabel ?? "$5.99"}
-            </span>
-            <span className="text-gray-500">/month</span>
-          </div>
-          {onIos && (
-            <p className="mt-1 text-sm font-medium text-brandGreen" data-testid="text-free-month">
-              First month free for new subscribers
-            </p>
-          )}
+        <div className="mx-auto mt-4 h-20 w-20 overflow-hidden rounded-2xl bg-white shadow-sm">
+          <img
+            src={appLogo}
+            alt="WILL"
+            className="h-full w-full object-cover"
+            data-testid="img-paywall-icon"
+          />
+        </div>
 
-          <ul className="mt-6 space-y-3 text-left">
-            {FEATURES.map((feature) => (
-              <li key={feature} className="flex items-start gap-3">
-                <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-brandGreen" />
-                <span className="text-gray-700">{feature}</span>
-              </li>
-            ))}
-          </ul>
+        <h1
+          className="mt-8 text-4xl font-bold leading-tight tracking-tight text-gray-900"
+          data-testid="text-paywall-title"
+        >
+          Become your intentions.
+        </h1>
 
-          <Button
-            onClick={onIos ? handleApplePurchase : handleStripeSubscribe}
-            disabled={loading || restoring}
-            className="mt-7 h-12 w-full rounded-xl bg-brandGreen text-base font-semibold hover:bg-brandGreen/90"
-            data-testid="button-subscribe"
+        <div className="mt-10 rounded-2xl bg-white p-7 shadow-sm" data-testid="card-price">
+          <p className="text-2xl font-bold text-[#1D9E75]" data-testid="text-trial">
+            30-Day Free Trial
+          </p>
+          <p
+            className="mt-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-400"
+            data-testid="text-then"
           >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                {onIos ? "Processing…" : "Starting checkout…"}
-              </>
-            ) : (
-              "Subscribe"
-            )}
-          </Button>
-
-          {onIos && (
-            <Button
-              onClick={handleRestore}
-              disabled={loading || restoring}
-              variant="ghost"
-              className="mt-2 h-10 w-full rounded-xl text-sm font-medium text-gray-600 hover:text-gray-900"
-              data-testid="button-restore"
-            >
-              {restoring ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Restoring…
-                </>
-              ) : (
-                "Restore purchases"
-              )}
-            </Button>
-          )}
-
-          {onIos ? (
-            <p className="mt-4 text-[11px] leading-relaxed text-gray-400">
-              New subscribers get a 1-month free trial, then {priceLabel ?? "$5.99"}/month.
-              Free trial eligibility is determined by the App Store. Your subscription
-              automatically renews monthly unless cancelled at least 24 hours before the
-              end of the current period. Payment is charged to your Apple ID account when
-              the free trial ends (or at purchase if you're not eligible for the trial).
-              Manage or cancel anytime in your Apple ID settings.
-            </p>
-          ) : (
-            <p className="mt-4 text-xs text-gray-400">
-              Cancel anytime. Secure payment powered by Stripe.
-            </p>
-          )}
-
-          <p className="mt-3 text-[11px] text-gray-400">
-            <Link href="/terms">
-              <a className="underline hover:text-gray-600" data-testid="link-paywall-terms">
-                Terms of Use
-              </a>
-            </Link>
-            {" · "}
-            <Link href="/privacy">
-              <a className="underline hover:text-gray-600" data-testid="link-paywall-privacy">
-                Privacy Policy
-              </a>
-            </Link>
+            THEN
+          </p>
+          <p className="mt-1 text-lg text-gray-500" data-testid="text-price">
+            $5.99 / month
           </p>
         </div>
+
+        <Button
+          onClick={onIos ? handleApplePurchase : handleStripeSubscribe}
+          disabled={loading || restoring}
+          className="mt-8 h-12 w-full rounded-xl bg-[#1D9E75] text-base font-semibold text-white hover:bg-[#1D9E75]/90"
+          data-testid="button-subscribe"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Processing…
+            </>
+          ) : (
+            "Start Free Trial"
+          )}
+        </Button>
+
+        <p className="mt-3 text-sm text-gray-500" data-testid="text-disclaimer">
+          No charge today · Cancel anytime
+        </p>
+
+        <button
+          onClick={handleRestore}
+          disabled={loading || restoring}
+          className="mt-6 text-sm text-gray-500 underline hover:text-gray-700 disabled:opacity-50"
+          data-testid="button-restore"
+        >
+          {restoring ? "Restoring…" : "Restore purchases"}
+        </button>
       </div>
     </div>
   );
