@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useEffect, useState, useRef } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { notificationService } from "@/services/NotificationService";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { useLocation } from "wouter";
@@ -507,7 +508,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Router />
+        <ErrorBoundary>
+          <Router />
+        </ErrorBoundary>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
