@@ -685,6 +685,7 @@ export class DatabaseStorage implements IStorage {
         inArray(wills.visibility, ['open', 'public']),
         sql`${wills.parentWillId} IS NULL`,
         inArray(wills.kind, ['solo', 'public']),
+        sql`${wills.mode} NOT IN ('team', 'circle')`,
         sql`${wills.status} IN ('pending', 'scheduled', 'active')`
       ))
       .orderBy(desc(wills.createdAt))

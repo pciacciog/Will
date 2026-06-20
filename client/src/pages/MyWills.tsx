@@ -127,11 +127,23 @@ function getDisplayTitle(will: Will, userId?: string): string {
   return willDisplayTitle(will, userId);
 }
 
+// A will belongs on the "Public" tab when it is publicly discoverable:
+// a joinable public-kind will, a joined instance (has a parent), or a personal
+// will made public (visibility 'public'/'open'). Team and circle wills are never
+// public, even though a team will can carry visibility 'open'.
+function willIsPublic(will: Will): boolean {
+  if (will.mode === 'team' || will.mode === 'circle') return false;
+  return (will as any).kind === 'public'
+    || !!will.parentWillId
+    || will.visibility === 'public'
+    || will.visibility === 'open';
+}
+
 function WillCard({ will, onClick, userId, alertType }: { will: Will; onClick: () => void; userId?: string; alertType?: HomeAlertType | null }) {
   const commitment = (userId && will.commitments?.find(c => c.userId === userId)) || will.commitments?.[0];
   const isCircle = will.mode === 'circle';
   const isTeamWill = will.mode === 'team';
-  const isPublic = (will as any).kind === 'public' || !!will.parentWillId;
+  const isPublic = willIsPublic(will);
 
   const statusConfig: Record<string, { label: string; className: string; icon: typeof Flame }> = {
     active: { label: 'Active', className: 'bg-emerald-100 text-emerald-700', icon: Flame },
@@ -336,7 +348,7 @@ export default function MyWills() {
     w.status === 'active' || w.status === 'will_review' || w.status === 'scheduled' || w.status === 'pending' || w.status === 'paused'
   ) || [];
 
-  const isPublicWill = (w: Will) => (w as any).kind === 'public' || !!w.parentWillId;
+  const isPublicWill = (w: Will) => willIsPublic(w);
   const soloWills = activeWills.filter(w => w.mode !== 'circle' && w.mode !== 'team' && !isPublicWill(w));
   const teamWills = activeWills.filter(w => w.mode === 'team');
   const publicWills = activeWills.filter(w => isPublicWill(w));
