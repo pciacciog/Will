@@ -629,7 +629,10 @@ export default function TeamWillHub({ willId }: TeamWillHubProps) {
       return [
         { key: 'creator', userId: user.id, firstName: user.firstName || user.email?.split('@')[0] || '?', status: 'creator', inviteId: null as number | null },
         ...invitesData
-          .filter(inv => inv.status === 'pending' || inv.status === 'accepted')
+          // Active member row = still-pending invites, or accepted invites that
+          // actually committed. Accepted-but-uncommitted invitees are NOT members
+          // (ghost-invitee fix); they appear only in "Awaiting commitment".
+          .filter(inv => inv.status === 'pending' || (inv.status === 'accepted' && inv.hasCommitted))
           .map(inv => ({
             key: String(inv.id),
             userId: inv.invitedUserId,
