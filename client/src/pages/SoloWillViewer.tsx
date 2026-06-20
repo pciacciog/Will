@@ -6,12 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
 import DayStrip from "@/components/DayStrip";
-import { Zap, Send, MessageCircle } from "lucide-react";
+import DeadlineArc from "@/components/DeadlineArc";
+import { Zap, Send, MessageCircle, CheckCircle, Star } from "lucide-react";
 import type { WillCheckIn } from "@shared/schema";
 
 interface SoloViewerData {
   id: number;
   title: string | null;
+  what: string;
   mode: string;
   kind: string;
   status: string;
@@ -106,8 +108,15 @@ export default function SoloWillViewer({ willId }: { willId: number }) {
   }
 
   const creatorName = will.creator?.firstName || "Someone";
+  const creatorHandle = (will.creator?.username || creatorName).toLowerCase();
   const hasPushedToday = pushStatus?.hasUserPushedToday ?? false;
   const isTracking = will.checkInType === "daily" || will.checkInType === "specific_days";
+
+  const category = will.commitmentCategory;
+  const isRecurring = category === "recurring";
+  const isDuration = category === "duration";
+  const isEvent = category === "event";
+  const isCompleted = will.status === "completed";
 
   const now = new Date();
   const endDate = will.endDate ? new Date(will.endDate) : null;
@@ -143,7 +152,7 @@ export default function SoloWillViewer({ willId }: { willId: number }) {
       <div className="px-4 pb-10 space-y-4">
         {/* Header: type pill + title */}
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 tracking-wide uppercase">
               Solo
             </span>
@@ -152,10 +161,21 @@ export default function SoloWillViewer({ willId }: { willId: number }) {
             >
               {will.status === "will_review" ? "Review" : will.status.charAt(0).toUpperCase() + will.status.slice(1)}
             </span>
+            {will.commitmentCategory && (
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
+                {will.commitmentCategory}
+              </span>
+            )}
           </div>
-          <h1 className="text-xl font-bold text-gray-900 leading-snug" data-testid="text-will-title">
-            {will.title ?? `I Will`}
+          <h1 className="text-xl font-bold text-gray-900 leading-snug" data-testid="text-commitment">
+            <span className="text-gray-400 font-normal">@{creatorHandle} will </span>
+            {will.what}
           </h1>
+          {will.title && (
+            <p className="text-sm font-medium text-gray-500 mt-1" data-testid="text-will-title">
+              {will.title}
+            </p>
+          )}
         </div>
 
         {/* Creator row */}
@@ -175,61 +195,93 @@ export default function SoloWillViewer({ willId }: { willId: number }) {
           </div>
         </div>
 
-        {/* Progress card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center gap-5 mb-4">
-            {/* Ring */}
-            <div className="flex-shrink-0">
-              <svg width="88" height="88" viewBox="0 0 88 88">
-                <circle cx="44" cy="44" r={R} fill="none" stroke="#F3F4F6" strokeWidth="8" />
-                <circle
-                  cx="44" cy="44" r={R} fill="none"
-                  stroke="#10B981"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${strokeDash} ${circumference}`}
-                  strokeDashoffset="0"
-                  transform="rotate(-90 44 44)"
-                />
-                <text x="44" y="41" textAnchor="middle" fontSize="14" fontWeight="700" fill="#111827">
-                  {totalDays ? Math.min(daysIn, totalDays) : daysIn}
-                </text>
-                <text x="44" y="56" textAnchor="middle" fontSize="9" fill="#6B7280">
-                  {totalDays ? `of ${totalDays}` : "days"}
-                </text>
-              </svg>
+        {/* Progress card — type-aware: event countdown / duration ring / recurring rate + strip */}
+        {isEvent ? (
+          <div className="space-y-3" data-testid="card-progress-event">
+            {will.startDate && will.endDate && (
+              <DeadlineArc startDate={will.startDate} endDate={will.endDate} />
+            )}
+            <div
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-center gap-2"
+              data-testid="status-event"
+            >
+              {isCompleted ? (
+                <>
+                  <CheckCircle className="w-5 h-5 text-emerald-500" />
+                  <span className="text-sm font-semibold text-emerald-700">Done</span>
+                </>
+              ) : (
+                <>
+                  <Star className="w-5 h-5 text-purple-400" />
+                  <span className="text-sm font-semibold text-gray-600">Not yet</span>
+                </>
+              )}
             </div>
-
-            {/* Stat chips */}
-            <div className="flex-1 grid grid-cols-2 gap-2.5">
+          </div>
+        ) : isDuration && totalDays ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-progress-duration">
+            <div className="flex items-center gap-5">
+              <div className="flex-shrink-0">
+                <svg width="88" height="88" viewBox="0 0 88 88">
+                  <circle cx="44" cy="44" r={R} fill="none" stroke="#F3F4F6" strokeWidth="8" />
+                  <circle
+                    cx="44" cy="44" r={R} fill="none"
+                    stroke="#10B981"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={`${strokeDash} ${circumference}`}
+                    strokeDashoffset="0"
+                    transform="rotate(-90 44 44)"
+                  />
+                  <text x="44" y="41" textAnchor="middle" fontSize="14" fontWeight="700" fill="#111827">
+                    {Math.min(daysIn, totalDays)}
+                  </text>
+                  <text x="44" y="56" textAnchor="middle" fontSize="9" fill="#6B7280">
+                    {`of ${totalDays}`}
+                  </text>
+                </svg>
+              </div>
+              <div className="flex-1 grid grid-cols-2 gap-2.5">
+                <div className="bg-gray-50 rounded-xl p-2.5 text-center">
+                  <div className="text-lg font-bold text-gray-900">{daysIn}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">Days in</div>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-2.5 text-center">
+                  <div className="text-lg font-bold text-gray-900">{daysLeft ?? 0}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">Days left</div>
+                </div>
+              </div>
+            </div>
+            {isTracking && will.checkIns.length > 0 && (
+              <div className="border-t border-gray-100 pt-3 mt-4">
+                <DayStrip startDate={will.startDate} endDate={will.endDate} checkIns={will.checkIns} />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-progress-recurring">
+            <div className="grid grid-cols-3 gap-2.5 mb-4">
               <div className="bg-gray-50 rounded-xl p-2.5 text-center">
                 <div className="text-lg font-bold text-gray-900">{successRate.toFixed(0)}%</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">Success rate</div>
               </div>
               <div className="bg-gray-50 rounded-xl p-2.5 text-center">
+                <div className="text-lg font-bold text-gray-900">{will.progress?.streak ?? 0}</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">Day streak</div>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-2.5 text-center">
                 <div className="text-lg font-bold text-gray-900">{daysIn}</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">Days in</div>
               </div>
-              {daysLeft !== null && (
-                <div className="bg-gray-50 rounded-xl p-2.5 text-center col-span-2">
-                  <div className="text-lg font-bold text-gray-900">{daysLeft}</div>
-                  <div className="text-[10px] text-gray-500 mt-0.5">Days remaining</div>
-                </div>
-              )}
             </div>
+            {isTracking && will.checkIns.length > 0 && (
+              <div className="border-t border-gray-100 pt-3">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">This week</p>
+                <DayStrip startDate={will.startDate} endDate={will.endDate} checkIns={will.checkIns} />
+              </div>
+            )}
           </div>
-
-          {/* Calendar strip */}
-          {isTracking && will.checkIns.length > 0 && (
-            <div className="border-t border-gray-100 pt-3">
-              <DayStrip
-                startDate={will.startDate}
-                endDate={will.endDate}
-                checkIns={will.checkIns}
-              />
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Encouragement card */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
