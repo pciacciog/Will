@@ -2636,6 +2636,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const checkIns = await storage.getWillCheckIns(willId, will.createdBy);
       const progress = await storage.getWillCheckInProgress(willId, will.createdBy);
 
+      // Solo commitment text ("what") lives on willCommitments, not on the will
+      // record — fetch the creator's commitment so the viewer can show it.
+      const soloCommitments = await storage.getWillCommitments(willId);
+      const ownerCommitment = soloCommitments.find((c: any) => c.userId === will.createdBy) ?? soloCommitments[0];
+      const what = ownerCommitment?.what ?? '';
+
       const now = new Date();
       const startDate = new Date(will.startDate);
       const daysActive = Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
@@ -2645,6 +2651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         ...safeWill,
+        what,
         creator: {
           id: creator?.id,
           firstName: creator?.firstName,
