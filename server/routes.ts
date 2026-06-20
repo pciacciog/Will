@@ -419,7 +419,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      // Search by username (partial) or exact email, excluding self
+      // Search by username, first/last name (partial), excluding self.
+      // Email is only matched when the query looks like an email (contains '@')
+      // to avoid enabling email-fragment enumeration of accounts.
+      const matchConditions = [
+        ilike(users.username, `%${q}%`),
+        ilike(users.firstName, `%${q}%`),
+        ilike(users.lastName, `%${q}%`),
+      ];
+      if (q.includes('@')) {
+        matchConditions.push(ilike(users.email, `%${q}%`));
+      }
+
       const results = await db
         .select({
           id: users.id,
@@ -431,8 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(
           and(
             ne(users.id, currentUserId),
-            isNotNull(users.username),
-            ilike(users.username, `%${q}%`)
+            or(...matchConditions)
           )
         )
         .limit(20);
@@ -501,7 +511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const discoverUsers = await db
         .select({ userId: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username })
         .from(users)
-        .where(and(notInArray(users.id, excludeIds), isNotNull(users.username)));
+        .where(notInArray(users.id, excludeIds));
 
       res.json(discoverUsers);
     } catch (error) {
