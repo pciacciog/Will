@@ -362,16 +362,28 @@ function ViewerView({
   );
   const topMembers = sortedMembers.slice(0, 4);
 
-  const avgSuccessRate = useMemo(() => {
-    if (!members || members.length === 0) return null;
-    const rates = members.map(m => {
-      const relevant = m.sevenDayActivity.filter(a => a !== 'none');
-      if (relevant.length === 0) return null;
-      return (relevant.filter(a => a === 'yes' || a === 'partial').length / relevant.length) * 100;
-    }).filter((r): r is number => r !== null);
-    if (rates.length === 0) return null;
-    return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length);
-  }, [members]);
+  // Type-aware progress helpers (the viewer sees the creator's will type)
+  const category = will.commitmentCategory;
+  const isRecurring = category === 'recurring';
+  const isDuration = category === 'duration';
+  const isEvent = category === 'event';
+  const creatorMember =
+    members.find(m => m.isCreator) ?? members.find(m => m.userId === will.createdBy) ?? null;
+  const totalDays = will.endDate
+    ? Math.max(1, Math.round((new Date(will.endDate).getTime() - new Date(will.startDate).getTime()) / 86400000))
+    : null;
+  const daysLeft = will.endDate && !will.isIndefinite
+    ? Math.max(0, Math.ceil((new Date(will.endDate).getTime() - Date.now()) / 86400000))
+    : null;
+  const durationPct = totalDays ? Math.min(100, Math.max(0, (will.daysIn / totalDays) * 100)) : 0;
+  const isCompleted = will.status === 'completed';
+  const recurringDot: Record<string, string> = {
+    yes: 'bg-emerald-500', partial: 'bg-amber-400', no: 'bg-red-400', none: 'bg-gray-200',
+  };
+  const weekLabels = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+    return ['S', 'M', 'T', 'W', 'T', 'F', 'S'][d.getDay()];
+  });
 
   return (
     <>
@@ -396,16 +408,18 @@ function ViewerView({
                 </span>
               )}
             </div>
-            <p className="text-base font-semibold text-gray-900 leading-snug mb-4">
-              {will.title ? (
-                <>
-                  {will.title}
-                  <span className="text-gray-400 font-normal text-sm ml-2">— I will {will.what}</span>
-                </>
-              ) : (
-                <>I will {will.what}</>
-              )}
+            <p
+              className={cn("text-lg font-bold text-gray-900 leading-snug", will.title ? "mb-1" : "mb-4")}
+              data-testid="text-commitment"
+            >
+              <span className="text-gray-400 font-normal">@{will.creatorName.toLowerCase()} will </span>
+              {will.what}
             </p>
+            {will.title && (
+              <p className="text-sm font-medium text-gray-500 mb-4" data-testid="text-will-title">
+                {will.title}
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
@@ -414,23 +428,80 @@ function ViewerView({
                 {getInitials(will.creatorName)}
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-700">@{will.creatorName.toLowerCase()}</p>
+                <p className="text-xs font-semibold text-gray-700" data-testid="text-creator-name">@{will.creatorName.toLowerCase()}</p>
                 <p className="text-[11px] text-gray-400">Creator · {will.daysIn} days in</p>
               </div>
             </div>
           </div>
 
-          {/* Stats row: Days Running · Avg Success Rate · Members */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Type-aware progress — recurring week strip / duration ring / event deadline */}
+          {isRecurring && creatorMember && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid="card-progress-recurring">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">This week</p>
+              <div className="flex gap-1.5" aria-label="7-day activity">
+                {creatorMember.sevenDayActivity.map((status, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                    <div
+                      className={cn("w-full h-8 rounded-lg", recurringDot[status] ?? 'bg-gray-200')}
+                      title={status === 'none' ? 'N/A' : status}
+                    />
+                    <span className="text-[10px] text-gray-400">{weekLabels[i]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isDuration && totalDays && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4" data-testid="card-progress-duration">
+              <div className="relative flex-shrink-0" style={{ width: 72, height: 72 }}>
+                <svg width="72" height="72" viewBox="0 0 72 72">
+                  <circle cx="36" cy="36" r="30" fill="none" stroke="#E5E7EB" strokeWidth="7" />
+                  <circle
+                    cx="36" cy="36" r="30" fill="none" stroke="#3B82F6" strokeWidth="7" strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 30}`}
+                    strokeDashoffset={`${2 * Math.PI * 30 * (1 - durationPct / 100)}`}
+                    transform="rotate(-90 36 36)"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-base font-bold text-gray-900">{will.daysIn}</span>
+                  <span className="text-[9px] text-gray-400">day{will.daysIn === 1 ? '' : 's'} in</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{will.daysIn} of {totalDays} days</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {daysLeft !== null ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left` : 'Ongoing'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isEvent && will.startDate && will.endDate && (
+            <div className="space-y-3" data-testid="card-progress-event">
+              <DeadlineArc startDate={will.startDate} endDate={will.endDate} />
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-center gap-2" data-testid="status-event">
+                {isCompleted ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                    <span className="text-sm font-semibold text-emerald-700">Done</span>
+                  </>
+                ) : (
+                  <>
+                    <Star className="w-5 h-5 text-purple-400" />
+                    <span className="text-sm font-semibold text-gray-600">Not yet</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Stats row: Days Running · Members */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-days">
               <p className="text-xl font-bold text-gray-900">{will.daysIn}</p>
               <p className="text-[11px] text-gray-400 mt-0.5">days running</p>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-success-rate">
-              <p className="text-xl font-bold text-gray-900">
-                {avgSuccessRate !== null ? `${avgSuccessRate}%` : '—'}
-              </p>
-              <p className="text-[11px] text-gray-400 mt-0.5">avg rate</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center" data-testid="stat-members">
               <p className="text-xl font-bold text-gray-900">{will.memberCount}</p>
