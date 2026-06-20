@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "wouter";
 import { Loader2 } from "lucide-react";
 import appLogo from "@assets/apple-devices/AppIcon.appiconset/icon-ios-1024x1024.png";
 import {
@@ -182,6 +183,20 @@ export default function Paywall() {
         >
           {restoring ? "Restoring…" : "Restore purchases"}
         </button>
+
+        <p className="mt-6 text-xs text-gray-400" data-testid="text-legal-links">
+          <Link href="/terms">
+            <a className="underline hover:text-gray-600" data-testid="link-paywall-terms">
+              Terms of Use
+            </a>
+          </Link>
+          {" · "}
+          <Link href="/privacy">
+            <a className="underline hover:text-gray-600" data-testid="link-paywall-privacy">
+              Privacy Policy
+            </a>
+          </Link>
+        </p>
       </div>
     </div>
   );
