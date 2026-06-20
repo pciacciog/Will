@@ -2096,17 +2096,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const willId = parseInt(req.params.id);
       if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID' });
 
-      // Authorization: creator, committer, or accepted invitee
+      // Authorization: real participant = creator or has a commitment row.
+      // Accepted-but-uncommitted invitees are NOT participants (ghost-invitee fix).
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: 'Will not found' });
 
       const isCreator = will.createdBy === userId;
       const [commitment] = await db.select({ id: willCommitments.id }).from(willCommitments)
         .where(and(eq(willCommitments.willId, willId), eq(willCommitments.userId, userId))).limit(1);
-      const [acceptedInvite] = await db.select({ id: teamWillInvites.id }).from(teamWillInvites)
-        .where(and(eq(teamWillInvites.willId, willId), eq(teamWillInvites.invitedUserId, userId), eq(teamWillInvites.status, 'accepted'))).limit(1);
 
-      if (!isCreator && !commitment && !acceptedInvite) {
+      if (!isCreator && !commitment) {
         return res.status(403).json({ message: 'Not a participant of this will' });
       }
 
