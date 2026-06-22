@@ -168,18 +168,14 @@ export default function Home() {
     // Prioritise review over invite
     const primaryAlert = reviewAlert ?? inviteAlert;
 
-    if (!primaryAlert || !primaryAlert.willIds?.length) {
-      setLocation('/wills');
-      return;
-    }
-
-    if (primaryAlert.willIds.length === 1) {
-      // Single will — go straight to detail
-      sessionStorage.setItem('willAlertType', primaryAlert.type);
-      setLocation(`/will/${primaryAlert.willIds[0]}`);
-    } else {
-      // Multiple wills — open list with filter active
+    // Always land on the My Wills list so the user can see every will. When an
+    // alert exists, pass it through so the list highlights/filters the relevant
+    // wills — never deep-link straight to a single will (that traps the user on
+    // one will and hides the rest).
+    if (primaryAlert && primaryAlert.willIds?.length) {
       setLocation(`/wills?alert=${primaryAlert.type}`);
+    } else {
+      setLocation('/wills');
     }
   };
 
