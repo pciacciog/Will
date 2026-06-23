@@ -663,10 +663,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPublicWills(search?: string): Promise<{ id: number; title: string | null; kind: string | null; what: string; checkInType: string | null; startDate: Date; endDate: Date; isIndefinite: boolean; createdBy: string; creatorName: string; memberCount: number; status: string | null }[]> {
-    // Explore feed: public, viewable/joinable wills only — public solo wills
-    // (viewable) and public-kind wills (joinable). Team wills are invite-only and
-    // are intentionally excluded. Accept both visibility values: 'open' is the
-    // canonical "public" flag, but legacy/un-migrated rows still use 'public'.
+    // Explore feed: only true public wills, i.e. wills the creator explicitly
+    // published via the "Public Will" option. Two valid representations exist:
+    //   - modern public:  kind = 'public' (visibility defaults to 'open')
+    //   - legacy public:   kind = 'solo'  with visibility = 'public'
+    // Plain solo wills (kind='solo', visibility 'open'/'private') are private to
+    // their owner and must NEVER be discoverable here — note modern solo and
+    // modern public wills both carry visibility='open', so `kind` is the real
+    // distinguisher and visibility='open' alone must not imply public. Team and
+    // circle wills are invite-only; joined instances (parentWillId set) are
+    // excluded so only the original public will is shown.
     const publicWillsList = await db
       .select({
         id: wills.id,
@@ -682,9 +688,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(wills)
       .where(and(
-        inArray(wills.visibility, ['open', 'public']),
+        or(eq(wills.kind, 'public'), eq(wills.visibility, 'public')),
         sql`${wills.parentWillId} IS NULL`,
-        inArray(wills.kind, ['solo', 'public']),
         sql`${wills.mode} NOT IN ('team', 'circle')`,
         sql`${wills.status} IN ('pending', 'scheduled', 'active')`
       ))

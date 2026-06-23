@@ -127,16 +127,20 @@ function getDisplayTitle(will: Will, userId?: string): string {
   return willDisplayTitle(will, userId);
 }
 
-// A will belongs on the "Public" tab when it is publicly discoverable:
-// a joinable public-kind will, a joined instance (has a parent), or a personal
-// will made public (visibility 'public'/'open'). Team and circle wills are never
-// public, even though a team will can carry visibility 'open'.
+// A will belongs on the "Public" tab only when it is genuinely a public will:
+// a joinable public-kind will, or a joined instance of one (has a parent).
+// Team and circle wills are never public, and plain solo wills stay on the Solo tab.
 function willIsPublic(will: Will): boolean {
   if (will.mode === 'team' || will.mode === 'circle') return false;
+  // A will is "public" only when explicitly created via the Public Will option.
+  // Two valid representations: modern (kind === 'public') and legacy
+  // (visibility === 'public'); plus joined instances of one (parentWillId).
+  // NOTE: visibility 'open' is the default for EVERY will (incl. plain solo and
+  // modern public), so it must NOT be treated as public — `kind` is the real
+  // distinguisher. Using visibility 'open' here mis-files solo wills on the Public tab.
   return (will as any).kind === 'public'
     || !!will.parentWillId
-    || will.visibility === 'public'
-    || will.visibility === 'open';
+    || will.visibility === 'public';
 }
 
 function WillCard({ will, onClick, userId, alertType }: { will: Will; onClick: () => void; userId?: string; alertType?: HomeAlertType | null }) {
