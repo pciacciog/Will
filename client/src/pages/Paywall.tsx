@@ -12,6 +12,7 @@ import {
   purchasePremium,
   restorePurchases,
   isUserCancelled,
+  describeStoreError,
 } from "@/lib/revenueCat";
 
 export default function Paywall() {
@@ -78,9 +79,15 @@ export default function Paywall() {
       }
     } catch (err) {
       if (!isUserCancelled(err)) {
+        console.error("[Paywall] Apple purchase failed", err);
+        const { code, message } = describeStoreError(err);
+        console.error(`[Paywall] store error code=${code} message=${message}`);
+        const noProducts = code === "NO_PRODUCTS_AVAILABLE";
         toast({
-          title: "Purchase failed",
-          description: "Something went wrong with the App Store. Please try again.",
+          title: noProducts ? "Subscription unavailable" : "Purchase failed",
+          description: noProducts
+            ? "This subscription isn't available from the App Store yet. Please try again later."
+            : `Something went wrong with the App Store (${code}). Please try again.`,
           variant: "destructive",
         });
       }

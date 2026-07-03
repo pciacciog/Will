@@ -66,11 +66,33 @@ Capacitor plugins to a version whose peer matches the installed Capacitor major,
 npm install fails with ERESOLVE.
 
 ## Steps that must happen OUTSIDE this repo for iOS IAP to actually work
-RevenueCat dashboard product/app/entitlement/offering are created, but the user must
-still: add the App Store Connect in-app-purchase API key AND App-Specific Shared Secret
-to RevenueCat (the app shows `app_store_connect_api_key_configured:false` /
-`subscription_key_configured:false`); and rebuild + resubmit to TestFlight. IAP cannot
-be tested in the Replit env (needs device + Apple sandbox).
+RevenueCat dashboard product/app/entitlement/offering are created, and (as of the
+last check) BOTH App Store keys are now configured: the app shows
+`app_store_connect_api_key_configured:true` AND `subscription_key_configured:true`.
+IAP still cannot be tested in the Replit env (needs a device + Apple sandbox), and
+client code changes require an iOS rebuild + TestFlight resubmit to reach the phone.
+
+### Verifying RevenueCat config is complete (read-only, no rebuild needed)
+Use the connector token to hit the v2 REST API and confirm the full chain:
+`listConnections('revenuecat')[0].settings.access_token` →
+`GET /v2/projects/proj404a18c1/apps` (keys configured, bundle com.porfirio.will) →
+`/offerings` (offering `default`, `is_current:true`) →
+`/offerings/{id}/packages?expand=items.product` (package `$rc_monthly` → product
+`com.porfirio.will.monthly`, `state:active`, `trial_duration:P1M`). NOTE: the
+`/packages/{id}/products` sub-path 404s ("resource_missing") even when a product IS
+attached — that 404 is NOT proof of a missing product; use `?expand=items.product`
+on the packages list instead.
+
+### When "Purchase failed / Something went wrong with the App Store" persists
+If the RevenueCat chain above is complete, the failure is APPLE-side, not RevenueCat:
+(1) Paid Applications Agreement not Active in App Store Connect (Business) — the #1
+cause; without it StoreKit returns no products. (2) Subscription not in a testable
+state (Missing Metadata / Waiting for Review / price not set). (3) Device not signed
+into a Sandbox Apple ID (Settings → App Store → Sandbox Account), or the build isn't
+TestFlight/sandbox-capable. The client's generic catch used to hide this; it now
+surfaces the RevenueCat/StoreKit error `code` (and logs `code`+`message`) and a
+distinct `NO_PRODUCTS_AVAILABLE` case (offering/current returned no package on-device)
+so the specific cause is visible after the next iOS build.
 
 ## RevenueCat store_identifier must equal the App Store Connect Product ID exactly
 The App Store Connect subscription Product ID is `com.porfirio.will.monthly`; the

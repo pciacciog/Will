@@ -63,12 +63,39 @@ function hasActivePremium(customerInfo: { entitlements: { active: Record<string,
   return Boolean(customerInfo?.entitlements?.active?.[ENTITLEMENT_ID]);
 }
 
+/**
+ * Thrown when the store returned no purchasable subscription package. On iOS this
+ * almost always means the product could not be loaded from the App Store (e.g. the
+ * Paid Applications Agreement is not active, the product isn't in a testable state,
+ * or the device isn't signed into a sandbox account) — not a RevenueCat problem.
+ */
+export class NoProductsError extends Error {
+  readonly code = "NO_PRODUCTS_AVAILABLE";
+  constructor() {
+    super("No subscription package available");
+    this.name = "NoProductsError";
+  }
+}
+
+/** Extracts a diagnostic code + message from a RevenueCat / StoreKit error. */
+export function describeStoreError(err: unknown): { code: string; message: string } {
+  if (err instanceof NoProductsError) {
+    return { code: err.code, message: err.message };
+  }
+  const e = err as
+    | { code?: string | number; message?: string; underlyingErrorMessage?: string }
+    | undefined;
+  const code = e?.code != null ? String(e.code) : "UNKNOWN";
+  const message = e?.underlyingErrorMessage || e?.message || "Unknown store error";
+  return { code, message };
+}
+
 /** Triggers the Apple purchase sheet. Returns true if the premium entitlement is active afterward. */
 export async function purchasePremium(): Promise<boolean> {
   if (!isIosNative()) return false;
   const { Purchases } = await import("@revenuecat/purchases-capacitor");
   const pkg = await getMonthlyPackage();
-  if (!pkg) throw new Error("No subscription package available");
+  if (!pkg) throw new NoProductsError();
   const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
   return hasActivePremium(customerInfo);
 }
