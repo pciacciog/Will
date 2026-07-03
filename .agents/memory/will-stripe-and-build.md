@@ -85,14 +85,26 @@ on the packages list instead.
 
 ### When "Purchase failed / Something went wrong with the App Store" persists
 If the RevenueCat chain above is complete, the failure is APPLE-side, not RevenueCat:
-(1) Paid Applications Agreement not Active in App Store Connect (Business) — the #1
-cause; without it StoreKit returns no products. (2) Subscription not in a testable
-state (Missing Metadata / Waiting for Review / price not set). (3) Device not signed
-into a Sandbox Apple ID (Settings → App Store → Sandbox Account), or the build isn't
-TestFlight/sandbox-capable. The client's generic catch used to hide this; it now
-surfaces the RevenueCat/StoreKit error `code` (and logs `code`+`message`) and a
-distinct `NO_PRODUCTS_AVAILABLE` case (offering/current returned no package on-device)
-so the specific cause is visible after the next iOS build.
+(1) Paid Applications Agreement not Active in App Store Connect (Business) — without it
+StoreKit returns no products. (2) Subscription not in a testable state (Missing
+Metadata / Waiting for Review / price not set). (3) Device signed into a leftover
+Sandbox Apple ID (Settings → App Store → Sandbox Account) routes even real-App-Store
+builds to sandbox. (4) **Subscription "Approved"/"Ready for Distribution" in App Store
+Connect does NOT mean it is purchasable in PRODUCTION.** The first auto-renewable
+subscription must ship attached to a **released** app version; if the live build
+predates the IAP (or the version carrying it hasn't been released), production StoreKit
+offers no product → generic "Something went wrong." Newly-approved products also take
+up to ~24h to propagate to storefronts. The client's generic catch used to hide all of
+this; it now surfaces the RevenueCat/StoreKit `code` (+logs `code`/`message`) and a
+distinct `NO_PRODUCTS_AVAILABLE` case, visible after the next iOS build.
+
+### Decisive check: has ANY production purchase ever succeeded?
+`GET /v2/projects/{id}/metrics/overview` returns project-wide `active_subscriptions`,
+`active_trials`, `mrr`, `revenue`. If all are 0 while a customer only has
+`environment:"sandbox"` subscriptions (`store_subscription_identifier` starting
+`2000000…` = sandbox), then NO production purchase has ever gone through for anyone →
+the product is not actually live for sale in production yet (see cause #4 above), which
+is an App-Store-Connect release problem, not a code/RevenueCat-config problem.
 
 ## RevenueCat store_identifier must equal the App Store Connect Product ID exactly
 The App Store Connect subscription Product ID is `com.porfirio.will.monthly`; the
