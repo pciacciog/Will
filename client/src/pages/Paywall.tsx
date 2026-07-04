@@ -121,6 +121,10 @@ export default function Paywall() {
     }
   };
 
+  const trialEndDate = new Date(
+    Date.now() + 30 * 24 * 60 * 60 * 1000,
+  ).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-gradient-to-b from-brandGreen/10 to-white">
       <div className="w-full max-w-md text-center">
@@ -148,17 +152,15 @@ export default function Paywall() {
         </h1>
 
         <div className="mt-10 rounded-2xl bg-white p-7 shadow-sm" data-testid="card-price">
-          <p className="text-2xl font-bold text-[#1D9E75]" data-testid="text-trial">
-            30-Day Free Trial
-          </p>
           <p
-            className="mt-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-400"
-            data-testid="text-then"
+            className="text-4xl font-extrabold tracking-tight text-gray-900"
+            data-testid="text-price"
           >
-            THEN
+            $5.99
+            <span className="text-xl font-semibold text-gray-500"> / month</span>
           </p>
-          <p className="mt-1 text-lg text-gray-500" data-testid="text-price">
-            $5.99 / month
+          <p className="mt-2 text-sm font-medium text-[#1D9E75]" data-testid="text-trial">
+            30-day free trial, then billed monthly
           </p>
         </div>
 
@@ -180,6 +182,9 @@ export default function Paywall() {
 
         <p className="mt-3 text-sm text-gray-500" data-testid="text-disclaimer">
           No charge today · Cancel anytime
+        </p>
+        <p className="mt-1 text-xs text-gray-500" data-testid="text-charge-date">
+          You won't be charged until {trialEndDate}. Then $5.99/month.
         </p>
 
         <button
