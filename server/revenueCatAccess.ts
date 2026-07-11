@@ -6,6 +6,12 @@ const connectors = new ReplitConnectors();
 
 const PROJECT_ID = process.env.REVENUECAT_PROJECT_ID;
 
+// Hard cap on how long we'll wait for the RevenueCat connector. If it exceeds
+// this we treat it as an availability problem and return "unknown" so the
+// caller's outage-grace path protects real subscribers instead of hanging the
+// client in a perpetual loading spinner.
+const RC_TIMEOUT_MS = 6_000;
+
 export type RcProbe = "active" | "none" | "unknown";
 
 /**
@@ -17,7 +23,8 @@ export type RcProbe = "active" | "none" | "unknown";
  *               single "premium" entitlement, so any active entitlement grants access)
  *  - "none"    → customer exists with no active entitlement, OR customer is unknown
  *               to RevenueCat (404 resource_missing — never purchased)
- *  - "unknown" → RevenueCat was unreachable / errored (caller falls back, never locks out)
+ *  - "unknown" → RevenueCat was unreachable / timed out / errored (caller falls back,
+ *               never locks out)
  */
 export async function probeRevenueCatEntitlement(appUserId: string): Promise<RcProbe> {
   // No user id → nothing to look up (definitive non-match, not an outage).
@@ -30,11 +37,17 @@ export async function probeRevenueCatEntitlement(appUserId: string): Promise<RcP
     return "unknown";
   }
   try {
-    const resp = await connectors.proxy(
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("RevenueCat probe timed out")), RC_TIMEOUT_MS)
+    );
+
+    const probeCall = connectors.proxy(
       "revenuecat",
       `/v2/projects/${PROJECT_ID}/customers/${encodeURIComponent(appUserId)}/active_entitlements`,
       { method: "GET" },
     );
+
+    const resp = await Promise.race([probeCall, timeout]);
 
     if (resp.status === 404) {
       // Customer not found for this project → never purchased.
@@ -48,7 +61,10 @@ export async function probeRevenueCatEntitlement(appUserId: string): Promise<RcP
     const data = await resp.json().catch(() => null);
     const items = (data && Array.isArray(data.items)) ? data.items : [];
     return items.length > 0 ? "active" : "none";
-  } catch {
+  } catch (err: any) {
+    if (err?.message?.includes("timed out")) {
+      console.warn("[RevenueCat] Probe timed out after", RC_TIMEOUT_MS, "ms — returning unknown");
+    }
     return "unknown";
   }
 }
