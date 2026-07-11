@@ -27,6 +27,13 @@ export type RcProbe = "active" | "none" | "unknown";
  *               never locks out)
  */
 export async function probeRevenueCatEntitlement(appUserId: string): Promise<RcProbe> {
+  // Staging environment: RevenueCat is not configured (different bundle ID, no
+  // matching project). Skip the call entirely and grant access so Staging is
+  // fully functional without a RevenueCat setup.
+  if (process.env.APP_ENV === "staging") {
+    return "active";
+  }
+
   // No user id → nothing to look up (definitive non-match, not an outage).
   if (!appUserId) return "none";
   // Misconfiguration is an availability problem, not proof of "no subscription":
