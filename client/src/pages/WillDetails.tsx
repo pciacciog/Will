@@ -2741,7 +2741,6 @@ export default function WillDetails() {
         </div>
       </div>
 
-<<<<<<< HEAD
       {/* Photo modal */}
       {photoModal && (
         <div className="fixed inset-0 z-50 bg-black/90 flex flex-col" onClick={() => setPhotoModal(null)}>
@@ -2820,7 +2819,10 @@ export default function WillDetails() {
                 Cancel
               </button>
             </div>
-=======
+          </div>
+        </div>
+      )}
+
       {/* Full Notifications Editor (Solo wills) — reuses the creation NotificationsSetup form */}
       {showNotifEditor && isSoloMode && effectiveCategory && (
         <div className="fixed inset-0 z-[60] bg-white flex flex-col" data-testid="overlay-notif-editor">
@@ -2850,7 +2852,6 @@ export default function WillDetails() {
               onBack={() => setShowNotifEditor(false)}
               onComplete={(data) => saveFullNotifMutation.mutate(data)}
             />
->>>>>>> 45f522c2623550bf6ff843dd92749eae382948d2
           </div>
         </div>
       )}
