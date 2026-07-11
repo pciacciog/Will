@@ -995,6 +995,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Feedback submission
+  app.post('/api/feedback', async (req: any, res) => {
+    try {
+      const { message } = req.body;
+      if (!message || typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({ message: 'Feedback message is required' });
+      }
+      const trimmed = message.trim().substring(0, 2000);
+      const userInfo = req.user
+        ? `User: ${req.user.email} (ID: ${req.user.id})`
+        : 'User: not logged in';
+      const { emailService } = await import('./emailService');
+      await emailService.sendEmail({
+        to: 'hello@willapp.live',
+        subject: 'App Feedback',
+        html: `<p>${userInfo}</p><p style="white-space:pre-wrap">${trimmed.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`,
+      });
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error('[feedback]', err);
+      return res.status(500).json({ message: 'Failed to send feedback' });
+    }
+  });
+
   // Password change route
   app.post('/api/change-password', isAuthenticated, async (req: any, res) => {
     try {

@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Users, Compass, Settings, LogOut, ChevronRight, Flame, Bell } from "lucide-react";
+import { Users, Compass, Settings, LogOut, ChevronRight, Flame, Bell, MessageSquare } from "lucide-react";
 import { WhoModal } from "@/components/WhoModal";
 import SplashScreen from "@/components/SplashScreen";
 import AccountSettingsModal from "@/components/AccountSettingsModal";
@@ -34,6 +34,9 @@ export default function Home() {
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [showWhoModal, setShowWhoModal] = useState(false);
   const [activeCard, setActiveCard] = useState<'explore' | 'friends' | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackDone, setFeedbackDone] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -45,6 +48,22 @@ export default function Home() {
   }, []);
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const feedbackMutation = useMutation({
+    mutationFn: (message: string) =>
+      apiRequest("POST", "/api/feedback", { message }),
+    onSuccess: () => {
+      setFeedbackDone(true);
+      setTimeout(() => {
+        setShowFeedback(false);
+        setFeedbackText("");
+        setFeedbackDone(false);
+      }, 1800);
+    },
+    onError: () => {
+      toast({ title: "Couldn't send", description: "Please try again.", variant: "destructive" });
+    },
+  });
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -439,6 +458,16 @@ export default function Home() {
             </button>
             <span className="text-gray-200 text-lg leading-none">|</span>
             <button
+              onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); }}
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full transition-colors"
+              style={{ backgroundColor: "#d1fae5", color: "#065f46" }}
+              data-testid="button-feedback"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Feedback
+            </button>
+            <span className="text-gray-200 text-lg leading-none">|</span>
+            <button
               onClick={handleLogout}
               disabled={isLoggingOut}
               className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-[12px] transition-colors disabled:opacity-50"
@@ -456,6 +485,52 @@ export default function Home() {
         isOpen={showAccountSettings}
         onClose={() => setShowAccountSettings(false)}
       />
+
+      {/* Feedback modal */}
+      {showFeedback && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+          onClick={() => { if (!feedbackMutation.isPending) { setShowFeedback(false); setFeedbackText(""); setFeedbackDone(false); } }}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-t-2xl pb-10 px-5 pt-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+            {feedbackDone ? (
+              <div className="flex flex-col items-center gap-2 py-6">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center mb-1" style={{ backgroundColor: "#d1fae5" }}>
+                  <MessageSquare className="w-5 h-5" style={{ color: "#065f46" }} />
+                </div>
+                <p className="text-[15px] font-semibold text-gray-800">Thanks — got it.</p>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  autoFocus
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="Share your thoughts, report a bug, or suggest a feature…"
+                  rows={5}
+                  maxLength={2000}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  data-testid="input-feedback-text"
+                />
+                <button
+                  onClick={() => { if (feedbackText.trim()) feedbackMutation.mutate(feedbackText.trim()); }}
+                  disabled={!feedbackText.trim() || feedbackMutation.isPending}
+                  className="mt-3 w-full py-3.5 rounded-2xl text-white text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
+                  style={{ backgroundColor: "#1D9E75" }}
+                  data-testid="button-feedback-submit"
+                >
+                  {feedbackMutation.isPending ? "Sending…" : "Send Feedback"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <WhoModal
         isOpen={showWhoModal}
         onClose={() => setShowWhoModal(false)}
