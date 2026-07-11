@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { FinalWillSummary } from "@/components/FinalWillSummary";
 import { WillReviewFlow } from "@/components/WillReviewFlow";
 import { ThreadedMemberReview } from "@/components/ThreadedMemberReview";
 import { MobileLayout, SectionCard, PrimaryButton, SectionTitle, ActionButton, AvatarBadge, UnifiedBackButton } from "@/components/ui/design-system";
-import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, X, Check, MessageCircle, Rocket, Bell, Star } from "lucide-react";
+import { Calendar, Clock, Target, Edit, Trash2, Users, CheckCircle, AlertCircle, Video, Heart, Zap, BarChart3, MinusCircle, XCircle, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, X, Check, MessageCircle, Rocket, Bell, Star, Camera, Plus, ImageIcon } from "lucide-react";
 import { EndRoomTooltip } from "@/components/EndRoomTooltip";
 import { EndRoomCountdown } from "@/components/EndRoomCountdown";
 import { notificationService } from "@/services/NotificationService";
@@ -25,7 +25,28 @@ import { OngoingWillReviewFlow } from "@/components/OngoingWillReviewFlow";
 import ProgressView from "@/components/ProgressView";
 import DayStrip from "@/components/DayStrip";
 import type { WillCheckIn, AbstainLog } from "@shared/schema";
+import { Capacitor } from "@capacitor/core";
+import { sessionPersistence } from "@/services/SessionPersistence";
+import { getApiPath } from "@/config/api";
 
+type ProofDrop = {
+  id: number;
+  userId: string;
+  imageUrl: string;
+  thumbnailUrl: string | null;
+  caption: string | null;
+  createdAt: string;
+  firstName: string | null;
+  email: string;
+};
+
+type PhotoModal = {
+  imageUrl: string;
+  firstName: string | null;
+  email: string;
+  caption: string | null;
+  createdAt: string;
+} | null;
 
 function isActiveDay(date: Date, activeDays: string, customDays?: string): boolean {
   if (!activeDays || activeDays === 'every_day') return true;
@@ -302,6 +323,11 @@ export default function WillDetails() {
   const [editDate, setEditDate] = useState<string | null>(null);
   const [recurringWeekOffset, setRecurringWeekOffset] = useState(0);
   const [showSoloWhy, setShowSoloWhy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingProofs, setPendingProofs] = useState<{ tempId: string; blobUrl: string }[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [photoModal, setPhotoModal] = useState<PhotoModal>(null);
+  const [showProofPicker, setShowProofPicker] = useState(false);
 
   const todayLocalDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
 
@@ -372,6 +398,11 @@ export default function WillDetails() {
 
   // Detect solo mode from will data with localStorage fallback for error states
   const isSoloMode = will?.mode === 'solo' || will?.mode === 'personal';
+  const isProofLocked = will?.status !== "active" && will?.status !== "will_review";
+  const proofLockMessage =
+    will?.status === "pending" || will?.status === "scheduled" ? "Available once Will starts" :
+    will?.status === "paused" ? "Resume Will to add drops" :
+    "Will has ended";
   
   // Store the mode when will is loaded so we can use it in error states
   useEffect(() => {
@@ -697,6 +728,25 @@ export default function WillDetails() {
     reviewsError: reviewsError,
     reviewsData: reviews,
   });
+
+  const { data: proofsData, refetch: refetchProofs } = useQuery<{ items: ProofDrop[]; hasMore: boolean }>({
+    queryKey: [`/api/wills/${id}/proofs`],
+    queryFn: async () => {
+      const token = await sessionPersistence.getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const resp = await fetch(getApiPath(`/api/wills/${id}/proofs?limit=4`), {
+        credentials: "include",
+        headers,
+      });
+      if (!resp.ok) throw new Error("Failed to fetch proofs");
+      return resp.json();
+    },
+    enabled: !!id && !!user && !!will && (will.status === "active" || will.status === "will_review"),
+    refetchInterval: 30000,
+    staleTime: 0,
+  });
+  const proofItems: ProofDrop[] = proofsData?.items || [];
 
   // Fetch end room data when room is open during will_review
   const shouldEnableEndRoomQuery = !!id && !!user && will?.status === 'will_review' && will?.endRoomStatus === 'open';
@@ -1066,6 +1116,148 @@ export default function WillDetails() {
   const userHasCommitted = will.commitments?.some((c: any) => c.userId === user?.id);
   const totalMembers = will.memberCount || will.commitments?.length || 0;
   const submittedCount = will.commitments?.length || 0;
+
+  const normalizeToJpeg = (file: File): Promise<File> =>
+    new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("Canvas not available")); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => { if (!blob) { reject(new Error("Image conversion failed")); return; } resolve(new File([blob], "proof.jpg", { type: "image/jpeg" })); },
+          "image/jpeg", 0.8,
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not load image")); };
+      img.src = url;
+    });
+
+  const handleCapacitorCapture = async (source: "camera" | "library") => {
+    setShowProofPicker(false);
+    if (!Capacitor.isNativePlatform()) return;
+    await new Promise(res => setTimeout(res, 400));
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
+      const currentPerms = await Camera.checkPermissions();
+      const currentStatus = source === "camera" ? currentPerms.camera : currentPerms.photos;
+      if (currentStatus === "denied" || currentStatus === "restricted") {
+        toast({ title: "Permission required", description: `Please allow ${source === "camera" ? "camera" : "photo library"} access in Settings → WILL.`, variant: "destructive" });
+        return;
+      }
+      if (source === "library" && currentStatus === "limited") {
+        toast({ title: "Full photo access required", description: "Please go to Settings → WILL → Photos and select 'All Photos'.", variant: "destructive" });
+        return;
+      }
+      const photo = await Camera.getPhoto({
+        resultType: CameraResultType.Base64,
+        source: source === "camera" ? CameraSource.Camera : CameraSource.Photos,
+        quality: 70, width: 1200, correctOrientation: true, allowEditing: false, saveToGallery: false,
+      });
+      if (!photo.base64String) throw new Error("No image data returned from camera.");
+      const byteStr = atob(photo.base64String);
+      const ab = new ArrayBuffer(byteStr.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+      const blob = new Blob([ab], { type: "image/jpeg" });
+      const file = new File([blob], "proof.jpg", { type: "image/jpeg" });
+      await handleDropPhoto(file);
+    } catch (err: any) {
+      const msg = err?.message?.toLowerCase() ?? "";
+      if (!msg.includes("cancel") && !msg.includes("dismiss")) {
+        toast({ title: "Camera error", description: err?.message || "Could not open camera.", variant: "destructive" });
+      }
+    }
+  };
+
+  const openPhotoPicker = () => {
+    if (Capacitor.isNativePlatform()) { setShowProofPicker(true); }
+    else { fileInputRef.current?.click(); }
+  };
+
+  const handleDropPhoto = async (file: File) => {
+    if (isUploading) return;
+    const tempId = `tmp-${Date.now()}`;
+    const blobUrl = URL.createObjectURL(file);
+    setPendingProofs(prev => [...prev, { tempId, blobUrl }]);
+    setIsUploading(true);
+    let proofId: number | null = null;
+    try {
+      let uploadFile: File;
+      try { uploadFile = await normalizeToJpeg(file); } catch { uploadFile = file; }
+      const token = await sessionPersistence.getToken();
+      const authHeaders: Record<string, string> = {};
+      if (token) authHeaders["Authorization"] = `Bearer ${token}`;
+      const signRes = await fetch(getApiPath("/api/cloudinary/sign"), { credentials: "include", headers: authHeaders });
+      if (!signRes.ok) {
+        if (signRes.status === 503) throw new Error("Photo uploads are not configured yet.");
+        throw new Error("Failed to get upload credentials.");
+      }
+      const { timestamp, signature, publicId: serverPublicId, apiKey: cApiKey, cloudName: cCloudName, eager: eagerTransform, uploadToken } = await signRes.json();
+      const formData = new FormData();
+      formData.append("file", uploadFile);
+      formData.append("timestamp", String(timestamp));
+      formData.append("signature", signature);
+      formData.append("api_key", cApiKey);
+      formData.append("public_id", serverPublicId);
+      formData.append("transformation", "c_limit,w_1200,h_1200,q_auto");
+      if (eagerTransform) formData.append("eager", eagerTransform);
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cCloudName}/image/upload`, { method: "POST", body: formData });
+      if (!uploadRes.ok) throw new Error("Photo upload failed.");
+      const uploadData = await uploadRes.json();
+      const imageUrl: string = uploadData.secure_url;
+      const thumbnailUrl = imageUrl.replace("/upload/", "/upload/c_fill,w_200,h_200,q_auto/");
+      const createRes = await fetch(getApiPath(`/api/wills/${id}/proofs`), {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ imageUrl, thumbnailUrl, cloudinaryPublicId: uploadData.public_id }),
+      });
+      if (!createRes.ok) {
+        const err = await createRes.json().catch(() => ({}));
+        if (uploadToken) {
+          fetch(getApiPath("/api/cloudinary/abandon"), {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json", ...authHeaders },
+            body: JSON.stringify({ uploadToken }),
+          }).catch(() => {});
+        }
+        throw new Error((err as any).message || "Failed to save proof.");
+      }
+      const created = await createRes.json();
+      proofId = created.id;
+      if (proofId) {
+        const confirmRes = await fetch(getApiPath(`/api/proofs/${proofId}/confirm`), {
+          method: "PATCH", credentials: "include", headers: authHeaders,
+        });
+        if (!confirmRes.ok) throw new Error("Failed to confirm proof.");
+      }
+      await refetchProofs();
+      toast({ title: "Drop added!" });
+    } catch (err: any) {
+      if (proofId) {
+        const t = await sessionPersistence.getToken();
+        const h: Record<string, string> = {};
+        if (t) h["Authorization"] = `Bearer ${t}`;
+        fetch(getApiPath(`/api/proofs/${proofId}/fail`), { method: "PATCH", credentials: "include", headers: h }).catch(() => {});
+      }
+      toast({ title: "Drop failed", description: err?.message || "Something went wrong.", variant: "destructive" });
+    } finally {
+      setPendingProofs(prev => prev.filter(p => p.tempId !== tempId));
+      URL.revokeObjectURL(blobUrl);
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   return (
     <MobileLayout>
@@ -2385,6 +2577,79 @@ export default function WillDetails() {
           </button>
         )}
 
+        {/* ── Proof / Drop card ─────────────────────────── */}
+        {isSoloMode && (
+          <div className={`bg-white border border-gray-100 rounded-2xl p-4 shadow-sm${isProofLocked ? " opacity-50 pointer-events-none select-none" : ""}`} data-testid="section-proof-drop">
+            {isProofLocked ? (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Proof</p>
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <p className="text-xs text-gray-400 text-center py-2">{proofLockMessage}</p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[15px] font-semibold" style={{ color: "#1C1C1E" }}>Proof</p>
+                  <button
+                    onClick={openPhotoPicker}
+                    disabled={isUploading}
+                    className="flex items-center gap-1.5 text-white disabled:opacity-50 text-xs font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95"
+                    style={{ backgroundColor: "#1D9E75" }}
+                    data-testid="button-add-drop"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Drop
+                  </button>
+                </div>
+                {proofItems.length === 0 && pendingProofs.length === 0 ? (
+                  <button
+                    onClick={openPhotoPicker}
+                    disabled={isUploading}
+                    className="w-full border border-dashed border-gray-200 rounded-xl py-5 flex flex-col items-center gap-2 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50/30 transition-colors disabled:pointer-events-none"
+                    data-testid="button-empty-drop-zone"
+                  >
+                    <Camera className="w-5 h-5 opacity-60" />
+                    <span className="text-xs">No drops yet — add your first</span>
+                  </button>
+                ) : (
+                  <div className="flex gap-2 flex-wrap">
+                    {proofItems.map((proof) => {
+                      const initial = (proof.firstName || proof.email)?.charAt(0).toUpperCase() || "?";
+                      const src = proof.thumbnailUrl || proof.imageUrl;
+                      return (
+                        <button
+                          key={proof.id}
+                          onClick={() => setPhotoModal({ imageUrl: proof.imageUrl, firstName: proof.firstName, email: proof.email, caption: proof.caption, createdAt: proof.createdAt })}
+                          className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm hover:opacity-90 transition-opacity"
+                          data-testid={`button-proof-thumb-${proof.id}`}
+                        >
+                          <img src={src} alt="Proof" className="w-full h-full object-cover" />
+                          <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-[9px] shadow">
+                            {initial}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    {pendingProofs.map((p) => (
+                      <div key={p.tempId} className="relative w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
+                        <img src={p.blobUrl} alt="Uploading…" className="w-full h-full object-cover opacity-50" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {/* Back to Hub */}
         <div className="text-center mt-4">
           <button 
@@ -2396,6 +2661,88 @@ export default function WillDetails() {
           </button>
         </div>
       </div>
+
+      {/* Photo modal */}
+      {photoModal && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col" onClick={() => setPhotoModal(null)}>
+          <div className="flex items-center justify-between px-4 py-3 text-white" style={{ paddingTop: "max(12px, env(safe-area-inset-top))" }}>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm truncate">{photoModal.firstName || photoModal.email?.split("@")[0]}</p>
+              <p className="text-xs text-white/60">{new Date(photoModal.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
+            </div>
+            <button onClick={() => setPhotoModal(null)} className="w-14 h-14 flex items-center justify-center bg-white/30 rounded-full hover:bg-white/50 transition-colors" data-testid="button-close-photo-modal">
+              <X className="w-7 h-7 text-white" />
+            </button>
+          </div>
+          <div className="flex-1 flex items-center justify-center px-4 pb-4" onClick={(e) => e.stopPropagation()}>
+            <img src={photoModal.imageUrl} alt="Proof" className="max-w-full max-h-full rounded-xl object-contain shadow-2xl" />
+          </div>
+          {photoModal.caption && (
+            <p className="text-white/80 text-sm px-4 text-center pb-6">{photoModal.caption}</p>
+          )}
+        </div>
+      )}
+
+      {/* Web-only hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDropPhoto(f); }}
+      />
+
+      {/* Native iOS proof-drop picker bottom sheet */}
+      {showProofPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowProofPicker(false)}
+        >
+          <div
+            className="w-full bg-white rounded-t-2xl pb-10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-4" />
+            <p className="text-center text-sm font-semibold text-gray-800 mb-4 px-6">Add Proof Drop</p>
+            <button
+              onClick={() => handleCapacitorCapture("camera")}
+              className="w-full flex items-center gap-4 px-6 py-4 active:bg-gray-50 transition-colors"
+              data-testid="button-proof-camera"
+            >
+              <span className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                <Camera className="w-5 h-5 text-emerald-600" />
+              </span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">Take Photo</p>
+                <p className="text-xs text-gray-400">Open camera now</p>
+              </div>
+            </button>
+            <button
+              onClick={() => handleCapacitorCapture("library")}
+              className="w-full flex items-center gap-4 px-6 py-4 active:bg-gray-50 transition-colors"
+              data-testid="button-proof-library"
+            >
+              <span className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <ImageIcon className="w-5 h-5 text-blue-500" />
+              </span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">Choose from Library</p>
+                <p className="text-xs text-gray-400">Pick an existing photo</p>
+              </div>
+            </button>
+            <div className="mx-5 mt-2">
+              <button
+                onClick={() => setShowProofPicker(false)}
+                className="w-full py-3.5 rounded-2xl bg-gray-100 text-sm font-semibold text-gray-700 active:bg-gray-200 transition-colors"
+                data-testid="button-proof-picker-cancel"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manage Will Modal */}
       {showManageModal && (
