@@ -4,12 +4,15 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useEffect, useState, useRef } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { notificationService } from "@/services/NotificationService";
 import { sessionPersistence } from "@/services/SessionPersistence";
 import { useLocation } from "wouter";
 import { logBridge } from "@/lib/logBridge";
 import { getApiUrl } from "@/config/api";
+import { initRevenueCat } from "@/lib/revenueCat";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
@@ -32,6 +35,8 @@ import IconGenerator from "@/pages/IconGenerator";
 import FriendsPage from "@/pages/FriendsPage";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import Terms from "@/pages/Terms";
 import MyWills from "@/pages/MyWills";
 import Today from "@/pages/Today";
 import ProofFeed from "@/pages/ProofFeed";
@@ -47,6 +52,8 @@ import TeamWillViewer from "@/pages/TeamWillViewer";
 import DirectMessagePage from "@/pages/DirectMessagePage";
 import FindWillLifeArea from "@/pages/FindWillLifeArea";
 import FindWillSuggestions from "@/pages/FindWillSuggestions";
+import Paywall from "@/pages/Paywall";
+import UsernameSetup from "@/components/UsernameSetup";
 import { ScrollFadeIndicator } from "@/components/ScrollFadeIndicator";
 
 // Global debug helper for easy access
@@ -71,6 +78,7 @@ function CircleLobbyRedirect() {
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { subscription, isLoading: subLoading, refetch: refetchSubscription } = useSubscription(isAuthenticated);
   const [location, setLocation] = useLocation();
   const [sessionRestored, setSessionRestored] = useState(false);
   const pendingDeepLinkRef = useRef<string | null>(null);
@@ -140,6 +148,12 @@ function Router() {
       console.log('User authenticated - initializing push notifications');
       notificationService.initialize().catch(console.error);
       console.log('✅ User authenticated - server handles token association automatically');
+
+      // Link RevenueCat (Apple In-App Purchase) to this user on iOS so purchases
+      // are tied to the same identity the server verifies. No-op off-device.
+      initRevenueCat(user.id).catch((err) =>
+        console.error('[App] RevenueCat init error:', err)
+      );
       
       console.log('[App] 🔄 Auth state changed to authenticated - invalidating wills queries');
       queryClient.invalidateQueries({ queryKey: ['/api/wills/all-active'] });
@@ -351,6 +365,56 @@ function Router() {
     );
   }
 
+  // Username gate: existing/new authenticated users must claim an @username
+  // BEFORE any subscription/paywall logic. Non-dismissible until set.
+  if (isAuthenticated && user && !user.username) {
+    return <UsernameSetup />;
+  }
+
+  // While we resolve subscription state for an authenticated user, avoid flashing
+  // either the app or the paywall.
+  if (isAuthenticated && subLoading && !subscription) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Fail closed: if we couldn't determine subscription state for an authenticated
+  // user, do NOT grant app access. Show a retry screen (not the paywall, to avoid
+  // misleading grandfathered/paying users during a transient outage).
+  if (isAuthenticated && !subscription) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-gray-600" data-testid="text-subscription-unavailable">
+          We couldn't verify your subscription. Please check your connection and try again.
+        </p>
+        <button
+          onClick={() => refetchSubscription()}
+          className="rounded-xl bg-brandGreen px-6 py-2.5 font-semibold text-white hover:bg-brandGreen/90"
+          data-testid="button-retry-subscription"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Full lockout: authenticated users whose trial has ended without an active
+  // subscription only see the paywall. Legal pages are exempted so the
+  // Privacy/Terms links shown on the paywall remain reachable (Apple requires
+  // these links to be functional from the subscription screen).
+  if (
+    isAuthenticated &&
+    subscription &&
+    !subscription.hasAccess &&
+    location !== "/privacy" &&
+    location !== "/terms"
+  ) {
+    return <Paywall />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <ScrollFadeIndicator />
@@ -362,6 +426,10 @@ function Router() {
         {/* Password reset routes - always accessible */}
         <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/reset-password" component={ResetPassword} />
+
+        {/* Legal pages - public, required for App Store submission */}
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={Terms} />
         
         {!isAuthenticated ? (
           <>
@@ -440,7 +508,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Router />
+        <ErrorBoundary>
+          <Router />
+        </ErrorBoundary>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

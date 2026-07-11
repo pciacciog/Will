@@ -1,0 +1,54 @@
+We are preparing the Will app for production and I need to implement proper username/handle setup. Do not make any changes yet — read this fully first, audit the codebase, and then we will discuss the approach together before touching anything.
+Right now, user handles are being auto-generated from their full name, which is not acceptable for production. Additionally, the friends list is currently displaying user emails, which is a privacy issue that must be fixed.
+Important context before you begin:
+The username system is partially built already. Here is what we know exists:
+
+The username field already exists in the database schema at shared/schema.ts line 37 as varchar with max 30 characters and a unique constraint. It is nullable — no .notNull() — which is intentional for existing users.
+Uniqueness is enforced at two levels: the database unique index and a case-insensitive check in the PATCH /api/user/username endpoint.
+Username is already wired into the social layer — it appears in the friends list, friend profile page, create team will picker, and direct messages.
+The friend search endpoint queries username with partial case-insensitive matching and email with exact match only. Users with no username set are invisible to search — they simply do not appear.
+There is already a username field in Account Settings where users can set their handle. It has never been enforced and users can skip it entirely.
+Do not touch the database schema. Username stays nullable at the database level. We enforce it at the application layer only.
+
+What needs to be built:
+1. Add @username field to the account creation screen
+
+Add a username field between last name and email on the existing signup screen
+Real-time availability check as the user types — green checkmark if available, clear inline error if taken
+Validate characters — only letters, numbers, and underscores allowed
+Enforce minimum 3 and maximum 30 characters to match the existing schema
+The Create Account button stays disabled until a valid available username is confirmed
+
+2. One-time intercept for existing users
+
+When the app opens after this update, check if the logged-in user has a username set in the database
+If they do not have one, show the username assignment screen immediately before they reach home
+This screen must have no X button, no skip option, no way to dismiss it
+Edge cases to handle:
+
+User taps outside the modal — nothing happens
+User force-closes and reopens the app — screen appears again immediately
+Username field is empty — proceed button is disabled
+Username is already taken — real-time inline error, proceed button stays disabled
+Invalid characters typed — inline validation fires immediately
+Network drops during availability check — show retry state, do not allow proceeding with unverified handle
+User already has a username set — intercept never shows, goes straight to home as normal
+
+
+
+3. Fix email visibility in the friends list
+
+Remove email addresses from the friends list entirely
+Display first name, last name, and @username only — never email in any social or discovery context
+
+4. Display logic across the app — this is intentional and important
+
+Social and discovery contexts — friends list, friend search results, friend profile page, direct messages, create team will picker — display @username
+Accountability contexts — Will detail screens, team member lists, check-ins, progress screens — display first name only. These screens are where the human relationship matters. First names feel serious and personal here. Usernames would feel cold.
+
+Before you write any code tell me:
+
+Your proposed implementation plan for each of the four items above
+The full list of every screen where a user identifier is currently displayed and which context each one falls into
+Any risks or complications you see given what already exists
+Estimated complexity for each piece

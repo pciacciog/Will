@@ -11,7 +11,6 @@ type Friend = {
   firstName: string | null;
   lastName: string | null;
   username: string | null;
-  email: string | null;
 };
 
 type FriendsData = {
@@ -24,7 +23,6 @@ type SearchResult = {
   firstName: string | null;
   lastName: string | null;
   username: string | null;
-  email: string | null;
   friendshipId: number | null;
   friendshipStatus: string | null;
   friendshipDirection: 'sent' | 'received' | null;
@@ -33,7 +31,8 @@ type SearchResult = {
 type DiscoverUser = {
   userId: string;
   firstName: string | null;
-  email: string;
+  lastName: string | null;
+  username: string | null;
 };
 
 function getInitial(firstName: string | null, lastName: string | null, username: string | null) {
@@ -199,7 +198,7 @@ export default function FriendsPage() {
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search by username or email"
+              placeholder="Search by username"
               className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-colors"
               data-testid="input-search-friends"
             />
@@ -235,9 +234,9 @@ export default function FriendsPage() {
                           <p className="text-sm font-semibold text-gray-900 truncate">
                             {displayName(result.firstName, result.lastName, result.username)}
                           </p>
-                          {result.email && (
-                            <p className="text-[11px] text-gray-400 truncate" data-testid={`text-email-${result.id}`}>
-                              {result.email}
+                          {result.username && (
+                            <p className="text-[11px] text-gray-400 truncate" data-testid={`text-username-${result.id}`}>
+                              @{result.username}
                             </p>
                           )}
                         </div>
@@ -311,9 +310,9 @@ export default function FriendsPage() {
                       <p className="text-sm font-semibold text-gray-900 truncate">
                         {displayName(person.firstName, person.lastName, person.username)}
                       </p>
-                      {person.email && (
-                        <p className="text-[11px] text-gray-400 truncate" data-testid={`text-email-${person.userId}`}>
-                          {person.email}
+                      {person.username && (
+                        <p className="text-[11px] text-gray-400 truncate" data-testid={`text-username-${person.userId}`}>
+                          @{person.username}
                         </p>
                       )}
                     </div>
@@ -397,9 +396,9 @@ export default function FriendsPage() {
                         <p className="text-sm font-semibold text-gray-900 truncate">
                           {displayName(friend.firstName, friend.lastName, friend.username)}
                         </p>
-                        {friend.email && (
-                          <p className="text-[11px] text-gray-400 truncate" data-testid={`text-email-${friend.userId}`}>
-                            {friend.email}
+                        {friend.username && (
+                          <p className="text-[11px] text-gray-400 truncate" data-testid={`text-username-${friend.userId}`}>
+                            @{friend.username}
                           </p>
                         )}
                       </div>
@@ -423,8 +422,8 @@ export default function FriendsPage() {
               <div className="space-y-2">
                 {discoverUsers.map(user => {
                   const isPending = discoverPending.has(user.userId);
-                  const initial = user.firstName ? user.firstName[0].toUpperCase() : (user.email ? user.email[0].toUpperCase() : '?');
-                  const name = user.firstName || user.email;
+                  const initial = getInitial(user.firstName, user.lastName, user.username);
+                  const name = displayName(user.firstName, user.lastName, user.username);
                   return (
                     <div
                       key={user.userId}
@@ -439,6 +438,9 @@ export default function FriendsPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900 truncate">{name}</p>
+                        {user.username && (
+                          <p className="text-[11px] text-gray-400 truncate">@{user.username}</p>
+                        )}
                       </div>
                       {isPending ? (
                         <button

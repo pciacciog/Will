@@ -34,7 +34,9 @@ import {
   directMessages,
 } from "@shared/schema";
 import { z } from "zod";
+import { validateUsername } from "@shared/username";
 import { isAuthenticated, isAdmin } from "./auth";
+import { registerStripeRoutes } from "./stripeRoutes";
 import { db, pool } from "./db";
 import { eq, and, or, isNull, isNotNull, sql, inArray, notInArray, lt, gt, gte, desc, ne, ilike } from "drizzle-orm";
 import { cloudinary, cloudName, apiKey as cloudApiKey } from "./cloudinary";
@@ -210,6 +212,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Use local authentication only - bypass Replit auth
   setupAuth(app);
 
+  // Stripe subscription routes (checkout, portal, status)
+  registerStripeRoutes(app);
+
   // Auth routes are handled by setupAuth
 
   // Health check endpoint - verify environment and database connection
@@ -353,11 +358,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username is required" });
       }
 
-      const trimmed = username.trim().toLowerCase();
-
-      if (!/^[a-z0-9_]{3,30}$/.test(trimmed)) {
-        return res.status(400).json({ message: "Username must be 3–30 characters, letters, numbers, or underscores only" });
+      const check = validateUsername(username);
+      if (!check.valid) {
+        return res.status(400).json({ message: check.reason });
       }
+      const trimmed = check.normalized;
 
       // Check uniqueness
       const [existing] = await db
@@ -376,9 +381,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       res.json(updated);
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        return res.status(409).json({ message: "Username is already taken" });
+      }
       console.error("[USERNAME] Error updating username:", error);
       res.status(500).json({ message: "Failed to update username" });
+    }
+  });
+
+  // ─── USERNAME AVAILABILITY (public; used by signup + existing-user intercept) ─
+  app.get('/api/users/username-available', async (req, res) => {
+    try {
+      const raw = (req.query.u as string) || '';
+      const check = validateUsername(raw);
+      if (!check.valid) {
+        return res.json({ valid: false, available: false, reason: check.reason });
+      }
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.username, check.normalized));
+      return res.json({ valid: true, available: !existing });
+    } catch (error) {
+      console.error("[USERNAME-AVAILABLE] Error:", error);
+      res.status(500).json({ message: "Failed to check username" });
     }
   });
 
@@ -392,23 +419,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      // Search by username (partial) or exact email, excluding self
+      // Search by username, first/last name (partial), excluding self.
+      // Email is only matched when the query looks like an email (contains '@')
+      // to avoid enabling email-fragment enumeration of accounts.
+      const matchConditions = [
+        ilike(users.username, `%${q}%`),
+        ilike(users.firstName, `%${q}%`),
+        ilike(users.lastName, `%${q}%`),
+      ];
+      if (q.includes('@')) {
+        matchConditions.push(ilike(users.email, `%${q}%`));
+      }
+
       const results = await db
         .select({
           id: users.id,
           firstName: users.firstName,
           lastName: users.lastName,
           username: users.username,
-          email: users.email,
         })
         .from(users)
         .where(
           and(
             ne(users.id, currentUserId),
-            or(
-              ilike(users.username, `%${q}%`),
-              eq(users.email, q.toLowerCase())
-            )
+            or(...matchConditions)
           )
         )
         .limit(20);
@@ -443,7 +477,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: u.firstName,
           lastName: u.lastName,
           username: u.username,
-          email: u.email,
           friendshipId: fs?.id ?? null,
           friendshipStatus: fs?.status ?? null,
           friendshipDirection: fs?.direction ?? null,
@@ -476,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ]));
 
       const discoverUsers = await db
-        .select({ userId: users.id, firstName: users.firstName, email: users.email })
+        .select({ userId: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username })
         .from(users)
         .where(notInArray(users.id, excludeIds));
 
@@ -661,10 +694,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       allUserIds.delete(userId);
 
-      let userMap = new Map<string, { id: string; firstName: string | null; lastName: string | null; username: string | null; email: string | null }>();
+      let userMap = new Map<string, { id: string; firstName: string | null; lastName: string | null; username: string | null }>();
       if (allUserIds.size > 0) {
         const userRows = await db
-          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username, email: users.email })
+          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, username: users.username })
           .from(users)
           .where(inArray(users.id, Array.from(allUserIds)));
         for (const u of userRows) {
@@ -681,7 +714,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: other?.firstName ?? null,
           lastName: other?.lastName ?? null,
           username: other?.username ?? null,
-          email: other?.email ?? null,
         };
       });
 
@@ -693,7 +725,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: other?.firstName ?? null,
           lastName: other?.lastName ?? null,
           username: other?.username ?? null,
-          email: other?.email ?? null,
         };
       });
 
@@ -934,9 +965,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const baseUrl = process.env.APP_URL || originFromRequest || getDefaultOrigin();
         
         console.log(`[PasswordReset] Using base URL: ${baseUrl} (from origin: ${req.headers.origin}, referer: ${req.headers.referer})`);
-        await emailService.sendPasswordResetEmail(user.email, token, baseUrl);
-        
-        console.log(`[PasswordReset] Reset email sent to ${user.email}`);
+        const sent = await emailService.sendPasswordResetEmail(user.email, token, baseUrl);
+
+        if (sent) {
+          console.log(`[PasswordReset] Reset email sent to ${user.email}`);
+        } else {
+          console.error(`[PasswordReset] ❌ Failed to deliver reset email to ${user.email} (check EMAIL_FROM / Resend domain verification)`);
+        }
       } else {
         console.log(`[PasswordReset] No user found for email: ${email}`);
       }
@@ -2085,17 +2120,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const willId = parseInt(req.params.id);
       if (isNaN(willId)) return res.status(400).json({ message: 'Invalid will ID' });
 
-      // Authorization: creator, committer, or accepted invitee
+      // Authorization: real participant = creator or has a commitment row.
+      // Accepted-but-uncommitted invitees are NOT participants (ghost-invitee fix).
       const will = await storage.getWillById(willId);
       if (!will) return res.status(404).json({ message: 'Will not found' });
 
       const isCreator = will.createdBy === userId;
       const [commitment] = await db.select({ id: willCommitments.id }).from(willCommitments)
         .where(and(eq(willCommitments.willId, willId), eq(willCommitments.userId, userId))).limit(1);
-      const [acceptedInvite] = await db.select({ id: teamWillInvites.id }).from(teamWillInvites)
-        .where(and(eq(teamWillInvites.willId, willId), eq(teamWillInvites.invitedUserId, userId), eq(teamWillInvites.status, 'accepted'))).limit(1);
 
-      if (!isCreator && !commitment && !acceptedInvite) {
+      if (!isCreator && !commitment) {
         return res.status(403).json({ message: 'Not a participant of this will' });
       }
 
@@ -2278,20 +2312,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const search = req.query.search as string | undefined;
       const publicWills = await storage.getPublicWills(search);
+      // Explore is a discovery page — show only OTHER people's public wills,
+      // never the requester's own. (Wills they've joined still belong to others.)
+      const othersWills = publicWills.filter((w) => w.createdBy !== userId);
       const enriched = await Promise.all(
-        publicWills.map(async (w) => {
-          const isOwner = w.createdBy === userId;
+        othersWills.map(async (w) => {
           let hasJoined = false;
-          let isTeamMember = false;
-          if (!isOwner) {
-            if (w.kind === 'public') {
-              const joined = await storage.getUserJoinedWill(userId, w.id);
-              hasJoined = !!joined;
-            } else if (w.kind === 'team_i_will' || w.kind === 'team_we_will') {
-              isTeamMember = await storage.hasUserCommitted(w.id, userId);
-            }
+          if (w.kind === 'public') {
+            const joined = await storage.getUserJoinedWill(userId, w.id);
+            hasJoined = !!joined;
           }
-          return { ...w, isOwner, hasJoined, isTeamMember };
+          return { ...w, isOwner: false, hasJoined, isTeamMember: false };
         })
       );
       res.json(enriched);
@@ -2629,6 +2660,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const checkIns = await storage.getWillCheckIns(willId, will.createdBy);
       const progress = await storage.getWillCheckInProgress(willId, will.createdBy);
 
+      // Solo commitment text ("what") lives on willCommitments, not on the will
+      // record — fetch the creator's commitment so the viewer can show it.
+      const soloCommitments = await storage.getWillCommitments(willId);
+      const ownerCommitment = soloCommitments.find((c: any) => c.userId === will.createdBy) ?? soloCommitments[0];
+      const what = ownerCommitment?.what ?? '';
+
       const now = new Date();
       const startDate = new Date(will.startDate);
       const daysActive = Math.max(0, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
@@ -2638,6 +2675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         ...safeWill,
+        what,
         creator: {
           id: creator?.id,
           firstName: creator?.firstName,
@@ -4415,16 +4453,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!isParticipant) return res.status(403).json({ message: "Not authorized" });
       }
 
-      const { reminderTime } = req.body;
+      const {
+        reminderTime,
+        checkInTime,
+        checkInType,
+        commitmentCategory,
+        activeDays,
+        customDays,
+        milestones,
+        customReminders,
+      } = req.body;
 
-      if (reminderTime !== null && reminderTime !== undefined) {
-        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-        if (!timeRegex.test(reminderTime)) {
-          return res.status(400).json({ message: "Invalid time format. Use HH:MM" });
-        }
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      const validateTime = (t: any) => t === null || t === undefined || timeRegex.test(t);
+      if (!validateTime(reminderTime) || !validateTime(checkInTime)) {
+        return res.status(400).json({ message: "Invalid time format. Use HH:MM" });
       }
 
-      await db.update(wills).set({ reminderTime: reminderTime || null }).where(eq(wills.id, willId));
+      // Build a partial update. Only fields present in the body are touched, so the
+      // legacy reminder-only callers keep working unchanged.
+      const updates: Record<string, any> = {};
+      if (reminderTime !== undefined) updates.reminderTime = reminderTime || null;
+
+      // Full editor payload (Solo wills): present when commitmentCategory is sent.
+      // These are will-level fields, so restrict full edits to the owner — a
+      // participant may only change their own reminder time (handled above).
+      if (commitmentCategory !== undefined) {
+        if (will.createdBy !== userId) {
+          return res.status(403).json({ message: "Only the owner can edit these settings" });
+        }
+        if (!['recurring', 'duration', 'event'].includes(commitmentCategory)) {
+          return res.status(400).json({ message: "Invalid commitment category" });
+        }
+        if (checkInType !== undefined) {
+          if (!['daily', 'specific_days', 'final_review'].includes(checkInType)) {
+            return res.status(400).json({ message: "Invalid check-in type" });
+          }
+          updates.checkInType = checkInType;
+        }
+        if (activeDays !== undefined) {
+          if (!['every_day', 'weekdays', 'custom'].includes(activeDays)) {
+            return res.status(400).json({ message: "Invalid active days" });
+          }
+          updates.activeDays = activeDays;
+        }
+        updates.commitmentCategory = commitmentCategory;
+        updates.checkInTime = checkInTime || null;
+        updates.customDays = customDays ?? null;
+        updates.milestones = milestones ?? null;
+        updates.customReminders = customReminders ?? null;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await db.update(wills).set(updates).where(eq(wills.id, willId));
+      }
 
       res.json({ success: true });
     } catch (error) {
@@ -6032,7 +6114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: willProofs.status,
           createdAt: willProofs.createdAt,
           firstName: users.firstName,
-          email: users.email,
+          username: users.username,
         })
         .from(willProofs)
         .innerJoin(users, eq(willProofs.userId, users.id))

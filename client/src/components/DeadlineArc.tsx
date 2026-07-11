@@ -56,8 +56,11 @@ export default function DeadlineArc({ startDate, endDate, className }: DeadlineA
     const angle = Math.PI * (1 - clampedF);
     const x = 80 + 66 * Math.cos(angle);
     const y = 82 - 66 * Math.sin(angle);
-    const largeArcFlag = clampedF > 0.5 ? 1 : 0;
-    return `M 14 82 A 66 66 0 ${largeArcFlag} 1 ${x.toFixed(2)} ${y.toFixed(2)}`;
+    // The fill is always a portion of the top semicircle (<= 180deg), so this is
+    // always the minor arc — largeArcFlag must stay 0. Flipping it to 1 past the
+    // halfway point made the arc take the long way around (clipped below the
+    // baseline), producing broken/disjointed segments.
+    return `M 14 82 A 66 66 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)}`;
   }, [f]);
 
   return (

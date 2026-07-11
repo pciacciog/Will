@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { MobileLayout, UnifiedBackButton } from "@/components/ui/design-system";
@@ -31,9 +30,6 @@ const KIND_STYLES: Record<string, { label: string; bg: string; text: string }> =
   team_i_will: { label: "Team",     bg: "#EEEDFE", text: "#3C3489" },
   team_we_will:{ label: "We Will",  bg: "#EEEDFE", text: "#3C3489" },
 };
-
-const FILTERS = ["All", "Solo", "Team", "Public"] as const;
-type Filter = typeof FILTERS[number];
 
 function avatarColor(id: string) {
   const colors = ["#534AB7","#1D9E75","#D85A30","#0891B2","#7C3AED","#DC2626","#059669","#D97706"];
@@ -168,31 +164,15 @@ function ExploreCard({ will }: { will: ExploreWill }) {
   );
 }
 
-function matchesFilter(will: ExploreWill, filter: Filter): boolean {
-  if (filter === "All") return true;
-  if (filter === "Solo") return will.kind === "solo";
-  if (filter === "Team") return will.kind === "team_i_will" || will.kind === "team_we_will";
-  if (filter === "Public") return will.kind === "public";
-  return true;
-}
-
-const EMPTY_MESSAGES: Record<Filter, string> = {
-  All: "Nothing here yet — be the first to share a will with the world.",
-  Solo: "No solo wills yet.",
-  Team: "No team wills yet.",
-  Public: "No public wills yet.",
-};
-
 export default function Explore() {
   const [, setLocation] = useLocation();
-  const [activeFilter, setActiveFilter] = useState<Filter>("All");
 
   const { data: allWills, isLoading } = useQuery<ExploreWill[]>({
     queryKey: ["/api/wills/public"],
     staleTime: 30000,
   });
 
-  const wills = (allWills ?? []).filter((w) => matchesFilter(w, activeFilter));
+  const wills = allWills ?? [];
 
   return (
     <MobileLayout>
@@ -208,28 +188,6 @@ export default function Explore() {
           <div className="w-11" />
         </div>
 
-        {/* Filter pills */}
-        <div className="flex items-center gap-2 pb-1 overflow-x-auto no-scrollbar" data-testid="row-filter-pills">
-          {FILTERS.map((f) => {
-            const active = f === activeFilter;
-            return (
-              <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
-                className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all"
-                style={
-                  active
-                    ? { backgroundColor: "#534AB7", color: "#fff", borderColor: "#534AB7" }
-                    : { backgroundColor: "#fff", color: "#6B7280", borderColor: "#E5E7EB" }
-                }
-                data-testid={`pill-filter-${f.toLowerCase()}`}
-              >
-                {f}
-              </button>
-            );
-          })}
-        </div>
-
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
@@ -240,7 +198,7 @@ export default function Explore() {
               <Target className="w-8 h-8 text-gray-400" />
             </div>
             <p className="text-sm text-gray-500 px-8" data-testid="text-empty">
-              {EMPTY_MESSAGES[activeFilter]}
+              No public wills to explore yet — check back soon.
             </p>
           </div>
         ) : (

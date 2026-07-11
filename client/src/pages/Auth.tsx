@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SplashScreen from "@/components/SplashScreen";
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,12 +13,46 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { MobileLayout } from "@/components/ui/design-system";
 import { sessionPersistence } from "@/services/SessionPersistence";
+import { validateUsername } from "@shared/username";
 
 export default function Auth() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Username field state + debounced availability check
+  const [username, setUsername] = useState("");
+  const [availability, setAvailability] = useState<{ checking: boolean; available: boolean | null }>({
+    checking: false,
+    available: null,
+  });
+  const usernameCheck = validateUsername(username);
+
+  useEffect(() => {
+    if (username.length === 0) {
+      setAvailability({ checking: false, available: null });
+      return;
+    }
+    if (!usernameCheck.valid) {
+      setAvailability({ checking: false, available: null });
+      return;
+    }
+    setAvailability({ checking: true, available: null });
+    const t = setTimeout(async () => {
+      try {
+        const res = await apiRequest(`/api/users/username-available?u=${encodeURIComponent(usernameCheck.normalized)}`);
+        const data = await res.json();
+        setAvailability({ checking: false, available: !!data.available });
+      } catch {
+        setAvailability({ checking: false, available: null });
+      }
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
+
+  const isUsernameOk = usernameCheck.valid && availability.available === true;
   // Remove splash screen functionality
 
   const loginMutation = useMutation({
@@ -135,7 +169,7 @@ export default function Auth() {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string; firstName: string; lastName: string }) => {
+    mutationFn: async (credentials: { email: string; password: string; firstName: string; lastName: string; username: string }) => {
       // ISSUE #2 FIX: Send device token with registration request for immediate ownership transfer
       const deviceTokenData = localStorage.getItem('pendingDeviceToken');
       let deviceToken = null;
@@ -285,11 +319,30 @@ export default function Auth() {
       return;
     }
 
+    if (!usernameCheck.valid) {
+      toast({
+        title: "Invalid username",
+        description: usernameCheck.reason || "Please choose a valid username",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (availability.available !== true) {
+      toast({
+        title: "Username unavailable",
+        description: "That username is taken. Please choose another.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     registerMutation.mutate({
       email: formData.get('email') as string,
       password: password,
       firstName: formData.get('firstName') as string,
       lastName: formData.get('lastName') as string,
+      username: usernameCheck.normalized,
     });
   };
 
@@ -439,6 +492,48 @@ export default function Auth() {
                     </div>
                   </div>
                   <div>
+                    <Label htmlFor="register-username" className="text-xs font-medium">Username</Label>
+                    <div className="relative mt-0.5">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">@</span>
+                      <Input
+                        id="register-username"
+                        name="username"
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                        placeholder="username"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        required
+                        className="w-full pl-5 pr-2 py-1 border rounded-xl text-xs"
+                        data-testid="input-register-username"
+                      />
+                    </div>
+                    {username.length > 0 && (
+                      <p
+                        className={`text-[11px] mt-0.5 ${
+                          !usernameCheck.valid || availability.available === false
+                            ? "text-red-500"
+                            : availability.available === true
+                            ? "text-emerald-600"
+                            : "text-gray-400"
+                        }`}
+                        data-testid="text-username-status"
+                      >
+                        {!usernameCheck.valid
+                          ? usernameCheck.reason
+                          : availability.checking
+                          ? "Checking availability…"
+                          : availability.available === true
+                          ? `@${usernameCheck.normalized} is available`
+                          : availability.available === false
+                          ? "That username is taken"
+                          : ""}
+                      </p>
+                    )}
+                  </div>
+                  <div>
                     <Label htmlFor="register-email" className="text-xs font-medium">Email</Label>
                     <Input
                       id="register-email"
@@ -504,8 +599,9 @@ export default function Auth() {
                   <div className="mt-4">
                     <Button 
                       type="submit" 
-                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-2 rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]"
-                      disabled={registerMutation.isPending}
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-2 rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02] disabled:opacity-60"
+                      disabled={registerMutation.isPending || !isUsernameOk}
+                      data-testid="button-create-account"
                     >
                       {registerMutation.isPending ? "Creating account..." : "Create Account"}
                     </Button>
