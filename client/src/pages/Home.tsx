@@ -264,8 +264,8 @@ export default function Home() {
         .sp5 { animation-delay: 2.08s; }
       `}</style>
 
-      <div className="pt-[calc(env(safe-area-inset-top)+5.5rem)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] min-h-screen flex flex-col">
-        <div className="max-w-sm mx-auto px-5 flex-1 flex flex-col">
+      <div className="flex flex-col" style={{ height: '100dvh', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="max-w-sm mx-auto w-full px-5 flex-1 overflow-y-auto pt-[5.5rem] flex flex-col">
 
           {/* ── Header ── */}
           <div className="mb-3 flex items-start justify-between">
@@ -442,39 +442,40 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── Footer ── */}
-          <div className="mt-auto pt-2 flex items-center justify-center gap-5">
-            <button
-              onClick={() => setShowAccountSettings(true)}
-              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-[12px] transition-colors"
-              data-testid="button-settings"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              Settings
-            </button>
-            <span className="text-gray-200 text-lg leading-none">|</span>
-            <button
-              onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); }}
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full transition-colors"
-              style={{ backgroundColor: "#d1fae5", color: "#065f46" }}
-              data-testid="button-feedback"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Feedback
-            </button>
-            <span className="text-gray-200 text-lg leading-none">|</span>
-            <button
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-[12px] transition-colors disabled:opacity-50"
-              data-testid="button-sign-out"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              {isLoggingOut ? "Signing out..." : "Sign Out"}
-            </button>
-          </div>
-
         </div>
+
+        {/* ── Footer — pinned at bottom, always visible ── */}
+        <div className="max-w-sm mx-auto w-full px-5 pt-2 pb-3 flex items-center justify-center gap-5 flex-shrink-0">
+          <button
+            onClick={() => setShowAccountSettings(true)}
+            className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-[12px] transition-colors"
+            data-testid="button-settings"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            Settings
+          </button>
+          <span className="text-gray-200 text-lg leading-none">|</span>
+          <button
+            onClick={() => { setShowFeedback(true); setFeedbackDone(false); setFeedbackText(""); }}
+            className="inline-flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full transition-colors"
+            style={{ backgroundColor: "#d1fae5", color: "#065f46" }}
+            data-testid="button-feedback"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            Feedback
+          </button>
+          <span className="text-gray-200 text-lg leading-none">|</span>
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-[12px] transition-colors disabled:opacity-50"
+            data-testid="button-sign-out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            {isLoggingOut ? "Signing out..." : "Sign Out"}
+          </button>
+        </div>
+
       </div>
 
       <AccountSettingsModal
