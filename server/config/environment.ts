@@ -16,12 +16,15 @@ export function getEnvironment(): Environment {
   const appEnv = process.env.APP_ENV?.toLowerCase();
   const nodeEnv = process.env.NODE_ENV?.toLowerCase();
   
-  if (appEnv === 'production' || nodeEnv === 'production') {
-    return 'production';
-  }
-  
+  // APP_ENV is the explicit, intentional signal — check it first so it
+  // always wins over NODE_ENV=production (which Replit sets automatically
+  // on every deployment, staging included).
   if (appEnv === 'staging') {
     return 'staging';
+  }
+  
+  if (appEnv === 'production' || nodeEnv === 'production') {
+    return 'production';
   }
   
   // In Replit development environment, use 'development' to use the main DATABASE_URL
